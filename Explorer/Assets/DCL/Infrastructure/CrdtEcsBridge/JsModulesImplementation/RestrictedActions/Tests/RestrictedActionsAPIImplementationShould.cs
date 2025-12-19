@@ -219,5 +219,67 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 0f,
                 Arg.Any<CancellationToken>());
         }
+
+        [Test]
+        public void MovePlayerTo_PassesDurationParameter()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+            float testDuration = 2.5f;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, null, null, testDuration, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                Arg.Any<Vector3>(),
+                Arg.Any<Vector3?>(),
+                Arg.Any<Vector3?>(),
+                testDuration,
+                Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void MovePlayerTo_WithDuration_CallsGlobalWorldActions()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+            Vector3 cameraTarget = new Vector3(10, 5, 10);
+            Vector3 avatarTarget = new Vector3(15, 0, 10);
+            float testDuration = 3f;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, cameraTarget, avatarTarget, testDuration, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                sceneData.Geometry.BaseParcelPosition + testPosition,
+                sceneData.Geometry.BaseParcelPosition + cameraTarget,
+                avatarTarget,
+                testDuration,
+                Arg.Any<CancellationToken>());
+
+            globalWorldActions.Received(1).RotateCamera(
+                sceneData.Geometry.BaseParcelPosition + cameraTarget,
+                sceneData.Geometry.BaseParcelPosition + testPosition);
+        }
+
+        [Test]
+        public void MovePlayerTo_WithZeroDuration_CallsGlobalWorldActionsWithZeroDuration()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, null, null, 0f, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                Arg.Any<Vector3>(),
+                Arg.Any<Vector3?>(),
+                Arg.Any<Vector3?>(),
+                0f,
+                Arg.Any<CancellationToken>());
+        }
     }
 }
