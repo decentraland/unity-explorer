@@ -6,8 +6,10 @@ namespace ECS.StreamableLoading
     {
         public readonly Dictionary<string, PlatformVersionInfo> versions;
 
-        public static AssetBundlesVersions Create() =>
-            new (true);
+        public static AssetBundlesVersions Create()
+        {
+            return new AssetBundlesVersions (true);
+        }
 
         private AssetBundlesVersions(bool paramLess)
         {

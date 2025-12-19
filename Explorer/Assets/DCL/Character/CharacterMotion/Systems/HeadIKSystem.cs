@@ -170,7 +170,7 @@ namespace DCL.CharacterMotion.Systems
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                              && !platformComponent.PositionChanged;
 
-            if(emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
+            if (emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
                 avatarBase.HeadIKRig.weight = 0.0f;
             else
                 avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);

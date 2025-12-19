@@ -14,22 +14,22 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsPreview;
 
         /// <summary>
-        /// Determines the current opacity of the outline effect of the avatar, from 0 to 1 (opaque).
+        ///     Determines the current opacity of the outline effect of the avatar, from 0 to 1 (opaque).
         /// </summary>
         public float OutlineVfxOpacity;
 
         /// <summary>
-        /// The opacity of the outline the previous frame. Used to avoid setting the effect all the time when opacity is zero.
+        ///     The opacity of the outline the previous frame. Used to avoid setting the effect all the time when opacity is zero.
         /// </summary>
         public float PreviousOutlineVfxOpacity;
 
         /// <summary>
-        /// The current thickness of the outline effect of the avatar.
+        ///     The current thickness of the outline effect of the avatar.
         /// </summary>
         public float OutlineThickness;
 
         /// <summary>
-        /// The current color of the outline effect of the avatar.
+        ///     The current color of the outline effect of the avatar.
         /// </summary>
         public Color OutlineColor;
 

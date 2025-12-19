@@ -31,6 +31,8 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.FeatureFlags;
 using UnityEngine.Pool;
 using Utility;
 
@@ -157,8 +159,14 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
-
-            busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage, wearablesProvider);
+            
+            busController = new BackpackBusController(wearableStorage,
+                backpackEventBus,
+                backpackCommandBus,
+                equippedWearables,
+                equippedEmotes,
+                emoteStorage,
+                wearablesProvider);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 

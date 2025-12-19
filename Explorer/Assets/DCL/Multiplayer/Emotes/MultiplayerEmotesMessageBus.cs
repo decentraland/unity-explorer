@@ -68,8 +68,10 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
-            new (sync, lookAtPositionIntentions);
+        public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions()
+        {
+            return new OwnedBunch<LookAtPositionIntention> (sync, lookAtPositionIntentions);
+        }
 
         public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
         {
@@ -78,7 +80,7 @@ namespace DCL.Multiplayer.Emotes
 
             float timestamp = Time.unscaledTime;
 
-            MessageWrap<LookAtPosition> lookAtPositionMessageIsland = messagePipesHub.IslandPipe().NewMessage<LookAtPosition>();
+            var lookAtPositionMessageIsland = messagePipesHub.IslandPipe().NewMessage<LookAtPosition>();
             lookAtPositionMessageIsland.Payload.Timestamp = timestamp;
             lookAtPositionMessageIsland.Payload.PositionX = worldPositionX;
             lookAtPositionMessageIsland.Payload.PositionY = worldPositionY;
@@ -86,7 +88,7 @@ namespace DCL.Multiplayer.Emotes
             lookAtPositionMessageIsland.Payload.TargetAvatarWalletAddress = walletAddress;
             lookAtPositionMessageIsland.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
 
-            MessageWrap<LookAtPosition> lookAtPositionMessageScene = messagePipesHub.ScenePipe().NewMessage<LookAtPosition>();
+            var lookAtPositionMessageScene = messagePipesHub.ScenePipe().NewMessage<LookAtPosition>();
             lookAtPositionMessageScene.Payload.Timestamp = timestamp;
             lookAtPositionMessageScene.Payload.PositionX = worldPositionX;
             lookAtPositionMessageScene.Payload.PositionY = worldPositionY;
@@ -123,8 +125,8 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.Timestamp = timestamp;
             emote.Payload.SocialEmoteOutcome = socialEmoteOutcomeIndex;
             emote.Payload.IsReacting = isReactingToSocialEmote;
-            emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress?? string.Empty;
-            emote.Payload.TargetAvatar = targetAvatarWalletAddress?? string.Empty;
+            emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress ?? string.Empty;
+            emote.Payload.TargetAvatar = targetAvatarWalletAddress ?? string.Empty;
             emote.Payload.IsStopping = isStopping;
             emote.Payload.IsRepeating = isRepeating;
             emote.Payload.InteractionId = interactionId;
