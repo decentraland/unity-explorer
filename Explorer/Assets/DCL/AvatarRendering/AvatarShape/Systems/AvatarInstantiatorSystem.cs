@@ -20,14 +20,12 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
-using System.Linq;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Export;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Object = UnityEngine.Object;
 using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -212,20 +210,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
-            }
-
-            avatarShapeComponent.FacialFeatureMainTexturesForExport = new Dictionary<string, Texture>();
-            avatarShapeComponent.FacialFeatureMaskTexturesForExport = new Dictionary<string, Texture>();
-
-            foreach (var category in facialFeatureTextures.Value.Keys)
-            {
-                var textureDict = facialFeatureTextures.Value[category];
-
-                if (textureDict.TryGetValue(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, out var mainTex) && mainTex != null)
-                    avatarShapeComponent.FacialFeatureMainTexturesForExport[category] = mainTex;
-
-                if (textureDict.TryGetValue(TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID, out var maskTex) && maskTex != null)
-                    avatarShapeComponent.FacialFeatureMaskTexturesForExport[category] = maskTex;
             }
 
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
