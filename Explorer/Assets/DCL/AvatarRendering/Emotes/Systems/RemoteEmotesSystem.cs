@@ -39,16 +39,16 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (emoteIntentions.Available())
                 {
-                    foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
+                    foreach (var remoteEmoteIntention in emoteIntentions.Collection())
                     {
                         // The entity was not created yet, so we wait until its created to be able to consume the intent
-                        if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                        if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out var entry))
                         {
                             savedIntentions!.Add(remoteEmoteIntention);
                             continue;
                         }
 
-                        SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress);
+                        var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress);
 
                         // Ignores reaction messages when the initiator started the same social emote again, while they were interacting (which cancels the emote for both)
                         if (remoteEmoteIntention.SocialEmote.IsReacting &&
@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.Emotes
                             !SocialEmoteInteractionsManager.Instance.InteractionExists(remoteEmoteIntention.SocialEmote.InitiatorWalletAddress) &&
                             remoteEmoteIntention.SocialEmote.IsReacting)
                         {
-                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores messages of reaction to social emote when the interaction does not exist yet (may occur when a third player connects while 2 avatars are already interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {(interaction != null)}</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores messages of reaction to social emote when the interaction does not exist yet (may occur when a third player connects while 2 avatars are already interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {interaction != null}</color>");
                             continue;
                         }
 
@@ -92,12 +92,12 @@ namespace DCL.AvatarRendering.Emotes
                             remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation &&
                             SocialEmoteInteractionsManager.Instance.HasInteractionExisted(remoteEmoteIntention.SocialEmote.InteractionId))
                         {
-                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores reaction messages to non-existing interactions, unless it's the first time they are processed (when a third player connects while other 2 are interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {(interaction != null)}</color>");
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores reaction messages to non-existing interactions, unless it's the first time they are processed (when a third player connects while other 2 are interacting) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} IsUsingSocialOutcomeAnimation: {remoteEmoteIntention.SocialEmote.IsUsingOutcomeAnimation} Initiator: {remoteEmoteIntention.SocialEmote.InitiatorWalletAddress} interaction? {interaction != null}</color>");
                             continue;
                         }
 
-                        ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
-                        ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                        ref var replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+                        ref var intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                         if (remoteEmoteIntention.IsStopping)
                         {
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Emotes
                                 isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = true;
                             }
 
-                            ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
+                            ref var intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                             intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                             intention.WalletAddress = remoteEmoteIntention.WalletId;
                             intention.IsRepeating = remoteEmoteIntention.IsRepeating;
@@ -156,13 +156,13 @@ namespace DCL.AvatarRendering.Emotes
             // Look at position messages for remote players
             using var scopeLookAtPosition = HashSetPool<LookAtPositionIntention>.Get(out var savedLookAtPositionIntentions);
 
-            using (OwnedBunch<LookAtPositionIntention> lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
+            using (var lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
             {
                 if (lookAtPositionIntentions.Available())
                 {
-                    foreach (LookAtPositionIntention lookAtPositionIntention in lookAtPositionIntentions.Collection())
+                    foreach (var lookAtPositionIntention in lookAtPositionIntentions.Collection())
                     {
-                        if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
+                        if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out var entry))
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (remote) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
                             World.Add(entry.Entity, lookAtPositionIntention);
@@ -175,7 +175,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            foreach (LookAtPositionIntention savedIntention in savedLookAtPositionIntentions!)
+            foreach (var savedIntention in savedLookAtPositionIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
 
             // Look at position messages for local player
@@ -193,11 +193,11 @@ namespace DCL.AvatarRendering.Emotes
         {
             using var scopeLookAtPosition = HashSetPool<LookAtPositionIntention>.Get(out var savedLookAtPositionIntentions);
 
-            using (OwnedBunch<LookAtPositionIntention> lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
+            using (var lookAtPositionIntentions = emotesMessageBus.LookAtPositionIntentions())
             {
                 if (lookAtPositionIntentions.Available())
                 {
-                    foreach (LookAtPositionIntention lookAtPositionIntention in lookAtPositionIntentions.Collection())
+                    foreach (var lookAtPositionIntention in lookAtPositionIntentions.Collection())
                     {
                         if (profile.UserId == lookAtPositionIntention.WalletAddress)
                         {
@@ -212,7 +212,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            foreach (LookAtPositionIntention savedIntention in savedLookAtPositionIntentions!)
+            foreach (var savedIntention in savedLookAtPositionIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
         }
     }

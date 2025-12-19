@@ -7,7 +7,7 @@ namespace DCL.Ipfs
     {
         public static bool IsQmEntity(string entityID)
         {
-            ReadOnlySpan<char> span = entityID.AsSpan();
+            var span = entityID.AsSpan();
             return span.Length >= 2 && span[0] == 'Q' && span[1] == 'm';
         }
 

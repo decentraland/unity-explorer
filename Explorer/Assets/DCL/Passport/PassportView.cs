@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Passport
@@ -118,6 +117,12 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public string JumpInText { get; private set; } = "Jump to Location";
+
+        [field: SerializeField]
+        public Sprite GiftSprite { get; private set; }
+
+        [field: SerializeField]
+        public string GiftText { get; private set; } = "Gift";
 
         [field: SerializeField]
         public Sprite InviteToCommunitySprite { get; private set; }

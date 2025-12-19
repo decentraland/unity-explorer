@@ -29,8 +29,10 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         public (Color, Color, Color) GetColors() =>
             (hairColor, eyesColor, bodyshapeColor);
 
-        public bool IsEquipped(ITrimmedWearable wearable) =>
-            wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
+        public bool IsEquipped(ITrimmedWearable wearable)
+        {
+            return wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
+        }
 
         public void Equip(IWearable wearable) =>
             wearables[wearable.GetCategory()] = wearable;
