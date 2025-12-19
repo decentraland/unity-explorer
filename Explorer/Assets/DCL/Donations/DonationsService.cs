@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -33,10 +34,7 @@ namespace DCL.Donations
         private const string MATIC_NETWORK = "polygon";
         private const string AMOY_NETWORK = "amoy";
 
-        private const string MANA_BALANCE_FUNCTION_SELECTOR = "0x70a08231";
-        private const string TRANSFER_FUNCTION_SELECTOR = "0xa9059cbb";
         private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
-
         private const double MANA_RATE_CACHE_DURATION_MINUTES = 30;
 
         private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
@@ -132,32 +130,9 @@ namespace DCL.Donations
             }
         }
 
-        private static string LeftPad64(string hex)
-        {
-            // Ensure no 0x prefix before padding
-            string s = hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
-
-            if (s.Length > 64)
-                throw new ArgumentException($"Argument too large: {s.Length} chars. Max 64 hex chars allowed.");
-
-            // Pad with zeros on the left to reach 64 characters
-            return s.PadLeft(64, '0').ToLowerInvariant();
-        }
-
-        private static string NormalizeAddress(string addr)
-        {
-            // Remove '0x' prefix if present
-            string s = addr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addr[2..] : addr;
-
-            if (s.Length != 40)
-                throw new ArgumentException($"Invalid address length: {s.Length}. Expected 40 hex characters.");
-
-            return s.ToLowerInvariant();
-        }
-
         public async UniTask<decimal> GetCurrentBalanceAsync(CancellationToken ct)
         {
-            string address = LeftPad64(NormalizeAddress(ViewDependencies.CurrentIdentity?.Address));
+            string data = ManualTxEncoder.EncodeGetBalance(ViewDependencies.CurrentIdentity?.Address);
 
             var request = new EthApiRequest
             {
@@ -169,7 +144,7 @@ namespace DCL.Donations
                     new JObject
                     {
                         ["to"] = contractAddress,
-                        ["data"] = $"{MANA_BALANCE_FUNCTION_SELECTOR}{address}"
+                        ["data"] = data
                     },
                     "latest"
                 }
@@ -186,9 +161,7 @@ namespace DCL.Donations
 
         public async UniTask<bool> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
         {
-            BigInteger value = new BigInteger(decimal.Round(amountInMana * WEI_FACTOR, 0, MidpointRounding.AwayFromZero));
-            string to = LeftPad64(NormalizeAddress(toAddress));
-            string weiAmountString = LeftPad64(value.ToString("x"));
+            string data = ManualTxEncoder.EncodeSendDonation(toAddress, amountInMana);
 
             var request = new EthApiRequest
             {
@@ -201,7 +174,7 @@ namespace DCL.Donations
                         ["from"] = ViewDependencies.CurrentIdentity?.Address.ToString(),
                         ["to"] = contractAddress,
                         ["value"] = "0x0",
-                        ["data"] = $"{TRANSFER_FUNCTION_SELECTOR}{to}{weiAmountString}"
+                        ["data"] = data
                     }
                 }
             };
