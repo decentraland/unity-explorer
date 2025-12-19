@@ -160,9 +160,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
-            //Avoid teleports below ground level
-            if(floorPosition.y < 0)
-                return false;
+            // Avoid teleporting below ground level
+            floorPosition.y = Mathf.Max(floorPosition.y, 0);
 
             var parcelToCheck = floorPosition.ToParcel();
 

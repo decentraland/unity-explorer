@@ -41,6 +41,7 @@ using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.EventsApi;
@@ -55,6 +56,8 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -151,9 +154,12 @@ namespace DCL.PluginSystem.Global
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
-        private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly IVoiceChatOrchestrator communityCallOrchestrator;
         private readonly IPassportBridge passportBridge;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly IAnalyticsController analytics;
+        private readonly CommunityDataService communityDataService;
+        private readonly ILoadingStatus loadingStatus;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -207,14 +213,17 @@ namespace DCL.PluginSystem.Global
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            ICommunityCallOrchestrator communityCallOrchestrator,
+            IVoiceChatOrchestrator communityCallOrchestrator,
             bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            IAnalyticsController analytics,
+            CommunityDataService communityDataService,
+            ILoadingStatus loadingStatus)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -276,6 +285,9 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.analytics = analytics;
+            this.communityDataService = communityDataService;
+            this.loadingStatus = loadingStatus;
         }
 
         public void Dispose()
@@ -298,7 +310,7 @@ namespace DCL.PluginSystem.Global
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
-            
+
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
                 assetsProvisioner,
@@ -331,7 +343,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                decentralandUrlsSource
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -466,7 +479,10 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 communityCallOrchestrator,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus,
+                analytics,
+                communityDataService,
+                loadingStatus);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

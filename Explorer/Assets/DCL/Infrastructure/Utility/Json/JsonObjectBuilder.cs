@@ -1,6 +1,6 @@
-using Segment.Serialization;
 using System.Collections.Generic;
 using UnityEngine.Pool;
+using Newtonsoft.Json.Linq;
 
 namespace Utility.Json
 {
@@ -12,12 +12,12 @@ namespace Utility.Json
         private readonly Dictionary<string, float> floatValues = new ();
         private readonly Dictionary<string, int> intValues = new ();
 
-        private readonly IObjectPool<JsonObject> jsonObjectPool = new ObjectPool<JsonObject>(
-            () => new JsonObject(),
-            actionOnRelease: o => o.Clear()
+        private readonly IObjectPool<JObject> jObjectPool = new ObjectPool<JObject>(
+            () => new JObject(),
+            actionOnRelease: o => o.RemoveAll()
         );
 
-        private readonly Dictionary<string, JsonElement> stringValuesCache = new ();
+        private readonly Dictionary<string, JToken> stringValuesCache = new ();
 
         private void Clear()
         {
@@ -44,9 +44,9 @@ namespace Utility.Json
         /// <summary>
         /// <inheritdoc cref="JsonObjectBuilder.Build"/>
         /// </summary>
-        public JsonObject Build()
+        public JObject Build()
         {
-            var json = jsonObjectPool.Get()!;
+            var json = jObjectPool.Get()!;
 
             foreach ((string key, string? value) in stringValues)
                 json[key] = ElementForString(value);
@@ -62,15 +62,15 @@ namespace Utility.Json
             return json;
         }
 
-        public void Release(JsonObject jsonObject)
+        public void Release(JObject jObject)
         {
-            jsonObjectPool.Release(jsonObject);
+            jObjectPool.Release(jObject);
 
             if (stringValuesCache.Count > STRING_CACHE_SIZE)
                 stringValuesCache.Clear();
         }
 
-        private JsonElement ElementForString(string value)
+        private JToken? ElementForString(string value)
         {
             if (stringValuesCache.TryGetValue(value, out var element) == false)
                 stringValuesCache[value] = element = value;

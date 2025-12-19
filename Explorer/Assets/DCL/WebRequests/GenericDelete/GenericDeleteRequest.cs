@@ -8,11 +8,11 @@ namespace DCL.WebRequests.GenericDelete
 
         public bool Idempotent => false;
 
-        internal static GenericDeleteRequest Initialize(in CommonArguments commonArguments, GenericDeleteArguments arguments)
+        internal static GenericDeleteRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
         {
             UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null
                 ? UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)!
-                : UnityWebRequest.Post(commonArguments.URL, arguments.DeleteData, arguments.ContentType)!;
+                : UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType)!;
 
             unityWebRequest.method = "DELETE";
 

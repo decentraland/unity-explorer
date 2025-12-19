@@ -4,7 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -84,7 +84,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (!manuallyEquipped) return;
 
             var emoteUrn = emote.GetUrn().ToString();
-            analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
+            analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JObject
             {
                 { "item_id", emoteUrn }, // Id of the item <contract-address>-<item_id>
                 { "is_base", !Emote.IsOnChain(emoteUrn) },

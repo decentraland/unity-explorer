@@ -3575,7 +3575,7 @@ MonoBehaviour:
   <RightLegAnchorPoint>k__BackingField: {fileID: 7773640597938076529}
   <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
   <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
-  <Armature>k__BackingField: {fileID: 174017465429567360}
+  <ArmatureObject>k__BackingField: {fileID: 174017465429567360}
   nametagMaxOffset: 2
   nametagBoundedOffset: 1
   nametagBuffer: 0.025

@@ -156,6 +156,16 @@ MonoBehaviour:
       Wearable drops"
     m_Metadata:
       m_Items: []
+  - m_Id: 252176286601961472
+    m_Localized: Festive Trail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 252176435784966144
+    m_Localized: "Step into a festive world of gifts, games, and daily surprises
+      from Dec 16\u2013Jan 6. Discover new scenes, meet up with friends, and see
+      what opens next as the Trail unfolds."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

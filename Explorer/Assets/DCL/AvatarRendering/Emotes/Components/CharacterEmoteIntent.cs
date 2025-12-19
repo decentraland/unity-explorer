@@ -12,15 +12,121 @@ namespace DCL.AvatarRendering.Emotes
 
     public struct CharacterEmoteIntent
     {
+        public struct SocialEmoteData
+        {
+            /// <summary>
+            /// Whether the avatar has to play an outcome animation of the emote.
+            /// </summary>
+            public bool UseOutcomeAnimation;
+
+            /// <summary>
+            /// The index of the outcome animation to be played. -1 means no outcome will play.
+            /// </summary>
+            public int OutcomeIndex;
+
+            /// <summary>
+            /// Whether the avatar has to play the reaction outcome animation of the emote (the animation of the receiver).
+            /// </summary>
+            public bool UseOutcomeReactionAnimation;
+
+            /// <summary>
+            /// The wallet address of the initiator's player.
+            /// </summary>
+            public string InitiatorWalletAddress;
+
+            /// <summary>
+            /// When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the emote.
+            /// </summary>
+            public string TargetAvatarWalletAddress;
+
+            /// <summary>
+            /// The ID of the current interaction, set when an avatar starts a social emote.
+            /// </summary>
+            public int InteractionId;
+
+            /// <summary>
+            /// Whether the outcome animation of the initiator has to be on hold until a message of a receiver playing the same outcome animation for the same interaction arrives.
+            /// See explanation at RemoteEmotesSystem.
+            /// </summary>
+            public bool IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop;
+        }
+
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
+        public SocialEmoteData SocialEmote;
+
+        /// <summary>
+        /// The wallet address of the player who is playing the emote.
+        /// </summary>
+        public string WalletAddress;
+
+        /// <summary>
+        /// Whether this is a repetition of a looping emote (true) or it is the first shot (false).
+        /// </summary>
+        public bool IsRepeating;
+
+        /// <summary>
+        /// The emote that could be loaded and is ready to be played.
+        /// </summary>
+        public IEmote? EmoteAsset;
+
+        /// <summary>
+        /// Whether the emote was finally played.
+        /// </summary>
+        public bool HasPlayedEmote;
+
+        public CharacterEmoteIntent(URN emoteId,
+            TriggerSource triggerSource = default,
+            bool spatial = false,
+            string walletAddress = "",
+            bool isRepeating = false,
+            bool useOutcomeAnimation = false,
+            int outcomeIndex = -1,
+            bool useOutcomeReactionAnimation = false,
+            string initiatorWalletAddress = "",
+            string targetAvatarWalletAddress = "",
+            int interactionId = 0,
+            bool isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false)
+        {
+            this.WalletAddress = walletAddress;
+            this.EmoteId = emoteId;
+            this.Spatial = spatial;
+            this.TriggerSource = triggerSource;
+            this.IsRepeating = isRepeating;
+            this.SocialEmote.UseOutcomeAnimation = useOutcomeAnimation;
+            this.SocialEmote.OutcomeIndex = outcomeIndex;
+            this.SocialEmote.UseOutcomeReactionAnimation = useOutcomeReactionAnimation;
+            this.SocialEmote.InitiatorWalletAddress = initiatorWalletAddress;
+            this.SocialEmote.TargetAvatarWalletAddress = targetAvatarWalletAddress;
+            this.SocialEmote.InteractionId = interactionId;
+            this.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = isInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop;
+            this.EmoteAsset = null;
+            this.HasPlayedEmote = false;
+        }
 
         public void UpdateRemoteId(URN emoteId)
         {
+            this.Reset();
             this.EmoteId = emoteId;
+        }
+
+        private void Reset()
+        {
+            this.WalletAddress = string.Empty;
+            this.EmoteId = new URN();
             this.Spatial = true;
             this.TriggerSource = TriggerSource.REMOTE;
+            this.IsRepeating = false;
+            this.SocialEmote.UseOutcomeAnimation = false;
+            this.SocialEmote.OutcomeIndex = -1;
+            this.SocialEmote.UseOutcomeReactionAnimation = false;
+            this.SocialEmote.InitiatorWalletAddress = string.Empty;
+            this.SocialEmote.TargetAvatarWalletAddress = string.Empty;
+            this.SocialEmote.InteractionId = 0;
+            this.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
+            this.EmoteAsset = null;
+            this.HasPlayedEmote = false;
         }
     }
 }

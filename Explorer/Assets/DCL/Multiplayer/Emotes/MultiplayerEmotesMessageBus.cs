@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -32,6 +33,7 @@ namespace DCL.Multiplayer.Emotes
         private uint nextIncrementalId = 1;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<LookAtPositionIntention> lookAtPositionIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
@@ -46,6 +48,15 @@ namespace DCL.Multiplayer.Emotes
 
             this.messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
+
+            this.messagePipesHub.IslandPipe().Subscribe<LookAtPosition>(Packet.MessageOneofCase.LookAtPosition, OnLookAtPositionMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<LookAtPosition>(Packet.MessageOneofCase.LookAtPosition, OnLookAtPositionMessageReceived);
+        }
+
+        private void OnLookAtPositionMessageReceived(ReceivedMessage<LookAtPosition> lookAtPositionMessage)
+        {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnLookAtPositionMessageReceived() <color=green>RECEIVED Look at: {new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ).ToString("F6")} ADDRESS: {lookAtPositionMessage.Payload.TargetAvatarWalletAddress}</color>");
+            lookAtPositionIntentions.Add(new LookAtPositionIntention(lookAtPositionMessage.Payload.TargetAvatarWalletAddress, new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ)));
         }
 
         public void Dispose()
@@ -57,37 +68,75 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed)
+        public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+            new (sync, lookAtPositionIntentions);
+
+        public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
             float timestamp = Time.unscaledTime;
 
-            SendTo(emote, timestamp, messagePipesHub.IslandPipe());
-            SendTo(emote, timestamp, messagePipesHub.ScenePipe());
+            MessageWrap<LookAtPosition> lookAtPositionMessageIsland = messagePipesHub.IslandPipe().NewMessage<LookAtPosition>();
+            lookAtPositionMessageIsland.Payload.Timestamp = timestamp;
+            lookAtPositionMessageIsland.Payload.PositionX = worldPositionX;
+            lookAtPositionMessageIsland.Payload.PositionY = worldPositionY;
+            lookAtPositionMessageIsland.Payload.PositionZ = worldPositionZ;
+            lookAtPositionMessageIsland.Payload.TargetAvatarWalletAddress = walletAddress;
+            lookAtPositionMessageIsland.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            MessageWrap<LookAtPosition> lookAtPositionMessageScene = messagePipesHub.ScenePipe().NewMessage<LookAtPosition>();
+            lookAtPositionMessageScene.Payload.Timestamp = timestamp;
+            lookAtPositionMessageScene.Payload.PositionX = worldPositionX;
+            lookAtPositionMessageScene.Payload.PositionY = worldPositionY;
+            lookAtPositionMessageScene.Payload.PositionZ = worldPositionZ;
+            lookAtPositionMessageScene.Payload.TargetAvatarWalletAddress = walletAddress;
+            lookAtPositionMessageScene.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.SendLookAtPositionMessage() <color=green>SENT LOOK AT POSITION: {new Vector3(worldPositionX, worldPositionY, worldPositionZ).ToString("F6")} ADDRESS: {walletAddress}</color>");
+        }
+
+        public void Send(URN emote, bool isRepeating, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId)
+        {
+            if (cancellationTokenSource.IsCancellationRequested)
+                throw new Exception("EmoteMessagesBus is disposed");
+
+            float timestamp = Time.unscaledTime;
+
+            SendTo(emote, timestamp, messagePipesHub.IslandPipe(), socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress, targetAvatarWalletAddress, isStopping, isRepeating, interactionId);
+            SendTo(emote, timestamp, messagePipesHub.ScenePipe(), socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress, targetAvatarWalletAddress, isStopping, isRepeating, interactionId);
 
             if (settings.SelfSending)
-                SelfSendWithDelayAsync(emote, timestamp).Forget();
+                SelfSendWithDelayAsync(emote, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress, targetAvatarWalletAddress, isStopping, isRepeating, interactionId).Forget();
         }
 
         public void OnPlayerRemoved(string walletId) =>
             messageScheduler.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe)
+        private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, bool isRepeating, int interactionId)
         {
             MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
 
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Urn = emoteId;
             emote.Payload.Timestamp = timestamp;
+            emote.Payload.SocialEmoteOutcome = socialEmoteOutcomeIndex;
+            emote.Payload.IsReacting = isReactingToSocialEmote;
+            emote.Payload.SocialEmoteInitiator = socialEmoteInitiatorWalletAddress?? string.Empty;
+            emote.Payload.TargetAvatar = targetAvatarWalletAddress?? string.Empty;
+            emote.Payload.IsStopping = isStopping;
+            emote.Payload.IsRepeating = isRepeating;
+            emote.Payload.InteractionId = interactionId;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.SendTo() <color=green>SENT TO [{emote.Payload.IncrementalId}]: {emote.Payload.Urn} outcome index: {emote.Payload.SocialEmoteOutcome} reacting? {emote.Payload.IsReacting} initiator: {emote.Payload.SocialEmoteInitiator} isStopping: {emote.Payload.IsStopping} isRepeating: {emote.Payload.IsRepeating} interactionId: {emote.Payload.InteractionId} target: {emote.Payload.TargetAvatar}</color>");
         }
 
-        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, bool isRepeating, int interactionId)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp);
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress, targetAvatarWalletAddress, isStopping, isRepeating, interactionId);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -105,25 +154,35 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
-                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnMessageReceived() <color=green>RECEIVED [{receivedMessage.Payload.IncrementalId}]</color>");
+
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, receivedMessage.Payload.SocialEmoteOutcome > -1, receivedMessage.Payload.SocialEmoteOutcome, receivedMessage.Payload.IsReacting, receivedMessage.Payload.SocialEmoteInitiator, receivedMessage.Payload.TargetAvatar, receivedMessage.Payload.IsStopping, receivedMessage.Payload.IsRepeating, receivedMessage.Payload.InteractionId);
             }
         }
 
         private bool IsUserBlocked(string userAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, float timestamp)
+        private void Inbox(string walletId, URN emoteURN, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, bool isRepeating, int interactionId)
         {
             if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;
 
             using (sync.GetScope())
-                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp));
+            {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.Inbox() INBOX: {walletId} {emoteURN} stop? {isStopping} is outcome? {isUsingSocialEmoteOutcome} reacting? {isReactingToSocialEmote} outcome index: {socialEmoteOutcomeIndex} initiator: {socialEmoteInitiatorWalletAddress} isRepeating: {isRepeating} interactionId: {interactionId} target: {targetAvatarWalletAddress}");
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, isUsingSocialEmoteOutcome, socialEmoteOutcomeIndex, isReactingToSocialEmote, socialEmoteInitiatorWalletAddress, targetAvatarWalletAddress, isStopping, isRepeating, interactionId));
+            }
         }
 
         public void SaveForRetry(RemoteEmoteIntention intention)
         {
             emoteIntentions.Add(intention);
+        }
+
+        public void SaveForRetry(LookAtPositionIntention intention)
+        {
+            lookAtPositionIntentions.Add(intention);
         }
     }
 }

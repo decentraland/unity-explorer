@@ -47,7 +47,6 @@ namespace DCL.Navmap
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
-        private readonly MultiStateButtonController favoriteButton;
         private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
@@ -133,8 +132,7 @@ namespace DCL.Navmap
             likeButton = new MultiStateButtonController(view.LikeButton, true);
             likeButton.OnButtonClicked += OnLikeButtonClick;
 
-            favoriteButton = new MultiStateButtonController(view.FavoriteButton, true);
-            favoriteButton.OnButtonClicked += SetAsFavorite;
+            view.FavoriteButton.OnButtonClicked += SetAsFavorite;
             
             if(view.HomeButton != null)
             {
@@ -191,7 +189,12 @@ namespace DCL.Navmap
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
-            favoriteButton.SetButtonState(place.user_favorite);
+            
+            if(place.IsEmptyPlace) 
+                view.FavoriteButton.SetButtonState(false, false);
+            else
+                view.FavoriteButton.SetButtonState(place.user_favorite);
+            
             if (view.HomeButton != null)
             {
                 VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
@@ -280,8 +283,8 @@ namespace DCL.Navmap
 
             async UniTaskVoid SetAsFavoriteAsync(CancellationToken ct)
             {
+                view.FavoriteButton.SetButtonState(isFavorite);
                 await placesAPIService.SetPlaceFavoriteAsync(place!.id, isFavorite, ct);
-                favoriteButton.SetButtonState(isFavorite);
             }
         }
 

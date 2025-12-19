@@ -408,6 +408,18 @@ MonoBehaviour:
       Severity: 1
     - Category: SOCIAL
       Severity: 0
+    - Category: EMOTE_DEBUG
+      Severity: 3
+    - Category: EMOTE_DEBUG
+      Severity: 2
+    - Category: EMOTE_DEBUG
+      Severity: 0
+    - Category: EMOTE_DEBUG
+      Severity: 4
+    - Category: EMOTE_DEBUG
+      Severity: 1
+    - Category: SOCIAL_EMOTE
+      Severity: 4
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -770,6 +782,8 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL
       Severity: 1
+    - Category: SOCIAL_EMOTE
+      Severity: 4
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

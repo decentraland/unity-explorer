@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -5,6 +6,7 @@ using DCL.UI;
 using System;
 using DCL.Browser;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Backpack
@@ -17,10 +19,13 @@ namespace DCL.Backpack
         private readonly BackpackSlotsController slotsController;
         private readonly CategoriesPresenter categoriesPresenter;
         private readonly OutfitsPresenter outfitsPresenter;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarTabsManager tabsManager;
+        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
 
         public AvatarController(AvatarView view,
             FeatureFlagsConfiguration featureFlags,
@@ -33,7 +38,8 @@ namespace DCL.Backpack
             BackpackGridController backpackGridController,
             CategoriesPresenter categoriesPresenter,
             OutfitsPresenter outfitsPresenter,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             this.webBrowser = webBrowser;
@@ -42,7 +48,8 @@ namespace DCL.Backpack
             this.backpackGridController = backpackGridController;
             this.categoriesPresenter = categoriesPresenter;
             this.outfitsPresenter = outfitsPresenter;
-            
+            this.decentralandUrlsSource = decentralandUrlsSource;
+
             rectTransform = view.GetComponent<RectTransform>();
 
             view.marketplaceButton.onClick.AddListener(OnOpenMarketplace);
@@ -62,13 +69,16 @@ namespace DCL.Backpack
             bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
             if (!isOutfitsEnabled)
                 tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
-            
+
             tabsManager.InitializeAndEnable();
         }
 
         private void OnOpenMarketplace()
         {
-            webBrowser.OpenUrl("https://market.decentraland.org/");
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
+            urlBuilder.AppendParameter(marketplaceSourceParam);
+            webBrowser.OpenUrl(urlBuilder.Build());
         }
 
         public void Dispose()
@@ -89,7 +99,7 @@ namespace DCL.Backpack
         public void Deactivate()
         {
             tabsManager.DeactivateAll();
-            
+
             backpackCommandBus.SendCommand(new BackpackFilterCommand(string.Empty,
                 AvatarWearableCategoryEnum.Body, string.Empty));
 

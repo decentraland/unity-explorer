@@ -187,7 +187,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new GetWearableByParamIntention(new[]
                     {
                         ("collectionType", "base-wearable"), ("pageSize", "282"),
-                    }, "DummyUser", new List<IWearable>(), 0),
+                    }, "DummyUser", new List<ITrimmedWearable>(), 0),
                     PartitionComponent.TOP_PRIORITY),
             };
 
@@ -240,7 +240,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void GenerateRandomizers(StreamableLoadingResult<WearablesResponse> baseWearables, AvatarRandomizer male, AvatarRandomizer female)
         {
-            foreach (IWearable wearable in baseWearables.Asset.Wearables)
+            foreach (ITrimmedWearable wearable in baseWearables.Asset.Wearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
