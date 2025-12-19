@@ -31,7 +31,6 @@ namespace DCL.UI.SystemMenu
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly IPassportBridge passportBridge;
-        private readonly IEventBus eventBus;
 
         private CancellationTokenSource? logoutCts;
 
@@ -45,8 +44,7 @@ namespace DCL.UI.SystemMenu
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IPassportBridge passportBridge,
-            IEventBus eventBus) : base(viewFactory)
+            IPassportBridge passportBridge) : base(viewFactory)
         {
             this.world = world;
             this.playerEntity = playerEntity;
@@ -56,7 +54,6 @@ namespace DCL.UI.SystemMenu
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
             this.passportBridge = passportBridge;
-            this.eventBus = eventBus;
         }
 
         public override void Dispose()
@@ -131,9 +128,6 @@ namespace DCL.UI.SystemMenu
                 await web3Authenticator.LogoutAsync(ct);
 
                 profileCache.Remove(address);
-
-                // Notify logout happened so other systems can react
-                eventBus.Publish(new LogoutEvent());
 
                 await userInAppInitializationFlow.ExecuteAsync(
                     new UserInAppInitializationFlowParameters(

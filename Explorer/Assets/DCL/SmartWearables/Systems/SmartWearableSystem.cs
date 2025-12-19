@@ -13,7 +13,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.RealmNavigation;
-using DCL.UI.SystemMenu;
+using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -28,7 +28,6 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
-using Utility;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
 
 namespace DCL.SmartWearables
@@ -48,7 +47,7 @@ namespace DCL.SmartWearables
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IEventBus eventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         /// <summary>
         ///     Promises waiting on the loading flow of a smart wearable scene.
@@ -66,7 +65,7 @@ namespace DCL.SmartWearables
             ILoadingStatus loadingStatus,
             IMVCManager mvcManager,
             IThumbnailProvider thumbnailProvider,
-            IEventBus eventBus) : base(world)
+            IWeb3IdentityCache web3IdentityCache) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.smartWearableCache = smartWearableCache;
@@ -76,7 +75,7 @@ namespace DCL.SmartWearables
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.thumbnailProvider = thumbnailProvider;
-            this.eventBus = eventBus;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public override void Initialize()
@@ -87,7 +86,7 @@ namespace DCL.SmartWearables
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
-            eventBus.Subscribe<LogoutEvent>(OnLogout);
+            web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
         }
 
         private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
@@ -312,7 +311,7 @@ namespace DCL.SmartWearables
             }
         }
 
-        private void OnLogout(LogoutEvent e)
+        private void OnIdentityCleared()
         {
             UnloadAllSmartWearableScenes();
 

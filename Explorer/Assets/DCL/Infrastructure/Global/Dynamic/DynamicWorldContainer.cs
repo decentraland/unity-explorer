@@ -977,7 +977,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider,
-                    eventBus),
+                    identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin()
             };
 
