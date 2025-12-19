@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string id;
             public string rarity;
             public bool isSmart;
+            public string name;
         }
 
         [Serializable]
@@ -37,7 +38,9 @@ namespace DCL.AvatarRendering.Loading.DTO
 
     public static class TrimmedAvatarAttachmentDTOExtensions
     {
-        public static string GetHash(this TrimmedAvatarAttachmentDTO DTO) =>
-            DTO.id;
+        public static string GetHash(this TrimmedAvatarAttachmentDTO DTO)
+        {
+            return DTO.id;
+        }
     }
 }

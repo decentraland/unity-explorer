@@ -6,14 +6,14 @@ using UnityEngine;
 namespace DCL.AvatarRendering.Emotes.Play
 {
     /// <summary>
-    /// A component that provides notifications for the state changes of the animator state machine of a character.
+    ///     A component that provides notifications for the state changes of the animator state machine of a character.
     /// </summary>
     public class AvatarStateMachineEventHandler
     {
         private readonly Entity entity;
 
         /// <summary>
-        /// Raised when exiting both Emote and Emote Loop states.
+        ///     Raised when exiting both Emote and Emote Loop states.
         /// </summary>
         public Action<Entity, AvatarStateMachineEventHandler>? EmoteStateExiting;
 

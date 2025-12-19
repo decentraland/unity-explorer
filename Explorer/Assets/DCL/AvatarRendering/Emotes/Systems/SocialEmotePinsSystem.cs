@@ -19,8 +19,8 @@ using UnityEngine.Pool;
 namespace DCL.SocialEmotes.UI
 {
     /// <summary>
-    /// Manages the pins (small banners) that appear atop the avatr of the initiators of social emotes
-    /// when the player can interact with them.
+    ///     Manages the pins (small banners) that appear atop the avatr of the initiators of social emotes
+    ///     when the player can interact with them.
     /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [UpdateAfter(typeof(NametagPlacementSystem))]
@@ -56,7 +56,7 @@ namespace DCL.SocialEmotes.UI
                 isCameraSet = true;
             }
 
-            if(identityCache.Identity == null)
+            if (identityCache.Identity == null)
                 return;
 
             RemoveDeletedEntityPinsQuery(World);
@@ -79,11 +79,11 @@ namespace DCL.SocialEmotes.UI
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, 0.0f))
                 return;
 
-            if(emoteComponent.IsPlayingEmote &&
-               emoteComponent.Metadata != null &&
-               emoteComponent.Metadata.IsSocialEmote &&
-               !emoteComponent.SocialEmote.IsPlayingOutcome &&
-               (string.IsNullOrEmpty(emoteComponent.SocialEmote.TargetAvatarWalletAddress) || emoteComponent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity.Address))
+            if (emoteComponent.IsPlayingEmote &&
+                emoteComponent.Metadata != null &&
+                emoteComponent.Metadata.IsSocialEmote &&
+                !emoteComponent.SocialEmote.IsPlayingOutcome &&
+                (string.IsNullOrEmpty(emoteComponent.SocialEmote.TargetAvatarWalletAddress) || emoteComponent.SocialEmote.TargetAvatarWalletAddress == identityCache.Identity.Address))
                 World.Add(entity, pinsPool.Get());
         }
 

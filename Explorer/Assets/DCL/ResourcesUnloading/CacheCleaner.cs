@@ -128,8 +128,10 @@ namespace DCL.ResourcesUnloading
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;
 
-        public void Register(ITrimmedWearableStorage storage) =>
+        public void Register(ITrimmedWearableStorage storage)
+        {
             trimmedWearableStorage = storage;
+        }
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             extendedObjectPools.Add(extendedObjectPool);
