@@ -6,11 +6,12 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Unity.Profiling;
+using Unity.PerformanceTesting;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
-using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
@@ -30,12 +31,17 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         [Performance]
         public void CleanUpIfNeeded()
         {
+            ProfilerRecorder gcAlloc =
+                ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
+
             Measure
                 .Method(cache.CleanUpIfNeeded)
-                .WarmupCount(50)
-                .MeasurementCount(1000)
+                .WarmupCount(10)
+                .MeasurementCount(10)
                 .GC()
                 .Run();
+
+            Debug.Log($"GC Alloc: {gcAlloc.LastValue} bytes");
         }
     }
 }
