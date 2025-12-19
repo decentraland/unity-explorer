@@ -25,7 +25,6 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
-        private string mentionName;
         private bool hasClaimedName;
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
@@ -222,7 +221,7 @@ namespace DCL.Profiles
                 DisplayName = $"{result}{WalletId}";
             }
 
-            mentionName = "@" + DisplayName;
+            MentionName = "@" + DisplayName;
         }
 
         public void ClearLinks()
