@@ -33,6 +33,8 @@ namespace DCL.Chat.MessageBus
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
+        private const int FRAMES_BETWEEN_RELEASES = 3;
+        private int frameCounter;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
@@ -165,16 +167,16 @@ namespace DCL.Chat.MessageBus
             {
                 await UniTask.Yield(PlayerLoopTiming.FixedUpdate);
 
-                var messagesReleasedThisFrame = 0;
+                frameCounter++;
 
-                while (messagesReleasedThisFrame < NearbyChannelMessageBuffer.MAX_MESSAGES_PER_FRAME && nearbyChannelBuffer.HasBufferedMessages)
+                if (frameCounter >= FRAMES_BETWEEN_RELEASES && nearbyChannelBuffer.HasBufferedMessages)
                 {
-                    if (!nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
-                        break;
-
-                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Dequeued Message! released {messagesReleasedThisFrame} messages this frame");
-                    MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, bufferedMessage);
-                    messagesReleasedThisFrame++;
+                    if (nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
+                    {
+                        ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Dequeued Message! released after {frameCounter} frames");
+                        MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, bufferedMessage);
+                        frameCounter = 0;
+                    }
                 }
             }
         }
