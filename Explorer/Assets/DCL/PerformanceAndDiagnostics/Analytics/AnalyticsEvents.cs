@@ -88,6 +88,7 @@
             public const string LOGGED_IN = "logged_in";
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
+            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
         }
 
         public static class Friends
