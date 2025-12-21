@@ -24,8 +24,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public void Send(string data)
         {
+            // TODO it can be implemented in alloc free manner
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
+
+            int length = EncodedMessage.LengthWithReservedByte(dataBytes.Length);
+            // TODO Actually it's really NOT safe because the implementation deals with strings.
+            Span<byte> contentAlloc = stackalloc byte[length];
+            EncodedMessage encodedMessage = new EncodedMessage(contentAlloc);
+            encodedMessage.AssignType(ISceneCommunicationPipe.MsgType.String);
+            // TODO Should avoid copy
+            dataBytes.AsSpan().CopyTo(encodedMessage.Content());
+
+            EncodeAndSendMessage(encodedMessage, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
