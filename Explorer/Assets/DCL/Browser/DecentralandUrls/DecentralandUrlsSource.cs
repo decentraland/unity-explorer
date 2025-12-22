@@ -129,6 +129,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
                 DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
+                DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
