@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
-using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,10 +18,6 @@ namespace DCL.Chat.MessageBus
         private int messagesReleasedThisSecond;
         private int messagesReleasedThisFrame;
         private int framesSinceLastRelease;
-
-        public bool HasBufferedMessages => messageQueue.Count > 0;
-
-        public int BufferedCount => messageQueue.Count;
 
         public event Action<ChatMessage>? MessageReleased;
 
@@ -91,10 +86,7 @@ namespace DCL.Chat.MessageBus
             }
 
             if (messagesReleasedThisSecond >= MAX_MESSAGES_PER_SECOND)
-            {
-                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Rate limit exceeded - {messagesReleasedThisSecond} messages released this second");
                 return false;
-            }
 
             if (messagesReleasedThisFrame >= MAX_MESSAGES_PER_FRAME)
                 return false;
