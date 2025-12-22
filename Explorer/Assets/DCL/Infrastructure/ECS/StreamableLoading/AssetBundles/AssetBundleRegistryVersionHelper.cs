@@ -46,15 +46,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
             bodyBuilder.Append("]}");
 
-            URLAddress url = urlBuilder.Build();
-            using PoolExtensions.Scope<List<ABVersionsResponse>> dtoPooledList = DTO_POOL.AutoScope();
+            var url = urlBuilder.Build();
+            using var dtoPooledList = DTO_POOL.AutoScope();
 
-            AssetBundlesVersions result = AssetBundlesVersions.Create();
+            var result = AssetBundlesVersions.Create();
 
             try
             {
                 await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, reportCategory)
-                                          .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                    .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -68,13 +68,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 {
                     mac = new AssetBundlesVersions.VersionInfo
                     {
-                        version = element.versions.assets.mac.version,
-                        buildDate = element.versions.assets.mac.buildDate,
+                        version = element.versions.assets.mac.version, buildDate = element.versions.assets.mac.buildDate
                     },
                     windows = new AssetBundlesVersions.VersionInfo
                     {
-                        version = element.versions.assets.windows.version,
-                        buildDate = element.versions.assets.windows.buildDate,
+                        version = element.versions.assets.windows.version, buildDate = element.versions.assets.windows.buildDate
                     }
                 });
 

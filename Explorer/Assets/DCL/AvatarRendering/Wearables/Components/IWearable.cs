@@ -45,31 +45,50 @@ namespace DCL.AvatarRendering.Wearables.Components
         URLPath IThumbnailAttachment.GetThumbnail()
         {
             const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
-            string thumbnailHash = this.DTO.Metadata.thumbnail;
+            string thumbnailHash = DTO.Metadata.thumbnail;
 
-            if (thumbnailHash != THUMBNAIL_DEFAULT_KEY || this.DTO.content == null) return new URLPath(thumbnailHash!);
+            if (thumbnailHash != THUMBNAIL_DEFAULT_KEY || DTO.content == null) return new URLPath(thumbnailHash!);
 
-            for (var i = 0; i < this.DTO.content.Length; i++)
-                if (this.DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
+            for (int i = 0; i < DTO.content.Length; i++)
+                if (DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
                 {
-                    thumbnailHash = this.DTO.content[i].hash;
+                    thumbnailHash = DTO.content[i].hash;
                     break;
                 }
 
             return new URLPath(thumbnailHash);
         }
 
-        URN IThumbnailAttachment.GetUrn() => this.DTO.Metadata.id;
+        URN IThumbnailAttachment.GetUrn()
+        {
+            return DTO.Metadata.id;
+        }
 
-        string IThumbnailAttachment.GetHash() => this.DTO.GetHash();
-        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => this.DTO.assetBundleManifestVersion;
-        string? IThumbnailAttachment.GetContentDownloadUrl() => this.DTO.ContentDownloadUrl;
-        string? IThumbnailAttachment.GetEntityId() => this.DTO.id;
+        string IThumbnailAttachment.GetHash()
+        {
+            return DTO.GetHash();
+        }
 
-        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
+        {
+            return DTO.assetBundleManifestVersion;
+        }
 
+        string? IThumbnailAttachment.GetContentDownloadUrl()
+        {
+            return DTO.ContentDownloadUrl;
+        }
+
+        string? IThumbnailAttachment.GetEntityId()
+        {
+            return DTO.id;
+        }
+
+        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct)
+        {
             // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
-            WaitForThumbnailImplAsync(this, checkInterval, ct);
+            return WaitForThumbnailImplAsync(this, checkInterval, ct);
+        }
 
         private static async UniTask<Sprite> WaitForThumbnailImplAsync(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
         {
