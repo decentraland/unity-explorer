@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
             }
 
-            if(World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
+            if (World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
                 // Note: It can't be removed at this point because there may send another message instantly which would not be marked as instant
                 World.Get<PlayerTeleportIntent.JustTeleportedLocally>(entity).IsConsumed = true;
 

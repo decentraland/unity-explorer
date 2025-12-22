@@ -54,7 +54,7 @@ namespace DCL.Interaction.Systems
         private readonly SocialEmoteOutcomesContextMenuSettings contextMenuSettings;
         private readonly SocialEmotesSettings socialEmotesSettings;
 
-        private GenericContextMenu contextMenuConfiguration;
+        private readonly GenericContextMenu contextMenuConfiguration;
 
         private bool wasCursorLockedWhenMenuOpened;
 
@@ -83,10 +83,10 @@ namespace DCL.Interaction.Systems
             dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
 
             contextMenuConfiguration = new GenericContextMenu(contextMenuSettings.Width,
-                    contextMenuSettings.Offset,
-                    contextMenuSettings.VerticalLayoutPadding,
-                    contextMenuSettings.ElementsSpacing,
-                    ContextMenuOpenDirection.CENTER_RIGHT);
+                contextMenuSettings.Offset,
+                contextMenuSettings.VerticalLayoutPadding,
+                contextMenuSettings.ElementsSpacing,
+                ContextMenuOpenDirection.CENTER_RIGHT);
         }
 
         protected override void Update(float t)
@@ -127,13 +127,13 @@ namespace DCL.Interaction.Systems
                 || World.Has<IgnoreInteractionComponent>(currentEntityHovered))
                 return;
 
-            Vector3 otherPosition = World.Get<CharacterTransform>(currentEntityHovered).Position;
-            Vector3 playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
+            var otherPosition = World.Get<CharacterTransform>(currentEntityHovered).Position;
+            var playerPosition = World.Get<CharacterTransform>(playerEntity).Position;
 
             float sqrDistanceToAvatar = (otherPosition - playerPosition).sqrMagnitude;
 
             // Distance limit
-            if(sqrDistanceToAvatar > socialEmotesSettings.VisibilityDistance * socialEmotesSettings.VisibilityDistance)
+            if (sqrDistanceToAvatar > socialEmotesSettings.VisibilityDistance * socialEmotesSettings.VisibilityDistance)
                 return;
 
             currentPositionHovered = Mouse.current.position.ReadValue();
@@ -147,11 +147,11 @@ namespace DCL.Interaction.Systems
                 World.Add(currentEntityHovered, new ShowAvatarHighlightIntent(isCloseEnoughToInteract));
 
             // Tooltips
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
+            var socialEmoteInteraction = SocialEmoteInteractionsManager.Instance.GetInteractionState(profile!.UserId);
 
             if (socialEmoteInteraction is { AreInteracting: false } &&
                 (string.IsNullOrEmpty(socialEmoteInteraction.TargetWalletAddress) || // Is not a directed emote
-                    socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
+                 socialEmoteInteraction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
                 viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
                 hoverFeedbackComponent.Add(viewProfileTooltip);
@@ -177,9 +177,9 @@ namespace DCL.Interaction.Systems
 
             wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
-            ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
+            ref var cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
-            if(cursor.CursorState == CursorState.Locked)
+            if (cursor.CursorState == CursorState.Locked)
                 World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
             World.Set(cameraEntityProxy.Object, cursor);
@@ -210,17 +210,17 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(currentProfileHovered.UserId);
+            var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(currentProfileHovered.UserId);
 
             if (interaction is { AreInteracting: false } &&
                 (string.IsNullOrEmpty(interaction.TargetWalletAddress) || // Is not a directed emote
-                    interaction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
+                 interaction.TargetWalletAddress == identityCache.Identity!.Address)) // Is a directed emote and the target is the local player
             {
                 contextMenuConfiguration.ClearControls();
 
                 contextMenuConfiguration.AddControl(new TextContextMenuControlSettings(interaction.Emote.Model.Asset.metadata.name));
 
-                EmoteDTO.EmoteOutcomeDTO[] outcomes = interaction.Emote.Model.Asset!.metadata.data!.outcomes!;
+                var outcomes = interaction.Emote.Model.Asset!.metadata.data!.outcomes!;
 
                 if (interaction.Emote.Model.Asset!.metadata.data!.randomizeOutcomes)
                 {
@@ -237,24 +237,24 @@ namespace DCL.Interaction.Systems
                         int outcomeIndex = i;
                         string initiatorWalletAddress = currentProfileHovered.UserId;
                         contextMenuConfiguration.AddControl(new ButtonContextMenuControlSettings(outcomes[i].title, contextMenuSettings.EmoteIcon,
-                                                            () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress)));
+                            () => OnOutcomePerformed(outcomeIndex, initiatorWalletAddress)));
                     }
 
                     contextMenuTask.TrySetResult();
                     contextMenuTask = new UniTaskCompletionSource();
 
-                    GenericContextMenuParameter parameter = new GenericContextMenuParameter(
+                    var parameter = new GenericContextMenuParameter(
                         contextMenuConfiguration,
                         currentPositionHovered!.Value,
                         closeTask: contextMenuTask.Task,
                         actionOnHide: OnContextMenuClosed
                     );
 
-                    ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
+                    ref var cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
 
                     wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
-                    if(cursor.CursorState == CursorState.Locked)
+                    if (cursor.CursorState == CursorState.Locked)
                         World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
 
                     World.Set(cameraEntityProxy.Object, cursor);
@@ -268,10 +268,10 @@ namespace DCL.Interaction.Systems
         {
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed()");
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
+            var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(interactingUserWalletAddress);
 
             // The social emote interaction may have been cancelled since the context menu was open
-            if(interaction == null)
+            if (interaction == null)
                 return;
 
             // Checks if the current emote has an outcome for the given index
@@ -288,7 +288,7 @@ namespace DCL.Interaction.Systems
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
-                Transform initiatorTransform = World.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
+                var initiatorTransform = World.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
 
                 World.Add(playerEntity, new MoveBeforePlayingSocialEmoteIntent(
                     initiatorTransform.position,
