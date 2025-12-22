@@ -18,17 +18,19 @@ namespace DCL.SocialEmotes.UI
         [SerializeField]
         private Sprite? emoteIcon;
 
-        private RectOffset verticalLayoutPadding;
-
         public int Width => width;
         public int ElementsSpacing => elementsSpacing;
         public Vector2 Offset => offset;
-        public RectOffset VerticalLayoutPadding => verticalLayoutPadding;
+        public RectOffset VerticalLayoutPadding { get; private set; }
+
         public Sprite? EmoteIcon => emoteIcon;
 
         private void OnEnable()
         {
-            verticalLayoutPadding = new RectOffset(){left = 10, right = 10, top = 8, bottom = 16};
+            VerticalLayoutPadding = new RectOffset
+            {
+                left = 10, right = 10, top = 8, bottom = 16
+            };
         }
     }
 }

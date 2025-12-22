@@ -15,28 +15,28 @@ namespace SceneRuntime.ModuleHub
             this.engine = engine;
         }
 
-        public void LoadAndCompileJsModule(string moduleName,
-            ReadOnlySpan<byte> code)
+        public void LoadAndCompileJsModules(IReadOnlyDictionary<string, string> sources)
         {
-            V8Script script = engine.CompileScriptFromUtf8(code);
-            string modulePath = $"system/{moduleName}";
-            string extension = Path.GetExtension(moduleName);
+            foreach (KeyValuePair<string, string> source in sources)
+            {
+                V8Script script = engine.Compile(source.Value);
+                string moduleName = $"system/{source.Key}";
+                string extension = Path.GetExtension(moduleName);
 
-            // "system/foo.js"
-            jsNodulesCompiledScripts.Add(modulePath, script);
+                // "system/foo.js"
+                jsNodulesCompiledScripts.Add(moduleName, script);
 
-            // "system/foo"
-            if (!string.IsNullOrEmpty(extension))
-                jsNodulesCompiledScripts.Add(modulePath[..^extension.Length],
-                    script);
+                // "system/foo"
+                if (!string.IsNullOrEmpty(extension))
+                    jsNodulesCompiledScripts.Add(moduleName[..^extension.Length], script);
 
-            // We added a "system/" prefix to all our modules, but protobufjs,
-            // a third party library, is not aware of that and is looking for
-            // buffer and long in the wrong place.
-            if (moduleName == "buffer.js")
-                jsNodulesCompiledScripts.Add("buffer", script);
-            else if (moduleName == "long.js")
-                jsNodulesCompiledScripts.Add("long", script);
+                // We added a "system/" prefix to all our modules, but protobufjs, a third party
+                // library, is not aware of that and is looking for buffer and long in the wrong place.
+                if (source.Key == "buffer.js")
+                    jsNodulesCompiledScripts.Add("buffer", script);
+                else if (source.Key == "long.js")
+                    jsNodulesCompiledScripts.Add("long", script);
+            }
         }
 
         /// <summary>

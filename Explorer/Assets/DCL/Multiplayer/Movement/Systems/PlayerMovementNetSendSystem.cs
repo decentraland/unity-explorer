@@ -90,7 +90,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
             }
 
-            if(World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
+            if (World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
                 // Note: It can't be removed at this point because there may send another message instantly which would not be marked as instant
                 World.Get<PlayerTeleportIntent.JustTeleportedLocally>(entity).IsConsumed = true;
 
@@ -150,6 +150,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongJump = animation.States.IsLongJump,
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,
+                    // NOTE we are NOT setting 'is stunned' because it's already sent as part of the movement message itself
 
                     // Just for testing purposes. We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
                     SlideBlendValue = animation.States.SlideBlendValue,

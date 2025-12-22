@@ -22,8 +22,10 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -35,6 +37,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -84,6 +87,8 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IInputBlock inputBlock;
+        private readonly ISelfProfile selfProfile;
+        private readonly IAnalyticsController analytics;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -123,7 +128,9 @@ namespace DCL.Communities.CommunitiesCard
             IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ISelfProfile selfProfile,
+            IAnalyticsController analytics)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -147,6 +154,8 @@ namespace DCL.Communities.CommunitiesCard
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
+            this.selfProfile = selfProfile;
+            this.analytics = analytics;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -160,6 +169,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_DEEP_LINK, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
@@ -220,7 +230,8 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
                                      CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
                                      CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
-                                     _ => string.Empty
+                                     CommunityDeepLinkNotification deepLinkNotification => deepLinkNotification.CommunityId,
+                                     _ => string.Empty,
                                  };
 
             if (communityId == string.Empty) return;
@@ -375,7 +386,8 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                web3IdentityCache,
+                selfProfile);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
@@ -425,6 +437,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+
+            analytics.Track(AnalyticsEvents.Communities.OPEN_COMMUNITY_PROFILE, new JObject { { "community_id", inputData.CommunityId } });
         }
 
         private void SetDefaultsAndLoadData(string communityId)
@@ -459,8 +473,8 @@ namespace DCL.Communities.CommunitiesCard
                 var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested)
-                    return;
+                    if (ct.IsCancellationRequested)
+                        return;
 
                 if (!getCommunityResult.Success)
                 {
@@ -533,7 +547,7 @@ namespace DCL.Communities.CommunitiesCard
             async UniTask<bool> IsSubscribedToCommunityNotificationsAsync(string commId, CancellationToken ct)
             {
                 var checkCommunityNotificationOptOutResult = await communitiesDataProvider.CheckCommunityNotificationOptOutAsync(commId, ct)
-                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
                     return true;
@@ -786,10 +800,10 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (isSubscribedToNotifications)
                     response = await communitiesDataProvider.DeleteCommunityNotificationOptOutAsync(communityId, ct)
-                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 else
                     response = await communitiesDataProvider.CreateCommunityNotificationOptOutAsync(communityId, ct)
-                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -797,9 +811,7 @@ namespace DCL.Communities.CommunitiesCard
                 if (!response.Success || !response.Value)
                 {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
-                        isSubscribedToNotifications ?
-                            DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE :
-                            CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
+                        isSubscribedToNotifications ? DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE : CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
 
                     return;
                 }

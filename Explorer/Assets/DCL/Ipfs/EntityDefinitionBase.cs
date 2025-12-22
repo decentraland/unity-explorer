@@ -23,7 +23,10 @@ namespace DCL.Ipfs
             this.id = id;
         }
 
-        public override string ToString() => id ?? string.Empty;
+        public override string ToString()
+        {
+            return id ?? string.Empty;
+        }
     }
 
     [Serializable]
