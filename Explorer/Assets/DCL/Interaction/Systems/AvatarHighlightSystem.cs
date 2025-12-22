@@ -13,7 +13,7 @@ using UnityEngine;
 namespace DCL.Interaction.Systems
 {
     /// <summary>
-    /// It controls the outline VFX that appears around avatars.
+    ///     It controls the outline VFX that appears around avatars.
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
@@ -28,7 +28,7 @@ namespace DCL.Interaction.Systems
 
         protected override void Update(float t)
         {
-            if(!settings.EnableAvatarOutline)
+            if (!settings.EnableAvatarOutline)
                 return;
 
             UpdateAvatarHighlightVanishingQuery(World, t);
@@ -41,7 +41,7 @@ namespace DCL.Interaction.Systems
         [None(typeof(ShowAvatarHighlightIntent), typeof(PlayAvatarHighlightBlinkingAnimationIntent))]
         private void UpdateAvatarHighlightVanishing([Data] float t, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(avatarShapeComponent.OutlineVfxOpacity <= 0.0f)
+            if (avatarShapeComponent.OutlineVfxOpacity <= 0.0f)
                 return;
 
             // While there is no intent, the opacity decreases
@@ -64,8 +64,8 @@ namespace DCL.Interaction.Systems
         {
             animationIntent.Progress = (UnityEngine.Time.time - animationIntent.StartTime) / animationIntent.Duration;
             float loopLength = 1.0f / animationIntent.LoopCount;
-            float progressInIteration = (animationIntent.Progress % loopLength) / loopLength;
-            float alpha = progressInIteration < 0.5f ? (progressInIteration * 2.0f) : (1.0f - (progressInIteration - 0.5f) * 2.0f);
+            float progressInIteration = animationIntent.Progress % loopLength / loopLength;
+            float alpha = progressInIteration < 0.5f ? progressInIteration * 2.0f : 1.0f - (progressInIteration - 0.5f) * 2.0f;
 
             avatarShapeComponent.OutlineVfxOpacity = Mathf.Clamp01(alpha);
             avatarShapeComponent.OutlineColor = animationIntent.OutlineColor;
@@ -81,14 +81,14 @@ namespace DCL.Interaction.Systems
             float previousOpacity = avatarShapeComponent.PreviousOutlineVfxOpacity;
             avatarShapeComponent.PreviousOutlineVfxOpacity = avatarShapeComponent.OutlineVfxOpacity;
 
-            if(avatarShapeComponent.OutlineVfxOpacity == previousOpacity && avatarShapeComponent.OutlineVfxOpacity == 0.0f)
+            if (avatarShapeComponent.OutlineVfxOpacity == previousOpacity && avatarShapeComponent.OutlineVfxOpacity == 0.0f)
                 return;
 
-            Color color = avatarShapeComponent.OutlineColor;
+            var color = avatarShapeComponent.OutlineColor;
             color.a *= avatarShapeComponent.OutlineVfxOpacity;
 
             // Just applies the effect to renderers of avatars
-            foreach (Renderer? rend in avatarShapeComponent.OutlineCompatibleRenderers)
+            foreach (var rend in avatarShapeComponent.OutlineCompatibleRenderers)
                 if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
                     RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(rend, color, avatarShapeComponent.OutlineThickness);
         }

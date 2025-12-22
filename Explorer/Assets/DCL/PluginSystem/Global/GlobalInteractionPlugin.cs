@@ -119,6 +119,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(GlobalInteractionPlugin))]
             [field: Space]
             [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
+
             [field: SerializeField] internal SocialEmoteOutcomesContextMenuSettings socialEmoteOutcomesContextMenuSettings { get; private set; }
             [field: SerializeField] internal SocialEmotesSettings socialEmoteSettings { get; private set; }
             [field: SerializeField] internal InteractionSettingsData interactionSettings { get; private set; }

@@ -26,11 +26,11 @@ namespace DCL.AvatarRendering.Wearables
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
             LoadThumbnailsUtils.CreateThumbnailABPromiseAsync(
-                realmData,
-                avatarAttachment,
-                world,
-                PartitionComponent.TOP_PRIORITY,
-                CancellationTokenSource.CreateLinkedTokenSource(ct))
+                    realmData,
+                    avatarAttachment,
+                    world,
+                    PartitionComponent.TOP_PRIORITY,
+                    CancellationTokenSource.CreateLinkedTokenSource(ct))
                 .Forget();
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here

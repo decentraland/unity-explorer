@@ -12,32 +12,33 @@ namespace DCL.Multiplayer.Emotes
         public struct SocialEmoteData
         {
             /// <summary>
-            /// Whether the avatar is playing an outcome animation of the emote.
+            ///     Whether the avatar is playing an outcome animation of the emote.
             /// </summary>
             public bool IsUsingOutcomeAnimation;
 
             /// <summary>
-            /// The index of the outcome animation being played. -1 means no outcome is playing.
+            ///     The index of the outcome animation being played. -1 means no outcome is playing.
             /// </summary>
             public int OutcomeIndex;
 
             /// <summary>
-            /// Whether the avatar is reacting to the start animation of an initiator.
+            ///     Whether the avatar is reacting to the start animation of an initiator.
             /// </summary>
             public bool IsReacting;
 
             /// <summary>
-            /// The wallet address of the initiator's player.
+            ///     The wallet address of the initiator's player.
             /// </summary>
             public string InitiatorWalletAddress;
 
             /// <summary>
-            /// When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the emote.
+            ///     When a directed emote is sent, it is the wallet address of the player whose avatar will be able to react to the
+            ///     emote.
             /// </summary>
             public string TargetAvatarWalletAddress;
 
             /// <summary>
-            /// The ID of the current interaction, set when an avatar starts a social emote.
+            ///     The ID of the current interaction, set when an avatar starts a social emote.
             /// </summary>
             public int InteractionId;
         }
@@ -48,12 +49,12 @@ namespace DCL.Multiplayer.Emotes
         public readonly SocialEmoteData SocialEmote;
 
         /// <summary>
-        /// Whether the remote avatar's emote stopped and has to be stopped locally too.
+        ///     Whether the remote avatar's emote stopped and has to be stopped locally too.
         /// </summary>
         public readonly bool IsStopping;
 
         /// <summary>
-        /// Whether this is a repetition of a looping emote (true) or it is the first shot (false).
+        ///     Whether this is a repetition of a looping emote (true) or it is the first shot (false).
         /// </summary>
         public readonly bool IsRepeating;
 
@@ -62,14 +63,10 @@ namespace DCL.Multiplayer.Emotes
             EmoteId = emoteId;
             WalletId = walletId;
             Timestamp = timestamp;
-            SocialEmote = new SocialEmoteData()
+            SocialEmote = new SocialEmoteData
             {
-                IsUsingOutcomeAnimation = isUsingSocialEmoteOutcome,
-                OutcomeIndex = socialEmoteOutcomeIndex,
-                IsReacting = isReactingToSocialEmote,
-                InitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
-                TargetAvatarWalletAddress = targetAvatarWalletAddress,
-                InteractionId = socialEmoteInteractionId
+                IsUsingOutcomeAnimation = isUsingSocialEmoteOutcome, OutcomeIndex = socialEmoteOutcomeIndex, IsReacting = isReactingToSocialEmote, InitiatorWalletAddress = socialEmoteInitiatorWalletAddress,
+                TargetAvatarWalletAddress = targetAvatarWalletAddress, InteractionId = socialEmoteInteractionId
             };
             IsStopping = isStopping;
             IsRepeating = isRepeating;

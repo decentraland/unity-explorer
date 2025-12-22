@@ -26,6 +26,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
@@ -104,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
             this.view.OpenUserChatRequested += OpenChatWithUserAsync;
+            this.view.GiftUserRequested += OnGiftUserRequested;
             this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
@@ -118,6 +121,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             foreach (MembersListView.MemberListSections section in EnumUtils.Values<MembersListView.MemberListSections>())
                 sectionsFetchData[section] = new SectionFetchData<ICommunityMemberData>(PAGE_SIZE);
+        }
+
+        private void OnGiftUserRequested(ICommunityMemberData memberData)
+        {
+            ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {memberData.Address}");
+
+            mvcManager.ShowAsync(GiftSelectionController
+                .IssueCommand(new GiftSelectionParams(memberData.Address, memberData.Name))).Forget();
         }
 
         public override void Dispose()
@@ -136,6 +147,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
             view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
+            view.GiftUserRequested -= OnGiftUserRequested;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
             view.TransferOwnershipRequested -= OnTransferOwnership;
