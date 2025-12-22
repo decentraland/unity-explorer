@@ -343,6 +343,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
                 return;
 
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingCheckEmoteAsset()");
+
             URN emoteId = emoteIntent.EmoteId;
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
@@ -350,8 +352,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
                 {
-                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingCheckEmoteAsset() " + emoteId);
-
                     if (emote.IsLoading)
                         return;
 
@@ -542,11 +542,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata.IsSocialEmote &&
                     emoteIntent.TriggerSource != TriggerSource.PREVIEW &&
                     emoteComponent.SocialEmote.IsPlayingOutcome &&
-                    emote.SocialEmoteOutcomeAudioAssetResults != null && emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].HasValue)
+                    emoteComponent.SocialEmote.CurrentOutcome < emote.SocialEmoteOutcomeAudioAssetResults.Count) // TODO: This IF step should never be true
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayNewEmote() AUDIO for outcome " + emoteComponent.SocialEmote.CurrentOutcome);
 
-                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome]!.Value.Asset;
+                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].Asset;
                 }
 
                 bool playedSuccessfully = emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent);

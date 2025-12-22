@@ -5,6 +5,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -16,7 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
         public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
-        public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
+        public List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; } = new ();
 
         public bool IsLoading { get; private set; }
 
