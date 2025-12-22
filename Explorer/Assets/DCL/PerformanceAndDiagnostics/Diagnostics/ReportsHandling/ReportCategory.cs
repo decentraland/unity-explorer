@@ -154,6 +154,8 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
+        public const string SDK_AUDIO_ANALYSIS = nameof(SDK_AUDIO_ANALYSIS);
+
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
         /// </summary>
@@ -346,6 +348,7 @@ namespace DCL.Diagnostics
         public const string TRANSLATE = nameof(TRANSLATE);
 
         public const string OUTFITS = nameof(OUTFITS);
+        public const string GIFTING = nameof(GIFTING);
 
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 

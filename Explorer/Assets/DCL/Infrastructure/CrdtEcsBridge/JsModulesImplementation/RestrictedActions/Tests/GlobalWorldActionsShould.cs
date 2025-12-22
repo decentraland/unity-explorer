@@ -140,15 +140,15 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void DoNothingWhenAvatarNotVisible()
+        public void CanPlayEmotesWhenAvatarNotVisible()
         {
             world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
             var emoteUrn = new URN("urn:emote:id");
 
             globalWorldActions.TriggerEmote(emoteUrn, false);
 
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
+            Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
@@ -237,17 +237,30 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
 
-            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions()
+            {
                 throw new NotImplementedException();
+            }
 
             public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed));
             }
 
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new System.NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new System.NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new System.NotImplementedException();
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions()
+            {
+                throw new NotImplementedException();
+            }
+
+            public void OnPlayerRemoved(string walletId)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SaveForRetry(RemoteEmoteIntention intention)
+            {
+                throw new NotImplementedException();
+            }
 
             public void SaveForRetry(LookAtPositionIntention intention)
             {

@@ -40,6 +40,7 @@ using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByP
 using LoadOwnedEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadOwnedEmotesSystem;
 using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -197,7 +198,7 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateSocialEmotePinPoolAsync(EmoteSettings settings, CancellationToken ct)
         {
-            SocialEmotePin pinPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotePinPrefab, ct: ct)).Value;
+            var pinPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SocialEmotePinPrefab, ct: ct)).Value;
 
             var poolRoot = componentPoolsRegistry.RootContainerTransform();
             poolParent = new GameObject("POOL_CONTAINER_SocialEmotePins").transform;
@@ -206,7 +207,7 @@ namespace DCL.PluginSystem.Global
             socialEmotePinsPool = new ObjectPool<SocialEmotePin>(
                 () =>
                 {
-                    SocialEmotePin socialEmotePin = UnityEngine.Object.Instantiate(pinPrefab, Vector3.zero, Quaternion.identity, poolParent);
+                    var socialEmotePin = Object.Instantiate(pinPrefab, Vector3.zero, Quaternion.identity, poolParent);
                     socialEmotePin.gameObject.SetActive(false);
                     return socialEmotePin;
                 },

@@ -22,11 +22,15 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public List<ITrimmedWearable> Results;
         public int TotalAmount { get; private set; }
 
-        public void SetTotal(int total) =>
+        public void SetTotal(int total)
+        {
             TotalAmount = total;
+        }
 
-        public void AppendToResult(ITrimmedWearable resultElement) =>
+        public void AppendToResult(ITrimmedWearable resultElement)
+        {
             Results.Add(resultElement);
+        }
 
         public bool NeedsBuilderAPISigning { get; }
 

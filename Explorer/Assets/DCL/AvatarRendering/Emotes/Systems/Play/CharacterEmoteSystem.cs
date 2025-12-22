@@ -49,7 +49,8 @@ namespace DCL.AvatarRendering.Emotes.Play
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         /// <summary>
-        /// Tells the system that the avatar has to be rotated so it coincides with the initiator, before playing a social emote.
+        ///     Tells the system that the avatar has to be rotated so it coincides with the initiator, before playing a social
+        ///     emote.
         /// </summary>
         private struct RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent
         {
@@ -117,7 +118,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             AfterPlayingUpdateSocialEmoteInteractionsQuery(World);
             RotateReceiverAvatarToCoincideWithInitiatorAvatarQuery(World); // This must occur after ConsumeEmoteIntentQuery, because it has to rotate the avatar one frame after the emote plays, at least
             ConsumeStopEmoteIntentQuery(World); // Repeated on purpose, if the state of both participants in a social emote interaction must be consistent all the time
-            CancelEmotesByDeletionQuery(World);
+            CancelEmotesByDeletionWhenProfileIsNotPresentQuery(World);
+            CancelEmotesByDeletionWhenProfileIsPresentQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
             DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
@@ -128,13 +130,21 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(AvatarStateMachineEventHandler))]
         private void AvatarStateMachineEventHandlerInitialization(Entity entity, IAvatarView avatarView)
         {
-            if(avatarView.AvatarAnimator)
+            if (avatarView.AvatarAnimator)
                 World.Add(entity, new AvatarStateMachineEventHandler(entity, avatarView.AvatarAnimator));
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        [None(typeof(Profile))]
+        private void CancelEmotesByDeletionWhenProfileIsNotPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            StopEmote(entity, ref emoteComponent, avatarView, string.Empty);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention), typeof(Profile))]
+        private void CancelEmotesByDeletionWhenProfileIsPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
             StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
@@ -172,7 +182,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
-   //         ReportHub.Log(ReportCategory.EMOTE_DEBUG, "Update emote tag for " + ((AvatarBase)avatarView).name + " : " + emoteComponent.CurrentAnimationTag);
+            //         ReportHub.Log(ReportCategory.EMOTE_DEBUG, "Update emote tag for " + ((AvatarBase)avatarView).name + " : " + emoteComponent.CurrentAnimationTag);
         }
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
@@ -225,7 +235,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported), typeof(MoveBeforePlayingSocialEmoteIntent))]
         private void CancelEmotesByMovement(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView, in Profile profile)
         {
-            if(!emoteComponent.IsPlayingEmote)
+            if (!emoteComponent.IsPlayingEmote)
                 return;
 
             const float XZ_CUTOFF_LIMIT = 0.01f;
@@ -246,7 +256,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!shouldCancelEmote)
                 return;
 
-            URN emoteUrn = emoteComponent.EmoteUrn;
+            var emoteUrn = emoteComponent.EmoteUrn;
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"CancelEmotesByMovement() {profile.UserId} Stopping emote");
 
@@ -271,7 +281,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (isSocialEmote)
             {
-                if(emoteComponent.SocialEmote.IsPlayingOutcome)
+                if (emoteComponent.SocialEmote.IsPlayingOutcome)
                     StopOtherParticipant(entity, ref emoteComponent, walletAddress);
 
                 SocialEmoteInteractionsManager.Instance.StopInteraction(walletAddress);
@@ -292,23 +302,23 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.Reset();
 
             // Cancels interpolating to start position in a social emote outcome animation
-            if(World.Has<InterpolateToOutcomeStartPoseIntent>(entity))
+            if (World.Has<InterpolateToOutcomeStartPoseIntent>(entity))
                 World.Get<InterpolateToOutcomeStartPoseIntent>(entity).HasBeenCancelled = true;
         }
 
         private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
         {
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(walletAddress);
+            var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(walletAddress);
 
             if (interaction != null)
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"StopOtherParticipant() Entities: initiator {interaction.InitiatorEntity} receiver {interaction.ReceiverEntity} IsReactingToSocialEmote: {emoteComponent.SocialEmote.IsReacting} IsPlayingSocialEmoteOutcome {emoteComponent.SocialEmote.IsPlayingOutcome}");
 
-                Entity socialEmoteAvatarToStop = Entity.Null;
+                var socialEmoteAvatarToStop = Entity.Null;
 
                 if (emoteComponent.SocialEmote.IsReacting) // It's the receiver
                     socialEmoteAvatarToStop = interaction.InitiatorEntity;
-                else if(emoteComponent.SocialEmote.IsPlayingOutcome) // It's the initiator
+                else if (emoteComponent.SocialEmote.IsPlayingOutcome) // It's the initiator
                     socialEmoteAvatarToStop = interaction.ReceiverEntity;
 
                 if (socialEmoteAvatarToStop != Entity.Null)
@@ -340,7 +350,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent,
             ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
+            if (emoteIntent.EmoteAsset != null) // TODO: Replace with another intent
                 return;
 
             URN emoteId = emoteIntent.EmoteId;
@@ -377,7 +387,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (emote.AssetResults[bodyShape] == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
+                    var streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
 
                     if (streamableAssetValue is { Succeeded: false } || streamableAssetValue.Asset?.MainAsset == null)
                     {
@@ -463,19 +473,19 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(DeleteEntityIntention))]
         private void BeforePlayingSynchronizeRemoteInteraction(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
         {
-            if(emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
+            if (emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
                 return;
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingSynchronizeRemoteInteraction()");
 
             if (emoteIntent.SocialEmote.UseOutcomeReactionAnimation)
             {
-                SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.SocialEmote.InitiatorWalletAddress);
+                var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.SocialEmote.InitiatorWalletAddress);
 
                 // The message of the receiver arrived and there is already an initiator waiting for that interaction...
-                if(interaction != null &&
-                   World.TryGet(interaction.InitiatorEntity, out CharacterEmoteIntent initiatorIntent) &&
-                   initiatorIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+                if (interaction != null &&
+                    World.TryGet(interaction.InitiatorEntity, out CharacterEmoteIntent initiatorIntent) &&
+                    initiatorIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingSynchronizeRemoteInteraction() Initiator UNLOCKED, remote receiver emote arrived and both can now play animations " + initiatorIntent.WalletAddress);
                     initiatorIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop = false;
@@ -483,7 +493,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Set(interaction.InitiatorEntity, initiatorIntent);
                 }
             }
-            else if(emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+            else if (emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingSynchronizeRemoteInteraction() Remote initiator starts interaction without animation, waiting for receiver emote " + emoteIntent.WalletAddress);
 
@@ -499,12 +509,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void PlayNewEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if(emoteIntent.EmoteAsset == null || emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
+            if (emoteIntent.EmoteAsset == null || emoteIntent.SocialEmote.IsInitiatorOutcomeAnimationWaitingForReceiverAnimationLoop)
                 return;
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayNewEmote()");
 
-            IEmote emote = emoteIntent.EmoteAsset;
+            var emote = emoteIntent.EmoteAsset;
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PlayNewEmote() Consuming emote - address: {emoteIntent.WalletAddress} Is reacting? {emoteIntent.SocialEmote.UseOutcomeReactionAnimation.ToString()} mov: {avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND).ToString("F6")}");
 
@@ -512,7 +522,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             try
             {
                 // Cancels walking to the initiator of a social emote
-                if(World.Has<MoveBeforePlayingSocialEmoteIntent>(entity))
+                if (World.Has<MoveBeforePlayingSocialEmoteIntent>(entity))
                     World.Get<MoveBeforePlayingSocialEmoteIntent>(entity).HasBeenCancelled = true;
 
                 // we wait until the avatar finishes moving to trigger the emote,
@@ -522,14 +532,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                     (avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f && !emoteIntent.SocialEmote.UseOutcomeReactionAnimation)) // Note: When playing the outcome animation of an avatar that is reacting, there is no movement blending
                     return;
 
-                BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                GameObject mainAsset = emote.AssetResults[bodyShape]!.Value.Asset!.MainAsset;
+                var bodyShape = avatarShapeComponent.BodyShape;
+                var mainAsset = emote.AssetResults[bodyShape]!.Value.Asset!.MainAsset;
 
                 // Existing emoteComponent is overwritten with new emote info
                 emoteComponent.Reset();
                 emoteComponent.EmoteUrn = emoteIntent.EmoteId;
                 emoteComponent.Metadata = (EmoteDTO.EmoteMetadataDto)emote.DTO.Metadata;
-                StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
+                var audioAssetResult = emote.AudioAssetResults[bodyShape];
                 AudioClip? audioClip = audioAssetResult?.Asset;
 
                 emoteComponent.SocialEmote.IsPlayingOutcome = emoteIntent.SocialEmote.UseOutcomeAnimation;
@@ -574,15 +584,15 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void AfterPlayingUpdateSocialEmoteInteractions(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
             CharacterTransform characterTransform, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
         {
-            if(emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
+            if (emoteIntent.EmoteAsset == null || !emoteIntent.HasPlayedEmote)
                 return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions()");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " emote: " + emoteIntent.EmoteId);
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
             try
             {
-                IEmote? emote = emoteIntent.EmoteAsset;
+                var emote = emoteIntent.EmoteAsset;
 
                 if (emoteComponent.Metadata!.IsSocialEmote && emoteIntent.TriggerSource != TriggerSource.PREVIEW)
                 {
@@ -609,7 +619,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                                 World.Add(entity, new PlayAvatarHighlightBlinkingAnimationIntent(socialEmotesSettings.DirectedEmoteReceivedAnimationThickness, socialEmotesSettings.DirectedEmoteReceivedAnimationColor, socialEmotesSettings.DirectedEmoteReceivedAnimationDuration, socialEmotesSettings.DirectedEmoteReceivedAnimationLoops));
 
                             // Notification displayed
-                            ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                            ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedSocialEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new []
+                            {
+                                emote.GetName()
+                            }).Forget();
                         }
                     }
                 }
@@ -619,7 +632,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 {
                     // Directed normal emote
                     // Notification displayed
-                    ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new string[] { emote.GetName() }).Forget();
+                    ephemeralNotificationsController.AddNotificationAsync(socialEmotesSettings.DirectedEmoteEphemeralNotificationPrefab.name, emoteIntent.WalletAddress, new []
+                    {
+                        emote.GetName()
+                    }).Forget();
                 }
 
                 if (emoteComponent.Metadata.IsSocialEmote && emoteIntent.SocialEmote.UseOutcomeReactionAnimation)
@@ -665,8 +681,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "RotateReceiverAvatarToCoincideWithInitiatorAvatar()");
 
             // Makes sure the avatar of the initiator is looking at the receiver's
-            IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
-            Vector3 initiatorForward = avatarView.GetTransform().position - initiatorAvatar.GetTransform().position;
+            var initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
+            var initiatorForward = avatarView.GetTransform().position - initiatorAvatar.GetTransform().position;
             initiatorForward.y = 0.0f;
             initiatorAvatar.GetTransform().forward = initiatorForward.normalized;
 
@@ -715,7 +731,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
-            if(SocialEmoteInteractionsManager.Instance.InteractionExists(profile.UserId))
+            if (SocialEmoteInteractionsManager.Instance.InteractionExists(profile.UserId))
                 SocialEmoteInteractionsManager.Instance.StopInteraction(profile.UserId);
 
             if (!deleteEntityIntention.DeferDeletion)
@@ -742,24 +758,24 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void ResetAvatarAndControllerTransforms(Entity entity)
         {
-            AvatarBase avatarBase = (AvatarBase)World.Get<IAvatarView>(entity);
+            var avatarBase = (AvatarBase)World.Get<IAvatarView>(entity);
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ResetAvatarAndControllerTransforms() <color=cyan>EXITING EMOTE STATE {avatarBase.name}</color>");
 
             avatarBase.RestoreArmatureName(); // This is necessary to avoid jittering during the transition
 
-            Vector3 newCharacterForward = avatarBase.HipAnchorPoint.forward;
+            var newCharacterForward = avatarBase.HipAnchorPoint.forward;
             newCharacterForward.y = 0.0f;
             newCharacterForward.Normalize();
 
-            Vector3 hipsWorldPosition = avatarBase.HipAnchorPoint.position;
+            var hipsWorldPosition = avatarBase.HipAnchorPoint.position;
             hipsWorldPosition.y = avatarBase.GetTransform().position.y;
 
-            ref CharacterController characterController = ref World.TryGetRef<CharacterController>(entity, out bool isLocal);
-            ref CharacterRigidTransform characterRigidTransform = ref World.TryGetRef<CharacterRigidTransform>(entity, out bool _);
-            ref PlayerComponent playerComponent = ref World.TryGetRef<PlayerComponent>(entity, out bool _);
+            ref var characterController = ref World.TryGetRef<CharacterController>(entity, out bool isLocal);
+            ref var characterRigidTransform = ref World.TryGetRef<CharacterRigidTransform>(entity, out bool _);
+            ref var playerComponent = ref World.TryGetRef<PlayerComponent>(entity, out bool _);
 
-            Vector3 cameraFocusCurrentPosition = Vector3.zero;
+            var cameraFocusCurrentPosition = Vector3.zero;
 
             // Below, the CharacterController or CharacterTransform will be placed where the avatar is,
             // and the avatar, which is its child, will reset its local transform to coincide with its parent
@@ -780,7 +796,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // Although the position of the remote avatar will be overriden with incoming position messages, the animation may finish
                     // before those messages arrive so we have to update the position as if they already arrived or the avatar will make a weird movement
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() Remote controller transform reset " + avatarBase.name);
-                    ref CharacterTransform characterTransform = ref World.Get<CharacterTransform>(entity);
+                    ref var characterTransform = ref World.Get<CharacterTransform>(entity);
                     characterTransform.Transform.position = hipsWorldPosition;
                     characterTransform.Transform.forward = newCharacterForward;
                 }
@@ -802,7 +818,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             catch // The try/catch is necessary to avoid that playerComponent.CameraFocus ends up without parent due to an exception
             {
-                if(characterController != null)
+                if (characterController != null)
                     playerComponent.CameraFocus.parent = characterController.transform;
 
                 throw;
@@ -811,13 +827,13 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PrepareToAdjustReceiverBeforeOutcomeAnimation(string initiatorWalletAddress)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PrepareToAdjustReceiverBeforeOutcomeAnimation() " + initiatorWalletAddress);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PrepareToAdjustReceiverBeforeOutcomeAnimation() " + initiatorWalletAddress);
 
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
+            var interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress)!;
 
             // Note: Since the avatar is reacting, the emote is already available
-            AvatarBase receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
-            AvatarBase initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
+            var receiverAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.ReceiverEntity, out bool _);
+            var initiatorAvatar = (AvatarBase)World.TryGetRef<IAvatarView>(interaction.InitiatorEntity, out bool _);
 
             // Adjustment interpolation
             World.Add(interaction.ReceiverEntity, new InterpolateToOutcomeStartPoseIntent(

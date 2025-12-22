@@ -5,12 +5,12 @@ using Utility.Animations;
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     /// <summary>
-    /// Handles events sent by the state machine of the AnimationController (attached to CharacterAnimator).
+    ///     Handles events sent by the state machine of the AnimationController (attached to CharacterAnimator).
     /// </summary>
     public class AvatarStateMachineBehaviour : StateMachineBehaviour
     {
         /// <summary>
-        /// Raised when leaving the Emote and Emote Loop states.
+        ///     Raised when leaving the Emote and Emote Loop states.
         /// </summary>
         public Action EmoteStateExiting;
 
