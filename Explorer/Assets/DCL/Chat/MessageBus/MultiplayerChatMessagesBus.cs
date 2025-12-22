@@ -29,12 +29,10 @@ namespace DCL.Chat.MessageBus
         private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
         private readonly ChatMessageRateLimiter messageRateLimiter;
-        private readonly NearbyChannelMessageBuffer nearbyChannelBuffer;
+        private readonly ChatChannelMessageBuffer nearbyChannelBuffer;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
-        private const int FRAMES_BETWEEN_RELEASES = 3;
-        private int frameCounter;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
@@ -51,7 +49,10 @@ namespace DCL.Chat.MessageBus
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
             messageRateLimiter = new ChatMessageRateLimiter();
-            nearbyChannelBuffer = new NearbyChannelMessageBuffer();
+            nearbyChannelBuffer = new ChatChannelMessageBuffer();
+            nearbyChannelBuffer.MessageReleased += OnBufferedMessageReleased;
+
+            identityCache.OnIdentityCleared += OnIdentityCleared;
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandEnvironment switch
@@ -74,13 +75,14 @@ namespace DCL.Chat.MessageBus
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
 
-            ReleaseBufferedMessagesAsync(cancellationTokenSource.Token).Forget();
+            nearbyChannelBuffer.Start(cancellationTokenSource.Token);
         }
 
         public void Dispose()
         {
             cancellationTokenSource.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+            nearbyChannelBuffer.Dispose();
         }
 
         private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
@@ -146,39 +148,37 @@ namespace DCL.Chat.MessageBus
                 if (channelType == ChatChannel.ChatChannelType.NEARBY && BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
                     return;
 
-                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
-
                 if (channelType == ChatChannel.ChatChannelType.NEARBY)
                 {
-                    if (!nearbyChannelBuffer.TryEnqueue(newMessage))
+                    if (!nearbyChannelBuffer.HasCapacity())
+                    {
                         ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "Discarded message, queue full!");
+                        return;
+                    }
+
+                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+                    if (!nearbyChannelBuffer.TryEnqueue(newMessage))
+                        ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "Failed to enqueue message!");
                 }
                 else
+                {
+                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
                     MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
+                }
             }
         }
 
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
 
-        private async UniTaskVoid ReleaseBufferedMessagesAsync(CancellationToken ct)
+        private void OnBufferedMessageReleased(ChatMessage message)
         {
-            while (!ct.IsCancellationRequested)
-            {
-                await UniTask.Yield(PlayerLoopTiming.FixedUpdate);
+            MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, message);
+        }
 
-                frameCounter++;
-
-                if (frameCounter >= FRAMES_BETWEEN_RELEASES && nearbyChannelBuffer.HasBufferedMessages)
-                {
-                    if (nearbyChannelBuffer.TryDequeue(out var bufferedMessage))
-                    {
-                        ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Dequeued Message! released after {frameCounter} frames");
-                        MessageAdded?.Invoke(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, bufferedMessage);
-                        frameCounter = 0;
-                    }
-                }
-            }
+        private void OnIdentityCleared()
+        {
+            nearbyChannelBuffer.Reset();
         }
 
         public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
