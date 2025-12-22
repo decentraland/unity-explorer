@@ -1124,8 +1124,8 @@ namespace DCL.AuthenticationScreenFlow
         private void RandomizeAvatar()
         {
             // If we're not at the end of history, remove all avatars after current position
-            // if (currentAvatarIndex < avatarHistory.Count - 1)
-            //     avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
+            if (currentAvatarIndex < avatarHistory.Count - 1)
+                avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
 
             // Create and add new avatar to history
             Avatar newAvatar = CreateDefaultAvatar();
