@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            DebugRenderSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            RenderDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
