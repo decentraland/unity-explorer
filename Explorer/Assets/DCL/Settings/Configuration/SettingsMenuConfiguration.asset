@@ -63,7 +63,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
-      - rid: 5190442923629740155
+      - rid: 5190442991532376251
   <ChatSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: 
@@ -302,10 +302,10 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 10
         <Feature>k__BackingField: 10
-    - rid: 5190442923629740155
+    - rid: 5190442991532376251
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
-        <FeatureId>k__BackingField: 36
+        <FeatureId>k__BackingField: 37
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
           m_SubObjectName: 
