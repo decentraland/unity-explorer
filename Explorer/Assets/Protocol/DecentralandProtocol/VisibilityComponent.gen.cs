@@ -119,7 +119,11 @@ namespace DCL.ECSComponents {
     public const int PropagateToChildrenFieldNumber = 2;
     private bool propagateToChildren_;
     /// <summary>
-    /// default=false
+    /// Propagation follows certain rules:
+    /// - Any own visibility component takes priority
+    /// - If no own visibility component, visibility is determined by visibility of the nearest parent with propagate = true
+    /// - If no own component and no parent with propagate = true, visibility is "visible"
+    /// - Visibility is always updated, whenever hierarchy, parent component or own component changes
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
