@@ -11,7 +11,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
