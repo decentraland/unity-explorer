@@ -38,7 +38,16 @@ namespace DCL.Rendering.RenderSystem
 
             // Apply initial state (off) to current asset
             lastUrpAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            ApplyCurrentStateToAsset(lastUrpAsset);
+
+            if (lastUrpAsset == null)
+                return;
+
+            lastUrpAsset.gpuResidentDrawerMode = residentDrawerBinding.Value
+                ? GPUResidentDrawerMode.InstancedDrawing
+                : GPUResidentDrawerMode.Disabled;
+
+            lastUrpAsset.gpuResidentDrawerEnableOcclusionCullingInCameras =
+                residentDrawerBinding.Value && gpuOcclusionBinding.Value;
         }
 
         /// <summary>

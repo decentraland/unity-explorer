@@ -320,3 +320,4 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     }
 #endif
 }
+
