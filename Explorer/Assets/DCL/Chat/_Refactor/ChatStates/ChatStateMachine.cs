@@ -45,6 +45,7 @@ namespace DCL.Chat.ChatStates
             );
 
             fsm.Enter<InitChatState>();
+
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));

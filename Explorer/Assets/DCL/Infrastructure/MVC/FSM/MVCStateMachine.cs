@@ -17,7 +17,9 @@ namespace MVC
         public MVCStateMachine(TContext context, params TBaseState[] states)
         {
             this.context = context;
-            foreach (TBaseState state in states) AddState(state);
+
+            foreach (TBaseState state in states)
+                AddState(state);
         }
 
         protected TContext context { get; }

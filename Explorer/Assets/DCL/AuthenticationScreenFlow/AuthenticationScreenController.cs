@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -97,6 +98,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
+        private MVCStateMachine<AuthStateBase, AuthStateContext> fsm;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -176,6 +178,18 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
+
+            fsm = new MVCStateMachine<AuthStateBase, AuthStateContext>(
+                context: new AuthStateContext(),
+                states: new AuthStateBase[]
+                {
+                    new AutoLoginAuthState(viewInstance),
+                    new LoginMethodSelectionAuthState(viewInstance, CurrentState),
+                    new LoadingAuthState(viewInstance),
+                    new VerificationAuthState(viewInstance),
+                    new LobbyAuthState(viewInstance, characterPreviewController),
+                }
+            );
         }
 
         protected override void OnBeforeViewShow()
@@ -535,7 +549,7 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    ResetAnimator(viewInstance!.LoginAnimator);
+                    viewInstance!.LoginAnimator.ResetAnimator();
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
@@ -559,7 +573,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance!.VerificationAnimator);
+                    viewInstance!.VerificationAnimator.ResetAndDeactivateAnimator();
 
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
                     viewInstance.LoadingSpinner.SetActive(false);
@@ -572,7 +586,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
-                    ResetAnimator(viewInstance!.FinalizeAnimator);
+                    viewInstance!.FinalizeAnimator.ResetAnimator();
                     viewInstance.PendingAuthentication.SetActive(false);
 
                     viewInstance.LoginContainer.SetActive(false);
@@ -592,13 +606,6 @@ namespace DCL.AuthenticationScreenFlow
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
-        }
-
-        private static void ResetAnimator(Animator animator)
-        {
-            animator.Rebind();
-            animator.Update(0f);
-            animator.gameObject.SetActive(false);
         }
 
         private void RestoreResolutionAndScreenMode()
