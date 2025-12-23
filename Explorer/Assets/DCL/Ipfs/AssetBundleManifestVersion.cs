@@ -161,11 +161,11 @@ public class AssetBundleManifestVersion
             convertedFiles = new HashSet<string>(new UrlHashComparer());
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
+                for (int i = 0; i < entityDefinitionContent.Length; i++)
                     convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
+                for (int i = 0; i < entityDefinitionContent.Length; i++)
                     convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
         }
     }

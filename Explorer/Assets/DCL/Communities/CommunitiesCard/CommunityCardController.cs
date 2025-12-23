@@ -547,7 +547,7 @@ namespace DCL.Communities.CommunitiesCard
             async UniTask<bool> IsSubscribedToCommunityNotificationsAsync(string commId, CancellationToken ct)
             {
                 var checkCommunityNotificationOptOutResult = await communitiesDataProvider.CheckCommunityNotificationOptOutAsync(commId, ct)
-                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
                     return true;
@@ -800,10 +800,10 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (isSubscribedToNotifications)
                     response = await communitiesDataProvider.DeleteCommunityNotificationOptOutAsync(communityId, ct)
-                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 else
                     response = await communitiesDataProvider.CreateCommunityNotificationOptOutAsync(communityId, ct)
-                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -811,9 +811,7 @@ namespace DCL.Communities.CommunitiesCard
                 if (!response.Success || !response.Value)
                 {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
-                        isSubscribedToNotifications ?
-                            DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE :
-                            CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
+                        isSubscribedToNotifications ? DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE : CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
 
                     return;
                 }
