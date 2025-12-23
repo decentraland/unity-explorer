@@ -130,6 +130,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected ref struct EncodedMessage
         {
+            public const int RESERVED_SIZE = 1;
+
             private Span<byte> data;
             private int contentLength;
 
@@ -137,27 +139,27 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             public EncodedMessage(Span<byte> data)
             {
                 this.data = data; // Extra byte for message type
-                contentLength = data.Length - 1;
+                contentLength = data.Length - RESERVED_SIZE;
             }
 
             public static int LengthWithReservedByte(int length)
             {
-                return length + 1;
+                return length + RESERVED_SIZE;
             }
 
             public Span<byte> Content()
             {
-                return data.Slice(1, contentLength); // first byte is msg type
+                return data.Slice(RESERVED_SIZE, contentLength); // first byte is msg type
             }
 
             public Span<byte> ContentWithHeader()
             {
-                return data.Slice(0, contentLength + 1); // first byte is msg type
+                return data.Slice(0, contentLength + RESERVED_SIZE); // first byte is msg type
             }
 
             public void ResizeContent(int length)
             {
-                int targetTotalLength = length + 1;
+                int targetTotalLength = length + RESERVED_SIZE;
                 UnityEngine.Assertions.Assert.IsFalse(
                     targetTotalLength > data.Length, 
                     "Cannot resize to target length greater than the origin span"

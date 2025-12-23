@@ -5,6 +5,7 @@ using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Collections;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
@@ -24,16 +25,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public void Send(string data)
         {
-            // TODO it can be implemented in alloc free manner
-            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+            int byteCount = Encoding.UTF8.GetByteCount(data);
+            int length = EncodedMessage.LengthWithReservedByte(byteCount);
+            using NativeArray<byte> dataBytes = new NativeArray<byte>(length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            EncodedMessage encodedMessage = new EncodedMessage(dataBytes.AsSpan());
 
-            int length = EncodedMessage.LengthWithReservedByte(dataBytes.Length);
-            // TODO Actually it's really NOT safe because the implementation deals with strings.
-            Span<byte> contentAlloc = stackalloc byte[length];
-            EncodedMessage encodedMessage = new EncodedMessage(contentAlloc);
+            Span<byte> contentSpan = encodedMessage.Content();
+            Encoding.UTF8.GetBytes(data, contentSpan);
+
             encodedMessage.AssignType(ISceneCommunicationPipe.MsgType.String);
-            // TODO Should avoid copy
-            dataBytes.AsSpan().CopyTo(encodedMessage.Content());
 
             EncodeAndSendMessage(encodedMessage, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
         }
