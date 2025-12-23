@@ -10,13 +10,10 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.Web3;
 using ECS.Abstract;
 using MVC;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.Systems
 {
@@ -25,7 +22,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string OPTIONS_TOOLTIP = "Options";
+        private const string HOVER_TOOLTIP = "View Profile";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
