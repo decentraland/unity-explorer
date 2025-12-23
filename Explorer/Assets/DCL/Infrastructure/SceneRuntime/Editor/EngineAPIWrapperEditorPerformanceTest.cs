@@ -8,6 +8,8 @@
  * But Unity's Profiler won't provide API to get GC memory allocated per frame
  */
 
+#if UNITY_EDITOR
+
 using System;
 using System.Threading;
 using UnityEngine;
@@ -76,3 +78,5 @@ namespace SceneRuntime.Editor
         }
     }
 }
+
+#endif
