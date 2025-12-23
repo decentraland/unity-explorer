@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -33,9 +34,12 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [All(typeof(PlayerMoveToWithDurationIntent))]
-        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent)
+        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent)
         {
-            if (movementInputComponent.Kind == MovementKind.IDLE || movementInputComponent.Axes == Vector2.zero)
+            bool hasMovementInput = movementInputComponent.Kind != MovementKind.IDLE && movementInputComponent.Axes != Vector2.zero;
+            bool hasJumpInput = jumpInputComponent.IsPressed;
+
+            if (!hasMovementInput && !hasJumpInput)
                 return;
 
             World.Remove<PlayerMoveToWithDurationIntent>(entity);
