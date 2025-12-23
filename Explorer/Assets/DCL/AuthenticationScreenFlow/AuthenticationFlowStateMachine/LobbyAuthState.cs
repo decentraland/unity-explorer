@@ -1,6 +1,3 @@
-using DCL.UI;
-using static Utility.GameObjectExtensions;
-
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class LobbyAuthState : AuthStateBase
@@ -16,23 +13,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
-
-            viewInstance!.FinalizeAnimator.ResetAndDeactivateAnimator();
-            viewInstance.VerificationContainer.SetActive(false);
-
-            viewInstance.LoginContainer.SetActive(false);
-            viewInstance.LoadingSpinner.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-            viewInstance.LoginButton.gameObject.SetActive(true);
-
-            viewInstance.FinalizeContainer.SetActive(true);
-            viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
-            viewInstance.JumpIntoWorldButton.interactable = true;
-
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
         }
 
         public override void Exit()

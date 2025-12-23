@@ -1,6 +1,4 @@
-using DCL.UI;
 using DCL.Utilities;
-using Utility;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
@@ -17,19 +15,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
-
-            viewInstance!.LoginAnimator.ResetAndDeactivateAnimator();
-            viewInstance.VerificationContainer.SetActive(false);
-
-            viewInstance.LoginContainer.SetActive(true);
-            viewInstance.LoadingSpinner.SetActive(false);
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-            viewInstance.LoginButton.interactable = true;
-            viewInstance.LoginButton.gameObject.SetActive(true);
-            viewInstance.LoadingSpinner.SetActive(false);
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
-            currentState.Value = AuthenticationScreenController.AuthenticationStatus.Login;
         }
 
         public override void Exit()
