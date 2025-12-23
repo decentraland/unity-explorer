@@ -66,7 +66,7 @@ namespace DCL.AuthenticationScreenFlow
             LoginInProgress,
             Loading,
             Finalize,
-            FinalizeNewUser,
+            FinalizeNewUser, VerificationOTP,
         }
 
         private const int ANIMATION_DELAY = 300;
@@ -174,8 +174,12 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartDappLoginFlowUntilEnd);
+
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+            viewInstance.BackButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
+            viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
             foreach (Button button in viewInstance.UseAnotherAccountButton)
@@ -201,8 +205,8 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
             viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
             viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
-            viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
 
+            viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
             viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
             viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
         }
@@ -582,6 +586,8 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance!.VerificationOTP.SetActive(false);
+                    viewInstance.FinalizeContainer.SetActive(false);
 
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
@@ -595,6 +601,9 @@ namespace DCL.AuthenticationScreenFlow
                     break;
                 case ViewState.Loading:
                     viewInstance!.PendingAuthentication.SetActive(false);
+                    viewInstance!.VerificationOTP.SetActive(false);
+                    viewInstance.FinalizeContainer.SetActive(false);
+
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.LoadingSpinner.SetActive(true);
@@ -617,9 +626,25 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
+                case ViewState.VerificationOTP:
+                    ResetAnimator(viewInstance!.VerificationAnimator);
+
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
+
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+
+                    viewInstance.VerificationOTP.SetActive(true);
+                    viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.IN);
+                    break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance!.VerificationOTP.SetActive(false);
 
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.LoadingSpinner.SetActive(false);
@@ -635,12 +660,19 @@ namespace DCL.AuthenticationScreenFlow
                     characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
 
-                    viewInstance.ProfileNameInputField.gameObject.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.gameObject.SetActive(true);
+                    viewInstance.ProfileNameLabel.gameObject.SetActive(true);
+                    viewInstance.Description.SetActive(true);
+                    viewInstance.DiffAccountButton.SetActive(true);
+
+                    viewInstance.NewUserContainer.SetActive(false);
                     break;
                 case ViewState.FinalizeNewUser:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
 
                     viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance!.VerificationOTP.SetActive(false);
+
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
@@ -648,10 +680,16 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
 
-                    viewInstance.ProfileNameInputField.gameObject.SetActive(true);
                     viewInstance.JumpIntoWorldButton.interactable = true;
+
+                    viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
+                    viewInstance.ProfileNameLabel.gameObject.SetActive(false);
+                    viewInstance.Description.SetActive(false);
+                    viewInstance.DiffAccountButton.SetActive(false);
+
                     viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.FinalizeContainer.SetActive(true);
+                    viewInstance.NewUserContainer.SetActive(true);
 
                     characterPreviewController?.OnBeforeShow();
                     characterPreviewController?.OnShow();
@@ -680,6 +718,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void CancelLoginProcess()
         {
+            Debug.Log("VVV Canceling login");
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
 
@@ -815,7 +854,7 @@ namespace DCL.AuthenticationScreenFlow
                     //             .Forget();
 
                     CurrentState.Value = AuthenticationStatus.VerificationInProgress;
-                    SwitchState(ViewState.LoginInProgress);
+                    SwitchState(ViewState.VerificationOTP);
 
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
 

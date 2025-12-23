@@ -57,6 +57,18 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject VerificationCodeHintContainer { get; private set; } = null!;
+        [SerializeField]
+        private LocalizeStringEvent countdownLabel = null!;
+
+        [field: SerializeField]
+        public Button CancelAuthenticationProcess { get; private set; } = null!;
+
+        [field: Header("VERIFICATION OTP")]
+        [field: SerializeField]
+        public GameObject VerificationOTP { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator VerificationOTPAnimator { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_InputField PasswordInputField { get; private set; } = null!;
@@ -64,11 +76,8 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button RegisterButton { get; private set; } = null!;
 
-        [SerializeField]
-        private LocalizeStringEvent countdownLabel = null!;
-
         [field: SerializeField]
-        public Button CancelAuthenticationProcess { get; private set; } = null!;
+        public Button CancelAuthenticationProcessOTP { get; private set; } = null!;
 
         [field: Header("FINALIZE")]
         [field: SerializeField]
@@ -81,12 +90,21 @@ namespace DCL.AuthenticationScreenFlow
         public Button JumpIntoWorldButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public GameObject Description { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject DiffAccountButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
         public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
 
         [field: Space]
+        [field: SerializeField]
+        public GameObject NewUserContainer { get; private set; } = null!;
+
         [field: SerializeField]
         public TMP_InputField ProfileNameInputField { get; private set; } = null!;
 
@@ -106,7 +124,7 @@ namespace DCL.AuthenticationScreenFlow
         public Button SubscribeToggle { get; private set; } = null!;
         [field: SerializeField]
         public Button AgreeLicenseToggle { get; private set; } = null!;
-        
+
         [field: Header("ERROR POPUP")]
         [field: SerializeField]
         public GameObject ErrorPopupRoot { get; private set; } = null!;
