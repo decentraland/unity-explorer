@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
             //set up the buffers depending on the platform
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
 #else
             return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
