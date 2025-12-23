@@ -32,10 +32,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         protected int vertCount;
         protected int skinnedMeshRendererBoneCount;
 
-        public ComputeSkinningBufferContainer(int vertCount, int skinnedMeshRenderersConeCount)
+        public ComputeSkinningBufferContainer(int vertCount, int skinnedMeshRenderersBoneCount)
         {
             this.vertCount = vertCount;
-            skinnedMeshRendererBoneCount = skinnedMeshRenderersConeCount;
+            skinnedMeshRendererBoneCount = skinnedMeshRenderersBoneCount;
         }
 
         public static ComputeSkinningBufferContainer New(int vertCount, int skinnedMeshRendererBoneCount)
