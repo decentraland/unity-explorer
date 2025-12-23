@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using TMPro;
 using UnityEngine;
@@ -8,11 +9,12 @@ namespace DCL.Chat
     {
         public Action? UserNameClicked;
 
-        [field: SerializeField] internal TMP_Text userName { get; private set; }
-        [field: SerializeField] internal TMP_Text walletIdText { get; private set; }
-        [field: SerializeField] internal RectTransform? verifiedIcon { get; private set; }
-        [field: SerializeField] internal RectTransform? officialIcon { get; private set; }
-        [field: SerializeField] internal ChatEntryUsernameClickDetectionHandler usernameClickDetection { get; private set; }
+        [field: SerializeField] internal TMP_Text userName { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text walletIdText { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform? verifiedIcon { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform? officialIcon { get; private set; } = null!;
+
+        [field: SerializeField] internal ChatEntryUsernameClickDetectionHandler? usernameClickDetection { get; private set; }
 
         private void Awake()
         {
