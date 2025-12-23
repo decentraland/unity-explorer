@@ -6,9 +6,11 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using DCL.Diagnostics;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -66,15 +68,23 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             foreach (ITypedArray<byte> data in broadcastData)
                 if (data.Length > 0)
                 {
-                    ulong length = data.Length;
+                    int length = (int) data.Length;
                     var instance = this;
+
+                    int encodedLength = EncodedMessage.LengthWithReservedByte(length);
+                    if (encodedLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                    {
+                        ReportHub.LogException(new InternalBufferOverflowException("Tried to encode a message larger than LIVEKIT_MAX_SIZE"), ReportCategory.CRDT_ECS_BRIDGE);
+                        continue;
+                    }
+
 
                     data.InvokeWithDirectAccess(
                         static (ptr, args) => {
                             Span<byte> span;
                             unsafe
                             {
-                                span = new Span<byte>(ptr.ToPointer(), (int) args.length);
+                                span = new Span<byte>(ptr.ToPointer(), args.length);
                             }
 
                             byte firstByte = span[0];
@@ -84,6 +94,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                                 : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
 
                             int length = EncodedMessage.LengthWithReservedByte(span.Length);
+                            // Considered save to stackalloc, it's checked the load cannot exceed LIVEKIT_MAX_SIZE
                             Span<byte> contentAlloc = stackalloc byte[length];
                             EncodedMessage encodedMessage = new EncodedMessage(contentAlloc);
                             encodedMessage.AssignType(ISceneCommunicationPipe.MsgType.Uint8Array);
@@ -99,8 +110,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                         }, 
                         (instance, recipient, length)
                     );
-
-
                 }
         }
 

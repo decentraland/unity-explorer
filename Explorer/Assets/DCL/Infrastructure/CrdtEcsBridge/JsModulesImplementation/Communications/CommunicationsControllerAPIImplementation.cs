@@ -30,6 +30,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     var data = (IntPtr)dataPtr;
 
+                    // TODO can be alloc free lambda
                     array.InvokeWithDirectAccess(buffer =>
                     {
                         var bufferPtr = (byte*)buffer;
