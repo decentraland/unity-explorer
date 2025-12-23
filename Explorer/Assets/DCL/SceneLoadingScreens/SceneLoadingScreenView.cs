@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
+using DCL.Diagnostics;
 using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens
@@ -123,20 +124,40 @@ namespace DCL.SceneLoadingScreens
         {
             ShowTip(index);
 
-            tips[index].RootCanvasGroup.alpha = 0f;
+            Option<TipView> tipView = TipViewByIndex(index);
 
-            await tips[index]
+            if (tipView.Has == false)
+            {
+                ReportHub.LogError(ReportCategory.UI, $"View does not exist: {index}");
+                return;
+            }
+
+            tipView.Value.RootCanvasGroup.alpha = 0f;
+
+            await tipView.Value
                  .RootCanvasGroup.DOFade(1f, duration)
                  .ToUniTask(cancellationToken: ct);
         }
 
         public async UniTask HideTipWithFadeAsync(int index, float duration, CancellationToken ct)
         {
-            await tips[index]
+            Option<TipView> tipView = TipViewByIndex(index);
+
+            if (tipView.Has == false)
+            {
+                ReportHub.LogError(ReportCategory.UI, $"View does not exist: {index}");
+                return;
+            }
+
+            await tipView.Value
                  .RootCanvasGroup.DOFade(0f, duration)
                  .ToUniTask(cancellationToken: ct);
 
-            tips[index].gameObject.SetActive(false);
+            // View might be cleared by ClearTips() during the await call. The existing reference is unreliable
+            tipView = TipViewByIndex(index);
+
+            if (tipView.Has)
+                tipView.Value.gameObject.SetActive(false);
         }
 
         public async UniTask ChangeBackgroundColorFadeAsync(Color toColor, float duration, CancellationToken ct)
@@ -159,6 +180,14 @@ namespace DCL.SceneLoadingScreens
         public void ChangeBackgroundColor(Color toColor)
         {
             Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
+        }
+
+        private Option<TipView> TipViewByIndex(int index)
+        {
+            if (index >= 0 && index < tips.Count)
+                return Option<TipView>.Some(tips[index]);
+
+            return Option<TipView>.None;
         }
     }
 }
