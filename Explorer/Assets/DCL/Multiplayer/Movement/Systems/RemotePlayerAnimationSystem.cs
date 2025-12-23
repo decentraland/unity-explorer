@@ -48,6 +48,10 @@ namespace DCL.Multiplayer.Movement.Systems
             if (remotePlayerMovement.WasPassedThisFrame)
             {
                 remotePlayerMovement.WasPassedThisFrame = false;
+
+                if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
+                    emote.StopEmote = true;
+
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }
 

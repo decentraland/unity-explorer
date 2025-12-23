@@ -585,8 +585,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
             public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
-            public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
-            public bool IsSocial { get; }
             public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
             public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }
