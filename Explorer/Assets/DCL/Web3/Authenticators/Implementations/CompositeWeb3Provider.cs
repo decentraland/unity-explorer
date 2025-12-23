@@ -73,6 +73,12 @@ namespace DCL.Web3.Authenticators
             dappAuth.SetVerificationListener(callback);
         }
 
+        public void CancelCurrentWeb3Operation()
+        {
+            thirdWebAuth.CancelCurrentWeb3Operation();
+            dappAuth.CancelCurrentWeb3Operation();
+        }
+
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback)
         {
             // Set on both - only ThirdWeb uses this

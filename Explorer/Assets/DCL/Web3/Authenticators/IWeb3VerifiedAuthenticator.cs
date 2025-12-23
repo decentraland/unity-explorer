@@ -19,8 +19,6 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         public delegate UniTask<string> OtpRequestDelegate(CancellationToken ct);
 
-        public void SetVerificationListener(VerificationDelegate? callback);
-
         public void SetOtpRequestListener(OtpRequestDelegate? callback);
     }
 }

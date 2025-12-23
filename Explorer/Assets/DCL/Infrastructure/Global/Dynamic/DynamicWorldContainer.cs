@@ -903,7 +903,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     eventBus,
                     webBrowser,
-                    bootstrapContainer.VerifiedEthereumApi,
+                    bootstrapContainer.EthereumApi,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
                     screenModeController),

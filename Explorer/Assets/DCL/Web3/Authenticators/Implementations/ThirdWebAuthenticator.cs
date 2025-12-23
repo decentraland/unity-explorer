@@ -130,7 +130,7 @@ namespace DCL.Web3.Authenticators
         }
 
         public async UniTask LogoutAsync(CancellationToken ct) =>
-            await ThirdWebManager.Instance.DisconnectWallet();
+            await ThirdWebManager.Instance?.DisconnectWallet();
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
         {
@@ -320,6 +320,11 @@ namespace DCL.Web3.Authenticators
             $"https://{chainId}.rpc.thirdweb.com";
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) { }
+
+        public void CancelCurrentWeb3Operation()
+        {
+            throw new NotImplementedException();
+        }
 
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
             otpRequestCallback = callback;
