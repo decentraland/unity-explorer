@@ -895,7 +895,7 @@ namespace DCL.AuthenticationScreenFlow
 
                         Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                        if (true) //(profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                        if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
                         {
                             IWeb3Identity? identity1 = storedIdentityProvider.Identity;
 
@@ -906,12 +906,6 @@ namespace DCL.AuthenticationScreenFlow
                             await LoadBaseWearablesAsync(ct);
 
                             newUserProfile = BuildDefaultProfile(identity1.Address.ToString(), currentEmail);
-
-                            // Profile? publishedProfile = await selfProfile.UpdateProfileAsync(defaultProfile, ct, updateAvatarInWorld: false);
-                            // profile = publishedProfile ?? throw new ProfileNotFoundException();
-                            // profileNameLabel!.Value = profile.Version == 1 ? profile.Name : "back " + profile.Name;
-                            // newUserProfile.IsDirty = true;
-
                             newUserProfile.HasConnectedWeb3 = true;
 
                             characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
@@ -925,6 +919,9 @@ namespace DCL.AuthenticationScreenFlow
                         {
                             profile.IsDirty = true;
                             profile.HasConnectedWeb3 = true;
+
+                            profileNameLabel!.Value = profile.Version == 1 ? profile.Name : "back " + profile.Name;
+                            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
 
                             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
                             sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
