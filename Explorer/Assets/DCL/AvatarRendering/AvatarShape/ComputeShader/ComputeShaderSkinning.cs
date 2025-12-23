@@ -38,23 +38,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
         }
 
-        private static ComputeSkinningBufferContainer CreateBufferContainer(int vertCount, int skinnedMeshRendererBoneCount)
-        {
-            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
-            //set up the buffers depending on the platform
-
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
-#else
-            return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
-#endif
-        }
-
         private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount)
         {
             Profiler.BeginSample(nameof(SetupComputeShader));
 
-            ComputeSkinningBufferContainer computeSkinningBufferContainer = CreateBufferContainer(vertCount, skinnedMeshRendererBoneCount);
+            ComputeSkinningBufferContainer computeSkinningBufferContainer = ComputeSkinningBufferContainer.New(vertCount, skinnedMeshRendererBoneCount);
 
             computeSkinningBufferContainer.StartWriting();
 
