@@ -1,0 +1,324 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.Gifting.Commands;
+using DCL.Backpack.Gifting.Events;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Backpack.Gifting.Views;
+using DCL.Diagnostics;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Backpack.Gifting.Presenters.Grid
+{
+    public abstract class GiftingGridPresenterBase<TViewModel> : IGiftingGridPresenter<TViewModel>
+        where TViewModel : IGiftableItemViewModel
+    {
+        private const int SEARCH_DEBOUNCE_MS = 500;
+        private const int CURRENT_PAGE_SIZE = 16;
+
+        // Dependencies
+        protected readonly GiftingGridView view;
+        protected readonly SuperScrollGridAdapter<TViewModel> adapter;
+        protected readonly IEventBus eventBus;
+        protected readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
+        protected readonly IAvatarEquippedStatusProvider equippedStatusProvider;
+        protected readonly IPendingTransferService pendingTransferService;
+        protected readonly IWearableStorage wearableStorage;
+        protected readonly IEmoteStorage emoteStorage;
+
+        // State
+        protected readonly Dictionary<string, TViewModel> viewModelsByUrn = new();
+        protected readonly List<string> viewModelUrnOrder = new();
+        protected int currentPage  ;
+        protected int totalCount = int.MaxValue;
+        protected string currentSearch = string.Empty;
+        protected bool isLoading  ;
+        protected bool canLoadNextPage = true;
+        protected int pendingThumbnailLoads  ;
+
+        // Async
+        protected CancellationTokenSource? lifeCts;
+        protected CancellationTokenSource? fetchCts;
+        protected CancellationTokenSource? searchCts;
+        private IDisposable? thumbnailLoadedSubscription;
+        private IDisposable? giftSuccessfulSubscription;
+
+        // Events
+        public event Action<string?>? OnSelectionChanged;
+        public event Action<bool>? OnLoadingStateChanged;
+
+        public int CurrentItemCount => viewModelsByUrn.Count;
+        public int ItemCount => viewModelUrnOrder.Count;
+        public string? SelectedUrn { get; private set; }
+
+        protected GiftingGridPresenterBase(
+            GiftingGridView view,
+            SuperScrollGridAdapter<TViewModel> adapter,
+            IEventBus eventBus,
+            LoadGiftableItemThumbnailCommand loadThumbnailCommand,
+            IAvatarEquippedStatusProvider equippedStatusProvider,
+            IPendingTransferService pendingTransferService,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage)
+        {
+            this.view = view;
+            this.adapter = adapter;
+            this.eventBus = eventBus;
+            this.loadThumbnailCommand = loadThumbnailCommand;
+            this.equippedStatusProvider = equippedStatusProvider;
+            this.pendingTransferService = pendingTransferService;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
+
+            adapter.SetDataProvider(this);
+        }
+
+        public void Activate()
+        {
+            lifeCts = new CancellationTokenSource();
+            thumbnailLoadedSubscription = eventBus.Subscribe<GiftingEvents.ThumbnailLoadedEvent>(OnThumbnailLoaded);
+            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful); 
+            adapter.OnNearEndOfScroll += OnNearEndOfScroll;
+            adapter.OnItemSelected += OnItemSelected;
+
+            ClearData();
+            adapter.RefreshData();
+            RequestNextPageAsync(lifeCts.Token).Forget();
+        }
+
+        private void OnGiftSuccessful(GiftingEvents.OnSuccessfulGift obj)
+        {
+        }
+
+        public void Deactivate()
+        {
+            thumbnailLoadedSubscription?.Dispose();
+            giftSuccessfulSubscription?.Dispose();
+            adapter.OnNearEndOfScroll -= OnNearEndOfScroll;
+            adapter.OnItemSelected -= OnItemSelected;
+
+            searchCts.SafeCancelAndDispose();
+            fetchCts.SafeCancelAndDispose();
+            lifeCts.SafeCancelAndDispose();
+
+            HardClear();
+        }
+
+        public void SetSearchText(string searchText)
+        {
+            searchText ??= string.Empty;
+            if (currentSearch == searchText) return;
+            currentSearch = searchText;
+
+            searchCts = searchCts.SafeRestartLinked(lifeCts!.Token);
+            DebouncedSearchAsync(searchCts.Token).Forget();
+        }
+
+        private async UniTaskVoid DebouncedSearchAsync(CancellationToken ct)
+        {
+            try
+            {
+                await UniTask.Delay(SEARCH_DEBOUNCE_MS, cancellationToken: ct);
+                if (ct.IsCancellationRequested) return;
+
+                fetchCts.SafeCancelAndDispose();
+                ClearData();
+                adapter.RefreshData();
+
+                await RequestNextPageAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                /* Expected */
+            }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING)); }
+        }
+
+        private async UniTask RequestNextPageAsync(CancellationToken ct)
+        {
+            if (isLoading) return;
+
+            isLoading = true;
+            canLoadNextPage = false;
+            currentPage++;
+
+            // Create a token specific to this fetch operation.
+            // It is linked to 'lifeCts' so it cancels if the view closes,
+            // but can also be canceled independently if a new search starts.
+            fetchCts = fetchCts.SafeRestartLinked(ct);
+            
+            var localCt = fetchCts.Token;
+
+            try
+            {
+                OnLoadingStateChanged?.Invoke(true);
+
+                (var items, int total) =
+                    await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
+
+                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry,
+                    emoteStorage.AllOwnedNftRegistry);
+                
+                totalCount = total;
+
+                foreach (var item in items)
+                {
+                    string urn = item.Urn;
+                    if (viewModelsByUrn.ContainsKey(urn)) continue;
+
+                    int totalOwned = GetItemAmount(item);
+                    int pendingCount = pendingTransferService.GetPendingCount(urn);
+                    int displayAmount = totalOwned - pendingCount;
+
+                    if (displayAmount <= 0) continue;
+
+                    bool isEquipped = equippedStatusProvider.IsEquipped(urn);
+                    bool isGiftable = !isEquipped || displayAmount > 1;
+
+                    viewModelUrnOrder.Add(urn);
+                    viewModelsByUrn[urn] = CreateViewModel(item, displayAmount, isEquipped, isGiftable);
+                }
+                
+                UpdateEmptyState(currentPage == 1 && viewModelUrnOrder.Count == 0);
+
+                await UniTask.Yield(PlayerLoopTiming.Update, localCt);
+                adapter.RefreshData();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING)); }
+            finally
+            {
+                isLoading = false;
+                OnLoadingStateChanged?.Invoke(false);
+                if (!localCt.IsCancellationRequested && pendingThumbnailLoads == 0)
+                    OnAllLoadsFinished();
+            }
+        }
+
+        private void OnNearEndOfScroll()
+        {
+            if (!canLoadNextPage || isLoading) return;
+
+            if (currentPage * CURRENT_PAGE_SIZE < totalCount)
+                RequestNextPageAsync(lifeCts!.Token).Forget();
+        }
+
+        private void OnItemSelected(string urn)
+        {
+            if (viewModelsByUrn.TryGetValue(urn, out var vm) && !vm.IsGiftable) return;
+            SelectedUrn = SelectedUrn == urn ? null : urn;
+            OnSelectionChanged?.Invoke(SelectedUrn);
+            adapter.RefreshAllShownItem();
+        }
+
+        public void RequestThumbnailLoad(int itemIndex)
+        {
+            string urn = viewModelUrnOrder[itemIndex];
+            var vm = viewModelsByUrn[urn];
+            if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
+
+            pendingThumbnailLoads++;
+            
+            viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
+
+            loadThumbnailCommand
+                .ExecuteAsync(vm.Giftable, urn, lifeCts!.Token)
+                .Forget();
+        }
+
+        private void OnThumbnailLoaded(GiftingEvents.ThumbnailLoadedEvent evt)
+        {
+            if (viewModelsByUrn.TryGetValue(evt.Urn, out var vm))
+            {
+                var final = evt.Success ? ThumbnailState.Loaded : ThumbnailState.Error;
+                viewModelsByUrn[evt.Urn] = UpdateViewModelState(vm, final, evt.Sprite);
+
+                int index = viewModelUrnOrder.IndexOf(evt.Urn);
+                if (index >= 0) adapter.RefreshItem(index);
+
+                if (pendingThumbnailLoads > 0) pendingThumbnailLoads--;
+                if (pendingThumbnailLoads == 0) OnAllLoadsFinished();
+            }
+        }
+
+        private void OnAllLoadsFinished()
+        {
+            if (lifeCts?.IsCancellationRequested == true) return;
+
+            canLoadNextPage = true;
+
+            if (adapter.IsNearEnd && !isLoading && currentPage * CURRENT_PAGE_SIZE < totalCount)
+                RequestNextPageAsync(lifeCts!.Token).Forget();
+        }
+
+        private void ClearData()
+        {
+            currentPage = 0;
+            totalCount = int.MaxValue;
+            SelectedUrn = null;
+            isLoading = false;
+            viewModelsByUrn.Clear();
+            viewModelUrnOrder.Clear();
+            OnSelectionChanged?.Invoke(null);
+            pendingThumbnailLoads = 0;
+            canLoadNextPage = true;
+
+            // FIX: Ensure "No Results" is hidden when data is cleared/reset
+            view.NoResultsContainer.SetActive(false);
+            view.RegularResultsContainer.SetActive(true);
+        }
+
+        private void HardClear()
+        {
+            ClearData();
+            adapter.RefreshData();
+            adapter.RefreshAllShownItem();
+        }
+
+        // Interface Implementation
+        public TViewModel GetViewModel(int itemIndex)
+        {
+            return viewModelsByUrn[viewModelUrnOrder[itemIndex]];
+        }
+
+        public string? GetItemNameByUrn(string urn)
+        {
+            return viewModelsByUrn.TryGetValue(urn, out var vm) ? vm.DisplayName : null;
+        }
+
+        public Sprite? GetThumbnailByUrn(string urn)
+        {
+            return viewModelsByUrn.TryGetValue(urn, out var vm) ? vm.Thumbnail : null;
+        }
+
+        public void ForceSearch(string? searchText)
+        {
+            SetSearchText(searchText ?? "");
+        }
+
+        public RectTransform GetRectTransform()
+        {
+            return view.GetComponent<RectTransform>();
+        }
+
+        public CanvasGroup GetCanvasGroup()
+        {
+            return view.GetComponent<CanvasGroup>();
+        }
+
+        // Abstract Requirements
+        protected abstract UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
+        protected abstract TViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable);
+        protected abstract int GetItemAmount(GiftableAvatarAttachment item);
+        protected abstract void UpdateEmptyState(bool isEmpty);
+        protected abstract TViewModel UpdateViewModelState(TViewModel vm, ThumbnailState state, Sprite? sprite);
+        public abstract bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);
+    }
+}

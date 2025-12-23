@@ -146,6 +146,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongJump = animation.States.IsLongJump,
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,
+                    // NOTE we are NOT setting 'is stunned' because it's already sent as part of the movement message itself
 
                     // Just for testing purposes. We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
                     SlideBlendValue = animation.States.SlideBlendValue,
