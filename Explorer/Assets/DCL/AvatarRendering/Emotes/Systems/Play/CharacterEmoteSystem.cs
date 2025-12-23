@@ -108,6 +108,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesOnMovePlayerToInvokedQuery(World);
+            CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementQuery(World);
             ConsumeStopEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
@@ -174,6 +175,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                 movePlayerTo.FrameCount == waitingEmote.FrameCount)
                 return;
 
+            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+        }
+
+        /// <summary>
+        /// Stops emote playback when smooth movement with duration is initiated.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerMoveToWithDurationIntent))]
+        [None(typeof(CharacterEmoteIntent))]
+        private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
+        {
             StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
         }
 
