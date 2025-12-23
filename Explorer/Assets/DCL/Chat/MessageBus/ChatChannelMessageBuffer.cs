@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,12 @@ namespace DCL.Chat.MessageBus
         private int messagesReleasedThisFrame;
         private int framesSinceLastRelease;
 
+        private volatile bool isLoopRunning;
+        private CancellationToken? externalCancellationToken;
+        private readonly object loopLock = new object();
+        private long cachedCurrentSecond = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+        private DateTime lastTimeCheck = DateTime.UtcNow;
+
         public event Action<ChatMessage>? MessageReleased;
 
         public bool HasCapacity() =>
@@ -37,13 +44,33 @@ namespace DCL.Chat.MessageBus
                 return false;
 
             messageQueue.Enqueue(message);
+
+            if (!isLoopRunning)
+            {
+                lock (loopLock)
+                {
+                    if (!isLoopRunning && externalCancellationToken?.IsCancellationRequested != true)
+                        RestartLoop();
+                }
+            }
+
             return true;
         }
 
         public void Start(CancellationToken cancellationToken)
         {
             LoadConfigurationFromFeatureFlag();
-            ReleaseBufferedMessagesAsync(cancellationToken).Forget();
+            externalCancellationToken = cancellationToken;
+            RestartLoop();
+        }
+
+        private void RestartLoop()
+        {
+            if (externalCancellationToken == null)
+                return;
+
+            isLoopRunning = true;
+            ReleaseBufferedMessagesAsync(externalCancellationToken.Value).Forget();
         }
 
         private void LoadConfigurationFromFeatureFlag()
@@ -54,7 +81,7 @@ namespace DCL.Chat.MessageBus
                 maxMessagesPerSecond = value.max_messages_per_second > 0 ? value.max_messages_per_second : DEFAULT_MAX_MESSAGES_PER_SECOND;
                 maxMessagesPerFrame = value.max_messages_per_frame > 0 ? value.max_messages_per_frame : DEFAULT_MAX_MESSAGES_PER_FRAME;
                 framesBetweenReleases = value.frames_between_releases > 0 ? value.frames_between_releases : DEFAULT_FRAMES_BETWEEN_RELEASES;
-                
+
                 int newBufferSize = value.max_buffer_size > 0 ? value.max_buffer_size : DEFAULT_MAX_BUFFER_SIZE;
                 if (newBufferSize != maxBufferSize)
                 {
@@ -82,46 +109,88 @@ namespace DCL.Chat.MessageBus
         {
             while (!ct.IsCancellationRequested)
             {
-                await UniTask.Yield(PlayerLoopTiming.Update);
+                try
+                {
+                    if (messageQueue.Count == 0)
+                    {
+                        isLoopRunning = false;
+                        break;
+                    }
 
-                framesSinceLastRelease++;
+                    await UniTask.Yield(PlayerLoopTiming.Update);
 
-                if (TryRelease(out ChatMessage message))
-                    MessageReleased?.Invoke(message);
+                    messagesReleasedThisFrame = 0;
+                    framesSinceLastRelease++;
 
-                messagesReleasedThisFrame = 0;
+                    while (CanReleaseMessage())
+                    {
+                        try
+                        {
+                            messagesReleasedThisSecond++;
+                            messagesReleasedThisFrame++;
+                            framesSinceLastRelease = 0;
+                            var message = messageQueue.Dequeue();
+                            MessageReleased?.Invoke(message);
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    isLoopRunning = false;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
+                    isLoopRunning = false;
+                    break;
+                }
             }
+
+            isLoopRunning = false;
         }
 
-        private bool TryRelease(out ChatMessage message)
+        private bool CanReleaseMessage()
         {
-            message = default(ChatMessage);
-
             if (framesSinceLastRelease < framesBetweenReleases)
                 return false;
 
             if (messageQueue.Count == 0)
                 return false;
 
-            long nowSecond = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
+            if (messagesReleasedThisFrame >= maxMessagesPerFrame)
+                return false;
+
+            long nowSecond = GetCurrentSecond();
 
             if (currentSecond != nowSecond)
             {
                 currentSecond = nowSecond;
                 messagesReleasedThisSecond = 0;
             }
+            else
+            {
+                if (messagesReleasedThisSecond >= maxMessagesPerSecond)
+                    return false;
+            }
 
-            if (messagesReleasedThisSecond >= maxMessagesPerSecond)
-                return false;
 
-            if (messagesReleasedThisFrame >= maxMessagesPerFrame)
-                return false;
-
-            messagesReleasedThisSecond++;
-            messagesReleasedThisFrame++;
-            framesSinceLastRelease = 0;
-            message = messageQueue.Dequeue();
             return true;
+        }
+
+        private long GetCurrentSecond()
+        {
+            DateTime now = DateTime.UtcNow;
+            if ((now - lastTimeCheck).TotalSeconds >= 1.0)
+            {
+                cachedCurrentSecond = now.Ticks / TimeSpan.TicksPerSecond;
+                lastTimeCheck = now;
+            }
+            return cachedCurrentSecond;
         }
 
         [Serializable]
