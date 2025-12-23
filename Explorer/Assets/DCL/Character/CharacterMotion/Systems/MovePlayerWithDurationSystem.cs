@@ -24,7 +24,7 @@ namespace DCL.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     public partial class MovePlayerWithDurationSystem : BaseUnityLoopSystem
     {
-        private MovePlayerWithDurationSystem(World world) : base(world) { }
+        internal MovePlayerWithDurationSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
