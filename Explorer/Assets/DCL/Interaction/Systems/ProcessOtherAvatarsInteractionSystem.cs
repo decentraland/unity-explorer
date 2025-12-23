@@ -36,7 +36,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string OPTIONS_TOOLTIP = "Interact";
+        private const string OPTIONS_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
