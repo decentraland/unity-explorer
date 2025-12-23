@@ -10,6 +10,7 @@ using ECS.LifeCycle.Components;
 using Unity.Collections;
 using Unity.Mathematics;
 using System;
+using RichTypes;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
@@ -37,11 +38,17 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(AvatarShapeComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            ref AvatarCustomSkinningComponent computeShaderSkinning)
+        private void Execute(
+            ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+            ref AvatarCustomSkinningComponent computeShaderSkinning
+        )
         {
             if (avatarTransformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex))
-                skinningStrategy.ComputeSkinning(currentResult, validIndex, ref computeShaderSkinning);
+            { 
+                Result result = computeShaderSkinning.ComputeSkinning(currentResult, validIndex);
+                if (result.Success == false)
+                    ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
+            }
             else
                 ReportHub.LogException(new Exception("Attempt to process an invalid avatar"), ReportCategory.AVATAR);
         }
