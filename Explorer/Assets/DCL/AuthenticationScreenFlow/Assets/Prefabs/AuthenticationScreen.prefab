@@ -6286,7 +6286,7 @@ MonoBehaviour:
   <CancelAuthenticationProcess>k__BackingField: {fileID: 7578292249645083079}
   <VerificationOTP>k__BackingField: {fileID: 5208512819119278071}
   <VerificationOTPAnimator>k__BackingField: {fileID: 6848179078515068325}
-  <PasswordInputField>k__BackingField: {fileID: 9171980104786074529}
+  <OTPInputField>k__BackingField: {fileID: 2581784068079769924}
   <RegisterButton>k__BackingField: {fileID: 1048887969023072498}
   <CancelAuthenticationProcessOTP>k__BackingField: {fileID: 6896499953490516536}
   <FinalizeContainer>k__BackingField: {fileID: 3916047686447302749}
@@ -11007,22 +11007,22 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3123366505080492411, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
   m_PrefabInstance: {fileID: 3297644571991101588}
   m_PrefabAsset: {fileID: 0}
---- !u!224 &8073672285170780838 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 6757902406052420146, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
-  m_PrefabInstance: {fileID: 3297644571991101588}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &9171980104786074529 stripped
+--- !u!114 &2581784068079769924 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5947844483155430197, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
+  m_CorrespondingSourceObject: {fileID: 1015492079078214096, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
   m_PrefabInstance: {fileID: 3297644571991101588}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 676ff52dfc83a75449e30e939bedc04b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TMP_InputField
+  m_EditorClassIdentifier: UI::OtpInputBox
+--- !u!224 &8073672285170780838 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6757902406052420146, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
+  m_PrefabInstance: {fileID: 3297644571991101588}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4074324823791093050
 PrefabInstance:
   m_ObjectHideFlags: 0

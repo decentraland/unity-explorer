@@ -205,7 +205,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // ThirdWeb buttons
             viewInstance.LoginWithOtpButton.onClick.AddListener(StartOTPLoginFlowUntilEnd);
-            viewInstance.RegisterButton.onClick.AddListener(SendRegistration);
+            viewInstance.OTPInputField.OnCodeComplete += SendRegistration;
             viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
 
             viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
@@ -488,7 +488,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
         {
-            viewInstance!.PasswordInputField.gameObject.SetActive(false);
+            viewInstance!.OTPInputField.gameObject.SetActive(false);
             viewInstance!.RegisterButton.gameObject.SetActive(false);
             viewInstance!.VerificationDescriptionsLabel.gameObject.SetActive(true);
             viewInstance!.VerificationCodeLabel.gameObject.SetActive(true);
@@ -839,7 +839,7 @@ namespace DCL.AuthenticationScreenFlow
                     string email = viewInstance!.EmailInputField.text;
                     currentEmail = email;
 
-                    viewInstance!.PasswordInputField.gameObject.SetActive(true);
+                    viewInstance!.OTPInputField.gameObject.SetActive(true);
                     viewInstance!.RegisterButton.gameObject.SetActive(true);
                     viewInstance!.VerificationDescriptionsLabel.gameObject.SetActive(false);
                     viewInstance!.VerificationCodeLabel.gameObject.SetActive(false);
@@ -894,8 +894,9 @@ namespace DCL.AuthenticationScreenFlow
                         sentryTransactionManager.StartSpan(profileFetchSpan);
 
                         Profile? profile = await selfProfile.ProfileAsync(ct);
+                        bool isNewUser = profile == null && ThirdWebManager.Instance.ActiveWallet != null;
 
-                        if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
+                        if (isNewUser)
                         {
                             IWeb3Identity? identity1 = storedIdentityProvider.Identity;
 
@@ -977,11 +978,12 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void SendRegistration()
+        private void SendRegistration(string otp)
         {
             // If we're waiting for OTP input, complete the task with the entered code
             if (otpCompletionSource == null) return;
-            string? otp = viewInstance!.PasswordInputField.text;
+
+            // string? otp = viewInstance!.OTPInputField.Code;
             otpCompletionSource.TrySetResult(otp);
         }
 

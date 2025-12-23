@@ -71,7 +71,7 @@ namespace DCL.AuthenticationScreenFlow
         public Animator VerificationOTPAnimator { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_InputField PasswordInputField { get; private set; } = null!;
+        public OtpInputBox OTPInputField { get; private set; } = null!;
 
         [field: SerializeField]
         public Button RegisterButton { get; private set; } = null!;
