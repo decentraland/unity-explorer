@@ -72,8 +72,8 @@ namespace DCL.UI
                                                                                          verticalLayoutPadding: SUBMENU_VERTICAL_PADDINGS),
                                                                         anchorPadding: SUBMENU_ANCHOR_PADDING,
                                                                         asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
-                                                                        asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync);
-            GenericContextMenuElement newButton = new GenericContextMenuElement(newButtonSettings);
+                asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync);
+            var newButton = new GenericContextMenuElement(newButtonSettings);
             contextMenu.AddControl(newButton);
             return newButton;
         }

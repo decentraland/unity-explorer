@@ -15,6 +15,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             core.SetVerificationListener(callback);
 
+        public void CancelCurrentWeb3Operation()
+        {
+            core.CancelCurrentWeb3Operation();
+        }
+
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
             core.SetOtpRequestListener(callback);
     }

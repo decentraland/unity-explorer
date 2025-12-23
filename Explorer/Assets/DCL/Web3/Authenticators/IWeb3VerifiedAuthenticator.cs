@@ -11,6 +11,9 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         public delegate void VerificationDelegate(int code, DateTime expiration, string requestID);
 
+        void SetVerificationListener(VerificationDelegate? callback);
+
+        void CancelCurrentWeb3Operation();
         /// <summary>
         ///     Callback for requesting OTP input from user (ThirdWeb flow - pull-based)
         /// </summary>

@@ -17,6 +17,11 @@ namespace DCL.Web3.Authenticators
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             authenticator.SetVerificationListener(callback);
 
+        public void CancelCurrentWeb3Operation()
+        {
+            authenticator.CancelCurrentWeb3Operation();
+        }
+
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
             authenticator.SetOtpRequestListener(callback);
     }

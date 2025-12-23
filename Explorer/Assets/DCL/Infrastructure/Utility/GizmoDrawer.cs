@@ -1,12 +1,10 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 
 namespace DCL.Utilities
 {
     /// <summary>
-    ///
     /// </summary>
     public class GizmoDrawer : MonoBehaviour
     {
@@ -41,19 +39,25 @@ namespace DCL.Utilities
         }
 
         private static GizmoDrawer instance = null!;
-        private Dictionary<int, DrawWireCubeParams> drawWireCubeParams = new (128);
-        private Dictionary<int, DrawWireSphereParams> drawWireSphereParams = new (128);
+        private readonly Dictionary<int, DrawWireCubeParams> drawWireCubeParams = new (128);
+        private readonly Dictionary<int, DrawWireSphereParams> drawWireSphereParams = new (128);
 
         [Conditional("UNITY_EDITOR")]
         public void DrawWireCube(int id, Vector3 center, Vector3 size, Color color)
         {
-            drawWireCubeParams[id] = new DrawWireCubeParams(){ Center = center, Size = size, Color = color};
+            drawWireCubeParams[id] = new DrawWireCubeParams
+            {
+                Center = center, Size = size, Color = color
+            };
         }
 
         [Conditional("UNITY_EDITOR")]
         public void DrawWireSphere(int id, Vector3 center, float radius, Color color)
         {
-            drawWireSphereParams[id] = new DrawWireSphereParams(){ Center = center, Radius = radius, Color = color};
+            drawWireSphereParams[id] = new DrawWireSphereParams
+            {
+                Center = center, Radius = radius, Color = color
+            };
         }
 
         [Conditional("UNITY_EDITOR")]
@@ -79,13 +83,13 @@ namespace DCL.Utilities
 
         private void OnDrawGizmos()
         {
-            foreach (KeyValuePair<int,DrawWireCubeParams> pair in drawWireCubeParams)
+            foreach (var pair in drawWireCubeParams)
             {
                 Gizmos.color = pair.Value.Color;
                 Gizmos.DrawWireCube(pair.Value.Center, pair.Value.Size);
             }
 
-            foreach (KeyValuePair<int,DrawWireSphereParams> pair in drawWireSphereParams)
+            foreach (var pair in drawWireSphereParams)
             {
                 Gizmos.color = pair.Value.Color;
                 Gizmos.DrawWireSphere(pair.Value.Center, pair.Value.Radius);

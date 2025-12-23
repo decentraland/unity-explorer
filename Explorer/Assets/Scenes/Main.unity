@@ -345,8 +345,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 234607242}
-  - component: {fileID: 234607246}
-  - component: {fileID: 234607247}
   - component: {fileID: 234607245}
   m_Layer: 0
   m_Name: EntryPoint
@@ -363,8 +361,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 234607240}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.020391682, y: 0.022493497, z: -0.00046073523, w: 0.9995389}
+  m_LocalPosition: {x: 521.83405, y: 221.78735, z: -55.4384}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -383,14 +381,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 5
+    initialRealm: 0
     targetScene: {x: 0, y: 0}
-    EditorSceneStartPosition: 0
+    EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
-      - {x: 83, y: -6}
-    targetWorld: flutterecho.dcl.eth
+      - {x: 145, y: 60}
+    targetWorld: yemel.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -524,31 +522,6 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
---- !u!114 &234607246
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 234607240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb4329e3bb4442b89d44bbaab7bd4942, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DCL.Plugins::DCL.Web3.Authenticators.TestWeb3MonoBeh
---- !u!114 &234607247
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 234607240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1141db6910ed4fbc9b1b1ac9faab3d49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DCL.Plugins::DCL.Web3.Authenticators.TestOnChainWeb3
-  selectedNetwork: 1
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -817,52 +790,6 @@ MonoBehaviour:
   sceneCoordinates: {x: 0, y: 0}
   entityId: 0
   message: 
---- !u!1 &2075206876
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2075206878}
-  - component: {fileID: 2075206877}
-  m_Layer: 0
-  m_Name: ThirdWebManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2075206877
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075206876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd5e183e72feffa4c996a5acfb3e961a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: ThirdWebUnity::ThirdWebUnity.ThirdWebManager
-  <ClientId>k__BackingField: e1adce863fe287bb6cf0e3fd90bdb77f
-  <BundleId>k__BackingField: com.Decentraland.Explorer
---- !u!4 &2075206878
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075206876}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 290.70978, y: 495.16507, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2104274356
 GameObject:
   m_ObjectHideFlags: 0
@@ -908,4 +835,3 @@ SceneRoots:
   - {fileID: 1929393544}
   - {fileID: 2104274357}
   - {fileID: 108934498}
-  - {fileID: 2075206878}

@@ -113,6 +113,8 @@ namespace DCL.AuthenticationScreenFlow
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;
 
+        public event Action DiscordButtonClicked;
+
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -732,8 +734,11 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
-        private void OpenDiscord() =>
+        private void OpenDiscord()
+        {
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+            DiscordButtonClicked?.Invoke();
+        }
 
         private void ExitApplication()
         {

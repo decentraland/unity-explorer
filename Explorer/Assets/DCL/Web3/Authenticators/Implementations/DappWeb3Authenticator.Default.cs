@@ -33,9 +33,7 @@ namespace DCL.Web3.Authenticators
                         new[]
                         {
                             "eth_getBalance",
-                            "eth_call",
-                            "eth_blockNumber",
-                            "eth_signTypedData_v4",
+                            "eth_call", "eth_blockNumber", "eth_signTypedData_v4", "eth_sendTransaction"
                         }
                     ),
                     new HashSet<string>
@@ -52,8 +50,7 @@ namespace DCL.Web3.Authenticators
                         "web3_sha3",
                         "web3_clientVersion",
                         "eth_getTransactionCount",
-                        "eth_getBlockByNumber",
-                        "eth_getCode",
+                        "eth_getBlockByNumber", "eth_getCode"
                     },
                     environment,
                     new InvalidAuthCodeVerificationFeatureFlag()
@@ -82,6 +79,11 @@ namespace DCL.Web3.Authenticators
 
             public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
                 originAuth.SetOtpRequestListener(callback);
+
+            public void CancelCurrentWeb3Operation()
+            {
+                originAuth.CancelCurrentWeb3Operation();
+            }
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {
