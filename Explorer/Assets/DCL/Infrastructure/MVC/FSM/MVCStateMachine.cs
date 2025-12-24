@@ -12,29 +12,29 @@ namespace MVC
     /// <typeparam name="TBaseState">Base type for all states in this machine</typeparam>
     public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IExitableState
     {
-        public event Action? OnStateChanged;
+        public event Action<TBaseState>? OnStateChanged;
 
         private readonly Dictionary<Type, TBaseState> states = new ();
-
         private readonly CancellationTokenSource disposalCts = new ();
 
         private TBaseState? previousState;
-
         public TBaseState? CurrentState { get; private set; }
 
         public CancellationToken DisposalCt => disposalCts.Token;
 
-        public MVCStateMachine() { }
-
-        public MVCStateMachine(params TBaseState[] states)
-        {
-            AddStates(states);
-        }
-
-        public void AddStates(params TBaseState[] states)
+        public MVCStateMachine<TBaseState> AddStates(params TBaseState[] states)
         {
             foreach (TBaseState state in states)
-                this.states[state.GetType()] = state;
+            {
+                if (!this.states.TryAdd(state.GetType(), state))
+                {
+                    var error = $"Trying to add state that already exists in the machine - {state.GetType()}. Machine cannot have duplicate states.";
+                    ReportHub.LogError(ReportCategory.MVC, error);
+                    throw new Exception(error);
+                }
+            }
+
+            return this;
         }
 
         public void Dispose()
@@ -42,16 +42,20 @@ namespace MVC
             disposalCts.SafeCancelAndDispose();
         }
 
-        public void Enter<TState>() where TState: TBaseState, IState
+        public MVCStateMachine<TBaseState> Enter<TState>() where TState: TBaseState, IState
         {
             TState state = ChangeState<TState>();
             state.Enter();
+            OnStateChanged?.Invoke(state);
+            return this;
         }
 
-        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
+        public MVCStateMachine<TBaseState> Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
         {
             TState state = ChangeState<TState>();
             state.Enter(payload);
+            OnStateChanged?.Invoke(state);
+            return this;
         }
 
         private TState ChangeState<TState>() where TState: TBaseState
@@ -73,7 +77,6 @@ namespace MVC
 
             previousState = CurrentState;
             CurrentState = newState;
-            OnStateChanged?.Invoke();
 
             return (TState)newState;
         }
@@ -81,17 +84,23 @@ namespace MVC
         /// <summary>
         ///     Reverts to the previous state. Works only for IState (without payload).
         /// </summary>
-        public void PopState()
+        public bool TryPopState()
         {
+            // Ensure there is a previous state to go back to and we can Enter it without payload (IState).
             if (previousState is not IState prevState)
-                return;
+            {
+                ReportHub.LogWarning(ReportCategory.MVC, $"Can't pop the state. Previous state is not of type {nameof(IState)}!");
+                return false;
+            }
 
             CurrentState?.Exit();
             CurrentState = previousState;
             previousState = null;
 
             prevState.Enter();
-            OnStateChanged?.Invoke();
+            OnStateChanged?.Invoke(CurrentState);
+
+            return true;
         }
     }
 }

@@ -31,17 +31,16 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine<ChatState>();
-            fsm.AddStates(
-                new InitChatState(),
-                new DefaultChatState(fsm, mediator),
-                new FocusedChatState(fsm, mediator, inputBlocker),
-                new MembersChatState(fsm, mediator),
-                new MinimizedChatState(fsm, mediator),
-                new HiddenChatState(mediator)
-            );
-
-            fsm.Enter<InitChatState>();
+            fsm = new MVCStateMachine<ChatState>()
+                 .AddStates(
+                      new InitChatState(),
+                      new DefaultChatState(fsm, mediator),
+                      new FocusedChatState(fsm, mediator, inputBlocker),
+                      new MembersChatState(fsm, mediator),
+                      new MinimizedChatState(fsm, mediator),
+                      new HiddenChatState(mediator)
+                  )
+                 .Enter<InitChatState>();
 
             fsm.OnStateChanged += PropagateStateChange;
 
@@ -69,10 +68,10 @@ namespace DCL.Chat.ChatStates
             scope.Dispose();
         }
 
-        private void PropagateStateChange() =>
+        private void PropagateStateChange(ChatState currentState) =>
             eventBus.Publish(new ChatEvents.ChatStateChangedEvent
             {
-                CurrentState = fsm.CurrentState!,
+                CurrentState = currentState,
             });
 
         public void OnViewShow()
@@ -129,7 +128,7 @@ namespace DCL.Chat.ChatStates
             else
             {
                 // fsm.Enter<MinimizedChatState>();
-                fsm.PopState();
+                fsm.TryPopState();
             }
         }
 
@@ -143,7 +142,7 @@ namespace DCL.Chat.ChatStates
 
         public void PopState()
         {
-            fsm.PopState();
+            fsm.TryPopState();
         }
 
         /// <summary>
