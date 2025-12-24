@@ -5,7 +5,6 @@ TagManager:
   serializedVersion: 3
   tags:
   - LongRoad
-  - DebugSocialEmoteInteractionsView
   layers:
   - Default
   - TransparentFX

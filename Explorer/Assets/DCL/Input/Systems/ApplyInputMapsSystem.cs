@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Input.Component;
 using ECS.Abstract;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -74,6 +73,7 @@ namespace DCL.Input.Systems
         private static void SetActionMapEnabled(bool enabled, InputActionMap map)
         {
             if (map.enabled == enabled) return;
+
             if (enabled) map.Enable();
             else map.Disable();
         }
