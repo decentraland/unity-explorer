@@ -16,21 +16,25 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
+using Global.AppArgs;
 using DCL.Utilities;
-using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Prefs;
+using DCL.Utility;
+using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+
 #if UNITY_EDITOR
+using UnityEditor;
 #endif
 
 namespace DCL.AuthenticationScreenFlow
