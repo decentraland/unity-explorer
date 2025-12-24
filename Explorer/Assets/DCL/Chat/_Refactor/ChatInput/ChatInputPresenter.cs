@@ -40,18 +40,22 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
-                new EmojiMapping(view.emojiContainer.emojiPanelConfiguration));
-
+            var context = new ChatInputStateContext();
             fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(
                 context,
                 states: new ChatInputState[]
                 {
                     new InitializingChatInputState(),
-                    new HiddenChatInputState(),
-                    new BlockedChatInputState(chatConfig, currentChannelService),
-                    new UnfocusedChatInputState(),
-                    new TypingEnabledChatInputState(chatEventBus),
+                    new HiddenChatInputState(view),
+                    new BlockedChatInputState(view, eventBus, chatConfig, currentChannelService),
+                    new UnfocusedChatInputState(view, eventBus),
+                    new TypingEnabledChatInputState(view,
+                        chatEventBus,
+                        sendMessageCommand,
+                        new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
+                        profileRepositoryWrapper,
+                        getParticipantProfilesCommand
+                    ),
                 }
             );
 

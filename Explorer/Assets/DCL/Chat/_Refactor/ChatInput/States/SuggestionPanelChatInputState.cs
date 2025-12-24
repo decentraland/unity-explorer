@@ -1,8 +1,10 @@
 ﻿using DCL.Audio;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.CustomInputField;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -14,6 +16,10 @@ namespace DCL.Chat.ChatInput
 {
     public class SuggestionPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
     {
+        private readonly ChatInputView view;
+        private readonly EmojiMapping emojiMapping;
+        private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
         private static readonly Regex PROFILE_PATTERN_REGEX = new (@"(?:^|\s)@([A-Za-z0-9]{1,15})(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex PRE_MATCH_PATTERN_REGEX = new (@"(?<=^|\s)([@:]\S+)$", RegexOptions.Compiled);
@@ -30,18 +36,26 @@ namespace DCL.Chat.ChatInput
         private int wordMatchIndex;
         private Match lastMatch = Match.Empty;
 
-        public SuggestionPanelChatInputState(ChatInputStateContext context) : base(context)
+        public SuggestionPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            ChatInputStateContext context) : base(context)
         {
-            suggestionPanelController = new InputSuggestionPanelController(context.ChatInputView.suggestionPanel);
-            clickDetectionHandler = new ChatClickDetectionHandler(context.ChatInputView.suggestionPanel.transform);
+            this.view = view;
+            this.emojiMapping = emojiMapping;
+            this.getParticipantProfilesCommand = getParticipantProfilesCommand;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+
+            suggestionPanelController = new InputSuggestionPanelController(view.suggestionPanel);
+            clickDetectionHandler = new ChatClickDetectionHandler(view.suggestionPanel.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;
             clickDetectionHandler.Pause();
 
-            inputField = context.ChatInputView.inputField;
+            inputField = view.inputField;
 
-            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiMapping.NameMapping.Count);
+            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
 
-            foreach (KeyValuePair<string, EmojiData> pair in context.EmojiMapping.NameMapping)
+            foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
         }
 
@@ -86,16 +100,16 @@ namespace DCL.Chat.ChatInput
             {
                 if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.emojiContainer.addEmojiAudio);
                 int replaceAmount = lastMatch.Groups[1].Length;
                 int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 
                 inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
-                context.ChatInputView.RefreshCharacterCount();
+                view.RefreshCharacterCount();
             }
 
             // TODO It's here because the input field needs to be focused again after losing focus
-            context.ChatInputView.SelectInputField();
+            view.SelectInputField();
         }
 
         protected override void Activate(ControllerNoData input)
@@ -115,7 +129,7 @@ namespace DCL.Chat.ChatInput
 
         private void UpdateProfileNameMap()
         {
-            context.GetParticipantProfilesCommand.Execute(participantProfiles);
+            getParticipantProfilesCommand.Execute(participantProfiles);
 
             List<KeyValuePair<string, ProfileInputSuggestionData>>? profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
             profileSuggestions.AddRange(profileSuggestionsDictionary);
@@ -140,9 +154,9 @@ namespace DCL.Chat.ChatInput
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
                     }
-                    else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper)); }
+                    else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profileRepositoryWrapper)); }
                 }
             }
         }

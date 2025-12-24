@@ -14,19 +14,19 @@ namespace DCL.Chat.ChatInput
         private readonly CustomInputField inputField;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        public EmojiPanelChatInputState(ChatInputStateContext context) : base(context)
+        public EmojiPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping, ChatInputStateContext context) : base(context)
         {
-            emojiContainer = context.ChatInputView.emojiContainer;
+            emojiContainer = view.emojiContainer;
 
             emojiPanelPresenter = new EmojiPanelPresenter(
                 emojiContainer.emojiPanel,
                 emojiContainer.emojiPanelConfiguration,
-                context.EmojiMapping,
+                emojiMapping,
                 emojiContainer.emojiSectionViewPrefab,
                 emojiContainer.emojiButtonPrefab
             );
 
-            inputField = context.ChatInputView.inputField;
+            inputField = view.inputField;
 
             clickDetectionHandler = new ChatClickDetectionHandler(emojiContainer.emojiPanel.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;

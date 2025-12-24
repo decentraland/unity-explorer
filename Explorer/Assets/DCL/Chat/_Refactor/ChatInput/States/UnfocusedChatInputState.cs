@@ -1,31 +1,42 @@
-﻿using UnityEngine.EventSystems;
+﻿using System;
+using UnityEngine.EventSystems;
+using Utility;
 
 namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {
+        private readonly ChatInputView view;
+        private readonly IEventBus eventBus;
+
+        public UnfocusedChatInputState(ChatInputView view, IEventBus eventBus)
+        {
+            this.view = view;
+            this.eventBus = eventBus;
+        }
+
         public override void Enter()
         {
-            context.ChatInputView.Show();
-            context.ChatInputView.SetDefault();
-            context.ChatInputView.RefreshHeight();
-            
+            view.Show();
+            view.SetDefault();
+            view.RefreshHeight();
+
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(null);
 
-            context.ChatInputView.inputField.onSelect.AddListener(OnInputSelected);
+            view.inputField.onSelect.AddListener(OnInputSelected);
         }
 
         private void OnInputSelected(string _)
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }
 
         public override void Exit()
         {
-            context.ChatInputView.inputField.onSelect.RemoveListener(OnInputSelected);
+            view.inputField.onSelect.RemoveListener(OnInputSelected);
         }
 
         protected override void OnInputBlocked()

@@ -7,6 +7,8 @@ using MVC;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Emoji;
+using DCL.UI.Profiles.Helpers;
 using UnityEngine.EventSystems;
 using Utility;
 
@@ -19,7 +21,12 @@ namespace DCL.Chat.ChatInput
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
+        private readonly ChatInputView view;
         private readonly IChatEventBus chatEventBus;
+        private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly SendMessageCommand sendMessageCommand;
+        private readonly EmojiMapping emojiMapping;
 
         private PasteToastState? pasteToastState;
         private SuggestionPanelChatInputState? suggestionPanelState;
@@ -27,10 +34,19 @@ namespace DCL.Chat.ChatInput
         private bool isLocked;
         private CustomInputField inputField = null!;
         private CancellationTokenSource? suggestionCloseCts;
-        
-        public TypingEnabledChatInputState(IChatEventBus chatEventBus)
+
+        public TypingEnabledChatInputState(ChatInputView view, IChatEventBus chatEventBus,
+            SendMessageCommand sendMessageCommand,
+            EmojiMapping emojiMapping,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
+            this.view = view;
             this.chatEventBus = chatEventBus;
+            this.sendMessageCommand = sendMessageCommand;
+            this.emojiMapping = emojiMapping;
+            this.getParticipantProfilesCommand = getParticipantProfilesCommand;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public void Dispose()
@@ -40,18 +56,18 @@ namespace DCL.Chat.ChatInput
 
         public override void OnInitialized()
         {
-            pasteToastState = new PasteToastState(context, disposalCt);
-            suggestionPanelState = new SuggestionPanelChatInputState(context);
-            emojiPanelState = new EmojiPanelChatInputState(context);
-            inputField = context.ChatInputView.inputField;
+            pasteToastState = new PasteToastState(view, context, disposalCt);
+            suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand, context);
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping, context);
+            inputField = view.inputField;
         }
 
         public override void Enter()
         {
             LockInputField(true);
-            context.ChatInputView.Show();
-            context.ChatInputView.ApplyFocusStyle();
-            context.ChatInputView.SetActiveTyping();
+            view.Show();
+            view.ApplyFocusStyle();
+            view.SetActiveTyping();
 
             chatEventBus.InsertTextInChatRequested += InsertText;
             chatEventBus.ClearAndInsertTextInChatRequested += ClearAndInsertText;
@@ -61,11 +77,11 @@ namespace DCL.Chat.ChatInput
             inputField.Clicked += InputFieldOnClicked;
             inputField.onValueChanged.AddListener(OnInputChanged);
             inputField.PasteShortcutPerformed += OnPasteShortcut;
-            eventsScope.Add(context.InputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
+            eventsScope.Add(view.inputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
 
             inputField.onDeselect.AddListener(OnInputDeselected);
-            context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
-            context.ChatInputView.UpdateCharacterCount();
+            view.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
+            view.UpdateCharacterCount();
         }
 
         public override void Exit()
@@ -79,7 +95,7 @@ namespace DCL.Chat.ChatInput
             inputField.Clicked -= InputFieldOnClicked;
             inputField.onValueChanged.RemoveListener(OnInputChanged);
             inputField.PasteShortcutPerformed -= OnPasteShortcut;
-            context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
+            view.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
             inputField.onDeselect.RemoveListener(OnInputDeselected);
             eventsScope.Dispose();
 
@@ -104,9 +120,9 @@ namespace DCL.Chat.ChatInput
         {
             bool matchFound = suggestionPanelState!.TryFindMatch(inputText);
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.chatInputTextAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.chatInputTextAudio);
             pasteToastState!.TryDeactivate();
-            context.ChatInputView.UpdateCharacterCount();
+            view.UpdateCharacterCount();
 
             if (matchFound)
                 suggestionPanelState.TryActivate();
@@ -130,13 +146,13 @@ namespace DCL.Chat.ChatInput
             // NOTE: We need to select the input field again because
             // NOTE: the input field loses focus when the message is submitted
             inputField.SelectInputField();
-            
+
             if (string.IsNullOrWhiteSpace(message))
                 return;
 
             inputField.ResetInputField();
 
-            context.SendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
+            sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
         }
 
         private void InputFieldOnClicked(PointerEventData.InputButton inputButton)
@@ -146,7 +162,7 @@ namespace DCL.Chat.ChatInput
                 pasteToastState!.ReActivate();
 
                 // TODO Input Field get deactivate when the focus is lost, we should find a better way to handle this
-                context.ChatInputView.SelectInputField();
+                view.SelectInputField();
             }
         }
 
@@ -157,7 +173,7 @@ namespace DCL.Chat.ChatInput
             if (!ct.IsCancellationRequested)
                 suggestionPanelState.TryDeactivate();
         }
-        
+
         private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
         {
             // Not great
@@ -166,25 +182,25 @@ namespace DCL.Chat.ChatInput
 
             suggestionPanelState!.ReplaceSuggestionInText(suggestion.Id);
             // suggestionPanelState.TryDeactivate();
-            
+
             suggestionCloseCts = suggestionCloseCts.SafeRestart();
             DeactivateSuggestionsNextFrameAsync(suggestionCloseCts.Token).Forget();
         }
 
         private void PasteClipboardText(object sender, string pastedText)
         {
-            context.ChatInputView.InsertTextAtCaretPosition(pastedText);
+            view.InsertTextAtCaretPosition(pastedText);
             pasteToastState!.TryDeactivate();
         }
 
         private void InsertText(string text)
         {
-            context.ChatInputView.InsertTextAtCaretPosition(text);
+            view.InsertTextAtCaretPosition(text);
         }
 
         private void ClearAndInsertText(string text)
         {
-            context.ChatInputView.ClearAndInsertText(text);
+            view.ClearAndInsertText(text);
         }
 
         protected override void OnInputBlocked()
@@ -195,7 +211,7 @@ namespace DCL.Chat.ChatInput
         protected override void OnInputUnblocked()
         {
             // Regain the focus on the input field
-            context.ChatInputView.SelectInputField();
+            view.SelectInputField();
         }
 
         private void LockInputField(bool locked)
@@ -206,9 +222,7 @@ namespace DCL.Chat.ChatInput
         private void OnInputDeselected(string text)
         {
             if (isLocked)
-            {
-                context.ChatInputView.SelectInputField();
-            }
+                view.SelectInputField();
         }
     }
 }
