@@ -49,6 +49,7 @@ namespace DCL.Chat.MessageBus
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
             messageRateLimiter = new ChatMessageRateLimiter();
+            messageRateLimiter.LoadConfigurationFromFeatureFlag();
             nearbyChannelBuffer = new ChatChannelMessageBuffer();
             nearbyChannelBuffer.MessageReleased += OnBufferedMessageReleased;
 
@@ -113,7 +114,7 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId, messagesPerSecond: 10000)) return;
+                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId)) return;
 
                 // If the Communities shape is disabled, ignores the community conversation messages
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
