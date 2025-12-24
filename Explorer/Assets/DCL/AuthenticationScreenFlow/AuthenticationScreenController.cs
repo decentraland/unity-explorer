@@ -168,15 +168,14 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
 
             fsm = new MVCStateMachine<AuthStateBase>(
-                new InitAuthScreenState(viewInstance, buildData),
-                new AutoLoginAuthState(viewInstance),
-                new LoginStartAuthState(viewInstance, this, CurrentState),
-                new LoadingAuthState(viewInstance, CurrentState),
-                new VerificationAuthState(viewInstance, this, CurrentState),
-                new LobbyAuthState(viewInstance, this, characterPreviewController)
-            );
-
-            fsm.Enter<InitAuthScreenState>();
+                    new InitAuthScreenState(viewInstance, buildData),
+                    new AutoLoginAuthState(viewInstance),
+                    new LoginStartAuthState(viewInstance, this, CurrentState),
+                    new LoadingAuthState(viewInstance, CurrentState),
+                    new VerificationAuthState(viewInstance, this, CurrentState),
+                    new LobbyAuthState(viewInstance, this, characterPreviewController)
+                )
+               .EnterFirstState<InitAuthScreenState>();
         }
 
         protected override void OnBeforeViewShow()

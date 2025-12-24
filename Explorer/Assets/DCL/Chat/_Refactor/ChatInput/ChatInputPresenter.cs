@@ -40,23 +40,21 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            fsm = new MVCStateMachine<ChatInputState>();
-
-            fsm.AddStates(
-                new InitializingChatInputState(fsm),
-                new HiddenChatInputState(view),
-                new BlockedChatInputState(fsm, view, eventBus, chatConfig, currentChannelService),
-                new UnfocusedChatInputState(fsm, view, eventBus),
-                new TypingEnabledChatInputState(fsm, view,
-                    chatEventBus,
-                    sendMessageCommand,
-                    new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
-                    profileRepositoryWrapper,
-                    getParticipantProfilesCommand,
-                    fsm.DisposalCt
-                )
-            );
-            fsm.Enter<InitializingChatInputState>();
+            fsm = new MVCStateMachine<ChatInputState>()
+                 .WithStates(
+                      new InitializingChatInputState(fsm),
+                      new HiddenChatInputState(view),
+                      new BlockedChatInputState(fsm, view, eventBus, chatConfig, currentChannelService),
+                      new UnfocusedChatInputState(fsm, view, eventBus),
+                      new TypingEnabledChatInputState(fsm, view,
+                          chatEventBus,
+                          sendMessageCommand,
+                          new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
+                          profileRepositoryWrapper,
+                          getParticipantProfilesCommand,
+                          fsm.DisposalCt
+                      ))
+                 .EnterFirstState<InitializingChatInputState>();
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));

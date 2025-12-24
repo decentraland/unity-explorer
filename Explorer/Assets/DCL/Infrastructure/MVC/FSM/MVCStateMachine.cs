@@ -14,7 +14,7 @@ namespace MVC
         private TBaseState? previousState;
         public TBaseState? CurrentState { get; private set; }
 
-        // controls state machine lifecycle
+        // Cancellation that controls lifecycle of the state machine
         private readonly CancellationTokenSource disposalCts = new ();
         public CancellationToken DisposalCt => disposalCts.Token;
 
@@ -25,15 +25,23 @@ namespace MVC
                 this.states[state.GetType()] = state;
         }
 
-        public void AddStates(params TBaseState[] states)
-        {
-            foreach (TBaseState state in states)
-                this.states[state.GetType()] = state;
-        }
-
         public void Dispose()
         {
             disposalCts.SafeCancelAndDispose();
+        }
+
+        public MVCStateMachine<TBaseState> WithStates(params TBaseState[] states)
+        {
+            foreach (TBaseState state in states)
+                this.states[state.GetType()] = state;
+
+            return this;
+        }
+
+        public MVCStateMachine<TBaseState> EnterFirstState<TState>() where TState: TBaseState
+        {
+            Enter<TState>();
+            return this;
         }
 
         public void Enter<TState>() where TState: TBaseState
