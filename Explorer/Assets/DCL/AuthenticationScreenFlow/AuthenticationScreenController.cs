@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -17,23 +16,21 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
-using Global.AppArgs;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Utility;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
-
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 
 namespace DCL.AuthenticationScreenFlow
@@ -92,11 +89,10 @@ namespace DCL.AuthenticationScreenFlow
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        public ReactiveProperty<AuthenticationStatus> CurrentState { get; set; } = new (AuthenticationStatus.Init);
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
-        private MVCStateMachine<AuthStateBase> fsm;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -153,30 +149,29 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
+            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+            viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
+            viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
+
             foreach (Button button in viewInstance.UseAnotherAccountButton)
                 button.onClick.AddListener(ChangeAccount);
 
+            viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
             viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
+
+            viewInstance.VersionText.text = Application.isEditor
+                ? $"editor-version - {buildData.InstallSource}"
+                : $"{Application.version} - {buildData.InstallSource}";
 
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
-
-            fsm = new MVCStateMachine<AuthStateBase>()
-                 .AddStates(
-                      new InitAuthScreenState(viewInstance, buildData),
-                      new AutoLoginAuthState(viewInstance),
-                      new LoginStartAuthState(viewInstance, this, CurrentState),
-                      new LoadingAuthState(viewInstance, CurrentState),
-                      new VerificationAuthState(viewInstance, this, CurrentState),
-                      new LobbyAuthState(viewInstance, this, characterPreviewController)
-                  )
-                 .Enter<InitAuthScreenState>();
         }
 
         protected override void OnBeforeViewShow()
@@ -207,6 +202,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
+            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -256,31 +252,31 @@ namespace DCL.AuthenticationScreenFlow
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedInCached;
-                        fsm.Enter<LobbyAuthState>();
+                        SwitchState(ViewState.Finalize);
                     }
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        fsm.Enter<LoginStartAuthState>();
+                        SwitchState(ViewState.Login);
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginStartAuthState>();
+                SwitchState(ViewState.Login);
             }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
@@ -317,7 +313,7 @@ namespace DCL.AuthenticationScreenFlow
             await lifeCycleTask.Task;
         }
 
-        public void StartLoginFlowUntilEnd()
+        private void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
 
@@ -336,6 +332,11 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     CurrentRequestID = string.Empty;
 
+                    viewInstance!.ErrorPopupRoot.SetActive(false);
+                    viewInstance!.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
+
                     var web3AuthSpan = new SpanData
                     {
                         TransactionName = LOADING_TRANSACTION_NAME,
@@ -346,7 +347,9 @@ namespace DCL.AuthenticationScreenFlow
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
+
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
+
                     web3Authenticator.SetVerificationListener(null);
 
                     var identityValidationSpan = new SpanData
@@ -360,7 +363,8 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
-                        fsm.Enter<LoadingAuthState>();
+                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
+                        SwitchState(ViewState.Loading);
 
                         var profileFetchSpan = new SpanData
                         {
@@ -376,50 +380,49 @@ namespace DCL.AuthenticationScreenFlow
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedIn;
-                        fsm.Enter<LobbyAuthState>();
+                        SwitchState(ViewState.Finalize);
                     }
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        fsm.Enter<LoginStartAuthState>();
+                        SwitchState(ViewState.Login);
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (SignatureExpiredException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (Web3SignatureException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (CodeVerificationException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    SwitchState(ViewState.Login);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
-
                     ShowConnectionErrorPopup();
                 }
                 finally
@@ -427,6 +430,12 @@ namespace DCL.AuthenticationScreenFlow
                     RestoreResolutionAndScreenMode();
                 }
             }
+        }
+
+        private void CancelLoginAndRestartFromBeginning()
+        {
+            CancelLoginProcess();
+            SwitchState(ViewState.Login);
         }
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
@@ -450,7 +459,8 @@ namespace DCL.AuthenticationScreenFlow
                              verificationCountdownCancellationToken.Token)
                         .Forget();
 
-            fsm.Enter<VerificationAuthState>();
+            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
+            SwitchState(ViewState.LoginInProgress);
         }
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
@@ -482,8 +492,7 @@ namespace DCL.AuthenticationScreenFlow
                 viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
-
-                fsm.Enter<LoginStartAuthState>();
+                SwitchState(ViewState.Login);
             }
 
             characterPreviewController?.OnHide();
@@ -492,7 +501,7 @@ namespace DCL.AuthenticationScreenFlow
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
         }
 
-        public void JumpIntoWorld()
+        private void JumpIntoWorld()
         {
             viewInstance!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
@@ -515,6 +524,79 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
+        private void SwitchState(ViewState state)
+        {
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
+            switch (state)
+            {
+                case ViewState.Login:
+                    ResetAnimator(viewInstance!.LoginAnimator);
+                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoginButton.interactable = true;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    CurrentState.Value = AuthenticationStatus.Login;
+                    break;
+                case ViewState.Loading:
+                    viewInstance!.PendingAuthentication.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoadingSpinner.SetActive(true);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    break;
+                case ViewState.LoginInProgress:
+                    ResetAnimator(viewInstance!.VerificationAnimator);
+
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
+                    viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    break;
+                case ViewState.Finalize:
+                    ResetAnimator(viewInstance!.FinalizeAnimator);
+                    viewInstance.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
+
+                    viewInstance.FinalizeContainer.SetActive(true);
+                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnBeforeShow();
+                    characterPreviewController?.OnShow();
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
+            }
+        }
+
+        private static void ResetAnimator(Animator animator)
+        {
+            animator.Rebind();
+            animator.Update(0f);
+            animator.gameObject.SetActive(false);
+        }
+
         private void RestoreResolutionAndScreenMode()
         {
             Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
@@ -522,13 +604,13 @@ namespace DCL.AuthenticationScreenFlow
             Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
         }
 
-        public void CancelLoginProcess()
+        private void CancelLoginProcess()
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
         }
 
-        public void OpenOrCloseVerificationCodeHint()
+        private void OpenOrCloseVerificationCodeHint()
         {
             viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
