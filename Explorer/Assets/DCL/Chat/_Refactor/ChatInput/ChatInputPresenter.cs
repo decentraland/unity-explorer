@@ -40,20 +40,22 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            fsm = new MVCStateMachine<ChatInputState>(
-                new InitializingChatInputState(),
+            fsm = new MVCStateMachine<ChatInputState>();
+
+            fsm.AddStates(
+                new InitializingChatInputState(fsm),
                 new HiddenChatInputState(view),
-                new BlockedChatInputState(view, eventBus, chatConfig, currentChannelService),
-                new UnfocusedChatInputState(view, eventBus),
-                new TypingEnabledChatInputState(view,
+                new BlockedChatInputState(fsm, view, eventBus, chatConfig, currentChannelService),
+                new UnfocusedChatInputState(fsm, view, eventBus),
+                new TypingEnabledChatInputState(fsm, view,
                     chatEventBus,
                     sendMessageCommand,
                     new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
                     profileRepositoryWrapper,
-                    getParticipantProfilesCommand
+                    getParticipantProfilesCommand,
+                    fsm.DisposalCt
                 )
             );
-
             fsm.Enter<InitializingChatInputState>();
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));

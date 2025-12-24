@@ -1,4 +1,5 @@
 ﻿using DCL.Chat.ChatServices;
+using MVC;
 using UnityEngine.Assertions;
 using Utility;
 
@@ -10,13 +11,15 @@ namespace DCL.Chat.ChatInput
     /// </summary>
     public class BlockedChatInputState : ChatInputState
     {
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
         private readonly IEventBus eventBus;
         private readonly ChatConfig.ChatConfig config;
         private readonly CurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
+        public BlockedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
         {
+            this.stateMachine = stateMachine;
             this.view = view;
             this.eventBus = eventBus;
             this.config = config;
@@ -71,7 +74,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputUnblocked()
         {
-            machine.Enter<TypingEnabledChatInputState>();
+            stateMachine.Enter<TypingEnabledChatInputState>();
         }
 
         private void BlockedInputClicked() =>

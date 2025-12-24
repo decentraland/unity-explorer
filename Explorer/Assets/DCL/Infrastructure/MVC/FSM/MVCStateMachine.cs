@@ -11,54 +11,36 @@ namespace MVC
         public event Action? OnStateChanged;
 
         private readonly Dictionary<Type, TBaseState> states = new ();
+        private TBaseState? previousState;
+        public TBaseState? CurrentState { get; private set; }
 
+        // controls state machine lifecycle
         private readonly CancellationTokenSource disposalCts = new ();
+        public CancellationToken DisposalCt => disposalCts.Token;
 
+        // Constructor with pre-defined states
         public MVCStateMachine(params TBaseState[] states)
         {
             foreach (TBaseState state in states)
-                AddState(state);
+                this.states[state.GetType()] = state;
         }
 
-        public float ElapsedTimeInState { get; private set; }
-        public TBaseState? PreviousState { get; private set; }
-        public TBaseState? CurrentState { get; private set; }
-
-        /// <summary>
-        ///     adds the state to the machine
-        /// </summary>
-        public void AddState(TBaseState state)
+        public void AddStates(params TBaseState[] states)
         {
-            state.SetMachineAndDisposalCt(this, disposalCts.Token);
-            states[state.GetType()] = state;
+            foreach (TBaseState state in states)
+                this.states[state.GetType()] = state;
         }
 
-        /// <summary>
-        ///     ticks the state machine with the provided delta time
-        /// </summary>
-        public void Update(float deltaTime)
+        public void Dispose()
         {
-            ElapsedTimeInState += deltaTime;
-            CurrentState.Update(deltaTime);
+            disposalCts.SafeCancelAndDispose();
         }
 
-        /// <summary>
-        ///     ticks the state machine with the provided delta time
-        /// </summary>
-        public void LateUpdate(float deltaTime)
-        {
-            ElapsedTimeInState += deltaTime;
-            CurrentState.LateUpdate(deltaTime);
-        }
-
-        /// <summary>
-        ///     changes the current state
-        /// </summary>
         public void Enter<TState>() where TState: TBaseState
         {
-            // avoid changing to the same state
             Type newType = typeof(TState);
 
+            // avoid changing to the same state
             if (CurrentState != null)
             {
                 if (CurrentState.GetType() == newType)
@@ -70,18 +52,15 @@ namespace MVC
             // do a sanity check while in the editor to ensure we have the given state in our state list
             if (!states.ContainsKey(newType))
             {
-                var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it by calling {nameof(AddState)}?";
+                var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it while constructing state machine?";
                 ReportHub.LogError(ReportCategory.MVC, error);
                 throw new Exception(error);
             }
 
             // swap states and call begin
-            PreviousState = CurrentState;
+            previousState = CurrentState;
             CurrentState = states[newType];
             CurrentState.Enter();
-            ElapsedTimeInState = 0f;
-
-            // fire the changed event if we have a listener
             OnStateChanged?.Invoke();
         }
 
@@ -91,30 +70,20 @@ namespace MVC
         public void PopState()
         {
             // Ensure there is a previous state to go back to.
-            if (PreviousState == null)
-            {
+            if (previousState == null)
                 return;
-            }
 
             // End the current, swap to the previous.
-            CurrentState.Exit();
-
-            CurrentState = PreviousState;
+            CurrentState?.Exit();
+            CurrentState = previousState;
 
             // After popping, there is no longer a "previous" state to go back to.
             // A new "previous" state will be set on the next call to ChangeState.
-            PreviousState = null;
+            previousState = null;
 
             // Begin the new (old) state.
             CurrentState.Enter();
-            ElapsedTimeInState = 0f;
-
             OnStateChanged?.Invoke();
-        }
-
-        public void Dispose()
-        {
-            disposalCts.SafeCancelAndDispose();
         }
     }
 }

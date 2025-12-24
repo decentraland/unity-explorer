@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MVC;
+using System;
 using UnityEngine.EventSystems;
 using Utility;
 
@@ -6,11 +7,13 @@ namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
         private readonly IEventBus eventBus;
 
-        public UnfocusedChatInputState(ChatInputView view, IEventBus eventBus)
+        public UnfocusedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus)
         {
+            this.stateMachine = stateMachine;
             this.view = view;
             this.eventBus = eventBus;
         }
@@ -41,7 +44,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputBlocked()
         {
-            machine.Enter<BlockedChatInputState>();
+            stateMachine.Enter<BlockedChatInputState>();
         }
     }
 }

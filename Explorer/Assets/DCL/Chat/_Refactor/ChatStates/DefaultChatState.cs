@@ -1,4 +1,4 @@
-﻿using DCL.Chat.ChatServices;
+﻿using MVC;
 
 namespace DCL.Chat.ChatStates
 {
@@ -7,10 +7,12 @@ namespace DCL.Chat.ChatStates
     /// </summary>
     public class DefaultChatState : ChatState
     {
+        private readonly MVCStateMachine<ChatState> chatStateMachine;
         private readonly ChatUIMediator uiMediator;
 
-        public DefaultChatState(ChatUIMediator uiMediator)
+        public DefaultChatState(MVCStateMachine<ChatState> chatStateMachine, ChatUIMediator uiMediator)
         {
+            this.chatStateMachine = chatStateMachine;
             this.uiMediator = uiMediator;
         }
 
@@ -27,18 +29,18 @@ namespace DCL.Chat.ChatStates
             uiMediator.SetPanelsFocus(isFocused: false, animate: true);
 
         public override void OnClickInside() =>
-            machine.Enter<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnCloseRequested() =>
-            machine.Enter<MinimizedChatState>();
+            chatStateMachine.Enter<MinimizedChatState>();
 
         public override void OnFocusRequested() =>
-            machine.Enter<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnMinimizeRequested() =>
-            machine.Enter<MinimizedChatState>();
+            chatStateMachine.Enter<MinimizedChatState>();
 
         public override void OnToggleMembers() =>
-            machine.Enter<MembersChatState>();
+            chatStateMachine.Enter<MembersChatState>();
     }
 }

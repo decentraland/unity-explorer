@@ -1,11 +1,15 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using MVC;
+
+namespace DCL.Chat.ChatStates
 {
     public class MembersChatState : ChatState
     {
+        private readonly MVCStateMachine<ChatState> chatStateMachine;
         private readonly ChatUIMediator mediator;
 
-        public MembersChatState(ChatUIMediator mediator)
+        public MembersChatState(MVCStateMachine<ChatState> chatStateMachine, ChatUIMediator mediator)
         {
+            this.chatStateMachine = chatStateMachine;
             this.mediator = mediator;
         }
 
@@ -17,15 +21,15 @@
         public override void Exit() { }
 
         public override void OnToggleMembers() =>
-            machine.Enter<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnFocusRequested() =>
-            machine.Enter<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnCloseRequested() =>
-            machine.Enter<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnClickOutside() =>
-            machine.Enter<DefaultChatState>();
+            chatStateMachine.Enter<DefaultChatState>();
     }
 }

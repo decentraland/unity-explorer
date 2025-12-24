@@ -1,15 +1,18 @@
 ﻿using DCL.Chat.ChatServices;
+using MVC;
 using System;
 
 namespace DCL.Chat.ChatStates
 {
     public class FocusedChatState : ChatState
     {
+        private readonly MVCStateMachine<ChatState> stateMachine;
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
 
-        public FocusedChatState(ChatUIMediator mediator, ChatInputBlockingService inputBlocker)
+        public FocusedChatState(MVCStateMachine<ChatState> stateMachine, ChatUIMediator mediator, ChatInputBlockingService inputBlocker)
         {
+            this.stateMachine = stateMachine;
             this.mediator = mediator;
             this.inputBlocker = inputBlocker;
         }
@@ -27,15 +30,15 @@ namespace DCL.Chat.ChatStates
         }
 
         public override void OnClickOutside() =>
-            machine.Enter<DefaultChatState>();
+            stateMachine.Enter<DefaultChatState>();
 
         public override void OnCloseRequested() =>
-            machine.Enter<MinimizedChatState>();
+            stateMachine.Enter<MinimizedChatState>();
 
         public override void OnMinimizeRequested() =>
-            machine.Enter<MinimizedChatState>();
+            stateMachine.Enter<MinimizedChatState>();
 
         public override void OnToggleMembers() =>
-            machine.Enter<MembersChatState>();
+            stateMachine.Enter<MembersChatState>();
     }
 }

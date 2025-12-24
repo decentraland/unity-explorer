@@ -7,6 +7,7 @@ using MVC;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatStates;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine.EventSystems;
@@ -21,45 +22,46 @@ namespace DCL.Chat.ChatInput
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
         private readonly IChatEventBus chatEventBus;
-        private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly SendMessageCommand sendMessageCommand;
-        private readonly EmojiMapping emojiMapping;
 
-        private PasteToastState? pasteToastState;
-        private SuggestionPanelChatInputState? suggestionPanelState;
-        private EmojiPanelChatInputState? emojiPanelState;
-        private bool isLocked;
-        private CustomInputField inputField = null!;
+        private readonly PasteToastState? pasteToastState;
+        private readonly SuggestionPanelChatInputState? suggestionPanelState;
+        private readonly EmojiPanelChatInputState? emojiPanelState;
+        private readonly CustomInputField inputField;
+
+        private readonly CancellationToken stateMachineDisposalCt;
+
         private CancellationTokenSource? suggestionCloseCts;
+        private bool isLocked;
 
-        public TypingEnabledChatInputState(ChatInputView view, IChatEventBus chatEventBus,
+        public TypingEnabledChatInputState(
+            MVCStateMachine<ChatInputState> stateMachine,
+            ChatInputView view,
+            IChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,
             EmojiMapping emojiMapping,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            GetParticipantProfilesCommand getParticipantProfilesCommand)
+            GetParticipantProfilesCommand getParticipantProfilesCommand,
+            CancellationToken stateMachineDisposalCt)
         {
+            this.stateMachine = stateMachine;
             this.view = view;
             this.chatEventBus = chatEventBus;
             this.sendMessageCommand = sendMessageCommand;
-            this.emojiMapping = emojiMapping;
-            this.getParticipantProfilesCommand = getParticipantProfilesCommand;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.stateMachineDisposalCt = stateMachineDisposalCt;
+
+            pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
+            suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping);
+            inputField = view.inputField;
         }
 
         public void Dispose()
         {
             suggestionPanelState?.Dispose();
-        }
-
-        public override void OnInitialized()
-        {
-            pasteToastState = new PasteToastState(view, disposalCt);
-            suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
-            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping);
-            inputField = view.inputField;
         }
 
         public override void Enter()
@@ -205,7 +207,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputBlocked()
         {
-            machine.Enter<BlockedChatInputState>();
+            stateMachine.Enter<BlockedChatInputState>();
         }
 
         protected override void OnInputUnblocked()
