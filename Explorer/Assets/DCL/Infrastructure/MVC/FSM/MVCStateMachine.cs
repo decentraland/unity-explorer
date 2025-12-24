@@ -6,22 +6,30 @@ using Utility;
 
 namespace MVC
 {
-    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: MVCState<TBaseState>
+    public class MVCStateMachine : IDisposable
     {
         public event Action? OnStateChanged;
 
-        private readonly Dictionary<Type, TBaseState> states = new ();
-        private TBaseState? previousState;
-        public TBaseState? CurrentState { get; private set; }
+        private readonly Dictionary<Type, IExitableState> states = new ();
 
-        // Cancellation that controls lifecycle of the state machine
         private readonly CancellationTokenSource disposalCts = new ();
+
+        private IExitableState? previousState;
+
+        public IExitableState? CurrentState { get; private set; }
+
         public CancellationToken DisposalCt => disposalCts.Token;
 
-        // Constructor with pre-defined states
-        public MVCStateMachine(params TBaseState[] states)
+        public MVCStateMachine() { }
+
+        public MVCStateMachine(params IExitableState[] states)
         {
-            foreach (TBaseState state in states)
+            AddStates(states);
+        }
+
+        public void AddStates(params IExitableState[] states)
+        {
+            foreach (IExitableState state in states)
                 this.states[state.GetType()] = state;
         }
 
@@ -30,67 +38,55 @@ namespace MVC
             disposalCts.SafeCancelAndDispose();
         }
 
-        public MVCStateMachine<TBaseState> WithStates(params TBaseState[] states)
+        public void Enter<TState>() where TState: class, IState
         {
-            foreach (TBaseState state in states)
-                this.states[state.GetType()] = state;
-
-            return this;
+            TState state = ChangeState<TState>();
+            state.Enter();
         }
 
-        public MVCStateMachine<TBaseState> EnterFirstState<TState>() where TState: TBaseState
+        public void Enter<TState, TPayload>(TPayload payload) where TState: class, IPayloadedState<TPayload>
         {
-            Enter<TState>();
-            return this;
+            TState state = ChangeState<TState>();
+            state.Enter(payload);
         }
 
-        public void Enter<TState>() where TState: TBaseState
+        private TState ChangeState<TState>() where TState: class, IExitableState
         {
             Type newType = typeof(TState);
 
             // avoid changing to the same state
-            if (CurrentState != null)
-            {
-                if (CurrentState.GetType() == newType)
-                    return;
+            if (CurrentState != null && CurrentState.GetType() == newType)
+                return (TState)CurrentState;
 
-                CurrentState.Exit();
-            }
+            CurrentState?.Exit();
 
-            // do a sanity check while in the editor to ensure we have the given state in our state list
-            if (!states.ContainsKey(newType))
+            if (!states.TryGetValue(newType, out IExitableState? newState))
             {
                 var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it while constructing state machine?";
                 ReportHub.LogError(ReportCategory.MVC, error);
                 throw new Exception(error);
             }
 
-            // swap states and call begin
             previousState = CurrentState;
-            CurrentState = states[newType];
-            CurrentState.Enter();
+            CurrentState = newState;
             OnStateChanged?.Invoke();
+
+            return (TState)newState;
         }
 
         /// <summary>
-        ///     Reverts to the single previous state, if one exists.
+        ///     Reverts to the previous state. Works only for IState (without payload).
         /// </summary>
         public void PopState()
         {
-            // Ensure there is a previous state to go back to.
-            if (previousState == null)
+            if (previousState is not IState prevState)
                 return;
 
-            // End the current, swap to the previous.
             CurrentState?.Exit();
             CurrentState = previousState;
-
-            // After popping, there is no longer a "previous" state to go back to.
-            // A new "previous" state will be set on the next call to ChangeState.
             previousState = null;
 
-            // Begin the new (old) state.
-            CurrentState.Enter();
+            prevState.Enter();
             OnStateChanged?.Invoke();
         }
     }

@@ -3,7 +3,7 @@ using MVC;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public abstract class AuthStateBase : MVCState<AuthStateBase>
+    public abstract class AuthStateBase : IState
     {
         protected readonly AuthenticationScreenView viewInstance;
 
@@ -12,13 +12,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.viewInstance = viewInstance;
         }
 
-        public override void Enter()
+        public virtual void Enter()
         {
             viewInstance!.ErrorPopupRoot.SetActive(false);
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}...");
         }
 
-        public override void Exit()
+        public virtual void Exit()
         {
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Exit state {GetType().Name}...");
         }

@@ -11,13 +11,13 @@ namespace DCL.Chat.ChatInput
     /// </summary>
     public class BlockedChatInputState : ChatInputState
     {
-        private readonly MVCStateMachine<ChatInputState> stateMachine;
+        private readonly MVCStateMachine stateMachine;
         private readonly ChatInputView view;
         private readonly IEventBus eventBus;
         private readonly ChatConfig.ChatConfig config;
         private readonly CurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
+        public BlockedChatInputState(MVCStateMachine stateMachine, ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
         {
             this.stateMachine = stateMachine;
             this.view = view;

@@ -7,7 +7,6 @@ using MVC;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatStates;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine.EventSystems;
@@ -22,14 +21,14 @@ namespace DCL.Chat.ChatInput
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
-        private readonly MVCStateMachine<ChatInputState> stateMachine;
+        private readonly MVCStateMachine stateMachine;
         private readonly ChatInputView view;
         private readonly IChatEventBus chatEventBus;
         private readonly SendMessageCommand sendMessageCommand;
 
-        private readonly PasteToastState? pasteToastState;
-        private readonly SuggestionPanelChatInputState? suggestionPanelState;
-        private readonly EmojiPanelChatInputState? emojiPanelState;
+        private readonly PasteToastState pasteToastState;
+        private readonly SuggestionPanelChatInputState suggestionPanelState;
+        private readonly EmojiPanelChatInputState emojiPanelState;
         private readonly CustomInputField inputField;
 
         private readonly CancellationToken stateMachineDisposalCt;
@@ -38,7 +37,7 @@ namespace DCL.Chat.ChatInput
         private bool isLocked;
 
         public TypingEnabledChatInputState(
-            MVCStateMachine<ChatInputState> stateMachine,
+            MVCStateMachine stateMachine,
             ChatInputView view,
             IChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,
@@ -101,17 +100,17 @@ namespace DCL.Chat.ChatInput
             inputField.onDeselect.RemoveListener(OnInputDeselected);
             eventsScope.Dispose();
 
-            pasteToastState!.TryDeactivate();
-            suggestionPanelState!.TryDeactivate();
-            emojiPanelState!.TryDeactivate();
+            pasteToastState.TryDeactivate();
+            suggestionPanelState.TryDeactivate();
+            emojiPanelState.TryDeactivate();
         }
 
         private void ToggleEmojiPanel()
         {
-            if (!emojiPanelState!.IsActive)
+            if (!emojiPanelState.IsActive)
             {
                 emojiPanelState.TryActivate();
-                suggestionPanelState!.TryDeactivate();
+                suggestionPanelState.TryDeactivate();
             }
             else { emojiPanelState.TryDeactivate(); }
 
@@ -120,10 +119,10 @@ namespace DCL.Chat.ChatInput
 
         private void OnInputChanged(string inputText)
         {
-            bool matchFound = suggestionPanelState!.TryFindMatch(inputText);
+            bool matchFound = suggestionPanelState.TryFindMatch(inputText);
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.chatInputTextAudio);
-            pasteToastState!.TryDeactivate();
+            pasteToastState.TryDeactivate();
             view.UpdateCharacterCount();
 
             if (matchFound)
@@ -140,10 +139,10 @@ namespace DCL.Chat.ChatInput
         private void HandleMessageSubmitted(string message)
         {
             // Not great
-            if (suggestionPanelState!.IsActive)
+            if (suggestionPanelState.IsActive)
                 return;
 
-            emojiPanelState!.TryDeactivate();
+            emojiPanelState.TryDeactivate();
 
             // NOTE: We need to select the input field again because
             // NOTE: the input field loses focus when the message is submitted
@@ -161,7 +160,7 @@ namespace DCL.Chat.ChatInput
         {
             if (inputButton == PointerEventData.InputButton.Right && ViewDependencies.ClipboardManager.HasValue())
             {
-                pasteToastState!.ReActivate();
+                pasteToastState.ReActivate();
 
                 // TODO Input Field get deactivate when the focus is lost, we should find a better way to handle this
                 view.SelectInputField();
@@ -179,10 +178,10 @@ namespace DCL.Chat.ChatInput
         private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
         {
             // Not great
-            if (!suggestionPanelState!.IsActive)
+            if (!suggestionPanelState.IsActive)
                 return;
 
-            suggestionPanelState!.ReplaceSuggestionInText(suggestion.Id);
+            suggestionPanelState.ReplaceSuggestionInText(suggestion.Id);
             // suggestionPanelState.TryDeactivate();
 
             suggestionCloseCts = suggestionCloseCts.SafeRestart();
@@ -192,7 +191,7 @@ namespace DCL.Chat.ChatInput
         private void PasteClipboardText(object sender, string pastedText)
         {
             view.InsertTextAtCaretPosition(pastedText);
-            pasteToastState!.TryDeactivate();
+            pasteToastState.TryDeactivate();
         }
 
         private void InsertText(string text)

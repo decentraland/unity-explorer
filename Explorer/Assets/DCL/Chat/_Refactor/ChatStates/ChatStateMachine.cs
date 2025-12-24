@@ -10,9 +10,11 @@ namespace DCL.Chat.ChatStates
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
         private readonly IEventBus eventBus;
-        private readonly MVCStateMachine<ChatState> fsm;
+        private readonly MVCStateMachine fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
+
+        private ChatState CurrentChatState => (ChatState)fsm.CurrentState!;
 
         public bool IsFocused => fsm.CurrentState is FocusedChatState;
         public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
@@ -31,15 +33,18 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine<ChatState>()
-                 .WithStates(
-                      new InitChatState(),
-                      new DefaultChatState(fsm!, mediator),
-                      new FocusedChatState(fsm!, mediator, inputBlocker),
-                      new MembersChatState(fsm!, mediator),
-                      new MinimizedChatState(fsm!, mediator),
-                      new HiddenChatState(mediator))
-                 .EnterFirstState<InitChatState>();
+            fsm = new MVCStateMachine();
+
+            fsm.AddStates(
+                new InitChatState(),
+                new DefaultChatState(fsm, mediator),
+                new FocusedChatState(fsm, mediator, inputBlocker),
+                new MembersChatState(fsm, mediator),
+                new MinimizedChatState(fsm, mediator),
+                new HiddenChatState(mediator)
+            );
+
+            fsm.Enter<InitChatState>();
 
             fsm.OnStateChanged += PropagateStateChange;
 
@@ -70,7 +75,7 @@ namespace DCL.Chat.ChatStates
         private void PropagateStateChange() =>
             eventBus.Publish(new ChatEvents.ChatStateChangedEvent
             {
-                CurrentState = fsm!.CurrentState,
+                CurrentState = CurrentChatState,
             });
 
         public void OnViewShow()
@@ -82,42 +87,42 @@ namespace DCL.Chat.ChatStates
 
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
-            fsm.CurrentState.OnFocusRequested();
+            CurrentChatState.OnFocusRequested();
         }
 
         private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
         {
-            fsm.CurrentState.OnCloseRequested();
+            CurrentChatState.OnCloseRequested();
         }
 
         private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
-            fsm.CurrentState.OnToggleMembers();
+            CurrentChatState.OnToggleMembers();
         }
 
         private void HandleClickInside()
         {
-            fsm.CurrentState.OnClickInside();
+            CurrentChatState.OnClickInside();
         }
 
         private void HandleClickOutside()
         {
-            fsm.CurrentState.OnClickOutside();
+            CurrentChatState.OnClickOutside();
         }
 
         private void HandlePointerExited()
         {
-            fsm.CurrentState.OnPointerExit();
+            CurrentChatState.OnPointerExit();
         }
 
         private void HandlePointerEntered()
         {
-            fsm.CurrentState.OnPointerEnter();
+            CurrentChatState.OnPointerEnter();
         }
 
         public void Minimize()
         {
-            fsm.CurrentState.OnMinimizeRequested();
+            CurrentChatState.OnMinimizeRequested();
         }
 
         public void SetInitialState(bool focus)

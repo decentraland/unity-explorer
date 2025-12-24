@@ -4,10 +4,10 @@ namespace DCL.Chat.ChatStates
 {
     public class MinimizedChatState : ChatState
     {
-        private readonly MVCStateMachine<ChatState> stateMachine;
+        private readonly MVCStateMachine stateMachine;
         private readonly ChatUIMediator mediator;
 
-        public MinimizedChatState(MVCStateMachine<ChatState> stateMachine, ChatUIMediator mediator)
+        public MinimizedChatState(MVCStateMachine stateMachine, ChatUIMediator mediator)
         {
             this.stateMachine = stateMachine;
             this.mediator = mediator;

@@ -96,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
-        private MVCStateMachine<AuthStateBase> fsm;
+        private MVCStateMachine fsm;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -167,15 +167,16 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
 
-            fsm = new MVCStateMachine<AuthStateBase>(
-                    new InitAuthScreenState(viewInstance, buildData),
-                    new AutoLoginAuthState(viewInstance),
-                    new LoginStartAuthState(viewInstance, this, CurrentState),
-                    new LoadingAuthState(viewInstance, CurrentState),
-                    new VerificationAuthState(viewInstance, this, CurrentState),
-                    new LobbyAuthState(viewInstance, this, characterPreviewController)
-                )
-               .EnterFirstState<InitAuthScreenState>();
+            fsm = new MVCStateMachine(
+                new InitAuthScreenState(viewInstance, buildData),
+                new AutoLoginAuthState(viewInstance),
+                new LoginStartAuthState(viewInstance, this, CurrentState),
+                new LoadingAuthState(viewInstance, CurrentState),
+                new VerificationAuthState(viewInstance, this, CurrentState),
+                new LobbyAuthState(viewInstance, this, characterPreviewController)
+            );
+
+            fsm.Enter<InitAuthScreenState>();
         }
 
         protected override void OnBeforeViewShow()

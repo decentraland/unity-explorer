@@ -1,5 +1,4 @@
 ﻿using MVC;
-using System;
 using UnityEngine.EventSystems;
 using Utility;
 
@@ -7,11 +6,11 @@ namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {
-        private readonly MVCStateMachine<ChatInputState> stateMachine;
+        private readonly MVCStateMachine stateMachine;
         private readonly ChatInputView view;
         private readonly IEventBus eventBus;
 
-        public UnfocusedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus)
+        public UnfocusedChatInputState(MVCStateMachine stateMachine, ChatInputView view, IEventBus eventBus)
         {
             this.stateMachine = stateMachine;
             this.view = view;

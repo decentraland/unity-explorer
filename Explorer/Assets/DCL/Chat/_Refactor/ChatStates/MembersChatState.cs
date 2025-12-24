@@ -4,10 +4,10 @@ namespace DCL.Chat.ChatStates
 {
     public class MembersChatState : ChatState
     {
-        private readonly MVCStateMachine<ChatState> chatStateMachine;
+        private readonly MVCStateMachine chatStateMachine;
         private readonly ChatUIMediator mediator;
 
-        public MembersChatState(MVCStateMachine<ChatState> chatStateMachine, ChatUIMediator mediator)
+        public MembersChatState(MVCStateMachine chatStateMachine, ChatUIMediator mediator)
         {
             this.chatStateMachine = chatStateMachine;
             this.mediator = mediator;

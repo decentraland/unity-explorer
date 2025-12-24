@@ -7,10 +7,10 @@ namespace DCL.Chat.ChatStates
     /// </summary>
     public class DefaultChatState : ChatState
     {
-        private readonly MVCStateMachine<ChatState> chatStateMachine;
+        private readonly MVCStateMachine chatStateMachine;
         private readonly ChatUIMediator uiMediator;
 
-        public DefaultChatState(MVCStateMachine<ChatState> chatStateMachine, ChatUIMediator uiMediator)
+        public DefaultChatState(MVCStateMachine chatStateMachine, ChatUIMediator uiMediator)
         {
             this.chatStateMachine = chatStateMachine;
             this.uiMediator = uiMediator;
