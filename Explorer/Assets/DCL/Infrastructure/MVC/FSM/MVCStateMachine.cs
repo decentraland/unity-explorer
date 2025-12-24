@@ -22,7 +22,7 @@ namespace MVC
 
         public CancellationToken DisposalCt => disposalCts.Token;
 
-        public MVCStateMachine<TBaseState> AddStates(params TBaseState[] states)
+        public void AddStates(params TBaseState[] states)
         {
             foreach (TBaseState state in states)
             {
@@ -33,29 +33,23 @@ namespace MVC
                     throw new Exception(error);
                 }
             }
-
-            return this;
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             disposalCts.SafeCancelAndDispose();
-        }
 
-        public MVCStateMachine<TBaseState> Enter<TState>() where TState: TBaseState, IState
+        public void Enter<TState>() where TState: TBaseState, IState
         {
             TState state = ChangeState<TState>();
             state.Enter();
             OnStateChanged?.Invoke(state);
-            return this;
         }
 
-        public MVCStateMachine<TBaseState> Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
+        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
         {
             TState state = ChangeState<TState>();
             state.Enter(payload);
             OnStateChanged?.Invoke(state);
-            return this;
         }
 
         private TState ChangeState<TState>() where TState: TBaseState

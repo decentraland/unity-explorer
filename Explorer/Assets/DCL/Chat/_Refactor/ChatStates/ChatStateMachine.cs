@@ -31,17 +31,16 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine<ChatState>()
-                 .AddStates(
-                      new InitChatState(),
-                      new DefaultChatState(fsm, mediator),
-                      new FocusedChatState(fsm, mediator, inputBlocker),
-                      new MembersChatState(fsm, mediator),
-                      new MinimizedChatState(fsm, mediator),
-                      new HiddenChatState(mediator)
-                  )
-                 .Enter<InitChatState>();
-
+            fsm = new MVCStateMachine<ChatState>();
+            fsm.AddStates(
+                new InitChatState(),
+                new DefaultChatState(fsm, mediator),
+                new FocusedChatState(fsm, mediator, inputBlocker),
+                new MembersChatState(fsm, mediator),
+                new MinimizedChatState(fsm, mediator),
+                new HiddenChatState(mediator)
+            );
+            fsm.Enter<InitChatState>();
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
