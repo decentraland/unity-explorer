@@ -1,21 +1,30 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using DCL.Chat.ChatServices;
+
+namespace DCL.Chat.ChatStates
 {
     /// <summary>
     ///     Blurred/Unfocused state of the chat.
     /// </summary>
     public class DefaultChatState : ChatState
     {
+        private readonly ChatUIMediator uiMediator;
+
+        public DefaultChatState(ChatUIMediator uiMediator)
+        {
+            this.uiMediator = uiMediator;
+        }
+
         public override void Enter()
         {
-            context.UIMediator.SetupForDefaultState(animate: true);
-            context.UIMediator.chatInputPresenter.OnBlur();
+            uiMediator.SetupForDefaultState(animate: true);
+            uiMediator.chatInputPresenter.OnBlur();
         }
 
         public override void OnPointerEnter() =>
-            context.UIMediator.SetPanelsFocus(isFocused: true, animate: true);
+            uiMediator.SetPanelsFocus(isFocused: true, animate: true);
 
         public override void OnPointerExit() =>
-            context.UIMediator.SetPanelsFocus(isFocused: false, animate: true);
+            uiMediator.SetPanelsFocus(isFocused: false, animate: true);
 
         public override void OnClickInside() =>
             machine.Enter<FocusedChatState>();

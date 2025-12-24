@@ -2,9 +2,16 @@
 {
     public class MembersChatState : ChatState
     {
+        private readonly ChatUIMediator mediator;
+
+        public MembersChatState(ChatUIMediator mediator)
+        {
+            this.mediator = mediator;
+        }
+
         public override void Enter()
         {
-            context.UIMediator.SetupForMembersState();
+            mediator.SetupForMembersState();
         }
 
         public override void Exit() { }

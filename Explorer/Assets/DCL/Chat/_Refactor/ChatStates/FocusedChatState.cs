@@ -1,17 +1,29 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using DCL.Chat.ChatServices;
+using System;
+
+namespace DCL.Chat.ChatStates
 {
     public class FocusedChatState : ChatState
     {
+        private readonly ChatUIMediator mediator;
+        private readonly ChatInputBlockingService inputBlocker;
+
+        public FocusedChatState(ChatUIMediator mediator, ChatInputBlockingService inputBlocker)
+        {
+            this.mediator = mediator;
+            this.inputBlocker = inputBlocker;
+        }
+
         public override void Enter()
         {
-            context.UIMediator.SetupForFocusedState();
+            mediator.SetupForFocusedState();
 
-            context.InputBlocker.Block();
+            inputBlocker.Block();
         }
 
         public override void Exit()
         {
-            context.InputBlocker.Unblock();
+            inputBlocker.Unblock();
         }
 
         public override void OnClickOutside() =>

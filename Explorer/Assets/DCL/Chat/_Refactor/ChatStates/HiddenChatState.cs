@@ -1,15 +1,24 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using System;
+
+namespace DCL.Chat.ChatStates
 {
     public class HiddenChatState : ChatState
     {
+        private readonly ChatUIMediator mediator;
+
+        public HiddenChatState(ChatUIMediator mediator)
+        {
+            this.mediator = mediator;
+        }
+
         public override void Enter()
         {
-            context.UIMediator.SetupForHiddenState();
+            mediator.SetupForHiddenState();
         }
 
         public override void Exit()
         {
-            
+
         }
     }
 }

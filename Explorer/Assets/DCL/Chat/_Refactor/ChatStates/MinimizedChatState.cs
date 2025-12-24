@@ -2,10 +2,17 @@
 {
     public class MinimizedChatState : ChatState
     {
+        private readonly ChatUIMediator mediator;
+
+        public MinimizedChatState(ChatUIMediator mediator)
+        {
+            this.mediator = mediator;
+        }
+
         public override void Enter()
         {
-            context.UIMediator.SetupForMinimizedState();
-            context.UIMediator.chatInputPresenter.OnMinimize();
+            mediator.SetupForMinimizedState();
+            mediator.chatInputPresenter.OnMinimize();
         }
 
         public override void Exit() { }
