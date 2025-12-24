@@ -183,13 +183,16 @@ namespace DCL.AuthenticationScreenFlow
                 context: new AuthStateContext(),
                 states: new AuthStateBase[]
                 {
+                    new InitAuthScreenState(viewInstance),
                     new AutoLoginAuthState(viewInstance),
-                    new LoginMethodSelectionAuthState(viewInstance, CurrentState),
+                    new LoginAuthState(viewInstance, CurrentState),
                     new LoadingAuthState(viewInstance),
                     new VerificationAuthState(viewInstance),
                     new LobbyAuthState(viewInstance, characterPreviewController),
                 }
             );
+
+            fsm.Enter<InitAuthScreenState>();
         }
 
         protected override void OnBeforeViewShow()
@@ -549,59 +552,17 @@ namespace DCL.AuthenticationScreenFlow
             switch (state)
             {
                 case ViewState.Login:
-                    viewInstance!.LoginAnimator.ResetAnimator();
-                    viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoginButton.interactable = true;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    fsm.Enter<LoginAuthState>();
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.Loading:
-                    viewInstance!.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.LoadingSpinner.SetActive(true);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    fsm.Enter<LoadingAuthState>();
                     break;
                 case ViewState.LoginInProgress:
-                    viewInstance!.VerificationAnimator.ResetAndDeactivateAnimator();
-
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-                    viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
+                    fsm.Enter<VerificationAuthState>();
                     break;
                 case ViewState.Finalize:
-                    viewInstance!.FinalizeAnimator.ResetAnimator();
-                    viewInstance.PendingAuthentication.SetActive(false);
-
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.LoadingSpinner.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(true);
-
-                    viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.RestrictedUserContainer.SetActive(false);
-                    viewInstance.JumpIntoWorldButton.interactable = true;
-                    characterPreviewController?.OnBeforeShow();
-                    characterPreviewController?.OnShow();
-
+                    fsm.Enter<LobbyAuthState>();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
