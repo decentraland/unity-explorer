@@ -9,7 +9,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
-            viewInstance!.VerificationContainer.SetActive(false);
+            viewInstance.VerificationContainer.SetActive(false);
             viewInstance.LoginContainer.SetActive(true);
             viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
             viewInstance.LoadingSpinner.SetActive(true);

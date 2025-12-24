@@ -1,23 +1,21 @@
 using DCL.UI;
-using DCL.Utilities;
 using Utility;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class LoginAuthState : AuthStateBase
     {
-        private readonly ReactiveProperty<AuthenticationScreenController.AuthenticationStatus> currentState;
+        private readonly AuthenticationScreenController controller;
 
-        public LoginAuthState(AuthenticationScreenView viewInstance,
-            ReactiveProperty<AuthenticationScreenController.AuthenticationStatus> currentState) : base(viewInstance)
+        public LoginAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller) : base(viewInstance)
         {
-            this.currentState = currentState;
+            this.controller = controller;
         }
 
         public override void Enter()
         {
             base.Enter();
-            viewInstance!.LoginAnimator.ResetAnimator();
+            viewInstance.LoginAnimator.ResetAnimator();
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.LoginContainer.SetActive(true);
             viewInstance.LoadingSpinner.SetActive(false);
@@ -27,11 +25,22 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoadingSpinner.SetActive(false);
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
+
+            viewInstance.LoginButton.onClick.AddListener(controller.StartLoginFlowUntilEnd);
+            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
         public override void Exit()
         {
             base.Exit();
+            viewInstance.LoginButton.onClick.RemoveListener(controller.StartLoginFlowUntilEnd);
+            viewInstance.CancelLoginButton.onClick.RemoveListener(CancelLoginAndRestartFromBeginning);
+        }
+
+        private void CancelLoginAndRestartFromBeginning()
+        {
+            controller.CancelLoginProcess();
+            Enter(); // SwitchState(ViewState.Login);
         }
     }
 }

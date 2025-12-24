@@ -21,7 +21,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}...");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Exit state {GetType().Name}...");
         }
     }
 }

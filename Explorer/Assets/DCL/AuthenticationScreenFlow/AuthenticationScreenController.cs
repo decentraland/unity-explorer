@@ -26,9 +26,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Prefs;
 using DCL.Utility;
-using Sentry;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -155,23 +153,13 @@ namespace DCL.AuthenticationScreenFlow
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
-            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
-            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
-            viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
-            viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
-
             foreach (Button button in viewInstance.UseAnotherAccountButton)
                 button.onClick.AddListener(ChangeAccount);
 
-            viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
             viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-
-            viewInstance.VersionText.text = Application.isEditor
-                ? $"editor-version - {buildData.InstallSource}"
-                : $"{Application.version} - {buildData.InstallSource}";
 
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
@@ -183,12 +171,12 @@ namespace DCL.AuthenticationScreenFlow
                 context: new AuthStateContext(),
                 states: new AuthStateBase[]
                 {
-                    new InitAuthScreenState(viewInstance),
+                    new InitAuthScreenState(viewInstance, buildData),
                     new AutoLoginAuthState(viewInstance),
-                    new LoginAuthState(viewInstance, CurrentState),
+                    new LoginAuthState(viewInstance, this),
                     new LoadingAuthState(viewInstance),
-                    new VerificationAuthState(viewInstance),
-                    new LobbyAuthState(viewInstance, characterPreviewController),
+                    new VerificationAuthState(viewInstance, this),
+                    new LobbyAuthState(viewInstance, this, characterPreviewController),
                 }
             );
 
@@ -223,7 +211,6 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
-            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -334,7 +321,7 @@ namespace DCL.AuthenticationScreenFlow
             await lifeCycleTask.Task;
         }
 
-        private void StartLoginFlowUntilEnd()
+        public void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
 
@@ -453,12 +440,6 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void CancelLoginAndRestartFromBeginning()
-        {
-            CancelLoginProcess();
-            SwitchState(ViewState.Login);
-        }
-
         private void ShowVerification(int code, DateTime expiration, string requestID)
         {
             viewInstance!.VerificationCodeLabel.text = code.ToString();
@@ -522,7 +503,7 @@ namespace DCL.AuthenticationScreenFlow
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
         }
 
-        private void JumpIntoWorld()
+        public void JumpIntoWorld()
         {
             viewInstance!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
@@ -576,13 +557,13 @@ namespace DCL.AuthenticationScreenFlow
             Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
         }
 
-        private void CancelLoginProcess()
+        public void CancelLoginProcess()
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
         }
 
-        private void OpenOrCloseVerificationCodeHint()
+        public void OpenOrCloseVerificationCodeHint()
         {
             viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }

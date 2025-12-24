@@ -1,8 +1,16 @@
-﻿namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
+﻿using DCL.PerformanceAndDiagnostics.Analytics;
+using UnityEngine;
+
+namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class InitAuthScreenState : AuthStateBase
     {
-        public InitAuthScreenState(AuthenticationScreenView viewInstance) : base(viewInstance) { }
+        private readonly BuildData buildData;
+
+        public InitAuthScreenState(AuthenticationScreenView viewInstance, BuildData buildData) : base(viewInstance)
+        {
+            this.buildData = buildData;
+        }
 
         public override void Enter()
         {
@@ -13,6 +21,10 @@
 
             viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance.ErrorPopupRoot.SetActive(false);
+
+            viewInstance.VersionText.text = Application.isEditor
+                ? $"editor-version - {buildData.InstallSource}"
+                : $"{Application.version} - {buildData.InstallSource}";
         }
 
         public override void Exit()
