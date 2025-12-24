@@ -56,9 +56,9 @@ namespace DCL.Chat.ChatInput
 
         public override void OnInitialized()
         {
-            pasteToastState = new PasteToastState(view, context, disposalCt);
-            suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand, context);
-            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping, context);
+            pasteToastState = new PasteToastState(view, disposalCt);
+            suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping);
             inputField = view.inputField;
         }
 

@@ -520,7 +520,7 @@ namespace DCL.Chat.ChatMessages
             view.ShowLastMessage(useSmoothScroll: true);
         }
 
-        protected override void Activate(ControllerNoData input)
+        protected override void Activate()
         {
             view.Show();
 

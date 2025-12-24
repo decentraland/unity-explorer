@@ -2,7 +2,7 @@
 
 namespace DCL.Chat.ChatInput
 {
-    public abstract class ChatInputState : MVCState<ChatInputState, ChatInputStateContext>
+    public abstract class ChatInputState : MVCState<ChatInputState>
     {
         internal void OnBlockedUpdated(bool isUnblocked)
         {

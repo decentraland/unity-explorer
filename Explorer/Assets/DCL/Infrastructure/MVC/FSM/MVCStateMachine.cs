@@ -6,7 +6,7 @@ using Utility;
 
 namespace MVC
 {
-    public class MVCStateMachine<TBaseState, TContext> : IDisposable where TBaseState: MVCState<TBaseState, TContext>
+    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: MVCState<TBaseState>
     {
         public event Action? OnStateChanged;
 
@@ -14,15 +14,11 @@ namespace MVC
 
         private readonly CancellationTokenSource disposalCts = new ();
 
-        public MVCStateMachine(TContext context, params TBaseState[] states)
+        public MVCStateMachine(params TBaseState[] states)
         {
-            this.context = context;
-
             foreach (TBaseState state in states)
                 AddState(state);
         }
-
-        protected TContext context { get; }
 
         public float ElapsedTimeInState { get; private set; }
         public TBaseState? PreviousState { get; private set; }
@@ -33,7 +29,7 @@ namespace MVC
         /// </summary>
         public void AddState(TBaseState state)
         {
-            state.SetMachineAndContext(this, context, disposalCts.Token);
+            state.SetMachineAndDisposalCt(this, disposalCts.Token);
             states[state.GetType()] = state;
         }
 

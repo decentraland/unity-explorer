@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatStates
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
         private readonly IEventBus eventBus;
-        private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
+        private readonly MVCStateMachine<ChatState> fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
 
@@ -31,17 +31,13 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine<ChatState, ChatStateContext>(
-                context: new ChatStateContext(),
-                states: new ChatState[]
-                {
-                    new InitChatState(),
-                    new DefaultChatState(mediator),
-                    new FocusedChatState(mediator, inputBlocker),
-                    new MembersChatState(mediator),
-                    new MinimizedChatState(mediator),
-                    new HiddenChatState(mediator),
-                }
+            fsm = new MVCStateMachine<ChatState>(
+                new InitChatState(),
+                new DefaultChatState(mediator),
+                new FocusedChatState(mediator, inputBlocker),
+                new MembersChatState(mediator),
+                new MinimizedChatState(mediator),
+                new HiddenChatState(mediator)
             );
 
             fsm.Enter<InitChatState>();

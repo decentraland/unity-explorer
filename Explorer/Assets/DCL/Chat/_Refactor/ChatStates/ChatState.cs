@@ -2,7 +2,7 @@ using MVC;
 
 namespace DCL.Chat.ChatStates
 {
-    public class ChatState : MVCState<ChatState, ChatStateContext>
+    public class ChatState : MVCState<ChatState>
     {
         public virtual void OnClickOutside() { }
 

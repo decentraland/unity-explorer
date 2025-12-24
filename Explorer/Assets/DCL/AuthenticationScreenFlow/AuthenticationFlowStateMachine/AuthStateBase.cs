@@ -3,9 +3,7 @@ using MVC;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public readonly struct AuthStateContext { }
-
-    public abstract class AuthStateBase : MVCState<AuthStateBase, AuthStateContext>
+    public abstract class AuthStateBase : MVCState<AuthStateBase>
     {
         protected readonly AuthenticationScreenView viewInstance;
 

@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatInput
 
         private CancellationTokenSource cts = new ();
 
-        private readonly MVCStateMachine<ChatInputState, ChatInputStateContext> fsm;
+        private readonly MVCStateMachine<ChatInputState> fsm;
 
         public ChatInputPresenter(
             ChatInputView view,
@@ -40,23 +40,18 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            var context = new ChatInputStateContext();
-            fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(
-                context,
-                states: new ChatInputState[]
-                {
-                    new InitializingChatInputState(),
-                    new HiddenChatInputState(view),
-                    new BlockedChatInputState(view, eventBus, chatConfig, currentChannelService),
-                    new UnfocusedChatInputState(view, eventBus),
-                    new TypingEnabledChatInputState(view,
-                        chatEventBus,
-                        sendMessageCommand,
-                        new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
-                        profileRepositoryWrapper,
-                        getParticipantProfilesCommand
-                    ),
-                }
+            fsm = new MVCStateMachine<ChatInputState>(
+                new InitializingChatInputState(),
+                new HiddenChatInputState(view),
+                new BlockedChatInputState(view, eventBus, chatConfig, currentChannelService),
+                new UnfocusedChatInputState(view, eventBus),
+                new TypingEnabledChatInputState(view,
+                    chatEventBus,
+                    sendMessageCommand,
+                    new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
+                    profileRepositoryWrapper,
+                    getParticipantProfilesCommand
+                )
             );
 
             fsm.Enter<InitializingChatInputState>();

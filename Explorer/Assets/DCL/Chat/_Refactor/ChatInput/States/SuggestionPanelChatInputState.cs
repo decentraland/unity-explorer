@@ -14,7 +14,7 @@ using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatInput
 {
-    public class SuggestionPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
+    public class SuggestionPanelChatInputState : IndependentMVCState, IDisposable
     {
         private readonly ChatInputView view;
         private readonly EmojiMapping emojiMapping;
@@ -38,8 +38,7 @@ namespace DCL.Chat.ChatInput
 
         public SuggestionPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            GetParticipantProfilesCommand getParticipantProfilesCommand,
-            ChatInputStateContext context) : base(context)
+            GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
             this.view = view;
             this.emojiMapping = emojiMapping;
@@ -112,7 +111,7 @@ namespace DCL.Chat.ChatInput
             view.SelectInputField();
         }
 
-        protected override void Activate(ControllerNoData input)
+        protected override void Activate()
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;

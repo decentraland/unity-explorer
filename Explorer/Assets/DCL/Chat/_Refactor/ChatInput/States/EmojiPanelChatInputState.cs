@@ -7,14 +7,14 @@ using System;
 
 namespace DCL.Chat.ChatInput
 {
-    public class EmojiPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
+    public class EmojiPanelChatInputState : IndependentMVCState, IDisposable
     {
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        public EmojiPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping, ChatInputStateContext context) : base(context)
+        public EmojiPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping)
         {
             emojiContainer = view.emojiContainer;
 
@@ -33,7 +33,7 @@ namespace DCL.Chat.ChatInput
             clickDetectionHandler.Pause();
         }
 
-        protected override void Activate(ControllerNoData input)
+        protected override void Activate()
         {
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiContainer.emojiPanelButton.SetState(true);
