@@ -92,7 +92,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; set; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
@@ -173,9 +173,9 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     new InitAuthScreenState(viewInstance, buildData),
                     new AutoLoginAuthState(viewInstance),
-                    new LoginAuthState(viewInstance, this),
-                    new LoadingAuthState(viewInstance),
-                    new VerificationAuthState(viewInstance, this),
+                    new LoginStartAuthState(viewInstance, this, CurrentState),
+                    new LoadingAuthState(viewInstance, CurrentState),
+                    new VerificationAuthState(viewInstance, this, CurrentState),
                     new LobbyAuthState(viewInstance, this, characterPreviewController),
                 }
             );
@@ -260,31 +260,31 @@ namespace DCL.AuthenticationScreenFlow
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedInCached;
-                        SwitchState(ViewState.Finalize);
+                        fsm.Enter<LobbyAuthState>();
                     }
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        SwitchState(ViewState.Login);
+                        fsm.Enter<LoginStartAuthState>();
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                SwitchState(ViewState.Login);
+                fsm.Enter<LoginStartAuthState>();
             }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
@@ -340,11 +340,6 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     CurrentRequestID = string.Empty;
 
-                    viewInstance!.ErrorPopupRoot.SetActive(false);
-                    viewInstance!.LoadingSpinner.SetActive(true);
-                    viewInstance.LoginButton.interactable = false;
-                    viewInstance.LoginButton.gameObject.SetActive(false);
-
                     var web3AuthSpan = new SpanData
                     {
                         TransactionName = LOADING_TRANSACTION_NAME,
@@ -355,9 +350,7 @@ namespace DCL.AuthenticationScreenFlow
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
-
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
-
                     web3Authenticator.SetVerificationListener(null);
 
                     var identityValidationSpan = new SpanData
@@ -371,8 +364,7 @@ namespace DCL.AuthenticationScreenFlow
 
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
-                        CurrentState.Value = AuthenticationStatus.FetchingProfile;
-                        SwitchState(ViewState.Loading);
+                        fsm.Enter<LoadingAuthState>();
 
                         var profileFetchSpan = new SpanData
                         {
@@ -388,49 +380,50 @@ namespace DCL.AuthenticationScreenFlow
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                         CurrentState.Value = AuthenticationStatus.LoggedIn;
-                        SwitchState(ViewState.Finalize);
+                        fsm.Enter<LobbyAuthState>();
                     }
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        SwitchState(ViewState.Login);
+                        fsm.Enter<LoginStartAuthState>();
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (SignatureExpiredException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (Web3SignatureException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (CodeVerificationException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    SwitchState(ViewState.Login);
+                    fsm.Enter<LoginStartAuthState>();
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-                    SwitchState(ViewState.Login);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    fsm.Enter<LoginStartAuthState>();
+
                     ShowConnectionErrorPopup();
                 }
                 finally
@@ -461,8 +454,7 @@ namespace DCL.AuthenticationScreenFlow
                              verificationCountdownCancellationToken.Token)
                         .Forget();
 
-            CurrentState.Value = AuthenticationStatus.VerificationInProgress;
-            SwitchState(ViewState.LoginInProgress);
+            fsm.Enter<VerificationAuthState>();
         }
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
@@ -494,7 +486,8 @@ namespace DCL.AuthenticationScreenFlow
                 viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
-                SwitchState(ViewState.Login);
+
+                fsm.Enter<LoginStartAuthState>();
             }
 
             characterPreviewController?.OnHide();
@@ -523,30 +516,6 @@ namespace DCL.AuthenticationScreenFlow
 
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
-            }
-        }
-
-        private void SwitchState(ViewState state)
-        {
-            viewInstance!.ErrorPopupRoot.SetActive(false);
-
-            switch (state)
-            {
-                case ViewState.Login:
-                    fsm.Enter<LoginAuthState>();
-                    CurrentState.Value = AuthenticationStatus.Login;
-                    break;
-                case ViewState.Loading:
-                    fsm.Enter<LoadingAuthState>();
-                    break;
-                case ViewState.LoginInProgress:
-                    fsm.Enter<VerificationAuthState>();
-                    break;
-                case ViewState.Finalize:
-                    fsm.Enter<LobbyAuthState>();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 

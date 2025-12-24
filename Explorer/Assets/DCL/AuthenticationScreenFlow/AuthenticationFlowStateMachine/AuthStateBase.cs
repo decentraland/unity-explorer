@@ -16,6 +16,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Enter()
         {
+            viewInstance!.ErrorPopupRoot.SetActive(false);
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}...");
         }
 

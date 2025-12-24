@@ -1,20 +1,27 @@
 using DCL.UI;
+using DCL.Utilities;
 using Utility;
+using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class VerificationAuthState : AuthStateBase
     {
         private readonly AuthenticationScreenController controller;
+        private readonly ReactiveProperty<AuthenticationStatus> currentState;
 
-        public VerificationAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller) : base(viewInstance)
+        public VerificationAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
+            ReactiveProperty<AuthenticationStatus> currentState) : base(viewInstance)
         {
             this.controller = controller;
+            this.currentState = currentState;
         }
 
         public override void Enter()
         {
             base.Enter();
+            currentState.Value = AuthenticationStatus.VerificationInProgress;
+
             viewInstance.VerificationAnimator.ResetAndDeactivateAnimator();
 
             viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
