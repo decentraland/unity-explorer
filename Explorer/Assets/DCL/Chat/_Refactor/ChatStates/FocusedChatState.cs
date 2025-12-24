@@ -5,11 +5,11 @@ namespace DCL.Chat.ChatStates
 {
     public class FocusedChatState : ChatState
     {
-        private readonly MVCStateMachine stateMachine;
+        private readonly MVCStateMachine<ChatState> stateMachine;
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
 
-        public FocusedChatState(MVCStateMachine stateMachine, ChatUIMediator mediator, ChatInputBlockingService inputBlocker)
+        public FocusedChatState(MVCStateMachine<ChatState> stateMachine, ChatUIMediator mediator, ChatInputBlockingService inputBlocker)
         {
             this.stateMachine = stateMachine;
             this.mediator = mediator;

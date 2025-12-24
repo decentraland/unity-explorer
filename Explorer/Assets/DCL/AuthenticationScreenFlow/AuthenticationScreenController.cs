@@ -96,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
-        private MVCStateMachine fsm;
+        private MVCStateMachine<AuthStateBase> fsm;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -167,7 +167,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
 
-            fsm = new MVCStateMachine(
+            fsm = new MVCStateMachine<AuthStateBase>(
                 new InitAuthScreenState(viewInstance, buildData),
                 new AutoLoginAuthState(viewInstance),
                 new LoginStartAuthState(viewInstance, this, CurrentState),

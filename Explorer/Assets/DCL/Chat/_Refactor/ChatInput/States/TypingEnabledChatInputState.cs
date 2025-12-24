@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatInput
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
-        private readonly MVCStateMachine stateMachine;
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
         private readonly IChatEventBus chatEventBus;
         private readonly SendMessageCommand sendMessageCommand;
@@ -37,7 +37,7 @@ namespace DCL.Chat.ChatInput
         private bool isLocked;
 
         public TypingEnabledChatInputState(
-            MVCStateMachine stateMachine,
+            MVCStateMachine<ChatInputState> stateMachine,
             ChatInputView view,
             IChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,

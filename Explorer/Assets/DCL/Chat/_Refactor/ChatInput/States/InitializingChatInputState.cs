@@ -7,9 +7,9 @@ namespace DCL.Chat.ChatInput
     /// </summary>
     public class InitializingChatInputState : ChatInputState
     {
-        private readonly MVCStateMachine chatInputStateMachine;
+        private readonly MVCStateMachine<ChatInputState> chatInputStateMachine;
 
-        public InitializingChatInputState(MVCStateMachine chatInputStateMachine)
+        public InitializingChatInputState(MVCStateMachine<ChatInputState> chatInputStateMachine)
         {
             this.chatInputStateMachine = chatInputStateMachine;
         }

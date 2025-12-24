@@ -10,11 +10,9 @@ namespace DCL.Chat.ChatStates
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
         private readonly IEventBus eventBus;
-        private readonly MVCStateMachine fsm;
+        private readonly MVCStateMachine<ChatState> fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
-
-        private ChatState CurrentChatState => (ChatState)fsm.CurrentState!;
 
         public bool IsFocused => fsm.CurrentState is FocusedChatState;
         public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
@@ -33,8 +31,7 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine();
-
+            fsm = new MVCStateMachine<ChatState>();
             fsm.AddStates(
                 new InitChatState(),
                 new DefaultChatState(fsm, mediator),
@@ -75,7 +72,7 @@ namespace DCL.Chat.ChatStates
         private void PropagateStateChange() =>
             eventBus.Publish(new ChatEvents.ChatStateChangedEvent
             {
-                CurrentState = CurrentChatState,
+                CurrentState = fsm.CurrentState!,
             });
 
         public void OnViewShow()
@@ -87,42 +84,42 @@ namespace DCL.Chat.ChatStates
 
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
-            CurrentChatState.OnFocusRequested();
+            fsm.CurrentState!.OnFocusRequested();
         }
 
         private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
         {
-            CurrentChatState.OnCloseRequested();
+            fsm.CurrentState!.OnCloseRequested();
         }
 
         private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
-            CurrentChatState.OnToggleMembers();
+            fsm.CurrentState!.OnToggleMembers();
         }
 
         private void HandleClickInside()
         {
-            CurrentChatState.OnClickInside();
+            fsm.CurrentState!.OnClickInside();
         }
 
         private void HandleClickOutside()
         {
-            CurrentChatState.OnClickOutside();
+            fsm.CurrentState!.OnClickOutside();
         }
 
         private void HandlePointerExited()
         {
-            CurrentChatState.OnPointerExit();
+            fsm.CurrentState!.OnPointerExit();
         }
 
         private void HandlePointerEntered()
         {
-            CurrentChatState.OnPointerEnter();
+            fsm.CurrentState!.OnPointerEnter();
         }
 
         public void Minimize()
         {
-            CurrentChatState.OnMinimizeRequested();
+            fsm.CurrentState!.OnMinimizeRequested();
         }
 
         public void SetInitialState(bool focus)

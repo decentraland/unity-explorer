@@ -6,30 +6,34 @@ using Utility;
 
 namespace MVC
 {
-    public class MVCStateMachine : IDisposable
+    /// <summary>
+    ///     Generic state machine with typed CurrentState and support for payloaded states.
+    /// </summary>
+    /// <typeparam name="TBaseState">Base type for all states in this machine</typeparam>
+    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IExitableState
     {
         public event Action? OnStateChanged;
 
-        private readonly Dictionary<Type, IExitableState> states = new ();
+        private readonly Dictionary<Type, TBaseState> states = new ();
 
         private readonly CancellationTokenSource disposalCts = new ();
 
-        private IExitableState? previousState;
+        private TBaseState? previousState;
 
-        public IExitableState? CurrentState { get; private set; }
+        public TBaseState? CurrentState { get; private set; }
 
         public CancellationToken DisposalCt => disposalCts.Token;
 
         public MVCStateMachine() { }
 
-        public MVCStateMachine(params IExitableState[] states)
+        public MVCStateMachine(params TBaseState[] states)
         {
             AddStates(states);
         }
 
-        public void AddStates(params IExitableState[] states)
+        public void AddStates(params TBaseState[] states)
         {
-            foreach (IExitableState state in states)
+            foreach (TBaseState state in states)
                 this.states[state.GetType()] = state;
         }
 
@@ -38,19 +42,19 @@ namespace MVC
             disposalCts.SafeCancelAndDispose();
         }
 
-        public void Enter<TState>() where TState: class, IState
+        public void Enter<TState>() where TState: TBaseState, IState
         {
             TState state = ChangeState<TState>();
             state.Enter();
         }
 
-        public void Enter<TState, TPayload>(TPayload payload) where TState: class, IPayloadedState<TPayload>
+        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
         {
             TState state = ChangeState<TState>();
             state.Enter(payload);
         }
 
-        private TState ChangeState<TState>() where TState: class, IExitableState
+        private TState ChangeState<TState>() where TState: TBaseState
         {
             Type newType = typeof(TState);
 
@@ -60,7 +64,7 @@ namespace MVC
 
             CurrentState?.Exit();
 
-            if (!states.TryGetValue(newType, out IExitableState? newState))
+            if (!states.TryGetValue(newType, out TBaseState? newState))
             {
                 var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it while constructing state machine?";
                 ReportHub.LogError(ReportCategory.MVC, error);

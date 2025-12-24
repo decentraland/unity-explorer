@@ -21,9 +21,7 @@ namespace DCL.Chat.ChatInput
 
         private CancellationTokenSource cts = new ();
 
-        private readonly MVCStateMachine fsm;
-
-        private ChatInputState CurrentInputState => (ChatInputState)fsm.CurrentState!;
+        private readonly MVCStateMachine<ChatInputState> fsm;
 
         public ChatInputPresenter(
             ChatInputView view,
@@ -42,8 +40,7 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            fsm = new MVCStateMachine();
-
+            fsm = new MVCStateMachine<ChatInputState>();
             fsm.AddStates(
                 new InitializingChatInputState(fsm),
                 new HiddenChatInputState(view),
@@ -130,7 +127,7 @@ namespace DCL.Chat.ChatInput
 
         private void OnBlockedUpdated(Result<PrivateConversationUserStateService.ChatUserState> result)
         {
-            CurrentInputState.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
+            fsm.CurrentState!.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
         }
 
         public void Dispose()
