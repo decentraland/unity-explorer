@@ -116,8 +116,6 @@ using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
-using DCL.SocialEmotes;
-using DCL.PerformanceAndDiagnostics;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.Translation;
