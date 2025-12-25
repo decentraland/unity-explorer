@@ -124,33 +124,20 @@ namespace DCL.Input.Systems
         {
             if (intention.Locked)
             {
-                if (intention.WithUI)
+                if (cursorComponent.CursorState == CursorState.Locked)
                 {
-                    if (cursorComponent.CursorState == CursorState.LockedWithUI)
-                    {
-                        World.Remove<PointerLockIntention>(entity);
-                        return;
-                    }
-
-                    UpdateState(ref cursorComponent, CursorState.LockedWithUI);
+                    World.Remove<PointerLockIntention>(entity);
+                    return;
                 }
-                else
-                {
-                    if (cursorComponent.CursorState == CursorState.Locked)
-                    {
-                        World.Remove<PointerLockIntention>(entity);
-                        return;
-                    }
 
-                    // Keep the intention as pending if the cursor is over any UI
-                    if (cursorComponent.IsOverUI)
-                        return;
+                // Keep the intention as pending if the cursor is over any UI
+                if (cursorComponent.IsOverUI)
+                    return;
 
-                    // In editor sometimes the pointer is still visible even if its locked.
-                    // This is because how the editor window focusing works (it needs a click on the game window).
-                    // In the build it works 100%
-                    UpdateState(ref cursorComponent, CursorState.Locked);
-                }
+                // In editor sometimes the pointer is still visible even if its locked.
+                // This is because how the editor window focusing works (it needs a click on the game window).
+                // In the build it works 100%
+                UpdateState(ref cursorComponent, CursorState.Locked);
             }
             else
             {
@@ -201,9 +188,6 @@ namespace DCL.Input.Systems
                 case CursorState.Panning:
                     cursorStyle = CursorStyle.CameraPan;
                     break;
-                case CursorState.LockedWithUI:
-                    cursorStyle = CursorStyle.Interaction;
-                    break;
             }
 
             cursor.SetStyle(cursorStyle);
@@ -217,17 +201,6 @@ namespace DCL.Input.Systems
         private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
             CursorState nextState = cursorComponent.CursorState;
-
-            // Opened a menu while locked
-            if (nextState == CursorState.LockedWithUI)
-            {
-                UpdateState(ref cursorComponent, nextState);
-
-                if (cursorComponent.CursorState != CursorState.Panning)
-                    cursorComponent.PositionIsDirty = false;
-
-                return;
-            }
 
             if (cursorComponent is { IsOverUI: true, CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
@@ -294,12 +267,6 @@ namespace DCL.Input.Systems
                 case CursorState.Panning:
                     crosshairCanvas.SetDisplayed(true);
                     cursor.SetVisibility(false);
-                    break;
-
-                case CursorState.LockedWithUI:
-                    crosshairCanvas.SetDisplayed(false);
-                    cursor.SetVisibility(true);
-                    cursor.Unlock();
                     break;
             }
 

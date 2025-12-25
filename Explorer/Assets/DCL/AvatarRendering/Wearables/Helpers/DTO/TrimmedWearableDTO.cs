@@ -51,21 +51,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
     public static class TrimmedWearableDTOExtensions
     {
-        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO, string thumbnailHash) =>
-            new ()
+        public static TrimmedWearableDTO Convert(this WearableDTO wearableDTO, string thumbnailHash)
+        {
+            return new TrimmedWearableDTO
             {
-                id = wearableDTO.id,
-                thumbnail = thumbnailHash,
-                metadata = new TrimmedWearableDTO.WearableMetadataDto
+                id = wearableDTO.id, thumbnail = thumbnailHash, metadata = new TrimmedWearableDTO.WearableMetadataDto
                 {
-                    id = wearableDTO.metadata.id,
-                    rarity = wearableDTO.metadata.rarity,
-                    data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
+                    id = wearableDTO.metadata.id, rarity = wearableDTO.metadata.rarity, data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
                     {
-                        category = wearableDTO.metadata.data.category,
-                        representations = wearableDTO.metadata.data.representations
+                        category = wearableDTO.metadata.data.category, representations = wearableDTO.metadata.data.representations
                     }
                 }
             };
+        }
     }
 }

@@ -21,7 +21,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             TrimmedModel = model;
         }
 
-        public bool IsCompatibleWithBodyShape(string bodyShape) =>
-            false;
+        public int Amount { get; set; }
+
+        public bool IsCompatibleWithBodyShape(string bodyShape)
+        {
+            return false;
+        }
     }
 }

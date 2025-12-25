@@ -25,7 +25,6 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
-        private string mentionName;
         private bool hasClaimedName;
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
@@ -80,7 +79,7 @@ namespace DCL.Profiles
         /// <summary>
         /// The Display Name with @ before it. Cached here to avoid re-allocations.
         /// </summary>
-        public string MentionName => mentionName;
+        public string MentionName { get; private set; }
 
         public bool HasClaimedName
         {
@@ -170,8 +169,9 @@ namespace DCL.Profiles
             Version = default(int);
             HasClaimedName = default(bool);
             EmploymentStatus = default(string?);
-            UserId = "";
-            Name = "";
+            UserId = string.Empty;
+            Name = string.Empty;
+            MentionName = string.Empty;
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
             ProfilePicture = null;
@@ -221,7 +221,7 @@ namespace DCL.Profiles
                 DisplayName = $"{result}{WalletId}";
             }
 
-            mentionName = "@" + DisplayName;
+            MentionName = "@" + DisplayName;
         }
 
         public void ClearLinks()
