@@ -146,8 +146,8 @@ namespace DCL.EventsApi
             URLAddress url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments> result = webRequestController.DeleteAsync(
-                url, GenericDeleteArguments.Empty, ct, ReportCategory.EVENTS,
+            GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericPostArguments> result = webRequestController.DeleteAsync(
+                url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 

@@ -5,7 +5,7 @@ using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
@@ -66,7 +66,7 @@ namespace DCL.Analytics.Systems
         {
             if (timeSpentInWorld == 0) return;
 
-            analytics.Track(AnalyticsEvents.World.TIME_SPENT_IN_WORLD, new JsonObject
+            analytics.Track(AnalyticsEvents.World.TIME_SPENT_IN_WORLD, new JObject
             {
                 ["time_spent"] = timeSpentInWorld,
                 ["realm_name"] = currentRealmName,

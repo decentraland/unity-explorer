@@ -5,26 +5,37 @@ using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Communities
 {
-    public class RPCCommunitiesService : RPCSocialServiceBase, IRPCCommunitiesService
+    public class RPCCommunitiesService : RPCSocialServiceBase
     {
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToCommunityMemberConnectivityUpdates";
+        // Increase the default number of retries because once it consumes all, it will not receive updates for the rest of the session
+        private const int MAX_CONNECTION_RETRIES = 20;
 
         private readonly CommunitiesEventBus communitiesEventBus;
+        private bool isListeningToUpdatesFromServer;
 
         public RPCCommunitiesService(
             IRPCSocialServices socialServiceRPC,
-            CommunitiesEventBus communitiesEventBus) : base(socialServiceRPC, ReportCategory.COMMUNITIES)
+            CommunitiesEventBus communitiesEventBus) : base(socialServiceRPC, ReportCategory.COMMUNITIES, MAX_CONNECTION_RETRIES)
         {
             this.communitiesEventBus = communitiesEventBus;
         }
 
-        public UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
+        public async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            if (isListeningToUpdatesFromServer) return;
+
+            try
+            {
+                isListeningToUpdatesFromServer = true;
+                await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            }
+            finally { isListeningToUpdatesFromServer = false; }
+
+            return;
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
@@ -48,10 +59,8 @@ namespace DCL.Communities
                     }
 
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    catch (Exception e) when (e is not OperationCanceledException)
-                    {
-                        DiagnosticInfoUtils.LogWebSocketException(e, ReportCategory.COMMUNITIES);
-                    }
+                    // No need to handle OperationCancelledException because there are no async calls
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
                 }
             }
         }

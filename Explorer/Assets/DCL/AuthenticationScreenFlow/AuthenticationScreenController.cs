@@ -96,6 +96,8 @@ namespace DCL.AuthenticationScreenFlow
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;
 
+        public event Action DiscordButtonClicked;
+
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -152,6 +154,7 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
 
@@ -336,6 +339,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance!.ErrorPopupRoot.SetActive(false);
                     viewInstance!.LoadingSpinner.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
 
                     var web3AuthSpan = new SpanData
                     {
@@ -430,6 +434,12 @@ namespace DCL.AuthenticationScreenFlow
                     RestoreResolutionAndScreenMode();
                 }
             }
+        }
+
+        private void CancelLoginAndRestartFromBeginning()
+        {
+            CancelLoginProcess();
+            SwitchState(ViewState.Login);
         }
 
         private void ShowVerification(int code, DateTime expiration, string requestID)
@@ -527,29 +537,25 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
-
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.LoginButton.interactable = true;
-
+                    viewInstance.LoginButton.gameObject.SetActive(true);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
-
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
                 case ViewState.Loading:
                     viewInstance!.PendingAuthentication.SetActive(false);
-
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.LoadingSpinner.SetActive(true);
-                    viewInstance.LoginButton.interactable = true;
-
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
@@ -558,7 +564,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
-
+                    viewInstance.LoginButton.gameObject.SetActive(true);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.FinalizeContainer.SetActive(false);
@@ -572,6 +578,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.LoginButton.gameObject.SetActive(true);
 
                     viewInstance.FinalizeContainer.SetActive(true);
                     viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
@@ -612,8 +619,11 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
-        private void OpenDiscord() =>
+        private void OpenDiscord()
+        {
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+            DiscordButtonClicked?.Invoke();
+        }
 
         private void ExitApplication()
         {

@@ -1,26 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.ClearScript;
-using Microsoft.ClearScript.V8.FastProxy;
 
 namespace SceneRuntime.Apis
 {
-    public sealed class JSTaskResolverResetable : V8FastHostObject<JSTaskResolverResetable>
+    public class JSTaskResolverResetable
     {
         private AutoResetUniTaskCompletionSource source;
-
-        static JSTaskResolverResetable()
-        {
-            Configure(static configuration =>
-            {
-                configuration.AddMethodGetter(nameof(Completed),
-                    static (JSTaskResolverResetable self, in V8FastArgs args, in V8FastResult result) =>
-                        self.Completed());
-
-                configuration.AddMethodGetter(nameof(Reject),
-                    static (JSTaskResolverResetable self, in V8FastArgs args, in V8FastResult result) =>
-                        self.Reject(args.GetString(0)));
-            });
-        }
 
         public UniTask Task => source.Task;
 
@@ -29,12 +15,14 @@ namespace SceneRuntime.Apis
             source = AutoResetUniTaskCompletionSource.Create();
         }
 
-        private void Completed()
+        [UsedImplicitly]
+        public void Completed()
         {
             source.TrySetResult();
         }
 
-        private void Reject(string message)
+        [UsedImplicitly]
+        public void Reject(string message)
         {
             source.TrySetException(new ScriptEngineException(message));
         }

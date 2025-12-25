@@ -26,14 +26,15 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjVkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvY29tbW9uL2lucHV0X2Fj",
             "dGlvbi5wcm90bxIiZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1v",
-            "birlAQoLSW5wdXRBY3Rpb24SDgoKSUFfUE9JTlRFUhAAEg4KCklBX1BSSU1B",
+            "bir2AQoLSW5wdXRBY3Rpb24SDgoKSUFfUE9JTlRFUhAAEg4KCklBX1BSSU1B",
             "UlkQARIQCgxJQV9TRUNPTkRBUlkQAhIKCgZJQV9BTlkQAxIOCgpJQV9GT1JX",
             "QVJEEAQSDwoLSUFfQkFDS1dBUkQQBRIMCghJQV9SSUdIVBAGEgsKB0lBX0xF",
             "RlQQBxILCgdJQV9KVU1QEAgSCwoHSUFfV0FMSxAJEg8KC0lBX0FDVElPTl8z",
             "EAoSDwoLSUFfQUNUSU9OXzQQCxIPCgtJQV9BQ1RJT05fNRAMEg8KC0lBX0FD",
-            "VElPTl82EA0qVgoQUG9pbnRlckV2ZW50VHlwZRIKCgZQRVRfVVAQABIMCghQ",
-            "RVRfRE9XThABEhMKD1BFVF9IT1ZFUl9FTlRFUhACEhMKD1BFVF9IT1ZFUl9M",
-            "RUFWRRADQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "VElPTl82EA0SDwoLSUFfTU9ESUZJRVIQDipWChBQb2ludGVyRXZlbnRUeXBl",
+            "EgoKBlBFVF9VUBAAEgwKCFBFVF9ET1dOEAESEwoPUEVUX0hPVkVSX0VOVEVS",
+            "EAISEwoPUEVUX0hPVkVSX0xFQVZFEANCFKoCEURDTC5FQ1NDb21wb25lbnRz",
+            "YgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), }, null, null));
@@ -57,6 +58,7 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("IA_ACTION_4")] IaAction4 = 11,
     [pbr::OriginalName("IA_ACTION_5")] IaAction5 = 12,
     [pbr::OriginalName("IA_ACTION_6")] IaAction6 = 13,
+    [pbr::OriginalName("IA_MODIFIER")] IaModifier = 14,
   }
 
   /// <summary>

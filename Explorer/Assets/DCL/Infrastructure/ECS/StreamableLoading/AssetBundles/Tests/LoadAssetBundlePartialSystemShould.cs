@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
@@ -88,8 +89,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public async Task ParallelABLoadsWithoutCacheShould()
         {
+            var totalBudget = 15;
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest());
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

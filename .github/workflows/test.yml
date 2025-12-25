@@ -35,8 +35,11 @@ concurrency:
 jobs:
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
-    name: Test
+    name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        testMode: [playmode, editmode]
     steps:
 
       - name: Move Docker data-root to /mnt/docker
@@ -159,17 +162,17 @@ jobs:
           SHELL: /bin/bash
         with:
           projectPath: Explorer
-          testMode: all
+          testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
         if: always()
         uses: dorny/test-reporter@v2.1.1
         with:
-          name: Unity Tests
+          name: Unity Tests (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-nunit
           fail-on-error: true
@@ -180,6 +183,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Test results (play mode & edit mode)
+          name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error

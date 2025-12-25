@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -158,8 +159,34 @@ namespace DCL.PlacesAPIService
                 onlyFavorites: true);
         }
 
-        public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct) =>
-            await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
+        public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
+        {
+            placesById.TryGetValue(placeId, out var place);
+            bool cachedIsFavorite = place?.user_favorite ?? false;
+            
+            // Pre-warming cache with change for instant return in case of repeated call from different places.
+            // Example: Explore's PlaceInfoPanel and minimap race.
+            TryUpdateCachedPlaceFavorite(placeId, isFavorite);
+            
+            try
+            {
+                await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
+            }
+            catch (Exception _)
+            {
+                // Returning original value in case of exception.
+                TryUpdateCachedPlaceFavorite(placeId, cachedIsFavorite);
+                throw;
+            }
+        }
+
+        private void TryUpdateCachedPlaceFavorite(string placeId, bool isFavorite)
+        {
+            if (string.IsNullOrEmpty(placeId) || !placesById.TryGetValue(placeId, out var place))
+                return;
+            
+            place.user_favorite = isFavorite;
+        }
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {

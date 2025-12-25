@@ -1,4 +1,4 @@
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace Utility.Json
@@ -11,7 +11,7 @@ namespace Utility.Json
 
     public readonly struct PooledJsonObject : IDisposable
     {
-        public readonly JsonObject Json;
+        public readonly JObject Json;
         private readonly JsonObjectBuilder source;
 
         public PooledJsonObject(JsonObjectBuilder source)

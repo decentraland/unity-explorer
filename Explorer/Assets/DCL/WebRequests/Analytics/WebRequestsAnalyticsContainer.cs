@@ -46,5 +46,9 @@ namespace DCL.WebRequests.Analytics
                 metric.OnRequestEnded(request);
             }
         }
+
+        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
+
+        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
     }
 }

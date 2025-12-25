@@ -94,6 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 }
 
                 browserStateService.AddCommunities(result.Value.data.results);
+                browserStateService.SetMyCommunities(result.Value.data.results);
                 view.AddCommunitiesItems(result.Value.data.results, true);
                 view.SetAsLoading(false);
             }

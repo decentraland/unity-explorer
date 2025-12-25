@@ -15,7 +15,8 @@ namespace DCL.Passport.Modules.Badges
 {
     public class BadgesOverview_PassportModuleController : IPassportModuleController
     {
-        private const int BADGES_OVERVIEW_MAX_COUNT = 5;
+        private const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
+        private const int BADGES_OVERVIEW_MAX_COUNT = 9;
 
         private readonly BadgesOverview_PassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
@@ -92,13 +93,38 @@ namespace DCL.Passport.Modules.Badges
         {
             try
             {
-                var badges = await badgesAPIClient.FetchLatestAchievedBadgesAsync(walletId, ct);
+                var allBadges = await badgesAPIClient.FetchBadgesAsync(walletId, isOwnProfile: false, ct);
+                var achievedList = allBadges.achieved;
 
-                foreach (var badgeInfo in badges)
+                achievedList.Sort((a, b) =>
                 {
+                    long timeA = GetBadgeTimestamp(a);
+                    long timeB = GetBadgeTimestamp(b);
+                    return timeB.CompareTo(timeA);
+                });
+
+                int count = 0;
+                foreach (var badgeInfo in achievedList)
+                {
+                    if (count >= BADGES_OVERVIEW_MAX_COUNT)
+                        break;
+
+                    string imageUrl;
+                    if (badgeInfo.data.isTier)
+                        imageUrl = badgeInfo.data.progress.lastCompletedTierImage ?? string.Empty;
+                    else
+                        imageUrl = badgeInfo.data.assets?.textures2d?.normal ?? string.Empty;
+
+                    var badgeData = new LatestAchievedBadgeData
+                    {
+                        id = badgeInfo.data.id, name = badgeInfo.data.name, tierName = badgeInfo.data.progress.lastCompletedTierName, image = imageUrl
+                    };
+
                     var badgeOverviewItem = badgesOverviewItemsPool.Get();
-                    badgeOverviewItem.Setup(badgeInfo);
+                    badgeOverviewItem.Setup(badgeData);
                     instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
+
+                    count++;
                 }
 
                 view.BadgeOverviewItemsContainer.gameObject.SetActive(instantiatedBadgesOverviewItems.Count > 0);
@@ -107,10 +133,28 @@ namespace DCL.Passport.Modules.Badges
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        // Helper to parse the timestamp safely from either the Tier data or the Badge data
+        private long GetBadgeTimestamp(BadgeInfo badge)
+        {
+            string dateStr;
+
+            if (badge.data.isTier)
+                dateStr = badge.data.progress.lastCompletedTierAt;
+            else
+                dateStr = badge.data.completedAt;
+
+            if (string.IsNullOrEmpty(dateStr))
+                return 0;
+
+            if (long.TryParse(dateStr, out long result))
+                return result;
+
+            return 0;
         }
     }
 }

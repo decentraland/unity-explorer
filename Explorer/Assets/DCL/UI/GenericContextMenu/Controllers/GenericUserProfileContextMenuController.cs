@@ -23,15 +23,30 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Views;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
+using JsonUtility = UnityEngine.JsonUtility;
 
 namespace DCL.UI
 {
+    [Serializable]
+    public struct GiftData
+    {
+        public string userId;
+        public string userName;
+
+        public GiftData(string userId, string userName)
+        {
+            this.userId = userId;
+            this.userName = userName;
+        }
+    }
     public class GenericUserProfileContextMenuController
     {
         private delegate void StringDelegate(string id);
@@ -62,12 +77,14 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> giftButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
+        private readonly GenericContextMenuElement contextGiftButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
@@ -110,6 +127,7 @@ namespace DCL.UI
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
             mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
+            giftButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.GiftInButtonConfig.Text, contextMenuSettings.GiftInButtonConfig.Sprite, new StringDelegate(OnGiftUserClicked));
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
@@ -117,6 +135,7 @@ namespace DCL.UI
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
+            contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -127,6 +146,12 @@ namespace DCL.UI
                          .AddControl(contextMenuCallButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+                contextMenu.AddControl(contextGiftButton);
+
+            contextMenu.AddControl(contextMenuJumpInButton)
+                       .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
             {
@@ -163,6 +188,8 @@ namespace DCL.UI
 
                     blockButtonControlSettings.SetData(profile.UserId);
                     jumpInButtonControlSettings.SetData(profile.UserId);
+                    string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
+                    giftButtonControlSettings.SetData(json);
 
                     contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
@@ -350,10 +377,32 @@ namespace DCL.UI
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId)), ct);
 
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
-            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JObject
             {
                 { "receiver_id", targetAddress },
                 { "friend_position", parcel.ToString() },
             });
+
+        private void OnGiftUserClicked(string payload)
+        {
+            closeContextMenuTask.TrySetResult();
+            if (!string.IsNullOrEmpty(payload) && payload[0] == '{')
+            {
+                try
+                {
+                    var data = JsonUtility.FromJson<GiftData>(payload);
+                    ShowGiftingPopupAsync(data.userId, data.userName).Forget();
+                }
+                catch
+                {
+                    /* fallthrough */
+                }
+            }
+        }
+
+        private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName)
+        {
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(userId, userName)));
+        }
     }
 }

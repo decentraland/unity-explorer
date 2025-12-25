@@ -10,13 +10,10 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.Web3;
 using ECS.Abstract;
 using MVC;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.Systems
 {
