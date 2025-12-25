@@ -164,7 +164,7 @@ namespace DCL.PluginSystem.Global
                 giftItemLoaderService,
                 wearableCatalog,
                 webRequestController,
-                sharedSpaceManager
+                mvcManager
             );
 
             giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
