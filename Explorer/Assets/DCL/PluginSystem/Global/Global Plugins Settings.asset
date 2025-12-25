@@ -56,6 +56,8 @@ MonoBehaviour:
   - rid: 2008243996523495520
   - rid: 3821626543930605662
   - rid: 2198926019711205469
+  - rid: 1154745077649899756
+  - rid: 1154745077649899757
   references:
     version: 2
     RefIds:
@@ -111,6 +113,100 @@ MonoBehaviour:
         <EmotesSettings>k__BackingField:
           <IntroEmoteURN>k__BackingField: raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
+    - rid: 1154745077649899756
+      type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        GiftSelectionPopupPrefab:
+          m_AssetGUID: 91f584d6c05272842b8630c9c1bd041b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        GiftTransferPopupPrefab:
+          m_AssetGUID: 09f9d810bdd59ba4996aa290a346561e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftTransferPopupSuccessPrefab:
+          m_AssetGUID: 2b7c17e39a8541341a73119ee9cb0093
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GiftReceivedPopupPrefab:
+          m_AssetGUID: f87c3e77ea2e0ec45b0ddef98bfeb066
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <BackpackSettings>k__BackingField:
+          <CategoryIconsMapping>k__BackingField:
+            m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityInfoPanelBackgroundsMapping>k__BackingField:
+            m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <RarityColorMappings>k__BackingField:
+            m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <HairColors>k__BackingField:
+            m_AssetGUID: 2668240d360264034b2ee70e645aab92
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <EyesColors>k__BackingField:
+            m_AssetGUID: a00387527d7ddda41b9eb524b4a8662c
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <BodyshapeColors>k__BackingField:
+            m_AssetGUID: 5af318126b38647fea34ff22fba4ef17
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <PageButtonView>k__BackingField:
+            m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <ColorToggle>k__BackingField:
+            m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <DeleteOutfitIcon>k__BackingField:
+            m_AssetGUID: 0e0dc1c6390d85440bdf622928e144f5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 1
+        <EmbeddedEmotes>k__BackingField: []
+    - rid: 1154745077649899757
+      type: {class: AvatarLocomotionOverridesGlobalPlugin/Settings, ns: DCL.SDKComponents.AvatarLocomotion, asm: DCL.Plugins}
+      data:
+        MaxMovementSpeed: 500
+        MaxJumpHeight: 200
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
