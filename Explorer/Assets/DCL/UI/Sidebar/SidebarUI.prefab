@@ -76,6 +76,7 @@ MonoBehaviour:
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
+  <marketplaceButton>k__BackingField: {fileID: 4730184839101499880}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
   <friendsButton>k__BackingField: {fileID: 920916011785825721}
@@ -180,6 +181,10 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 280001150086817503, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c9753ec38a2dc45ea8bbcc8427746710, type: 3}
     - target: {fileID: 327198572831187187, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -260,6 +265,14 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2669211450715647368, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_SortingLayer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2994573715818768293, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d738e6e65f45840a889a1d7ced57b69e, type: 3}
     - target: {fileID: 3118329181800400097, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_SortingLayer
       value: 0
@@ -296,6 +309,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3554526115289001729, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c9753ec38a2dc45ea8bbcc8427746710, type: 3}
     - target: {fileID: 4612290781323780796, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_SortingLayer
       value: 0
@@ -492,6 +509,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8196942419600145696, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d738e6e65f45840a889a1d7ced57b69e, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -560,6 +581,17 @@ MonoBehaviour:
 --- !u!114 &3655238427613538003 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4442674242960712296, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4730184839101499880 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5672689832575700307, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
