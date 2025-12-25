@@ -6,6 +6,7 @@ using System.Threading;
 
 namespace DCL.Chat.Commands
 {
+    //TODO: Remove this after testing is done!!!!
     public class SpamChatCommand : IChatCommand
     {
         public string Command => "spam";
