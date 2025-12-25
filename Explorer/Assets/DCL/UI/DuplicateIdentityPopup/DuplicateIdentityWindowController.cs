@@ -12,6 +12,7 @@ namespace DCL.UI.DuplicateIdentityPopup
 
         protected override void OnBeforeViewShow()
         {
+            DCLInput.Instance.Disable();
             viewInstance!.ExitButton.onClick.AddListener(OnExitButtonClicked);
         }
 
