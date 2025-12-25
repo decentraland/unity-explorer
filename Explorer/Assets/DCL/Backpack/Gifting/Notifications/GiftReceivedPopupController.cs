@@ -2,14 +2,13 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using MVC;
 using UnityEngine;
@@ -19,13 +18,13 @@ namespace DCL.Backpack.Gifting.Notifications
 {
     public class GiftReceivedPopupController : ControllerBase<GiftReceivedPopupView, GiftReceivedNotification>
     {
-        public const string UnknownItemName = "Unknown Item";
-        
+        private const string UNKNOWN_ITEM_NAME = "Unknown Item";
+
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
         private readonly IWebRequestController webRequestController;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IGiftItemLoaderService giftItemLoaderService;
+        private readonly IMVCManager mvcManager;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -38,22 +37,21 @@ namespace DCL.Backpack.Gifting.Notifications
             IGiftItemLoaderService giftItemLoaderService,
             WearableStylingCatalog wearableCatalog,
             IWebRequestController webRequestController,
-            ISharedSpaceManager sharedSpaceManager)
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.profileRepository = profileRepository;
             this.giftItemLoaderService = giftItemLoaderService;
             this.wearableCatalog = wearableCatalog;
             this.webRequestController = webRequestController;
-            
-            this.sharedSpaceManager = sharedSpaceManager;
+            this.mvcManager = mvcManager;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
 
-            if (viewInstance?.GiftItemView?.ThumbnailImageView != null)
+            if (viewInstance?.GiftItemView.ThumbnailImageView != null)
             {
                 imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, webRequestController);
                 imageController.SpriteLoaded += OnImageLoaded;
@@ -65,12 +63,12 @@ namespace DCL.Backpack.Gifting.Notifications
             viewInstance!.SubTitleText.text = GiftingTextIds.GiftOpenedTitle;
             viewInstance.ItemNameText.text = GiftingTextIds.GiftLoading;
             viewInstance.GiftItemView.SetLoading();
-            
+
             lifeCts = new CancellationTokenSource();
 
             if (imageController != null)
                 imageController.SpriteLoaded += OnImageLoaded;
-            
+
             LoadFullDataAsync(inputData, lifeCts.Token)
                 .Forget();
 
@@ -132,7 +130,7 @@ namespace DCL.Backpack.Gifting.Notifications
                 }
                 else
                 {
-                    viewInstance!.ItemNameText.text = UnknownItemName;
+                    viewInstance!.ItemNameText.text = UNKNOWN_ITEM_NAME;
                     viewInstance.GiftItemView.SetLoadedState();
                 }
             }
@@ -145,10 +143,10 @@ namespace DCL.Backpack.Gifting.Notifications
                 ReportHub.LogException(e, ReportCategory.GIFTING);
                 if (viewInstance == null) return;
 
-                viewInstance.ItemNameText.text = UnknownItemName;
+                viewInstance.ItemNameText.text = UNKNOWN_ITEM_NAME;
                 viewInstance.GiftItemView.SetLoadedState();
             }
-            
+
         }
 
         private void OnImageLoaded(Sprite sprite)
@@ -187,7 +185,7 @@ namespace DCL.Backpack.Gifting.Notifications
                 UniTask.WhenAny(closeBtn, backpackBtn, bgBtn);
 
             if (result == 1)
-                await sharedSpaceManager.OpenBackpackAsync();
+                mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)), ct);
 
             await PlayHideAnimationAsync(CancellationToken.None);
             lifeCts.SafeCancelAndDispose();

@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ChatStates;
-using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
@@ -27,17 +26,9 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
-using DCL.Chat.ChatStates;
-using DCL.ChatArea;
-using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.InWorldCamera;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
-using DCL.Profiles;
 using DCL.UI.Buttons;
 using ECS.Abstract;
 using Runtime.Wearables;
@@ -69,6 +60,7 @@ namespace DCL.UI.Sidebar
         private readonly SidebarPanelsShortcutsHandler sidebarPanelsShortcutsHandler;
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
+        private readonly IEventBus chatEventBus;
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
         private bool includeMarketplaceCredits;
@@ -101,8 +93,7 @@ namespace DCL.UI.Sidebar
             SmartWearableCache smartWearableCache,
             EmotesBus emotesBus,
             World globalWorld,
-            IEventBus chatEventBus,
-            IEventBus eventBus)
+            IEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -147,7 +138,6 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewInstantiated()
         {
-
 /*
             mvcManager.RegisterController(controlsPanelController);
 
@@ -160,7 +150,6 @@ namespace DCL.UI.Sidebar
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
             viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
-            viewInstance.marketplaceButton.onClick.AddListener(OpenMarketplace);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
@@ -234,6 +223,7 @@ dev*/
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
+            viewInstance.marketplaceButton.onClick.AddListener(OpenMarketplace);
 
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClicked);
             viewInstance.NotificationsButton.onClick.AddListener(OpenNotificationsPanel);
@@ -329,7 +319,7 @@ dev*/
         {
             // Panels that are controllers and can be opened using shortcuts,
             // should we listen for the shortcuts instead??
-            // the problem there is that if we open the panel from anywhere else it wont get selected...
+            // the problem there is that if we open the panel from anywhere else it won't get selected...
             switch (showedController)
             {
                 case EmotesWheelController:

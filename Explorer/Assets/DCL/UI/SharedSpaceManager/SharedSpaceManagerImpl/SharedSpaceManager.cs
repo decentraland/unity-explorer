@@ -1,10 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
-using DCL.Communities;
 using DCL.Diagnostics;
-using DCL.InWorldCamera;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -176,11 +173,11 @@ namespace DCL.UI.SharedSpaceManager
             }
         }
 
-        public async UniTask OpenBackpackAsync()
+       /* public async UniTask OpenBackpackAsync()
         {
             await ShowAsync(PanelsSharingSpace.Explore,
                 new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Avatar), PanelsSharingSpace.Chat);
-        }
+        }*/
 
         /// <summary>
         ///     Waits for the panel to finish its animation or cleaning process.

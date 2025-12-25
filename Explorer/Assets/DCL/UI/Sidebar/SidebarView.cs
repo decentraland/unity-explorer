@@ -30,7 +30,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button backpackButton { get; private set; }
         [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
-        [SerializeField] internal Button marketplaceButton;
 
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; }
@@ -96,6 +95,7 @@ dev*/
         [field: SerializeField] internal Button backpackButton { get; private set; } = null!;
         [field: SerializeField] internal Button cameraReelButton { get; private set; } = null!;
         [field: SerializeField] internal Button settingsButton { get; private set; } = null!;
+        [field: SerializeField] internal Button marketplaceButton { get; private set; } = null!;
 
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
