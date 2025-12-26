@@ -2,6 +2,8 @@ name: Unity Performance Test
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: read
@@ -24,6 +26,7 @@ jobs:
   performance-test:
     name: Performance Test (PlayMode)
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'perf_test'
     steps:
 
       - name: Move Docker data-root to /mnt/docker
