@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,11 @@ using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://asset-bundle-registry.decentraland.today/", true)]
+    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", false, true)]
+    [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://peer-eu1.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://asset-bundle-registry.decentraland.org/", true, false)]
     public class ProfilesPerformanceTest : PerformanceBenchmark
     {
         private static readonly object[] TEST_CASES_SOURCE =
@@ -52,9 +54,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         private readonly string profilesUrls;
         private readonly string metadataUrl;
 
-        public ProfilesPerformanceTest(string lambdas, bool supportsMetadata)
+        [UsedImplicitly]
+        private readonly bool baseline;
+
+        public ProfilesPerformanceTest(string lambdas, bool supportsMetadata, bool baseline)
         {
             this.supportsMetadata = supportsMetadata;
+            this.baseline = baseline;
             profilesUrls = lambdas + "profiles";
             metadataUrl = lambdas + "profiles/metadata";
         }

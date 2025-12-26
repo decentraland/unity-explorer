@@ -143,7 +143,7 @@ jobs:
       # Configure test runner for Performance tests only
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 120
+        timeout-minutes: 180
         continue-on-error: true
         env:
           SHELL: /bin/bash
@@ -155,11 +155,35 @@ jobs:
           customParameters: -buildTarget StandaloneLinux64 -testCategory "Performance" -perfTestResults ./PerformanceTestResults.json
           githubToken: ${{ env.GITHUB_TOKEN }}
 
+      # Generate PDF report
+      - name: Set up Python
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install report dependencies
+        if: always()
+        run: pip install -r scripts/requirements-perf-report.txt
+
+      - name: Generate performance report PDF
+        if: always()
+        run: python scripts/generate_perf_report.py Explorer/PerformanceTestResults.json Explorer/PerformanceBenchmarkReport.pdf
+
       # Upload performance test results JSON
-      - name: Upload performance test results
+      - name: Upload performance test results (JSON)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Performance test results
+          name: Performance test results (JSON)
           path: Explorer/PerformanceTestResults.json
+          if-no-files-found: warn
+
+      # Upload performance report PDF
+      - name: Upload performance report (PDF)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Performance benchmark report (PDF)
+          path: Explorer/PerformanceBenchmarkReport.pdf
           if-no-files-found: warn
