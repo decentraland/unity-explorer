@@ -3,6 +3,7 @@ using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using MVC;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -27,6 +28,8 @@ namespace DCL.UI.ConfirmationDialog
         [field: SerializeField] private ProfilePictureView fromProfilePictureView { get; set; } = null!;
         [field: SerializeField] private GameObject profilePicturesContainer { get; set; } = null!;
         [field: SerializeField] private Image profileActionIcon { get; set; } = null!;
+        [field: SerializeField] private TMP_Text additonalUrlText { get; set; }
+        [field: SerializeField] private TMP_Text_ClickeableLink additionalUrlTextLinkHandler { get; set; } = null!;
 
         private readonly UniTask[] closeTasks = new UniTask[3];
 
@@ -70,7 +73,16 @@ namespace DCL.UI.ConfirmationDialog
                 mainImage.gameObject.SetActive(true);
                 mainImageLight.SetActive(true);
                 rimImage.gameObject.SetActive(!hasProfileImage);
-                mainImage.SetImage(dialogData.Image, true);
+
+                if (dialogData.PreserveAspect)
+                {
+                    mainImage.SetImage(dialogData.Image, fitAndCenterImage: false);
+                    mainImage.Image.preserveAspect = true;
+                }
+                else
+                {
+                    mainImage.SetImage(dialogData.Image, fitAndCenterImage: true);
+                }
             }
 
             if (!hasProfileImage) return;
@@ -81,6 +93,25 @@ namespace DCL.UI.ConfirmationDialog
             fromProfilePictureView.SetDefaultThumbnail();
             fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo);
 
+
+            additonalUrlText.gameObject.SetActive(false);
+            additionalUrlTextLinkHandler.ClearHookedEvents();
+        }
+
+        public void SetAdditionalUrlText(string text)
+        {
+            additonalUrlText.text = text;
+            additonalUrlText.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        }
+
+        public void ActivateAdditionalUrl(bool activate)
+        {
+            additonalUrlText.gameObject.SetActive(activate);
+        }
+
+        public void HookLinkClickEvent(Action<string> onLinkClicked)
+        {
+            additionalUrlTextLinkHandler.OnLinkClicked += onLinkClicked;
         }
 
         public void Reset()

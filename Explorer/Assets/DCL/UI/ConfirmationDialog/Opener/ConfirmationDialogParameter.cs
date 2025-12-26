@@ -16,12 +16,16 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly bool ShowQuitImage;
         public readonly Profile.CompactInfo UserInfo;
         public readonly Profile.CompactInfo FromUserInfo;
+        public readonly bool PreserveAspect;
         public Action<ConfirmationResult>? ResultCallback;
+        public readonly string LinkText;
+        public readonly Action<string>? OnLinkClickCallback;
 
         public ConfirmationDialogParameter(string text, string cancelButtonText, string confirmButtonText,
             Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
-            string subText = "", Profile.CompactInfo userInfo = default, Profile.CompactInfo fromUserInfo = default)
+            string subText = "", Profile.CompactInfo userInfo = default, string linkText = "", Action<string>? onLinkClickCallback = null,
+            bool preserveAspect = false, Profile.CompactInfo = default)
         {
             Text = text;
             CancelButtonText = cancelButtonText;
@@ -32,6 +36,9 @@ namespace DCL.UI.ConfirmationDialog.Opener
             ResultCallback = resultCallback;
             SubText = subText;
             UserInfo = userInfo;
+            LinkText = linkText;
+            OnLinkClickCallback = onLinkClickCallback;
+            PreserveAspect = preserveAspect;
             FromUserInfo = fromUserInfo;
         }
     }

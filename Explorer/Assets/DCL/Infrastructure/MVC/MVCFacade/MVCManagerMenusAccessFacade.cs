@@ -105,14 +105,14 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null)
         {
             Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(walletId, ct);
 
             if (profile == null)
                 return;
 
-            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
+            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint);
         }
 
         public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
@@ -140,12 +140,11 @@ namespace MVC
             await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
         }
 
-        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
-            Action? onContextMenuShow,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
+        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 
         private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,

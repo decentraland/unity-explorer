@@ -2,41 +2,39 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
-using DCL.UI.EphemeralNotifications;
 using DCL.Utilities;
+using MVC;
 using System.Threading;
 using Utility;
 
 namespace DCL.Friends.UI.PushNotifications
 {
-    public class FriendPushNotificationController
+    public class FriendPushNotificationController : ControllerBase<FriendPushNotificationView>
     {
         private const int SUBSCRIPTION_DELAY_MS = 5000;
 
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly ILoadingStatus loadingStatus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly EphemeralNotificationsController ephemeralNotificationsController;
 
         private CancellationTokenSource toastAnimationCancellationTokenSource = new ();
         private CancellationTokenSource? subscribeCancellationTokenSource;
 
-        public FriendPushNotificationController(
+        public FriendPushNotificationController(ViewFactoryMethod viewFactory,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ProfileRepositoryWrapper profileDataProvider,
-            ILoadingStatus loadingStatus,
-            EphemeralNotificationsController ephemeralNotificationsController)
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.profileRepositoryWrapper = profileDataProvider;
             this.loadingStatus = loadingStatus;
-            this.ephemeralNotificationsController = ephemeralNotificationsController;
 
             loadingStatus.CurrentStage.Subscribe(OnLoadingStatusChanged);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
+            base.Dispose();
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendConnected;
             toastAnimationCancellationTokenSource.SafeCancelAndDispose();
         }
@@ -66,10 +64,18 @@ namespace DCL.Friends.UI.PushNotifications
 
             async UniTaskVoid ResolveThumbnailAndShowAsync(CancellationToken ct)
             {
-                await profileRepositoryWrapper.GetProfileThumbnailAsync(friendProfile.FaceSnapshotUrl, ct);
+                if (viewInstance == null) return;
 
-                ephemeralNotificationsController.AddNotificationAsync("FriendOnlineEphemeralNotification", friendProfile.Address, null).Forget();
+                viewInstance.HideToast();
+                viewInstance.ConfigureForFriend(friendProfile, profileRepositoryWrapper);
+
+                await viewInstance.ShowToastAsync(ct);
             }
         }
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
     }
 }
