@@ -25,7 +25,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
             Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
             string subText = "", Profile.CompactInfo userInfo = default, string linkText = "", Action<string>? onLinkClickCallback = null,
-            bool preserveAspect = false, Profile.CompactInfo = default)
+            bool preserveAspect = false, Profile.CompactInfo fromUserInfo = default)
         {
             Text = text;
             CancelButtonText = cancelButtonText;

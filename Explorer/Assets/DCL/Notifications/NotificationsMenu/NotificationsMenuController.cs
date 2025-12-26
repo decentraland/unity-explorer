@@ -293,7 +293,7 @@ namespace DCL.Notifications.NotificationsMenu
                 {
                     if (giftView.Notification is GiftReceivedNotification current && current.Metadata.SenderAddress == address)
                     {
-                        giftView.UpdateSenderName(profile.Name, profile.UserNameColor);
+                        giftView.UpdateSenderName(profile.Value.Name, profile.Value.UserNameColor);
                     }
                 }
             }
