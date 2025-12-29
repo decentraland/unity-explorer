@@ -140,23 +140,20 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
 
+            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             foreach (Button button in viewInstance.UseAnotherAccountButton)
                 button.onClick.AddListener(ChangeAccount);
 
+            viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
+
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
             viewInstance.MuteButton.Button.onClick.AddListener(audio.OnMuteButtonClicked);
-            viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
-
-            viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
-            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
 
             fsm = new MVCStateMachine<AuthStateBase, AuthStateContext>(
                 context: new AuthStateContext(),
@@ -501,9 +498,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
-
-        private void CloseErrorPopup() =>
-            viewInstance!.ErrorPopupRoot.SetActive(false);
 
         private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);

@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Utility;
 using MVC;
 using System;
 using Utility;
@@ -17,6 +18,23 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             this.controller = controller;
             this.currentState = currentState;
+        }
+
+        public void Enter(PopupType payload)
+        {
+            Enter();
+
+            switch (payload)
+            {
+                case PopupType.NONE: break;
+                case PopupType.CONNECTION_ERROR:
+                    viewInstance!.ErrorPopupRoot.SetActive(true);
+                    break;
+                case PopupType.RESTRICTED_USER:
+                    viewInstance!.RestrictedUserContainer.SetActive(true);
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
+            }
         }
 
         public override void Enter()
@@ -37,42 +55,32 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             viewInstance.LoadingSpinner.SetActive(false);
 
-            viewInstance.LoginButton.onClick.AddListener(OnLoginButtonClicked);
+            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
-        }
 
-        public void Enter(PopupType payload)
-        {
-            Enter();
-
-            switch (payload)
-            {
-                case PopupType.NONE: break;
-                case PopupType.CONNECTION_ERROR:
-                    viewInstance!.ErrorPopupRoot.SetActive(true);
-                    break;
-                case PopupType.RESTRICTED_USER:
-                    viewInstance!.RestrictedUserContainer.SetActive(true);
-                    break;
-                default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
-            }
+            viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
+            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
+            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
         }
 
         public override void Exit()
         {
             base.Exit();
-            viewInstance.LoginButton.onClick.RemoveListener(OnLoginButtonClicked);
+            viewInstance.LoginButton.onClick.RemoveListener(StartLoginFlowUntilEnd);
             viewInstance.CancelLoginButton.onClick.RemoveListener(CancelLoginAndRestartFromBeginning);
+
+            viewInstance.ErrorPopupCloseButton.onClick.RemoveListener(CloseErrorPopup);
+            viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
+            viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(StartLoginFlowUntilEnd);
         }
 
-        private void OnLoginButtonClicked()
+        private void StartLoginFlowUntilEnd()
         {
             viewInstance!.ErrorPopupRoot.SetActive(false);
+            viewInstance!.LoadingSpinner.SetActive(true);
 
             viewInstance.LoginButton.interactable = false;
             viewInstance.LoginButton.gameObject.SetActive(false);
-
-            viewInstance!.LoadingSpinner.SetActive(true);
 
             controller.StartLoginFlowUntilEnd();
         }
@@ -82,6 +90,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             controller.CancelLoginProcess();
             machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
         }
+
+        private void CloseErrorPopup() =>
+            viewInstance!.ErrorPopupRoot.SetActive(false);
     }
 
     public enum PopupType
