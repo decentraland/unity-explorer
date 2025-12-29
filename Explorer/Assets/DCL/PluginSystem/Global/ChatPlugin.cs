@@ -387,7 +387,7 @@ namespace DCL.PluginSystem.Global
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
             if (status == LoadingStatus.LoadingStage.Completed)
-                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, false)));
+                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
         }
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)

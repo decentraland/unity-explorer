@@ -82,7 +82,6 @@ using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -447,11 +446,10 @@ namespace Global.Dynamic
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
+            //TODO FRAN: Replace these with proper FeaturesRegistry use.
             bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
-            bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
-            bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
 
@@ -460,7 +458,7 @@ namespace Global.Dynamic
 
             var chatHistory = new ChatHistory();
             var emotesBus = new EmotesBus();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
+            //ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -589,9 +587,9 @@ namespace Global.Dynamic
                 realmNavigator,
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
-                sharedSpaceManager,
                 chatEventBus,
-                currentChannelService
+                currentChannelService,
+                mvcManager
             );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -625,7 +623,7 @@ namespace Global.Dynamic
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
-            NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
+            NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
@@ -668,13 +666,11 @@ namespace Global.Dynamic
                 friendServiceProxy,
                 chatEventBus,
                 genericUserProfileContextMenuSettingsSo,
-                includeUserBlocking,
-                bootstrapContainer.Analytics,
+                bootstrapContainer.Analytics!,
                 onlineUsersProvider,
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profilesRepository,
-                sharedSpaceManager,
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
@@ -755,14 +751,20 @@ namespace Global.Dynamic
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
-                    assetsProvisioner, mvcManager, mainUIView,
-                    notificationsRequestController, identityCache, profilesRepository,
+                    assetsProvisioner,
+                    mvcManager,
+                    mainUIView,
+                    notificationsRequestController,
+                    identityCache,
+                    profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser,
+                    dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
-                    chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
+                    globalWorld,
+                    playerEntity,
+                    chatHistory, profileRepositoryWrapper, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache, globalWorld, emotesBus),
@@ -847,10 +849,8 @@ namespace Global.Dynamic
                     userCalendar,
                     clipboard,
                     explorePanelNavmapBus,
-                    includeCameraReel,
                     appArgs,
                     userBlockingCacheProxy,
-                    sharedSpaceManager,
                     profileChangesBus,
                     staticContainer.SceneLoadingLimit,
                     mainUIView.WarningNotification,
@@ -859,7 +859,6 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     realmNftNamesProvider,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    includeTranslationChat,
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
@@ -885,7 +884,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     eventBus,
                     webBrowser,
-                    bootstrapContainer.VerifiedEthereumApi,
+                    bootstrapContainer.VerifiedEthereumApi!,
                     bootstrapContainer.DecentralandUrlsSource,
                     screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -950,7 +949,6 @@ namespace Global.Dynamic
                     cameraReelStorageService,
                     globalWorld,
                     playerEntity,
-                    includeCameraReel,
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     onlineUsersProvider,
@@ -958,12 +956,8 @@ namespace Global.Dynamic
                     identityCache,
                     realmNftNamesProvider,
                     profileChangesBus,
-                    includeFriends,
-                    includeUserBlocking,
                     includeCommunities,
-                    isNameEditorEnabled,
                     chatEventBus,
-                    sharedSpaceManager,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
@@ -1043,7 +1037,6 @@ namespace Global.Dynamic
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     chatEventBus,
-                    sharedSpaceManager,
                     socialServiceEventBus,
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
@@ -1051,9 +1044,7 @@ namespace Global.Dynamic
                     friendOnlineStatusCacheProxy,
                     friendsCacheProxy,
                     userBlockingCacheProxy,
-                    profileRepositoryWrapper,
-                    voiceChatContainer.VoiceChatOrchestrator
-                );
+                    profileRepositoryWrapper);
 
                 globalPlugins.Add(friendsContainer);
             }
@@ -1121,7 +1112,6 @@ namespace Global.Dynamic
                     clipboard,
                     webBrowser,
                     eventsApiService,
-                    sharedSpaceManager,
                     chatEventBus,
                     galleryEventBus,
                     communitiesEventBus,

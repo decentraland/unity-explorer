@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -15,7 +16,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -49,7 +49,6 @@ namespace DCL.UI
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly CommunitiesDataProvider communityDataProvider;
@@ -74,7 +73,7 @@ namespace DCL.UI
         private readonly GenericContextMenuElement viewProfileButton;
         private readonly GenericContextMenuElement chatButton;
 
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource cts = new ();
         private UniTaskCompletionSource closeContextMenuTask;
 
         public CommunityPlayerEntryContextMenu(
@@ -86,7 +85,6 @@ namespace DCL.UI
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
             IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider)
         {
@@ -97,7 +95,6 @@ namespace DCL.UI
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
@@ -136,7 +133,7 @@ namespace DCL.UI
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile targetProfile, Vector3 position, Vector2 offset,
-            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
+            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
             bool targetIsSpeaker = false)
         {
@@ -146,19 +143,19 @@ namespace DCL.UI
             bool targetIsLocalParticipant = targetProfile.UserId.Equals(localParticipant.WalletId, StringComparison.InvariantCultureIgnoreCase);
             bool localParticipantIsMod = voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.Role.Value is VoiceChatParticipantCommunityRole.MODERATOR or VoiceChatParticipantCommunityRole.OWNER;
 
-            closeContextMenuTask?.TrySetResult();
+            closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
             if (!targetIsLocalParticipant && friendServiceProxy.Configured)
             {
-                FriendshipStatus friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(targetProfile.UserId, ct);
+                FriendshipStatus friendshipStatus = await friendServiceProxy.Object!.GetFriendshipStatusAsync(targetProfile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
                 jumpInButtonControlSettings.SetData(targetProfile.UserId);
 
-                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
-                                                  friendOnlineStatusCacheProxy.Object.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
+                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND && friendOnlineStatusCacheProxy.Configured &&
+                                                  friendOnlineStatusCacheProxy.Object!.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
             userProfileControlSettings.SetInitialData(targetProfile.ToUserData(), contextMenuFriendshipStatus);
@@ -225,8 +222,8 @@ namespace DCL.UI
 
         private void RemoveFriend(string userAddress)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            RemoveFriendAsync(cancellationTokenSource.Token).Forget();
+            cts = cts.SafeRestart();
+            RemoveFriendAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid RemoveFriendAsync(CancellationToken ct)
@@ -240,9 +237,11 @@ namespace DCL.UI
 
         private void CancelFriendRequest(string userAddress)
         {
-            IFriendsService friendService = friendServiceProxy.Object;
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            CancelFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            if (!friendServiceProxy.Configured) return;
+
+            IFriendsService friendService = friendServiceProxy.Object!;
+            cts = cts.SafeRestart();
+            CancelFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
@@ -253,8 +252,8 @@ namespace DCL.UI
 
         private void SendFriendRequest(string userAddress)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowFriendRequestUIAsync(cancellationTokenSource.Token).Forget();
+            cts = cts.SafeRestart();
+            ShowFriendRequestUIAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
@@ -268,10 +267,10 @@ namespace DCL.UI
 
         private void AcceptFriendship(string userAddress)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            cts = cts.SafeRestart();
             IFriendsService friendService = friendServiceProxy.Object!;
 
-            AcceptFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            AcceptFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
@@ -282,9 +281,9 @@ namespace DCL.UI
 
         private void OnShowUserPassportClicked(string userId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            cts = cts.SafeRestart();
             closeContextMenuTask.TrySetResult();
-            ShowPassport(userId, cancellationTokenSource.Token).Forget();
+            ShowPassport(userId, cts.Token).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)
@@ -293,16 +292,16 @@ namespace DCL.UI
             ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
         }
 
-        private async UniTaskVoid ShowChatAsync(Action onChatShown)
+        private async UniTaskVoid ShowChatAsync(Action? onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             onChatShown?.Invoke();
         }
 
         private void OnJumpInClicked(string userId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+            cts = cts.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
@@ -349,8 +348,8 @@ namespace DCL.UI
 
             string communityName = community.communityName;
 
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowBanConfirmationDialogAsync(cancellationTokenSource.Token).Forget();
+            cts = cts.SafeRestart();
+            ShowBanConfirmationDialogAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
@@ -373,8 +372,8 @@ namespace DCL.UI
 
         private void BanUser(string userWallet, string communityId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            BanUserAsync(cancellationTokenSource.Token).Forget();
+            cts = cts.SafeRestart();
+            BanUserAsync(cts.Token).Forget();
             return;
 
             async UniTaskVoid BanUserAsync(CancellationToken token)

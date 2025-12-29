@@ -11,6 +11,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using Utility;
 
@@ -37,9 +38,9 @@ namespace DCL.VoiceChat
             IRealmNavigator realmNavigator,
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource,
-            ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
-            CurrentChannelService currentChannelService)
+            CurrentChannelService currentChannelService,
+            IMVCManager mvcManager)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
@@ -51,9 +52,14 @@ namespace DCL.VoiceChat
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
             CommunityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService,
-                CommunityVoiceChatCallStatusService, participantsStateService,
-                sceneVoiceChatTrackerService, sharedSpaceManager, chatEventBus, currentChannelService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(
+                privateVoiceChatCallStatusService,
+                CommunityVoiceChatCallStatusService,
+                participantsStateService,
+                sceneVoiceChatTrackerService,
+                chatEventBus,
+                currentChannelService,
+                mvcManager);
         }
 
         public void Dispose()

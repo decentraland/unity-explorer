@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -25,7 +25,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private CancellationTokenSource openPassportCts = new ();
@@ -45,8 +44,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager)
+            IChatEventBus chatEventBus)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
@@ -54,7 +52,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
@@ -142,7 +139,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
         }
     }

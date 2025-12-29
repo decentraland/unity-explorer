@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunitiesBrowser.Commands;
@@ -19,13 +20,11 @@ using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using Utility;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -58,7 +57,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IAnalyticsController analytics;
@@ -96,7 +94,6 @@ namespace DCL.Communities.CommunitiesBrowser
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
-            ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
@@ -109,7 +106,6 @@ namespace DCL.Communities.CommunitiesBrowser
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
             this.analytics = analytics;
@@ -120,7 +116,7 @@ namespace DCL.Communities.CommunitiesBrowser
             browserEventBus = new CommunitiesBrowserEventBus();
             browserStateService = new CommunitiesBrowserStateService(browserEventBus, orchestrator);
             var thumbnailLoader = new ThumbnailLoader(spriteCache);
-            commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, sharedSpaceManager, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
+            commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
 
             myCommunitiesPresenter = new CommunitiesBrowserMyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader, browserEventBus, orchestrator);
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
@@ -870,7 +866,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
             catch (OperationCanceledException) { }
@@ -884,7 +880,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 orchestrator.StartPrivateCallWithUserId(profile.Address);
             }
             catch (OperationCanceledException) { }

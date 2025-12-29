@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -19,7 +20,6 @@ using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
@@ -57,7 +57,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
@@ -92,12 +91,8 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             Arch.Core.World world,
             Entity playerEntity,
-            bool includeCameraReel,
-            bool includeFriends,
-            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
-            ISharedSpaceManager sharedSpaceManager,
             ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
@@ -122,12 +117,11 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.includeCameraReel = includeCameraReel;
-            this.includeFriends = includeFriends;
-            this.includeMarketplaceCredits = includeMarketplaceCredits;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             this.chatHistory = chatHistory;
             profileRepositoryWrapper = profileDataProvider;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
@@ -190,7 +184,6 @@ namespace DCL.PluginSystem.Global
                 includeFriends,
                 includeMarketplaceCredits,
                 chatHistory,
-                sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,

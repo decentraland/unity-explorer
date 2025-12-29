@@ -15,7 +15,6 @@ using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.Controls.Configs;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -28,6 +27,8 @@ using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.ChatArea;
+using DCL.UI.SharedSpaceManager;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -85,7 +86,6 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly GenericContextMenuElement contextGiftButton;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -103,7 +103,6 @@ namespace DCL.UI
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator)
         {
@@ -115,7 +114,6 @@ namespace DCL.UI
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -161,10 +159,10 @@ namespace DCL.UI
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
-            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null)
+            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
         {
-            closeContextMenuTask?.TrySetResult();
+            closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
@@ -341,7 +339,7 @@ namespace DCL.UI
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             onChatShown?.Invoke();
         }
 
@@ -353,7 +351,7 @@ namespace DCL.UI
 
         private async UniTaskVoid StartCallAsync(string userId)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 

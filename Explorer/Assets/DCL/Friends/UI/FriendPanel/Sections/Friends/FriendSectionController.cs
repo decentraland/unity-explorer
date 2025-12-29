@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -19,10 +19,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
         private CancellationTokenSource popupCts;
@@ -34,15 +33,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
+            IMVCManager mvcManager) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.mvcManager = mvcManager;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -85,7 +82,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
         }
     }

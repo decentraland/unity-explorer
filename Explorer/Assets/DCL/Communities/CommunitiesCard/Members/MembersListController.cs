@@ -10,12 +10,9 @@ using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -28,6 +25,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.ChatArea;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
@@ -43,19 +41,17 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
-        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
 
-        private GetCommunityResponse.CommunityData? communityData = null;
+        private GetCommunityResponse.CommunityData? communityData;
 
         private int requestAmount;
 
@@ -83,7 +79,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
-            ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ISelfProfile selfProfile) : base(view, PAGE_SIZE)
@@ -92,7 +87,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -323,7 +317,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             string? userAddress = web3IdentityCache.Identity?.Address;
 
-            for (int i = 0; i < memberList.Count; i++)
+            for (var i = 0; i < memberList.Count; i++)
                 if (memberList[i].Address.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     memberList.RemoveAt(i);
@@ -410,7 +404,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             try
             {
                 //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
@@ -423,7 +417,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
             catch (OperationCanceledException) { }

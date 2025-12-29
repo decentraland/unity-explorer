@@ -20,7 +20,6 @@ using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
 using ECS;
 using MVC;
@@ -51,7 +50,6 @@ namespace DCL.UI.Sidebar
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -86,7 +84,6 @@ namespace DCL.UI.Sidebar
             bool includeFriends,
             bool includeMarketplaceCredits,
             IChatHistory chatHistory,
-            ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -108,7 +105,6 @@ namespace DCL.UI.Sidebar
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -406,7 +402,6 @@ dev*/
         {
             chatEventBus.Publish(new ChatEvents.ToggleChatEvent());
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
-            //sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
         }
 
         private void OnEmotesWheelButtonClicked()

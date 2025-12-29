@@ -64,7 +64,6 @@ using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
 using DCL.UI.Profiles;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using Utility;
 using DCL.VoiceChat;
@@ -128,7 +127,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
         private readonly IAppArgs appArgs;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
@@ -150,7 +148,6 @@ namespace DCL.PluginSystem.Global
 
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
-        private readonly bool includeCameraReel;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -163,7 +160,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private ExplorePanelController explorePanelController;
+        private ExplorePanelController? explorePanelController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -206,10 +203,8 @@ namespace DCL.PluginSystem.Global
             GoogleUserCalendar userCalendar,
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
-            bool includeCameraReel,
             IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ISharedSpaceManager sharedSpaceManager,
             ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
@@ -218,7 +213,6 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
             IVoiceChatOrchestrator communityCallOrchestrator,
-            bool isTranslationChatEnabled,
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
@@ -270,10 +264,8 @@ namespace DCL.PluginSystem.Global
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
-            this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
@@ -281,7 +273,7 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
+            this.isTranslationChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_TRANSLATIONS);
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
@@ -500,7 +492,6 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 nftNamesProvider,
                 communityCallOrchestrator,
-                sharedSpaceManager,
                 chatEventBus,
                 analytics,
                 communityDataService,
@@ -510,7 +501,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                    communitiesBrowserController, inputBlock, includeCameraReel, mvcManager);
+                    communitiesBrowserController, inputBlock, mvcManager);
 
             mvcManager.RegisterController(explorePanelController);
 

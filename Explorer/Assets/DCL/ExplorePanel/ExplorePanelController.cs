@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -25,7 +26,6 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
-
         private readonly BackpackController backpackController;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
@@ -33,7 +33,6 @@ namespace DCL.ExplorePanel
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private readonly IMVCManager mvcManager;
-        private bool includeCommunities;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -44,11 +43,13 @@ namespace DCL.ExplorePanel
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
+        private bool includeCommunities;
+
+        private CommunitiesBrowserController communitiesBrowserController { get; }
 
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
-        public CommunitiesBrowserController CommunitiesBrowserController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -63,7 +64,6 @@ namespace DCL.ExplorePanel
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
             IInputBlock inputBlock,
-            bool includeCameraReel,
             IMVCManager mvcManager)
             : base(viewFactory)
         {
@@ -77,9 +77,9 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
-            this.includeCameraReel = includeCameraReel;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             this.mvcManager = mvcManager;
-            CommunitiesBrowserController = communitiesBrowserController;
+            this.communitiesBrowserController = communitiesBrowserController;
         }
 
         public override void Dispose()
@@ -119,7 +119,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, SettingsController },
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
-                { ExploreSections.Communities, CommunitiesBrowserController },
+                { ExploreSections.Communities, communitiesBrowserController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);

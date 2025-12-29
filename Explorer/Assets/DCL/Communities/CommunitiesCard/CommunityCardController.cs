@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
@@ -41,7 +42,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -79,7 +79,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -121,7 +120,6 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
@@ -145,7 +143,6 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
@@ -345,9 +342,10 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
-                CloseController();
+                //TODO FRAN: I Think this might not be needed anymore
+                //CloseController();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -384,7 +382,6 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                sharedSpaceManager,
                 chatEventBus,
                 web3IdentityCache,
                 selfProfile);
@@ -429,7 +426,7 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid OnClosePanelAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             }
         }
 

@@ -26,13 +26,11 @@ using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.NotificationsBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -57,7 +55,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -67,9 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
-        private readonly bool isNameEditorEnabled;
         private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -98,7 +93,6 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IOnlineUsersProvider onlineUsersProvider,
@@ -106,12 +100,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
-            bool enableFriends,
-            bool includeUserBlocking,
             bool includeCommunities,
-            bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
@@ -136,7 +126,6 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -144,11 +133,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.enableFriends = enableFriends;
-            this.includeUserBlocking = includeUserBlocking;
-            this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
@@ -207,13 +192,8 @@ namespace DCL.PluginSystem.Global
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                enableCameraReel,
-                enableFriends,
-                includeUserBlocking,
                 includeCommunities,
-                isNameEditorEnabled,
                 chatEventBus,
-                sharedSpaceManager,
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,

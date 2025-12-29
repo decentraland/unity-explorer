@@ -21,7 +21,6 @@ using DCL.RealmNavigation;
 using DCL.SocialService;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -86,7 +85,6 @@ namespace DCL.PluginSystem.Global
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
@@ -94,8 +92,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -142,9 +139,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
-                sharedSpaceManager,
-                profileRepositoryWrapper,
-                voiceChatOrchestrator
+                profileRepositoryWrapper
             );
 
             mvcManager.RegisterController(friendsPanelController);

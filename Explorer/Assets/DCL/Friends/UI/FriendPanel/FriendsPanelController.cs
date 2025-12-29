@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.ChatArea;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -8,20 +9,17 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IBlocksChat
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>
     {
         public enum FriendsPanelTab
         {
@@ -41,7 +39,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly RequestsSectionController requestsSectionController;
         private readonly bool includeUserBlocking;
         private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -66,14 +64,12 @@ namespace DCL.Friends.UI.FriendPanel
             IChatEventBus chatEventBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
-            ISharedSpaceManager sharedSpaceManager,
-            ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
+            this.mvcManager = mvcManager;
             this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             if (isConnectivityStatusEnabled)
             {
@@ -86,8 +82,7 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    chatEventBus,
-                    sharedSpaceManager);
+                    chatEventBus);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -95,13 +90,18 @@ namespace DCL.Friends.UI.FriendPanel
             }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, profileDataProvider, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListRequestManager(friendsService,
+                        friendEventBus,
+                        profileRepository,
+                        instantiatedView.FriendsSection.LoopList,
+                        profileDataProvider,
+                        FRIENDS_PAGE_SIZE,
+                        FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
                     chatEventBus,
-                    sharedSpaceManager,
-                    voiceChatOrchestrator);
+                    mvcManager);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
@@ -176,7 +176,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
         }
 
