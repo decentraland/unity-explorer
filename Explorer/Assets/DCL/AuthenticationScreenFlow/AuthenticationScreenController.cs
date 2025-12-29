@@ -84,7 +84,9 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; private set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
+
         private MVCStateMachine<AuthStateBase, AuthStateContext> fsm;
+        private AuthenticationScreenAudio audio;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -132,12 +134,13 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
-            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
+            audio.Dispose();
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
@@ -146,7 +149,7 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
-            viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
+            viewInstance.MuteButton.Button.onClick.AddListener(audio.OnMuteButtonClicked);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
@@ -182,28 +185,18 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewShow()
         {
             base.OnViewShow();
-
-            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
-            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
-            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
-            // Unregistering in case player re-login midgame.
-            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
-            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent += OnContinuousAudioStarted;
-            InitMusicMute();
+            audio.OnShow();
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
+            audio.OnHide();
 
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
-
-            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
-            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
-            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -498,37 +491,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             CancelLoginProcess();
             ExitUtils.Exit();
-        }
-
-        private void OnContinuousAudioStarted(AudioClipConfig audioClipConfig)
-        {
-            if (audioClipConfig.GetInstanceID() != backgroundMusic.GetInstanceID())
-                return;
-
-            UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
-            InitMusicMute();
-        }
-        private void InitMusicMute()
-        {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-
-            if (isMuted)
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-
-            viewInstance?.MuteButton.SetIcon(isMuted);
-        }
-        private void OnMuteButtonClicked()
-        {
-            bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
-
-            if (isMuted)
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, false);
-            else
-                UIAudioEventsBus.Instance.SendMuteContinuousAudioEvent(backgroundMusic, true);
-
-            viewInstance?.MuteButton.SetIcon(!isMuted);
-
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, !isMuted, save: true);
         }
 
         private void CancelVerificationCountdown()
