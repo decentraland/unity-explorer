@@ -116,7 +116,6 @@ using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
-using DCL.PerformanceAndDiagnostics;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.Translation;
@@ -888,7 +887,6 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.VerifiedEthereumApi,
                     bootstrapContainer.DecentralandUrlsSource,
-                    sharedSpaceManager,
                     screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),

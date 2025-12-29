@@ -3,17 +3,14 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using UnityEngine;
 using DCL.Utilities;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class ChatTranslationSettingsController : SettingsFeatureController
     {
-        private const string TranslationSettingsChangeEvent = "TranslationSettingsChangeEvent";
+        private const string TRANSLATION_SETTINGS_CHANGE_EVENT = "TranslationSettingsChangeEvent";
         private readonly SettingsDropdownModuleView view;
-        private readonly ChatSettingsAsset chatSettingsAsset;
-        private readonly bool isTranslationChatEnabled;
         private readonly IEventBus eventBus;
 
         public ChatTranslationSettingsController(SettingsDropdownModuleView view,
@@ -22,8 +19,6 @@ namespace DCL.Settings.ModuleControllers
             IEventBus eventBus)
         {
             this.view = view;
-            this.chatSettingsAsset = chatSettingsAsset;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.eventBus = eventBus;
 
             int currentLanguage;
@@ -40,7 +35,7 @@ namespace DCL.Settings.ModuleControllers
 
             view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
-            view.gameObject.SetActive(this.isTranslationChatEnabled);
+            view.gameObject.SetActive(isTranslationChatEnabled);
 
             if (view.TooltipButtonView != null)
                 view.TooltipButtonView.Activate(chatSettingsAsset.CHAT_TRANSLATION_SETTINGS_HOVER_TOOLTIP);
@@ -49,7 +44,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetPreferredLanguageSettings(int index)
         {
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_TRANSLATION_PREFERRED_LANGUAGE, index, save: true);
-            eventBus.Publish(TranslationSettingsChangeEvent);
+            eventBus.Publish(TRANSLATION_SETTINGS_CHANGE_EVENT);
         }
 
         public override void Dispose()

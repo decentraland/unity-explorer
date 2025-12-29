@@ -7,7 +7,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Playground;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
 using System.Diagnostics;
@@ -21,7 +20,7 @@ namespace DCL.InWorldCamera.UI
     /// <summary>
     ///     Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
     /// </summary>
-    public class InWorldCameraController : ControllerBase<InWorldCameraView>, IBlocksChat
+    public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
         private const string SOURCE_BUTTON = "Button";
 
@@ -106,7 +105,7 @@ namespace DCL.InWorldCamera.UI
         {
             ToggleShortcutsInfoAsync(toOpen: false);
 
-            viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
+            viewInstance?.HideAsync(CancellationToken.None, isInstant).Forget();
         }
 
         public void Close()
@@ -125,7 +124,7 @@ namespace DCL.InWorldCamera.UI
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.SFXScreenshotCapture);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.SFXScreenshotCapture);
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 

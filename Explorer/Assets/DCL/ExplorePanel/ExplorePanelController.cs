@@ -11,7 +11,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
 using MVC;
 using System;
@@ -24,7 +23,7 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>, IBlocksChat
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
 
         private readonly BackpackController backpackController;
@@ -54,8 +53,6 @@ namespace DCL.ExplorePanel
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -163,7 +160,7 @@ namespace DCL.ExplorePanel
 
             ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
 
-            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections!)
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == sectionToShow, tab, section, true);
                 sectionSelectorController.SetAnimationState(section == sectionToShow, tabsBySections[section]);
@@ -189,16 +186,16 @@ namespace DCL.ExplorePanel
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
             if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
-            sectionSelectorController!.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
             if (!isOn) return;
 
             if (shownSection == lastShownSection)
-                exploreSections![lastShownSection].Activate();
+                exploreSections[lastShownSection].Activate();
 
             lastShownSection = shownSection;
         }
@@ -240,7 +237,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Navmap)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Navmap);
             }
             else
@@ -251,7 +248,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Settings)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Settings);
             }
             else
@@ -264,7 +261,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Communities)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Communities);
             }
             else
@@ -275,7 +272,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Backpack)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Backpack);
             }
             else
@@ -284,12 +281,12 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            ToggleSection(true, tabsBySections![section], section, true);
+            ToggleSection(true, tabsBySections[section], section, true);
         }
 
         protected override void OnViewClose()
         {
-            foreach (ISection exploreSectionsValue in exploreSections!.Values)
+            foreach (ISection exploreSectionsValue in exploreSections.Values)
                 exploreSectionsValue.Deactivate();
 
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
@@ -323,7 +320,6 @@ namespace DCL.ExplorePanel
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
                                   UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
@@ -337,10 +333,10 @@ namespace DCL.ExplorePanel
             {
                 try
                 {
+                    //TODO FRAN: Fix this, we need to open the profile in the correct position!
                     await mvcManager.ShowAsync(ProfileMenuController.IssueCommand(), profileMenuCts.Token);
 
 //                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),new ControllerNoData(), profileMenuCts.Token);
-
  //                   await profileMenuController.HideViewAsync(profileMenuCts.Token);
                 }
                 catch (OperationCanceledException)

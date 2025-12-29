@@ -9,7 +9,6 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
@@ -28,15 +27,11 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
 using DCL.Web3;
-using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -62,7 +57,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IEthereumApi ethereumApi;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
 
         private GiftSelectionController? giftSelectionController;
@@ -88,7 +82,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISharedSpaceManager sharedSpaceManager,
             IScreenModeController screenModeController)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -108,7 +101,6 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
         }
 

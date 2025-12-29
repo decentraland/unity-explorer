@@ -55,10 +55,11 @@ using DCL.Utility.Types;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Passport
 {
-    public class PassportController : ControllerBase<PassportView, PassportParams>, IBlocksChat
+    public class PassportController : ControllerBase<PassportView, PassportParams>
     {
         private enum OpenBadgeSectionOrigin
         {
@@ -233,7 +234,7 @@ namespace DCL.Passport
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.badge3DPreviewCamera = GameObject.Instantiate(badge3DPreviewCameraPrefab);
+            this.badge3DPreviewCamera = Object.Instantiate(badge3DPreviewCameraPrefab);
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -242,7 +243,7 @@ namespace DCL.Passport
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
+            isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             isGiftingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GIFTING_ENABLED);
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -385,7 +386,7 @@ namespace DCL.Passport
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                         parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false));
 
-            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
+            if (isGiftingEnabled)
             {
                 contextMenu.AddControl(contextMenuGiftButton =
                     new GenericContextMenuElement(
@@ -665,12 +666,12 @@ namespace DCL.Passport
             SetCharacterPreviewVisible(false, false);
 
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
-            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, OpenBadgeSectionOrigin.BUTTON.ToString());
+            BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, nameof(OpenBadgeSectionOrigin.BUTTON));
         }
 
         private void SetCharacterPreviewVisible(bool visible, bool triggerOnShowBusEvent = true)
         {
-            GameObject previewGO = viewInstance.CharacterPreviewView.gameObject;
+            GameObject previewGO = viewInstance!.CharacterPreviewView.gameObject;
 
             if (previewGO.activeSelf == visible)
                 return;
@@ -724,7 +725,7 @@ namespace DCL.Passport
 
                 if (ownProfile != null)
                 {
-                    BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.NOTIFICATION.ToString());
+                    BadgesSectionOpened?.Invoke(ownProfile.UserId, true, nameof(OpenBadgeSectionOrigin.NOTIFICATION));
                     mvcManager.ShowAsync(IssueCommand(new PassportParams(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
                 }
             }
@@ -761,8 +762,8 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-                    // Dont show any interaction for our own user
+                    ownProfile ??= await selfProfile.ProfileAsync(ct);
+                    // Don't show any interaction for our own user
                     if (ownProfile?.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isCallEnabled);
@@ -791,7 +792,7 @@ namespace DCL.Passport
                     bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
                     viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
 
-                    //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
+                    //For now this button will not appear if the user is blocked
                     viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
 
                     await SetupContextMenuAsync(friendshipStatus, ct);

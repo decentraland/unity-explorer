@@ -63,6 +63,7 @@ namespace DCL.UI.SharedSpaceManager
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
+            // Migrate this one to CHAT PLUGIN or SIDEBAR PLUGIN!
             dclInput.UI.Submit.performed += OnUISubmitPerformedAsync;
         }
 
@@ -80,17 +81,12 @@ namespace DCL.UI.SharedSpaceManager
 
         private void OnMvcViewShowed(IController controller)
         {
-            if (controller is IBlocksChat) isChatBlockerVisible = true;
+            //if (controller is IBlocksChat) isChatBlockerVisible = true;
         }
 
         private void OnMvcViewClosed(IController controller)
         {
             if (controller is IBlocksChat) isChatBlockerVisible = false;
-        }
-
-        public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
-        {
-            await ShowAsync(panel, parameters, PanelsSharingSpace.Chat);
         }
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!, params PanelsSharingSpace[] panelsToIgnore)
