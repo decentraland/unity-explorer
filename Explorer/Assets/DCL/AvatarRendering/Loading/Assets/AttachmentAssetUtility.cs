@@ -63,15 +63,6 @@ namespace DCL.AvatarRendering.Loading.Assets
             if (pooledList.Value.Count == 0)
                 return;
 
-            // Re-parent all renderer GameObjects directly to the wearable root to reduce the hierarchy clutter
-            foreach (Renderer renderer in pooledList.Value)
-            {
-                Transform transform = renderer.transform;
-
-                if (transform != wearableRoot && transform.parent != wearableRoot)
-                    transform.SetParent(wearableRoot, true);
-            }
-
             for (int i = wearableRoot.childCount - 1; i >= 0; i--)
             {
                 Transform child = wearableRoot.GetChild(i);
