@@ -1,11 +1,13 @@
 using DCL.UI;
 using DCL.Utilities;
+using MVC;
+using System;
 using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LoginStartAuthState : AuthStateBase
+    public class LoginStartAuthState : AuthStateBase, IPayloadedState<PopupType>
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
@@ -35,18 +37,35 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             viewInstance.LoadingSpinner.SetActive(false);
 
-            viewInstance.LoginButton.onClick.AddListener(StartLoginProcess);
+            viewInstance.LoginButton.onClick.AddListener(OnLoginButtonClicked);
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+        }
+
+        public void Enter(PopupType payload)
+        {
+            Enter();
+
+            switch (payload)
+            {
+                case PopupType.NONE: break;
+                case PopupType.CONNECTION_ERROR:
+                    viewInstance!.ErrorPopupRoot.SetActive(true);
+                    break;
+                case PopupType.RESTRICTED_USER:
+                    viewInstance!.RestrictedUserContainer.SetActive(true);
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
+            }
         }
 
         public override void Exit()
         {
             base.Exit();
-            viewInstance.LoginButton.onClick.RemoveListener(controller.StartLoginFlowUntilEnd);
+            viewInstance.LoginButton.onClick.RemoveListener(OnLoginButtonClicked);
             viewInstance.CancelLoginButton.onClick.RemoveListener(CancelLoginAndRestartFromBeginning);
         }
 
-        private void StartLoginProcess()
+        private void OnLoginButtonClicked()
         {
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
@@ -61,7 +80,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void CancelLoginAndRestartFromBeginning()
         {
             controller.CancelLoginProcess();
-            Enter(); // SwitchState(ViewState.Login);
+            machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
         }
+    }
+
+    public enum PopupType
+    {
+        NONE = 0,
+        CONNECTION_ERROR = 1,
+        RESTRICTED_USER = 2,
     }
 }

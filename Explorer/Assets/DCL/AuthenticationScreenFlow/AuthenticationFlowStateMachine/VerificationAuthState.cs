@@ -35,14 +35,17 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.RestrictedUserContainer.SetActive(false);
 
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(controller.CancelLoginProcess);
-            viewInstance.VerificationCodeHintButton.onClick.AddListener(controller.OpenOrCloseVerificationCodeHint);
+            viewInstance.VerificationCodeHintButton.onClick.AddListener(ToggleVerificationCodeVisibility);
         }
 
         public override void Exit()
         {
             base.Exit();
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
-            viewInstance.VerificationCodeHintButton.onClick.RemoveListener(controller.OpenOrCloseVerificationCodeHint);
+            viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
         }
+
+        private void ToggleVerificationCodeVisibility() =>
+            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
     }
 }

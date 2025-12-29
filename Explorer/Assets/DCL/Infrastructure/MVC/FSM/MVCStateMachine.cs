@@ -60,13 +60,12 @@ namespace MVC
             CurrentState.LateUpdate(deltaTime);
         }
 
-        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
+        public void Enter<TState, TPayload>(TPayload payload, bool allowReEnterSameState = false) where TState: TBaseState, IPayloadedState<TPayload>
         {
-            if (TryChangeCurrentState<TState>() && CurrentState is IPayloadedState<TPayload> payloadedState)
+            if (TryChangeCurrentState<TState>(allowReEnterSameState) && CurrentState is IPayloadedState<TPayload> payloadedState)
             {
                 payloadedState.Enter(payload);
                 ElapsedTimeInState = 0f;
-
                 // fire the changed event if we have a listener
                 OnStateChanged?.Invoke();
             }
@@ -75,9 +74,9 @@ namespace MVC
         /// <summary>
         ///     changes the current state
         /// </summary>
-        public void Enter<TState>() where TState: TBaseState
+        public void Enter<TState>(bool allowReEnterSameState = false) where TState: TBaseState
         {
-            if (TryChangeCurrentState<TState>())
+            if (TryChangeCurrentState<TState>(allowReEnterSameState))
             {
                 CurrentState.Enter();
                 ElapsedTimeInState = 0f;
@@ -89,14 +88,14 @@ namespace MVC
         /// <summary>
         ///     changes the current state
         /// </summary>
-        private bool TryChangeCurrentState<TState>() where TState: TBaseState
+        private bool TryChangeCurrentState<TState>(bool allowReEnterSameState = false) where TState: TBaseState
         {
             // avoid changing to the same state
             Type newType = typeof(TState);
 
             if (CurrentState != null)
             {
-                if (CurrentState.GetType() == newType)
+                if (!allowReEnterSameState && CurrentState.GetType() == newType)
                     return false;
 
                 CurrentState.Exit();

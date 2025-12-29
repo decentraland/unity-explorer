@@ -32,10 +32,6 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
@@ -52,15 +48,7 @@ namespace DCL.AuthenticationScreenFlow
             LoggedIn,
         }
 
-        private enum ViewState
-        {
-            Login,
-            LoginInProgress,
-            Loading,
-            Finalize,
-        }
-
-        private const int ANIMATION_DELAY = 300;
+        internal const int ANIMATION_DELAY = 300;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -85,9 +73,9 @@ namespace DCL.AuthenticationScreenFlow
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
-        private UniTaskCompletionSource? lifeCycleTask;
+        internal UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
-        private IInputBlock inputBlock;
+        private readonly IInputBlock inputBlock;
         private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -176,7 +164,7 @@ namespace DCL.AuthenticationScreenFlow
                     new LoginStartAuthState(viewInstance, this, CurrentState),
                     new LoadingAuthState(viewInstance, CurrentState),
                     new VerificationAuthState(viewInstance, this, CurrentState),
-                    new LobbyAuthState(viewInstance, this, characterPreviewController),
+                    new LobbyAuthState(viewInstance, this, characterPreviewController, inputBlock),
                 }
             );
 
@@ -265,35 +253,29 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        fsm.Enter<LoginStartAuthState>();
-                        ShowRestrictedUserPopup();
+                        fsm.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER, allowReEnterSameState: true);
                     }
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(true);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(true);
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginStartAuthState>();
+                fsm.Enter<LoginStartAuthState>(true);
             }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
                 splashScreen.Hide();
-        }
-
-        private void ShowRestrictedUserPopup()
-        {
-            viewInstance!.RestrictedUserContainer.SetActive(true);
         }
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
@@ -385,46 +367,43 @@ namespace DCL.AuthenticationScreenFlow
                     else
                     {
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        fsm.Enter<LoginStartAuthState>();
-                        ShowRestrictedUserPopup();
+                        fsm.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER, allowReEnterSameState: true);
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
                 catch (SignatureExpiredException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
                 catch (Web3SignatureException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
                 catch (CodeVerificationException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
+                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>();
-
-                    ShowConnectionErrorPopup();
+                    fsm.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR, allowReEnterSameState: true);
                 }
                 finally
                 {
@@ -487,36 +466,13 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginStartAuthState>();
+                fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
             }
 
             characterPreviewController?.OnHide();
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
-        }
-
-        public void JumpIntoWorld()
-        {
-            viewInstance!.JumpIntoWorldButton.interactable = false;
-            AnimateAndAwaitAsync().Forget();
-            return;
-
-            async UniTaskVoid AnimateAndAwaitAsync()
-            {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
-
-                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
-                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await UniTask.Delay(ANIMATION_DELAY);
-                characterPreviewController?.OnHide();
-
-                // Restore inputs before transitioning to world
-                UnblockUnwantedInputs();
-
-                lifeCycleTask?.TrySetResult();
-                lifeCycleTask = null;
-            }
         }
 
         private void RestoreResolutionAndScreenMode()
@@ -530,11 +486,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
-        }
-
-        public void OpenOrCloseVerificationCodeHint()
-        {
-            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
         private void OpenDiscord()
@@ -557,7 +508,6 @@ namespace DCL.AuthenticationScreenFlow
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
             InitMusicMute();
         }
-
         private void InitMusicMute()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
@@ -567,7 +517,6 @@ namespace DCL.AuthenticationScreenFlow
 
             viewInstance?.MuteButton.SetIcon(isMuted);
         }
-
         private void OnMuteButtonClicked()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
@@ -594,13 +543,7 @@ namespace DCL.AuthenticationScreenFlow
         private void CloseErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
-        private void ShowConnectionErrorPopup() =>
-            viewInstance!.ErrorPopupRoot.SetActive(true);
-
         private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-
-        private void UnblockUnwantedInputs() =>
-            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
     }
 }
