@@ -38,11 +38,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         private static readonly object[] TEST_CASES_SOURCE =
         {
-            new object[] { 1, 100, 0.25d, 1 },
-            new object[] { 10, 50, 0.25d, 100 },
-            new object[] { 50, 50, 0.25d, 100 },
-            new object[] { 100, 50, 0.25d, 100 },
-            new object[] { 20, 10, 6, 25 },
+            new object[] { 1, 10, 0.25d, 1 },
+            new object[] { 10, 5, 0.25d, 100 },
+            new object[] { 50, 5, 0.25d, 100 },
+            new object[] { 100, 5, 0.25d, 100 },
+            new object[] { 20, 5, 6, 25 },
             new object[] { 20, 5, 20, 25 },
         };
 

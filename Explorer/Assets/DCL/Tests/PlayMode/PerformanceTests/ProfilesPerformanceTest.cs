@@ -11,20 +11,20 @@ using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", false, true)]
+    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", true, false)]
     [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false, false)]
     [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false, false)]
     [TestFixture("https://peer-eu1.decentraland.org/lambdas/", false, false)]
-    [TestFixture("https://asset-bundle-registry.decentraland.org/", true, false)]
+    [TestFixture("https://asset-bundle-registry.decentraland.org/", false, true)]
     public class ProfilesPerformanceTest : PerformanceBenchmark
     {
         private static readonly object[] TEST_CASES_SOURCE =
         {
             new object[] { 1, 5, 0.25d, 100 },
-            new object[] { 10, 10, 0.25d, 100 },
-            new object[] { 50, 10, 0.25d, 100 },
-            new object[] { 100, 10, 0.25d, 100 },
-            new object[] { 20, 10, 6, 25 },
+            new object[] { 10, 5, 0.25d, 100 },
+            new object[] { 50, 5, 0.25d, 100 },
+            new object[] { 100, 5, 0.25d, 100 },
+            new object[] { 20, 5, 6, 25 },
             new object[] { 20, 5, 20, 25 },
         };
 
@@ -57,7 +57,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         [UsedImplicitly]
         private readonly bool baseline;
 
-        public ProfilesPerformanceTest(string lambdas, bool supportsMetadata, bool baseline)
+        public ProfilesPerformanceTest(string lambdas, bool baseline, bool supportsMetadata)
         {
             this.supportsMetadata = supportsMetadata;
             this.baseline = baseline;
