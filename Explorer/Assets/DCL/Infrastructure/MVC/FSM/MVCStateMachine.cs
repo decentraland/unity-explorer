@@ -10,7 +10,7 @@ namespace MVC
     ///     Generic state machine with typed CurrentState and support for payloaded states.
     /// </summary>
     /// <typeparam name="TBaseState">Base type for all states in this machine</typeparam>
-    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IExitableState
+    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IState
     {
         public event Action<TBaseState>? OnStateChanged;
 
@@ -42,13 +42,6 @@ namespace MVC
         {
             TState state = ChangeState<TState>();
             state.Enter();
-            OnStateChanged?.Invoke(state);
-        }
-
-        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
-        {
-            TState state = ChangeState<TState>();
-            state.Enter(payload);
             OnStateChanged?.Invoke(state);
         }
 

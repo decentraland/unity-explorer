@@ -1,21 +1,8 @@
 namespace MVC
 {
-    // IExitableState ( Exit only)
-    //     ├── IState ( Enter without parameters)
-    //     └── IPayloadedState<T> (Enter with parameters)
-
-    public interface IExitableState
+    public interface IState
     {
         void Exit();
-    }
-
-    public interface IState : IExitableState
-    {
         void Enter();
-    }
-
-    public interface IPayloadedState<in TPayload> : IExitableState
-    {
-        void Enter(TPayload payload);
     }
 }
