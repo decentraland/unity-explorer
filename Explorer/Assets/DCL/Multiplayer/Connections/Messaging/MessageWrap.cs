@@ -102,7 +102,8 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(Chat)] = (packet, o) => packet.Chat = (Chat)o,
             [typeof(Movement)] = (packet, o) => packet.Movement = (Movement)o,
             [typeof(MovementCompressed)] = (packet, o) => packet.MovementCompressed = (MovementCompressed)o,
-            [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o, [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o, [typeof(LookAtPosition)] = (packet, o) => packet.LookAtPosition = (LookAtPosition)o
+            [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o,
+            [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o
         };
     }
 }
