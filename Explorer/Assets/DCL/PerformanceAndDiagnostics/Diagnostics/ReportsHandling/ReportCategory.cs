@@ -347,11 +347,10 @@
         public const string TRANSLATE = nameof(TRANSLATE);
 
         public const string OUTFITS = nameof(OUTFITS);
+        public const string GIFTING = nameof(GIFTING);
 
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
-
-        public const string SOCIAL_EMOTE = nameof(SOCIAL_EMOTE);
     }
 }

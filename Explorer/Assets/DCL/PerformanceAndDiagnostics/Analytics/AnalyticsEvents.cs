@@ -89,6 +89,7 @@
             public const string LOGGED_IN = "logged_in";
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
+            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
         }
 
         public static class Friends
@@ -136,6 +137,14 @@
             public const string SAVE_OUTFIT = "save_outfit";
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
+
+        public static class Gifts
+        {
+            public const string SENT_GIFT = "sent_gift";
+            public const string SUCCESSFULL_GIFT = "successful_gift";
+            public const string FAILED_GIFT = "failed_gift";
+            public const string CANCELED_GIFT = "canceled_gift";
         }
 
         public static class Communities

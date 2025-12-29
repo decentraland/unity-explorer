@@ -26,7 +26,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using DCL.EmotesWheel.Params;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -316,7 +315,7 @@ namespace DCL.UI.Sidebar
 
         private async void OnEmotesWheelButtonClickedAsync()
         {
-            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel, new EmotesWheelParams());
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private async void OnFriendsButtonClickedAsync()

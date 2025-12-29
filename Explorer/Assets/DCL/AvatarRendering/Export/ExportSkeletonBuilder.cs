@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Export
             if (instantiatedWearables.Count <= 0 || instantiatedWearables[0].OriginalAsset.MainAsset == null)
                 return null;
 
-            var armature = avatarBase.ArmatureObject;
+            var armature = avatarBase.Armature;
 
             var duplicateRoot = new GameObject("DCL_Avatar_Export").transform;
             duplicateRoot.position = armature.position;

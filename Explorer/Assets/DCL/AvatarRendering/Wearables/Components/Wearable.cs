@@ -25,6 +25,15 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
+        public int Amount { get; set; }
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
+        }
+
+        public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
+
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
         StreamableLoadingResult<WearableDTO> IAvatarAttachment<WearableDTO>.Model
@@ -40,7 +49,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public AvatarAttachmentDTO DTO => Model.Asset!;
         public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
-
+        
         public WearableType Type { get; private set; }
 
         public bool IsLoading { get; private set; }
@@ -64,6 +73,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
+            
 
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;
