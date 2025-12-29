@@ -172,7 +172,7 @@ namespace DCL.UI
                 if (!config.Enabled) continue;
 
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
-                component.SetAsInteractable(config.Interactable);
+                ConfigureComponentInteractability(component, config);
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {
@@ -202,6 +202,7 @@ namespace DCL.UI
                 totalHeight += component!.RectTransformComponent.rect.height;
             }
 
+            container.HideNonInteractableTooltip();
             container.controlsLayoutGroup.spacing = contextMenuConfig.elementsSpacing;
             container.controlsLayoutGroup.padding = contextMenuConfig.verticalLayoutPadding;
             container.containerRim.SetActive(contextMenuConfig.showRim);
@@ -242,6 +243,22 @@ namespace DCL.UI
                     queuedDeferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, boundaryRect);
                 }
             }
+        }
+
+        private void ConfigureComponentInteractability(GenericContextMenuComponentBase component, GenericContextMenuElement config)
+        {
+            component.IsInteractable = config.Interactable;
+            component.NonInteractableFeedback = config.NonInteractableFeedback;
+            component.OnPointerDownEvent -= OnMenuComponentPointerDown;
+            component.OnPointerDownEvent += OnMenuComponentPointerDown;
+        }
+
+        private void OnMenuComponentPointerDown(GenericContextMenuComponentBase component)
+        {
+            if (!component.IsInteractable)
+                viewInstance!.ControlsContainer.ShowNonInteractableTooltip(component.RectTransformComponent, component.NonInteractableFeedback);
+            else
+                viewInstance!.ControlsContainer.HideNonInteractableTooltip();
         }
 
         // TODO: Reuse the existing method AdjustPositionToFitBounds with the proper parameters

@@ -156,14 +156,12 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                mainUIView.ChatMainView,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus,
-                smartWearableCache
+                eventBus
             ));
         }
 

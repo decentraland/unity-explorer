@@ -13,6 +13,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -42,7 +43,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents | MapLayer.HomeMarker;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
         private const string RELOAD_SCENE_TEXT = "RELOAD SCENE";
         private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new ()
@@ -70,15 +71,18 @@ namespace DCL.Minimap
         private readonly IRoomHub roomHub;
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
+        private CancellationTokenSource? favoriteCancellationToken = new ();
+        private CancellationTokenSource showBannedTooltipCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
-        private CancellationTokenSource showBannedTooltipCts;
+        private ToggleContextMenuControlSettings homeToggleSettings;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -103,8 +107,9 @@ namespace DCL.Minimap
             ReloadSceneChatCommand reloadSceneCommand,
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
-            bool includeBannedUsersFromScene
-        ) : base(() => minimapView)
+            bool includeBannedUsersFromScene,
+            HomePlaceEventBus homePlaceEventBus) 
+                : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -123,6 +128,7 @@ namespace DCL.Minimap
             this.roomHub = roomHub;
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
+            this.homePlaceEventBus = homePlaceEventBus;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -131,6 +137,7 @@ namespace DCL.Minimap
         {
             placesApiCts.SafeCancelAndDispose();
             disposeCts.Cancel();
+            favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
@@ -143,7 +150,10 @@ namespace DCL.Minimap
             }
 
             sceneRestrictionsController?.Dispose();
-            viewInstance?.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
+
+            if (viewInstance == null) return;
+            viewInstance.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
+            viewInstance.favoriteButton.OnButtonClicked -= OnFavoriteButtonClicked;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -164,6 +174,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -178,14 +189,17 @@ namespace DCL.Minimap
 
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
-
+            
             contextMenu = new GenericContextMenu()
                           // Add title control to prevent incorrect layout height when the context menu has a single control
                           // May be removed if a new control is added
                          .AddControl(new TextContextMenuControlSettings("Scene's Options"))
                          .AddControl(new SeparatorContextMenuControlSettings())
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
+                         .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
+            SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
@@ -196,11 +210,60 @@ namespace DCL.Minimap
             }
         }
 
+        private void SetInitialHomeToggleValue()
+        {
+            bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+            homeToggleSettings.SetInitialValue(isHome);
+        }
+
         private void ShowContextMenu()
         {
+            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
+        }
+
+        private void SetAsHomeToggledAsync(bool value)
+        {
+            if (value)
+                homePlaceEventBus.SetAsHome(previousParcelPosition);
+            else
+                homePlaceEventBus.UnsetHome();
+            
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+            // gaining focus again.
+            OnFocus();
+        }
+        
+        private void OnFavoriteButtonClicked(bool value)
+        {
+            // Setting button for immediate graphic change.
+            viewInstance!.favoriteButton.SetButtonState(value);
+            favoriteCancellationToken = favoriteCancellationToken.SafeRestart();
+            SetAsFavoriteAsync(favoriteCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid SetAsFavoriteAsync(CancellationToken ct)
+            {
+                try
+                {
+                    PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(previousParcelPosition, favoriteCancellationToken.Token);
+                    if (placeInfo == null)
+                    {
+                        viewInstance!.favoriteButton.SetButtonState(false, false);
+                        return;
+                    }
+                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo!.id, value, ct);
+                    viewInstance!.favoriteButton.SetButtonState(value);
+                }
+                catch (OperationCanceledException _) { }
+                catch (Exception exception)
+                {
+                    viewInstance!.favoriteButton.SetButtonState(false);
+                    ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
+                }
+            }
         }
 
         private void CopyJumpInLink()
@@ -279,12 +342,12 @@ namespace DCL.Minimap
 
                 //Once the render target image is ready to be shown, we enable the minimap
                 viewInstance.SetCanvasActive(true);
-                GetPlaceInfoAsync(position);
+                UpdatePlaceDisplayAsync(position);
             }
             else
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
-                GetPlaceInfoAsync(position);
+                UpdatePlaceDisplayAsync(position);
             }
         }
 
@@ -300,9 +363,13 @@ namespace DCL.Minimap
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
+
+            placesApiCts.SafeCancelAndDispose();
+            placesApiCts = new CancellationTokenSource();
+            RefreshPlaceInfoUIAsync(previousParcelPosition, placesApiCts.Token).Forget();
         }
 
-        private void GetPlaceInfoAsync(Vector3 playerPosition)
+        private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = playerPosition.ToParcel();
 
@@ -312,37 +379,60 @@ namespace DCL.Minimap
             previousParcelPosition = playerParcelPosition;
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
-            RetrieveParcelInfoAsync().Forget();
-
+            RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
+            
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+        }
+        
+        private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
 
-            return;
-
-            async UniTaskVoid RetrieveParcelInfoAsync()
+            if (realmData.ScenesAreFixed)
             {
-                await realmData.WaitConfiguredAsync();
-
-                try
-                {
-                    if (realmData.ScenesAreFixed)
-                        viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-                    else
-                    {
-                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, placesApiCts.Token);
-                        viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
-                    }
-                }
-                catch (NotAPlaceException notAPlaceException)
-                {
-                    viewInstance!.placeNameText.text = "Unknown place";
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
-                }
-                catch (Exception) { viewInstance!.placeNameText.text = "Unknown place"; }
-                finally { viewInstance!.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
+                viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                viewInstance!.favoriteButton.SetButtonState(false, false);
             }
+            else if (placeInfo != null)
+            {
+                viewInstance!.placeNameText.text = placeInfo.title;
+                viewInstance!.favoriteButton.SetButtonState(placeInfo.user_favorite);
+            }
+            else
+            {
+                viewInstance!.placeNameText.text = "Unknown place";
+                viewInstance!.favoriteButton.SetButtonState(false, false);
+            }
+    
+            viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
+        }
+
+        private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct,
+            bool renewCache = false)
+        {
+            await realmData.WaitConfiguredAsync();
+
+            try
+            {
+                if (realmData.ScenesAreFixed)
+                    return null;
+        
+                return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
+            }
+            catch (OperationCanceledException _) { }
+            catch (NotAPlaceException notAPlaceException)
+            {
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
+            }
+            catch (Exception exception)
+            {
+                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
+            }
+            
+            return null;
         }
 
         private void SetGenesisMode(bool isGenesisModeActivated)

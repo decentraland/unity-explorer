@@ -93,7 +93,12 @@ namespace DCL.Multiplayer.Movement.Systems
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
             animationComponent.States.IsFalling = message.animState.IsFalling;
             animationComponent.States.IsLongFall = message.animState.IsLongFall;
-            AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, jumpTriggered, message.isStunned);
+            animationComponent.States.IsStunned = message.isStunned;
+            AnimationStatesLogic.SetAnimatorParameters(view,
+                ref animationComponent.States,
+                animationComponent.States.IsJumping,
+                jumpTriggered,
+                animationComponent.States.IsStunned);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)

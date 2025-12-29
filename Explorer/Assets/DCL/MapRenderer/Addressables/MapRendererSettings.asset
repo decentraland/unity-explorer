@@ -42,6 +42,12 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  <HomeMarker>k__BackingField:
+    m_AssetGUID: cd3edf52c6206d44a9855feccaef9467
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   <PinMarker>k__BackingField:
     m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
     m_SubObjectName: 

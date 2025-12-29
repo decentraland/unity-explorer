@@ -1,10 +1,9 @@
-pub mod batcher;
+use lazy_static::lazy_static;
+use std::os::raw::c_char;
+
 pub mod cabi;
 pub mod operations;
-pub mod queue_batcher;
 pub mod server;
-
-use lazy_static::lazy_static;
 
 pub type OperationHandleId = u64;
 
@@ -14,15 +13,15 @@ pub const INVALID_OPERATION_HANDLE_ID: OperationHandleId = 0;
 #[derive(Debug)]
 pub enum Response {
     Success = 0,
-    FailInitializedWrongKey = 1,
-    ErrorMessageTooLarge = 2,
-    ErrorDeserialize = 3,
-    ErrorNetwork = 4,
-    ErrorUtf8Decode = 5,
+    // Errors are propagated vie the error callback
+    Error = 1,
 }
 
 /// # SAFTEY: The "C" callback must be threadsafe and not block
 pub type FfiCallbackFn = unsafe extern "C" fn(OperationHandleId, Response);
+
+/// # SAFTEY: The "C" callback must be threadsafe and not block
+pub type FfiErrorCallbackFn = unsafe extern "C" fn(msg: *const c_char);
 
 lazy_static! {
     pub static ref SEGMENT_SERVER: server::Server = server::Server::default();
@@ -41,11 +40,18 @@ mod tests {
     #[test]
     fn test_integration() {
         let write_key = std::env::var("SEGMENT_WRITE_KEY").unwrap();
+        let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();
 
-        SEGMENT_SERVER.initialize(write_key, test_callback);
+        SEGMENT_SERVER.initialize(persistent_path, 100, write_key, test_callback, None);
         SEGMENT_SERVER.try_execute(&|segment, id| {
-            let operation =
-                SegmentServer::enqueue_track(segment, id, "id", "rust_check", "{}", "{}");
+            let operation = SegmentServer::enqueue_track(
+                segment,
+                id,
+                segment::message::User::default(),
+                "rust_check",
+                "{}",
+                "{}",
+            );
             SEGMENT_SERVER.async_runtime.block_on(operation);
         });
         SEGMENT_SERVER.try_execute(&|segment, id| {
@@ -55,6 +61,6 @@ mod tests {
     }
 
     unsafe extern "C" fn test_callback(id: OperationHandleId, response: Response) {
-        info!("id: {}, response: {:?}", id, response);
+        info!("id: {id}, response: {response:?}");
     }
 }

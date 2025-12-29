@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using Newtonsoft.Json;
 using System;
 
 namespace DCL.WebRequests
@@ -15,6 +16,7 @@ namespace DCL.WebRequests
         public readonly int Timeout;
         public readonly RetryPolicy RetryPolicy;
 
+        [JsonConstructor]
         public CommonArguments(URLAddress url, RetryPolicy? retryPolicy = null, int timeout = DEFAULT_TIMEOUT)
         {
             URL = url;

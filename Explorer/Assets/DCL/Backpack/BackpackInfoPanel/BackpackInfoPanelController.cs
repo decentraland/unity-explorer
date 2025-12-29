@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.ThirdParty;
@@ -30,6 +31,7 @@ namespace DCL.Backpack
         private readonly NFTColorsSO rarityColors;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly HideCategoriesController hideCategoriesController;
+        private readonly IThumbnailProvider thumbnailProvider;
         private CancellationTokenSource? cts;
 
         public BackpackInfoPanelController(
@@ -40,7 +42,8 @@ namespace DCL.Backpack
             NFTColorsSO rarityColors,
             IReadOnlyEquippedWearables equippedWearables,
             AttachmentType attachmentType,
-            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
@@ -48,6 +51,7 @@ namespace DCL.Backpack
             this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
             this.rarityColors = rarityColors;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.thumbnailProvider = thumbnailProvider;
 
             hideCategoriesController = new HideCategoriesController(
                 view.HideCategoryGridView,
@@ -106,7 +110,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment itemWearable, CancellationToken ct)
         {
-            view.WearableThumbnail.sprite = await itemWearable.WaitForThumbnailAsync(MINIMUM_WAIT_TIME, ct);
+            view.WearableThumbnail.sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
             view.LoadingSpinner.SetActive(false);
             view.WearableThumbnail.gameObject.SetActive(true);
         }

@@ -2,7 +2,7 @@
 using DCL.Chat.MessageBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Text.RegularExpressions;
 
@@ -10,7 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class ChatMessagesBusAnalyticsDecorator : IChatMessagesBus
     {
-        private static readonly JsonArray MENTION_WALLET_IDS = new ();
+        private static readonly JArray MENTION_WALLET_IDS = new ();
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IChatMessagesBus core;
@@ -44,7 +44,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             bool isMentionMessage = CheckIfIsMention(message);
 
-            JsonObject jsonObject = new JsonObject
+            JObject jsonObject = new JObject
                 {
                     { "is_command", message[0] == '/' },
                     { "length", message.Length },

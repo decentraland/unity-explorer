@@ -7,10 +7,10 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Text;
 using UnityEngine.Pool;
 
 namespace DCL.Analytics.Systems
@@ -21,10 +21,10 @@ namespace DCL.Analytics.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ScreencaptureAnalyticsSystem : BaseUnityLoopSystem
     {
-        private static readonly JsonArray ADDRESS_BUILDER = new ();
-        private static readonly ObjectPool<JsonObject> JSON_OBJECT_POOL = new (
-            createFunc: () => new JsonObject(),
-            actionOnRelease: obj => obj.Clear());
+        private static readonly JArray ADDRESS_BUILDER = new ();
+        private static readonly ObjectPool<JObject> JSON_OBJECT_POOL = new (
+            createFunc: () => new JObject(),
+            actionOnRelease: obj => obj.RemoveAll());
 
         private readonly IAnalyticsController analytics;
         private readonly ICameraReelStorageService storage;
@@ -51,7 +51,7 @@ namespace DCL.Analytics.Systems
 
         private void OnScreenshotUploaded(CameraReelResponse response, CameraReelStorageStatus _, string source)
         {
-            analytics.Track(AnalyticsEvents.CameraReel.TAKE_PHOTO, new JsonObject
+            analytics.Track(AnalyticsEvents.CameraReel.TAKE_PHOTO, new JObject
             {
                 { "Photo UUID", response.id },
                 { "Profiles Enhanced", GetVisiblePeopleAddresses(response.metadata.visiblePeople) },
@@ -59,19 +59,21 @@ namespace DCL.Analytics.Systems
             });
         }
 
-        private JsonArray GetVisiblePeopleAddresses(ReadOnlySpan<VisiblePerson> persons)
+        private JArray GetVisiblePeopleAddresses(ReadOnlySpan<VisiblePerson> persons)
         {
-            foreach (JsonObject element in ADDRESS_BUILDER)
-                JSON_OBJECT_POOL.Release(element);
+            foreach (var element in ADDRESS_BUILDER)
+                if (element is JObject jObject)
+                    JSON_OBJECT_POOL.Release(jObject);
+
             ADDRESS_BUILDER.Clear();
 
             foreach (var visiblePerson in persons)
             {
-                JsonObject jsonObject = JSON_OBJECT_POOL.Get();
-                jsonObject.Add("address", visiblePerson.userAddress);
-                jsonObject.Add("isEmoting", visiblePerson.isEmoting);
+                JObject JObject = JSON_OBJECT_POOL.Get().EnsureNotNull();
+                JObject.Add("address", visiblePerson.userAddress);
+                JObject.Add("isEmoting", visiblePerson.isEmoting);
 
-                ADDRESS_BUILDER.Add(jsonObject);
+                ADDRESS_BUILDER.Add(JObject);
             }
 
             return ADDRESS_BUILDER;
@@ -80,7 +82,7 @@ namespace DCL.Analytics.Systems
         protected override void Update(float t)
         {
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request) && request.IsEnable)
-                analytics.Track(AnalyticsEvents.CameraReel.CAMERA_OPEN, new JsonObject
+                analytics.Track(AnalyticsEvents.CameraReel.CAMERA_OPEN, new JObject
                 {
                     { "source", request.Source },
                 });

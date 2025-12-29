@@ -1,5 +1,4 @@
-using Segment.Analytics;
-using Segment.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.Services
@@ -18,7 +17,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             this.flushCount = flushCount;
         }
 
-        public void Identify(string? userId, JsonObject? traits = null)
+        public void Identify(string? userId, JObject? traits = null)
         {
             lock (monitor)
             {
@@ -27,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             }
         }
 
-        public void Track(string eventName, JsonObject? properties = null)
+        public void Track(string eventName, JObject? properties = null)
         {
             lock (monitor)
             {
@@ -36,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             }
         }
 
-        public void InstantTrackAndFlush(string eventName, JsonObject? properties = null)
+        public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
             lock (monitor)
             {
@@ -44,7 +43,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             }
         }
 
-        public void AddPlugin(EventPlugin plugin)
+        public void AddPlugin(IAnalyticsPlugin plugin)
         {
             origin.AddPlugin(plugin);
         }

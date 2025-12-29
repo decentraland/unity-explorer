@@ -9,7 +9,7 @@ namespace DCL.UI
         private readonly MultiStateButtonView view;
         private readonly bool replacesImage;
 
-        private bool isButtonOn;
+        public bool IsButtonOn { get; private set; }
 
         public MultiStateButtonController(MultiStateButtonView view, bool replacesImage)
         {
@@ -27,15 +27,15 @@ namespace DCL.UI
 
         public void SetButtonState(bool isOn)
         {
-            isButtonOn = isOn;
+            IsButtonOn = isOn;
             SetButtonGraphic(isOn);
         }
 
         private void ButtonClicked()
         {
-            isButtonOn = !isButtonOn;
-            SetButtonGraphic(isButtonOn);
-            OnButtonClicked?.Invoke(isButtonOn);
+            IsButtonOn = !IsButtonOn;
+            SetButtonGraphic(IsButtonOn);
+            OnButtonClicked?.Invoke(IsButtonOn);
         }
 
         private void SetButtonGraphic(bool isOn)

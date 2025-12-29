@@ -4,20 +4,24 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Plugins.NativeAudioAnalysis;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public struct MediaPlayerComponent
+    public struct MediaPlayerComponent : IComponentWithAudioFrameBuffer
     {
         public const float DEFAULT_VOLUME = 1f;
         public const float DEFAULT_PLAYBACK_RATE = 1f;
         public const float DEFAULT_POSITION = 0f;
         private const float PLAY_CHECK_THRESHOLD = 0.5f;
+        public const float DEFAULT_SPATIAL_MIN_DISTANCE = 0f;
+        public const float DEFAULT_SPATIAL_MAX_DISTANCE = 60f;
 
         private float lastVideoTime;
         private float frozenTimestamp;
         private float lastPlayTimestamp;
         private bool isFrozen;
+        private bool isSpatial;
 
         public readonly MultiMediaPlayer MediaPlayer;
         public readonly bool IsFromContentServer;
@@ -30,6 +34,20 @@ namespace DCL.SDKComponents.MediaStream
         public CancellationTokenSource? Cts;
         public OpenMediaPromise? OpenMediaPromise;
 
+        public bool IsSpatial => MediaPlayer.IsSpatial;
+        public float SpatialMaxDistance => MediaPlayer.SpatialMaxDistance;
+        public float SpatialMinDistance => MediaPlayer.SpatialMinDistance;
+
+        /// <summary>
+        ///     Use ThreadSafeLastAudioFrameReadFilter because it has to be attached to the same GameObject.
+        ///     But GameObject is owned by AudioSource MonoBehavour in practice, and gets repooled with it.
+        ///     To avoid LifeCycle complications ThreadSafeLastAudioFrameReadFilter is referenced directly and owned by AudioSourceComponent.
+        ///     MonoBehaviour cannot be easily pooled because the ownership issue arise. 
+        ///     AudioSource and ThreadSafeLastAudioFrameReadFilter share the same GameObject.
+        /// </summary>
+        private ThreadSafeLastAudioFrameReadFilterWrap lastAudioFrameReadFilter;
+
+
         public MediaPlayerComponent(MultiMediaPlayer mediaPlayer, bool isFromContentServer) : this()
         {
             MediaPlayer = mediaPlayer;
@@ -37,6 +55,7 @@ namespace DCL.SDKComponents.MediaStream
             HasFailed = false;
             State = VideoState.VsNone;
             isFrozen = false;
+            lastAudioFrameReadFilter = new ();
         }
 
         public readonly bool IsPlaying => MediaPlayer.IsPlaying;
@@ -69,7 +88,7 @@ namespace DCL.SDKComponents.MediaStream
                     lastPlayTimestamp = timestamp;
 
                     bool wasFrozen = isFrozen;
-                    isNowFrozen = Math.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
+                    isNowFrozen = Mathf.Abs(player.CurrentTime - lastVideoTime) < Mathf.Epsilon;
 
                     if (!isNowFrozen)
                     {
@@ -114,13 +133,38 @@ namespace DCL.SDKComponents.MediaStream
         public void MarkAsFailed(bool failed) =>
             HasFailed = failed;
 
+        public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
+        {
+            AudioSource? AudioSource = MediaPlayer.ExposedAudioSource();
+
+            if (AudioSource == null)
+            {
+                output = null;
+                return false;
+            }
+
+            return lastAudioFrameReadFilter.TryAttachLastAudioFrameReadFilterOrUseExisting(AudioSource, out output);
+        }
+
+        public void EnsureLastAudioFrameReadFilterIsRemoved() 
+        {
+            lastAudioFrameReadFilter.EnsureLastAudioFrameReadFilterIsRemoved();
+        }
+
+
         public void Dispose()
         {
             State = VideoState.VsNone;
             HasFailed = false;
             isFrozen = false;
             MediaPlayer.Dispose(MediaAddress);
+            EnsureLastAudioFrameReadFilterIsRemoved();
             Cts.SafeCancelAndDispose();
         }
+
+        public void UpdateSpatialAudio(bool isSpatial, float? minDistance, float? maxDistance) =>
+            MediaPlayer.UpdateSpatialAudio(isSpatial,
+                minDistance ?? DEFAULT_SPATIAL_MIN_DISTANCE,
+                maxDistance ?? DEFAULT_SPATIAL_MAX_DISTANCE);
     }
 }

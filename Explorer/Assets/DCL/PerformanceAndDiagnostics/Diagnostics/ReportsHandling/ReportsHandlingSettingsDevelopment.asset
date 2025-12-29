@@ -574,15 +574,21 @@ MonoBehaviour:
       Severity: 4
     - Category: TRANSLATE
       Severity: 1
-    - Category: TRANSLATE
-      Severity: 2
-    - Category: TRANSLATE
-      Severity: 3
     - Category: OUTFITS
       Severity: 0
     - Category: OUTFITS
       Severity: 4
     - Category: OUTFITS
+      Severity: 1
+    - Category: GIFTING
+      Severity: 3
+    - Category: GIFTING
+      Severity: 2
+    - Category: GIFTING
+      Severity: 0
+    - Category: GIFTING
+      Severity: 4
+    - Category: GIFTING
       Severity: 1
     - Category: SOCIAL
       Severity: 0
