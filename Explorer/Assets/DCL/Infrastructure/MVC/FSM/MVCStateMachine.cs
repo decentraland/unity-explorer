@@ -6,6 +6,11 @@ using Utility;
 
 namespace MVC
 {
+    public interface IPayloadedState<in TPayload>
+    {
+        void Enter(TPayload payload);
+    }
+
     public class MVCStateMachine<TBaseState, TContext> : IDisposable where TBaseState: MVCState<TBaseState, TContext>
     {
         public event Action? OnStateChanged;
@@ -55,10 +60,36 @@ namespace MVC
             CurrentState.LateUpdate(deltaTime);
         }
 
+        public void Enter<TState, TPayload>(TPayload payload) where TState: TBaseState, IPayloadedState<TPayload>
+        {
+            if (TryChangeCurrentState<TState>() && CurrentState is IPayloadedState<TPayload> payloadedState)
+            {
+                payloadedState.Enter(payload);
+                ElapsedTimeInState = 0f;
+
+                // fire the changed event if we have a listener
+                OnStateChanged?.Invoke();
+            }
+        }
+
         /// <summary>
         ///     changes the current state
         /// </summary>
         public void Enter<TState>() where TState: TBaseState
+        {
+            if (TryChangeCurrentState<TState>())
+            {
+                CurrentState.Enter();
+                ElapsedTimeInState = 0f;
+                // fire the changed event if we have a listener
+                OnStateChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        ///     changes the current state
+        /// </summary>
+        private bool TryChangeCurrentState<TState>() where TState: TBaseState
         {
             // avoid changing to the same state
             Type newType = typeof(TState);
@@ -66,7 +97,7 @@ namespace MVC
             if (CurrentState != null)
             {
                 if (CurrentState.GetType() == newType)
-                    return;
+                    return false;
 
                 CurrentState.Exit();
             }
@@ -82,11 +113,7 @@ namespace MVC
             // swap states and call begin
             PreviousState = CurrentState;
             CurrentState = states[newType];
-            CurrentState.Enter();
-            ElapsedTimeInState = 0f;
-
-            // fire the changed event if we have a listener
-            OnStateChanged?.Invoke();
+            return true;
         }
 
         /// <summary>
