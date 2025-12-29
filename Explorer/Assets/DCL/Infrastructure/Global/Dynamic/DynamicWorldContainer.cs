@@ -110,20 +110,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Backpack.Gifting.Services;
-using DCL.Backpack.Gifting.Services.PendingTransfers;
-using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.PerformanceAndDiagnostics;
 using DCL.SDKComponents.AvatarLocomotion;
-using DCL.Settings.ScreenMode;
 using DCL.SocialEmotes;
 using DCL.SocialEmotes.UI;
 using DCL.Translation;
-using DCL.Web3.Authenticators;
 using DCL.UI.EphemeralNotifications;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -250,8 +245,6 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
-            var screenModeController = new ScreenModeController(appArgs);
-
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -344,10 +337,6 @@ namespace Global.Dynamic
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
-
-            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
-            IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
-            IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
@@ -704,7 +693,7 @@ namespace Global.Dynamic
 
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
             SocialEmoteInteractionsManager.Initialize(new SocialEmoteInteractionsManager());
-            var debugSocialEmotesView = GameObject.FindWithTag("DebugSocialEmoteInteractionsView")?.GetComponent<DebugSocialEmoteInteractionsView>();
+            DebugSocialEmoteInteractionsView? debugSocialEmotesView = GameObject.FindWithTag("DebugSocialEmoteInteractionsView")?.GetComponent<DebugSocialEmoteInteractionsView>();
 
             if (debugSocialEmotesView != null)
             {
@@ -748,11 +737,14 @@ namespace Global.Dynamic
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
-                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager), new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, menusAccessFacade, identityCache, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, staticContainer.PlayerEntity),
-                new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs), new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, builderContentURL.Value, builderCollectionsPreview),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
+                new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, menusAccessFacade, identityCache, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, staticContainer.PlayerEntity),
+                new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, staticContainer.ComponentsContainer.ComponentPoolsRegistry, identityCache, ephemeralNotificationsController),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                new RenderingSystemPlugin(debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,
@@ -888,28 +880,9 @@ namespace Global.Dynamic
                     communitiesDataService,
                     staticContainer.LoadingStatus
                 ),
-                new GiftingPlugin(assetsProvisioner,
-                    mvcManager,
-                    pendingTransferService,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    equippedStatusProvider,
-                    profilesRepository,
-                    staticContainer.InputBlock,
-                    wearablesProvider,
-                    wearableCatalog,
-                    emotesCache,
-                    emoteProvider,
-                    identityCache,
-                    thumbnailProvider,
-                    eventBus,
-                    webBrowser,
-                    bootstrapContainer.EthereumApi,
-                    bootstrapContainer.DecentralandUrlsSource,
-                    sharedSpaceManager,
-                    screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser, wearablesProvider),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
@@ -948,8 +921,7 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsRequestController,
-                    identityCache,
-                    profilesRepository),
+                    identityCache),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
