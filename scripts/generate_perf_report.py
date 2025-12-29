@@ -125,57 +125,31 @@ class TestResult:
 
 
 def extract_scenario_label(fixture_args: str) -> str:
-    """Extract a readable scenario label from TestFixture arguments."""
+    """Extract a readable scenario label from TestFixture arguments.
+
+    Extracts the full subdomain from URLs:
+    - "https://peer-ap1.decentraland.org/..." -> "peer-ap1"
+    - "https://asset-bundle-registry.decentraland.today/..." -> "asset-bundle-registry"
+    - "https://gateway.decentraland.zone/..." -> "gateway.zone" (includes TLD for distinction)
+    """
     if not fixture_args:
         return "default"
-
-    # Try to extract meaningful identifier from URL or enum
-    # Examples:
-    # - "https://peer-ec1.decentraland.org/lambdas/,False" -> "ec1"
-    # - "https://asset-bundle-registry.decentraland.today/,True" -> "today"
-    # - "https://asset-bundle-registry-test.de..." -> "registry-test"
-    # - "Org" -> "Org"
-    # - "Zone" -> "Zone"
 
     # Check for URL patterns
     url_match = re.search(r"https?://([^/]+)", fixture_args)
     if url_match:
         domain = url_match.group(1)
-        # Extract identifier from domain - check specific patterns first
-        if "ec1" in domain:
-            return "ec1"
-        elif "ec2" in domain:
-            return "ec2"
-        elif "ap1" in domain:
-            return "ap1"
-        elif "today" in domain:
-            return "today"
-        elif "gateway" in domain.lower() and "zone" in domain.lower():
-            return "gateway-zone"
-        elif "zone" in domain.lower():
-            return "zone"
-        elif "org" in domain.lower():
-            return "org"
-        else:
-            # Use first part of subdomain, but detect -test suffix
-            parts = domain.split(".")
-            subdomain = parts[0]
+        parts = domain.split(".")
 
-            # Check if this is a -test variant
-            if "-test" in subdomain:
-                # Extract meaningful part + test indicator
-                base = subdomain.replace("-test", "")
-                # Get last meaningful segment
-                segments = base.split("-")
-                if len(segments) > 1:
-                    return f"{segments[-1]}-test"
-                return f"{base[:10]}-test"
+        # Get subdomain (first part before the main domain)
+        subdomain = parts[0]
 
-            # For non-test URLs, use last segment of hyphenated name
-            segments = subdomain.split("-")
-            if len(segments) > 1:
-                return segments[-1][:15]
-            return subdomain[:15]
+        # For gateway URLs, include TLD to distinguish (e.g., gateway.zone vs gateway.org)
+        if subdomain == "gateway" and len(parts) >= 3:
+            tld = parts[-1]  # org, zone, today, etc.
+            return f"{subdomain}.{tld}"
+
+        return subdomain
 
     # Check for enum-like values
     args_list = [a.strip() for a in fixture_args.split(",")]
@@ -183,29 +157,44 @@ def extract_scenario_label(fixture_args: str) -> str:
         first_arg = args_list[0]
         if first_arg in ("Org", "Zone"):
             return first_arg.lower()
-        return first_arg[:15]  # Limit length
+        return first_arg[:20]  # Limit length
 
-    return fixture_args[:15]
+    return fixture_args[:20]
 
 
 def is_baseline_fixture(fixture_args: str) -> bool:
     """
     Check if the TestFixture should be used as baseline.
-    Looks for a boolean 'true' that could indicate baseline parameter.
+    Extracts the second parameter from fixture args - if it's 'True', this is the baseline.
+
+    Example: "https://peer-ap1.decentraland.org/...",True,False -> baseline=True
     """
     if not fixture_args:
         return False
 
-    args_list = [a.strip().lower() for a in fixture_args.split(",")]
+    # Split by comma, but be careful with URLs containing commas (though unlikely)
+    # We need to handle quoted strings properly
+    args_list = []
+    current_arg = ""
+    in_quotes = False
 
-    # Look for explicit 'baseline' or a trailing 'true' that might be baseline param
-    # This is a heuristic - adjust based on actual usage
-    for i, arg in enumerate(args_list):
-        if arg == "true" and i == len(args_list) - 1:
-            # Last boolean argument might be baseline
-            # But we need to be careful - it could be something else
-            # For now, we don't auto-detect baseline from bool
-            pass
+    for char in fixture_args:
+        if char == '"':
+            in_quotes = not in_quotes
+            current_arg += char
+        elif char == ',' and not in_quotes:
+            args_list.append(current_arg.strip())
+            current_arg = ""
+        else:
+            current_arg += char
+
+    if current_arg:
+        args_list.append(current_arg.strip())
+
+    # Check if second parameter exists and is 'True'
+    if len(args_list) >= 2:
+        second_param = args_list[1].strip().lower()
+        return second_param == "true"
 
     return False
 
@@ -321,26 +310,45 @@ def create_comparison_chart(
                 fontweight="bold",
             )
         else:
-            pct_diff = calculate_percentage_diff(val, baseline_value)
-            sign = "+" if pct_diff >= 0 else ""
-            color = "green" if pct_diff <= 0 else "red"
             if i == baseline_idx:
-                color = "blue"
+                # Show "baseline" label for the baseline bar
+                ax.annotate(
+                    "baseline",
+                    xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                    xytext=(0, 5),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    color="blue",
+                    fontstyle="italic",
+                )
+            else:
+                pct_diff = calculate_percentage_diff(val, baseline_value)
+                sign = "+" if pct_diff >= 0 else ""
+                color = "green" if pct_diff <= 0 else "red"
 
-            ax.annotate(
-                f"{sign}{pct_diff:.1f}%",
-                xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
-                xytext=(0, 5),
-                textcoords="offset points",
-                ha="center",
-                va="bottom",
-                fontsize=8,
-                color=color,
-            )
+                ax.annotate(
+                    f"{sign}{pct_diff:.1f}%",
+                    xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                    xytext=(0, 5),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    color=color,
+                )
 
     ax.set_title(title, fontsize=10, fontweight="bold")
     ax.set_xticks(x)
-    ax.set_xticklabels(scenarios, fontsize=8)
+
+    # Rotate labels if any are long to prevent overlap
+    max_label_len = max(len(s) for s in scenarios) if scenarios else 0
+    if max_label_len > 12:
+        ax.set_xticklabels(scenarios, fontsize=8, rotation=30, ha="right")
+    else:
+        ax.set_xticklabels(scenarios, fontsize=8)
+
     ax.set_ylim(bottom=0)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
 
@@ -497,7 +505,7 @@ def generate_report(json_path: str, output_path: str):
                     pdf.savefig(fig, bbox_inches="tight")
                     plt.close(fig)
 
-                print(f"  Generated charts for: {method_key} ({len(time_based_groups)} time-based metrics)")
+                print(f"  Generated charts for: {method_key} (baseline: {baseline_label}, {len(time_based_groups)} time-based metrics)")
 
     print(f"\nReport saved to: {output_path}")
 
