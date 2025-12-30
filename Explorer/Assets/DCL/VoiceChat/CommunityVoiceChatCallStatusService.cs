@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -416,10 +414,6 @@ namespace DCL.VoiceChat
                 // Delegate scene registration to the tracker
                 voiceChatSceneTrackerService.RegisterCommunityInScene(communityUpdate.CommunityId, communityUpdate.Positions, communityUpdate.Worlds);
                 voiceChatSceneTrackerService.SetActiveCommunityVoiceChat(communityUpdate.CommunityId, activeChat);
-
-                // We only show notification if we are part of the community, and we didn't start the stream ourselves
-                if (communityUpdate.IsMember && communityUpdate.CommunityId != locallyStartedCommunityId)
-                    NotificationsBusController.Instance.AddNotification(new CommunityVoiceChatStartedNotification(communityUpdate.CommunityName, communityUpdate.CommunityImage, communityUpdate.CommunityId));
             }
         }
 
