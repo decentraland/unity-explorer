@@ -21,7 +21,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached)>
+    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
@@ -31,7 +31,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ISelfProfile selfProfile;
 
         private readonly StringVariable? profileNameLabel;
-        private bool isCached;
 
         public ProfileFetchingAuthState(AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -56,24 +55,21 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             throw new NotImplementedException();
         }
 
-        public void Enter((IWeb3Identity identity, bool isCached) payload)
+        public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
             base.Enter();
-
-            isCached = payload.isCached;
-            FetchProfileFlowAsync(payload.identity, payload.isCached).Forget();
+            FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
         }
 
         public override void Exit()
         {
             base.Exit();
 
-            // Cached branch is entered only once at the start of app
-            if (isCached)
+            if (machine.PreviousState is InitAuthScreenState)
                 splashScreen.Hide();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached)
+        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
         {
             var identityValidationSpan = new SpanData
             {
@@ -82,11 +78,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 SpanOperation = "auth.identity_validation",
                 Depth = 1,
             };
+
             sentryTransactionManager.StartSpan(identityValidationSpan);
 
             if (IsUserAllowedToAccessToBeta(identity))
             {
                 currentState.Value = isCached ? AuthenticationStatus.FetchingProfileCached : AuthenticationStatus.FetchingProfile;
+
                 // if (!isCached) ShowLoadingSpinner();
 
                 try
@@ -98,9 +96,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                         SpanOperation = "auth.profile_fetch",
                         Depth = 1,
                     };
+
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    await FetchProfileAsync(controller.loginCancellationToken.Token);
+                    await FetchProfileAsync(ct);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     currentState.Value = isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;

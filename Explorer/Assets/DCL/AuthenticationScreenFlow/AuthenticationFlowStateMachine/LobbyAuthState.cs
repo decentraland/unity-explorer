@@ -57,8 +57,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 await UniTask.Delay(AuthenticationScreenController.ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
 
-                controller.lifeCycleTask?.TrySetResult();
-                controller.lifeCycleTask = null;
+                controller.TrySetLifeCycle();
             }
         }
     }

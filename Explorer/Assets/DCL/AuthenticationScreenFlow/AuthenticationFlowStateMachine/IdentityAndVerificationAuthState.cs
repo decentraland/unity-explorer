@@ -7,6 +7,7 @@ using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Global.AppArgs;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,7 +17,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityAndVerificationAuthState : AuthStateBase
+    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<CancellationToken>
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
@@ -44,21 +45,25 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Enter()
         {
+            throw new NotImplementedException();
+        }
+
+        public void Enter(CancellationToken ct)
+        {
             base.Enter();
+
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
 
-            controller.CancelLoginProcess();
-            controller.loginCancellationToken = new CancellationTokenSource();
-
-            AuthenticateAsync(controller.loginCancellationToken.Token).Forget();
+            AuthenticateAsync(ct).Forget();
         }
 
         public override void Exit()
         {
             base.Exit();
             RestoreResolutionAndScreenMode();
+
             CancelVerificationCountdown();
             web3Authenticator.SetVerificationListener(null);
 
@@ -91,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 web3Authenticator.SetVerificationListener(ShowVerification);
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
 
-                machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached)>((identity, isCached: false));
+                machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }
             catch (OperationCanceledException)
             {

@@ -42,9 +42,10 @@ namespace DCL.AuthenticationScreenFlow
             LoggedIn,
         }
 
-        internal const int ANIMATION_DELAY = 300;
-
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
+
+        internal const int ANIMATION_DELAY = 300;
+        internal const string LOADING_TRANSACTION_NAME = "loading_process";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -62,18 +63,15 @@ namespace DCL.AuthenticationScreenFlow
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
 
-        internal const string LOADING_TRANSACTION_NAME = "loading_process";
-
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
-        internal CancellationTokenSource? loginCancellationToken;
-        internal UniTaskCompletionSource? lifeCycleTask;
         private readonly IInputBlock inputBlock;
-        private float originalWorldAudioVolume;
+
+        private UniTaskCompletionSource? lifeCycleTask;
+        private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
-        public string CurrentRequestID { get; set; } = string.Empty;
+        public string CurrentRequestID { get; internal set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
 
@@ -149,7 +147,7 @@ namespace DCL.AuthenticationScreenFlow
                 states: new AuthStateBase[]
                 {
                     new InitAuthScreenState(viewInstance, buildData.InstallSource),
-                    new LoginStartAuthState(viewInstance, this, CurrentState),
+                    new LoginStartAuthState(viewInstance, this, CurrentState, splashScreen),
                     new IdentityAndVerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                     new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LobbyAuthState(viewInstance, this, characterPreviewController),
@@ -172,8 +170,8 @@ namespace DCL.AuthenticationScreenFlow
             if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
                 CancelLoginProcess();
-                loginCancellationToken = new CancellationTokenSource();
-                fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached)>((storedIdentity, isCached: true));
+                loginCancellationTokenSource = new CancellationTokenSource();
+                fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, loginCancellationTokenSource.Token));
             }
             else
             {
@@ -208,14 +206,29 @@ namespace DCL.AuthenticationScreenFlow
             await lifeCycleTask.Task;
         }
 
+        internal void TrySetLifeCycle()
+        {
+            lifeCycleTask?.TrySetResult();
+            lifeCycleTask = null;
+        }
+
+        internal void CancelLoginProcess()
+        {
+            loginCancellationTokenSource?.SafeCancelAndDispose();
+            loginCancellationTokenSource = null;
+        }
+
+        internal CancellationToken GetRestartedLoginToken()
+        {
+            loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart();
+            return loginCancellationTokenSource.Token;
+        }
+
         private void ChangeAccount()
         {
             characterPreviewController?.OnHide();
-            CancelLoginProcess();
 
-            loginCancellationToken = new CancellationTokenSource();
-
-            ChangeAccountAsync(loginCancellationToken.Token).Forget();
+            ChangeAccountAsync(GetRestartedLoginToken()).Forget();
             return;
 
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
@@ -226,12 +239,6 @@ namespace DCL.AuthenticationScreenFlow
 
                 fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
             }
-        }
-
-        public void CancelLoginProcess()
-        {
-            loginCancellationToken?.SafeCancelAndDispose();
-            loginCancellationToken = null;
         }
 
         private void OpenDiscord()

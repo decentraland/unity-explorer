@@ -1,8 +1,10 @@
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
 using MVC;
 using System;
+using System.Threading;
 using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
@@ -12,12 +14,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly SplashScreen splashScreen;
 
         public LoginStartAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState) : base(viewInstance)
+            ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen) : base(viewInstance)
         {
             this.controller = controller;
             this.currentState = currentState;
+            this.splashScreen = splashScreen;
 
             // Cancel button persists in the Verification state (until code is shown)
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
@@ -43,6 +47,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
+
+            if (machine.PreviousState is InitAuthScreenState)
+                splashScreen.Hide();
+
             currentState.Value = AuthenticationStatus.Login;
 
             // GameObjects state setup
@@ -83,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoginButton.interactable = false;
             viewInstance!.LoadingSpinner.SetActive(true);
 
-            machine.Enter<IdentityAndVerificationAuthState>();
+            machine.Enter<IdentityAndVerificationAuthState, CancellationToken>(controller.GetRestartedLoginToken());
         }
 
         private void CancelLoginAndRestartFromBeginning()
