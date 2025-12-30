@@ -101,31 +101,31 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             catch (OperationCanceledException)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState>();
             }
             catch (SignatureExpiredException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState>();
             }
             catch (Web3SignatureException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState>();
             }
             catch (CodeVerificationException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState>();
             }
             catch (Exception e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR, allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             finally
             {
