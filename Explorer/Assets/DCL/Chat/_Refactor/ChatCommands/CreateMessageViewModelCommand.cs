@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), NameColorHelper.GetNameColor(message.SenderValidatedName)));
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true, NameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 
@@ -90,7 +90,7 @@ namespace DCL.Chat.ChatCommands
 
             if (profile != null)
             {
-                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.Value.UserNameColor));
+                viewModel.ProfileData.SetColor(profile.Value.UserNameColor);
                 var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(walletId);
                 viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.Value.ValidatedName, profile.Value.WalletId, isOfficial));
 
@@ -99,8 +99,7 @@ namespace DCL.Chat.ChatCommands
             }
             else
             {
-                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail),
-                    ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail));
             }
         }
     }

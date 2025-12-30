@@ -1,6 +1,5 @@
 
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.WebRequests;
 using System.Threading;
@@ -23,13 +22,11 @@ namespace DCL.UI.Profiles.Helpers
 
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IRemoteMetadata remoteMetadata;
 
-        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache, IRemoteMetadata remoteMetadata)
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
-            this.remoteMetadata = remoteMetadata;
         }
 
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>

@@ -21,7 +21,7 @@ namespace DCL.UI.ProfileElements
         private readonly IProfileRepository profileRepository;
         private readonly ProfileChangesBus profileChangesBus;
 
-        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> thumbnail = new (ProfileThumbnailViewModel.WithColor.Default());
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -92,7 +92,7 @@ namespace DCL.UI.ProfileElements
 
             if (compactInfo == null) return;
             Profile.CompactInfo profile = compactInfo.Value;
-            thumbnail.UpdateValue(thumbnail.Value.SetLoading(profile.UserNameColor));
+            thumbnail.SetLoading(profile.UserNameColor);
 
             if (viewInstance!.NameLabel != null)
                 viewInstance.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
@@ -101,7 +101,7 @@ namespace DCL.UI.ProfileElements
                 if (profile.HasClaimedName == false)
                     viewInstance.AddressLabel.text = profile.WalletId;
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.FaceSnapshotUrl, ct);
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
         }
     }
 }

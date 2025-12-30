@@ -53,37 +53,21 @@ namespace DCL.UI.ProfileElements
         public event Action? PointerEnter;
         public event Action? PointerExit;
 
-        public void Bind(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModelProp)
-        {
-            binding?.Dispose();
-
-            viewModelProp.UpdateValue(viewModelProp.Value.SetProfile(viewModelProp.Value.Thumbnail.TryBind()));
-
-            OnThumbnailWithColorUpdated(viewModelProp.Value);
-            binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
-        }
-
-        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp)
         {
             // Unbind previous binding if exists
             binding?.Dispose();
 
-            viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
-
-            SetBaseBackgroundColor(userNameColor);
+            viewModelProp.TryBind();
 
             OnThumbnailUpdated(viewModelProp.Value);
             binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
 
-        private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
-        {
-            SetBaseBackgroundColor(model.ProfileColor);
-            OnThumbnailUpdated(model.Thumbnail);
-        }
-
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
+            SetBaseBackgroundColor(model.ProfileColor);
+
             switch (model.ThumbnailState)
             {
                 case ProfileThumbnailViewModel.State.LOADING:

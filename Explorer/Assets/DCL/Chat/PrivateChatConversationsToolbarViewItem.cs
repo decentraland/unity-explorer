@@ -13,7 +13,7 @@ namespace DCL.Chat
             removeButton.gameObject.SetActive(true);
         }
 
-        public override void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
+        public override void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel> viewModel)
         {
             var pictureView = thumbnailView.GetComponent<ProfilePictureView>();
             if (pictureView != null)

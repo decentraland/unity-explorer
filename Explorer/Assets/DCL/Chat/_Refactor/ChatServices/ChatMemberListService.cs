@@ -286,10 +286,6 @@ namespace DCL.Chat.ChatServices
         }
 
         private ChatMemberListData CreateMemberDataFromProfile(Profile.CompactInfo profile) =>
-            new ()
-            {
-                Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
-                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName,
-            };
+            new (profile, ChatMemberConnectionStatus.Online);
     }
 }

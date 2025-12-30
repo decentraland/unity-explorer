@@ -13,9 +13,9 @@ namespace DCL.Profiles.Helpers
     {
         public static readonly SpriteData DEFAULT_PROFILE_PIC = Texture2D.grayTexture.ToUnownedFulLRectSpriteData();
 
-        public static void CreateProfilePicturePromise(Profile profile, World world, IPartitionComponent partitionComponent)
+        public static void CreateProfilePicturePromise(ProfileTier profile, World world, IPartitionComponent partitionComponent)
         {
-            if (!profile.Compact.FaceSnapshotUrl.Value.IsValidUrl())
+            if (!profile.FaceSnapshotUrl.Value.IsValidUrl())
             {
                 profile.ProfilePicture = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_PROFILE_PIC);
                 return;
@@ -29,7 +29,7 @@ namespace DCL.Profiles.Helpers
                     reportSource: nameof(ProfileUtils)),
                 partitionComponent);
 
-            world.Create(profile, promise, partitionComponent);
+            world.Create(profile, promise);
         }
     }
 }

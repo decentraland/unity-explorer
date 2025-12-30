@@ -140,9 +140,9 @@ namespace DCL.Chat.ChatCommands
                 viewModel.HasClaimedName = profile.Value.HasClaimedName;
                 viewModel.IsOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(userId);
 
-                viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.Value.UserNameColor));
+                viewModel.ProfilePicture.SetColor(profile.Value.UserNameColor);
 
-                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.Value.UserId, profile.Value.FaceSnapshotUrl, ct);
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.Value, ct);
             }
             else
             {
@@ -150,8 +150,7 @@ namespace DCL.Chat.ChatCommands
                 viewModel.HasClaimedName = false;
 
                 viewModel.ProfilePicture
-                    .UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true),
-                        ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+                         .UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true));
             }
 
             eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
