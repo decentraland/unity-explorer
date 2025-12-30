@@ -27,6 +27,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void OnShow()
         {
+            viewInstance.MuteButton.Button.onClick.AddListener(OnMuteButtonClicked);
+
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
@@ -40,12 +42,14 @@ namespace DCL.AuthenticationScreenFlow
 
         public void OnHide()
         {
+            viewInstance.MuteButton.Button.onClick.RemoveListener(OnMuteButtonClicked);
+
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
-        public void OnMuteButtonClicked()
+        private void OnMuteButtonClicked()
         {
             bool isMuted = DCLPlayerPrefs.GetBool(DCLPrefKeys.AUTHENTICATION_SCREEN_MUSIC_MUTED, false);
 

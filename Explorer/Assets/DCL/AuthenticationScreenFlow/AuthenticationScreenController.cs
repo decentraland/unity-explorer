@@ -68,13 +68,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
 
-        private const string LOADING_TRANSACTION_NAME = "loading_process";
+        internal const string LOADING_TRANSACTION_NAME = "loading_process";
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
-        private CancellationTokenSource? loginCancellationToken;
+        internal CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         internal UniTaskCompletionSource? lifeCycleTask;
-        private StringVariable? profileNameLabel;
         private readonly IInputBlock inputBlock;
         private float originalWorldAudioVolume;
 
@@ -135,6 +134,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController?.Dispose();
             web3Authenticator.SetVerificationListener(null);
             audio.Dispose();
+            fsm.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -143,24 +143,22 @@ namespace DCL.AuthenticationScreenFlow
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
+            // Subscriptions
             foreach (Button button in viewInstance.UseAnotherAccountButton)
                 button.onClick.AddListener(ChangeAccount);
 
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
-            viewInstance.MuteButton.Button.onClick.AddListener(audio.OnMuteButtonClicked);
 
-
+            // States
             fsm = new MVCStateMachine<AuthStateBase, AuthStateContext>(
                 context: new AuthStateContext(),
                 states: new AuthStateBase[]
                 {
-                    new InitAuthScreenState(viewInstance, buildData),
-                    new AutoLoginAuthState(viewInstance),
+                    new InitAuthScreenState(viewInstance, buildData.InstallSource),
+                    new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LoginStartAuthState(viewInstance, this, CurrentState),
                     new LoadingAuthState(viewInstance, CurrentState),
                     new VerificationAuthState(viewInstance, this, CurrentState),
@@ -171,17 +169,34 @@ namespace DCL.AuthenticationScreenFlow
             fsm.Enter<InitAuthScreenState>();
         }
 
+        /// <summary>
+        /// View can be shown from bootstrap and have storedIdentity.
+        /// In all other cases view is shown after logout.
+        /// </summary>
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
 
-            CheckValidIdentityAndStartInitialFlowAsync().Forget();
-            BlockUnwantedInputs();
+            // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+            // getting the identity expired while in-world, provoking signed-fetch requests to fail
+            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
+            if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
+            {
+                CancelLoginProcess();
+                loginCancellationToken = new CancellationTokenSource();
+                fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached)>((storedIdentity, isCached: true));
+            }
+            else
+            {
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                fsm.Enter<LoginStartAuthState>(true);
+            }
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
+            BlockUnwantedInputs();
             audio.OnShow();
         }
 
@@ -196,96 +211,6 @@ namespace DCL.AuthenticationScreenFlow
             web3Authenticator.SetVerificationListener(null);
         }
 
-        private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
-        {
-            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
-
-            if (storedIdentity is { IsExpired: false }
-
-                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
-                // getting the identity expired while in-world, provoking signed-fetch requests to fail
-                && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
-            {
-                CancelLoginProcess();
-                loginCancellationToken = new CancellationTokenSource();
-
-                try
-                {
-                    var identityValidationSpan = new SpanData
-                    {
-                        TransactionName = LOADING_TRANSACTION_NAME,
-                        SpanName = "IdentityValidation",
-                        SpanOperation = "auth.identity_validation",
-                        Depth = 1
-                    };
-                    sentryTransactionManager.StartSpan(identityValidationSpan);
-
-                    if (IsUserAllowedToAccessToBeta(storedIdentity))
-                    {
-                        CurrentState.Value = AuthenticationStatus.FetchingProfileCached;
-
-                        var profileFetchSpan = new SpanData
-                        {
-                            TransactionName = LOADING_TRANSACTION_NAME,
-                            SpanName = "FetchProfileCached",
-                            SpanOperation = "auth.profile_fetch",
-                            Depth = 1
-                        };
-                        sentryTransactionManager.StartSpan(profileFetchSpan);
-
-                        await FetchProfileAsync(loginCancellationToken.Token);
-
-                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                        CurrentState.Value = AuthenticationStatus.LoggedInCached;
-                        fsm.Enter<LobbyAuthState>();
-                    }
-                    else
-                    {
-                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (cached)");
-                        fsm.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER, allowReEnterSameState: true);
-                    }
-                }
-                catch (ProfileNotFoundException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Profile not found during cached authentication", e);
-                    fsm.Enter<LoginStartAuthState>(true);
-                }
-                catch (Exception e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during cached authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>(true);
-                }
-            }
-            else
-            {
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginStartAuthState>(true);
-            }
-
-            if (splashScreen != null) // Splash screen is destroyed after first login
-                splashScreen.Hide();
-        }
-
-        private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
-        {
-            if (Application.isEditor)
-                return true;
-
-            FeatureFlagsConfiguration flags = FeatureFlagsConfiguration.Instance;
-
-            if (!flags.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLET_VARIANT)) return true;
-
-            if (!flags.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLET_VARIANT, out List<List<string>>? allowedUsersCsv))
-                return true;
-
-            bool isUserAllowed = allowedUsersCsv![0]
-               .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
-
-            return isUserAllowed;
-        }
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             lifeCycleTask?.TrySetCanceled(ct);
@@ -296,28 +221,26 @@ namespace DCL.AuthenticationScreenFlow
         public void StartLoginFlowUntilEnd()
         {
             CancelLoginProcess();
-
-            // Checks the current screen mode because it could have been overridden with Alt+Enter
-            if (Screen.fullScreenMode != FullScreenMode.Windowed)
-                WindowModeUtils.ApplyWindowedMode();
-
             loginCancellationToken = new CancellationTokenSource();
-            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
 
+            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
             return;
 
             async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
             {
+                // Checks the current screen mode because it could have been overridden with Alt+Enter
+                if (Screen.fullScreenMode != FullScreenMode.Windowed)
+                    WindowModeUtils.ApplyWindowedMode();
+
                 try
                 {
                     CurrentRequestID = string.Empty;
-
                     var web3AuthSpan = new SpanData
                     {
                         TransactionName = LOADING_TRANSACTION_NAME,
                         SpanName = "Web3Authentication",
                         SpanOperation = "auth.web3_login",
-                        Depth = 1
+                        Depth = 1,
                     };
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
@@ -325,40 +248,7 @@ namespace DCL.AuthenticationScreenFlow
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
                     web3Authenticator.SetVerificationListener(null);
 
-                    var identityValidationSpan = new SpanData
-                    {
-                        TransactionName = LOADING_TRANSACTION_NAME,
-                        SpanName = "IdentityValidation",
-                        SpanOperation = "auth.identity_validation",
-                        Depth = 1
-                    };
-                    sentryTransactionManager.StartSpan(identityValidationSpan);
-
-                    if (IsUserAllowedToAccessToBeta(identity))
-                    {
-                        fsm.Enter<LoadingAuthState>();
-
-                        var profileFetchSpan = new SpanData
-                        {
-                            TransactionName = LOADING_TRANSACTION_NAME,
-                            SpanName = "FetchProfile",
-                            SpanOperation = "auth.profile_fetch",
-                            Depth = 1
-                        };
-                        sentryTransactionManager.StartSpan(profileFetchSpan);
-
-                        await FetchProfileAsync(ct);
-
-                        sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                        CurrentState.Value = AuthenticationStatus.LoggedIn;
-                        fsm.Enter<LobbyAuthState>();
-                    }
-                    else
-                    {
-                        sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-                        fsm.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER, allowReEnterSameState: true);
-                    }
+                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached)>((identity, isCached: false));
                 }
                 catch (OperationCanceledException)
                 {
@@ -380,12 +270,6 @@ namespace DCL.AuthenticationScreenFlow
                 catch (CodeVerificationException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                }
-                catch (ProfileNotFoundException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
                 }
@@ -426,30 +310,14 @@ namespace DCL.AuthenticationScreenFlow
             fsm.Enter<VerificationAuthState>();
         }
 
-        private async UniTask FetchProfileAsync(CancellationToken ct)
-        {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
-
-            if (profile == null)
-                throw new ProfileNotFoundException();
-
-            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
-            profile.IsDirty = true;
-
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
-
-            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-
-            return;
-
-            bool IsNewUser() =>
-                profile.Version == 1;
-        }
-
         private void ChangeAccount()
         {
+            characterPreviewController?.OnHide();
+            CancelLoginProcess();
+            loginCancellationToken = new CancellationTokenSource();
+            ChangeAccountAsync(loginCancellationToken.Token).Forget();
+            return;
+
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
                 viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
@@ -458,11 +326,6 @@ namespace DCL.AuthenticationScreenFlow
 
                 fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
             }
-
-            characterPreviewController?.OnHide();
-            CancelLoginProcess();
-            loginCancellationToken = new CancellationTokenSource();
-            ChangeAccountAsync(loginCancellationToken.Token).Forget();
         }
 
         private void RestoreResolutionAndScreenMode()
@@ -478,6 +341,11 @@ namespace DCL.AuthenticationScreenFlow
             loginCancellationToken = null;
         }
 
+        private void CancelVerificationCountdown()
+        {
+            verificationCountdownCancellationToken?.SafeCancelAndDispose();
+            verificationCountdownCancellationToken = null;
+        }
         private void OpenDiscord()
         {
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
@@ -488,12 +356,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             CancelLoginProcess();
             ExitUtils.Exit();
-        }
-
-        private void CancelVerificationCountdown()
-        {
-            verificationCountdownCancellationToken?.SafeCancelAndDispose();
-            verificationCountdownCancellationToken = null;
         }
 
         private void RequestAlphaAccess() =>

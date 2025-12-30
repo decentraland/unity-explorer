@@ -42,6 +42,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             base.Enter();
             currentState.Value = AuthenticationStatus.Login;
 
+            // GameObjects state setup
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
@@ -55,6 +56,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             viewInstance.LoadingSpinner.SetActive(false);
 
+            // Listeners
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
 

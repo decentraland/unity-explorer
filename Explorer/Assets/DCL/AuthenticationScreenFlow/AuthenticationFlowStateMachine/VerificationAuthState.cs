@@ -20,6 +20,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
+
+
+
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
             viewInstance.VerificationAnimator.ResetAndDeactivateAnimator();
@@ -34,6 +37,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
 
+            // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(controller.CancelLoginProcess);
             viewInstance.VerificationCodeHintButton.onClick.AddListener(ToggleVerificationCodeVisibility);
         }
@@ -44,6 +48,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
             viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
         }
+
+
 
         private void ToggleVerificationCodeVisibility() =>
             viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
