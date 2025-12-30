@@ -65,7 +65,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             RestoreResolutionAndScreenMode();
 
             CancelVerificationCountdown();
-            web3Authenticator.SetVerificationListener(null);
 
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
@@ -93,7 +92,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
-                web3Authenticator.SetVerificationListener(ShowVerification);
+                web3Authenticator.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
 
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
@@ -127,6 +126,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR, allowReEnterSameState: true);
             }
+            finally
+            {
+               web3Authenticator.VerificationRequired -= ShowVerification;
+            }
         }
 
         private void RestoreResolutionAndScreenMode()
@@ -136,12 +139,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
         }
 
-        private void ShowVerification(int code, DateTime expiration, string requestID)
+        private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
+            web3Authenticator.VerificationRequired -= ShowVerification;
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
-            viewInstance!.VerificationCodeLabel.text = code.ToString();
-            controller.CurrentRequestID = requestID;
+            viewInstance!.VerificationCodeLabel.text = data.code.ToString();
+            controller.CurrentRequestID = data.requestId;
 
             var verificationSpan = new SpanData
             {
@@ -156,7 +160,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();
 
-            viewInstance.StartVerificationCountdownAsync(expiration, verificationCountdownCancellationToken.Token)
+            viewInstance.StartVerificationCountdownAsync(data.expiration, verificationCountdownCancellationToken.Token)
                         .Forget();
 
             // Anim-OUT non-interactable Login Screen
