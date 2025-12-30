@@ -130,7 +130,7 @@ namespace Runtime.Wearables
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
             item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
             if (ct.IsCancellationRequested) return null;
 
             item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;
