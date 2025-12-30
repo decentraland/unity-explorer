@@ -5,14 +5,10 @@
         public override void Begin()
         {
             context.UIMediator.SetupForMinimizedState();
-
             context.UIMediator.chatInputPresenter.OnMinimize();
         }
 
-        public override void End()
-        {
-
-        }
+        public override void End() { }
 
         public override void OnFocusRequested() =>
             ChangeState<FocusedChatState>();
@@ -23,7 +19,8 @@
         /// </summary>
         public override void OnMinimizeRequested()
         {
-            ChangeState<FocusedChatState>();
+            //TODO FRAN: IF we are already minimized, we don't do anything.
+            //ChangeState<FocusedChatState>();
         }
     }
 }

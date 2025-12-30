@@ -28,7 +28,6 @@ using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.ChatArea;
-using DCL.UI.SharedSpaceManager;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;

@@ -29,7 +29,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;

@@ -44,7 +44,7 @@ namespace DCL.Friends.UI.FriendPanel
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;

@@ -55,7 +55,6 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly SmartWearableCache smartWearablesCache;
-        private readonly SidebarPanelsShortcutsHandler sidebarPanelsShortcutsHandler;
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly IEventBus chatEventBus;
@@ -95,7 +94,7 @@ namespace DCL.UI.Sidebar
         {
             this.mvcManager = mvcManager;
             this.profileButtonPresenter = profileButtonPresenter;
-            profileMenuController = profileMenuMenuWidgetController;
+            this.profileMenuController = profileMenuMenuWidgetController;
             this.notificationsPanelController = notificationsPanelController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
@@ -112,7 +111,7 @@ namespace DCL.UI.Sidebar
             this.chatEventBus = chatEventBus;
             smartWearablesCache = smartWearableCache;
 
-            sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
+            //sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
 
             chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -121,8 +120,7 @@ namespace DCL.UI.Sidebar
         {
             base.Dispose();
 
-            sidebarPanelsShortcutsHandler.Dispose();
-            // TODO FRAN: Does it make sense to call this here? or should we dispose on the plugin?
+            // TODO FRAN: We should dispose all controllers in the class that spawns them.
             notificationsPanelController.Dispose();
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
@@ -152,9 +150,6 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
             viewInstance.skyboxButton.interactable = true;
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);

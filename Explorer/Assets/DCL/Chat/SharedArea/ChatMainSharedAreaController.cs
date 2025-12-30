@@ -141,9 +141,9 @@ namespace DCL.ChatArea
 
         private void OnMvcViewShowed(IController controller)
         {
-            //if (controller is not IBlocksChat blocker) return;
+            //We only need to hide the chat if a fullscreen view is shown
+            if (controller.Layer is CanvasOrdering.SortingLayer.Popup or CanvasOrdering.SortingLayer.Overlay) return;
 
-            //chatBlockers.Add(blocker);
             chatSharedAreaEventBus.RaiseMvcViewShowedEvent();
         }
 

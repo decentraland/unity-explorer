@@ -27,7 +27,6 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Identities;

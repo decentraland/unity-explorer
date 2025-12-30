@@ -21,7 +21,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;

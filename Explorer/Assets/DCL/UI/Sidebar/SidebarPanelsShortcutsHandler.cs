@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace DCL.UI.Sidebar
 {
+    //TODO FRAN: DELETE ME
     public class SidebarPanelsShortcutsHandler : IDisposable
     {
         private readonly DCLInput dclInput;

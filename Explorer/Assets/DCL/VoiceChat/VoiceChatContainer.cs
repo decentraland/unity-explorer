@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
-using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -13,7 +12,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
-using Utility;
 
 namespace DCL.VoiceChat
 {
