@@ -21,8 +21,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.FinalizeContainer.SetActive(false);
 
-            viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance.ErrorPopupRoot.SetActive(false);
+            viewInstance.RestrictedUserContainer.SetActive(false);
 
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildDataInstallSource}"

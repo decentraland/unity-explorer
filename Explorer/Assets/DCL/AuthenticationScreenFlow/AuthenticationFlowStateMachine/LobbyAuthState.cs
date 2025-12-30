@@ -19,20 +19,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Enter()
         {
             base.Enter();
-            viewInstance.FinalizeAnimator.ResetAnimator();
-
-            viewInstance.VerificationContainer.SetActive(false);
-
-            viewInstance.LoginContainer.SetActive(false);
-            viewInstance.LoadingSpinner.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-            viewInstance.LoginButton.gameObject.SetActive(true);
-
             viewInstance.FinalizeContainer.SetActive(true);
+
+            viewInstance.FinalizeAnimator.ResetAnimator();
             viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
+
             viewInstance.JumpIntoWorldButton.interactable = true;
+
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
@@ -43,6 +36,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             base.Exit();
             viewInstance!.FinalizeContainer.SetActive(false);
+
             characterPreviewController?.OnHide();
 
             viewInstance.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);

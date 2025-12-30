@@ -6,6 +6,7 @@ using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -15,6 +16,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
+using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -73,9 +75,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached)
         {
-            // TODO (Vit):
-            //machine.Enter<LoadingAuthState>();
-
             var identityValidationSpan = new SpanData
             {
                 TransactionName = LOADING_TRANSACTION_NAME,
@@ -88,6 +87,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (IsUserAllowedToAccessToBeta(identity))
             {
                 currentState.Value = isCached ? AuthenticationStatus.FetchingProfileCached : AuthenticationStatus.FetchingProfile;
+                // if (!isCached) ShowLoadingSpinner();
 
                 try
                 {
@@ -109,25 +109,38 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                    machine.Enter<LoginStartAuthState>();
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                    machine.Enter<LoginStartAuthState>();
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                    machine.Enter<LoginStartAuthState>();
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                machine.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER, allowReEnterSameState: true);
+                machine.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
+        }
+
+        private void ShowLoadingSpinner()
+        {
+            viewInstance.LoginContainer.SetActive(true);
+
+            viewInstance.LoginAnimator.ResetAnimator();
+            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+
+            viewInstance.LoginButton.gameObject.SetActive(false);
+            viewInstance.LoginButton.interactable = false;
+
+            viewInstance.LoadingSpinner.SetActive(true);
         }
 
         private async UniTask FetchProfileAsync(CancellationToken ct)

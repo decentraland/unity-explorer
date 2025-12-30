@@ -46,12 +46,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             currentState.Value = AuthenticationStatus.Login;
 
             // GameObjects state setup
-            viewInstance.VerificationContainer.SetActive(false);
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
-
-            viewInstance.LoginAnimator.ResetAnimator();
             viewInstance.LoginContainer.SetActive(true);
+
+            viewInstance.LoginAnimator.ResetAnimator(); // Animator should be updated after enabling its gameObject
             viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
 
             viewInstance.LoginButton.gameObject.SetActive(true);
@@ -60,29 +57,30 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoadingSpinner.SetActive(false);
 
             // Listeners
-            viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.LoginButton.onClick.AddListener(Login);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
+            viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
         }
 
         public override void Exit()
         {
             base.Exit();
-            viewInstance.LoginButton.onClick.RemoveListener(StartLoginFlowUntilEnd);
+            viewInstance.RestrictedUserContainer.SetActive(false);
+            viewInstance!.ErrorPopupRoot.SetActive(false);
+
+            viewInstance.LoginButton.onClick.RemoveListener(Login);
 
             viewInstance.ErrorPopupCloseButton.onClick.RemoveListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(StartLoginFlowUntilEnd);
+            viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(Login);
         }
 
-        private void StartLoginFlowUntilEnd()
+        private void Login()
         {
-            viewInstance!.ErrorPopupRoot.SetActive(false);
             viewInstance.LoginButton.gameObject.SetActive(false);
             viewInstance.LoginButton.interactable = false;
-
             viewInstance!.LoadingSpinner.SetActive(true);
 
             machine.Enter<IdentityAndVerificationAuthState>();

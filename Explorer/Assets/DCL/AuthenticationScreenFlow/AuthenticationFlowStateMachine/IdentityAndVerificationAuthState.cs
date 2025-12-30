@@ -50,7 +50,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 WindowModeUtils.ApplyWindowedMode();
 
             controller.CancelLoginProcess();
-            controller.loginCancellationToken = controller.loginCancellationToken.SafeRestart();
+            controller.loginCancellationToken = new CancellationTokenSource();
 
             AuthenticateAsync(controller.loginCancellationToken.Token).Forget();
         }
@@ -61,6 +61,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             RestoreResolutionAndScreenMode();
             CancelVerificationCountdown();
             web3Authenticator.SetVerificationListener(null);
+
+            viewInstance.VerificationCodeHintContainer.SetActive(false);
+            viewInstance.VerificationContainer.SetActive(false);
+
+            viewInstance.LoginContainer.SetActive(false);
 
             // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
@@ -149,18 +154,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.StartVerificationCountdownAsync(expiration, verificationCountdownCancellationToken.Token)
                         .Forget();
 
-            // fsm.Enter<VerificationAuthState>();
-            viewInstance.VerificationAnimator.ResetAndDeactivateAnimator();
-
+            // Anim-OUT non-interactable Login Screen
             viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-            viewInstance.LoadingSpinner.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
+
             viewInstance.LoginButton.gameObject.SetActive(true);
+            viewInstance.LoginButton.interactable = false;
+
+            viewInstance.LoadingSpinner.SetActive(false);
+
+            // Anim-IN Verification Screen
             viewInstance.VerificationContainer.SetActive(true);
+            viewInstance.VerificationAnimator.ResetAnimator();
             viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-            viewInstance.FinalizeContainer.SetActive(false);
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
 
             // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(controller.CancelLoginProcess);

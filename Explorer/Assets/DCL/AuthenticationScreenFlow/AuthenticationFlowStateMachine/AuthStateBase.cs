@@ -16,13 +16,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Enter()
         {
-            viewInstance!.ErrorPopupRoot.SetActive(false);
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}...");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}");
         }
 
         public override void Exit()
         {
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Exit state {GetType().Name}...");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Exit state {GetType().Name}");
         }
     }
 }

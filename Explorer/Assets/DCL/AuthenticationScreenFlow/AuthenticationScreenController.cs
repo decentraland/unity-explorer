@@ -149,10 +149,9 @@ namespace DCL.AuthenticationScreenFlow
                 states: new AuthStateBase[]
                 {
                     new InitAuthScreenState(viewInstance, buildData.InstallSource),
-                    new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LoginStartAuthState(viewInstance, this, CurrentState),
-                    new LoadingAuthState(viewInstance, CurrentState),
                     new IdentityAndVerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                    new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LobbyAuthState(viewInstance, this, characterPreviewController),
                 }
             );
@@ -179,7 +178,7 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginStartAuthState>(true);
+                fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
             }
         }
 
