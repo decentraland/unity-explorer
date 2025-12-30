@@ -52,7 +52,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Enter()
         {
-            throw new NotImplementedException();
+            // TODO (Vit): remove after refactoring state-machine to interfaces instead of its current CRTP (Curiously Recurring Template Pattern) approach
+            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"Trying to enter state {nameof(ProfileFetchingAuthState)} that doesn't support entering without payload.");
         }
 
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
