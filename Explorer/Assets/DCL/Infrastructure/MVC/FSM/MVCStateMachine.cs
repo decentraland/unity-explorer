@@ -144,7 +144,6 @@ namespace MVC
 
         public void Dispose()
         {
-            CurrentState?.Exit();
             disposalCts.SafeCancelAndDispose();
         }
     }
