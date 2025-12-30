@@ -45,6 +45,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             base.Exit();
+            viewInstance!.FinalizeContainer.SetActive(false);
+
             viewInstance.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);
         }
 

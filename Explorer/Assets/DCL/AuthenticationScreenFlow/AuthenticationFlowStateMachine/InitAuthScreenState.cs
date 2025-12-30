@@ -6,6 +6,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     {
         private readonly string buildDataInstallSource;
 
+        /// <summary>
+        /// Set main View  prefab to the default visual state in case it was forgotten to disable some container during prefab editing
+        /// </summary>
         public InitAuthScreenState(AuthenticationScreenView viewInstance, string buildDataInstallSource) : base(viewInstance)
         {
             this.buildDataInstallSource = buildDataInstallSource;

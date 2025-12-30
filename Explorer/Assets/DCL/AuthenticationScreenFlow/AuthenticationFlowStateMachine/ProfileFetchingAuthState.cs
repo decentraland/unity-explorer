@@ -57,9 +57,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public void Enter((IWeb3Identity identity, bool isCached) payload)
         {
             base.Enter();
-            isCached = payload.isCached;
 
-            CheckValidIdentityAndStartInitialFlowAsync(payload.identity, payload.isCached).Forget();
+            isCached = payload.isCached;
+            FetchProfileFlowAsync(payload.identity, payload.isCached).Forget();
         }
 
         public override void Exit()
@@ -70,7 +70,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 splashScreen.Hide();
         }
 
-        private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync(IWeb3Identity identity, bool isCached)
+        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached)
         {
             //machine.Enter<LoadingAuthState>();
 
@@ -81,7 +81,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 SpanOperation = "auth.identity_validation",
                 Depth = 1,
             };
-
             sentryTransactionManager.StartSpan(identityValidationSpan);
 
             if (IsUserAllowedToAccessToBeta(identity))
@@ -97,33 +96,30 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                         SpanOperation = "auth.profile_fetch",
                         Depth = 1,
                     };
-
                     sentryTransactionManager.StartSpan(profileFetchSpan);
+
                     await FetchProfileAsync(controller.loginCancellationToken.Token);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
+                    currentState.Value = isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
+                    machine.Enter<LobbyAuthState>();
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
                     machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                    return;
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                    return;
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                    return;
                 }
-
-                currentState.Value = isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
-                machine.Enter<LobbyAuthState>();
             }
             else
             {

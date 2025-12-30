@@ -84,7 +84,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoginButton.interactable = false;
             viewInstance.LoginButton.gameObject.SetActive(false);
 
-            controller.StartLoginFlowUntilEnd();
+            machine.Enter<VerificationAuthState>();
         }
 
         private void CancelLoginAndRestartFromBeginning()

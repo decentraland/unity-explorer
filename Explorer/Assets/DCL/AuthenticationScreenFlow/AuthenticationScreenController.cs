@@ -4,22 +4,17 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Prefs;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
 using Global.AppArgs;
 using DCL.Utilities;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -28,7 +23,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Utility;
 using UnityEngine;
-using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
@@ -72,7 +66,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         internal CancellationTokenSource? loginCancellationToken;
-        private CancellationTokenSource? verificationCountdownCancellationToken;
         internal UniTaskCompletionSource? lifeCycleTask;
         private readonly IInputBlock inputBlock;
         private float originalWorldAudioVolume;
@@ -80,7 +73,7 @@ namespace DCL.AuthenticationScreenFlow
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; set; } = new (AuthenticationStatus.Init);
-        public string CurrentRequestID { get; private set; } = string.Empty;
+        public string CurrentRequestID { get; set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
 
@@ -128,11 +121,9 @@ namespace DCL.AuthenticationScreenFlow
         public override void Dispose()
         {
             base.Dispose();
+            characterPreviewController?.Dispose();
 
             CancelLoginProcess();
-            CancelVerificationCountdown();
-            characterPreviewController?.Dispose();
-            web3Authenticator.SetVerificationListener(null);
             audio.Dispose();
             fsm.Dispose();
         }
@@ -161,16 +152,15 @@ namespace DCL.AuthenticationScreenFlow
                     new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LoginStartAuthState(viewInstance, this, CurrentState),
                     new LoadingAuthState(viewInstance, CurrentState),
-                    new VerificationAuthState(viewInstance, this, CurrentState),
+                    new VerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                     new LobbyAuthState(viewInstance, this, characterPreviewController, inputBlock),
                 }
             );
-
             fsm.Enter<InitAuthScreenState>();
         }
 
         /// <summary>
-        /// View can be shown from bootstrap and have storedIdentity.
+        /// First time view is shown from bootstrap and could have storedIdentity.
         /// In all other cases view is shown after logout.
         /// </summary>
         protected override void OnBeforeViewShow()
@@ -196,6 +186,7 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewShow()
         {
             base.OnViewShow();
+
             BlockUnwantedInputs();
             audio.OnShow();
         }
@@ -203,12 +194,10 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            audio.OnHide();
 
             CancelLoginProcess();
-            CancelVerificationCountdown();
-            viewInstance!.FinalizeContainer.SetActive(false);
-            web3Authenticator.SetVerificationListener(null);
+            audio.OnHide();
+            fsm.CurrentState?.Exit();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -216,98 +205,6 @@ namespace DCL.AuthenticationScreenFlow
             lifeCycleTask?.TrySetCanceled(ct);
             lifeCycleTask = new UniTaskCompletionSource();
             await lifeCycleTask.Task;
-        }
-
-        public void StartLoginFlowUntilEnd()
-        {
-            CancelLoginProcess();
-            loginCancellationToken = new CancellationTokenSource();
-
-            StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
-            return;
-
-            async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
-            {
-                // Checks the current screen mode because it could have been overridden with Alt+Enter
-                if (Screen.fullScreenMode != FullScreenMode.Windowed)
-                    WindowModeUtils.ApplyWindowedMode();
-
-                try
-                {
-                    CurrentRequestID = string.Empty;
-                    var web3AuthSpan = new SpanData
-                    {
-                        TransactionName = LOADING_TRANSACTION_NAME,
-                        SpanName = "Web3Authentication",
-                        SpanOperation = "auth.web3_login",
-                        Depth = 1,
-                    };
-                    sentryTransactionManager.StartSpan(web3AuthSpan);
-
-                    web3Authenticator.SetVerificationListener(ShowVerification);
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
-                    web3Authenticator.SetVerificationListener(null);
-
-                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached)>((identity, isCached: false));
-                }
-                catch (OperationCanceledException)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                }
-                catch (SignatureExpiredException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                }
-                catch (Web3SignatureException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                }
-                catch (CodeVerificationException e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
-                }
-                catch (Exception e)
-                {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    fsm.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR, allowReEnterSameState: true);
-                }
-                finally
-                {
-                    RestoreResolutionAndScreenMode();
-                }
-            }
-        }
-
-        private void ShowVerification(int code, DateTime expiration, string requestID)
-        {
-            viewInstance!.VerificationCodeLabel.text = code.ToString();
-            CurrentRequestID = requestID;
-
-            var verificationSpan = new SpanData
-            {
-                TransactionName = LOADING_TRANSACTION_NAME,
-                SpanName = "CodeVerification",
-                SpanOperation = "auth.code_verification",
-                Depth = 1
-            };
-            sentryTransactionManager.StartSpan(verificationSpan);
-
-            CancelVerificationCountdown();
-            verificationCountdownCancellationToken = new CancellationTokenSource();
-
-            viewInstance.StartVerificationCountdownAsync(expiration,
-                             verificationCountdownCancellationToken.Token)
-                        .Forget();
-
-            fsm.Enter<VerificationAuthState>();
         }
 
         private void ChangeAccount()
@@ -328,24 +225,12 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void RestoreResolutionAndScreenMode()
-        {
-            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
-        }
-
         public void CancelLoginProcess()
         {
             loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
         }
 
-        private void CancelVerificationCountdown()
-        {
-            verificationCountdownCancellationToken?.SafeCancelAndDispose();
-            verificationCountdownCancellationToken = null;
-        }
         private void OpenDiscord()
         {
             webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
