@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var totalBudget = 15;
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget))));
 
-            var metaDataSource = new ConstSceneRoomMetaDataSource("random-name").WithLog();
+            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
 
             new GateKeeperSceneRoom(
