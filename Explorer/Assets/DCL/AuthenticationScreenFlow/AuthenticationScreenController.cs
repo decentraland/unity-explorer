@@ -72,7 +72,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        public ReactiveProperty<AuthenticationStatus> CurrentState { get; set; } = new (AuthenticationStatus.Init);
+        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
@@ -152,8 +152,8 @@ namespace DCL.AuthenticationScreenFlow
                     new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
                     new LoginStartAuthState(viewInstance, this, CurrentState),
                     new LoadingAuthState(viewInstance, CurrentState),
-                    new VerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
-                    new LobbyAuthState(viewInstance, this, characterPreviewController, inputBlock),
+                    new IdentityAndVerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                    new LobbyAuthState(viewInstance, this, characterPreviewController),
                 }
             );
             fsm.Enter<InitAuthScreenState>();
@@ -195,9 +195,11 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewClose();
 
-            CancelLoginProcess();
-            audio.OnHide();
             fsm.CurrentState?.Exit();
+            CancelLoginProcess();
+
+            UnblockUnwantedInputs();
+            audio.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -211,7 +213,9 @@ namespace DCL.AuthenticationScreenFlow
         {
             characterPreviewController?.OnHide();
             CancelLoginProcess();
+
             loginCancellationToken = new CancellationTokenSource();
+
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
             return;
 
@@ -248,5 +252,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void UnblockUnwantedInputs() =>
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
     }
 }

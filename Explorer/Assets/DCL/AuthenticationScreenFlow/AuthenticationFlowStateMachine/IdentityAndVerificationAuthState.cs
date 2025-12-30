@@ -16,7 +16,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class VerificationAuthState : AuthStateBase
+    public class IdentityAndVerificationAuthState : AuthStateBase
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
@@ -26,7 +26,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private CancellationTokenSource? verificationCountdownCancellationToken;
 
-        public VerificationAuthState(AuthenticationScreenView viewInstance,
+        public IdentityAndVerificationAuthState(AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -52,14 +52,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             controller.CancelLoginProcess();
             controller.loginCancellationToken = controller.loginCancellationToken.SafeRestart();
 
-            StartLoginFlowUntilEndAsync(controller.loginCancellationToken.Token).Forget();
+            AuthenticateAsync(controller.loginCancellationToken.Token).Forget();
         }
 
         public override void Exit()
         {
             base.Exit();
             RestoreResolutionAndScreenMode();
-
             CancelVerificationCountdown();
             web3Authenticator.SetVerificationListener(null);
 
@@ -68,7 +67,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
         }
 
-        private async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
+        private async UniTaskVoid AuthenticateAsync(CancellationToken ct)
         {
             try
             {

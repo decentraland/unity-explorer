@@ -18,6 +18,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             this.controller = controller;
             this.currentState = currentState;
+
+            // Cancel button persists in the Verification state (until code is shown)
+            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
         public void Enter(PopupType payload)
@@ -51,14 +54,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoginContainer.SetActive(true);
             viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
 
-            viewInstance.LoginButton.interactable = true;
             viewInstance.LoginButton.gameObject.SetActive(true);
+            viewInstance.LoginButton.interactable = true;
 
             viewInstance.LoadingSpinner.SetActive(false);
 
             // Listeners
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
-            viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
@@ -69,7 +71,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             base.Exit();
             viewInstance.LoginButton.onClick.RemoveListener(StartLoginFlowUntilEnd);
-            viewInstance.CancelLoginButton.onClick.RemoveListener(CancelLoginAndRestartFromBeginning);
 
             viewInstance.ErrorPopupCloseButton.onClick.RemoveListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
@@ -79,12 +80,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void StartLoginFlowUntilEnd()
         {
             viewInstance!.ErrorPopupRoot.SetActive(false);
+            viewInstance.LoginButton.gameObject.SetActive(false);
+            viewInstance.LoginButton.interactable = false;
+
             viewInstance!.LoadingSpinner.SetActive(true);
 
-            viewInstance.LoginButton.interactable = false;
-            viewInstance.LoginButton.gameObject.SetActive(false);
-
-            machine.Enter<VerificationAuthState>();
+            machine.Enter<IdentityAndVerificationAuthState>();
         }
 
         private void CancelLoginAndRestartFromBeginning()

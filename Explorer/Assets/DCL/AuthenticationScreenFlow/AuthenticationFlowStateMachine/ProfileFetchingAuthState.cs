@@ -66,12 +66,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             base.Exit();
 
+            // Cached branch is entered only once at the start of app
             if (isCached)
                 splashScreen.Hide();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached)
         {
+            // TODO (Vit):
             //machine.Enter<LoadingAuthState>();
 
             var identityValidationSpan = new SpanData
