@@ -27,6 +27,100 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 
+# Default config path (same directory as script)
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "perf_report_config.json"
+
+
+def load_config(config_path: Path = DEFAULT_CONFIG_PATH) -> dict:
+    """Load the report configuration file."""
+    if not config_path.exists():
+        print(f"Warning: Config file not found at {config_path}, using defaults")
+        return {}
+    with open(config_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def get_parallelism_category(concurrency: int, config: dict) -> tuple[str, str]:
+    """
+    Determine parallelism category based on concurrency value.
+
+    Returns:
+        Tuple of (category_key, human_readable_label)
+    """
+    parallelism = config.get("parallelism", {})
+
+    for key, params in parallelism.items():
+        min_val = params.get("min", 0)
+        max_val = params.get("max")
+
+        if max_val is None:
+            if concurrency >= min_val:
+                return key, params.get("label", key)
+        elif min_val <= concurrency <= max_val:
+            return key, params.get("label", key)
+
+    return "unknown", "Unknown"
+
+
+def get_difference_category(pct_diff: float, config: dict) -> tuple[str, str]:
+    """
+    Categorize a percentage difference based on thresholds.
+
+    Returns:
+        Tuple of (label, color)
+    """
+    thresholds = config.get("difference_thresholds", [])
+
+    for threshold in thresholds:
+        min_val = threshold.get("min")
+        max_val = threshold.get("max")
+
+        # Handle unbounded ranges
+        if min_val is None and max_val is not None:
+            if pct_diff < max_val:
+                return threshold.get("label", ""), threshold.get("color", "#000000")
+        elif max_val is None and min_val is not None:
+            if pct_diff >= min_val:
+                return threshold.get("label", ""), threshold.get("color", "#000000")
+        elif min_val is not None and max_val is not None:
+            if min_val <= pct_diff < max_val:
+                return threshold.get("label", ""), threshold.get("color", "#000000")
+
+    return "Unknown", "#000000"
+
+
+def get_metric_display_name(metric_key: str, config: dict) -> tuple[str, str]:
+    """
+    Get human-readable name and description for a metric.
+
+    Returns:
+        Tuple of (name, description)
+    """
+    metrics = config.get("metrics", {})
+    metric_info = metrics.get(metric_key, {})
+    return (
+        metric_info.get("name", metric_key),
+        metric_info.get("description", metric_key.lower())
+    )
+
+
+def parse_test_case_args(test_case_args: str) -> dict:
+    """
+    Parse test case arguments to extract concurrency value.
+    Assumes first argument is concurrency/parallelism count.
+
+    Example: "10,50,0.25d,100" -> {"concurrency": 10, ...}
+    """
+    args = [a.strip() for a in test_case_args.split(",")]
+    result = {}
+    if args:
+        try:
+            result["concurrency"] = int(args[0])
+        except ValueError:
+            result["concurrency"] = 1
+    return result
+
+
 # Sample unit constants from Unity Performance Testing Framework
 SAMPLE_UNIT_UNDEFINED = 0
 SAMPLE_UNIT_MICROSECOND = 1
@@ -353,8 +447,360 @@ def create_comparison_chart(
     ax.grid(axis="y", linestyle="--", alpha=0.7)
 
 
-def generate_report(json_path: str, output_path: str):
+def generate_summary_page(
+    pdf: PdfPages,
+    grouped: dict,
+    config: dict,
+):
+    """
+    Generate a summary page showing key metrics for configured test cases.
+
+    For each summary case, shows metrics across different parallelism levels.
+    """
+    summary_cases = config.get("summary_cases", [])
+    if not summary_cases:
+        print("  No summary cases configured, skipping summary page")
+        return
+
+    metrics_config = config.get("metrics", {})
+    metric_keys = list(metrics_config.keys())
+
+    if not metric_keys:
+        print("  No metrics configured, skipping summary page")
+        return
+
+    parallelism_config = config.get("parallelism", {})
+    parallelism_order = ["no_concurrency", "low_concurrency", "high_concurrency"]
+
+    # Collect summary data
+    summary_data = []
+
+    for case in summary_cases:
+        test_name = case.get("test", "")
+        endpoint = case.get("endpoint", "")
+        compare_test = case.get("compare_test", "")
+
+        # Parse test name into class and method
+        if "." in test_name:
+            class_short, method_name = test_name.rsplit(".", 1)
+        else:
+            class_short = test_name
+            method_name = ""
+
+        # Find matching class in grouped data
+        matching_class = None
+        for class_name in grouped.keys():
+            if class_name.endswith(class_short):
+                matching_class = class_name
+                break
+
+        if not matching_class:
+            print(f"  Warning: No matching class found for '{test_name}'")
+            continue
+
+        methods = grouped[matching_class]
+
+        # Find methods matching the method name
+        matching_methods = {k: v for k, v in methods.items() if k.startswith(method_name + "(")}
+
+        if not matching_methods:
+            print(f"  Warning: No matching methods found for '{test_name}'")
+            continue
+
+        # If compare_test is specified, find the comparison test methods
+        compare_methods = {}
+        if compare_test:
+            if "." in compare_test:
+                compare_class_short, compare_method_name = compare_test.rsplit(".", 1)
+            else:
+                compare_class_short = compare_test
+                compare_method_name = ""
+
+            # Find matching comparison class
+            compare_matching_class = None
+            for class_name in grouped.keys():
+                if class_name.endswith(compare_class_short):
+                    compare_matching_class = class_name
+                    break
+
+            if compare_matching_class:
+                compare_all_methods = grouped[compare_matching_class]
+                compare_methods = {k: v for k, v in compare_all_methods.items()
+                                   if k.startswith(compare_method_name + "(")}
+
+        # Group by parallelism category
+        case_results = {cat: [] for cat in parallelism_order}
+
+        for method_key, scenarios in matching_methods.items():
+            # Extract concurrency from method key
+            args_match = re.search(r"\(([^)]+)\)", method_key)
+            if args_match:
+                parsed = parse_test_case_args(args_match.group(1))
+                concurrency = parsed.get("concurrency", 1)
+            else:
+                concurrency = 1
+
+            cat_key, _ = get_parallelism_category(concurrency, config)
+
+            # The configured endpoint is our test subject
+            if endpoint not in scenarios:
+                continue
+
+            subject_result = scenarios[endpoint]
+
+            if not subject_result or not subject_result.sample_groups:
+                continue
+
+            if compare_test and compare_methods:
+                # Cross-test comparison mode:
+                # Compare subject (test.endpoint) against compare_test's endpoints
+
+                # Find matching compare method by concurrency
+                compare_method_key = None
+                for ck in compare_methods.keys():
+                    cargs_match = re.search(r"\(([^)]+)\)", ck)
+                    if cargs_match:
+                        cparsed = parse_test_case_args(cargs_match.group(1))
+                        if cparsed.get("concurrency", 1) == concurrency:
+                            compare_method_key = ck
+                            break
+
+                if not compare_method_key:
+                    continue
+
+                compare_scenarios = compare_methods[compare_method_key]
+
+                # Compare against ALL endpoints in the compare test
+                for compare_label, compare_result in compare_scenarios.items():
+                    if not compare_result or not compare_result.sample_groups:
+                        continue
+
+                    for metric_key in metric_keys:
+                        subject_sg = subject_result.sample_groups.get(metric_key)
+                        compare_sg = compare_result.sample_groups.get(metric_key)
+
+                        if subject_sg and compare_sg and compare_sg.median > 0:
+                            # Calculate how subject compares to compare_test endpoints
+                            # Negative = subject is faster (improvement)
+                            # Positive = subject is slower (regression)
+                            pct_diff = calculate_percentage_diff(subject_sg.median, compare_sg.median)
+                            case_results[cat_key].append({
+                                "metric": metric_key,
+                                "pct_diff": pct_diff,
+                                "compare_endpoint": compare_label,
+                                "subject_median": subject_sg.median,
+                                "compare_median": compare_sg.median,
+                                "concurrency": concurrency,
+                            })
+            else:
+                # Standard mode: Compare endpoint against other endpoints in same test
+                other_endpoints = [label for label in scenarios.keys() if label != endpoint]
+
+                if not other_endpoints:
+                    continue
+
+                # Calculate metrics for each non-subject endpoint
+                for other_label in other_endpoints:
+                    other_result = scenarios[other_label]
+
+                    if not other_result or not other_result.sample_groups:
+                        continue
+
+                    for metric_key in metric_keys:
+                        other_sg = other_result.sample_groups.get(metric_key)
+                        subject_sg = subject_result.sample_groups.get(metric_key)
+
+                        if other_sg and subject_sg and other_sg.median > 0:
+                            # Calculate how subject compares to other (inverted)
+                            # Negative = subject is faster (improvement)
+                            # Positive = subject is slower (regression)
+                            pct_diff = calculate_percentage_diff(subject_sg.median, other_sg.median)
+                            case_results[cat_key].append({
+                                "metric": metric_key,
+                                "pct_diff": pct_diff,
+                                "other_endpoint": other_label,
+                                "other_median": other_sg.median,
+                                "subject_median": subject_sg.median,
+                                "concurrency": concurrency,
+                            })
+
+        summary_data.append({
+            "test": test_name,
+            "endpoint": endpoint,
+            "compare_test": compare_test,
+            "results": case_results,
+        })
+
+    # Create summary page
+    fig = plt.figure(figsize=(11, 8.5))
+    fig.suptitle("Performance Summary", fontsize=16, fontweight="bold", y=0.98)
+
+    # Calculate layout
+    y_pos = 0.92
+    line_height = 0.025
+
+    ax = fig.add_axes([0.05, 0.05, 0.9, 0.85])
+    ax.axis("off")
+
+    for case_data in summary_data:
+        test_name = case_data["test"]
+        endpoint = case_data["endpoint"]
+        compare_test = case_data.get("compare_test", "")
+        results = case_data["results"]
+
+        # Test header
+        ax.text(0.0, y_pos, f"{test_name}", fontsize=11, fontweight="bold",
+                transform=ax.transAxes)
+
+        if compare_test:
+            # Cross-test comparison mode
+            ax.text(0.0, y_pos - line_height,
+                    f"Endpoint: {endpoint} (vs {compare_test} endpoints)",
+                    fontsize=9, fontstyle="italic", transform=ax.transAxes, color="#555555")
+        else:
+            # Standard mode
+            ax.text(0.0, y_pos - line_height,
+                    f"Endpoint: {endpoint} (performance vs other endpoints)",
+                    fontsize=9, fontstyle="italic", transform=ax.transAxes, color="#555555")
+        y_pos -= line_height * 2.5
+
+        # Results by parallelism category
+        for cat_key in parallelism_order:
+            cat_label = parallelism_config.get(cat_key, {}).get("label", cat_key)
+            cat_results = results.get(cat_key, [])
+
+            if not cat_results:
+                continue
+
+            ax.text(0.02, y_pos, f"{cat_label}:", fontsize=10, fontweight="bold",
+                    transform=ax.transAxes)
+            y_pos -= line_height * 1.2
+
+            # Group by metric and average
+            metric_averages = defaultdict(list)
+            for r in cat_results:
+                metric_averages[r["metric"]].append(r["pct_diff"])
+
+            for metric_key, pct_diffs in metric_averages.items():
+                avg_diff = sum(pct_diffs) / len(pct_diffs)
+                metric_name, metric_desc = get_metric_display_name(metric_key, config)
+                diff_label, diff_color = get_difference_category(avg_diff, config)
+
+                sign = "+" if avg_diff >= 0 else ""
+                text = f"  • {metric_name}: {sign}{avg_diff:.1f}% ({diff_label})"
+
+                ax.text(0.04, y_pos, text, fontsize=9, transform=ax.transAxes,
+                        color=diff_color)
+                y_pos -= line_height
+
+            y_pos -= line_height * 0.5
+
+        y_pos -= line_height * 1.5
+
+        # Check if we need a new page
+        if y_pos < 0.1:
+            pdf.savefig(fig, bbox_inches="tight")
+            plt.close(fig)
+            fig = plt.figure(figsize=(11, 8.5))
+            fig.suptitle("Performance Summary (continued)", fontsize=16, fontweight="bold", y=0.98)
+            ax = fig.add_axes([0.05, 0.05, 0.9, 0.85])
+            ax.axis("off")
+            y_pos = 0.92
+
+    pdf.savefig(fig, bbox_inches="tight")
+    plt.close(fig)
+    print("  Generated summary page")
+
+    return summary_data  # Return for GitHub summary generation
+
+
+def generate_github_summary(summary_data: list, config: dict, output_path: str):
+    """Generate a markdown summary for GitHub Actions."""
+    parallelism_config = config.get("parallelism", {})
+    parallelism_order = ["no_concurrency", "low_concurrency", "high_concurrency"]
+
+    lines = ["## Performance Summary\n"]
+
+    for case_data in summary_data:
+        test_name = case_data["test"]
+        endpoint = case_data["endpoint"]
+        compare_test = case_data.get("compare_test", "")
+        results = case_data["results"]
+
+        # Test header
+        lines.append(f"### {test_name}\n")
+
+        if compare_test:
+            lines.append(f"*Endpoint: `{endpoint}` vs `{compare_test}` endpoints*\n")
+        else:
+            lines.append(f"*Endpoint: `{endpoint}` (performance vs other endpoints)*\n")
+
+        # Check if there's any data
+        has_data = any(results.get(cat) for cat in parallelism_order)
+        if not has_data:
+            lines.append("*No data available*\n")
+            continue
+
+        # Results by parallelism category
+        for cat_key in parallelism_order:
+            cat_label = parallelism_config.get(cat_key, {}).get("label", cat_key)
+            cat_results = results.get(cat_key, [])
+
+            if not cat_results:
+                continue
+
+            lines.append(f"**{cat_label}:**\n")
+
+            # Group by metric and average
+            metric_averages = defaultdict(list)
+            for r in cat_results:
+                metric_averages[r["metric"]].append(r["pct_diff"])
+
+            for metric_key, pct_diffs in metric_averages.items():
+                avg_diff = sum(pct_diffs) / len(pct_diffs)
+                metric_name, _ = get_metric_display_name(metric_key, config)
+                diff_label, diff_color = get_difference_category(avg_diff, config)
+
+                sign = "+" if avg_diff >= 0 else ""
+
+                # Use emoji for visual indication
+                if "Improvement" in diff_label:
+                    emoji = "🟢"
+                elif "Regression" in diff_label:
+                    emoji = "🔴"
+                else:
+                    emoji = "⚪"
+
+                lines.append(f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})\n")
+
+            lines.append("\n")
+
+        lines.append("---\n")
+
+    # Write to file
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    print(f"  Generated GitHub summary: {output_path}")
+
+
+def generate_report(
+    json_path: str,
+    output_path: str,
+    config_path: Optional[Path] = None,
+    summary_only: bool = False,
+    github_summary_path: Optional[str] = None,
+):
     """Generate the PDF report from performance test results."""
+    # Load configuration
+    if config_path:
+        config = load_config(config_path)
+    else:
+        config = load_config()
+
+    if summary_only:
+        print("Summary-only mode enabled")
+
     print(f"Loading results from: {json_path}")
     data = load_performance_results(json_path)
 
@@ -383,6 +829,19 @@ def generate_report(json_path: str, output_path: str):
     print(f"Processing {len(filtered_grouped)} test classes with multiple scenarios")
 
     with PdfPages(output_path) as pdf:
+        # Generate summary page first
+        print("Generating summary page...")
+        summary_data = generate_summary_page(pdf, filtered_grouped, config)
+
+        # Generate GitHub Actions summary if requested
+        if github_summary_path and summary_data:
+            generate_github_summary(summary_data, config, github_summary_path)
+
+        if summary_only:
+            print(f"\nSummary-only report saved to: {output_path}")
+            return
+
+        # Generate detailed charts for each class
         for class_name, methods in filtered_grouped.items():
             print(f"Processing class: {class_name}")
 
@@ -513,16 +972,40 @@ def generate_report(json_path: str, output_path: str):
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
+        print("\nOptions:")
+        print("  --summary-only              Generate only the summary page (useful for debugging)")
+        print("  --github-summary <path>     Output markdown summary for GitHub Actions")
         sys.exit(1)
 
-    input_json = sys.argv[1]
-    output_pdf = sys.argv[2] if len(sys.argv) > 2 else "PerformanceBenchmarkReport.pdf"
+    # Parse arguments
+    args = sys.argv[1:]
+    summary_only = "--summary-only" in args
+    if summary_only:
+        args.remove("--summary-only")
+
+    github_summary_path = None
+    if "--github-summary" in args:
+        idx = args.index("--github-summary")
+        if idx + 1 < len(args):
+            github_summary_path = args[idx + 1]
+            args.pop(idx)  # Remove --github-summary
+            args.pop(idx)  # Remove the path
+        else:
+            print("Error: --github-summary requires a path argument")
+            sys.exit(1)
+
+    if not args:
+        print("Error: Input JSON file required")
+        sys.exit(1)
+
+    input_json = args[0]
+    output_pdf = args[1] if len(args) > 1 else "PerformanceBenchmarkReport.pdf"
 
     if not Path(input_json).exists():
         print(f"Error: Input file not found: {input_json}")
         sys.exit(1)
 
-    generate_report(input_json, output_pdf)
+    generate_report(input_json, output_pdf, summary_only=summary_only, github_summary_path=github_summary_path)
 
 
 if __name__ == "__main__":

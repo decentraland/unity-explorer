@@ -177,7 +177,9 @@ jobs:
 
       - name: Generate performance report PDF
         if: always()
-        run: python scripts/generate_perf_report.py Explorer/PerformanceTestResults.json Explorer/PerformanceBenchmarkReport.pdf
+        run: |
+          python scripts/generate_perf_report.py Explorer/PerformanceTestResults.json Explorer/PerformanceBenchmarkReport.pdf --github-summary Explorer/github_summary.md
+          cat Explorer/github_summary.md >> $GITHUB_STEP_SUMMARY
 
       # Upload performance test results JSON
       - name: Upload performance test results (JSON)

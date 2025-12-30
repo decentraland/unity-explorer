@@ -1,0 +1,96 @@
+{
+  "difference_thresholds": [
+    {
+      "min": null,
+      "max": -30,
+      "label": "Major Improvement",
+      "color": "#006400"
+    },
+    {
+      "min": -30,
+      "max": -20,
+      "label": "Moderate Improvement",
+      "color": "#228B22"
+    },
+    {
+      "min": -20,
+      "max": -10,
+      "label": "Slight Improvement",
+      "color": "#90EE90"
+    },
+    {
+      "min": -10,
+      "max": 10,
+      "label": "Within Margin of Error",
+      "color": "#808080"
+    },
+    {
+      "min": 10,
+      "max": 20,
+      "label": "Slight Regression",
+      "color": "#FFB347"
+    },
+    {
+      "min": 20,
+      "max": 30,
+      "label": "Moderate Regression",
+      "color": "#FF6347"
+    },
+    {
+      "min": 30,
+      "max": null,
+      "label": "Major Regression",
+      "color": "#8B0000"
+    }
+  ],
+  "metrics": {
+    "WebRequest.Send": {
+      "name": "Web Request Send Time",
+      "description": "time to send the web request"
+    },
+    "WebRequest.ProcessData": {
+      "name": "Data Processing Time",
+      "description": "time to process the response data"
+    },
+    "Iteration Total Time": {
+      "name": "Total Iteration Time",
+      "description": "total time for the complete operation"
+    }
+  },
+  "parallelism": {
+    "no_concurrency": {
+      "min": 1,
+      "max": 1,
+      "label": "No Concurrency"
+    },
+    "low_concurrency": {
+      "min": 2,
+      "max": 10,
+      "label": "Low Concurrency"
+    },
+    "high_concurrency": {
+      "min": 11,
+      "max": null,
+      "label": "High Concurrency"
+    }
+  },
+  "summary_cases": [
+    {
+      "test": "ProfilesPerformanceTest.PostProfilesAsync",
+      "endpoint": "asset-bundle-registry"
+    },
+    {
+      "test": "ProfilesPerformanceTest.PostMetadataAsync",
+      "endpoint": "asset-bundle-registry",
+      "compare_test": "ProfilesPerformanceTest.PostProfilesAsync"
+    },
+    {
+      "test": "AssetBundleRegistryPerformanceTests.GetEntitiesActive",
+      "endpoint": "gateway.zone"
+    },
+    {
+      "test": "AssetBundleRegistryPerformanceTests.GetEntitiesStatusAsync",
+      "endpoint": "gateway.zone"
+    }
+  ]
+}
