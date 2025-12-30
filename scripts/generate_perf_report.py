@@ -463,9 +463,9 @@ def generate_summary_page(
         return
 
     metrics_config = config.get("metrics", {})
-    metric_keys = list(metrics_config.keys())
+    default_metric_keys = config.get("default_summary_metrics", list(metrics_config.keys()))
 
-    if not metric_keys:
+    if not default_metric_keys:
         print("  No metrics configured, skipping summary page")
         return
 
@@ -479,6 +479,8 @@ def generate_summary_page(
         test_name = case.get("test", "")
         endpoint = case.get("endpoint", "")
         compare_test = case.get("compare_test", "")
+        # Use per-case metrics or fall back to default
+        metric_keys = case.get("metrics", default_metric_keys)
 
         # Parse test name into class and method
         if "." in test_name:
@@ -628,6 +630,7 @@ def generate_summary_page(
             "test": test_name,
             "endpoint": endpoint,
             "compare_test": compare_test,
+            "metric_keys": metric_keys,
             "results": case_results,
         })
 
@@ -646,6 +649,7 @@ def generate_summary_page(
         test_name = case_data["test"]
         endpoint = case_data["endpoint"]
         compare_test = case_data.get("compare_test", "")
+        metric_keys = case_data.get("metric_keys", [])
         results = case_data["results"]
 
         # Test header
@@ -681,7 +685,11 @@ def generate_summary_page(
             for r in cat_results:
                 metric_averages[r["metric"]].append(r["pct_diff"])
 
-            for metric_key, pct_diffs in metric_averages.items():
+            # Iterate in the order specified by metric_keys
+            for metric_key in metric_keys:
+                pct_diffs = metric_averages.get(metric_key)
+                if not pct_diffs:
+                    continue
                 avg_diff = sum(pct_diffs) / len(pct_diffs)
                 metric_name, metric_desc = get_metric_display_name(metric_key, config)
                 diff_label, diff_color = get_difference_category(avg_diff, config)
@@ -725,6 +733,7 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
         test_name = case_data["test"]
         endpoint = case_data["endpoint"]
         compare_test = case_data.get("compare_test", "")
+        metric_keys = case_data.get("metric_keys", [])
         results = case_data["results"]
 
         # Test header
@@ -756,7 +765,11 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
             for r in cat_results:
                 metric_averages[r["metric"]].append(r["pct_diff"])
 
-            for metric_key, pct_diffs in metric_averages.items():
+            # Iterate in the order specified by metric_keys
+            for metric_key in metric_keys:
+                pct_diffs = metric_averages.get(metric_key)
+                if not pct_diffs:
+                    continue
                 avg_diff = sum(pct_diffs) / len(pct_diffs)
                 metric_name, _ = get_metric_display_name(metric_key, config)
                 diff_label, diff_color = get_difference_category(avg_diff, config)

@@ -55,8 +55,17 @@
     "Iteration Total Time": {
       "name": "Total Iteration Time",
       "description": "total time for the complete operation"
+    },
+    "Iteration Downloaded Data": {
+      "name": "Downloaded Data",
+      "description": "amount of data downloaded"
     }
   },
+  "default_summary_metrics": [
+    "WebRequest.Send",
+    "WebRequest.ProcessData",
+    "Iteration Total Time"
+  ],
   "parallelism": {
     "no_concurrency": {
       "min": 1,
@@ -82,7 +91,13 @@
     {
       "test": "ProfilesPerformanceTest.PostMetadataAsync",
       "endpoint": "asset-bundle-registry",
-      "compare_test": "ProfilesPerformanceTest.PostProfilesAsync"
+      "compare_test": "ProfilesPerformanceTest.PostProfilesAsync",
+      "metrics": [
+        "WebRequest.Send",
+        "WebRequest.ProcessData",
+        "Iteration Total Time",
+        "Iteration Downloaded Data"
+      ]
     },
     {
       "test": "AssetBundleRegistryPerformanceTests.GetEntitiesActive",
