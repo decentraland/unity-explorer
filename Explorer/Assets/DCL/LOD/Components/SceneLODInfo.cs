@@ -3,6 +3,7 @@ using Arch.Core;
 using DCL.LOD.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility;
@@ -25,6 +26,8 @@ namespace DCL.LOD.Components
         // Same problem related to UNloadSceneLODSystem.UnloadSceneLOFForISS. We need to clear the result because this gets re-initiated every time
         public InitialSceneStateLOD InitialSceneStateLOD;
 
+        public ISceneStateProvider? sceneStateProvider;
+
         public void Dispose(World world)
         {
             InitialSceneStateLOD.Dispose(world);
@@ -38,6 +41,7 @@ namespace DCL.LOD.Components
             {
                 CurrentLODLevelPromise = byte.MaxValue,
                 InitialSceneStateLOD =  new InitialSceneStateLOD(),
+                sceneStateProvider = null
             };
         }
 

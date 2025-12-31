@@ -161,6 +161,7 @@ namespace SceneRunner
 
         public void Dispose()
         {
+            UnityEngine.Debug.Log("JUANI DOING THE ECS WORLD FACADE DISPOSE");
             // The order can make a difference here
             ECSWorldFacade.Dispose();
             CRDTProtocol.Dispose();

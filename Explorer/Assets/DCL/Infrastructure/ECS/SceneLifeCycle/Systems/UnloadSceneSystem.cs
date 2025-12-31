@@ -51,13 +51,16 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref SceneLODInfo sceneLODInfo)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
+                UnityEngine.Debug.Log("JUANI UNLOADING SCENE");
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
                     sceneDefinitionComponent.Parcels);
+
+                sceneLODInfo.sceneStateProvider = sceneFacade.SceneStateProvider;
 
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }

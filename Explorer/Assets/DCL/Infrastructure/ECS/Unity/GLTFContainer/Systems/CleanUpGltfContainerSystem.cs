@@ -56,6 +56,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         public void FinalizeComponents(in Query query)
         {
+            UnityEngine.Debug.Log("JUANI FINALIZING GLTF");
             DestroyWithScenePartitionQuery(World);
         }
 
@@ -63,6 +64,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
+                UnityEngine.Debug.Log("JUANI RELEASING ASSET");
                 //TODO (JUANI) : Newly instantiated asset will remain in the bridge
                 cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
                 entityCollidersSceneCache.Remove(result.Asset);

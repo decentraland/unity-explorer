@@ -59,6 +59,8 @@ namespace DCL.LOD.Systems
                     {
                         if (Result.Asset!.InitialSceneStateMetadata.HasValue)
                         {
+                            UnityEngine.Debug.Log("JUANI DOING ISS LOD INSTANTIATION");
+
                             InitialSceneStateMetadata initialSceneStateMetadata = Result.Asset!.InitialSceneStateMetadata.Value;
                             initialSceneStateLOD.Initialize(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition, Result.Asset,
                                 gltfCache, initialSceneStateMetadata.assetHash.Count);
@@ -68,9 +70,13 @@ namespace DCL.LOD.Systems
                                 string assetHash = initialSceneStateMetadata.assetHash[i];
 
                                 if (gltfCache.TryGet(assetHash, out var asset))
+                                {
+                                    UnityEngine.Debug.Log("JUANI ASSET IS IN CACHE");
                                     PositionAsset(initialSceneStateLOD, assetHash, asset, initialSceneStateLOD.ParentContainer.transform, initialSceneStateMetadata, i);
+                                }
                                 else
                                 {
+                                    UnityEngine.Debug.Log("JUANI ASSET IS NOT IN CACHE");
                                     //Little bit redundant, but needed for correct ref counting
                                     AssetBundlePromise promise = AssetBundlePromise.Create(World,
                                         GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id),
