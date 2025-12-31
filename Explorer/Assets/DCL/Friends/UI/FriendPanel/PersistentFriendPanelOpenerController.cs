@@ -15,6 +15,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
+    //TODO (FRAN): this needs refactoring -> this class is doing way more than just opening the friends panel, is handling notifications as well
     public class PersistentFriendPanelOpenerController : ControllerBase<PersistentFriendPanelOpenerView>
     {
         private readonly IMVCManager mvcManager;

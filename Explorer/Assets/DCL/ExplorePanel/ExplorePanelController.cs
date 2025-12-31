@@ -149,8 +149,8 @@ namespace DCL.ExplorePanel
                 );
             }
 
-            //TODO FRAN: This is throwing a null ref!!!
-            viewInstance.ProfileWidget.OpenProfileButton.Button.onClick.AddListener(ShowProfileMenuAsync);
+
+            viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
         }
 
         protected override void OnViewShow()

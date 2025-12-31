@@ -123,10 +123,7 @@ namespace DCL.Chat.ChatStates
             if (focus)
                 fsm.ChangeState<FocusedChatState>();
             else
-            {
-                // fsm.ChangeState<MinimizedChatState>();
                 fsm.PopState();
-            }
         }
 
         public void SetToggleState()

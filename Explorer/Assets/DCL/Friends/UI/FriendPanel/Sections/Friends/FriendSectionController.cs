@@ -4,7 +4,6 @@ using DCL.Chat.EventBus;
 using DCL.ChatArea;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -24,7 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
-        private CancellationTokenSource popupCts;
+        private CancellationTokenSource popupCts = new ();
         private UniTaskCompletionSource contextMenuTask = new ();
 
         public FriendSectionController(FriendsSectionView view,
@@ -60,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.CanUnHover = false;
 
             popupCts = popupCts.SafeRestart();
-            contextMenuTask?.TrySetResult();
+            contextMenuTask.TrySetResult();
 
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);

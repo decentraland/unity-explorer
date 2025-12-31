@@ -14,10 +14,7 @@ using Utility;
 //TODO FRAN: DELETE ME
 namespace DCL.UI.SharedSpaceManager
 {
-    /// <summary>
-    ///     <inheritdoc cref="ISharedSpaceManager" />
-    /// </summary>
-    public class SharedSpaceManager : ISharedSpaceManager, IDisposable
+    public class SharedSpaceManager : IDisposable
     {
         private readonly Dictionary<PanelsSharingSpace, PanelRegistration> registrations = new ();
 

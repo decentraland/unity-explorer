@@ -395,8 +395,8 @@ dev*/
 #region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
-            chatEventBus.Publish(new ChatEvents.ToggleChatEvent());
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
+            chatEventBus.Publish(new ChatEvents.ToggleChatEvent());
         }
 
         private void OnEmotesWheelButtonClicked()

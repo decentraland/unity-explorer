@@ -49,7 +49,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -357,7 +356,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 chatSharedAreaEventBus,
                 commandRegistry,
-                eventBus
+                eventBus,
+                dclInput
             );
 
             var chatBusListenerService = new ChatHistoryService(chatMessagesBus,
@@ -378,7 +378,6 @@ namespace DCL.PluginSystem.Global
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
 
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
-            dclInput.UI.Submit.performed += OnUISubmitPerformed;
         }
 
         private void OnChatClickableBlockedInputClickedEventAsync(ChatEvents.ClickableBlockedInputClickedEvent evt) =>
@@ -390,17 +389,9 @@ namespace DCL.PluginSystem.Global
                 mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
         }
 
-        private void OnUISubmitPerformed(InputAction.CallbackContext _)
-        {
-            if (chatSharedAreaController?.State != ControllerState.ViewFocused)
-                chatSharedAreaController?.SetVisibility(true);
-                //mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-        }
-
-
         private void OnIdentityCleared()
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, "ChatPlugin.OnIdentityCleared");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, "ChatPlugin.OnIdentityCleared");
             commandRegistry?.ResetChat.Execute();
 
             if (chatSharedAreaController is { IsVisibleInSharedSpace: true })

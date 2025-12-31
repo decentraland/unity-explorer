@@ -223,7 +223,7 @@ namespace DCL.Minimap
         {
             SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
+                           new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
         }
 
@@ -262,7 +262,7 @@ namespace DCL.Minimap
                     await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
-                catch (OperationCanceledException _) { }
+                catch (OperationCanceledException) { }
                 catch (Exception exception)
                 {
                     viewInstance!.favoriteButton.SetButtonState(false);
@@ -427,7 +427,7 @@ namespace DCL.Minimap
 
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
-            catch (OperationCanceledException _) { }
+            catch (OperationCanceledException) { }
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
@@ -544,6 +544,6 @@ namespace DCL.Minimap
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TrackPlayerPositionSystem : ControllerECSBridgeSystem
     {
-        internal TrackPlayerPositionSystem(World world) : base(world) { }
+        private TrackPlayerPositionSystem(World world) : base(world) { }
     }
 }

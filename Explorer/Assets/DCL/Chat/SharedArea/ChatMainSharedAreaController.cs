@@ -6,6 +6,7 @@ using DCL.Chat.ControllerShowParams;
 using MVC;
 using System.Threading;
 using Utility;
+using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.ChatArea
 {
@@ -14,24 +15,26 @@ namespace DCL.ChatArea
         private readonly IMVCManager mvcManager;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly IEventBus chatEventBus;
-
-        //private readonly HashSet<IBlocksChat> chatBlockers = new ();
         private readonly EventSubscriptionScope eventScope = new ();
+        private readonly DCLInput dclInput;
 
         public readonly CommandRegistry CommandRegistry;
 
         public bool IsVisibleInSharedSpace { get; private set; }
 
+        private int fullscreenViewsOpenCount;
+
         public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             CommandRegistry commandRegistry,
-            IEventBus chatEventBus) : base(viewFactory)
+            IEventBus chatEventBus, DCLInput dclInput) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.CommandRegistry = commandRegistry;
             this.chatEventBus = chatEventBus;
+            this.dclInput = dclInput;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -44,7 +47,9 @@ namespace DCL.ChatArea
             mvcManager.OnViewClosed += OnMvcViewClosed;
             viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
-            eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleState));
+            dclInput.UI.Submit.performed += OnUISubmitPerformed;
+
+            eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleChatState));
             // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
             CentralizedChatClickDetectionService.Instance.Resume();
@@ -71,10 +76,16 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
-        public void ToggleState(ChatEvents.ToggleChatEvent _)
+        private void ToggleChatState(ChatEvents.ToggleChatEvent _)
         {
             chatSharedAreaEventBus.RaiseToggleEvent();
         }
+
+        private void OnUISubmitPerformed(InputAction.CallbackContext callbackContext)
+        {
+            chatSharedAreaEventBus.RaiseToggleEvent();
+        }
+
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatMainSharedAreaControllerShowParams showParams)
         {
@@ -99,12 +110,12 @@ namespace DCL.ChatArea
             await UniTask.CompletedTask;
         }
 
-        /*public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
             CentralizedChatClickDetectionService.Instance.Pause();
             chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
             await UniTask.CompletedTask;
-        }*/
+        }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
@@ -135,25 +146,24 @@ namespace DCL.ChatArea
             eventScope.Dispose();
 
             base.Dispose();
-
-            //chatBlockers.Clear();
         }
 
         private void OnMvcViewShowed(IController controller)
         {
-            //We only need to hide the chat if a fullscreen view is shown
-            if (controller.Layer is CanvasOrdering.SortingLayer.Popup or CanvasOrdering.SortingLayer.Overlay) return;
+            //We only need to notify the chat if a fullscreen view is shown (to hide it)
+            if (controller.Layer is not CanvasOrdering.SortingLayer.Fullscreen) return;
 
+            fullscreenViewsOpenCount++;
             chatSharedAreaEventBus.RaiseMvcViewShowedEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            //if (controller is not IBlocksChat blocker) return;
+            if (controller.Layer is not CanvasOrdering.SortingLayer.Fullscreen) return;
+            fullscreenViewsOpenCount--;
 
-            //chatBlockers.Remove(blocker);
-             //if (chatBlockers.Count == 0)
-               // chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
+            if (fullscreenViewsOpenCount == 0)
+                chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
         }
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
