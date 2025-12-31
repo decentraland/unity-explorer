@@ -150,6 +150,7 @@ namespace DCL.Notifications.NotificationsMenu
             view.LoopList.SetListItemCount(notifications.Count, false);
 
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
+            requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);

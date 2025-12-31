@@ -137,7 +137,7 @@ namespace ECS.Unity.AvatarShape.Systems
             if (!isSceneEmote)
             {
                 globalWorld.AddOrSet(globalWorldEntity,
-                    new CharacterEmoteIntent(emoteId));
+                    new CharacterEmoteIntent() { EmoteId = emoteId });
 
                 return;
             }
@@ -222,11 +222,11 @@ namespace ECS.Unity.AvatarShape.Systems
 
                 globalWorld.AddOrSet(globalWorldEntity,
                     new CharacterEmoteIntent
-                    (
-                        emoteUrn,
-                        triggerSource: TriggerSource.SCENE,
-                        spatial: true
-                    ));
+                    {
+                        EmoteId = emoteUrn,
+                        Spatial = true,
+                        TriggerSource = TriggerSource.SCENE,
+                    });
             }
         }
 
