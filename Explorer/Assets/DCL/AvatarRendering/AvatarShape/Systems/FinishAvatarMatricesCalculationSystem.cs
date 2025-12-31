@@ -43,14 +43,9 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarCustomSkinningComponent computeShaderSkinning
         )
         {
-            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex))
-            { 
-                Result result = computeShaderSkinning.ComputeSkinning(currentResult, validIndex);
-                if (result.Success == false)
-                    ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
-            }
-            else
-                ReportHub.LogException(new Exception("Attempt to process an invalid avatar"), ReportCategory.AVATAR);
+            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+            if (result.Success == false)
+                ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
         }
     }
 }

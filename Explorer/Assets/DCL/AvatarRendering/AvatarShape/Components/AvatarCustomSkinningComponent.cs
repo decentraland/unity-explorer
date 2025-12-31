@@ -1,8 +1,8 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -113,14 +113,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray)
+        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
+            if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+            {
+                return Result.ErrorResult("Attempt to process an invalid avatar");
+            }
+
             if (buffers.TryGetBones(out ComputeBuffer bones) == false)
             {
                 return Result.ErrorResult("ComputeSkinning error: Cannot get bones (ComputeBuffer)");
             }
 
-            bones.SetData(bonesResult, indexInGlobalResultArray * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
+            bones.SetData(bonesResult, validIndex * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
             computeShaderInstance.Dispatch(buffers.kernel, (VertCount / 64) + 1, 1, 1);
             return Result.SuccessResult();
 
