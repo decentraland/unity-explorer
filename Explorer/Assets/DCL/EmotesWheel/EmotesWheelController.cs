@@ -12,7 +12,6 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -22,7 +21,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly SelfProfile selfProfile;
@@ -42,8 +41,6 @@ namespace DCL.EmotesWheel
 
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             SelfProfile selfProfile,
@@ -141,8 +138,6 @@ namespace DCL.EmotesWheel
             closeViewTask = new UniTaskCompletionSource();
 
             UnblockShortcutToEmoteSlotsSetup();
-
-            ViewShowingComplete?.Invoke(this);
 
             await closeViewTask.Task;
         }
