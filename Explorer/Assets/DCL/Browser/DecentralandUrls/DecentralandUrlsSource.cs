@@ -85,6 +85,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
                 DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
+                DecentralandUrl.GateKeeperStreamToken => $"https://comms-gatekeeper.decentraland.{ENV}/cast/streamer-token",
                 DecentralandUrl.ChatAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",

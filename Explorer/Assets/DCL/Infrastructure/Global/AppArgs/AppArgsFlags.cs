@@ -53,6 +53,8 @@
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
+        public const string NO_CRDT_FILTER = "no-crdt-filter";
+
         public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
 
         public static class Multiplayer

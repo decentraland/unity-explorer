@@ -28,6 +28,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName ROOM_ISLAND = "Room: Island".AsWidgetName();
             public static readonly WidgetName ROOM_SCENE = "Room: Scene".AsWidgetName();
             public static readonly WidgetName ROOM_THROUGHPUT = "Room: Throughput".AsWidgetName();
+            public static readonly WidgetName DCL_CAST = "DCL Cast".AsWidgetName();
             public static readonly WidgetName PERFORMANCE = "Performance".AsWidgetName();
             public static readonly WidgetName CRASH = "Crash".AsWidgetName();
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();

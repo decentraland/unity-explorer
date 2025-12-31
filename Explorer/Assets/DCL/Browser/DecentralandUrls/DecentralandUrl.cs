@@ -37,6 +37,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         GateKeeperSceneAdapter,
         LocalGateKeeperSceneAdapter,
+
+        GateKeeperStreamToken,
+
         ChatAdapter,
 
         OpenSea,

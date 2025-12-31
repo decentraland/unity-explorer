@@ -251,6 +251,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
                 bootstrapContainer.Environment,
+                appArgs,
                 dynamicWorldContainer.SystemClipboard
             );
 
@@ -291,6 +292,7 @@ namespace Global.Dynamic
             splashScreen.Show();
 
             try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+
             // Exceptions on auto-login should not block the application bootstrap
             catch (AutoLoginTokenNotFoundException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

@@ -31,6 +31,7 @@ using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using Global.AppArgs;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -110,8 +111,10 @@ namespace SceneRunner.Tests
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
+                Substitute.For<DCL.Clipboard.ISystemClipboard>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<DCL.Clipboard.ISystemClipboard>());
+                ApplicationParametersParser.TEST_INSTANCE
+            );
         }
 
         [OneTimeTearDown]
