@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private readonly IWebRequestController webRequests;
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
-        public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress)
+        public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress) : base()
         {
             this.webRequests = webRequests;
             this.currentAdapterAddress = currentAdapterAddress;

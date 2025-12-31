@@ -60,7 +60,6 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
-using DCL.Nametags;
 using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
@@ -117,7 +116,6 @@ using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
-using DCL.PerformanceAndDiagnostics;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.Translation;
@@ -991,7 +989,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
-                new AvatarLocomotionOverridesGlobalPlugin()
+                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
+                new AvatarLocomotionOverridesGlobalPlugin(),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
