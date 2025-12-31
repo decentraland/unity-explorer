@@ -1,50 +1,37 @@
-using System.Collections.Generic;
-using UnityEngine.EventSystems;
-
 namespace DCL.ChatArea
 {
     public static class ChatSharedAreaEvents
     {
         public struct ChatPanelPointerEnterEvent { }
         public struct ChatPanelPointerExitEvent { }
-        public struct ChatPanelFocusEvent { }
+        public struct FocusChatPanelEvent { }
 
-        public struct ChatPanelVisibilityEvent
+        public struct SetChatPanelVisibilityEvent
         {
             public bool IsVisible { get; }
 
-            public ChatPanelVisibilityEvent(bool isVisible)
+            public SetChatPanelVisibilityEvent(bool isVisible)
             {
                 IsVisible = isVisible;
             }
         }
 
-        public struct ChatPanelToggleEvent { }
+        public struct ToggleChatPanelEvent { }
         public struct ChatPanelViewShowEvent { }
 
-        public struct ChatPanelShownInSharedSpaceEvent
+        public struct ShowChatPanelEvent
         {
             public bool Focus { get; }
 
-            public ChatPanelShownInSharedSpaceEvent(bool focus)
+            public ShowChatPanelEvent(bool focus)
             {
                 Focus = focus;
             }
         }
 
-        public struct ChatPanelHiddenInSharedSpaceEvent { }
-        public struct ChatPanelMvcViewShowedEvent { }
-        public struct ChatPanelMvcViewClosedEvent { }
-
-        public struct ChatPanelGlobalClickEvent
-        {
-            public IReadOnlyList<RaycastResult> RaycastResults { get; }
-
-            public ChatPanelGlobalClickEvent(IReadOnlyList<RaycastResult> raycastResults)
-            {
-                RaycastResults = raycastResults;
-            }
-        }
+        public struct HideChatPanelEvent { }
+        public struct FullscreenViewOpenEvent { }
+        public struct FullscreenClosedEvent { }
 
         public struct ChatPanelVisibilityStateChangedEvent
         {

@@ -17,28 +17,28 @@ namespace DCL.ChatArea
             Publish(new ChatSharedAreaEvents.ChatPanelPointerExitEvent());
 
         public void RaiseFocusEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelFocusEvent());
+            Publish(new ChatSharedAreaEvents.FocusChatPanelEvent());
 
         public void RaiseVisibilityEvent(bool isVisible) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityEvent(isVisible));
+            Publish(new ChatSharedAreaEvents.SetChatPanelVisibilityEvent(isVisible));
 
         public void RaiseToggleEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelToggleEvent());
+            Publish(new ChatSharedAreaEvents.ToggleChatPanelEvent());
 
         public void RaiseViewShowEvent() =>
             Publish(new ChatSharedAreaEvents.ChatPanelViewShowEvent());
 
         public void RaiseShownInSharedSpaceEvent(bool focus) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent(focus));
+            Publish(new ChatSharedAreaEvents.ShowChatPanelEvent(focus));
 
         public void RaiseHiddenInSharedSpaceEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent());
+            Publish(new ChatSharedAreaEvents.HideChatPanelEvent());
 
-        public void RaiseMvcViewShowedEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent());
+        public void RaiseFullscreenOpenEvent() =>
+            Publish(new ChatSharedAreaEvents.FullscreenViewOpenEvent());
 
-        public void RaiseMvcViewClosedEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent());
+        public void RaiseFullscreenClosedEvent() =>
+            Publish(new ChatSharedAreaEvents.FullscreenClosedEvent());
 
         public void RaiseVisibilityStateChangedEvent(bool isVisibleInSharedSpace) =>
             Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisibleInSharedSpace));

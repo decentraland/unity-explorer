@@ -28,7 +28,8 @@ namespace DCL.ChatArea
             IMVCManager mvcManager,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             CommandRegistry commandRegistry,
-            IEventBus chatEventBus, DCLInput dclInput) : base(viewFactory)
+            IEventBus chatEventBus,
+            DCLInput dclInput) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -154,7 +155,8 @@ namespace DCL.ChatArea
             if (controller.Layer is not CanvasOrdering.SortingLayer.Fullscreen) return;
 
             fullscreenViewsOpenCount++;
-            chatSharedAreaEventBus.RaiseMvcViewShowedEvent();
+            if (fullscreenViewsOpenCount == 1)
+                chatSharedAreaEventBus.RaiseFullscreenOpenEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
@@ -163,7 +165,7 @@ namespace DCL.ChatArea
             fullscreenViewsOpenCount--;
 
             if (fullscreenViewsOpenCount == 0)
-                chatSharedAreaEventBus.RaiseMvcViewClosedEvent();
+                chatSharedAreaEventBus.RaiseFullscreenClosedEvent();
         }
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)

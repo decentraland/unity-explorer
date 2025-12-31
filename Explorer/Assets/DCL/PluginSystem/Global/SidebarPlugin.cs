@@ -199,7 +199,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
-
             mvcManager.RegisterController(sidebarController);
         }
 

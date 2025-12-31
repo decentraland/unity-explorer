@@ -56,10 +56,10 @@ namespace DCL.VoiceChat
             clickDetectionHandler.OnClickOutside += HandleClickOutside;
 
             presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ShowChatPanelEvent>(HandleChatPanelShownInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.HideChatPanelEvent>(HandleChatPanelHiddenInSharedSpace));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(HandleChatPanelToggle));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.SetChatPanelVisibilityEvent>(HandleChatPanelVisibility));
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -70,12 +70,12 @@ namespace DCL.VoiceChat
                 clickDetectionHandler.Resume();
         }
 
-        private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
+        private void HandleChatPanelVisibility(ChatSharedAreaEvents.SetChatPanelVisibilityEvent evt)
         {
             voiceChatOrchestrator.ChangePanelState(evt.IsVisible ? VoiceChatPanelState.UNFOCUSED : VoiceChatPanelState.HIDDEN, force: true);
         }
 
-        private void HandleChatPanelToggle(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
+        private void HandleChatPanelToggle(ChatSharedAreaEvents.ToggleChatPanelEvent evt)
         {
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
             {
@@ -84,12 +84,12 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
+        private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.HideChatPanelEvent _)
         {
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
         }
 
-        private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
+        private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ShowChatPanelEvent evt)
         {
             voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
         }

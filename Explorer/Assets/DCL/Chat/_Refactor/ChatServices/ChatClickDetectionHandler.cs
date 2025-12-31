@@ -40,21 +40,19 @@ namespace DCL.Chat.ChatServices
 
         public void Pause()
         {
-            if (!isPaused)
-            {
-                isPaused = true;
-                centralizedChatService.OnClickDetected -= HandleClickDetected;
-            }
+            if (isPaused) return;
+
+            isPaused = true;
+            centralizedChatService.OnClickDetected -= HandleClickDetected;
         }
 
 
         public void Resume()
         {
-            if (isPaused)
-            {
-                isPaused = false;
-                centralizedChatService.OnClickDetected += HandleClickDetected;
-            }
+            if (!isPaused) return;
+
+            isPaused = false;
+            centralizedChatService.OnClickDetected += HandleClickDetected;
         }
 
         private void HandleClickDetected(RaycastResult? raycastResult)
@@ -80,11 +78,11 @@ namespace DCL.Chat.ChatServices
 
         private bool IsIgnored(GameObject clickedObject)
         {
-            if (clickedObject == null) return false;
+            if (!clickedObject) return false;
 
             Transform current = clickedObject.transform;
 
-            while (current != null)
+            while (current)
             {
                 if (ignoredElementsSet.Contains(current))
                     return true;
