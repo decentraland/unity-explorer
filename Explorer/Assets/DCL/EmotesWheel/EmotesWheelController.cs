@@ -40,7 +40,7 @@ namespace DCL.EmotesWheel
         private CancellationTokenSource? slotSetUpCts;
 
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             SelfProfile selfProfile,

@@ -25,7 +25,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private CancellationTokenSource? friendRequestReceivedCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
         public event Action? FriendshipNotificationClicked;
 

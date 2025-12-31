@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
         private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -343,8 +343,10 @@ namespace DCL.Communities.CommunitiesCard
             {
                 await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
-                //TODO FRAN: I Think this might not be needed anymore
-                //CloseController();
+                //TODO FRAN: We need to properly close all controllers when showing the chat.
+                //This only closes THIS controller, but not the one behind it if there is one.
+                //We need to use SHOWTOP inside the MVCManager, but its reserved for overlays -> add a param to ShowAsync??
+                CloseController();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)

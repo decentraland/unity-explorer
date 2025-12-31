@@ -66,7 +66,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private SingleInstanceEntity? cameraInternal;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
         public event Action? HelpOpened;
 

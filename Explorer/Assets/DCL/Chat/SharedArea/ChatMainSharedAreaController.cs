@@ -38,7 +38,7 @@ namespace DCL.ChatArea
             this.dclInput = dclInput;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
         protected override void OnViewInstantiated()
         {
@@ -152,7 +152,7 @@ namespace DCL.ChatArea
         private void OnMvcViewShowed(IController controller)
         {
             //We only need to notify the chat if a fullscreen view is shown (to hide it)
-            if (controller.Layer is not CanvasOrdering.SortingLayer.Fullscreen) return;
+            if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
 
             fullscreenViewsOpenCount++;
             if (fullscreenViewsOpenCount == 1)
@@ -161,7 +161,7 @@ namespace DCL.ChatArea
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller.Layer is not CanvasOrdering.SortingLayer.Fullscreen) return;
+            if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
             fullscreenViewsOpenCount--;
 
             if (fullscreenViewsOpenCount == 0)

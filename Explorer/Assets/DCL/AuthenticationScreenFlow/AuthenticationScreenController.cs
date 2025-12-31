@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow
         private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; private set; } = string.Empty;

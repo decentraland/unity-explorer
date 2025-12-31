@@ -27,7 +27,7 @@ namespace DCL.MarketplaceCredits
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public event Action<bool> MarketplaceCreditsOpened;
 

@@ -7,7 +7,7 @@ namespace DCL.UI.ErrorPopup
 {
     public partial class ErrorPopupController : ControllerBase<ErrorPopupView, ErrorPopupData>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public static ViewFactoryMethod CreateLazily(ErrorPopupView prefab, Transform? root = null) =>
             () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root!)!;

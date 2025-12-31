@@ -21,7 +21,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private const string CouldNotFindTokenForUrnLog = "Could not find a valid tokenId for URN {0}. Aborting gift transfer.";
         private const string DefaultGiftItemName = "Item";
         
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
         
         private readonly IProfileRepository profileRepository;
         private readonly GiftSelectionComponentFactory componentFactory;

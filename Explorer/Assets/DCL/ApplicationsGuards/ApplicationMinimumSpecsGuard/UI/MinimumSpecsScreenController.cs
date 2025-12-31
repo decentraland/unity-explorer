@@ -15,7 +15,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private readonly IWebBrowser webBrowser;
         private readonly IAnalyticsController analytics;
         private readonly IReadOnlyList<SpecResult> specResult;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
         public readonly UniTaskCompletionSource HoldingTask;
 
         private MinimumSpecsTablePresenter specsTablePresenter;

@@ -83,17 +83,17 @@ namespace MVC
 
                 switch (controller.Layer)
                 {
-                    case CanvasOrdering.SortingLayer.Popup:
+                    case CanvasOrdering.SortingLayer.POPUP:
                         await ShowPopupAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Fullscreen:
+                    case CanvasOrdering.SortingLayer.FULLSCREEN:
                         await ShowFullScreenAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Persistent:
+                    case CanvasOrdering.SortingLayer.PERSISTENT:
                         await ShowPersistentAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Overlay:
-                        await ShowTopAsync(command, controller, ct);
+                    case CanvasOrdering.SortingLayer.OVERLAY:
+                        await ShowOverlayAsync(command, controller, ct);
                         break;
                 }
 
@@ -106,7 +106,7 @@ namespace MVC
             }
         }
 
-        private async UniTask ShowTopAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowOverlayAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
             // Push new fullscreen controller
@@ -131,7 +131,7 @@ namespace MVC
         private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
-            // Push a new fullscreen controller
+            // Push a new persistent controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
             try { await UniTask.WhenAny(command.Execute(controller, persistentPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct)); }

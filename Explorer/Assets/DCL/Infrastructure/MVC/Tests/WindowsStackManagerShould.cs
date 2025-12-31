@@ -76,7 +76,7 @@ namespace MVC.Tests
         {
             manager.PushOverlay(controller);
 
-            Assert.AreSame(controller, manager.topController);
+            Assert.AreSame(controller, manager.overlayController);
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace MVC.Tests
 
             manager.PopOverlay(controller);
 
-            Assert.IsNull(manager.topController);
+            Assert.IsNull(manager.overlayController);
         }
     }
     public class TestInputData2 { }

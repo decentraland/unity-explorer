@@ -7,7 +7,7 @@ namespace MVC
     {
         (IController controller, int orderInLayer) TopMostPopup { get; }
 
-        IController CurrentFullscreenController { get; }
+        IController? CurrentFullscreenController { get; }
 
         /// <summary>
         ///     For each sortingLayer there is a separate stack with a begin value for <see cref="CanvasOrdering.OrderInLayer" />

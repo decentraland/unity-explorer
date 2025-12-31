@@ -51,7 +51,7 @@ namespace DCL.ExplorePanel
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 

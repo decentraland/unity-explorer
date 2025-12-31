@@ -32,7 +32,7 @@ namespace DCL.InWorldCamera.UI
 
         private CancellationTokenSource ctx;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
         private SingleInstanceEntity? cameraInternal;
 
