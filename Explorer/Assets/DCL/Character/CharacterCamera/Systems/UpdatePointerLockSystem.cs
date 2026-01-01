@@ -45,7 +45,7 @@ namespace DCL.CharacterCamera.Systems
         {
             if (!sdkPointerLock.IsDirty) return;
 
-            globalWorld.AddOrGet(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
+            globalWorld.Add(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
 
             sdkPointerLock.IsDirty = false;
         }
