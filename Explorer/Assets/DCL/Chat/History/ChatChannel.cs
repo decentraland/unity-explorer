@@ -155,7 +155,7 @@ namespace DCL.Chat.History
 
             MessageAdded?.Invoke(this, message, 0);
         }
-        
+
         public void TryInitializeChannel()
         {
             if (isInitialized)
