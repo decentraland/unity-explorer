@@ -11,6 +11,7 @@ using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Utilities.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -109,8 +110,18 @@ namespace DCL.Input.Systems
         {
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
-            IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
+
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
+
+            IReadOnlyList<RaycastResult> raycastResults;
+            if (cursorComponent.CursorState == CursorState.Free)
+            {
+                raycastResults = eventSystem.RaycastAll(mousePos);
+            }
+            else
+            {
+                raycastResults = Array.Empty<RaycastResult>();
+            }
 
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
             UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
