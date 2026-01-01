@@ -207,7 +207,7 @@ namespace DCL.Minimap
                          .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
             SetInitialHomeToggleValue();
-            viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+            viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
             {
@@ -227,7 +227,7 @@ namespace DCL.Minimap
         {
             SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
+                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
         }
 
