@@ -79,8 +79,7 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private void UpdateTweenSequenceState(Entity entity, ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence,
-            CRDTEntity sdkEntity, ref TransformComponent transformComponent)
+        private void UpdateTweenSequenceState(Entity entity, ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
@@ -97,11 +96,11 @@ namespace DCL.SDKComponents.Tween
                 }
 
                 SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform, material);
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
             }
             else
             {
-                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, ref transformComponent);
+                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, transformComponent);
             }
         }
 
@@ -124,19 +123,19 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, ref TransformComponent transformComponent)
+        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenSequenceComponent.SequenceTweener);
             if (newState != sdkTweenSequenceComponent.TweenStateStatus)
             {
                 sdkTweenSequenceComponent.TweenStateStatus = newState;
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 // Update transform while sequence is playing
                 if (sdkTweenSequenceComponent.HasTransformTweens)
-                    UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
+                    UpdateSequenceTransform(sdkEntity, ref sdkTransform, transformComponent);
             }
         }
 
@@ -174,16 +173,16 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent)
         {
             if (sdkTweenSequenceComponent.HasTransformTweens)
-                UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
+                UpdateSequenceTransform(sdkEntity, ref sdkTransform, transformComponent);
 
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenSequenceComponent.TweenStateStatus);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, TransformComponent transformComponent)
         {
             // Read back from Unity Transform (DOTween Sequence updates it directly)
             TweenSDKComponentHelper.SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, sceneStateProvider.IsCurrent);
