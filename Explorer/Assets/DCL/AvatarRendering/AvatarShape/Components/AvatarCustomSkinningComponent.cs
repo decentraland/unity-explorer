@@ -1,11 +1,15 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Diagnostics;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Assertions;
+using RichTypes;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
@@ -16,14 +20,27 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public struct Buffers
         {
-            internal ComputeSkinningBufferContainer computeSkinningBufferContainer;
-            internal readonly ComputeBuffer bones;
+            // since it's impossible to guarantee initialization of structure in C# the case requires to provide an additional check
+            private ComputeSkinningBufferContainer computeSkinningBufferContainer;
+            private readonly ComputeBuffer bones; 
             internal readonly int kernel;
 
             public Buffers(ComputeBuffer bones, int kernel) : this()
             {
+                Assert.IsNotNull(bones, "AvatarCustomSkinningComponent cannot have NULL ComputeBuffer as bones");
                 this.bones = bones;
                 this.kernel = kernel;
+            }
+
+            public bool TryGetBones(out ComputeBuffer bones)
+            {
+                bones = this.bones;
+                return bones != null;
+            }
+
+            public void AssignBuffer(ComputeSkinningBufferContainer container)
+            {
+                computeSkinningBufferContainer = container;
             }
 
             public void DisposeBuffers()
@@ -60,9 +77,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public readonly int VertCount;
 
-        internal Buffers buffers;
         internal readonly List<MaterialSetup> materials;
-        internal readonly UnityEngine.ComputeShader computeShaderInstance;
+        private readonly Buffers buffers;
+        private readonly UnityEngine.ComputeShader computeShaderInstance;
 
         private bool disposed;
 
@@ -94,6 +111,40 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             {
                 materials[i].usedMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, distance);
             }
+        }
+
+        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
+        {
+            if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+            {
+                return Result.ErrorResult("Attempt to process an invalid avatar");
+            }
+
+            if (buffers.TryGetBones(out ComputeBuffer bones) == false)
+            {
+                return Result.ErrorResult("ComputeSkinning error: Cannot get bones (ComputeBuffer)");
+            }
+
+            bones.SetData(bonesResult, validIndex * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
+            computeShaderInstance.Dispatch(buffers.kernel, (VertCount / 64) + 1, 1, 1);
+            return Result.SuccessResult();
+
+            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
+            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
+            //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
+            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
+            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
+            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
+        }
+
+        public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
+        {
+            VertsOutRegion = region;
+
+            computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
+
+            for (var i = 0; i < materials.Count; i++)
+                materials[i].usedMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
         }
 
         public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
