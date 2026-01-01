@@ -24,6 +24,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Minimap.Settings;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
@@ -72,6 +73,7 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -108,7 +110,8 @@ namespace DCL.Minimap
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus) 
+            HomePlaceEventBus homePlaceEventBus,
+            MinimapContextMenuSettings minimapContextMenuSettings)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -129,6 +132,8 @@ namespace DCL.Minimap
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.minimapContextMenuSettings = minimapContextMenuSettings;
+
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -189,15 +194,17 @@ namespace DCL.Minimap
 
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
-            
+
             contextMenu = new GenericContextMenu()
+
                           // Add title control to prevent incorrect layout height when the context menu has a single control
                           // May be removed if a new control is added
-                         .AddControl(new TextContextMenuControlSettings("Scene's Options"))
+                         .AddControl(new TextContextMenuControlSettings(minimapContextMenuSettings.ContextMenuTitle))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings(minimapContextMenuSettings.SetAsHomeText, SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.CopyLinkText, minimapContextMenuSettings.CopyLinkSprite, CopyJumpInLink))
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
             SetInitialHomeToggleValue();
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
@@ -230,12 +237,12 @@ namespace DCL.Minimap
                 homePlaceEventBus.SetAsHome(previousParcelPosition);
             else
                 homePlaceEventBus.UnsetHome();
-            
-            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate 
+
+            // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
             OnFocus();
         }
-        
+
         private void OnFavoriteButtonClicked(bool value)
         {
             // Setting button for immediate graphic change.
@@ -380,13 +387,13 @@ namespace DCL.Minimap
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
             RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
-            
+
             // This is disabled until we figure out a better way to inform the user if the current is scene is SDK6 or not
             // bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             // bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             // viewInstance!.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
         }
-        
+
         private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
             PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
@@ -406,7 +413,7 @@ namespace DCL.Minimap
                 viewInstance!.placeNameText.text = "Unknown place";
                 viewInstance!.favoriteButton.SetButtonState(false, false);
             }
-    
+
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
         }
 
@@ -419,7 +426,7 @@ namespace DCL.Minimap
             {
                 if (realmData.ScenesAreFixed)
                     return null;
-        
+
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
             catch (OperationCanceledException _) { }
@@ -431,7 +438,7 @@ namespace DCL.Minimap
             {
                 ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
             }
-            
+
             return null;
         }
 
@@ -496,10 +503,13 @@ namespace DCL.Minimap
                             .Forget();
             }
 
-            return () => chatMessagesBus.SendWithUtcNowTimestamp(
+            return ReloadScene;
+        }
+
+        private void ReloadScene() =>
+            chatMessagesBus.SendWithUtcNowTimestamp(
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP
             );
-        }
 
         private void SetAnimatorController(bool isGenesisModeActivated)
         {
