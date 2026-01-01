@@ -266,8 +266,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 foreach (Renderer renderer in wearable.Renderers)
                     renderer.enabled = toggle;
 
-            avatarAnimator.enabled = toggle;
-            avatarAnimator.fireEvents = toggle; // even when disabled the Animator can fire events...
+            avatarAnimator.enabled = !avatarShape.HiddenByModifierArea;
+            avatarAnimator.fireEvents = avatarAnimator.enabled; // even when disabled the Animator fires events...
         }
 
         private AvatarCachedVisibilityComponent InitializeCachedComponent(bool shouldBeHidden, ref AvatarShapeComponent avatarShape, in AvatarBase avatarBase)
