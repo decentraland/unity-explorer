@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
-using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;

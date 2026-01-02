@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
 using DCL.Chat;
-using DCL.ChatArea;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;

@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Communities;
@@ -377,7 +376,7 @@ namespace DCL.PluginSystem.Global
         private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
             if (status == LoadingStatus.LoadingStage.Completed)
-                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
+                mvcManager.ShowAndForget(ChatMainSharedAreaController.IssueCommand());
         }
 
         private void OnIdentityCleared()

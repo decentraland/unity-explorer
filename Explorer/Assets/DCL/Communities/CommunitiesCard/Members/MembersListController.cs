@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -25,7 +24,6 @@ using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Chat;
-using DCL.ChatArea;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 

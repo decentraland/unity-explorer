@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
-using DCL.ChatArea;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Web3;

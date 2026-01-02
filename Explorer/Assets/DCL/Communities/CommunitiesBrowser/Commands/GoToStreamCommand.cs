@@ -1,7 +1,4 @@
-using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
-using DCL.ChatArea;
 using MVC;
 
 namespace DCL.Communities.CommunitiesBrowser.Commands

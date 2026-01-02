@@ -52,8 +52,7 @@ namespace DCL.UI.Sidebar
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly ChatEventBus chatEventBus;
-
-        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
+        private readonly IDisposable? chatEventBusSubscription;
         private bool includeMarketplaceCredits;
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -61,6 +60,8 @@ namespace DCL.UI.Sidebar
         private SingleInstanceEntity? cameraInternal;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
+
+        private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
 
         public event Action? HelpOpened;
 
@@ -87,16 +88,54 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
-            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
+            includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
 
-            chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
+            chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
 
         public override void Dispose()
         {
             base.Dispose();
+
+            chatEventBusSubscription?.Dispose();
+            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
+
+            if (viewInstance != null)
+            {
+                viewInstance.settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
+                viewInstance.communitiesButton.onClick.RemoveListener(OnCommunitiesButtonClicked);
+                viewInstance.mapButton.onClick.RemoveListener(OnMapButtonClicked);
+                viewInstance.autoHideToggle.onValueChanged.RemoveListener(OnAutoHideToggleChanged);
+                viewInstance.helpButton.onClick.RemoveListener(OnHelpButtonClicked);
+                viewInstance.controlsButton.onClick.RemoveListener(OnControlsButtonClicked);
+                viewInstance.InWorldCameraButton.onClick.RemoveListener(OnOpenCameraButtonClicked);
+                viewInstance.marketplaceButton.onClick.RemoveListener(OpenMarketplace);
+                viewInstance.emotesWheelButton.onClick.RemoveListener(OnEmotesWheelButtonClicked);
+                viewInstance.NotificationsButton.onClick.RemoveListener(OpenNotificationsPanel);
+                viewInstance.skyboxButton.onClick.RemoveListener(OpenSkyboxSettingsPanel);
+                viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OpenProfilePanel);
+                viewInstance.sidebarConfigButton.onClick.RemoveListener(OpenSidebarSettings);
+                viewInstance.unreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
+                viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
+                viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
+                viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
+
+                if (includeCameraReel)
+                    viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
+
+                if (includeFriends)
+                    viewInstance.friendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
+
+                if (includeMarketplaceCredits)
+                    viewInstance.marketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
+            }
+
+            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
+            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            NotificationsBusController.Instance.UnsubscribeFromNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
@@ -127,9 +166,6 @@ namespace DCL.UI.Sidebar
 
         private void SubscribeToEvents()
         {
-            //mvcManager.OnViewShowed += OnMvcManagerViewShowed;
-            //mvcManager.OnViewClosed += OnMvcManagerViewClosed;
-
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
 
@@ -219,32 +255,6 @@ namespace DCL.UI.Sidebar
             }
         }
 
-        private void OnMvcManagerViewClosed(IController closedController)
-        {
-            //When panels are closed through shortcuts we need to be able to de-select the buttons
-            switch (closedController)
-            {
-                case EmotesWheelController:
-                    viewInstance?.emotesWheelButton.Deselect(); break;
-                case FriendsPanelController:
-                    viewInstance?.friendsButton.Deselect(); break;
-            }
-        }
-
-        private void OnMvcManagerViewShowed(IController showedController)
-        {
-            // Panels that are controllers and can be opened using shortcuts, we need to select/deselect their buttons.
-            switch (showedController)
-            {
-                case EmotesWheelController:
-                    viewInstance?.emotesWheelButton.Select();
-                    break;
-                case FriendsPanelController:
-                    viewInstance?.friendsButton.Select();
-                    break;
-            }
-        }
-
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
         {
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
@@ -318,7 +328,6 @@ namespace DCL.UI.Sidebar
 #region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
-            // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
             chatEventBus.RaiseToggleChatEvent();
         }
 
@@ -335,7 +344,8 @@ namespace DCL.UI.Sidebar
         private void OnMarketplaceCreditsButtonClicked()
         {
             OpenPanelAsync(viewInstance!.sidebarConfigButton,
-                mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false)))).Forget();
+                    mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))))
+               .Forget();
         }
 
         private void OnHelpButtonClicked()

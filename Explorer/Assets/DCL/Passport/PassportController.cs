@@ -44,8 +44,6 @@ using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
-using DCL.ChatArea;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;

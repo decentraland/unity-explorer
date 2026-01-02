@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
-using DCL.Chat.ControllerShowParams;
 using MVC;
 using System.Threading;
 using Utility;
@@ -10,7 +9,7 @@ using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.ChatArea
 {
-    public class ChatMainSharedAreaController : ControllerBase<ChatMainSharedAreaView, ChatMainSharedAreaControllerShowParams>
+    public class ChatMainSharedAreaController : ControllerBase<ChatMainSharedAreaView>
     {
         private readonly IMVCManager mvcManager;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
