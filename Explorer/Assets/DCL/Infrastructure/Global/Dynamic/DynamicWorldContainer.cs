@@ -372,7 +372,7 @@ namespace Global.Dynamic
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
-            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = ConstSceneRoomMetaDataSource.FromMachineUUID().WithLog();
+            SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource);
 
@@ -982,7 +982,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     mvcManager,
                     thumbnailProvider),
-                new AvatarLocomotionOverridesGlobalPlugin()
+                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
+                new AvatarLocomotionOverridesGlobalPlugin(),
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
