@@ -168,6 +168,10 @@ namespace DCL.UI.Sidebar
 
         private void SubscribeToEvents()
         {
+
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
+
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
 
@@ -198,6 +202,37 @@ namespace DCL.UI.Sidebar
             if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (includeFriends) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
         }
+
+        private void OnMvcManagerViewClosed(IController closedController)
+        {
+            if (!viewInstance) return;
+
+            //When panels are closed through shortcuts we need to be able to de-select the buttons remotely.
+            switch (closedController)
+            {
+                case EmotesWheelController:
+                    viewInstance.emotesWheelButton.Deselect(); break;
+                case FriendsPanelController:
+                    viewInstance.friendsButton.Deselect(); break;
+            }
+        }
+
+        private void OnMvcManagerViewShowed(IController showedController)
+        {
+            if (!viewInstance) return;
+
+            // Panels that are controllers and can be opened using shortcuts, we need to select their buttons remotely.
+            switch (showedController)
+            {
+                case EmotesWheelController:
+                    viewInstance.emotesWheelButton.Select();
+                    break;
+                case FriendsPanelController:
+                    viewInstance.friendsButton.Select();
+                    break;
+            }
+        }
+
 
         private void OnOpenCameraButtonClicked()
         {
