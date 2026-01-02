@@ -157,8 +157,8 @@ namespace DCL.SDKComponents.MediaStream
             {
                 videoStateByPriority.Score = float.MinValue;
 
-                Vector3 boundsMin = videoTextureConsumer.BoundsMin;
-                Vector3 boundsMax = videoTextureConsumer.BoundsMax;
+                // Use GetBounds() to calculate both min bounds and max bound in a single pass (to avoid duplicate Renderer.bounds calls that are heavy)
+                var (boundsMin, boundsMax) = videoTextureConsumer.GetBounds();
                 Vector3 videoCenterPosition = (boundsMax + boundsMin) * 0.5f;
 
                 bool isCameraInVideoBoundingBox = cameraWorldPosition.x >= boundsMin.x && cameraWorldPosition.y >= boundsMin.y && cameraWorldPosition.z >= boundsMin.z &&
@@ -188,7 +188,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
                     {
                         // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-                        float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
+                        float videoMeshLocalSize = (boundsMax - boundsMin).magnitude;
                         float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance));
 
                         // Skips videos that are too small on screen
