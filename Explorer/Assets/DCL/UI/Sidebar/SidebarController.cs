@@ -57,6 +57,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
+        private CancellationTokenSource openPanelCts = new ();
         private SingleInstanceEntity? cameraInternal;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
@@ -140,6 +141,7 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
+            openPanelCts.SafeCancelAndDispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
@@ -333,19 +335,18 @@ namespace DCL.UI.Sidebar
 
         private void OnEmotesWheelButtonClicked()
         {
-            OpenPanelAsync(viewInstance!.emotesWheelButton, mvcManager.ShowAsync(EmotesWheelController.IssueCommand())).Forget();
+            OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
         }
 
         private void OnFriendsButtonClicked()
         {
-            OpenPanelAsync(viewInstance!.friendsButton, mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS)))).Forget();
+            OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
         }
 
         private void OnMarketplaceCreditsButtonClicked()
         {
             OpenPanelAsync(viewInstance!.sidebarConfigButton,
-                    mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))))
-               .Forget();
+                MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
         }
 
         private void OnHelpButtonClicked()
@@ -357,54 +358,38 @@ namespace DCL.UI.Sidebar
         private void OnControlsButtonClicked()
         {
             //We don't "select" the controls button as it doesn't have any visual change of state.
-            OpenPanelAsync(null, mvcManager.ShowAsync(ControlsPanelController.IssueCommand())).Forget();
+            OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
         }
 
         private void OpenSidebarSettings()
         {
-            OpenPanelAsync(viewInstance!.sidebarConfigButton, mvcManager.ShowAsync(SidebarSettingsWidgetController.IssueCommand())).Forget();
+            OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
         }
 
         private void OpenProfilePanel()
         {
             //We don't "select" the profile button as it doesn't have any visual change of state.
-            OpenPanelAsync(null, mvcManager.ShowAsync(ProfileMenuController.IssueCommand())).Forget();
+            OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
         }
 
         private void OpenSkyboxSettingsPanel()
         {
-            OpenPanelAsync(viewInstance!.skyboxButton, mvcManager.ShowAsync(SkyboxMenuController.IssueCommand())).Forget();
-        }
-
-        private async UniTaskVoid OpenPanelAsync(ISelectableButton? button, UniTask showTask)
-        {
-            //TODO FRAN: DO we need a cancellation token and error handling?
-            //Instead of a UniTask maybe we can get the ShowCommand like ShowAsync??
-            //We can make all of these into commands so they can be better reused in other parts.
-
-            if (!viewInstance) return;
-
-            viewInstance.BlockSidebar();
-            button?.Select();
-            await showTask;
-            button?.Deselect();
-            viewInstance.UnblockSidebar();
+            OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
         }
 
         private void OpenNotificationsPanel()
         {
-            OpenPanelAsync(viewInstance!.NotificationsButton, mvcManager.ShowAsync(NotificationsPanelController.IssueCommand())).Forget();
+            OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            // Note: The buttons of these options (map, backpack, etc.) are not selected because they are not visible anyway, same reason we don't lock the sidebar.
-            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection)));
+            OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection))).Forget();
         }
 
         private void OnSmartWearablesButtonHover()
         {
-            OpenPanelAsync(viewInstance!.smartWearablesButton, mvcManager.ShowAsync(SmartWearablesSideBarTooltipController.IssueCommand())).Forget();
+            OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
         }
 
         private void OnSmartWearablesButtonUnhover()
@@ -419,6 +404,33 @@ namespace DCL.UI.Sidebar
             urlBuilder.AppendParameter(marketplaceSourceParam);
             webBrowser.OpenUrl(urlBuilder.Build());
         }
+
+        private async UniTaskVoid OpenPanelAsync<TView, TInputData>(
+            ISelectableButton? button,
+            ShowCommand<TView, TInputData> command)
+            where TView: IView
+        {
+            if (!viewInstance) return;
+
+            openPanelCts = openPanelCts.SafeRestart();
+            CancellationToken ct = openPanelCts.Token;
+
+            viewInstance.BlockSidebar();
+            button?.Select();
+
+            try { await mvcManager.ShowAsync(command, ct).SuppressCancellationThrow(); }
+            catch (OperationCanceledException){} // Expected cancellation when a new panel is opened
+            catch (Exception e) { ReportHub.LogException(new Exception("Exception on opening panel from Sidebar: " + e.Message, e), ReportCategory.UI); }
+            finally
+            {
+                if (viewInstance)
+                {
+                    button?.Deselect();
+                    viewInstance.UnblockSidebar();
+                }
+            }
+        }
+
 #endregion
     }
 }
