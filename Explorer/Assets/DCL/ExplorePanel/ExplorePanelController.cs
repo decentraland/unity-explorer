@@ -333,11 +333,8 @@ namespace DCL.ExplorePanel
             {
                 try
                 {
-                    //TODO FRAN: Fix this, we need to open the profile in the correct position!
-                    await mvcManager.ShowAsync(ProfileMenuController.IssueCommand(), profileMenuCts.Token);
-
-//                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),new ControllerNoData(), profileMenuCts.Token);
- //                   await profileMenuController.HideViewAsync(profileMenuCts.Token);
+                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 0),new ControllerNoData(), profileMenuCts.Token);
+                    await profileMenuController.HideViewAsync(profileMenuCts.Token);
                 }
                 catch (OperationCanceledException)
                 {
