@@ -123,6 +123,7 @@ namespace DCL.ChatArea
         {
             if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
 
+            //We restore the chat to its previous appearance if the fullscreen view is closed
             chatSharedAreaEventBus.RaiseFullscreenClosedEvent();
         }
 

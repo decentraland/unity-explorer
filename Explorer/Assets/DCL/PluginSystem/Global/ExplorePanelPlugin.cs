@@ -84,7 +84,6 @@ namespace DCL.PluginSystem.Global
     public class ExplorePanelPlugin : IDCLGlobalPlugin<ExplorePanelPlugin.ExplorePanelSettings>
     {
         private readonly IEventBus eventBus;
-        private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
@@ -163,7 +162,6 @@ namespace DCL.PluginSystem.Global
         private ExplorePanelController? explorePanelController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
-            FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
@@ -224,7 +222,6 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus)
         {
             this.eventBus = eventBus;
-            this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -326,7 +323,6 @@ namespace DCL.PluginSystem.Global
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
 
             backpackSubPlugin = new BackpackSubPlugin(
-                featureFlags,
                 assetsProvisioner,
                 web3IdentityCache,
                 characterPreviewFactory,

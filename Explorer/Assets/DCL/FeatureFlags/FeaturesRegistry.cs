@@ -36,6 +36,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.CHAT_TRANSLATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED),
                 [FeatureId.GIFTING_ENABLED] = featureFlags.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = isLocalSceneDevelopment,
+                [FeatureId.BANNED_USERS_FROM_SCENE] = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor,
+                [FeatureId.BACKPACK_OUTFITS] = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -137,5 +139,7 @@ namespace DCL.FeatureFlags
         GPUI_ENABLED,
         GIFTING_ENABLED = 10,
         CHAT_TRANSLATIONS = 11,
+        BANNED_USERS_FROM_SCENE = 12,
+        BACKPACK_OUTFITS = 13,
     }
 }
