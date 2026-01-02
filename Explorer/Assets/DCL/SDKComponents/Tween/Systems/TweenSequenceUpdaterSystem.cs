@@ -22,8 +22,7 @@ namespace DCL.SDKComponents.Tween
     /// Handles the update logic of PBTween and PBTweenSequence components
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(InstantiateTransformSystem))] // Temporary fix: UpdateTweenSequenceState relies on the position initially set by UpdateTransformSystem
-    [UpdateAfter(typeof(TweenSequenceLoaderSystem))]
+    [UpdateAfter(typeof(UpdateTransformSystem))] // The transform has to be correctly updated at least once before the Tween can use it
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenSequenceUpdaterSystem : BaseUnityLoopSystem
     {
