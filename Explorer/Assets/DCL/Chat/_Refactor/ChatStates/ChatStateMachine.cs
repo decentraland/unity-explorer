@@ -136,10 +136,6 @@ namespace DCL.Chat.ChatStates
             fsm.PopState();
         }
 
-        /// <summary>
-        /// NOTE: called from the SharedSpaceManager
-        /// </summary>
-        /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)

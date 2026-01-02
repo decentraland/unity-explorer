@@ -23,15 +23,9 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         /// <param name="communityId">The community ID to join</param>
         public void Execute(string communityId)
         {
-            GoToStreamAsync().Forget();
-            return;
-
-            async UniTaskVoid GoToStreamAsync()
-            {
-                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
-                mvcManager.CloseAllNonPersistent();
-                chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
-            }
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityId);
         }
     }
 }

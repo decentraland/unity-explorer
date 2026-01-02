@@ -5,41 +5,18 @@ namespace DCL.ChatArea
         public struct ChatPanelPointerEnterEvent { }
         public struct ChatPanelPointerExitEvent { }
         public struct FocusChatPanelEvent { }
-
-        public struct SetChatPanelVisibilityEvent
-        {
-            public bool IsVisible { get; }
-
-            public SetChatPanelVisibilityEvent(bool isVisible)
-            {
-                IsVisible = isVisible;
-            }
-        }
-
         public struct ToggleChatPanelEvent { }
         public struct ChatPanelViewShowEvent { }
-
-        public struct ShowChatPanelEvent
-        {
-            public bool Focus { get; }
-
-            public ShowChatPanelEvent(bool focus)
-            {
-                Focus = focus;
-            }
-        }
-
-        public struct HideChatPanelEvent { }
         public struct FullscreenViewOpenEvent { }
         public struct FullscreenClosedEvent { }
 
         public struct ChatPanelVisibilityStateChangedEvent
         {
-            public bool IsVisibleInSharedSpace { get; }
+            public bool IsVisible { get; }
 
-            public ChatPanelVisibilityStateChangedEvent(bool isVisibleInSharedSpace)
+            public ChatPanelVisibilityStateChangedEvent(bool isVisible)
             {
-                IsVisibleInSharedSpace = isVisibleInSharedSpace;
+                IsVisible = isVisible;
             }
         }
     }

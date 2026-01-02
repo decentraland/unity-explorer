@@ -169,15 +169,9 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void OnOpenConversationClicked(Web3Address web3Address)
         {
-            OpenChatConversationAsync().Forget();
-            return;
-
-            async UniTaskVoid OpenChatConversationAsync()
-            {
-                mvcManager.CloseAllNonPersistent();
-                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
-            }
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(web3Address);
         }
 
 

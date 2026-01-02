@@ -7,7 +7,6 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -52,9 +51,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly bool includeCameraReel;
-        private readonly bool includeFriends;
-        private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ProfileChangesBus profileChangesBus;
@@ -66,7 +62,6 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly Arch.Core.World globalWorld;
-        private readonly EmotesBus emotesBus;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -101,8 +96,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
-            Arch.Core.World globalWorld,
-            EmotesBus emotesBus)
+            Arch.Core.World globalWorld
+            )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -117,9 +112,6 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
-            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             this.chatHistory = chatHistory;
             profileRepositoryWrapper = profileDataProvider;
             this.profileChangesBus = profileChangesBus;
@@ -130,7 +122,6 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
             this.globalWorld = globalWorld;
-            this.emotesBus = emotesBus;
             this.chatEventBus = chatEventBus;
         }
 
@@ -173,22 +164,13 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 mvcManager,
-                notificationsPanelController,
                 profileButtonPresenter,
-                profileMenuController,
-                skyboxMenuController,
-                controlsPanelController,
                 smartWearablesSideBarTooltipController,
                 webBrowser,
-                includeCameraReel,
-                includeFriends,
-                includeMarketplaceCredits,
                 chatHistory,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                smartWearableCache,
-                emotesBus,
                 globalWorld,
                 chatEventBus
                 );

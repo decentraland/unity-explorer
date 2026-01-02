@@ -403,12 +403,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                //mvcManager.CloseAllNonPersistent();
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                mvcManager.CloseAllNonPersistent();
+                chatEventBus.RaiseFocusRequestedEvent();
+                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
                 //TODO FRAN & DAVIDE: This is not clean or pretty, but works for now. Ideally we should be able to await
                 await UniTask.Delay(500);
-                chatEventBus.StartCallInCurrentConversation();
+                chatEventBus.RaiseStartCallEvent();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
@@ -418,9 +418,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                //mvcManager.CloseAllNonPersistent();
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                mvcManager.CloseAllNonPersistent();
+                chatEventBus.RaiseFocusRequestedEvent();
+                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }

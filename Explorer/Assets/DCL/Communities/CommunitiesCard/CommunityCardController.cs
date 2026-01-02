@@ -342,9 +342,9 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
-                //mvcManager.CloseAllNonPersistent();
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
+                mvcManager.CloseAllNonPersistent();
+                chatEventBus.RaiseFocusRequestedEvent();
+                chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityData.id);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -420,13 +420,8 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnClosePanel()
         {
-            OnClosePanelAsync().Forget();
-            return;
-
-            async UniTaskVoid OnClosePanelAsync()
-            {
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            }
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
         }
 
         protected override void OnViewShow()

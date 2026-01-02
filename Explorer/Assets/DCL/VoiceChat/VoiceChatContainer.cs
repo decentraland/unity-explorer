@@ -10,7 +10,6 @@ using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
-using MVC;
 using System;
 
 namespace DCL.VoiceChat
@@ -22,8 +21,8 @@ namespace DCL.VoiceChat
         private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
+        private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
-        public readonly ICommunityVoiceChatCallStatusService CommunityVoiceChatCallStatusService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
         public VoiceChatContainer(
@@ -37,8 +36,7 @@ namespace DCL.VoiceChat
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource,
             ChatEventBus chatEventBus,
-            CurrentChannelService currentChannelService,
-            IMVCManager mvcManager)
+            CurrentChannelService currentChannelService)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)
@@ -48,22 +46,21 @@ namespace DCL.VoiceChat
 
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus, webRequestController, urlsSource);
             sceneVoiceChatTrackerService = new SceneVoiceChatTrackerService(scenesCache, realmNavigator, realmData);
-            CommunityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
+            communityVoiceChatCallStatusService = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT)
                 ? new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, sceneVoiceChatTrackerService) : new CommunityVoiceChatCallStatusServiceNull();
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
-                CommunityVoiceChatCallStatusService,
+                communityVoiceChatCallStatusService,
                 participantsStateService,
                 sceneVoiceChatTrackerService,
                 chatEventBus,
-                currentChannelService,
-                mvcManager);
+                currentChannelService);
         }
 
         public void Dispose()
         {
             privateVoiceChatCallStatusService.Dispose();
-            CommunityVoiceChatCallStatusService.Dispose();
+            communityVoiceChatCallStatusService.Dispose();
             rpcPrivateVoiceChatService.Dispose();
             VoiceChatOrchestrator.Dispose();
             rpcCommunityVoiceChatService.Dispose();

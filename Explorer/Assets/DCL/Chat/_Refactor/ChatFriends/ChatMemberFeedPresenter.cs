@@ -94,7 +94,7 @@ namespace DCL.Chat.ChatFriends
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            chatEventBus.OpenPrivateConversationUsingUserId(userId);
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }
 
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)

@@ -90,21 +90,6 @@ namespace DCL.Chat
 
         public void RaiseStartCallEvent() =>
             Publish(new ChatEvents.StartCallEvent());
-
-        public void InsertText(string text) =>
-            RaiseInsertTextInChatRequestedEvent(text);
-
-        public void ClearAndInsertText(string text) =>
-            RaiseClearAndInsertTextInChatRequestedEvent(text);
-
-        public void OpenPrivateConversationUsingUserId(string userId) =>
-            RaiseOpenPrivateConversationRequestedEvent(userId);
-
-        public void OpenCommunityConversationUsingCommunityId(string communityId) =>
-            RaiseOpenCommunityConversationRequestedEvent(communityId);
-
-        public void StartCallInCurrentConversation() =>
-            RaiseStartCallEvent();
 #endregion
     }
 }

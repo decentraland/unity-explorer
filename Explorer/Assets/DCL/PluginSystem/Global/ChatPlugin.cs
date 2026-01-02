@@ -385,7 +385,7 @@ namespace DCL.PluginSystem.Global
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, "ChatPlugin.OnIdentityCleared");
             commandRegistry?.ResetChat.Execute();
 
-            if (chatSharedAreaController is { IsVisibleInSharedSpace: true })
+            if (chatSharedAreaController is { IsVisible: true })
                 chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
         }
 

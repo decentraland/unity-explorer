@@ -85,7 +85,7 @@ namespace DCL.Chat.ChatCommands
         private void SelectAndInsertAsync(ChatChannel.ChannelId channelId, string text, CancellationToken ct)
         {
             Execute(channelId, ct);
-            chatEventBus.ClearAndInsertText(text);
+            chatEventBus.RaiseClearAndInsertTextInChatRequestedEvent(text);
         }
 
         /// <summary>

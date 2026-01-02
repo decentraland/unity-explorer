@@ -19,7 +19,7 @@ namespace DCL.ChatArea
         private readonly DCLInput dclInput;
         public readonly ChatCommandRegistry ChatCommandRegistry;
 
-        public bool IsVisibleInSharedSpace { get; private set; }
+        public bool IsVisible { get; private set; }
 
         public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -48,13 +48,10 @@ namespace DCL.ChatArea
             dclInput.UI.Submit.performed += OnUISubmitPerformed;
 
             eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleChatState));
+            eventScope.Add(chatEventBus.Subscribe<ChatEvents.FocusRequestedEvent>(SetFocusState));
+
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
             CentralizedChatClickDetectionService.Instance.Resume();
-        }
-
-        protected override void OnViewClose()
-        {
-
         }
 
         protected override void OnBeforeViewShow()
@@ -69,55 +66,19 @@ namespace DCL.ChatArea
             chatSharedAreaEventBus.RaiseViewShowEvent();
         }
 
-        public void SetVisibility(bool isVisible)
-        {
-            chatSharedAreaEventBus.RaiseVisibilityEvent(isVisible);
-        }
-
-        public void SetFocusState()
+        private void SetFocusState(ChatEvents.FocusRequestedEvent _)
         {
             chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
         private void ToggleChatState(ChatEvents.ToggleChatEvent _)
         {
-            //TODO FRAN: Does this make sense? we can just listen to the ToggleChatEvent directly on the consumer?
             chatSharedAreaEventBus.RaiseToggleEvent();
         }
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
             chatSharedAreaEventBus.RaiseToggleEvent();
-        }
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatMainSharedAreaControllerShowParams showParams)
-        {
-            // This method is called when we want to "show" the chat.
-            // This can happen when:
-            // 1. Toggling from a Minimized state.
-            // 2. Another panel (like Friends) that was obscuring the chat is closed.
-            if (State == ControllerState.ViewHidden)
-            {
-                CentralizedChatClickDetectionService.Instance.Pause();
-                // If the entire controller view is not even active, we can't proceed.
-                await UniTask.CompletedTask;
-                return;
-            }
-
-            // If the chat was fully hidden (e.g., by the Friends panel), transition to Default.
-            // If it was minimized, transition to Default or Focused based on the input.
-            // The `showParams.Focus` will be true when toggling with Enter/shortcut, and false when returning from another panel.
-            chatSharedAreaEventBus.RaiseShownInSharedSpaceEvent(showParams.Focus);
-            CentralizedChatClickDetectionService.Instance.Resume();
-
-            await UniTask.CompletedTask;
-        }
-
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            CentralizedChatClickDetectionService.Instance.Pause();
-            chatSharedAreaEventBus.RaiseHiddenInSharedSpaceEvent();
-            await UniTask.CompletedTask;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -168,8 +129,8 @@ namespace DCL.ChatArea
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
         {
-            IsVisibleInSharedSpace = evt.IsVisibleInSharedSpace;
-            if (IsVisibleInSharedSpace)
+            IsVisible = evt.IsVisible;
+            if (IsVisible)
                 CentralizedChatClickDetectionService.Instance.Resume();
             else
                 CentralizedChatClickDetectionService.Instance.Pause();

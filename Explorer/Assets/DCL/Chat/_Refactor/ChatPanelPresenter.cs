@@ -210,11 +210,6 @@ namespace DCL.Chat
             chatStateMachine.OnViewShow();
         }
 
-        private void SetVisibility(ChatSharedAreaEvents.SetChatPanelVisibilityEvent evt)
-        {
-            chatStateMachine.SetVisibility(evt.IsVisible);
-        }
-
         private void SetFocusState(ChatSharedAreaEvents.FocusChatPanelEvent evt)
         {
             chatStateMachine.SetFocusState();
@@ -225,25 +220,15 @@ namespace DCL.Chat
             chatStateMachine.SetToggleState();
         }
 
-        private void OnShownInSharedSpaceAsync(ChatSharedAreaEvents.ShowChatPanelEvent evt)
-        {
-            chatStateMachine.SetInitialState(evt.Focus);
-        }
-
         private void OnFullscreenOpened(ChatSharedAreaEvents.FullscreenViewOpenEvent evt)
         {
             chatStateMachine.SetVisibility(false);
         }
 
-        private void OnMvcViewClosed(ChatSharedAreaEvents.FullscreenClosedEvent evt)
+        private void OnFullscreenClosed(ChatSharedAreaEvents.FullscreenClosedEvent evt)
         {
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();
-        }
-
-        private void OnHiddenInSharedSpace(ChatSharedAreaEvents.HideChatPanelEvent evt)
-        {
-            chatStateMachine.Minimize();
         }
 
         private void SubscribeToCoordinationEvents()
@@ -251,13 +236,10 @@ namespace DCL.Chat
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(HandlePointerEnter));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(HandlePointerExit));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FocusChatPanelEvent>(SetFocusState));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.SetChatPanelVisibilityEvent>(SetVisibility));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(ToggleState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelViewShowEvent>(OnViewShow));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ShowChatPanelEvent>(OnShownInSharedSpaceAsync));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.HideChatPanelEvent>(OnHiddenInSharedSpace));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenViewOpenEvent>(OnFullscreenOpened));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenClosedEvent>(OnMvcViewClosed));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenClosedEvent>(OnFullscreenClosed));
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)

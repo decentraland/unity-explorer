@@ -289,13 +289,9 @@ namespace DCL.UI
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
-        }
-
-        private async UniTaskVoid ShowChatAsync(Action? onChatShown)
-        {
-            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            onChatShown?.Invoke();
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }
 
         private void OnJumpInClicked(string userId)

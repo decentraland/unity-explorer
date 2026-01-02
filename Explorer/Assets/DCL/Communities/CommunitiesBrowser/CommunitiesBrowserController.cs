@@ -866,9 +866,9 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                //mvcManager.CloseAllNonPersistent();
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                mvcManager.CloseAllNonPersistent();
+                chatEventBus.RaiseFocusRequestedEvent();
+                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -881,7 +881,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
+                mvcManager.CloseAllNonPersistent();
+                chatEventBus.RaiseFocusRequestedEvent();
                 orchestrator.StartPrivateCallWithUserId(profile.Address);
             }
             catch (OperationCanceledException) { }

@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
 using DCL.Chat;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using DCL.ChatArea;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.NotificationsBus.NotificationTypes;
@@ -14,7 +12,6 @@ using System;
 using System.Threading;
 using Utility;
 using DCL.NotificationsBus;
-using MVC;
 
 namespace DCL.VoiceChat
 {
@@ -27,7 +24,6 @@ namespace DCL.VoiceChat
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
         private readonly ChatEventBus chatEventBus;
         private readonly CurrentChannelService currentChannelService;
-        private readonly IMVCManager mvcManager;
 
         private readonly IDisposable? privateStatusSubscription;
         private readonly IDisposable? communityStatusSubscription;
@@ -67,14 +63,13 @@ namespace DCL.VoiceChat
             VoiceChatParticipantsStateService participantsStateService,
             SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
             ChatEventBus chatEventBus,
-            CurrentChannelService currentChannelService, IMVCManager mvcManager)
+            CurrentChannelService currentChannelService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
-            this.mvcManager = mvcManager;
             ParticipantsStateService = participantsStateService;
 
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT)) return;
@@ -120,16 +115,9 @@ namespace DCL.VoiceChat
 
             var notification = (CommunityVoiceChatStartedNotification)parameters[0];
 
-            ShowCommunityInChatAndJoinAsync().Forget();
-            return;
-
-            async UniTaskVoid ShowCommunityInChatAndJoinAsync()
-            {
-                JoinCommunityVoiceChat(notification.CommunityId, true);
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
-            }
-
+            JoinCommunityVoiceChat(notification.CommunityId, true);
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenCommunityConversationRequestedEvent(notification.CommunityId);
         }
 
         public void StartCall(string callId, VoiceChatType callType)
@@ -185,7 +173,7 @@ namespace DCL.VoiceChat
                 var targetChannelId = new ChatChannel.ChannelId(userId);
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
                 {
-                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+                    chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
                     StartCall(userId, VoiceChatType.PRIVATE);
                     return;
                 }
@@ -198,7 +186,7 @@ namespace DCL.VoiceChat
 
                 try
                 {
-                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+                    chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
 
                     int winningTaskIndex = await UniTask.WhenAny(
                         channelChangedSource.Task,

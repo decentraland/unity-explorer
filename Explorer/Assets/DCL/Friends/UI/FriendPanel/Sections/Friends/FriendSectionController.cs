@@ -76,13 +76,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
         {
-            OnOpenConversationAsync(elementViewUserProfile).Forget();
-        }
-
-        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
-        {
-            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(elementViewUserProfile.Address);
         }
     }
 }

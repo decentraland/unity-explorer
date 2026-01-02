@@ -399,25 +399,16 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            OnStartCallButtonClickedAsync().Forget();
-            return;
-
-            async UniTaskVoid OnStartCallButtonClickedAsync()
-            {
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-                voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
-            }
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
         }
 
         private void OnChatButtonClicked()
         {
-            OnOpenConversationAsync().Forget();
-        }
-
-        private async UniTaskVoid OnOpenConversationAsync()
-        {
-            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
+            mvcManager.CloseAllNonPersistent();
+            chatEventBus.RaiseFocusRequestedEvent();
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(inputData.UserId);
         }
 
         private void OnJumpToFriendButtonClicked()

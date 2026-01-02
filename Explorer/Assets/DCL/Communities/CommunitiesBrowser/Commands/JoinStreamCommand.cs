@@ -43,10 +43,10 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
             async UniTaskVoid JoinStreamAsync()
             {
                 mvcManager.CloseAllNonPersistent();
-                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
+                chatEventBus.RaiseFocusRequestedEvent();
 
                 if (shouldOpenConversation)
-                    chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
+                    chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityId);
 
                 // We wait until the panel has disappeared before starting the call, so the UX feels better.
                 await UniTask.Delay(UI_CLOSE_DELAY);

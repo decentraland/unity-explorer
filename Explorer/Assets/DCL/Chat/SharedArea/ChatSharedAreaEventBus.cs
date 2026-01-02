@@ -19,20 +19,11 @@ namespace DCL.ChatArea
         public void RaiseFocusEvent() =>
             Publish(new ChatSharedAreaEvents.FocusChatPanelEvent());
 
-        public void RaiseVisibilityEvent(bool isVisible) =>
-            Publish(new ChatSharedAreaEvents.SetChatPanelVisibilityEvent(isVisible));
-
         public void RaiseToggleEvent() =>
             Publish(new ChatSharedAreaEvents.ToggleChatPanelEvent());
 
         public void RaiseViewShowEvent() =>
             Publish(new ChatSharedAreaEvents.ChatPanelViewShowEvent());
-
-        public void RaiseShownInSharedSpaceEvent(bool focus) =>
-            Publish(new ChatSharedAreaEvents.ShowChatPanelEvent(focus));
-
-        public void RaiseHiddenInSharedSpaceEvent() =>
-            Publish(new ChatSharedAreaEvents.HideChatPanelEvent());
 
         public void RaiseFullscreenOpenEvent() =>
             Publish(new ChatSharedAreaEvents.FullscreenViewOpenEvent());

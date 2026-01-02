@@ -587,8 +587,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatEventBus,
-                currentChannelService,
-                mvcManager
+                currentChannelService
             );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -772,7 +771,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     passportBridge,
                     chatEventBus,
-                    staticContainer.SmartWearableCache, globalWorld, emotesBus),
+                    staticContainer.SmartWearableCache,
+                    globalWorld),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(

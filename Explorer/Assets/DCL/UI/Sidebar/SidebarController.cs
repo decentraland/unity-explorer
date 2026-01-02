@@ -25,12 +25,11 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
+using DCL.FeatureFlags;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
 using ECS.Abstract;
-using Runtime.Wearables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -41,10 +40,6 @@ namespace DCL.UI.Sidebar
 
         private readonly IMVCManager mvcManager;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
-        private readonly NotificationsPanelController notificationsPanelController;
-        private readonly ProfileMenuController profileMenuController;
-        private readonly SkyboxMenuController skyboxMenuController;
-        private readonly ControlsPanelController controlsPanelController;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
@@ -54,7 +49,6 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly SmartWearableCache smartWearablesCache;
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly ChatEventBus chatEventBus;
@@ -72,46 +66,30 @@ namespace DCL.UI.Sidebar
 
         public SidebarController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
-            NotificationsPanelController notificationsPanelController,
             SidebarProfileButtonPresenter profileButtonPresenter,
-            ProfileMenuController profileMenuMenuWidgetController,
-            SkyboxMenuController skyboxMenuController,
-            ControlsPanelController controlsPanelController,
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             IWebBrowser webBrowser,
-            bool includeCameraReel,
-            bool includeFriends,
-            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            SmartWearableCache smartWearableCache,
-            EmotesBus emotesBus,
             World globalWorld,
             ChatEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileButtonPresenter = profileButtonPresenter;
-            this.profileMenuController = profileMenuMenuWidgetController;
-            this.notificationsPanelController = notificationsPanelController;
-            this.skyboxMenuController = skyboxMenuController;
-            this.controlsPanelController = controlsPanelController;
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
-            this.includeCameraReel = includeCameraReel;
             this.chatHistory = chatHistory;
-            this.includeFriends = includeFriends;
-            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
-            smartWearablesCache = smartWearableCache;
-
-            //sidebarPanelsShortcutsHandler = new SidebarPanelsShortcutsHandler(mvcManager, DCLInput.Instance, emotesBus, globalWorld);
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
 
             chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -120,8 +98,6 @@ namespace DCL.UI.Sidebar
         {
             base.Dispose();
 
-            // TODO FRAN: We should dispose all controllers in the class that spawns them.
-            notificationsPanelController.Dispose();
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
@@ -132,59 +108,6 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewInstantiated()
         {
-/*
-            mvcManager.RegisterController(controlsPanelController);
-
-            viewInstance!.backpackButton.onClick.AddListener(() =>
-            {
-                viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
-            });
-
-            viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
-            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
-            viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
-            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettingsAsync);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanelAsync);
-            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
-            viewInstance.backpackNotificationIndicator.SetActive(false);
-            viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            viewInstance.skyboxButton.interactable = true;
-            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
-            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
-            viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
-            viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
-            viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-
-            if (includeCameraReel)
-                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
-            else
-            {
-                viewInstance.cameraReelButton.gameObject.SetActive(false);
-                viewInstance.InWorldCameraButton.gameObject.SetActive(false);
-            }
-
-            if (includeFriends)
-                viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
-
-            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
-
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-
-            //chatView.FoldingChanged += OnChatViewFoldingChanged;
-
-            mvcManager.RegisterController(skyboxMenuController);
-            mvcManager.RegisterController(profileMenuController);
-            mvcManager.RegisterController(smartWearablesTooltipController);
-dev*/
-
-            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
-            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
-
             viewInstance!.backpackNotificationIndicator.SetActive(false);
             viewInstance.skyboxButton.Button.interactable = true;
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
@@ -192,9 +115,6 @@ dev*/
             viewInstance.InWorldCameraButton.gameObject.SetActive(includeCameraReel);
 
             SubscribeToEvents();
-
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -207,6 +127,12 @@ dev*/
 
         private void SubscribeToEvents()
         {
+            //mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            //mvcManager.OnViewClosed += OnMvcManagerViewClosed;
+
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+
             viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
             viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
             viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
@@ -296,7 +222,6 @@ dev*/
         private void OnMvcManagerViewClosed(IController closedController)
         {
             //When panels are closed through shortcuts we need to be able to de-select the buttons
-            //Do we care WHICH button was selected?? we can just try to deselect all!?
             switch (closedController)
             {
                 case EmotesWheelController:
@@ -308,9 +233,7 @@ dev*/
 
         private void OnMvcManagerViewShowed(IController showedController)
         {
-            // Panels that are controllers and can be opened using shortcuts,
-            // should we listen for the shortcuts instead??
-            // the problem there is that if we open the panel from anywhere else it won't get selected...
+            // Panels that are controllers and can be opened using shortcuts, we need to select/deselect their buttons.
             switch (showedController)
             {
                 case EmotesWheelController:
