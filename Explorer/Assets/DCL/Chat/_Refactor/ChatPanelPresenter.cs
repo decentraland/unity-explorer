@@ -6,7 +6,6 @@ using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.ChatArea;
 using DCL.Communities;
@@ -32,7 +31,7 @@ namespace DCL.Chat
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope chatAreaEventBusScope = new ();
 
-        private readonly CommandRegistry commandRegistry;
+        private readonly ChatCommandRegistry chatCommandRegistry;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ChatStateMachine chatStateMachine;
         private readonly EventSubscriptionScope uiScope;
@@ -47,14 +46,13 @@ namespace DCL.Chat
             CurrentChannelService currentChannelService,
             CommunitiesDataProvider communityDataProvider,
             ChatConfig.ChatConfig chatConfig,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CommunityDataService communityDataService,
             ChatMemberListService chatMemberListService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            CommandRegistry commandRegistry,
+            ChatCommandRegistry chatCommandRegistry,
             ChatInputBlockingService chatInputBlockingService,
-            IEventBus eventBus,
             ChatContextMenuService chatContextMenuService,
             ChatClickDetectionHandler chatClickDetectionHandler,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
@@ -65,12 +63,12 @@ namespace DCL.Chat
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
-            this.commandRegistry = commandRegistry;
+            this.chatCommandRegistry = chatCommandRegistry;
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
-            uiScope.Add(eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
+            uiScope.Add(chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
                 view.JoinCommunityLiveStreamSubTitleButton,
@@ -82,34 +80,34 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(
                 view.TitlebarView,
                 chatConfig,
-                eventBus,
+                chatEventBus,
                 communityDataService,
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
                 translationSettings,
-                commandRegistry.GetTitlebarViewModel,
-                commandRegistry.GetCommunityThumbnail,
-                commandRegistry.DeleteChatHistory,
+                chatCommandRegistry.GetTitlebarViewModel,
+                chatCommandRegistry.GetCommunityThumbnail,
+                chatCommandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
                 chatEventBus,
-                commandRegistry.GetUserCallStatusCommand,
-                commandRegistry.ToggleAutoTranslateCommand);
+                chatCommandRegistry.GetUserCallStatusCommand,
+                chatCommandRegistry.ToggleAutoTranslateCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
-                eventBus,
+                chatEventBus,
                 chatEventBus,
                 chatHistory,
                 currentChannelService,
                 communityDataService,
-                commandRegistry.SelectChannel,
-                commandRegistry.CloseChannel,
-                commandRegistry.OpenConversation,
-                commandRegistry.CreateChannelViewModel);
+                chatCommandRegistry.SelectChannel,
+                chatCommandRegistry.CloseChannel,
+                chatCommandRegistry.OpenConversation,
+                chatCommandRegistry.CreateChannelViewModel);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
-                eventBus,
+                chatEventBus,
                 chatHistory,
                 chatConfig,
                 currentChannelService,
@@ -117,31 +115,30 @@ namespace DCL.Chat
                 translationMemory,
                 translationCache,
                 translationSettings,
-                commandRegistry.GetMessageHistory,
-                commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead,
-                commandRegistry.TranslateMessageCommand,
-                commandRegistry.RevertToOriginalCommand);
+                chatCommandRegistry.GetMessageHistory,
+                chatCommandRegistry.CreateMessageViewModel,
+                chatCommandRegistry.MarkMessagesAsRead,
+                chatCommandRegistry.TranslateMessageCommand,
+                chatCommandRegistry.RevertToOriginalCommand);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,
                 chatConfig,
-                eventBus,
                 chatEventBus,
                 currentChannelService,
-                commandRegistry.ResolveInputStateCommand,
-                commandRegistry.GetParticipantProfilesCommand,
+                chatCommandRegistry.ResolveInputStateCommand,
+                chatCommandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
-                commandRegistry.SendMessage,
+                chatCommandRegistry.SendMessage,
                 textFormatter);
 
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
-                eventBus,
+                chatEventBus,
                 chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
-                commandRegistry.GetChannelMembersCommand);
+                chatCommandRegistry.GetChannelMembersCommand);
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
@@ -160,7 +157,7 @@ namespace DCL.Chat
                 memberListPresenter,
                 communityVoiceChatSubTitleButtonPresenter);
 
-            chatStateMachine = new ChatStateMachine(eventBus,
+            chatStateMachine = new ChatStateMachine(chatEventBus,
                 mediator,
                 chatInputBlockingService,
                 chatClickDetectionHandler,
@@ -180,7 +177,7 @@ namespace DCL.Chat
             if (!chatStateMachine.IsFocused && (isVisible || chatStateMachine.IsMinimized))
             {
                 chatStateMachine.SetFocusState();
-                commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
+                chatCommandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
             }
         }
 
@@ -209,7 +206,7 @@ namespace DCL.Chat
         private void OnViewShow(ChatSharedAreaEvents.ChatPanelViewShowEvent evt)
         {
             initCts = new CancellationTokenSource();
-            commandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
+            chatCommandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
             chatStateMachine.OnViewShow();
         }
 

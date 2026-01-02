@@ -1,4 +1,4 @@
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Chat.ChatServices;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
@@ -36,7 +36,7 @@ namespace DCL.VoiceChat
             IRealmNavigator realmNavigator,
             IRealmData realmData,
             IDecentralandUrlsSource urlsSource,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
             IMVCManager mvcManager)
         {

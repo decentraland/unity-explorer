@@ -88,8 +88,10 @@ namespace MVC
             return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 0), onClose);
         }
 
-        public void PopFullscreen(IController controller)
+        public void PopFullscreen(IController? controller)
         {
+            if (controller == null) return;
+
             TryGracefulClose(controller);
 
             foreach (IController persistentController in persistentStack)
@@ -172,6 +174,9 @@ namespace MVC
                 new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
                 topMostPopup.controller);
         }
+
+        public CloseAllNonPersistentInfo GetCloseAllNonPersistentInfo() =>
+            new (popupStack, fullscreenController, overlayController);
 
         private void RemovePopup(IController controller)
         {
@@ -260,5 +265,20 @@ namespace MVC
         {
             ControllerOrdering = controllerOrdering;
         }
+    }
+
+    public readonly struct CloseAllNonPersistentInfo
+    {
+        public readonly List<(IController, int)> PopupControllers;
+        public readonly IController? FullscreenController;
+        public readonly IController? OverlayController;
+
+        public CloseAllNonPersistentInfo(List<(IController, int)> popupControllers, IController? fullscreenController, IController? overlayController)
+        {
+            PopupControllers = popupControllers;
+            FullscreenController = fullscreenController;
+            OverlayController = overlayController;
+        }
+
     }
 }

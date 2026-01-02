@@ -9,7 +9,7 @@ namespace DCL.Chat.ChatStates
     {
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
@@ -19,7 +19,7 @@ namespace DCL.Chat.ChatStates
         public bool IsHidden => fsm.CurrentState is HiddenChatState;
 
         public ChatStateMachine(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             ChatUIMediator mediator,
             ChatInputBlockingService inputBlocker,
             ChatClickDetectionHandler chatClickDetectionHandler,
@@ -66,10 +66,7 @@ namespace DCL.Chat.ChatStates
         }
 
         private void PropagateStateChange() =>
-            eventBus.Publish(new ChatEvents.ChatStateChangedEvent
-            {
-                CurrentState = fsm.CurrentState
-            });
+            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState);
 
         public void OnViewShow()
         {

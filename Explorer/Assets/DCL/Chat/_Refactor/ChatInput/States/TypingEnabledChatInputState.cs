@@ -1,6 +1,5 @@
 ﻿using DCL.Audio;
 using DCL.Chat.ChatCommands;
-using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
@@ -19,7 +18,7 @@ namespace DCL.Chat.ChatInput
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
 
         private PasteToastState? pasteToastState;
         private SuggestionPanelChatInputState? suggestionPanelState;
@@ -27,8 +26,8 @@ namespace DCL.Chat.ChatInput
         private bool isLocked;
         private CustomInputField inputField = null!;
         private CancellationTokenSource? suggestionCloseCts;
-        
-        public TypingEnabledChatInputState(IChatEventBus chatEventBus)
+
+        public TypingEnabledChatInputState(ChatEventBus chatEventBus)
         {
             this.chatEventBus = chatEventBus;
         }
@@ -53,8 +52,8 @@ namespace DCL.Chat.ChatInput
             context.ChatInputView.ApplyFocusStyle();
             context.ChatInputView.SetActiveTyping();
 
-            chatEventBus.InsertTextInChatRequested += InsertText;
-            chatEventBus.ClearAndInsertTextInChatRequested += ClearAndInsertText;
+            eventsScope.Add(chatEventBus.Subscribe<ChatEvents.InsertTextInChatRequestedEvent>(evt => InsertText(evt.Text)));
+            eventsScope.Add(chatEventBus.Subscribe<ChatEvents.ClearAndInsertTextInChatRequestedEvent>(evt => ClearAndInsertText(evt.Text)));
 
             ViewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             inputField.onSubmit.AddListener(HandleMessageSubmitted);
@@ -71,8 +70,7 @@ namespace DCL.Chat.ChatInput
         public override void End()
         {
             LockInputField(false);
-            chatEventBus.InsertTextInChatRequested -= InsertText;
-            chatEventBus.ClearAndInsertTextInChatRequested -= ClearAndInsertText;
+            eventsScope.Dispose();
 
             ViewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);
@@ -130,7 +128,7 @@ namespace DCL.Chat.ChatInput
             // NOTE: We need to select the input field again because
             // NOTE: the input field loses focus when the message is submitted
             inputField.SelectInputField();
-            
+
             if (string.IsNullOrWhiteSpace(message))
                 return;
 
@@ -157,7 +155,7 @@ namespace DCL.Chat.ChatInput
             if (!ct.IsCancellationRequested)
                 suggestionPanelState.TryDeactivate();
         }
-        
+
         private void ReplaceSuggestionInText(InputSuggestionsEvents.SuggestionSelectedEvent suggestion)
         {
             // Not great
@@ -166,7 +164,7 @@ namespace DCL.Chat.ChatInput
 
             suggestionPanelState!.ReplaceSuggestionInText(suggestion.Id);
             // suggestionPanelState.TryDeactivate();
-            
+
             suggestionCloseCts = suggestionCloseCts.SafeRestart();
             DeactivateSuggestionsNextFrameAsync(suggestionCloseCts.Token).Forget();
         }

@@ -1,4 +1,4 @@
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -16,7 +16,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
         public CommunitiesBrowserCommandsLibrary(
             ICommunityCallOrchestrator orchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IMVCManager mvcManager,

@@ -17,23 +17,20 @@ namespace DCL.ChatArea
         private readonly IEventBus chatEventBus;
         private readonly EventSubscriptionScope eventScope = new ();
         private readonly DCLInput dclInput;
-
-        public readonly CommandRegistry CommandRegistry;
+        public readonly ChatCommandRegistry ChatCommandRegistry;
 
         public bool IsVisibleInSharedSpace { get; private set; }
-
-        private int fullscreenViewsOpenCount;
 
         public ChatMainSharedAreaController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            CommandRegistry commandRegistry,
+            ChatCommandRegistry chatCommandRegistry,
             IEventBus chatEventBus,
             DCLInput dclInput) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
-            this.CommandRegistry = commandRegistry;
+            this.ChatCommandRegistry = chatCommandRegistry;
             this.chatEventBus = chatEventBus;
             this.dclInput = dclInput;
         }
@@ -51,7 +48,6 @@ namespace DCL.ChatArea
             dclInput.UI.Submit.performed += OnUISubmitPerformed;
 
             eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleChatState));
-            // Subscribe to visibility state changes
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
             CentralizedChatClickDetectionService.Instance.Resume();
         }
@@ -59,6 +55,12 @@ namespace DCL.ChatArea
         protected override void OnViewClose()
         {
 
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+            mvcManager.CloseAllNonPersistent();
         }
 
         protected override void OnViewShow()
@@ -79,14 +81,14 @@ namespace DCL.ChatArea
 
         private void ToggleChatState(ChatEvents.ToggleChatEvent _)
         {
+            //TODO FRAN: Does this make sense? we can just listen to the ToggleChatEvent directly on the consumer?
             chatSharedAreaEventBus.RaiseToggleEvent();
         }
 
-        private void OnUISubmitPerformed(InputAction.CallbackContext callbackContext)
+        private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
             chatSharedAreaEventBus.RaiseToggleEvent();
         }
-
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatMainSharedAreaControllerShowParams showParams)
         {
@@ -151,21 +153,17 @@ namespace DCL.ChatArea
 
         private void OnMvcViewShowed(IController controller)
         {
-            //We only need to notify the chat if a fullscreen view is shown (to hide it)
+            //We only need to hide the chat if a fullscreen view is shown
             if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
 
-            fullscreenViewsOpenCount++;
-            if (fullscreenViewsOpenCount == 1)
-                chatSharedAreaEventBus.RaiseFullscreenOpenEvent();
+            chatSharedAreaEventBus.RaiseFullscreenOpenEvent();
         }
 
         private void OnMvcViewClosed(IController controller)
         {
             if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
-            fullscreenViewsOpenCount--;
 
-            if (fullscreenViewsOpenCount == 0)
-                chatSharedAreaEventBus.RaiseFullscreenClosedEvent();
+            chatSharedAreaEventBus.RaiseFullscreenClosedEvent();
         }
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)

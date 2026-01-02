@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -27,6 +26,7 @@ using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.Chat;
 using DCL.ChatArea;
 using UnityEngine;
 using Utility;
@@ -61,7 +61,7 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -94,7 +94,7 @@ namespace DCL.UI
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -161,7 +161,7 @@ namespace DCL.UI
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
         {
-            closeContextMenuTask.TrySetResult();
+            closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
@@ -336,8 +336,9 @@ namespace DCL.UI
             ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
         }
 
-        private async UniTaskVoid ShowChatAsync(Action onChatShown)
+        private async UniTaskVoid ShowChatAsync(Action? onChatShown)
         {
+            //mvcManager.CloseAllNonPersistent();
             await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
             onChatShown?.Invoke();
         }
@@ -345,13 +346,15 @@ namespace DCL.UI
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            StartCallAsync(userId).Forget();
-        }
+            StartCallAsync().Forget();
+            return;
 
-        private async UniTaskVoid StartCallAsync(string userId)
-        {
-            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+            async UniTaskVoid StartCallAsync()
+            {
+                //mvcManager.CloseAllNonPersistent();
+                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
+                voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+            }
         }
 
         private void OnBlockUserClicked(string userId)

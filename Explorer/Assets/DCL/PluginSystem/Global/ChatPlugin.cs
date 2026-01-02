@@ -7,7 +7,6 @@ using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
@@ -36,7 +35,6 @@ using DCL.Chat.ChatConfig;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -57,9 +55,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
-        private readonly ClipboardManager clipboardManager;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IEventBus eventBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly IInputBlock inputBlock;
@@ -70,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatMessageFactory chatMessageFactory;
@@ -96,7 +92,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
-        private CommandRegistry? commandRegistry;
+        private ChatCommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
         private FallbackFontsProvider? fallbackFontsProvider;
 
@@ -104,9 +100,8 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IChatHistory chatHistory,
-            ClipboardManager clipboardManager,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             MainUIView mainUIView,
@@ -117,7 +112,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
@@ -141,9 +136,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
-            this.eventBus = eventBus;
             this.chatHistory = chatHistory;
-            this.clipboardManager = clipboardManager;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.mainUIView = mainUIView;
@@ -230,7 +223,7 @@ namespace DCL.PluginSystem.Global
                 translationCache,
                 translationPolicy,
                 translationSettings,
-                eventBus,
+                chatEventBus,
                 translationMemory);
 
             var chatWorldBubbleService = new ChatWorldBubbleService(world,
@@ -246,7 +239,7 @@ namespace DCL.PluginSystem.Global
 
             var chatUserStateService = new PrivateConversationUserStateService(
                 currentChannelService,
-                eventBus,
+                chatEventBus,
                 userBlockingCacheProxy,
                 friendsServiceProxy,
                 settings.ChatSettingsAsset,
@@ -273,12 +266,12 @@ namespace DCL.PluginSystem.Global
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
 
-            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, chatEventBus);
 
             var communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
-                eventBus,
+                chatEventBus,
                 chatHistory,
                 web3IdentityCache);
 
@@ -287,14 +280,14 @@ namespace DCL.PluginSystem.Global
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
                 friendsServiceProxy,
                 currentChannelService,
-                eventBus);
+                chatEventBus);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
-            commandRegistry = new CommandRegistry(
+            commandRegistry = new ChatCommandRegistry(
                 chatConfig,
                 settings.ChatSettingsAsset,
-                eventBus,
+                chatEventBus,
                 web3IdentityCache,
                 chatEventBus,
                 chatMessagesBus,
@@ -313,7 +306,6 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
                 voiceChatOrchestrator,
-                clipboardManager,
                 translationService,
                 translationMemory,
                 translationCache,
@@ -335,7 +327,6 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 commandRegistry,
                 chatInputBlockingService,
-                eventBus,
                 chatContextMenuService,
                 chatClickDetectionHandler,
                 chatSharedAreaEventBus,
@@ -356,7 +347,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 chatSharedAreaEventBus,
                 commandRegistry,
-                eventBus,
+                chatEventBus,
                 dclInput
             );
 

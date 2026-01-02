@@ -15,7 +15,6 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.ChatArea;
@@ -111,6 +110,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Chat;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -479,7 +479,7 @@ namespace Global.Dynamic
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
-            IEventBus eventBus = new EventBus(true);
+            ChatEventBus chatEventBus = new ChatEventBus();
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -498,7 +498,7 @@ namespace Global.Dynamic
                         onlineUsersProvider,
                         identityCache,
                         homePlaceEventBus,
-                        eventBus,
+                        chatEventBus,
                         ct
                     );
 
@@ -572,7 +572,6 @@ namespace Global.Dynamic
 
             var coreBackpackEventBus = new BackpackEventBus();
 
-            IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var currentChannelService = new CurrentChannelService();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
@@ -764,9 +763,15 @@ namespace Global.Dynamic
                     profileCache,
                     globalWorld,
                     playerEntity,
-                    chatHistory, profileRepositoryWrapper, profileChangesBus,
-                    selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
-                    bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
+                    chatHistory,
+                    profileRepositoryWrapper,
+                    profileChangesBus,
+                    selfProfile,
+                    staticContainer.RealmData,
+                    staticContainer.SceneRestrictionBusController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    passportBridge,
+                    chatEventBus,
                     staticContainer.SmartWearableCache, globalWorld, emotesBus),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(mvcManager, minimap),
@@ -774,9 +779,8 @@ namespace Global.Dynamic
                     mvcManager,
                     menusAccessFacade,
                     chatMessagesBus,
-                    eventBus,
+                    chatEventBus,
                     chatHistory,
-                    clipboardManager,
                     entityParticipantTable,
                     dynamicSettings.NametagsData,
                     mainUIView,
@@ -808,7 +812,7 @@ namespace Global.Dynamic
                     chatSharedAreaEventBus,
                     currentChannelService),
                 new ExplorePanelPlugin(
-                    eventBus,
+                    chatEventBus,
                     featureFlags,
                     assetsProvisioner,
                     mvcManager,
@@ -882,7 +886,7 @@ namespace Global.Dynamic
                     emoteProvider,
                     identityCache,
                     thumbnailProvider,
-                    eventBus,
+                    chatEventBus,
                     webBrowser,
                     bootstrapContainer.VerifiedEthereumApi!,
                     bootstrapContainer.DecentralandUrlsSource,
@@ -1134,7 +1138,7 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
-                        eventBus, translationSettings
+                        chatEventBus, translationSettings
                     )
                 );
 

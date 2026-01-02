@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
-using DCL.Chat.EventBus;
 using DCL.Emoji;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
@@ -26,8 +25,7 @@ namespace DCL.Chat.ChatInput
         public ChatInputPresenter(
             ChatInputView view,
             ChatConfig.ChatConfig chatConfig,
-            IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
             ResolveInputStateCommand resolveInputStateCommand,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
@@ -40,7 +38,7 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
+            var context = new ChatInputStateContext(view, view.inputEventBus, chatEventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
                 new EmojiMapping(view.emojiContainer.emojiPanelConfiguration));
 
             fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
@@ -50,9 +48,9 @@ namespace DCL.Chat.ChatInput
             fsm.AddState(new UnfocusedChatInputState());
             fsm.AddState(new TypingEnabledChatInputState(chatEventBus));
 
-            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
-            scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
-            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)

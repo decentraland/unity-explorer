@@ -1,7 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -24,7 +24,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
-using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -84,7 +83,7 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,

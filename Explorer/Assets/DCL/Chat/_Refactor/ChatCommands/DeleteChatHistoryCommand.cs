@@ -1,17 +1,16 @@
 ﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class DeleteChatHistoryCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
 
         public DeleteChatHistoryCommand(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService)
         {
@@ -30,10 +29,7 @@ namespace DCL.Chat.ChatCommands
             {
                 chatHistory.ClearChannel(channelId);
 
-                eventBus.Publish(new ChatEvents.ChatHistoryClearedEvent
-                {
-                    ChannelId = channelId
-                });
+                eventBus.RaiseChatHistoryClearedEvent(channelId);
             }
         }
     }

@@ -13,11 +13,11 @@ namespace DCL.Chat.ChatInput
         public readonly ProfileRepositoryWrapper ProfileRepositoryWrapper;
         public readonly EmojiMapping EmojiMapping;
         public readonly IEventBus InputEventBus;
-        public readonly IEventBus ChatEventBus;
+        public readonly ChatEventBus ChatEventBus;
 
         public ChatInputStateContext(ChatInputView chatInputView,
             IEventBus inputEventBus,
-            IEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SendMessageCommand sendMessageCommand,

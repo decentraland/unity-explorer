@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.ChatArea;
 using MVC;
 
@@ -8,10 +8,10 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 {
     public class GoToStreamCommand
     {
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
 
-        public GoToStreamCommand(IChatEventBus chatEventBus, IMVCManager mvcManager)
+        public GoToStreamCommand(ChatEventBus chatEventBus, IMVCManager mvcManager)
         {
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
@@ -28,7 +28,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid GoToStreamAsync()
             {
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
+                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
+                mvcManager.CloseAllNonPersistent();
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
             }
         }

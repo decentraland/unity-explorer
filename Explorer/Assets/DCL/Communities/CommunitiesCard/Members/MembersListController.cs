@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -25,6 +24,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.Chat;
 using DCL.ChatArea;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -46,7 +46,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
@@ -79,7 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ISelfProfile selfProfile) : base(view, PAGE_SIZE)
         {
@@ -403,9 +403,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
+                //mvcManager.CloseAllNonPersistent();
                 await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                //TODO FRAN & DAVIDE: This is not clean or pretty, but works for now. Ideally we should be able to await
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
             }
@@ -417,6 +418,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
+                //mvcManager.CloseAllNonPersistent();
                 await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }

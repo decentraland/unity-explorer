@@ -1,7 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -32,7 +32,7 @@ namespace MVC
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
@@ -53,7 +53,7 @@ namespace MVC
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,

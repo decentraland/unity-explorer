@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -33,7 +34,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
-        private readonly IEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly Arch.Core.World globalWorld;
         private readonly EmotesBus emotesBus;
@@ -99,7 +99,7 @@ namespace DCL.PluginSystem.Global
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
-            IEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             SmartWearableCache smartWearableCache,
             Arch.Core.World globalWorld,
             EmotesBus emotesBus)

@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
-using DCL.ChatArea;
+using DCL.Chat;
 using DCL.VoiceChat;
 using MVC;
 
@@ -15,12 +13,12 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         private const int UI_CLOSE_DELAY = 600;
 
         private readonly ICommunityCallOrchestrator orchestrator;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
 
         public JoinStreamCommand(
             ICommunityCallOrchestrator orchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IMVCManager mvcManager)
         {
             this.orchestrator = orchestrator;
@@ -44,7 +42,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid JoinStreamAsync()
             {
-                await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
+                mvcManager.CloseAllNonPersistent();
+                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true)));
 
                 if (shouldOpenConversation)
                     chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);

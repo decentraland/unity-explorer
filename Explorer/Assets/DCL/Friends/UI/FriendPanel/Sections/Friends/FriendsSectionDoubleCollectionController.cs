@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.ChatArea;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
@@ -24,7 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IRealmNavigator realmNavigator;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private CancellationTokenSource openPassportCts = new ();
@@ -44,7 +44,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            IChatEventBus chatEventBus)
+            ChatEventBus chatEventBus)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;

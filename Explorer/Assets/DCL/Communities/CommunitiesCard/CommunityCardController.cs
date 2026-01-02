@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Announcements;
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -98,6 +98,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
         private CancellationTokenSource communityNotificationsToggleCancellationTokenSource = new ();
+        private readonly EventSubscriptionScope eventScope = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
@@ -119,7 +120,7 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
@@ -153,7 +154,7 @@ namespace DCL.Communities.CommunitiesCard
             this.selfProfile = selfProfile;
             this.analytics = analytics;
 
-            chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
+            eventScope.Add(chatEventBus.Subscribe<ChatEvents.OpenPrivateConversationRequestedEvent>(evt => CloseCardOnConversationRequested(evt.UserId)));
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
@@ -191,7 +192,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
-            chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
+            eventScope.Dispose();
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
@@ -341,12 +342,9 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
+                //mvcManager.CloseAllNonPersistent();
                 await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
-                //TODO FRAN: We need to properly close all controllers when showing the chat.
-                //This only closes THIS controller, but not the one behind it if there is one.
-                //We need to use SHOWTOP inside the MVCManager, but its reserved for overlays -> add a param to ShowAsync??
-                CloseController();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)

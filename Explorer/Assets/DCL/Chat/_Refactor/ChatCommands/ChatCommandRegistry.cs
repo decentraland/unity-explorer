@@ -10,10 +10,8 @@ using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
-using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.VoiceChat;
-using DCL.Clipboard;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Web3.Identities;
@@ -21,7 +19,7 @@ using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
-    public class CommandRegistry : IDisposable
+    public class ChatCommandRegistry : IDisposable
     {
         private readonly EventSubscriptionScope scope = new();
 
@@ -48,12 +46,12 @@ namespace DCL.Chat.ChatCommands
         public TranslateMessageCommand TranslateMessageCommand { get; }
         public RevertToOriginalCommand RevertToOriginalCommand { get; }
 
-        public CommandRegistry(
+        public ChatCommandRegistry(
             ChatConfig.ChatConfig chatConfig,
             ChatSettingsAsset chatSettings,
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IWeb3IdentityCache identityCache,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
@@ -70,7 +68,6 @@ namespace DCL.Chat.ChatCommands
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            ClipboardManager clipboardManager,
             ITranslationService translationService,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,

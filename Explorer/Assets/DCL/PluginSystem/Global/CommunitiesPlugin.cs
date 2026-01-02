@@ -2,7 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.InWorldCamera;
 using DCL.Input;
 using DCL.Clipboard;
@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly IProfileRepository profileRepository;
@@ -82,7 +82,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,

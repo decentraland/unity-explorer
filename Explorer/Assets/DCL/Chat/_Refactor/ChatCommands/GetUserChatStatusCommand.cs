@@ -4,16 +4,15 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System.Threading;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class GetUserChatStatusCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly PrivateConversationUserStateService userStateService;
 
-        public GetUserChatStatusCommand(PrivateConversationUserStateService userStateService, IEventBus eventBus)
+        public GetUserChatStatusCommand(PrivateConversationUserStateService userStateService, ChatEventBus eventBus)
         {
             this.eventBus = eventBus;
             this.userStateService = userStateService;
@@ -27,12 +26,12 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested || !result.Success)
             {
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, false));
+                eventBus.RaiseUserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, false);
                 return new PrivateConversationUserStateService.UserState(false, PrivateConversationUserStateService.ChatUserState.DISCONNECTED);
             }
 
             bool isOnline = result.Value.Result.IsConsideredOnline;
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline));
+            eventBus.RaiseUserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline);
 
             return result.Value.Result;
         }

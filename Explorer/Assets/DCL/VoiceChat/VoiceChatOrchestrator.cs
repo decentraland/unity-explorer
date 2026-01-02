@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.ChatArea;
@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
         private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly CurrentChannelService currentChannelService;
         private readonly IMVCManager mvcManager;
 
@@ -66,7 +66,7 @@ namespace DCL.VoiceChat
             ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
             SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             CurrentChannelService currentChannelService, IMVCManager mvcManager)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;

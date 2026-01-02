@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatServices
     public class NearbyUserStateService : ICurrentChannelUserStateService
     {
         private readonly IRoomHub roomHub;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
 
@@ -29,7 +29,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        public NearbyUserStateService(IRoomHub roomHub, IEventBus eventBus)
+        public NearbyUserStateService(IRoomHub roomHub, ChatEventBus eventBus)
         {
             this.roomHub = roomHub;
             this.eventBus = eventBus;
@@ -114,7 +114,7 @@ namespace DCL.Chat.ChatServices
                     case ConnectionState.ConnDisconnected:
                     case ConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
-                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
+                        eventBus.RaiseChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants);
                         break;
                 }
             }
@@ -123,13 +123,13 @@ namespace DCL.Chat.ChatServices
         private void SetOnline(string userId)
         {
             if (onlineParticipants.Add(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true));
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true);
         }
 
         private void SetOffline(string userId)
         {
             if (onlineParticipants.Remove(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false);
         }
     }
 }

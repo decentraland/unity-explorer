@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatInput
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            context.ChatEventBus.RaiseFocusRequestedEvent();
         }
 
         public override void End()

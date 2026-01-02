@@ -65,6 +65,24 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
+        public void CloseAllNonPersistent(CancellationToken ct = default)
+        {
+            var info = windowsStackManager.GetCloseAllNonPersistentInfo();
+
+            // Hide all popups in the stack and clear it
+            CloseAllPopups(info.PopupControllers);
+
+            // Hide fullscreen UI if any
+            if (info.FullscreenController != null)
+                windowsStackManager.PopFullscreen(info.FullscreenController);
+
+            if (info.OverlayController != null)
+                windowsStackManager.PopOverlay(info.OverlayController);
+
+            // Hide the popup closer
+            popupCloser.HideAsync(ct).Forget();
+        }
+
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
             // Find the controller

@@ -26,6 +26,11 @@ namespace MVC
         void SetAllViewsCanvasActive(bool isActive);
 
         void SetAllViewsCanvasActive(IController except, bool isActive);
+
+        /// <summary>
+        ///     Closes all POPUPS, FULLSCREEN and OVERLAY views currently open, leaving only PERSISTENT ones.
+        /// </summary>
+        void CloseAllNonPersistent(CancellationToken ct = default);
     }
 
     public static class ManagerExtensions

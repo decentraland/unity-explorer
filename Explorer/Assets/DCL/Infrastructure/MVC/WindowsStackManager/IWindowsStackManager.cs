@@ -37,5 +37,7 @@ namespace MVC
         ///     Controller can be popped from the middle?
         /// </summary>
         PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true);
+
+        CloseAllNonPersistentInfo GetCloseAllNonPersistentInfo();
     }
 }

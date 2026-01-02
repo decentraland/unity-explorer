@@ -31,14 +31,14 @@ namespace DCL.Chat.ChatServices
 
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly IChatHistory chatHistory;
 
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> onlineParticipantsPerChannel = new (10);
 
-        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, IEventBus eventBus, IChatHistory chatHistory,
+        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, ChatEventBus eventBus, IChatHistory chatHistory,
             IWeb3IdentityCache web3IdentityCache)
         {
             this.communitiesDataProvider = communitiesDataProvider;
@@ -106,7 +106,7 @@ namespace DCL.Chat.ChatServices
             // Edge case - the channel is initialized AFTER the community is selected
             // (on the moment of the community selection the online users collection was empty)
             if (currentChannelId.Equals(communityChannelId))
-                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants));
+                eventBus.RaiseChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants);
         }
 
         public void Deactivate()
@@ -142,7 +142,7 @@ namespace DCL.Chat.ChatServices
 
             // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Add(userId) && currentChannelId.Equals(channelId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true));
+                eventBus.RaiseUserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true);
         }
 
         private void SetOffline(ChatChannel.ChannelId channelId, string userId)
@@ -152,7 +152,7 @@ namespace DCL.Chat.ChatServices
 
             // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.Remove(userId) && currentChannelId.Equals(channelId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
+                eventBus.RaiseUserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false);
         }
 
         public void Reset()

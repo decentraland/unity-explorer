@@ -57,7 +57,7 @@ namespace DCL.UI.Sidebar
         private readonly SmartWearableCache smartWearablesCache;
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
-        private readonly IEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
         private bool includeMarketplaceCredits;
@@ -89,7 +89,7 @@ namespace DCL.UI.Sidebar
             SmartWearableCache smartWearableCache,
             EmotesBus emotesBus,
             World globalWorld,
-            IEventBus chatEventBus)
+            ChatEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -396,7 +396,7 @@ dev*/
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
-            chatEventBus.Publish(new ChatEvents.ToggleChatEvent());
+            chatEventBus.RaiseToggleChatEvent();
         }
 
         private void OnEmotesWheelButtonClicked()

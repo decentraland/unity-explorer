@@ -70,13 +70,13 @@ namespace DCL.Chat.ChatInput
         }
 
         private void BlockedInputClicked() =>
-            context.ChatEventBus.Publish(new ChatEvents.ClickableBlockedInputClickedEvent());
+            context.ChatEventBus.RaiseClickableBlockedInputClickedEvent();
 
         private void RequestFocusedState()
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            context.ChatEventBus.RaiseFocusRequestedEvent();
         }
     }
 }

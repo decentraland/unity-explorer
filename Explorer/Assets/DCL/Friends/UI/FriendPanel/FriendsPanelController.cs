@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
-using DCL.ChatArea;
+using DCL.Chat;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -38,7 +36,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly bool includeUserBlocking;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
@@ -61,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
@@ -171,14 +169,17 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void OnOpenConversationClicked(Web3Address web3Address)
         {
-            OpenChatConversationAsync(web3Address).Forget();
+            OpenChatConversationAsync().Forget();
+            return;
+
+            async UniTaskVoid OpenChatConversationAsync()
+            {
+                mvcManager.CloseAllNonPersistent();
+                //await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
+                chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
+            }
         }
 
-        private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
-        {
-            await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
-            chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
-        }
 
         protected override void OnViewShow()
         {

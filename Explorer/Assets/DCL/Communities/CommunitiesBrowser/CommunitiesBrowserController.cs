@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
@@ -57,7 +57,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
@@ -94,7 +94,7 @@ namespace DCL.Communities.CommunitiesBrowser
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus)
@@ -866,6 +866,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
+                //mvcManager.CloseAllNonPersistent();
                 await mvcManager.ShowAsync(ChatMainSharedAreaController.IssueCommand(new ChatMainSharedAreaControllerShowParams(true, true)));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
             }
