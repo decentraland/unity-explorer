@@ -9,11 +9,11 @@ namespace DCL.CharacterMotion.Components
     /// </summary>
     public struct PlayerMoveToWithDurationIntent
     {
-        public Vector3 StartPosition;
-        public Vector3 TargetPosition;
-        public Vector3? CameraTarget;
-        public Vector3? AvatarTarget;
-        public float Duration;
+        public readonly Vector3 StartPosition;
+        public readonly Vector3 TargetPosition;
+        public readonly Vector3? CameraTarget;
+        public readonly Vector3? AvatarTarget;
+        public readonly float Duration;
         public float ElapsedTime;
 
         /// <summary>
