@@ -11,7 +11,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -151,7 +150,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            var intent = new CharacterEmoteIntent(emoteId, triggerSource: TriggerSource.PREVIEW);
+            var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
 
             if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))
                 globalWorld.Set(characterPreviewEntity, intent);
