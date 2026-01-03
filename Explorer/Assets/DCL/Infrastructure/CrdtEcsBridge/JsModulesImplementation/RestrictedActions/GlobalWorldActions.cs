@@ -53,7 +53,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (duration > 0f)
             {
                 // Smooth movement over duration (through MovePlayerWithDurationSystem)
-                Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Transform.position;
+                Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
                 world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
                     startPosition,
                     newPlayerPosition,
