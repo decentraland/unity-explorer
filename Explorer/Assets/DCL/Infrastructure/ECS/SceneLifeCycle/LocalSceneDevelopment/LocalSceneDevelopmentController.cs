@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.SkyBox;
 using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;
@@ -65,7 +64,23 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                 // every iteration starts on the thread pool
                 await UniTask.SwitchToThreadPool();
 
-                WebSocketReceiveResult? receiveResult = await webSocket.ReceiveAsync(receiveBuffer, ct);
+                WebSocketReceiveResult receiveResult;
+
+                try
+                {
+                    receiveResult = await webSocket.ReceiveAsync(receiveBuffer, ct);
+                }
+                catch (WebSocketException)
+                {
+                    if (ct.IsCancellationRequested || webSocket.State != WebSocketState.Open)
+                        break;
+
+                    throw;
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
 
                 if (receiveResult.MessageType == WebSocketMessageType.Binary)
                 {
