@@ -57,7 +57,7 @@ namespace DCL.CharacterMotion.Systems
         {
             // Always enforce the movement direction rotation every frame
             // This ensures consistent behavior even if the component is added mid-frame
-            ApplyMovementDirectionRotation(characterTransform, ref rigidTransform, in moveIntent);
+            ApplyMovementDirectionRotation(ref characterTransform, ref rigidTransform, in moveIntent);
 
             moveIntent.ElapsedTime += deltaTime;
 
@@ -69,7 +69,7 @@ namespace DCL.CharacterMotion.Systems
 
             // We intentionally bypass CharacterController.Move() to avoid physics/collision detection.
             // This allows the player to move smoothly to the target position without being blocked by obstacles.
-            characterTransform.Transform.position = newPosition;
+            characterTransform.SetPositionWithDirtyCheck(newPosition);
 
             // Update animation based on movement speed
             UpdateAnimation(deltaTime, avatarView, ref animationComponent, ref moveIntent, newPosition);
@@ -77,9 +77,9 @@ namespace DCL.CharacterMotion.Systems
             if (moveIntent.IsComplete)
             {
                 // Ensure final position is exact
-                characterTransform.Transform.position = moveIntent.TargetPosition;
+                characterTransform.SetPositionWithDirtyCheck(moveIntent.TargetPosition);
 
-                ApplyFinalRotation(characterTransform, ref rigidTransform, in moveIntent);
+                ApplyFinalRotation(ref characterTransform, ref rigidTransform, in moveIntent);
                 ResetAnimationToIdle(avatarView, ref animationComponent);
 
                 World.Remove<PlayerMoveToWithDurationIntent>(entity);
@@ -92,7 +92,7 @@ namespace DCL.CharacterMotion.Systems
         /// Sets both the transform rotation and the LookDirection in CharacterRigidTransform.
         /// </summary>
         private static void ApplyMovementDirectionRotation(
-            CharacterTransform characterTransform,
+            ref CharacterTransform characterTransform,
             ref CharacterRigidTransform rigidTransform,
             in PlayerMoveToWithDurationIntent moveIntent)
         {
@@ -108,7 +108,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.LookDirection = normalizedDirection;
 
             // Also set the transform rotation immediately
-            characterTransform.Transform.rotation = Quaternion.LookRotation(normalizedDirection, Vector3.up);
+            characterTransform.SetRotation(Quaternion.LookRotation(normalizedDirection, Vector3.up));
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace DCL.CharacterMotion.Systems
         /// Sets both the transform rotation and the LookDirection in CharacterRigidTransform.
         /// </summary>
         private static void ApplyFinalRotation(
-            CharacterTransform characterTransform,
+            ref CharacterTransform characterTransform,
             ref CharacterRigidTransform rigidTransform,
             in PlayerMoveToWithDurationIntent moveIntent)
         {
@@ -137,7 +137,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.LookDirection = normalizedDirection;
 
             // Instantly snap to face avatar target
-            characterTransform.Transform.rotation = Quaternion.LookRotation(normalizedDirection, Vector3.up);
+            characterTransform.SetRotation(Quaternion.LookRotation(normalizedDirection, Vector3.up));
         }
 
         private static void UpdateAnimation(
