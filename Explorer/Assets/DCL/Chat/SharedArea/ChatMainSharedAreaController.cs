@@ -48,8 +48,8 @@ namespace DCL.ChatArea
 
             eventScope.Add(chatEventBus.Subscribe<ChatEvents.ToggleChatEvent>(ToggleChatState));
             eventScope.Add(chatEventBus.Subscribe<ChatEvents.FocusRequestedEvent>(SetFocusState));
-
             eventScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent>(HandleVisibilityStateChanged));
+
             CentralizedChatClickDetectionService.Instance.Resume();
         }
 
@@ -77,7 +77,7 @@ namespace DCL.ChatArea
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
-            chatSharedAreaEventBus.RaiseToggleEvent();
+            chatSharedAreaEventBus.RaiseUISubmitEvent();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

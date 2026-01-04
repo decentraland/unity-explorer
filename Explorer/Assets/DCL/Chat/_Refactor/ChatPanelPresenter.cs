@@ -168,9 +168,9 @@ namespace DCL.Chat
             SubscribeToCoordinationEvents();
         }
 
-        private void HandlePointerEnter(ChatSharedAreaEvents.ChatPanelPointerEnterEvent chatPanelPointerEnterEvent) => PointerEntered?.Invoke();
+        private void HandlePointerEnter(ChatSharedAreaEvents.PointerEnterChatPanelEvent pointerEnterChatPanelEvent) => PointerEntered?.Invoke();
 
-        private void HandlePointerExit(ChatSharedAreaEvents.ChatPanelPointerExitEvent chatPanelPointerExitEvent) => PointerExited?.Invoke();
+        private void HandlePointerExit(ChatSharedAreaEvents.PointerExitChatPanelEvent pointerExitChatPanelEvent) => PointerExited?.Invoke();
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
@@ -233,13 +233,20 @@ namespace DCL.Chat
 
         private void SubscribeToCoordinationEvents()
         {
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(HandlePointerEnter));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(HandlePointerExit));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.PointerEnterChatPanelEvent>(HandlePointerEnter));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.PointerExitChatPanelEvent>(HandlePointerExit));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FocusChatPanelEvent>(SetFocusState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(ToggleState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelViewShowEvent>(OnViewShow));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenViewOpenEvent>(OnFullscreenOpened));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenClosedEvent>(OnFullscreenClosed));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.UISubmitPerformedEvent>(OnUISubmitPerformed));
+        }
+
+        private void OnUISubmitPerformed(ChatSharedAreaEvents.UISubmitPerformedEvent obj)
+        {
+            if (!chatStateMachine.IsFocused)
+                chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)

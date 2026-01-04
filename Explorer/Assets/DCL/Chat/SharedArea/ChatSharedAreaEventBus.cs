@@ -7,14 +7,17 @@ namespace DCL.ChatArea
     {
         private readonly IEventBus eventBus = new EventBus(invokeSubscribersOnMainThread: true);
 
-        public void Publish<T>(T evt) => eventBus.Publish(evt);
-        public IDisposable Subscribe<T>(Action<T> handler) => eventBus.Subscribe(handler);
+        public void Publish<T>(T evt) =>
+            eventBus.Publish(evt);
+
+        public IDisposable Subscribe<T>(Action<T> handler) =>
+            eventBus.Subscribe(handler);
 
         public void RaisePointerEnter() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelPointerEnterEvent());
+            Publish(new ChatSharedAreaEvents.PointerEnterChatPanelEvent());
 
         public void RaisePointerExit() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelPointerExitEvent());
+            Publish(new ChatSharedAreaEvents.PointerExitChatPanelEvent());
 
         public void RaiseFocusEvent() =>
             Publish(new ChatSharedAreaEvents.FocusChatPanelEvent());
@@ -31,7 +34,10 @@ namespace DCL.ChatArea
         public void RaiseFullscreenClosedEvent() =>
             Publish(new ChatSharedAreaEvents.FullscreenClosedEvent());
 
-        public void RaiseVisibilityStateChangedEvent(bool isVisibleInSharedSpace) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisibleInSharedSpace));
+        public void RaiseVisibilityStateChangedEvent(bool isVisible) =>
+            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisible));
+
+        public void RaiseUISubmitEvent() =>
+            Publish(new ChatSharedAreaEvents.UISubmitPerformedEvent());
     }
 }
