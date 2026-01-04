@@ -69,7 +69,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 }
 
                 // Check if we reached the target position (not interrupted by input or anything)
-                Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Transform.position;
+                Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Position;
                 return Vector3.Distance(finalPosition, newPlayerPosition) < MOVE_PLAYER_TO_COMPLETION_THRESHOLD;
             }
 
