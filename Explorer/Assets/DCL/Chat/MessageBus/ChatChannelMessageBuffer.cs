@@ -11,28 +11,21 @@ namespace DCL.Chat.MessageBus
 {
     public class ChatChannelMessageBuffer
     {
-        private const int DEFAULT_MAX_MESSAGES_PER_SECOND = 30;
-        private const int DEFAULT_MAX_MESSAGES_PER_FRAME = 1;
-        private const int DEFAULT_FRAMES_BETWEEN_RELEASES = 3;
+        private const int DEFAULT_MILLISECONDS_BETWEEN_RELEASES = 50;
+        private const int DEFAULT_MAX_MESSAGES_PER_BURST = 1;
         private const int DEFAULT_MAX_BUFFER_SIZE = 1000;
+        private readonly object loopLock = new ();
 
-        private int maxMessagesPerSecond = DEFAULT_MAX_MESSAGES_PER_SECOND;
-        private int maxMessagesPerFrame = DEFAULT_MAX_MESSAGES_PER_FRAME;
-        private int framesBetweenReleases = DEFAULT_FRAMES_BETWEEN_RELEASES;
+        private int millisecondsBetweenReleases = DEFAULT_MILLISECONDS_BETWEEN_RELEASES;
+        private int maxMessagesPerBurst = DEFAULT_MAX_MESSAGES_PER_BURST;
         private int maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
 
-        private Queue<ChatMessage> messageQueue = new Queue<ChatMessage>(DEFAULT_MAX_BUFFER_SIZE);
+        private Queue<ChatMessage> messageQueue = new (DEFAULT_MAX_BUFFER_SIZE);
 
-        private long currentSecond;
-        private int messagesReleasedThisSecond;
-        private int messagesReleasedThisFrame;
-        private int framesSinceLastRelease;
+        private DateTime lastReleaseTime = DateTime.MinValue;
 
         private volatile bool isLoopRunning;
         private CancellationToken? externalCancellationToken;
-        private readonly object loopLock = new object();
-        private long cachedCurrentSecond = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
-        private DateTime lastTimeCheck = DateTime.UtcNow;
 
         public event Action<ChatMessage>? MessageReleased;
 
@@ -41,18 +34,16 @@ namespace DCL.Chat.MessageBus
 
         public bool TryEnqueue(ChatMessage message)
         {
-            if (!HasCapacity())
-                return false;
+            if (!HasCapacity()) return false;
 
             messageQueue.Enqueue(message);
 
-            if (!isLoopRunning)
+            if (isLoopRunning) return true;
+
+            lock (loopLock)
             {
-                lock (loopLock)
-                {
-                    if (!isLoopRunning && externalCancellationToken?.IsCancellationRequested != true)
-                        RestartLoop();
-                }
+                if (!isLoopRunning && externalCancellationToken?.IsCancellationRequested != true)
+                    RestartLoop();
             }
 
             return true;
@@ -79,15 +70,14 @@ namespace DCL.Chat.MessageBus
             if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG, FeatureFlagsStrings.CONFIG_VARIANT, out ChatMessageBufferConfig? config) && config.HasValue)
             {
                 ChatMessageBufferConfig value = config.Value;
-                maxMessagesPerSecond = value.MaxMessagesPerSecond > 0 ? value.MaxMessagesPerSecond : DEFAULT_MAX_MESSAGES_PER_SECOND;
-                maxMessagesPerFrame = value.MaxMessagesPerFrame > 0 ? value.MaxMessagesPerFrame : DEFAULT_MAX_MESSAGES_PER_FRAME;
-                framesBetweenReleases = value.FramesBetweenReleases > 0 ? value.FramesBetweenReleases : DEFAULT_FRAMES_BETWEEN_RELEASES;
+                millisecondsBetweenReleases = value.MillisecondsBetweenReleases > 0 ? value.MillisecondsBetweenReleases : DEFAULT_MILLISECONDS_BETWEEN_RELEASES;
+                maxMessagesPerBurst = value.MaxMessagesPerBurst > 0 ? value.MaxMessagesPerBurst : DEFAULT_MAX_MESSAGES_PER_BURST;
 
                 int newBufferSize = value.MaxBufferSize > 0 ? value.MaxBufferSize : DEFAULT_MAX_BUFFER_SIZE;
+
                 if (newBufferSize != maxBufferSize)
-                {
                     messageQueue = new Queue<ChatMessage>(newBufferSize);
-                }
+
                 maxBufferSize = newBufferSize;
             }
         }
@@ -100,10 +90,7 @@ namespace DCL.Chat.MessageBus
         public void Reset()
         {
             messageQueue.Clear();
-            messagesReleasedThisSecond = 0;
-            messagesReleasedThisFrame = 0;
-            framesSinceLastRelease = 0;
-            currentSecond = 0;
+            lastReleaseTime = DateTime.MinValue;
         }
 
         private async UniTaskVoid ReleaseBufferedMessagesAsync(CancellationToken ct)
@@ -118,26 +105,23 @@ namespace DCL.Chat.MessageBus
                         break;
                     }
 
-                    await UniTask.Yield(PlayerLoopTiming.Update);
+                    var messagesReleasedThisBurst = 0;
 
-                    messagesReleasedThisFrame = 0;
-                    framesSinceLastRelease++;
-
-                    while (CanReleaseMessage())
+                    while (CanReleaseMessage(messagesReleasedThisBurst))
                     {
                         try
                         {
-                            messagesReleasedThisSecond++;
-                            messagesReleasedThisFrame++;
-                            framesSinceLastRelease = 0;
-                            var message = messageQueue.Dequeue();
+                            ChatMessage message = messageQueue.Dequeue();
+                            lastReleaseTime = DateTime.UtcNow;
+                            messagesReleasedThisBurst++;
                             MessageReleased?.Invoke(message);
                         }
-                        catch (Exception e)
-                        {
-                            ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
-                        }
+                        catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
+
+                        await UniTask.Yield(PlayerLoopTiming.Update);
                     }
+
+                    await UniTask.Delay(millisecondsBetweenReleases, cancellationToken: ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -155,51 +139,28 @@ namespace DCL.Chat.MessageBus
             isLoopRunning = false;
         }
 
-        private bool CanReleaseMessage()
+        private bool CanReleaseMessage(int messagesReleasedThisBurst)
         {
-            if (framesSinceLastRelease < framesBetweenReleases)
-                return false;
-
             if (messageQueue.Count == 0)
                 return false;
 
-            if (messagesReleasedThisFrame >= maxMessagesPerFrame)
+            if (messagesReleasedThisBurst >= maxMessagesPerBurst)
                 return false;
 
-            long nowSecond = GetCurrentSecond();
+            if (messagesReleasedThisBurst > 0)
+                return true;
 
-            if (currentSecond != nowSecond)
-            {
-                currentSecond = nowSecond;
-                messagesReleasedThisSecond = 0;
-            }
-            else
-            {
-                if (messagesReleasedThisSecond >= maxMessagesPerSecond)
-                    return false;
-            }
+            if (lastReleaseTime == DateTime.MinValue)
+                return true;
 
-
-            return true;
-        }
-
-        private long GetCurrentSecond()
-        {
-            DateTime now = DateTime.UtcNow;
-            if ((now - lastTimeCheck).TotalSeconds >= 1.0)
-            {
-                cachedCurrentSecond = now.Ticks / TimeSpan.TicksPerSecond;
-                lastTimeCheck = now;
-            }
-            return cachedCurrentSecond;
+            return (DateTime.UtcNow - lastReleaseTime).TotalMilliseconds >= millisecondsBetweenReleases;
         }
 
         [Serializable]
         private struct ChatMessageBufferConfig
         {
-            [JsonProperty("max_messages_per_second")] public int MaxMessagesPerSecond;
-            [JsonProperty("max_messages_per_frame")] public int MaxMessagesPerFrame;
-            [JsonProperty("frames_between_releases")] public int FramesBetweenReleases;
+            [JsonProperty("milliseconds_between_releases")] public int MillisecondsBetweenReleases;
+            [JsonProperty("max_messages_per_burst")] public int MaxMessagesPerBurst;
             [JsonProperty("max_buffer_size")] public int MaxBufferSize;
         }
     }
