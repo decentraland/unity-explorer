@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,12 +15,12 @@ namespace DCL.Chat.MessageBus
         private const int DEFAULT_MAX_MESSAGES_PER_FRAME = 1;
         private const int DEFAULT_FRAMES_BETWEEN_RELEASES = 3;
         private const int DEFAULT_MAX_BUFFER_SIZE = 1000;
-        private const string FEATURE_FLAG_VARIANT = "config";
 
         private int maxMessagesPerSecond = DEFAULT_MAX_MESSAGES_PER_SECOND;
         private int maxMessagesPerFrame = DEFAULT_MAX_MESSAGES_PER_FRAME;
         private int framesBetweenReleases = DEFAULT_FRAMES_BETWEEN_RELEASES;
         private int maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+
         private Queue<ChatMessage> messageQueue = new Queue<ChatMessage>(DEFAULT_MAX_BUFFER_SIZE);
 
         private long currentSecond;
@@ -75,14 +76,14 @@ namespace DCL.Chat.MessageBus
 
         private void LoadConfigurationFromFeatureFlag()
         {
-            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG, FEATURE_FLAG_VARIANT, out ChatMessageBufferConfig? config) && config.HasValue)
+            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG, FeatureFlagsStrings.CONFIG_VARIANT, out ChatMessageBufferConfig? config) && config.HasValue)
             {
                 ChatMessageBufferConfig value = config.Value;
-                maxMessagesPerSecond = value.max_messages_per_second > 0 ? value.max_messages_per_second : DEFAULT_MAX_MESSAGES_PER_SECOND;
-                maxMessagesPerFrame = value.max_messages_per_frame > 0 ? value.max_messages_per_frame : DEFAULT_MAX_MESSAGES_PER_FRAME;
-                framesBetweenReleases = value.frames_between_releases > 0 ? value.frames_between_releases : DEFAULT_FRAMES_BETWEEN_RELEASES;
+                maxMessagesPerSecond = value.MaxMessagesPerSecond > 0 ? value.MaxMessagesPerSecond : DEFAULT_MAX_MESSAGES_PER_SECOND;
+                maxMessagesPerFrame = value.MaxMessagesPerFrame > 0 ? value.MaxMessagesPerFrame : DEFAULT_MAX_MESSAGES_PER_FRAME;
+                framesBetweenReleases = value.FramesBetweenReleases > 0 ? value.FramesBetweenReleases : DEFAULT_FRAMES_BETWEEN_RELEASES;
 
-                int newBufferSize = value.max_buffer_size > 0 ? value.max_buffer_size : DEFAULT_MAX_BUFFER_SIZE;
+                int newBufferSize = value.MaxBufferSize > 0 ? value.MaxBufferSize : DEFAULT_MAX_BUFFER_SIZE;
                 if (newBufferSize != maxBufferSize)
                 {
                     messageQueue = new Queue<ChatMessage>(newBufferSize);
@@ -196,10 +197,10 @@ namespace DCL.Chat.MessageBus
         [Serializable]
         private struct ChatMessageBufferConfig
         {
-            public int max_messages_per_second;
-            public int max_messages_per_frame;
-            public int frames_between_releases;
-            public int max_buffer_size;
+            [JsonProperty("max_messages_per_second")] public int MaxMessagesPerSecond;
+            [JsonProperty("max_messages_per_frame")] public int MaxMessagesPerFrame;
+            [JsonProperty("frames_between_releases")] public int FramesBetweenReleases;
+            [JsonProperty("max_buffer_size")] public int MaxBufferSize;
         }
     }
 }

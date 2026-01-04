@@ -51,6 +51,7 @@ namespace DCL.FeatureFlags
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
         public const string CHAT_MESSAGE_BUFFER_CONFIG = "alfa-chat-message-buffer-config";
         public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
+        public const string CONFIG_VARIANT = "config";
     }
 
     public enum FeatureFlag

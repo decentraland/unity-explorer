@@ -3,6 +3,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
@@ -28,8 +29,8 @@ namespace DCL.Chat.MessageBus
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
-        private readonly ChatMessageRateLimiter messageRateLimiter;
-        private readonly ChatChannelMessageBuffer nearbyChannelBuffer;
+        private readonly ChatMessageRateLimiter? messageRateLimiter;
+        private readonly ChatChannelMessageBuffer? nearbyChannelBuffer;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
@@ -48,10 +49,17 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
-            messageRateLimiter = new ChatMessageRateLimiter();
-            messageRateLimiter.LoadConfigurationFromFeatureFlag();
-            nearbyChannelBuffer = new ChatChannelMessageBuffer();
-            nearbyChannelBuffer.MessageReleased += OnBufferedMessageReleased;
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT))
+            {
+                messageRateLimiter = new ChatMessageRateLimiter();
+                messageRateLimiter.LoadConfigurationFromFeatureFlag();
+            }
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_BUFFER))
+            {
+                nearbyChannelBuffer = new ChatChannelMessageBuffer();
+                nearbyChannelBuffer.MessageReleased += OnBufferedMessageReleased;
+            }
 
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
@@ -76,14 +84,14 @@ namespace DCL.Chat.MessageBus
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
 
-            nearbyChannelBuffer.Start(cancellationTokenSource.Token);
+            nearbyChannelBuffer?.Start(cancellationTokenSource.Token);
         }
 
         public void Dispose()
         {
             cancellationTokenSource.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
-            nearbyChannelBuffer.Dispose();
+            nearbyChannelBuffer?.Dispose();
         }
 
         private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
@@ -114,7 +122,7 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                if (!messageRateLimiter.TryAllow(receivedMessage.FromWalletId)) return;
+                if (messageRateLimiter != null && !messageRateLimiter.TryAllow(receivedMessage.FromWalletId)) return;
 
                 // If the Communities shape is disabled, ignores the community conversation messages
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
@@ -145,12 +153,20 @@ namespace DCL.Chat.MessageBus
                 string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
                                                                            : receivedMessage.FromWalletId;
 
-                // If the user that sends the message is banned from the current scene, we ignore the message
-                if (channelType == ChatChannel.ChatChannelType.NEARBY && BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
-                    return;
 
                 if (channelType == ChatChannel.ChatChannelType.NEARBY)
                 {
+                    // If the user that sends the message is banned from the current scene, we ignore the message on Nearby
+                    if (BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
+                        return;
+
+                    if (nearbyChannelBuffer == null)
+                    {
+                        ChatMessage message = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+                        MessageAdded?.Invoke(parsedChannelId, channelType, message);
+                        return;
+                    }
+
                     if (!nearbyChannelBuffer.HasCapacity())
                     {
                         ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "Discarded message, queue full!");
@@ -158,6 +174,7 @@ namespace DCL.Chat.MessageBus
                     }
 
                     ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+
                     if (!nearbyChannelBuffer.TryEnqueue(newMessage))
                         ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "Failed to enqueue message!");
                 }
@@ -179,7 +196,7 @@ namespace DCL.Chat.MessageBus
 
         private void OnIdentityCleared()
         {
-            nearbyChannelBuffer.Reset();
+            nearbyChannelBuffer?.Reset();
         }
 
         public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)

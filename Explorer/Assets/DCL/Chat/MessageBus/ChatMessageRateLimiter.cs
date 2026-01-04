@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -8,7 +9,6 @@ namespace DCL.Chat.MessageBus
     public class ChatMessageRateLimiter
     {
         private const int DEFAULT_MESSAGES_PER_SECOND = 1;
-        private const string FEATURE_FLAG_VARIANT = "config";
         private const int MAX_DICTIONARY_SIZE = 1000;
 
         private readonly Dictionary<string, UserRateLimitData> userRateLimitData = new ();
@@ -51,10 +51,10 @@ namespace DCL.Chat.MessageBus
 
         public void LoadConfigurationFromFeatureFlag()
         {
-            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT, FEATURE_FLAG_VARIANT, out ChatMessageRateLimitConfig? config) && config.HasValue)
+            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT, FeatureFlagsStrings.CONFIG_VARIANT, out ChatMessageRateLimitConfig? config) && config.HasValue)
             {
                 ChatMessageRateLimitConfig value = config.Value;
-                messagesPerSecond = value.messages_per_second > 0 ? value.messages_per_second : DEFAULT_MESSAGES_PER_SECOND;
+                messagesPerSecond = value.MessagesPerSecond > 0 ? value.MessagesPerSecond : DEFAULT_MESSAGES_PER_SECOND;
             }
         }
 
@@ -87,7 +87,7 @@ namespace DCL.Chat.MessageBus
         [Serializable]
         private struct ChatMessageRateLimitConfig
         {
-            public int messages_per_second;
+            [JsonProperty("messages_per_second")] public int MessagesPerSecond;
         }
 
         private class UserRateLimitData
