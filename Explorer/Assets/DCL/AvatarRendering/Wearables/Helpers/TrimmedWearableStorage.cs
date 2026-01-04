@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             lock (lockObject)
             {
-                return TryGetElement(dto.metadata.id, out ITrimmedWearable existingWearable)
+                return TryGetElement(dto.metadata.id, out var existingWearable)
                     ? existingWearable
                     : AddWearable(dto.metadata.id, new TrimmedWearable(dto), qualifiedForUnloading);
             }
@@ -42,11 +42,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             lock (lockObject)
             {
-                for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+                for (var node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 {
-                    URN urn = node.Value.key;
+                    var urn = node.Value.key;
 
-                    if (!wearablesCache.TryGetValue(urn, out ITrimmedWearable wearable))
+                    if (!wearablesCache.TryGetValue(urn, out var wearable))
                         continue;
 
                     DisposeThumbnail(wearable);
@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private void UpdateListedCachePriority(URN @for)
         {
-            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(URN key, long lastUsedFrame)> node))
+            if (cacheKeysDictionary.TryGetValue(@for, out var node))
             {
                 node.Value = (@for, MultithreadingUtility.FrameCount);
 

@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine.Device;
 using UnityEngine.Pool;
@@ -46,7 +47,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
-            string path = System.IO.Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            string path = Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
             const int DEFAULT_LIMIT = 500;
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
