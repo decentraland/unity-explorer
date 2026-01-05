@@ -122,7 +122,7 @@ namespace DCL.PluginSystem.Global
         {
             // Initialize the embedded emote URN mapping for legacy emote conversion
             IReadOnlyCollection<URN> embeddedEmoteUrns = settings.EmbeddedEmotesAsURN();
-            EmoteComponentsUtils.InitializeEmbeddedEmoteMapping(embeddedEmoteUrns);
+            EmoteComponentsUtils.InitializeLegacyToOnChainEmoteMapping(embeddedEmoteUrns);
 
             var giftSelectionPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftSelectionPopupPrefab, ct))
                 .Value.GetComponent<GiftingView>();

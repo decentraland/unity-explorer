@@ -36,11 +36,14 @@ namespace DCL.AvatarRendering.Emotes
         //     "confettipopper",
         // };
 
-        private static readonly Dictionary<string, URN> EMBEDDED_EMOTE_URN_MAP = new (StringComparer.OrdinalIgnoreCase);
+        /* Maps the legacy URN to the related new on-chain URN, i.e. :
+         "wave" -> "urn:decentraland:off-chain:base-emotes:wave"
+        */
+        private static readonly Dictionary<string, URN> LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP = new (StringComparer.OrdinalIgnoreCase);
 
-        public static void InitializeEmbeddedEmoteMapping(IReadOnlyCollection<URN> embeddedEmoteUrns)
+        public static void InitializeLegacyToOnChainEmoteMapping(IReadOnlyCollection<URN> embeddedEmoteUrns)
         {
-            EMBEDDED_EMOTE_URN_MAP.Clear();
+            LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP.Clear();
 
             foreach (URN embeddedUrn in embeddedEmoteUrns)
             {
@@ -53,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (lastColonIndex < 0 || lastColonIndex >= urnString.Length - 1) continue;
 
                 string lastSegment = urnString.Substring(lastColonIndex + 1);
-                EMBEDDED_EMOTE_URN_MAP[lastSegment] = embeddedUrn;
+                LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP[lastSegment] = embeddedUrn;
             }
         }
 
@@ -68,8 +71,8 @@ namespace DCL.AvatarRendering.Emotes
 
                 string emoteId = emote.ToString();
 
-                // If it's a legacy emote, try to find a matching embedded emote URN by last segment
-                if (EMBEDDED_EMOTE_URN_MAP.TryGetValue(emoteId, out URN embeddedUrn))
+                // If it's a legacy emote, try to find a matching on-chain emote URN by last segment
+                if (LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP.TryGetValue(emoteId, out URN embeddedUrn))
                 {
                     pointers.Add(embeddedUrn);
                     continue;
