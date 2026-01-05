@@ -542,7 +542,6 @@ namespace Global.Dynamic
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
-                new SpamChatCommand(tempChatMessagesBus, currentChannelService)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
