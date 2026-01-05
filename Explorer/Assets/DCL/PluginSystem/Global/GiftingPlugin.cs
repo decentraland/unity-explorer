@@ -120,6 +120,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(GiftingSettings settings, CancellationToken ct)
         {
+            // Initialize the embedded emote URN mapping for legacy emote conversion
+            IReadOnlyCollection<URN> embeddedEmoteUrns = settings.EmbeddedEmotesAsURN();
+            EmoteComponentsUtils.InitializeEmbeddedEmoteMapping(embeddedEmoteUrns);
+
             var giftSelectionPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftSelectionPopupPrefab, ct))
                 .Value.GetComponent<GiftingView>();
 

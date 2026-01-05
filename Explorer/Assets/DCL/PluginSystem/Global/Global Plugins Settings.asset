@@ -231,7 +231,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <IntroEmoteURN>k__BackingField: raiseHand
+          <IntroEmoteURN>k__BackingField: urn:decentraland:off-chain:base-emotes:raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
     - rid: 1154744868092248158
       type: {class: DuplicateIdentityPlugin/DuplicateIdentitySettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
