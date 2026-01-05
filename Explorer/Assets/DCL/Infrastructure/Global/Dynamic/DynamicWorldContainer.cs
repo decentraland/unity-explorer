@@ -698,23 +698,6 @@ namespace Global.Dynamic
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
 
-            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
-                globalPlugins.Add(
-                    new VoiceChatPlugin(
-                        roomHub,
-                        mainUIView.ChatMainView.VoiceChatPanelView,
-                        voiceChatContainer,
-                        profileRepositoryWrapper,
-                        entityParticipantTable,
-                        globalWorld,
-                        playerEntity,
-                        communitiesDataProvider,
-                        staticContainer.TextureProvider,
-                        assetsProvisioner,
-                        chatSharedAreaEventBus,
-                        debugBuilder)
-                );
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit), new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus), new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld), new MultiplayerPlugin(
@@ -981,6 +964,24 @@ namespace Global.Dynamic
                     thumbnailProvider),
                 new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner), new AvatarLocomotionOverridesGlobalPlugin()
             };
+
+            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
+                globalPlugins.Add(
+                    new VoiceChatPlugin(
+                        roomHub,
+                        mainUIView.ChatMainView.VoiceChatPanelView,
+                        voiceChatContainer,
+                        profileRepositoryWrapper,
+                        entityParticipantTable,
+                        globalWorld,
+                        playerEntity,
+                        communitiesDataProvider,
+                        staticContainer.TextureProvider,
+                        assetsProvisioner,
+                        chatSharedAreaEventBus,
+                        debugBuilder)
+                );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
