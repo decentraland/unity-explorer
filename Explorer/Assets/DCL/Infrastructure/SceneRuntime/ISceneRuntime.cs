@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -8,7 +8,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Microsoft.ClearScript.V8;
 using PortableExperiences.Controller;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -51,7 +50,7 @@ namespace SceneRuntime
 
         void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);
 
-        V8RuntimeHeapInfo RuntimeHeapInfo { get; }
+        IRuntimeHeapInfo? RuntimeHeapInfo { get; }
     }
 
     public static class SceneRuntimeExtensions

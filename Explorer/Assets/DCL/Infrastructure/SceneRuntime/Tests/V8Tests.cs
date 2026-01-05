@@ -15,7 +15,7 @@ namespace SceneRuntime.Tests
         public void SetUp()
         {
             engineFactory = new V8EngineFactory();
-            engine = engineFactory.Create(new SceneShortInfo(new Vector2Int(0, 0), "test"));
+            engine = engineFactory.CreateV8Engine(new SceneShortInfo(new Vector2Int(0, 0), "test"));
         }
 
         [TearDown]

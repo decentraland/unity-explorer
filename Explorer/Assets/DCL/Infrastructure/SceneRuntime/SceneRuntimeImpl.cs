@@ -35,7 +35,7 @@ namespace SceneRuntime
         private ScriptObject startFunc;
         private EngineApiWrapper? engineApi;
 
-        public V8RuntimeHeapInfo RuntimeHeapInfo { get; private set; }
+        public IRuntimeHeapInfo? RuntimeHeapInfo { get; private set; }
 
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
@@ -44,12 +44,16 @@ namespace SceneRuntime
             string initCode,
             IReadOnlyDictionary<string, string> jsModules,
             SceneShortInfo sceneShortInfo,
-            V8EngineFactory engineFactory
+            IJavaScriptEngineFactory engineFactory
         )
         {
             resetableSource = new JSTaskResolverResetable();
 
-            engine = engineFactory.Create(sceneShortInfo);
+            IJavaScriptEngine jsEngine = engineFactory.Create(sceneShortInfo);
+            if (jsEngine is V8JavaScriptEngineAdapter v8Adapter)
+                engine = v8Adapter.V8Engine;
+            else
+                throw new NotSupportedException("SceneRuntimeImpl currently only supports V8 engine. Use WebGLSceneRuntimeImpl for WebGL.");
             jsApiBunch = new JsApiBunch(engine);
 
             var moduleHub = new SceneModuleHub(engine);
@@ -148,7 +152,8 @@ namespace SceneRuntime
         public UniTask UpdateScene(float dt)
         {
             nextUint8Array = 0;
-            RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
+            V8RuntimeHeapInfo? v8HeapInfo = engine.GetRuntimeHeapInfo();
+            RuntimeHeapInfo = v8HeapInfo != null ? new V8RuntimeHeapInfoAdapter(v8HeapInfo) : null;
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;

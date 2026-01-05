@@ -19,7 +19,7 @@ namespace SceneRuntime.Factory
     public sealed class SceneRuntimeFactory
     {
         private readonly IRealmData realmData;
-        private readonly V8EngineFactory engineFactory;
+        private readonly IJavaScriptEngineFactory engineFactory;
 
         public enum InstantiationBehavior
         {
@@ -33,7 +33,7 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
+        public SceneRuntimeFactory(IRealmData realmData, IJavaScriptEngineFactory engineFactory,
             IWebJsSources webJsSources)
         {
             this.realmData = realmData;
