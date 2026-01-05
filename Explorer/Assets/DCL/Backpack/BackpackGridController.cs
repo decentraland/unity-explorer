@@ -16,7 +16,6 @@ using MVC;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -178,7 +177,7 @@ namespace DCL.Backpack
 
             for (int i = Math.Min(gridWearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                ITrimmedWearable wearable = gridWearables[i];
+                var wearable = gridWearables[i];
 
                 //This only happens in last page of results, when gridWearables returned twice the amount of wearables
                 //caused by clicking repeatedly on the same number on the backpack
@@ -309,7 +308,7 @@ namespace DCL.Backpack
 
             try
             {
-                (IReadOnlyList<ITrimmedWearable>? wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
+                (var wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
                     pageNumber,
                     ct,
                     currentSort.OrderByOperation.ToSortingField(),
@@ -410,7 +409,7 @@ namespace DCL.Backpack
         {
             for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
-                ITrimmedWearable wearable = wearables[i];
+                var wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];
 
                 if (itemView == null) continue;

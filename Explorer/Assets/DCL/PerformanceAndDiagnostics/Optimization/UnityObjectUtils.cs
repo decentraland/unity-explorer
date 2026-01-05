@@ -2,6 +2,11 @@
 using Sentry;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 using UnityEngine;
 
 namespace Utility
@@ -26,16 +31,16 @@ namespace Utility
         // This code fixes the following situation: enter play mode, exit play
         // mode, run edit mode tests.
 #if UNITY_EDITOR
-        [UnityEditor.InitializeOnLoadMethod]
+        [InitializeOnLoadMethod]
         private static void ResetIsQuittingOnEnteredEditMode()
         {
-            UnityEditor.EditorApplication.playModeStateChanged +=
+            EditorApplication.playModeStateChanged +=
                 static stateChange =>
-            {
-                if (stateChange ==
-                    UnityEditor.PlayModeStateChange.EnteredEditMode)
-                    IsQuitting = false;
-            };
+                {
+                    if (stateChange ==
+                        PlayModeStateChange.EnteredEditMode)
+                        IsQuitting = false;
+                };
         }
 #endif
 
