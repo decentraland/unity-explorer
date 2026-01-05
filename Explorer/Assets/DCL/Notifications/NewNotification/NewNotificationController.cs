@@ -29,7 +29,6 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
         private readonly UITextureProvider textureProvider;
         private readonly Queue<INotification> notificationQueue = new ();
@@ -48,14 +47,12 @@ namespace DCL.Notifications.NewNotification
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             UITextureProvider textureProvider) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
-            this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
             this.textureProvider  = textureProvider;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
@@ -75,7 +72,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, textureProvider);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, webRequestController);
+            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, textureProvider);
             viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))

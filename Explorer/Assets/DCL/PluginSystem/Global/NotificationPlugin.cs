@@ -63,8 +63,8 @@ namespace DCL.PluginSystem.Global
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
-                    textureProvider,
-                    profileRepository
+                    profileRepository,
+                    textureProvider
                 );
 
             mvcManager.RegisterController(newNotificationController);
