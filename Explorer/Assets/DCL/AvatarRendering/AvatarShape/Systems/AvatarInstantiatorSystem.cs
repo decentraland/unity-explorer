@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -124,6 +125,17 @@ namespace DCL.AvatarRendering.AvatarShape
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+
+            // Only enable the rig if head-sync is enabled
+            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
+            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
+
+            // Hands / Feet IK components are not added to remote entities
+            // We still disable the rigs to ensure no cpu time is wasted
+            // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
+            avatarBase.HandsIKRig.enabled = false;
+            avatarBase.FeetIKRig.enabled = false;
+
             return avatarBase;
         }
 
@@ -136,7 +148,11 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (avatarBase != null)
             {
+                // Re-enable rigs since by default we disable them when instantiating new avatars
                 avatarBase.RigBuilder.enabled = true;
+                avatarBase.HandsIKRig.enabled = true;
+                avatarBase.FeetIKRig.enabled = true;
+
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
             }
         }
