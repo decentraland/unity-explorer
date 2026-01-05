@@ -174,5 +174,3 @@ public static class OtpInputBoxCreator
 }
 #endif
 
-
-

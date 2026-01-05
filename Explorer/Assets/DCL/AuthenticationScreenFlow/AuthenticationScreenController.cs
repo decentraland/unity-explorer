@@ -20,7 +20,6 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
-using DCL.WebRequests;
 using Global.AppArgs;
 using DCL.Utilities;
 using DCL.Web3;
@@ -91,7 +90,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IWebRequestController webRequestController;
 
         // Base wearables randomization - Dictionary<category, List<URN>>
         private Dictionary<string, List<URN>>? maleWearablesByCategory;
@@ -135,8 +133,7 @@ namespace DCL.AuthenticationScreenFlow
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
             IAppArgs appArgs,
-            IWearablesProvider wearablesProvider,
-            IWebRequestController webRequestController)
+            IWearablesProvider wearablesProvider)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -156,7 +153,6 @@ namespace DCL.AuthenticationScreenFlow
             this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
-            this.webRequestController = webRequestController;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -897,9 +893,8 @@ namespace DCL.AuthenticationScreenFlow
 
                         sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                        var walletAddress = identity.Address.ToString();
-                        bool profileExists = await CheckProfileExistsAsync(walletAddress, ct);
-                        bool isNewUser = !profileExists && ThirdWebManager.Instance.ActiveWallet != null;
+                        Profile? profile = await selfProfile.ProfileAsync(ct);
+                        bool isNewUser = profile == null && ThirdWebManager.Instance.ActiveWallet != null;
 
                         if (isNewUser)
                         {
@@ -923,9 +918,7 @@ namespace DCL.AuthenticationScreenFlow
                         }
                         else
                         {
-                            Profile? profile = await selfProfile.ProfileAsync(ct);
-
-                            profile!.IsDirty = true;
+                            profile.IsDirty = true;
                             profile.HasConnectedWeb3 = true;
 
                             profileNameLabel!.Value = profile.Version == 1 ? profile.Name : "back " + profile.Name;
@@ -1227,28 +1220,6 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
 #endregion
-
-        /// <summary>
-        ///     Проверяет существование профиля через GET запрос к API Decentraland.
-        /// </summary>
-        /// <param name="walletAddress">Ethereum адрес кошелька</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>true если профиль существует (200), false если не существует (404) или ошибка</returns>
-        private async UniTask<bool> CheckProfileExistsAsync(string walletAddress, CancellationToken ct)
-        {
-            const string PROFILES_API_URL = "https://peer.decentraland.org/lambdas/profiles/";
-            var url = $"{PROFILES_API_URL}{walletAddress}";
-
-            try
-            {
-                int statusCode = await webRequestController
-                                      .GetAsync(new CommonArguments(URLAddress.FromString(url)), ct, ReportCategory.PROFILE)
-                                      .StatusCodeAsync();
-
-                return statusCode == 200;
-            }
-            catch (Exception) { return false; }
-        }
 
     }
 }
