@@ -5,7 +5,7 @@
     /// </summary>
     public class DefaultChatState : ChatState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.UIMediator.SetupForDefaultState(animate: true);
             context.UIMediator.chatInputPresenter.OnBlur();
@@ -18,18 +18,18 @@
             context.UIMediator.SetPanelsFocus(isFocused: false, animate: true);
 
         public override void OnClickInside() =>
-            ChangeState<FocusedChatState>();
+            machine.Enter<FocusedChatState>();
 
         public override void OnCloseRequested() =>
-            ChangeState<MinimizedChatState>();
+            machine.Enter<MinimizedChatState>();
 
         public override void OnFocusRequested() =>
-            ChangeState<FocusedChatState>();
+            machine.Enter<FocusedChatState>();
 
         public override void OnMinimizeRequested() =>
-            ChangeState<MinimizedChatState>();
+            machine.Enter<MinimizedChatState>();
 
         public override void OnToggleMembers() =>
-            ChangeState<MembersChatState>();
+            machine.Enter<MembersChatState>();
     }
 }
