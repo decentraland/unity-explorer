@@ -27,10 +27,11 @@ namespace DCL.CharacterCamera.Systems
         private readonly byte propagationThreshold;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
         private readonly IComponentPool<PBMainCamera> mainCameraPool;
+        private readonly IComponentPool<PBPointerLock> pointerLockPool;
         private readonly Entity cameraEntity;
 
         internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
-            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, IComponentPool<PBMainCamera> mainCameraPool, Entity cameraEntity) : base(world)
+            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, IComponentPool<PBMainCamera> mainCameraPool, IComponentPool<PBPointerLock> pointerLockPool, Entity cameraEntity) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
@@ -39,6 +40,7 @@ namespace DCL.CharacterCamera.Systems
             this.sdkTransformPool = sdkTransformPool;
             this.cameraEntity = cameraEntity;
             this.mainCameraPool = mainCameraPool;
+            this.pointerLockPool = pointerLockPool;
             this.scenePartition = scenePartition;
         }
 
@@ -74,6 +76,10 @@ namespace DCL.CharacterCamera.Systems
             pbMainCameraForWorld.VirtualCameraEntity = 0;
             World.Add(cameraEntity, pbMainCameraForWorld);
 
+            PBPointerLock pbPointerLockForWorld = pointerLockPool.Get();
+            pbPointerLockForWorld.IsPointerLocked = false;
+            World.Add(cameraEntity, pbPointerLockForWorld);
+
             PropagateCameraData(false);
         }
 
@@ -91,7 +97,7 @@ namespace DCL.CharacterCamera.Systems
             if (!checkIsDirty || exposedCameraData.CameraType.IsDirty)
                 ecsToCrdtWriter.PutMessage<PBCameraMode, IExposedCameraData>(static (mode, data) => mode.Mode = data.CameraType, SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);
 
-            if (exposedCameraData.PointerIsLocked.IsDirty)
+            if (!checkIsDirty || exposedCameraData.PointerIsLocked.IsDirty)
                 ecsToCrdtWriter.PutMessage<PBPointerLock, IExposedCameraData>(
                     static (pointerLock, data) => pointerLock.IsPointerLocked = data.PointerIsLocked,
                     SpecialEntitiesID.CAMERA_ENTITY, exposedCameraData);

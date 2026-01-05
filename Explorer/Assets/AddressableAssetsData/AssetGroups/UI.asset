@@ -575,11 +575,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a0f8bf40b1a14c54384029def9ea0582
-    m_Address: SocialEmotePin
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1d5d4f99234041159f0c215eef3eff3
     m_Address: NewNotificationPanel
     m_ReadOnly: 0
@@ -597,6 +592,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a731ee28947d7d54d8f4ff349525c868
     m_Address: Assets/Textures/ExplorePanel/EmotesHoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9b1068498c63904cb1ff1958d25fb63
+    m_Address: Assets/DCL/UI/DuplicateIdentityPopup/DuplicateIdentityWindow.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

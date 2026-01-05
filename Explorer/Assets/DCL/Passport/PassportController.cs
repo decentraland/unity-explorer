@@ -395,7 +395,7 @@ namespace DCL.Passport
             }
 
             contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
-            
+
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
@@ -540,7 +540,7 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
         }
-        
+
         private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
         {
             try
@@ -843,7 +843,7 @@ namespace DCL.Passport
             // Open gifting popup and close passport popup
             await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile?.UserId, targetProfile?.DisplayName)));
         }
-        
+
         private void BlockUserClicked()
         {
             BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
