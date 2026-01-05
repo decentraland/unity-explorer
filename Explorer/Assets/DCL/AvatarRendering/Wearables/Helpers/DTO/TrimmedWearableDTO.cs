@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 id = wearableDTO.id, thumbnail = thumbnailHash, metadata = new TrimmedWearableDTO.WearableMetadataDto
                 {
-                    id = wearableDTO.metadata.id, rarity = wearableDTO.metadata.rarity, data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
+                    id = wearableDTO.metadata.id, rarity = wearableDTO.metadata.rarity, name = wearableDTO.metadata.name, data = new TrimmedWearableDTO.WearableMetadataDto.DataDto
                     {
                         category = wearableDTO.metadata.data.category, representations = wearableDTO.metadata.data.representations
                     }

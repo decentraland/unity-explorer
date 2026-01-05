@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

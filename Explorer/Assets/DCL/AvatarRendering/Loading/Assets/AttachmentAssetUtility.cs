@@ -30,6 +30,9 @@ namespace DCL.AvatarRendering.Loading.Assets
                 for (var i = 0; i < meshRenderers.Value.Count; i++)
                     Object.DestroyImmediate(meshRenderers.Value[i].gameObject);
 
+                // Remove unused bone GameObjects from the wearable hierarchies as we don't need them anymore
+                RemoveBonesGameObjects(instantiatedWearable.transform);
+
                 cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
             }
 
@@ -50,6 +53,37 @@ namespace DCL.AvatarRendering.Loading.Assets
 
             cachedWearable.Instance.gameObject.SetActive(true);
             return cachedWearable;
+        }
+
+        private static void RemoveBonesGameObjects(Transform wearableRoot)
+        {
+            using PoolExtensions.Scope<List<Renderer>> pooledList =
+                wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
+
+            if (pooledList.Value.Count == 0)
+                return;
+
+            for (int i = wearableRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = wearableRoot.GetChild(i);
+
+                if (!HasRendererInHierarchy(child))
+                    Object.Destroy(child.gameObject);
+            }
+        }
+
+        private static bool HasRendererInHierarchy(Transform transform)
+        {
+            if (transform.GetComponent<Renderer>() != null)
+                return true;
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (HasRendererInHierarchy(transform.GetChild(i)))
+                    return true;
+            }
+
+            return false;
         }
     }
 }
