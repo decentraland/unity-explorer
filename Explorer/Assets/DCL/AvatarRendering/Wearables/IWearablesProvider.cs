@@ -21,10 +21,29 @@ namespace DCL.AvatarRendering.Wearables
             bool smartWearablesOnly = false,
             string? name = null,
             List<ITrimmedWearable>? results = null,
+            string? network = null,
+            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false);
+            bool needsBuilderAPISigning = false
+        );
 
-        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers, BodyShape bodyShape, CancellationToken ct);
+        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(
+            int pageSize,
+            int pageNumber,
+            CancellationToken ct,
+            SortingField sortingField = SortingField.Date,
+            OrderBy orderBy = OrderBy.Descending,
+            string? category = null,
+            CollectionType collectionType = CollectionType.All,
+            bool smartWearablesOnly = false,
+            string? name = null,
+            string? network = null,
+            CommonLoadingArguments? loadingArguments = null
+        );
+        
+        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            CancellationToken ct);
 
         public enum SortingField
         {
@@ -45,7 +64,7 @@ namespace DCL.AvatarRendering.Wearables
             Base = 1 << 0,
             OnChain = 1 << 1,
             ThirdParty = 1 << 2,
-            All = -1,
+            All = -1
         }
     }
 }

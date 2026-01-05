@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 
@@ -8,6 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 {
     public interface ITrimmedWearable : IThumbnailAttachment
     {
+        public int Amount { get; set; }
         bool IsCompatibleWithBodyShape(string bodyShape);
 
         /// <summary>
@@ -17,31 +19,75 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
 
-        public URLPath GetThumbnail() =>
-            new (TrimmedDTO.thumbnail);
+        public URLPath GetThumbnail()
+        {
+            return new URLPath (TrimmedDTO.thumbnail);
+        }
 
-        public bool IsSmart() =>
-            TrimmedDTO.Metadata.isSmart;
+        public bool IsSmart()
+        {
+            return TrimmedDTO.Metadata.isSmart;
+        }
 
-        URN GetUrn() =>
-            this.TrimmedDTO.Metadata.id;
+        URN GetUrn()
+        {
+            return TrimmedDTO.Metadata.id;
+        }
 
         string GetRarity()
         {
             const string DEFAULT_RARITY = "base";
-            string result = this.TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            string result = TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
             return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
         }
 
-        string GetCategory() =>
-            this.TrimmedDTO.Metadata.AbstractData.category;
+        string GetCategory()
+        {
+            return TrimmedDTO.Metadata.AbstractData.category;
+        }
 
         // IThumbnailAttachment implementation
-        URLPath IThumbnailAttachment.GetThumbnail() => this.GetThumbnail();
-        URN IThumbnailAttachment.GetUrn() => this.GetUrn();
-        string IThumbnailAttachment.GetHash() => TrimmedDTO.GetHash();
-        DCL.Ipfs.AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => TrimmedDTO.assetBundleManifestVersion;
-        string? IThumbnailAttachment.GetContentDownloadUrl() => TrimmedDTO.ContentDownloadUrl;
-        string? IThumbnailAttachment.GetEntityId() => TrimmedDTO.id;
+        URLPath IThumbnailAttachment.GetThumbnail()
+        {
+            return GetThumbnail();
+        }
+
+        URN IThumbnailAttachment.GetUrn()
+        {
+            return GetUrn();
+        }
+
+        string IThumbnailAttachment.GetHash()
+        {
+            return TrimmedDTO.GetHash();
+        }
+
+        string GetName()
+        {
+            if (string.IsNullOrEmpty(TrimmedDTO.Metadata.name))
+                return "NAME_WEARABLE";
+            
+            return TrimmedDTO.Metadata.name;
+        }
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
+        }
+
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
+        {
+            return TrimmedDTO.assetBundleManifestVersion;
+        }
+
+        string? IThumbnailAttachment.GetContentDownloadUrl()
+        {
+            return TrimmedDTO.ContentDownloadUrl;
+        }
+
+        string? IThumbnailAttachment.GetEntityId()
+        {
+            return TrimmedDTO.id;
+        }
     }
 }
