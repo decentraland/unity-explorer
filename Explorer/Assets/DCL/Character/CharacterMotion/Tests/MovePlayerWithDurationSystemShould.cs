@@ -36,7 +36,8 @@ namespace DCL.CharacterMotion.Tests
             Vector3 targetPosition,
             float duration,
             Vector3? cameraTarget = null,
-            Vector3? avatarTarget = null)
+            Vector3? avatarTarget = null,
+            UniTaskCompletionSource<bool> completionSource = null)
         {
             characterGameObject.transform.position = startPosition;
 
@@ -45,7 +46,7 @@ namespace DCL.CharacterMotion.Tests
             var animationComponent = new CharacterAnimationComponent();
             var movementInput = new MovementInputComponent { Kind = MovementKind.IDLE, Axes = Vector2.zero };
             var jumpInput = new JumpInputComponent { IsPressed = false };
-            var completionSource = new UniTaskCompletionSource<bool>();
+            completionSource ??= new UniTaskCompletionSource<bool>();
             var moveIntent = new PlayerMoveToWithDurationIntent(startPosition, targetPosition, cameraTarget, avatarTarget, completionSource, duration);
 
             return world.Create(
@@ -343,6 +344,69 @@ namespace DCL.CharacterMotion.Tests
 
             var moveIntent = world.Get<PlayerMoveToWithDurationIntent>(e);
             Assert.That(moveIntent.LastFramePosition, Is.EqualTo(positionAfterFirstFrame));
+        }
+
+        [Test]
+        public void SetCompletionSourceToTrueOnSuccessfulCompletion()
+        {
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 0.5f;
+            var completionSource = new UniTaskCompletionSource<bool>();
+
+            CreatePlayerEntity(startPosition, targetPosition, duration, completionSource: completionSource);
+
+            // Complete the movement
+            system.Update(0.5f);
+
+            Assert.That(completionSource.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(completionSource.Task.GetAwaiter().GetResult(), Is.True);
+        }
+
+        [Test]
+        public void SetCompletionSourceToFalseOnMovementInputInterruption()
+        {
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 2f;
+            var completionSource = new UniTaskCompletionSource<bool>();
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, completionSource: completionSource);
+
+            // First update to start movement
+            system.Update(0.1f);
+
+            // Simulate movement input to interrupt
+            world.Set(e, new MovementInputComponent { Kind = MovementKind.JOG, Axes = new Vector2(1, 0) });
+
+            // Update should detect input and interrupt
+            system.Update(0.1f);
+
+            Assert.That(completionSource.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(completionSource.Task.GetAwaiter().GetResult(), Is.False);
+        }
+
+        [Test]
+        public void SetCompletionSourceToFalseOnJumpInputInterruption()
+        {
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 2f;
+            var completionSource = new UniTaskCompletionSource<bool>();
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, completionSource: completionSource);
+
+            // First update to start movement
+            system.Update(0.1f);
+
+            // Simulate jump input to interrupt
+            world.Set(e, new JumpInputComponent { IsPressed = true });
+
+            // Update should detect jump and interrupt
+            system.Update(0.1f);
+
+            Assert.That(completionSource.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
+            Assert.That(completionSource.Task.GetAwaiter().GetResult(), Is.False);
         }
     }
 }
