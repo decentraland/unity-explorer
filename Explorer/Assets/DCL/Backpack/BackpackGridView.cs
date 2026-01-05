@@ -2,7 +2,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack.Breadcrumb;
 using DCL.Backpack.EmotesSection;
 using DCL.UI;
-using DG.Tweening;
 using System;
 using UnityEngine;
 

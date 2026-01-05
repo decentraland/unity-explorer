@@ -176,7 +176,7 @@ namespace DCL.Backpack
             if (string.IsNullOrEmpty(ItemId)) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;
 
-            if (!(CanHover || (!CanHover && eventData.clickCount == 2))) return;
+            if (!CanHover && eventData.clickCount != 2) return;
 
             switch (eventData.clickCount)
             {
