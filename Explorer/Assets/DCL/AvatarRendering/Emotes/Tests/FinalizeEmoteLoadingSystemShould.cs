@@ -568,6 +568,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public bool TryGetOwnedNftRegistry(URN urn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 
+            public int GetOwnedNftCount(URN nftUrn)
+            {
+                return 1;
+            }
+
             public void ClearOwnedNftRegistry()
             {
                 throw new NotImplementedException();
@@ -577,6 +582,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
         }
 
         public class MockEmote : IEmote
@@ -585,8 +597,15 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
             public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
-            public List<StreamableLoadingResult<AudioClipData>> SocialEmoteOutcomeAudioAssetResults { get; }
+            public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
             public bool IsSocial { get; }
+            public int Amount { get; set; }
+
+            public void SetAmount(int amount)
+            {
+                Amount = amount;
+            }
+
             public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
             public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }

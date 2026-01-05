@@ -11,7 +11,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -59,15 +58,14 @@ namespace DCL.CharacterPreview
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
-                new HeadIKComponent { IsEnabled = false });
+                new HeadIKComponent());
         }
 
         public void EnableHeadIK()
         {
             ref HeadIKComponent headIK = ref globalWorld.TryGetRef<HeadIKComponent>(characterPreviewEntity, out bool exists);
 
-            if (exists)
-                headIK.IsEnabled = true;
+            if (exists) headIK.SetEnabled(true, true);
         }
 
         public void Dispose()

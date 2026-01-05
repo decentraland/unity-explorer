@@ -39,6 +39,8 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE = "community_ownership_transferred";
         private const string USER_BANNED_FROM_SCENE_TYPE = "user_banned_from_scene";
         private const string USER_UNBANNED_FROM_SCENE_TYPE = "user_unbanned_from_scene";
+        private const string TRANSFER_RECEIVED_TYPE = "transfer_received";
+        private const string COMMUNITY_VOICE_CHAT_STARTED_TYPE = "community_voice_chat_started";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -112,6 +114,8 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE => new CommunityOwnershipTransferredNotification(),
                     USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
                     USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
+                    TRANSFER_RECEIVED_TYPE => new GiftReceivedNotification(),
+                    COMMUNITY_VOICE_CHAT_STARTED_TYPE => new CommunityVoiceChatStartedNotification(),
                     _ => null,
                 };
 

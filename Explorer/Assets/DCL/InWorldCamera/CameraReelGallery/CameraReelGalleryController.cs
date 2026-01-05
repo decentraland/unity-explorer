@@ -56,7 +56,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action ScreenshotDownloaded;
         public event Action<int> MaxThumbnailsUpdated;
 
-        private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
+        private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 1;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;

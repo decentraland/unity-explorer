@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.ThirdParty;
@@ -22,7 +23,6 @@ namespace DCL.Backpack
         private const string DEFAULT_DESCRIPTION = "This wearable does not have a description set.";
         private const int MINIMUM_WAIT_TIME = 500;
         private const string EMOTE_CATEGORY = "emote";
-        private const string SOCIAL_EMOTE_CATEGORY = "social_emote";
 
         private readonly BackpackInfoPanelView view;
         private readonly IBackpackEventBus backpackEventBus;
@@ -31,6 +31,7 @@ namespace DCL.Backpack
         private readonly NFTColorsSO rarityColors;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly HideCategoriesController hideCategoriesController;
+        private readonly IThumbnailProvider thumbnailProvider;
         private CancellationTokenSource? cts;
 
         public BackpackInfoPanelController(
@@ -41,7 +42,8 @@ namespace DCL.Backpack
             NFTColorsSO rarityColors,
             IReadOnlyEquippedWearables equippedWearables,
             AttachmentType attachmentType,
-            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
@@ -49,6 +51,7 @@ namespace DCL.Backpack
             this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
             this.rarityColors = rarityColors;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.thumbnailProvider = thumbnailProvider;
 
             hideCategoriesController = new HideCategoriesController(
                 view.HideCategoryGridView,
@@ -83,10 +86,7 @@ namespace DCL.Backpack
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
             view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? DEFAULT_DESCRIPTION : wearable.GetDescription();
-            bool isEmote = wearable.GetType() == typeof(Emote);
-            bool isSocialEmote = isEmote && ((EmoteDTO)wearable.DTO).metadata.IsSocialEmote;
-            string category = isSocialEmote ? SOCIAL_EMOTE_CATEGORY : isEmote ? EMOTE_CATEGORY : wearable.GetCategory();
-            view.CategoryImage.sprite = categoryIcons.GetTypeImage(category);
+            view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetType() == typeof(Emote) ? EMOTE_CATEGORY : wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();
@@ -110,7 +110,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment itemWearable, CancellationToken ct)
         {
-            view.WearableThumbnail.sprite = await itemWearable.WaitForThumbnailAsync(MINIMUM_WAIT_TIME, ct);
+            view.WearableThumbnail.sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
             view.LoadingSpinner.SetActive(false);
             view.WearableThumbnail.gameObject.SetActive(true);
         }
