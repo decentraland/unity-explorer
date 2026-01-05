@@ -143,9 +143,7 @@ namespace DCL.UI
                          .AddControl(mentionUserButtonControlSettings)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
-                         .AddControl(contextMenuCallButton)
-                         .AddControl(contextMenuJumpInButton)
-                         .AddControl(contextMenuBlockUserButton);
+                         .AddControl(contextMenuCallButton);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);

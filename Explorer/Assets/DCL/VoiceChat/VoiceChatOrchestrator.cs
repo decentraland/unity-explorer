@@ -122,9 +122,9 @@ namespace DCL.VoiceChat
 
             async UniTaskVoid ShowCommunityInChatAndJoinAsync()
             {
-                JoinCommunityVoiceChat(notification.CommunityId, true);
+                JoinCommunityVoiceChat(notification.Metadata.CommunityId, true);
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(notification.CommunityId);
+                chatEventBus.OpenCommunityConversationUsingCommunityId(notification.Metadata.CommunityId);
             }
 
         }

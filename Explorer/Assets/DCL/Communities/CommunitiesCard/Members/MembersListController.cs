@@ -181,7 +181,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                     profile.Role = CommunityMemberRole.member;
                     List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
                     memberList.Add(profile);
-                    MembersSorter.SortMembersList(memberList);
                 }
 
                 RefreshGrid(true);
@@ -260,8 +259,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                 List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].Items;
                 profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
-
-                MembersSorter.SortMembersList(memberList);
 
                 RefreshGrid(true);
             }
@@ -363,8 +360,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                         break;
                     }
 
-                MembersSorter.SortMembersList(memberList);
-
                 RefreshGrid(true);
             }
         }
@@ -397,8 +392,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                         member.Role = CommunityMemberRole.member;
                         break;
                     }
-
-                MembersSorter.SortMembersList(memberList);
 
                 RefreshGrid(true);
             }
@@ -539,8 +532,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             foreach (var member in response.Value.members)
                 if (!membersData.Items.Contains(member))
                     membersData.Items.Add(member);
-
-            MembersSorter.SortMembersList(membersData.Items);
 
             if (currentSection == MembersListView.MemberListSections.REQUESTS)
                 RequestsAmount = response.Value.total;

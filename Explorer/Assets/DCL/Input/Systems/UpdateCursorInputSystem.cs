@@ -11,6 +11,7 @@ using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Utilities.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace DCL.Input.Systems
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private const int MOUSE_BOUNDS_OFFSET = 10;
+        private const float RAYCAST_POSITION_THRESHOLD_SQR = 4f;
         private static readonly Vector2 CURSOR_OFFSET = new (0, 15);
 
         private readonly IEventSystem eventSystem;
@@ -32,15 +34,17 @@ namespace DCL.Input.Systems
         private readonly ICrosshairView crosshairCanvas;
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.UIActions uiActions;
+        private readonly Mouse mouseDevice;
+        private readonly DCLInput.ShortcutsActions shortcuts;
+        private readonly InteractionCache interactionCache;
+
         private bool hasHoverCollider;
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
         private bool shouldBeLocked;
-
-        private readonly Mouse mouseDevice;
-        private readonly DCLInput.ShortcutsActions shortcuts;
-        private readonly InteractionCache interactionCache;
+        private Vector2 lastRaycastPosition;
+        private IReadOnlyList<RaycastResult> cachedRaycastResults = Array.Empty<RaycastResult>();
 
         internal UpdateCursorInputSystem(World world, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
@@ -109,8 +113,29 @@ namespace DCL.Input.Systems
         {
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
-            IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
+
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
+
+            IReadOnlyList<RaycastResult> raycastResults;
+            if (cursorComponent.CursorState == CursorState.Free)
+            {
+                bool positionChanged = (mousePos - lastRaycastPosition).sqrMagnitude > RAYCAST_POSITION_THRESHOLD_SQR;
+                bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame();
+                bool needsFreshRaycast = positionChanged || inputWantsToLock || shouldBeLocked;
+
+                if (needsFreshRaycast)
+                {
+                    cachedRaycastResults = eventSystem.RaycastAll(mousePos);
+                    lastRaycastPosition = mousePos;
+                }
+
+                raycastResults = cachedRaycastResults;
+            }
+            else
+            {
+                raycastResults = Array.Empty<RaycastResult>();
+                lastRaycastPosition = new Vector2(float.MinValue, float.MinValue);
+            }
 
             UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
             UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
