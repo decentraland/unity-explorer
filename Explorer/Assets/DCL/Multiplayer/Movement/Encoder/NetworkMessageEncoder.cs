@@ -1,6 +1,7 @@
 ﻿using DCL.CharacterMotion.Components;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
@@ -24,6 +25,7 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
+                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch)
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
@@ -86,6 +88,23 @@ namespace DCL.Multiplayer.Movement
                    | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
         }
 
+        private int CompressHeadSyncData(bool yawEnabled, bool pitchEnabled, Vector2 headLookAt)
+        {
+            int value = 0;
+            if (!yawEnabled && !pitchEnabled) return value;
+
+            const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
+            int yaw = FloatQuantizer.Compress(NormalizeAngle(headLookAt.x), 0, 360, ROTATION_BITS);
+            int pitch = FloatQuantizer.Compress(NormalizeAngle(headLookAt.y), 0, 360, ROTATION_BITS);
+
+            value = pitch;
+            value |= yaw << ROTATION_BITS;
+            if (pitchEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS);
+            if (yawEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS + 1);
+
+            return value;
+        }
+
         public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
         {
             int compressedTemporalData = compressedMessage.temporalData;
@@ -98,6 +117,8 @@ namespace DCL.Multiplayer.Movement
             float timestamp = timestampEncoder.Decompress(compressedTemporalData);
 
             var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
+
+            DecompressHeadIK(compressedMessage, out float2 headYawAndPitch, out bool headIKYawEnabled, out bool headIKPitchEnabled);
 
             return new NetworkMovementMessage
             {
@@ -127,6 +148,11 @@ namespace DCL.Multiplayer.Movement
 
                 isStunned = (compressedTemporalData & (1 << encodingSettings.STUNNED_BIT)) != 0,
                 isSliding = (compressedTemporalData & (1 << encodingSettings.SLIDING_BIT)) != 0,
+
+                // Decompressed head sync data
+                headIKYawEnabled = headIKYawEnabled,
+                headIKPitchEnabled = headIKPitchEnabled,
+                headYawAndPitch = headYawAndPitch,
             };
         }
 
@@ -206,5 +232,23 @@ namespace DCL.Multiplayer.Movement
             value < 0
                 ? (byte)1
                 : (byte)0;
+
+        private void DecompressHeadIK(in CompressedNetworkMovementMessage compressedMessage, out float2 yawAndPitch, out bool yawEnabled, out bool pitchEnabled)
+        {
+            const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
+            const int ROTATION_MASK = (1 << ROTATION_BITS) - 1;
+            const int ENABLED_MASK = 1;
+
+            int data = compressedMessage.headSyncData;
+
+            int compressedPitch = data & ROTATION_MASK;
+            int compressedYaw = (data >> ROTATION_BITS) & ROTATION_MASK;
+            pitchEnabled = ((data >> (ROTATION_BITS + ROTATION_BITS)) & ENABLED_MASK) != 0;
+            yawEnabled = ((data >> (ROTATION_BITS + ROTATION_BITS + 1)) & ENABLED_MASK) != 0;
+
+            float pitch = FloatQuantizer.Decompress(compressedPitch, 0, 360, ROTATION_BITS);
+            float yaw = FloatQuantizer.Decompress(compressedYaw, 0, 360, ROTATION_BITS);
+            yawAndPitch = new Vector2(yaw, pitch);
+        }
     }
 }

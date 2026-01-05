@@ -69,6 +69,9 @@ namespace DCL.Prefs
         public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
 
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
+        
         public const string GIFTING_PENDING_GIFTS = "PendingGifts";
+
+        public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
     }
 }
