@@ -140,7 +140,7 @@ namespace DCL.FeatureFlags
         GPUI_ENABLED,
         GIFTING_ENABLED,
         CHAT_MESSAGE_RATE_LIMIT,
-        CHAT_MESSAGE_BUFFER
+        CHAT_MESSAGE_BUFFER,
         HEAD_SYNC,
     }
 }
