@@ -40,18 +40,23 @@ namespace MVC
 
         public void Enter<TState>() where TState: TBaseState, IState
         {
-            TState state = ChangeState<TState>();
-            state.Enter();
-            OnStateChanged?.Invoke(state);
+            if (TryChangeState(out TState state))
+            {
+                state.Enter();
+                OnStateChanged?.Invoke(state);
+            }
         }
 
-        private TState ChangeState<TState>() where TState: TBaseState
+        private bool TryChangeState<TState>(out TState state) where TState: TBaseState
         {
             Type newType = typeof(TState);
 
-            // avoid changing to the same state
+            // Avoid changing to the same state
             if (CurrentState != null && CurrentState.GetType() == newType)
-                return (TState)CurrentState;
+            {
+                state = (TState)CurrentState;
+                return false;
+            }
 
             CurrentState?.Exit();
 
@@ -65,7 +70,8 @@ namespace MVC
             previousState = CurrentState;
             CurrentState = newState;
 
-            return (TState)newState;
+            state = (TState)newState;
+            return true;
         }
 
         /// <summary>
