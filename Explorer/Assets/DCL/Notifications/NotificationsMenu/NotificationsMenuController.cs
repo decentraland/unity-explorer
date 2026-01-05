@@ -29,6 +29,7 @@ namespace DCL.Notifications.NotificationsMenu
         private const int PIXELS_PER_UNIT = 50;
         private const int DEFAULT_NOTIFICATION_INDEX = 0;
         private const int FRIENDS_NOTIFICATION_INDEX = 1;
+        private const int GIFT_NOTIFICATION_INDEX = 2;
 
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
@@ -149,6 +150,7 @@ namespace DCL.Notifications.NotificationsMenu
             view.LoopList.SetListItemCount(notifications.Count, false);
 
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
+            requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);
@@ -191,6 +193,10 @@ namespace DCL.Notifications.NotificationsMenu
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<FriendsNotificationView>();
                     break;
+                case NotificationType.TRANSFER_RECEIVED:
+                    listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[GIFT_NOTIFICATION_INDEX].mItemPrefab.name);
+                    notificationView = listItem!.GetComponent<GiftNotificationView>();
+                    break;
                 default:
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[DEFAULT_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<NotificationView>();
@@ -206,12 +212,22 @@ namespace DCL.Notifications.NotificationsMenu
 
             DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notificationData.Type);
 
-            if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
-                notificationView.NotificationImage.SetImage(thumbnailSprite, true);
-            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
-                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
-            else
+            if (notificationData.Type == NotificationType.TRANSFER_RECEIVED)
+            {
                 notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+            }
+            else if (notificationData.Id != null && notificationThumbnailCache.TryGetValue(notificationData.Id, out var thumbnailSprite))
+            {
+                notificationView.NotificationImage.SetImage(thumbnailSprite, true);
+            }
+            else if(!string.IsNullOrEmpty(notificationData.GetThumbnail()))
+            {
+                LoadNotificationThumbnailAsync(notificationView, notificationData, defaultThumbnail, notificationThumbnailCts!.Token).Forget();
+            }
+            else
+            {
+                notificationView.NotificationImage.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+            }
 
             return listItem;
         }
@@ -261,6 +277,30 @@ namespace DCL.Notifications.NotificationsMenu
                     friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
                     friendNotificationView2.TimeText.gameObject.SetActive(true);
                     break;
+                case GiftReceivedNotification giftNotification:
+                    var giftView = (GiftNotificationView)notificationView;
+                    giftView.Configure(giftNotification);
+                    UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, notificationThumbnailCts.Token).Forget();
+                    break;
+            }
+        }
+
+        private async UniTaskVoid UpdateGiftSenderNameAsync(GiftNotificationView giftView, string address, CancellationToken ct)
+        {
+            try
+            {
+                var profile = await profileRepository.GetProfileAsync(address, ct);
+                if (profile != null && !ct.IsCancellationRequested)
+                {
+                    if (giftView.Notification is GiftReceivedNotification current && current.Metadata.SenderAddress == address)
+                    {
+                        giftView.UpdateSenderName(profile.Name, profile.UserNameColor);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
             }
         }
 

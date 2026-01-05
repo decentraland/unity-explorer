@@ -65,5 +65,7 @@ namespace DCL.NotificationsBus.NotificationTypes
         USER_UNBANNED_FROM_SCENE,
 
         COMMUNITY_DEEP_LINK,
+
+        TRANSFER_RECEIVED
     }
 }

@@ -96,5 +96,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ChatTranslate,
 
         ActiveCommunityVoiceChats,
+
+        Support
     }
 }

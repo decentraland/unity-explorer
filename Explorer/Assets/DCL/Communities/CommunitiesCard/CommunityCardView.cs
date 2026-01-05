@@ -191,10 +191,10 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
-                         .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
-                              communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
-                         .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
-                              new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
+                .AddControl(communityNotificationsContextMenuElement = new GenericContextMenuElement(
+                    communityNotificationsContextMenuControlSettings = new ToggleWithIconContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSprite, contextMenuSettings.CommunityNotificationsText, OnToggleCommunityNotifications, null, 10)))
+                .AddControl(communityNotificationsSeparatorContextMenuElement = new GenericContextMenuElement(
+                    new SeparatorContextMenuControlSettings(contextMenuSettings.CommunityNotificationsSeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right)))
                          .AddControl(copyLinkContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.CopyCommunityLinkText, contextMenuSettings.CopyCommunityLinkSprite, OnCopyCommunityLinkRequested)))
                          .AddControl(copyLinkSeparatorContextMenuElement = new GenericContextMenuElement(
@@ -206,8 +206,10 @@ namespace DCL.Communities.CommunitiesCard
                                   textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
 
-        private void OnToggleCommunityNotifications(bool isEnabled) =>
+        private void OnToggleCommunityNotifications(bool isEnabled)
+        {
             NotificationsToggleChanged?.Invoke(isEnabled);
+        }
 
         private void OnCopyCommunityLinkRequested() =>
             CopyCommunityLinkRequested?.Invoke();
@@ -423,7 +425,9 @@ namespace DCL.Communities.CommunitiesCard
                 go.SetActive(!isAllowed);
         }
 
-        public void SetNotificationsToggleInitialValue(bool value) =>
+        public void SetNotificationsToggleInitialValue(bool value)
+        {
             communityNotificationsContextMenuControlSettings!.SetInitialValue(value);
+        }
     }
 }

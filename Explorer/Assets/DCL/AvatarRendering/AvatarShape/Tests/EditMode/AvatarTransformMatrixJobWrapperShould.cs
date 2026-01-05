@@ -25,11 +25,12 @@ public class AvatarTransformMatrixJobWrapperShould
     {
         var avatarBase = new GameObject().AddComponent<AvatarBase>();
         var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
-        int initialIndex = transformMatrixComponent.IndexInGlobalJobArray;
+        transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int initialIndex);
 
         jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
 
-        Assert.AreNotEqual(initialIndex, transformMatrixComponent.IndexInGlobalJobArray);
+        transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int afterIndex);
+        Assert.AreNotEqual(initialIndex, afterIndex);
     }
 
     [Test]
@@ -56,14 +57,14 @@ public class AvatarTransformMatrixJobWrapperShould
 
         // Add the first avatar
         jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent1);
-        int firstIndex = transformMatrixComponent1.IndexInGlobalJobArray;
+        transformMatrixComponent1.IndexInGlobalJobArray.TryGetValue(out int firstIndex);
 
         // Release the first avatar
         jobWrapper.ReleaseAvatar(ref transformMatrixComponent1);
 
         // Add a second avatar and check if it reuses the released index
         jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent2);
-        int secondIndex = transformMatrixComponent2.IndexInGlobalJobArray;
+        transformMatrixComponent2.IndexInGlobalJobArray.TryGetValue(out int secondIndex);
 
         Assert.AreEqual(firstIndex, secondIndex);
     }
