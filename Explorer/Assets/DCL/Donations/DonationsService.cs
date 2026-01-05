@@ -39,8 +39,6 @@ namespace DCL.Donations
         private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
         private const double MANA_RATE_CACHE_DURATION_MINUTES = 30;
 
-        private static readonly URLAddress MANA_USD_API_URL = URLAddress.FromString("https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd");
-
         public IReadonlyReactiveProperty<(bool enabled, string? creatorAddress, Vector2Int? baseParcel)> DonationsEnabledCurrentScene => donationsEnabledCurrentScene;
         private readonly ReactiveProperty<(bool enabled, string? creatorAddress, Vector2Int? baseParcel)> donationsEnabledCurrentScene = new ((false, null, null));
 
@@ -54,6 +52,7 @@ namespace DCL.Donations
         private readonly string contractAddress;
         private readonly string networkName;
         private readonly bool donationFeatureEnabled;
+        private readonly URLAddress manaUsdApiUrl;
 
         private DateTime lastManaRateQueryTime;
         private decimal lastManaRate;
@@ -64,13 +63,15 @@ namespace DCL.Donations
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
             DecentralandEnvironment dclEnvironment,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.scenesCache = scenesCache;
             this.ethereumApi = ethereumApi;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.placesAPIService = placesAPIService;
+            this.manaUsdApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ManaUsdRateApiUrl));
 
             switch (dclEnvironment)
             {
@@ -195,7 +196,7 @@ namespace DCL.Donations
                 return lastManaRate;
 
             var response = await webRequestController.GetAsync(
-                                                          new CommonArguments(MANA_USD_API_URL),
+                                                          new CommonArguments(manaUsdApiUrl),
                                                           ct,
                                                           ReportCategory.DONATIONS)
                                                      .CreateFromJson<Dictionary<string, Dictionary<string, decimal>>>(WRJsonParser.Newtonsoft);

@@ -556,7 +556,7 @@ namespace Global.Dynamic
             var coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                 staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                 placesAPIService, bootstrapContainer.Environment,
-                appArgs);
+                appArgs, bootstrapContainer.DecentralandUrlsSource);
             IDonationsService donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
 
             var minimap = new MinimapController(
