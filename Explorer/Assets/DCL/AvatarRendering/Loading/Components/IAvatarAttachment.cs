@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 
@@ -14,6 +15,9 @@ namespace DCL.AvatarRendering.Loading.Components
 
         AvatarAttachmentDTO? DTO { get; }
 
+        int Amount { get; }
+        void SetAmount(int amount);
+        
         public string ToString() =>
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
 
@@ -25,7 +29,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && DTO.content != null)
             {
-                for (var i = 0; i < DTO.content.Length; i++)
+                for (int i = 0; i < DTO.content.Length; i++)
                 {
                     if (DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
                     {
@@ -38,11 +42,30 @@ namespace DCL.AvatarRendering.Loading.Components
             return new URLPath(thumbnailHash!);
         }
 
-        URN IThumbnailAttachment.GetUrn() => DTO.Metadata.id;
-        string IThumbnailAttachment.GetHash() => DTO.GetHash();
-        DCL.Ipfs.AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => DTO.assetBundleManifestVersion;
-        string? IThumbnailAttachment.GetContentDownloadUrl() => DTO.ContentDownloadUrl;
-        string? IThumbnailAttachment.GetEntityId() => DTO.id;
+        URN IThumbnailAttachment.GetUrn()
+        {
+            return DTO.Metadata.id;
+        }
+
+        string IThumbnailAttachment.GetHash()
+        {
+            return DTO.GetHash();
+        }
+
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
+        {
+            return DTO.assetBundleManifestVersion;
+        }
+
+        string? IThumbnailAttachment.GetContentDownloadUrl()
+        {
+            return DTO.ContentDownloadUrl;
+        }
+
+        string? IThumbnailAttachment.GetEntityId()
+        {
+            return DTO.id;
+        }
     }
 
     public interface IAvatarAttachment<TModelDTO> : IAvatarAttachment

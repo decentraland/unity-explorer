@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.assetBundleRegistryVersionURL = assetBundleRegistryVersionURL;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
-            this.avatarElementStorage = wearableStorage;
+            avatarElementStorage = wearableStorage;
             this.trimmedWearableStorage = trimmedWearableStorage;
             this.builderContentURL = builderContentURL;
         }
@@ -76,13 +76,13 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             else
             {
                 urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                          .AppendSubDirectory(wearablesSubdirectory);
+                    .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                    .AppendSubDirectory(wearablesSubdirectory);
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);
-
+            
             return urlBuilder.Build();
         }
 
@@ -91,11 +91,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         {
             await realmData.WaitConfiguredAsync();
 
-            URLAddress url = BuildUrlFromIntention(in intention);
+            var url = BuildUrlFromIntention(in intention);
 
             if (intention.NeedsBuilderAPISigning)
             {
-                IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>? lambdaResponse =
+                var lambdaResponse =
                     await ParseBuilderResponseAsync(
                         webRequestController.SignedFetchGetAsync(
                             new CommonArguments(url), string.Empty, ct)
@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
             else
             {
-                IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>>? lambdaResponse =
+                var lambdaResponse =
                     await ParseResponseAsync(
                         webRequestController.GetAsync(
                             new CommonArguments(url),
@@ -122,19 +122,19 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                     intention.SetTotal(lambdaResponse.TotalAmount);
 
                     // Process elements in parallel for better performance
-                    IReadOnlyList<ILambdaResponseElement<TrimmedWearableDTO>> pageElements = lambdaResponse.Page;
+                    var pageElements = lambdaResponse.Page;
                     var elementTasks = new UniTask<ITrimmedWearable>[pageElements.Count];
 
-                    for (var i = 0; i < pageElements.Count; i++)
+                    for (int i = 0; i < pageElements.Count; i++)
                     {
-                        ILambdaResponseElement<TrimmedWearableDTO>? element = pageElements[i];
+                        var element = pageElements[i];
                         elementTasks[i] = ProcessElementAsync(element, partition, assetBundlesVersions, ct);
                     }
 
                     // Wait for all elements to be processed and add results to intention
-                    ITrimmedWearable[]? processedWearables = await UniTask.WhenAll(elementTasks);
+                    var processedWearables = await UniTask.WhenAll(elementTasks);
 
-                    for (var i = 0; i < processedWearables.Length; i++) { intention.AppendToResult(processedWearables[i]); }
+                    for (int i = 0; i < processedWearables.Length; i++) { intention.AppendToResult(processedWearables[i]); }
                 }
             }
 
@@ -146,7 +146,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             if (lambdaResponse.TotalAmount == 0)
                 return AssetBundlesVersions.Create();
 
-            URN[] urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
+            var urns = ARRAY_POOL.Rent(lambdaResponse.Page.Count);
 
             for (int i = 0; i < lambdaResponse.Page.Count; i++)
                 urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
@@ -160,11 +160,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
         private async UniTask<ITrimmedWearable> ProcessElementAsync(ILambdaResponseElement<TrimmedWearableDTO> element, IPartitionComponent partition, AssetBundlesVersions assetBundlesVersions, CancellationToken ct)
         {
-            TrimmedWearableDTO elementDTO = element.Entity;
+            var elementDTO = element.Entity;
 
             elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
 
-            ITrimmedWearable wearable = trimmedWearableStorage.GetOrAddByDTO(elementDTO);
+            var wearable = trimmedWearableStorage.GetOrAddByDTO(elementDTO);
 
             // Run the asset bundle fallback check in parallel
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
@@ -172,28 +172,31 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 
-            // Process individual data (this part needs to remain sequential per element for thread safety)
-            foreach (ElementIndividualDataDto individualData in element.IndividualData)
-            {
-                // Probably a base wearable, wrongly return individual data. Skip it
-                if (elementDTO.Metadata.id == individualData.id) continue;
+            if (element.IndividualData != null)
+                // Process individual data (this part needs to remain sequential per element for thread safety)
+                foreach (var individualData in element.IndividualData)
+                {
+                    // Probably a base wearable, wrongly return individual data. Skip it
+                    if (elementDTO.Metadata.id == individualData.id) continue;
 
-                long.TryParse(individualData.transferredAt, out long transferredAt);
-                decimal.TryParse(individualData.price, out decimal price);
+                    long.TryParse(individualData.transferredAt, out long transferredAt);
+                    decimal.TryParse(individualData.price, out decimal price);
 
-                avatarElementStorage.SetOwnedNft(
-                    elementDTO.Metadata.id,
-                    new NftBlockchainOperationEntry(
-                        individualData.id,
-                        individualData.tokenId,
-                        DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                        price
-                    )
-                );
+                    avatarElementStorage.SetOwnedNft(
+                        elementDTO.Metadata.id,
+                        new NftBlockchainOperationEntry(
+                            individualData.id,
+                            individualData.tokenId,
+                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                            price
+                        )
+                    );
 
-                ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
-            }
+                    ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
+                }
 
+            int ownedAmount = avatarElementStorage.GetOwnedNftCount(elementDTO.Metadata.id);
+            wearable.SetAmount(ownedAmount);
             return wearable;
         }
 
@@ -203,16 +206,16 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             if (lambdaResponse.CollectionElements is { Count: > 0 })
             {
-                var totalCount = 0;
+                int totalCount = 0;
 
-                foreach (IBuilderLambdaResponseElement<WearableDTO>? element in lambdaResponse.CollectionElements)
+                foreach (var element in lambdaResponse.CollectionElements)
                 {
-                    WearableDTO elementDTO = element.BuildElementDTO(builderContentURL);
+                    var elementDTO = element.BuildElementDTO(builderContentURL);
 
                     if (!string.IsNullOrEmpty(expectedBuilderItemType) && elementDTO.type != expectedBuilderItemType)
                         continue;
 
-                    IWearable avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
+                    var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
 
                     //Builder items will never have an asset bundle
                     if (avatarElement.DTO.assetBundleManifestVersion == null)
@@ -226,13 +229,19 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
         }
 
-        private WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention) =>
-            new (intention.Results, intention.TotalAmount);
+        private WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention)
+        {
+            return new WearablesResponse (intention.Results, intention.TotalAmount);
+        }
 
-        private async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<TrimmedWearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
+        private async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
+        {
+            return await adapter.CreateFromJson<TrimmedWearableDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
+        }
 
-        private async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+        private async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
+        {
+            return await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+        }
     }
 }

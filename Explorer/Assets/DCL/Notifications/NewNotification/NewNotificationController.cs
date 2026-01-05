@@ -10,6 +10,9 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
+using DCL.Notifications.NotificationEntry;
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -26,6 +29,8 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
+        private readonly IWebRequestController webRequestController;
+        private readonly IProfileRepository profileRepository;
         private readonly UITextureProvider textureProvider;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
@@ -34,6 +39,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
         private ImageController communityThumbnailImageController;
+        private ImageController giftToastImageController;
         private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -42,11 +48,15 @@ namespace DCL.Notifications.NewNotification
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
+            IWebRequestController webRequestController,
+            IProfileRepository profileRepository,
             UITextureProvider textureProvider) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.webRequestController = webRequestController;
+            this.profileRepository = profileRepository;
             this.textureProvider  = textureProvider;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
@@ -65,6 +75,8 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
             marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, textureProvider);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
+            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, webRequestController);
+            viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
@@ -94,6 +106,7 @@ namespace DCL.Notifications.NewNotification
 
         private void QueueNewNotification(INotification newNotification)
         {
+            ReportHub.Log(ReportCategory.GIFTING, $"{newNotification.Type}");
             notificationQueue.Enqueue(newNotification);
 
             if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
@@ -133,6 +146,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.INTERNAL_DEFAULT_SUCCESS:
                         await ProcessArrivedNotificationAsync(notification, false);
                         break;
+                    case NotificationType.TRANSFER_RECEIVED:
+                        await ProcessGiftNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -142,6 +158,60 @@ namespace DCL.Notifications.NewNotification
             isDisplaying = false;
         }
 
+        private async UniTask ProcessGiftNotificationAsync(INotification notification)
+        {
+            var giftNotification = (GiftReceivedNotification)notification;
+            var giftView = viewInstance.GiftToastView;
+
+            giftView.Configure(giftNotification);
+
+            var defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+            if (defaultThumbnail.Thumbnail != null)
+            {
+                giftToastImageController.SetImage(defaultThumbnail.Thumbnail);
+            }
+
+            UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, cts.Token)
+                .Forget();
+
+            await AnimateGiftNotificationAsync();
+        }
+        
+        private async UniTaskVoid UpdateGiftSenderNameAsync(GiftToastView view, string address, CancellationToken ct)
+        {
+            try
+            {
+                var profile = await profileRepository.GetAsync(address, ct);
+                if (profile != null && !ct.IsCancellationRequested)
+                {
+                    view.UpdateSenderName(profile.Name, profile.UserNameColor);
+                }
+            }
+            catch (Exception) { /* ignore failures, keep address */ }
+        }
+
+
+        private async UniTask AnimateGiftNotificationAsync()
+        {
+            if (viewInstance == null) return;
+
+            try
+            {
+                viewInstance.GiftToastView.PlayNotificationAudio();
+
+                viewInstance.GiftToastAnimator.SetTrigger(SHOW_TRIGGER);
+
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                viewInstance.GiftToastAnimator.SetTrigger(HIDE_TRIGGER);
+
+                await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
+            }
+        }
+        
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
             viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();

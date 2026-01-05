@@ -8,8 +8,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class AuthenticationScreenAnalytics : IDisposable
     {
-        private const string STATE_KEY = "state";
-
         private readonly IAnalyticsController analytics;
         private readonly AuthenticationScreenController authenticationController;
 
@@ -17,13 +15,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             this.analytics = analytics;
             this.authenticationController = authenticationController;
-
             authenticationController.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
+            authenticationController.DiscordButtonClicked += OnDiscordButtonClicked;
         }
 
         public void Dispose()
         {
             authenticationController.CurrentState.OnUpdate -= OnAuthenticationScreenStateChanged;
+            authenticationController.DiscordButtonClicked -= OnDiscordButtonClicked;
         }
 
         private void OnAuthenticationScreenStateChanged(AuthenticationStatus state)
@@ -51,5 +50,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     analytics.Track(Authentication.LOGGED_IN, isInstant: true); break;
             }
         }
+
+        private void OnDiscordButtonClicked() =>
+            analytics.Track(Authentication.CLICK_COMMUNITY_GUIDANCE);
     }
 }

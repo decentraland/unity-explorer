@@ -20,21 +20,21 @@ namespace DCL.Chat.ChatServices
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ITranslationService translationService;
-        private readonly ChatSettingsAsset chatSettings;
+        private readonly CurrentChannelService currentChannelService;
 
         public ChatHistoryService(IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             ITextFormatter hyperlinkTextFormatter,
             ChatConfig.ChatConfig chatConfig,
-            ChatSettingsAsset chatSettings,
-            ITranslationService translationService)
+            ITranslationService translationService,
+            CurrentChannelService currentChannelService)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.chatConfig = chatConfig;
-            this.chatSettings = chatSettings;
             this.chatHistory = chatHistory;
             this.translationService = translationService;
+            this.currentChannelService = currentChannelService;
 
             chatMessagesBus.MessageAdded += OnChatMessageAdded;
         }
@@ -64,17 +64,15 @@ namespace DCL.Chat.ChatServices
             chatHistory.AddMessage(channel, type, messageToAdd);
 
             if (!messageToAdd.IsSystemMessage && !messageToAdd.IsSentByOwnUser)
-            {
                 translationService.ProcessIncomingMessage(messageToAdd.MessageId,
                     messageToAdd.SenderWalletAddress,
                     messageToAdd.Message,
                     channel.Id);
-            }
-            
-            HandleMessageAudioFeedback(message, channel);
+
+            HandleMessageAudioFeedback(message, channel, type);
         }
 
-        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId channelId)
+        private void HandleMessageAudioFeedback(ChatMessage message, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type)
         {
             if (message.IsSentByOwnUser)
                 return;
@@ -87,9 +85,24 @@ namespace DCL.Chat.ChatServices
                     return;
                 case ChatAudioSettings.MENTIONS_ONLY when message.IsMention:
                 case ChatAudioSettings.ALL:
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(message.IsMention ? chatConfig.ChatReceiveMentionMessageAudio : chatConfig.ChatReceiveMessageAudio);
+                    PlayMessageAudio(message, channelId);
                     break;
             }
+        }
+
+        private void PlayMessageAudio(ChatMessage message, ChatChannel.ChannelId channelId)
+        {
+            bool isChannelFocused = currentChannelService.CurrentChannelId.Equals(channelId);
+
+            ChatConfig.ChatConfig.ChannelAudioConfig audioConfig = isChannelFocused
+                ? chatConfig.FocusedChannelMessageAudioConfig
+                : chatConfig.UnfocusedChannelMessageAudioConfig;
+
+            AudioClipConfig clip = message.IsMention
+                ? audioConfig.receiveMentionAudio
+                : audioConfig.receiveMessageAudio;
+
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(clip);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
