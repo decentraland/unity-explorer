@@ -153,7 +153,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // This is a base on which we can keep growing how scenes may interact with the avatar's emotes
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
-        private void CancelEmotesByMovementInput(Entity entity,
+        private void CancelEmotesByMovementInput(
             ref CharacterEmoteComponent emoteComponent,
             in IAvatarView avatarView,
             ref JumpInputComponent jumpInputComponent,
@@ -169,9 +169,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!shouldCancelEmote) return;
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
+            ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
 
-            if (shouldCancelEmote) StopEmote(ref emoteComponent, avatarView);
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
