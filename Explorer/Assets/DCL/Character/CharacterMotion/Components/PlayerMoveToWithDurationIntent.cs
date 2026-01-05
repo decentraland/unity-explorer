@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
@@ -14,6 +15,7 @@ namespace DCL.CharacterMotion.Components
         public readonly Vector3? CameraTarget;
         public readonly Vector3? AvatarTarget;
         public readonly float Duration;
+        public readonly UniTaskCompletionSource<bool> CompletionSource;
         public float ElapsedTime;
 
         /// <summary>
@@ -26,6 +28,7 @@ namespace DCL.CharacterMotion.Components
             Vector3 targetPosition,
             Vector3? cameraTarget,
             Vector3? avatarTarget,
+            UniTaskCompletionSource<bool> completionSource,
             float duration)
         {
             StartPosition = startPosition;
@@ -35,6 +38,7 @@ namespace DCL.CharacterMotion.Components
             Duration = duration;
             ElapsedTime = 0f;
             LastFramePosition = startPosition;
+            CompletionSource = completionSource;
         }
 
         public float Progress => Duration > 0f ? Mathf.Clamp01(ElapsedTime / Duration) : 1f;

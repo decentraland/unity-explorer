@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -33,15 +34,17 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [All(typeof(PlayerMoveToWithDurationIntent))]
-        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent)
+        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent, ref PlayerMoveToWithDurationIntent moveIntent)
         {
+            if (moveIntent.CompletionSource.Task.Status != UniTaskStatus.Pending) return;
+
             bool hasMovementInput = movementInputComponent.Kind != MovementKind.IDLE && movementInputComponent.Axes != Vector2.zero;
             bool hasJumpInput = jumpInputComponent.IsPressed;
 
             if (!hasMovementInput && !hasJumpInput)
                 return;
 
+            moveIntent.CompletionSource.TrySetResult(false);
             World.Remove<PlayerMoveToWithDurationIntent>(entity);
         }
 
@@ -82,6 +85,7 @@ namespace DCL.CharacterMotion.Systems
                 ApplyFinalRotation(ref characterTransform, ref rigidTransform, in moveIntent);
                 ResetAnimationToIdle(avatarView, ref animationComponent);
 
+                moveIntent.CompletionSource.TrySetResult(true);
                 World.Remove<PlayerMoveToWithDurationIntent>(entity);
                 World.AddOrSet(entity, new MovePlayerToInfo(UnityEngine.Time.frameCount));
             }

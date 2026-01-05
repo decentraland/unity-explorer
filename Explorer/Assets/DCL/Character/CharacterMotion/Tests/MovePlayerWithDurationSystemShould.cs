@@ -1,4 +1,5 @@
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -44,7 +45,8 @@ namespace DCL.CharacterMotion.Tests
             var animationComponent = new CharacterAnimationComponent();
             var movementInput = new MovementInputComponent { Kind = MovementKind.IDLE, Axes = Vector2.zero };
             var jumpInput = new JumpInputComponent { IsPressed = false };
-            var moveIntent = new PlayerMoveToWithDurationIntent(startPosition, targetPosition, cameraTarget, avatarTarget, duration);
+            var completionSource = new UniTaskCompletionSource<bool>();
+            var moveIntent = new PlayerMoveToWithDurationIntent(startPosition, targetPosition, cameraTarget, avatarTarget, completionSource, duration);
 
             return world.Create(
                 characterTransform,
@@ -344,4 +346,5 @@ namespace DCL.CharacterMotion.Tests
         }
     }
 }
+
 

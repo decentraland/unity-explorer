@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -29,7 +28,6 @@ namespace CrdtEcsBridge.RestrictedActions
     public class GlobalWorldActions : IGlobalWorldActions
     {
         private const string SCENE_EMOTE_NAMING = "_emote.glb";
-        private const float MOVE_PLAYER_TO_COMPLETION_THRESHOLD = 0.1f;
 
         private readonly World world;
         private readonly Entity playerEntity;
@@ -54,23 +52,17 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 // Smooth movement over duration (through MovePlayerWithDurationSystem)
                 Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
+
+                var completionSource = new UniTaskCompletionSource<bool>();
                 world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
                     startPosition,
                     newPlayerPosition,
                     newCameraTarget,
                     newAvatarTarget,
+                    completionSource,
                     duration));
 
-                // Wait until the movement intent is removed (either completed or interrupted)
-                while (world.Has<PlayerMoveToWithDurationIntent>(playerEntity))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                }
-
-                // Check if we reached the target position (not interrupted by input or anything)
-                Vector3 finalPosition = world.Get<CharacterTransform>(playerEntity).Position;
-                return Vector3.Distance(finalPosition, newPlayerPosition) < MOVE_PLAYER_TO_COMPLETION_THRESHOLD;
+                return await completionSource.Task.AttachExternalCancellation(ct);
             }
 
             // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
