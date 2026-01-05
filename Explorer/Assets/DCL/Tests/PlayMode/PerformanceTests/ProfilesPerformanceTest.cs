@@ -72,8 +72,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+            await BenchmarkAsync(_ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
+                                                 .CreateFromNewtonsoftJsonAsync<List<Profile>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
 
         [TestCaseSource(nameof(TEST_CASES_SOURCE))]
@@ -85,8 +85,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.PostAsync(metadataUrl, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile.CompactInfo>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+            await BenchmarkAsync(_ => controller!.PostAsync(metadataUrl, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
+                                                 .CreateFromNewtonsoftJsonAsync<List<Profile.CompactInfo>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
     }
 }

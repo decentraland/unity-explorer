@@ -156,6 +156,7 @@ jobs:
         continue-on-error: true
         env:
           SHELL: /bin/bash
+          DCLBenchmarkCIPKey: ${{ secrets.DCL_BENCHMARK_CIP_KEY }}
         with:
           projectPath: Explorer
           testMode: playmode

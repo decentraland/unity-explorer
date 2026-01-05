@@ -51,7 +51,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
-        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
+        protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
             int iterationsCount, TimeSpan delayBetweenIterations, Action? onIterationFinished = null)
         {
             analytics.WarmingUp = true;
@@ -84,16 +84,16 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
                 await UniTask.Delay(delayBetweenIterations);
             }
+        }
 
-            static double Sum(SampleGroup sampleGroup)
-            {
-                double sum = 0.0;
+        protected static double Sum(SampleGroup sampleGroup)
+        {
+            double sum = 0.0;
 
-                foreach (double sample in sampleGroup.Samples)
-                    sum += sample;
+            foreach (double sample in sampleGroup.Samples)
+                sum += sample;
 
-                return sum;
-            }
+            return sum;
         }
     }
 }

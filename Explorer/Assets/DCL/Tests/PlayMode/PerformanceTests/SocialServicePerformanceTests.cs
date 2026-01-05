@@ -65,8 +65,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                                              .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(_ => controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                 .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft),
                 new[] { "" }, 2, totalRequests, iterations, delay);
         }
 
@@ -93,9 +93,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
 
@@ -108,9 +107,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/places", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/places", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
 
@@ -123,9 +121,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/members", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/members", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
     }

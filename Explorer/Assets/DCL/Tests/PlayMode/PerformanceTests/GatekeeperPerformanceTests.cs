@@ -98,7 +98,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             CreateController(concurrency);
 
-            return BenchmarkAsync(concurrency, param =>
+            return BenchmarkAsync(param =>
                 {
                     var metadata = new RequestMetadata
                     {
