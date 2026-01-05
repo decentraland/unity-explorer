@@ -86,8 +86,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 currentState.Value = isCached ? AuthenticationStatus.FetchingProfileCached : AuthenticationStatus.FetchingProfile;
 
-                // if (!isCached) ShowLoadingSpinner();
-
                 try
                 {
                     var profileFetchSpan = new SpanData
