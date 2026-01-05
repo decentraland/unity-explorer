@@ -553,11 +553,17 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            var coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
-                staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
-                placesAPIService, bootstrapContainer.Environment,
-                appArgs, bootstrapContainer.DecentralandUrlsSource);
-            IDonationsService donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+            IDonationsService donationsService;
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)))
+            {
+                IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+                    staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                    placesAPIService, bootstrapContainer.Environment,
+                    bootstrapContainer.DecentralandUrlsSource);
+                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+            }
+            else
+                donationsService = new DonationsServiceDisabled();
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),

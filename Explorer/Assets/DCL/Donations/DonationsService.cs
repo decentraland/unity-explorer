@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Utilities;
@@ -10,7 +9,6 @@ using DCL.Web3;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
-using Global.AppArgs;
 using MVC;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
@@ -42,7 +40,7 @@ namespace DCL.Donations
         public IReadonlyReactiveProperty<(bool enabled, string? creatorAddress, Vector2Int? baseParcel)> DonationsEnabledCurrentScene => donationsEnabledCurrentScene;
         private readonly ReactiveProperty<(bool enabled, string? creatorAddress, Vector2Int? baseParcel)> donationsEnabledCurrentScene = new ((false, null, null));
 
-        public bool DonationFeatureEnabled => donationFeatureEnabled;
+        public bool DonationFeatureEnabled => true;
 
         private readonly IScenesCache scenesCache;
         private readonly IEthereumApi ethereumApi;
@@ -51,7 +49,6 @@ namespace DCL.Donations
         private readonly IPlacesAPIService placesAPIService;
         private readonly string contractAddress;
         private readonly string networkName;
-        private readonly bool donationFeatureEnabled;
         private readonly URLAddress manaUsdApiUrl;
 
         private DateTime lastManaRateQueryTime;
@@ -63,7 +60,6 @@ namespace DCL.Donations
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
             DecentralandEnvironment dclEnvironment,
-            IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.scenesCache = scenesCache;
@@ -86,7 +82,6 @@ namespace DCL.Donations
                         break;
             }
 
-            donationFeatureEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI));
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
@@ -98,7 +93,7 @@ namespace DCL.Donations
         private void OnCurrentSceneChanged(ISceneFacade? currentScene)
         {
             string? creatorAddress = currentScene?.SceneData.GetCreatorAddress();
-            donationsEnabledCurrentScene.UpdateValue((creatorAddress != null && donationFeatureEnabled, creatorAddress, currentScene?.Info.BaseParcel));
+            donationsEnabledCurrentScene.UpdateValue((creatorAddress != null, creatorAddress, currentScene?.Info.BaseParcel));
         }
 
         public async UniTask<string> GetSceneNameAsync(Vector2Int parcelPosition, CancellationToken ct)
