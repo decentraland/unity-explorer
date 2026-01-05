@@ -54,11 +54,11 @@ namespace DCL.Backpack.Gifting.Utils
 
         private static string NormalizeAddress(string addr)
         {
+            if (addr.Length != 40 && addr.Length != 42)
+                throw new ArgumentException($"Invalid address length: {addr.Length}. Expected 40 or 42 (could start with `0x`) hex characters.");
+
             // Remove '0x' prefix if present
             string s = addr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addr[2..] : addr;
-
-            if (s.Length != 40)
-                throw new ArgumentException($"Invalid address length: {s.Length}. Expected 40 hex characters.");
 
             return s.ToLowerInvariant();
         }
