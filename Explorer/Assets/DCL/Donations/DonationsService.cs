@@ -25,6 +25,8 @@ namespace DCL.Donations
 {
     public class DonationsService : IDonationsService
     {
+        private const string UNKNOWN_PLACE_TEXT = "Unknown place";
+
         // https://contracts.decentraland.org/addresses.json
         // Prod Matic MANA contract
         private const string MATIC_CONTRACT_ADDRESS = "0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4";
@@ -105,7 +107,7 @@ namespace DCL.Donations
             if (realmData.ScenesAreFixed)
                 return realmData.RealmName.Replace(".dcl.eth", string.Empty);
 
-            return placeInfo?.title ?? "Unknown place";
+            return placeInfo?.title ?? UNKNOWN_PLACE_TEXT;
         }
 
         private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct)
