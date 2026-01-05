@@ -596,6 +596,12 @@ MonoBehaviour:
       Severity: 4
     - Category: SOCIAL
       Severity: 1
+    - Category: MVC_STATE_MACHINE
+      Severity: 0
+    - Category: MVC_STATE_MACHINE
+      Severity: 4
+    - Category: MVC_STATE_MACHINE
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

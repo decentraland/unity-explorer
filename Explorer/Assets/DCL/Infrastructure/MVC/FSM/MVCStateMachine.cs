@@ -44,21 +44,25 @@ namespace MVC
             {
                 state.Enter();
                 OnStateChanged?.Invoke(state);
+                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Enter: {CurrentState?.GetType().Name}");
             }
         }
 
         private bool TryChangeState<TState>(out TState state) where TState: TBaseState
         {
             Type newType = typeof(TState);
+            ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> trying to change states: {CurrentState?.GetType().Name} -> {newType.Name}");
 
             // Avoid changing to the same state
             if (CurrentState != null && CurrentState.GetType() == newType)
             {
                 state = (TState)CurrentState;
+                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> is already in {CurrentState?.GetType().Name}");
                 return false;
             }
 
             CurrentState?.Exit();
+            ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Exit: <{CurrentState?.GetType().Name}>");
 
             if (!states.TryGetValue(newType, out TBaseState? newState))
             {
