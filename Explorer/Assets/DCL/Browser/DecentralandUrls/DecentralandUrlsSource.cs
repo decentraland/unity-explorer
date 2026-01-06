@@ -26,10 +26,19 @@ namespace DCL.Browser.DecentralandUrls
                 // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
                 // Content and lambdas url are hardcoded to a particular catalyst
+                // Adapter info (both scene and room) also have to responde to the `.today` environment
+                // Archipelago status as well, to have a clear minimap
                 // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
                 // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundlesCDN);
+                Url(DecentralandUrl.ArchipelagoStatus);
+                Url(DecentralandUrl.ArchipelagoHotScenes);
+                Url(DecentralandUrl.Genesis);
+                Url(DecentralandUrl.GatekeeperStatus);
+                Url(DecentralandUrl.GateKeeperSceneAdapter);
+                Url(DecentralandUrl.RemotePeers);
+
                 CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
                 LAMBDAS_URL_OVERRIDE = "https://peer-testing.decentraland.org/lambdas/";
                 DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
