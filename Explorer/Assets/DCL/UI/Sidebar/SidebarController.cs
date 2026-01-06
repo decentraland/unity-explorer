@@ -49,8 +49,8 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
-
         private bool includeMarketplaceCredits;
+        private readonly bool includeDiscover;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -73,6 +73,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
+            bool includeDiscover,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -97,6 +98,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.includeDiscover = includeDiscover;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -158,6 +160,11 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+
+            if (includeDiscover)
+                viewInstance.discoverButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Discover).Forget());
+            else
+                viewInstance.discoverButton.gameObject.SetActive(false);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
