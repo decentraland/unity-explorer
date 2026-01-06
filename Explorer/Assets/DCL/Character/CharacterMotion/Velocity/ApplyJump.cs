@@ -23,7 +23,10 @@ namespace DCL.CharacterMotion
 
             // update the grounded frame from last frame
             if (characterPhysics.IsGrounded && !isJumpDisabled)
+            {
                 characterPhysics.LastGroundedFrame = physicsTick;
+                characterPhysics.JumpCount = 0;
+            }
 
             // (Coyote Timer: Pressing Jump before touching ground)
             // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
@@ -39,7 +42,13 @@ namespace DCL.CharacterMotion
 
             bool wantsToJump = jump.Trigger.IsAvailable(physicsTick, bonusFrames);
 
-            bool canJump = characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames;
+            const int MAX_JUMP_COUNT = 2;
+            bool isFirstJump = characterPhysics.JumpCount == 0;
+            bool tooManyJumps = characterPhysics.JumpCount >= MAX_JUMP_COUNT;
+            float timeSinceJumpStarted = (physicsTick - jump.Trigger.TickWhenJumpWasConsumed) * UnityEngine.Time.fixedDeltaTime;
+            bool canJump = (isFirstJump && (characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames))
+                           || !tooManyJumps;
+            if (!isFirstJump && timeSinceJumpStarted < 0.3f) canJump = false;
 
             // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
 
@@ -58,6 +67,7 @@ namespace DCL.CharacterMotion
                 jump.Trigger.TickWhenJumpOccurred = int.MinValue;
                 jump.Trigger.TickWhenJumpWasConsumed = physicsTick;
                 characterPhysics.JustJumped = true;
+                characterPhysics.JumpCount++;
             }
         }
 
