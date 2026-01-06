@@ -1,7 +1,6 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
-using DCL.CharacterMotion.Utils;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -15,55 +14,36 @@ namespace DCL.CharacterMotion
             ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
             ref JumpInputComponent jump,
-            Vector3 forward,
+            in Vector3 viewerForward,
+            in Vector3 viewerRight,
             in MovementInputComponent inputComponent,
             int physicsTick)
         {
             characterPhysics.JustJumped = false;
 
-            bool isJumpDisabled = characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck;
-
-            // update the grounded frame from last frame
-            if (characterPhysics.IsGrounded && !isJumpDisabled)
+            // Cannot jump on steep slopes unless stuck
+            bool isGrounded = characterPhysics.IsGrounded && (!characterPhysics.IsOnASteepSlope || characterPhysics.IsStuck);
+            if (isGrounded)
             {
                 characterPhysics.LastGroundedFrame = physicsTick;
                 characterPhysics.JumpCount = 0;
             }
 
-            // (Coyote Timer: Pressing Jump before touching ground)
             // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
+            // The bonus frames are used for BOTH input buffering and coyote time
             int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
 
-            // no bonus frames if we are already going up
-            if (characterPhysics.GravityVelocity.y > 0)
-                bonusFrames = 0;
+            // Reset the input buffering / coyote time windows if
+            // - Positive Y velocity, so we already jumped, no more coyote time
+            // - The simulation just started, and we are within the input buffering window, otherwise the character will jump on its own
+            if (characterPhysics.GravityVelocity.y > 0 || physicsTick < bonusFrames) bonusFrames = 0;
 
-            // avoid triggering jump on the first frames
-            if (physicsTick < bonusFrames)
-                bonusFrames = 0;
-
+            bool canJump = CanJump(characterPhysics, physicsTick, bonusFrames);
             bool wantsToJump = jump.Trigger.IsAvailable(physicsTick, bonusFrames);
 
-            const int MAX_JUMP_COUNT = 2;
-            bool isFirstJump = characterPhysics.JumpCount == 0;
-            bool tooManyJumps = characterPhysics.JumpCount >= MAX_JUMP_COUNT;
-            float timeSinceJumpStarted = (physicsTick - jump.Trigger.TickWhenJumpWasConsumed) * UnityEngine.Time.fixedDeltaTime;
-            bool canJump = (isFirstJump && (characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames))
-                           || !tooManyJumps;
-            if (!isFirstJump && timeSinceJumpStarted < 0.3f) canJump = false;
-
-            // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
-
-            if (canJump && wantsToJump && !isJumpDisabled)
+            if (canJump && wantsToJump)
             {
-                if (!isFirstJump)
-                {
-                    const float SPEED = 8;
-                    var velocity = SPEED * inputComponent.Axes;
-                    characterPhysics.MoveVelocity.XVelocity = velocity.x;
-                    characterPhysics.MoveVelocity.ZVelocity = velocity.y;
-                    characterPhysics.MoveVelocity.Velocity = (forward * velocity.y) + (Vector3.Cross(-forward, Vector3.up) * velocity.x);
-                }
+                TryApplyDirectionChangeImpulse(characterPhysics, viewerForward, viewerRight, inputComponent);
 
                 float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
                 float gravity = settings.Gravity * settings.JumpGravityFactor;
@@ -80,6 +60,43 @@ namespace DCL.CharacterMotion
                 characterPhysics.JustJumped = true;
                 characterPhysics.JumpCount++;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool CanJump(in CharacterRigidTransform characterPhysics, int tick, int coyoteTimeTickCount)
+        {
+            const int MAX_JUMP_COUNT = 2;
+            const float COOLDOWN_BETWEEN_JUMPS = 0.3f;
+
+            bool isFirstJump = characterPhysics.JumpCount == 0;
+            bool isGroundedOrCoyote = characterPhysics.IsGrounded || tick - characterPhysics.LastGroundedFrame < coyoteTimeTickCount;
+
+            // Ensure the player is grounded if it's the 1st jump, otherwise just don't exceed max number of jumps
+            bool canJump = (isFirstJump && isGroundedOrCoyote) || characterPhysics.JumpCount < MAX_JUMP_COUNT;
+
+            // Enforce the cooldown period between jumps
+            if (!isFirstJump)
+            {
+                float timeSinceJumpStarted = (tick - characterPhysics.LastJumpFrame) * UnityEngine.Time.fixedDeltaTime;
+                canJump &= timeSinceJumpStarted >= COOLDOWN_BETWEEN_JUMPS;
+            }
+
+            return canJump;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void TryApplyDirectionChangeImpulse(CharacterRigidTransform characterPhysics, in Vector3 viewerForward, in Vector3 viewerRight, in MovementInputComponent inputComponent)
+        {
+            // For the 1st jump we just keep the current velocity
+            if (characterPhysics.JumpCount <= 0) return;
+
+            // For later jumps we do apply an immediate change in direction
+            const float SPEED_AFTER_AIR_JUMP = 8;
+            var localVelocity = SPEED_AFTER_AIR_JUMP * inputComponent.Axes;
+            characterPhysics.MoveVelocity.XVelocity = localVelocity.x;
+            characterPhysics.MoveVelocity.ZVelocity = localVelocity.y;
+
+            characterPhysics.MoveVelocity.Velocity = (viewerForward * localVelocity.y) + (viewerRight * localVelocity.x);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

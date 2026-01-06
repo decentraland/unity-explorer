@@ -10,16 +10,11 @@ namespace DCL.CharacterMotion
     {
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            Transform cameraTransform,
+            Vector3 viewerForward,
+            Vector3 viewerRight,
             in MovementInputComponent input,
             float dt)
         {
-            Vector3 cameraForward = cameraTransform.forward;
-            cameraForward = LookDirectionUtils.FlattenLookDirection(cameraForward, cameraTransform.up);
-
-            Vector3 cameraRight = cameraTransform.right;
-            cameraRight.y = 0;
-
             float speedLimit = MovementSpeedLimitHelper.GetMovementSpeedLimit(settings, input.Kind);
 
             // Apply movement speed increase/decrease based on the current slope angle
@@ -60,7 +55,7 @@ namespace DCL.CharacterMotion
                 // Any minimal movement in the position will be reflected, producing undesired results
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.SmoothDamp(rigidTransform.MoveVelocity.ZVelocity, yAxis, ref rigidTransform.MoveVelocity.ZDamp, settings.StopTimeSec);
 
-            Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
+            Vector3 targetForward = (viewerForward * rigidTransform.MoveVelocity.ZVelocity) + (viewerRight * rigidTransform.MoveVelocity.XVelocity);
             targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
 
             if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)

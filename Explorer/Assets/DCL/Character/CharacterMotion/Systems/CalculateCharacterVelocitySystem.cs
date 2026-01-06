@@ -151,8 +151,11 @@ namespace DCL.CharacterMotion.Systems
             in MovementInputComponent movementInput,
             Transform viewerTransform)
         {
+            var viewerForward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
+            var viewerRight = Vector3.Cross(-viewerForward, Vector3.up);
+
             // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerTransform, in movementInput, dt);
+            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerForward, viewerRight, in movementInput, dt);
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
@@ -161,8 +164,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // Apply vertical velocity
-            var forward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, forward, in movementInput, physicsTick);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jump, viewerForward, viewerRight, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
