@@ -18,7 +18,7 @@ namespace DCL.Chat.ChatInput
             this.currentChannelService = currentChannelService;
         }
 
-        public override void Begin()
+        public override void Enter()
         {
             context.ChatInputView.Show();
 
@@ -53,7 +53,7 @@ namespace DCL.Chat.ChatInput
             context.ChatInputView.SetBlocked(blockedReason);
         }
 
-        public override void End()
+        public override void Exit()
         {
             context.ChatInputView.maskButton.onClick.RemoveListener(RequestFocusedState);
             context.ChatInputView.maskButton.onClick.RemoveListener(BlockedInputClicked);
@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputUnblocked()
         {
-            ChangeState<TypingEnabledChatInputState>();
+            machine.Enter<TypingEnabledChatInputState>();
         }
 
         private void BlockedInputClicked() =>

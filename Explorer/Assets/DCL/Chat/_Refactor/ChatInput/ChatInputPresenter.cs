@@ -43,12 +43,19 @@ namespace DCL.Chat.ChatInput
             var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
                 new EmojiMapping(view.emojiContainer.emojiPanelConfiguration));
 
-            fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
+            fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(
+                context,
+                states: new ChatInputState[]
+                {
+                    new InitializingChatInputState(),
+                    new HiddenChatInputState(),
+                    new BlockedChatInputState(chatConfig, currentChannelService),
+                    new UnfocusedChatInputState(),
+                    new TypingEnabledChatInputState(chatEventBus),
+                }
+            );
 
-            fsm.AddState(new HiddenChatInputState());
-            fsm.AddState(new BlockedChatInputState(chatConfig, currentChannelService));
-            fsm.AddState(new UnfocusedChatInputState());
-            fsm.AddState(new TypingEnabledChatInputState(chatEventBus));
+            fsm.Enter<InitializingChatInputState>();
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
@@ -61,24 +68,24 @@ namespace DCL.Chat.ChatInput
 
             view.ClearInput();
 
-            fsm.ChangeState<UnfocusedChatInputState>();
+            fsm.Enter<UnfocusedChatInputState>();
         }
 
         public void ShowUnfocused()
         {
-            fsm.ChangeState<UnfocusedChatInputState>();
+            fsm.Enter<UnfocusedChatInputState>();
         }
 
         public void Hide()
         {
-            fsm.ChangeState<HiddenChatInputState>();
+            fsm.Enter<HiddenChatInputState>();
         }
 
         public async UniTaskVoid ShowFocusedAsync()
         {
             cts = cts.SafeRestart();
 
-            fsm.ChangeState<InitializingChatInputState>();
+            fsm.Enter<InitializingChatInputState>();
 
             Result<PrivateConversationUserStateService.ChatUserState> result = await resolveInputStateCommand.ExecuteAsync(cts.Token);
             OnBlockedUpdated(result);
@@ -100,13 +107,13 @@ namespace DCL.Chat.ChatInput
         public void OnBlur()
         {
             cts.SafeCancelAndDispose();
-            fsm.ChangeState<UnfocusedChatInputState>();
+            fsm.Enter<UnfocusedChatInputState>();
         }
 
         public void OnMinimize()
         {
             cts.SafeCancelAndDispose();
-            fsm.ChangeState<UnfocusedChatInputState>();
+            fsm.Enter<UnfocusedChatInputState>();
         }
 
         private async UniTaskVoid UpdateStateForChannelAsync()

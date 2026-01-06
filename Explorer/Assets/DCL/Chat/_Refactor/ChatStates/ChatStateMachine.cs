@@ -31,14 +31,21 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            var context = new ChatStateContext(mediator, inputBlocker);
+            fsm = new MVCStateMachine<ChatState, ChatStateContext>(
+                context: new ChatStateContext(mediator, inputBlocker),
+                states: new ChatState[]
+                {
+                    new InitChatState(),
+                    new DefaultChatState(),
+                    new FocusedChatState(),
+                    new MembersChatState(),
+                    new MinimizedChatState(),
+                    new HiddenChatState(),
+                }
+            );
 
-            fsm = new MVCStateMachine<ChatState, ChatStateContext>(context, new InitChatState());
-            fsm.AddState(new DefaultChatState());
-            fsm.AddState(new FocusedChatState());
-            fsm.AddState(new MembersChatState());
-            fsm.AddState(new MinimizedChatState());
-            fsm.AddState(new HiddenChatState());
+            fsm.Enter<InitChatState>();
+
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
@@ -75,7 +82,7 @@ namespace DCL.Chat.ChatStates
         {
             inputBlocker.Initialize();
 
-            fsm.ChangeState<DefaultChatState>();
+            fsm.Enter<DefaultChatState>();
         }
 
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
@@ -121,7 +128,7 @@ namespace DCL.Chat.ChatStates
         public void SetInitialState(bool focus)
         {
             if (focus)
-                fsm.ChangeState<FocusedChatState>();
+                fsm.Enter<FocusedChatState>();
             else
             {
                 // fsm.ChangeState<MinimizedChatState>();
@@ -132,9 +139,9 @@ namespace DCL.Chat.ChatStates
         public void SetToggleState()
         {
             if (IsMinimized)
-                fsm.ChangeState<FocusedChatState>();
+                fsm.Enter<FocusedChatState>();
             else
-                fsm.ChangeState<MinimizedChatState>();
+                fsm.Enter<MinimizedChatState>();
         }
 
         public void PopState()
@@ -149,14 +156,14 @@ namespace DCL.Chat.ChatStates
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
-                fsm.ChangeState<DefaultChatState>();
+                fsm.Enter<DefaultChatState>();
             else
-                fsm.ChangeState<HiddenChatState>();
+                fsm.Enter<HiddenChatState>();
         }
 
         public void SetFocusState()
         {
-            fsm.ChangeState<FocusedChatState>();
+            fsm.Enter<FocusedChatState>();
         }
     }
 }
