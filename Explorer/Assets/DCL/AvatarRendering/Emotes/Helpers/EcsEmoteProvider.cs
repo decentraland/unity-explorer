@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -99,7 +100,12 @@ namespace DCL.AvatarRendering.Emotes
         {
             output.Clear();
 
-            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
+            var convertedEmoteIds = new List<URN>(emoteIds.Count);
+
+            foreach (URN emoteId in emoteIds)
+                convertedEmoteIds.Add(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(emoteId));
+
+            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, convertedEmoteIds);
             var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 

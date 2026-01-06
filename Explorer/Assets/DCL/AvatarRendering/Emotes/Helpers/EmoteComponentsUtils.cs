@@ -9,36 +9,8 @@ namespace DCL.AvatarRendering.Emotes
 {
     public static class EmoteComponentsUtils
     {
-        // TODO MAURIZIO remove
-
-        // private static string[] LEGACY_EMOTE_IDS = new []
-        // {
-        //     "wave",
-        //     "fistpump",
-        //     "dance",
-        //     "raiseHand",
-        //     "clap",
-        //     "money",
-        //     "kiss",
-        //     "shrug",
-        //     "headexplode",
-        //     "cry",
-        //     "dab",
-        //     "disco",
-        //     "dontsee",
-        //     "hammer",
-        //     "handsair",
-        //     "hohoho",
-        //     "robot",
-        //     "snowfall",
-        //     "tektonik",
-        //     "tik",
-        //     "confettipopper",
-        // };
-
-        /* Maps the legacy URN to the related new on-chain URN, i.e. :
-         "wave" -> "urn:decentraland:off-chain:base-emotes:wave"
-        */
+        /// Maps the legacy URN to the related new on-chain URN, i.e. :
+        /// "wave" -> "urn:decentraland:off-chain:base-emotes:wave"
         private static readonly Dictionary<string, URN> LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP = new (StringComparer.OrdinalIgnoreCase);
 
         public static void InitializeLegacyToOnChainEmoteMapping(IReadOnlyCollection<URN> embeddedEmoteUrns)
@@ -60,6 +32,20 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        /// <summary>
+        /// Converts a legacy emote URN to its on-chain equivalent if a mapping exists.
+        /// Returns the original URN if no conversion is needed.
+        /// </summary>
+        public static URN ConvertLegacyEmoteUrnToOnChain(URN emoteUrn)
+        {
+            if (emoteUrn.IsNullOrEmpty())
+                return emoteUrn;
+
+            string emoteId = emoteUrn.ToString();
+
+            return LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP.GetValueOrDefault(emoteId, emoteUrn);
+        }
+
         public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> emotes)
         {
             List<URN> pointers = POINTERS_POOL.Get()!;
@@ -68,15 +54,6 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (emote.IsNullOrEmpty())
                     continue;
-
-                string emoteId = emote.ToString();
-
-                // If it's a legacy emote, try to find a matching on-chain emote URN by last segment
-                if (LEGACY_TO_ON_CHAIN_EMOTE_URN_MAP.TryGetValue(emoteId, out URN embeddedUrn))
-                {
-                    pointers.Add(embeddedUrn);
-                    continue;
-                }
 
                 pointers.Add(emote);
             }
