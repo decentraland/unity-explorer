@@ -51,18 +51,34 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState, ref SceneLODInfo sceneLODInfo)
+            ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                UnityEngine.Debug.Log("JUANI UNLOADING SCENE");
-                //Dispose scene
-                sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
-                    sceneDefinitionComponent.Parcels);
+                var state = sceneFacade.SceneStateProvider.State.Value();
 
-                sceneLODInfo.sceneStateProvider = sceneFacade.SceneStateProvider;
+                switch (state)
+                {
+                    case SceneState.Disposed:
+                        // Fully disposed - safe to remove component
+                        World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                        break;
 
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                    case SceneState.Disposing:
+                        // Already disposing - wait for next frame
+                        // Save the provider so LOD system can check disposal state
+                        break;
+
+                    case SceneState.NotStarted:
+                    case SceneState.Running:
+                    case SceneState.EngineError:
+                    case SceneState.EcsError:
+                    case SceneState.JavaScriptError:
+                    default:
+                        // Start disposal, will be Disposing next check
+                        sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
+                        break;
+                }
             }
         }
 

@@ -44,17 +44,9 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
-            if (sceneLODInfo.sceneStateProvider != null && sceneLODInfo.sceneStateProvider.State.Value() != SceneState.Disposed)
-            {
-                UnityEngine.Debug.Log("JUANI HELD BY THE SCENE STATE PROVIDER");
-                return;
-            }
-
-            sceneLODInfo.sceneStateProvider = null;
-
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
                 byte lodForAcquisition;
