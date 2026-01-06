@@ -7,12 +7,12 @@
     {
         protected override void OnInputUnblocked()
         {
-            ChangeState<TypingEnabledChatInputState>();
+            machine.Enter<TypingEnabledChatInputState>();
         }
 
         protected override void OnInputBlocked()
         {
-            ChangeState<BlockedChatInputState>();
+            machine.Enter<BlockedChatInputState>();
         }
     }
 }

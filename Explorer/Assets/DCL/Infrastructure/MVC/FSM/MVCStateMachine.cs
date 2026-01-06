@@ -6,6 +6,11 @@ using Utility;
 
 namespace MVC
 {
+    public interface IPayloadedState<in TPayload>
+    {
+        void Enter(TPayload payload);
+    }
+
     public class MVCStateMachine<TBaseState, TContext> : IDisposable where TBaseState: MVCState<TBaseState, TContext>
     {
         public event Action? OnStateChanged;
@@ -14,21 +19,19 @@ namespace MVC
 
         private readonly CancellationTokenSource disposalCts = new ();
 
-        public MVCStateMachine(TContext context, TBaseState initialState)
+        public MVCStateMachine(TContext context, params TBaseState[] states)
         {
             this.context = context;
 
-            // setup our initial state
-            AddState(initialState);
-            CurrentState = initialState;
-            CurrentState.Begin();
+            foreach (TBaseState state in states)
+                AddState(state);
         }
 
         protected TContext context { get; }
 
         public float ElapsedTimeInState { get; private set; }
         public TBaseState? PreviousState { get; private set; }
-        public TBaseState CurrentState { get; private set; }
+        public TBaseState? CurrentState { get; private set; }
 
         /// <summary>
         ///     adds the state to the machine
@@ -57,32 +60,46 @@ namespace MVC
             CurrentState.LateUpdate(deltaTime);
         }
 
-        public R ChangeState<R>(R state) where R: TBaseState
+        public void Enter<TState, TPayload>(TPayload payload, bool allowReEnterSameState = false) where TState: TBaseState, IPayloadedState<TPayload>
         {
-            // Make sure that this state is registered in the state machine
-            if (!states.TryGetValue(typeof(R), out TBaseState? registeredState) || registeredState != state)
+            if (TryChangeCurrentState<TState>(allowReEnterSameState) && CurrentState is IPayloadedState<TPayload> payloadedState)
             {
-                var error = $"{GetType()}: state \"{typeof(R)}\" {state} is not registered";
-                ReportHub.LogError(ReportCategory.MVC, error);
-                throw new Exception(error);
+                payloadedState.Enter(payload);
+                ElapsedTimeInState = 0f;
+                // fire the changed event if we have a listener
+                OnStateChanged?.Invoke();
             }
-
-            return ChangeState<R>();
         }
 
         /// <summary>
         ///     changes the current state
         /// </summary>
-        public R ChangeState<R>() where R: TBaseState
+        public void Enter<TState>(bool allowReEnterSameState = false) where TState: TBaseState
+        {
+            if (TryChangeCurrentState<TState>(allowReEnterSameState))
+            {
+                CurrentState.Enter();
+                ElapsedTimeInState = 0f;
+                // fire the changed event if we have a listener
+                OnStateChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        ///     changes the current state
+        /// </summary>
+        private bool TryChangeCurrentState<TState>(bool allowReEnterSameState = false) where TState: TBaseState
         {
             // avoid changing to the same state
-            Type newType = typeof(R);
+            Type newType = typeof(TState);
 
-            if (CurrentState.GetType() == newType)
-                return (R)CurrentState;
+            if (CurrentState != null)
+            {
+                if (!allowReEnterSameState && CurrentState.GetType() == newType)
+                    return false;
 
-            // only call end if we have a currentState
-            CurrentState.End();
+                CurrentState.Exit();
+            }
 
             // do a sanity check while in the editor to ensure we have the given state in our state list
             if (!states.ContainsKey(newType))
@@ -95,13 +112,7 @@ namespace MVC
             // swap states and call begin
             PreviousState = CurrentState;
             CurrentState = states[newType];
-            CurrentState.Begin();
-            ElapsedTimeInState = 0f;
-
-            // fire the changed event if we have a listener
-            OnStateChanged?.Invoke();
-
-            return (R)CurrentState;
+            return true;
         }
 
         /// <summary>
@@ -116,7 +127,7 @@ namespace MVC
             }
 
             // End the current, swap to the previous.
-            CurrentState.End();
+            CurrentState.Exit();
 
             CurrentState = PreviousState;
 
@@ -125,7 +136,7 @@ namespace MVC
             PreviousState = null;
 
             // Begin the new (old) state.
-            CurrentState.Begin();
+            CurrentState.Enter();
             ElapsedTimeInState = 0f;
 
             OnStateChanged?.Invoke();
