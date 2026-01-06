@@ -310,7 +310,8 @@ namespace DCL.Character.Tests
             
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
-                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
+                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
+                new HeadIKComponent()
             );
             
             // Setup movement system dependencies
@@ -394,7 +395,8 @@ namespace DCL.Character.Tests
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor())), 
                 new AvatarShapeComponent(),
-                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
+                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
+                new HeadIKComponent()
             );
 
             // Setup movement system
