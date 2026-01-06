@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -35,6 +36,7 @@ namespace DCL.CharacterMotion.Systems
         {
             TeleportPlayerQuery(World);
             TryRemoveJustTeleportedQuery(World);
+            TryRemoveAnimTransitionQuery(World);
         }
 
         [Query]
@@ -175,6 +177,15 @@ namespace DCL.CharacterMotion.Systems
         {
             if (justTeleported.ExpireFrame <= UnityEngine.Time.frameCount)
                 World.Remove<PlayerTeleportIntent.JustTeleported>(entity);
+        }
+
+        [Query]
+        [All(typeof(DisableAnimationTransitionOnTeleport))]
+        [None(typeof(PlayerTeleportIntent))]
+        private void TryRemoveAnimTransition(Entity entity, DisableAnimationTransitionOnTeleport disableAnim)
+        {
+            if (disableAnim.ExpireFrame <= UnityEngine.Time.frameCount)
+                World.Remove<DisableAnimationTransitionOnTeleport>(entity);
         }
     }
 }
