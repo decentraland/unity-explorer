@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), NameColorHelper.GetNameColor(message.SenderValidatedName)));
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true, NameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 
@@ -81,26 +81,25 @@ namespace DCL.Chat.ChatCommands
         {
             CancellationToken cancellationToken = viewModel.cancellationToken;
 
-            Result<Profile?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            Result<Profile.CompactInfo?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
             if (!profileResult.Success)
                 return;
 
-            Profile? profile = profileResult.Value;
+            Profile.CompactInfo? profile = profileResult.Value;
 
             if (profile != null)
             {
-                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
+                viewModel.ProfileData.SetColor(profile.Value.UserNameColor);
                 var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(walletId);
-                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.ValidatedName, profile.WalletId, isOfficial));
+                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.Value.ValidatedName, profile.Value.WalletId, isOfficial));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
-                    walletId, profile.Avatar.FaceSnapshotUrl, cancellationToken);
+                    walletId, profile.Value.FaceSnapshotUrl, cancellationToken);
             }
             else
             {
-                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail),
-                    ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail));
             }
         }
     }

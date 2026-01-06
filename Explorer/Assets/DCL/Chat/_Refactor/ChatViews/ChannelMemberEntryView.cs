@@ -44,7 +44,7 @@ namespace DCL.Chat.ChatViews
 
             var request = new MemberEntryContextMenuRequest
             {
-                UserId = model.UserId, Position = contextMenuButton.transform.position,
+                UserId = model.Profile.UserId, Position = contextMenuButton.transform.position,
                 OnHide = () =>
                 {
                     canUnhover = true;
@@ -58,7 +58,7 @@ namespace DCL.Chat.ChatViews
         {
             var request = new MemberEntryContextMenuRequest
             {
-                UserId = model.UserId, Position = itemButton.transform.position
+                UserId = model.Profile.UserId, Position = itemButton.transform.position,
             };
             OnItemSelectRequested?.Invoke(request);
         }
@@ -67,11 +67,11 @@ namespace DCL.Chat.ChatViews
         {
             this.model = model;
             onlineIndicator.SetActive(model.IsOnline);
-            profilePictureView.Bind(model.ProfileThumbnail, model.ProfileColor);
-            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(model.UserId);
-            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, isOfficial, model.ProfileColor);
+            profilePictureView.Bind(model.ProfileThumbnail);
+            bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(model.Profile.UserId);
+            usernameView.Setup(model.UserName, model.Profile.UserId, model.Profile.HasClaimedName, isOfficial, model.Profile.UserNameColor);
 
-            profilePictureView.ConfigureThumbnailClickData(HandleContextMenuRequest, model.UserId);
+            profilePictureView.ConfigureThumbnailClickData(HandleContextMenuRequest, model.Profile.UserId);
         }
 
         private void Hover() =>
