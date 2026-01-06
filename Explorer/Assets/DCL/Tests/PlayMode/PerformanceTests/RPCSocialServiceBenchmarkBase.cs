@@ -20,6 +20,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public abstract class RPCSocialServiceBenchmarkBase : PerformanceBenchmark
     {
+        private const string PKEY_VAR_NAME = "DCLBenchmarkCIPKey";
+
         private readonly RPCSocialServices core;
         protected PerformanceTestSocialService socialService;
 
@@ -27,12 +29,17 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             var address = URLAddress.FromString($"wss://rpc-social-service-ea.decentraland.{env}");
 
-            string? ciPkey = Environment.GetEnvironmentVariable("DCLBenchmarkCIPKey");
+            string? ciPkey = Environment.GetEnvironmentVariable(PKEY_VAR_NAME);
 
             if (string.IsNullOrEmpty(ciPkey))
-                ciPkey = Environment.GetEnvironmentVariable("DCLBenchmarkCIPKey", EnvironmentVariableTarget.User);
+                ciPkey = Environment.GetEnvironmentVariable(PKEY_VAR_NAME, EnvironmentVariableTarget.User);
 
-            IWeb3Identity identity = PrivateKeyAuthenticator.Login(ciPkey!);
+            if (string.IsNullOrEmpty(ciPkey))
+                throw new ArgumentException("DCLBenchmarkCIPKey", "Private key is null/empty or not provided");
+
+            ciPkey = ciPkey.Trim();
+
+            IWeb3Identity identity = PrivateKeyAuthenticator.Login(ciPkey);
             identityCache.Identity.Returns(identity);
 
             core = new RPCSocialServices(address, identityCache, Substitute.For<ISocialServiceEventBus>());
