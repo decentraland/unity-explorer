@@ -22,11 +22,12 @@ using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Export;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.CharacterPreview;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using Runtime.Wearables;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
         private IAvatarMaterialPoolHandler avatarMaterialPoolHandler = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
+        private AvatarBase avatarBasePrefab = null!;
 
         private readonly NametagsData nametagsData;
 
@@ -142,6 +144,9 @@ namespace DCL.PluginSystem.Global
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
+            // TODO: Ask Misha how to do this correctly.
+            CharacterPreviewController.FacialFeaturesTexturesByBodyShape = facialFeaturesTextures;
+
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
@@ -170,6 +175,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
+            ExportAvatarSystem.InjectToWorld(ref builder, avatarBasePrefab, null);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -183,8 +189,8 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
-
+            var avatarBaseAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct);
+            avatarBasePrefab = avatarBaseAsset.Value.EnsureGetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }

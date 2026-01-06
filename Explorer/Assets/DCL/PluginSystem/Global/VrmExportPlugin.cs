@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ExportAvatarSystem.InjectToWorld(ref builder, eventBus);
+            ExportAvatarSystem.InjectToWorld(ref builder, null, eventBus);
         }
     }
 }

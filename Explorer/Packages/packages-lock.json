@@ -462,34 +462,25 @@
       }
     },
     "com.vrmc.gltf": {
-      "version": "https://github.com/decentraland/UniVRM.git?path=/Assets/UniGLTF",
+      "version": "file:../../../UniVRM/Packages/UniGLTF",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
-        "com.vrmc.vrmshaders": "0.112.0",
-        "com.unity.modules.animation": "1.0.0"
-      },
-      "hash": "d5503e821d6f12f8d7f645f46a5641d76ed31047"
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.test-framework": "1.4.6",
+        "com.unity.mathematics": "1.2.6"
+      }
     },
     "com.vrmc.univrm": {
-      "version": "https://github.com/decentraland/UniVRM.git?path=/Assets/VRM",
+      "version": "file:../../../UniVRM/Packages/VRM",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
-        "com.vrmc.vrmshaders": "0.112.0",
-        "com.vrmc.gltf": "0.112.0",
+        "com.vrmc.gltf": "0.131.0",
         "com.unity.ugui": "1.0.0"
-      },
-      "hash": "d5503e821d6f12f8d7f645f46a5641d76ed31047"
-    },
-    "com.vrmc.vrmshaders": {
-      "version": "https://github.com/decentraland/UniVRM.git?path=/Assets/VRMShaders",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.modules.imageconversion": "1.0.0"
-      },
-      "hash": "d5503e821d6f12f8d7f645f46a5641d76ed31047"
+      }
     },
     "decentraland.grassshader": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",

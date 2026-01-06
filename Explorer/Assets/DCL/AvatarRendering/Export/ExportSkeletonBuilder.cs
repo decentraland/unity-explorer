@@ -53,6 +53,16 @@ namespace DCL.AvatarRendering.Export
                 MapBonesRecursive(mapping, child);
         }
 
+        public static void MapBonesRecursive(
+            Dictionary<HumanBodyBones, Transform> mapping, Transform bone)
+        {
+            if (BONE_DEFINITIONS.TryGetValue(bone.name, out var humanBone))
+                mapping.Add(humanBone, bone);
+
+            foreach (Transform child in bone)
+                MapBonesRecursive(mapping, child);
+        }
+
         private GameObject InstantiateBones(Transform sourceRoot, Transform parent)
         {
             const string HIPS_NAME = "Avatar_Hips";
@@ -119,23 +129,18 @@ namespace DCL.AvatarRendering.Export
             ["Avatar_LeftHandThumb1"] = HumanBodyBones.LeftThumbProximal,
             ["Avatar_LeftHandThumb2"] = HumanBodyBones.LeftThumbIntermediate,
             ["Avatar_LeftHandThumb3"] = HumanBodyBones.LeftThumbDistal,
-            ["Avatar_LeftHandThumb4"] = HumanBodyBones.LeftThumbDistal,
             ["Avatar_LeftHandIndex1"] = HumanBodyBones.LeftIndexProximal,
             ["Avatar_LeftHandIndex2"] = HumanBodyBones.LeftIndexIntermediate,
             ["Avatar_LeftHandIndex3"] = HumanBodyBones.LeftIndexDistal,
-            ["Avatar_LeftHandIndex4"] = HumanBodyBones.LeftIndexDistal,
             ["Avatar_LeftHandMiddle1"] = HumanBodyBones.LeftMiddleProximal,
             ["Avatar_LeftHandMiddle2"] = HumanBodyBones.LeftMiddleIntermediate,
             ["Avatar_LeftHandMiddle3"] = HumanBodyBones.LeftMiddleDistal,
-            ["Avatar_LeftHandMiddle4"] = HumanBodyBones.LeftMiddleDistal,
             ["Avatar_LeftHandRing1"] = HumanBodyBones.LeftRingProximal,
             ["Avatar_LeftHandRing2"] = HumanBodyBones.LeftRingIntermediate,
             ["Avatar_LeftHandRing3"] = HumanBodyBones.LeftRingDistal,
-            ["Avatar_LeftHandRing4"] = HumanBodyBones.LeftRingDistal,
             ["Avatar_LeftHandPinky1"] = HumanBodyBones.LeftLittleProximal,
             ["Avatar_LeftHandPinky2"] = HumanBodyBones.LeftLittleIntermediate,
             ["Avatar_LeftHandPinky3"] = HumanBodyBones.LeftLittleDistal,
-            ["Avatar_LeftHandPinky4"] = HumanBodyBones.LeftLittleDistal,
 
             ["Avatar_RightShoulder"] = HumanBodyBones.RightShoulder,
             ["Avatar_RightArm"] = HumanBodyBones.RightUpperArm,
@@ -145,23 +150,18 @@ namespace DCL.AvatarRendering.Export
             ["Avatar_RightHandThumb1"] = HumanBodyBones.RightThumbProximal,
             ["Avatar_RightHandThumb2"] = HumanBodyBones.RightThumbIntermediate,
             ["Avatar_RightHandThumb3"] = HumanBodyBones.RightThumbDistal,
-            ["Avatar_RightHandThumb4"] = HumanBodyBones.RightThumbDistal,
             ["Avatar_RightHandIndex1"] = HumanBodyBones.RightIndexProximal,
             ["Avatar_RightHandIndex2"] = HumanBodyBones.RightIndexIntermediate,
             ["Avatar_RightHandIndex3"] = HumanBodyBones.RightIndexDistal,
-            ["Avatar_RightHandIndex4"] = HumanBodyBones.RightIndexDistal,
             ["Avatar_RightHandMiddle1"] = HumanBodyBones.RightMiddleProximal,
             ["Avatar_RightHandMiddle2"] = HumanBodyBones.RightMiddleIntermediate,
             ["Avatar_RightHandMiddle3"] = HumanBodyBones.RightMiddleDistal,
-            ["Avatar_RightHandMiddle4"] = HumanBodyBones.RightMiddleDistal,
             ["Avatar_RightHandRing1"] = HumanBodyBones.RightRingProximal,
             ["Avatar_RightHandRing2"] = HumanBodyBones.RightRingIntermediate,
             ["Avatar_RightHandRing3"] = HumanBodyBones.RightRingDistal,
-            ["Avatar_RightHandRing4"] = HumanBodyBones.RightRingDistal,
             ["Avatar_RightHandPinky1"] = HumanBodyBones.RightLittleProximal,
             ["Avatar_RightHandPinky2"] = HumanBodyBones.RightLittleIntermediate,
             ["Avatar_RightHandPinky3"] = HumanBodyBones.RightLittleDistal,
-            ["Avatar_RightHandPinky4"] = HumanBodyBones.RightLittleDistal,
 
             ["Avatar_LeftUpLeg"] = HumanBodyBones.LeftUpperLeg,
             ["Avatar_LeftLeg"] = HumanBodyBones.LeftLowerLeg,

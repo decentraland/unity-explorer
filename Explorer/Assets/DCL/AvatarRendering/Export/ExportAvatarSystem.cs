@@ -2,18 +2,18 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
+using UniGLTF;
 using UnityEngine;
 using Utility;
 using VRM;
-using VRMShaders;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Export
@@ -23,13 +23,16 @@ namespace DCL.AvatarRendering.Export
     public sealed partial class ExportAvatarSystem : BaseUnityLoopSystem
     {
         private readonly IEventBus analyticsEventBus;
-        private readonly UniGLTF.GltfExportSettings gltfExportSettings = new ();
+        private readonly GltfExportSettings gltfExportSettings = new ();
         private readonly RuntimeTextureSerializer textureSerializer = new ();
         private readonly ExportingState exportingState = new ();
+        private readonly AvatarBase avatarBasePrefab;
         private CancellationTokenSource cts;
 
-        private ExportAvatarSystem(World world, IEventBus analyticsEventBus) : base(world)
+        private ExportAvatarSystem(World world, AvatarBase avatarBasePrefab,
+            IEventBus analyticsEventBus) : base(world)
         {
+            this.avatarBasePrefab = avatarBasePrefab;
             this.analyticsEventBus = analyticsEventBus;
         }
 
@@ -60,7 +63,9 @@ namespace DCL.AvatarRendering.Export
                 exportData.FacialFeatureMainTextures,
                 exportData.FacialFeatureMaskTextures);
 
-            var vrmMetaObject = CreateVrmMetaObject(exportData);
+            var vrmMetaObject = AvatarExportUtilities.CreateVrmMetaObject(
+                exportData.AuthorName, exportData.WearableInfos);
+
             exportingState.Add(vrmMetaObject);
 
             try
@@ -98,7 +103,8 @@ namespace DCL.AvatarRendering.Export
                 }
 
                 // Create humanoid avatar
-                var avatar = AvatarExportUtilities.CreateHumanoidAvatar(skeleton, humanBones);
+                var avatar = AvatarExportUtilities.CreateHumanoidAvatar(
+                    skeleton.Root, humanBones);
 
                 if (avatar == null || !avatar.isValid)
                 {
@@ -107,7 +113,7 @@ namespace DCL.AvatarRendering.Export
                 }
 
                 // Normalize and export
-                var normalizedRoot = VRMBoneNormalizer.Execute(skeleton.Root, true);
+                var normalizedRoot = skeleton.Root; //VRMBoneNormalizer.Execute(skeleton.Root, true, false);
                 exportingState.Add(normalizedRoot);
                 normalizedRoot.AddComponent<VRMMeta>().Meta = vrmMetaObject;
 
@@ -122,7 +128,7 @@ namespace DCL.AvatarRendering.Export
                 await File.WriteAllBytesAsync(exportData.SavePath, vrmBytes, ctsToken);
 
                 exportData.OnFinishedAction?.Invoke();
-                analyticsEventBus.Publish(new AvatarExportEvents(true));
+                analyticsEventBus?.Publish(new AvatarExportEvents(true));
 
                 ReportHub.Log(GetReportCategory(), $"VRM exported successfully to: {exportData.SavePath}");
             }
@@ -130,53 +136,13 @@ namespace DCL.AvatarRendering.Export
             catch (Exception e)
             {
                 ReportHub.LogException(e, GetReportCategory());
-                analyticsEventBus.Publish(new AvatarExportEvents(false));
+                analyticsEventBus?.Publish(new AvatarExportEvents(false));
             }
             finally
             {
                 exportData.Cleanup();
                 World.Destroy(entity);
             }
-        }
-
-        private VRMMetaObject CreateVrmMetaObject(VrmExportDataComponent exportData)
-        {
-            var meta = ScriptableObject.CreateInstance<VRMMetaObject>();
-
-            meta.Title = $"{exportData.AuthorName} avatar";
-            meta.Reference = BuildWearableReferences(exportData.WearableInfos);
-
-            meta.Author = "Decentraland";
-            meta.ContactInformation = "info@decentraland.org";
-            meta.AllowedUser = AllowedUser.Everyone;
-            meta.ViolentUssage = UssageLicense.Disallow;
-            meta.SexualUssage = UssageLicense.Disallow;
-            meta.CommercialUssage = UssageLicense.Disallow;
-            meta.LicenseType = LicenseType.Redistribution_Prohibited;
-            meta.Version = "1.0, UniVRM v0.112.0";
-
-            return meta;
-        }
-
-        private string BuildWearableReferences(List<WearableExportInfo> wearables)
-        {
-            if (wearables == null || wearables.Count == 0)
-                return string.Empty;
-
-            var sb = new StringBuilder();
-
-            foreach (var wearable in wearables)
-            {
-                if (sb.Length > 0)
-                    sb.AppendLine(" | ");
-
-                sb.Append(wearable.Category).Append(": ").Append(wearable.Name);
-
-                if (!string.IsNullOrEmpty(wearable.MarketPlaceUrl))
-                    sb.Append(": ").Append(wearable.MarketPlaceUrl);
-            }
-
-            return sb.ToString();
         }
 
         private void AttachSkinnedMesh(

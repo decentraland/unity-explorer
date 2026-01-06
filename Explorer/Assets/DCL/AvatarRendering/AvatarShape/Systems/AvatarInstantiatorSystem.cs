@@ -301,7 +301,7 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 IWearable resultWearable = visibleWearables[i];
 
-                wearableInfos.Add(CreateWearableInfo(resultWearable));
+                wearableInfos.Add(AvatarExportUtilities.CreateWearableInfo(resultWearable));
 
                 // Handle facial features, just populate textures, don't instantiate
                 if (resultWearable.Type == WearableType.FacialFeature)
@@ -397,17 +397,6 @@ namespace DCL.AvatarRendering.AvatarShape
                 wearablesResult.Asset.Dispose();
 
             ReportHub.Log(GetReportCategory(), $"VRM Export: Avatar instantiated with {avatarShapeComponent.InstantiatedWearables.Count} wearables");
-        }
-
-        private static WearableExportInfo CreateWearableInfo(IWearable wearable)
-        {
-            var dto = wearable.DTO;
-            return new WearableExportInfo
-            {
-                Name = !string.IsNullOrEmpty(dto.Metadata.name) ? dto.Metadata.name : dto.Metadata.id,
-                Category = wearable.GetCategory(),
-                MarketPlaceUrl = wearable.GetMarketplaceLink()
-            };
         }
     }
 }

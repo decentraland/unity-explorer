@@ -244,7 +244,9 @@ namespace DCL.Backpack
         {
             try
             {
-                if (!world.TryGet(playerEntity, out Profile? profile)
+                await backpackCharacterPreviewController.ExportAvatarAsync();
+
+                /*if (!world.TryGet(playerEntity, out Profile? profile)
                     || profile == null)
                 {
                     ReportHub.LogError(ReportCategory.AVATAR_EXPORT,
@@ -268,7 +270,7 @@ namespace DCL.Backpack
                     });
 
                 ReportHub.Log(ReportCategory.AVATAR_EXPORT,
-                    "VRM Export requested...");
+                    "VRM Export requested...");*/
             }
             catch (Exception ex)
             {
