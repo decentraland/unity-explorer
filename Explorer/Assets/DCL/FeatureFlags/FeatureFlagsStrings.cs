@@ -53,6 +53,11 @@ namespace DCL.FeatureFlags
         public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
         public const string CONFIG_VARIANT = "config";
         public const string HEAD_SYNC = "alfa-head-sync";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
     }
 
     public enum FeatureFlag

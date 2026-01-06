@@ -1,35 +1,46 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using MVC;
+
+namespace DCL.Chat.ChatStates
 {
     /// <summary>
     ///     Blurred/Unfocused state of the chat.
     /// </summary>
-    public class DefaultChatState : ChatState
+    public class DefaultChatState : ChatState, IState
     {
-        public override void Begin()
+        private readonly MVCStateMachine<ChatState> chatStateMachine;
+        private readonly ChatUIMediator uiMediator;
+
+        public DefaultChatState(MVCStateMachine<ChatState> chatStateMachine, ChatUIMediator uiMediator)
         {
-            context.UIMediator.SetupForDefaultState(animate: true);
-            context.UIMediator.chatInputPresenter.OnBlur();
+            this.chatStateMachine = chatStateMachine;
+            this.uiMediator = uiMediator;
+        }
+
+        public void Enter()
+        {
+            uiMediator.SetupForDefaultState(animate: true);
+            uiMediator.chatInputPresenter.OnBlur();
         }
 
         public override void OnPointerEnter() =>
-            context.UIMediator.SetPanelsFocus(isFocused: true, animate: true);
+            uiMediator.SetPanelsFocus(isFocused: true, animate: true);
 
         public override void OnPointerExit() =>
-            context.UIMediator.SetPanelsFocus(isFocused: false, animate: true);
+            uiMediator.SetPanelsFocus(isFocused: false, animate: true);
 
         public override void OnClickInside() =>
-            ChangeState<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnCloseRequested() =>
-            ChangeState<MinimizedChatState>();
+            chatStateMachine.Enter<MinimizedChatState>();
 
         public override void OnFocusRequested() =>
-            ChangeState<FocusedChatState>();
+            chatStateMachine.Enter<FocusedChatState>();
 
         public override void OnMinimizeRequested() =>
-            ChangeState<MinimizedChatState>();
+            chatStateMachine.Enter<MinimizedChatState>();
 
         public override void OnToggleMembers() =>
-            ChangeState<MembersChatState>();
+            chatStateMachine.Enter<MembersChatState>();
     }
 }
