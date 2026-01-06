@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using DCL.Web3;
 
 namespace DCL.Friends.UI.Requests
@@ -15,6 +16,6 @@ namespace DCL.Friends.UI.Requests
         /// <summary>
         /// Needed in case the request was accepted from another flow, and we need to display the modal
         /// </summary>
-        public FriendProfile? OneShotFriendAccepted;
+        public Profile.CompactInfo? OneShotFriendAccepted;
     }
 }

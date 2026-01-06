@@ -150,6 +150,7 @@ namespace DCL.Notifications.NotificationsMenu
             view.LoopList.SetListItemCount(notifications.Count, false);
 
             List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
+            requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);
@@ -293,7 +294,7 @@ namespace DCL.Notifications.NotificationsMenu
                 {
                     if (giftView.Notification is GiftReceivedNotification current && current.Metadata.SenderAddress == address)
                     {
-                        giftView.UpdateSenderName(profile.Name, profile.UserNameColor);
+                        giftView.UpdateSenderName(profile.Value.Name, profile.Value.UserNameColor);
                     }
                 }
             }
@@ -356,10 +357,10 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
+                Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
-                    return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);
+                    return await profileRepository.GetProfileThumbnailAsync(profile.Value.FaceSnapshotUrl, ct);
 
                 return null;
             }
