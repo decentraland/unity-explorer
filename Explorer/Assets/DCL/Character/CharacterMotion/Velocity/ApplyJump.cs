@@ -1,6 +1,7 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Utils;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace DCL.CharacterMotion
             ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
             ref JumpInputComponent jump,
+            Vector3 forward,
             in MovementInputComponent inputComponent,
             int physicsTick)
         {
@@ -54,6 +56,15 @@ namespace DCL.CharacterMotion
 
             if (canJump && wantsToJump && !isJumpDisabled)
             {
+                if (!isFirstJump)
+                {
+                    const float SPEED = 8;
+                    var velocity = SPEED * inputComponent.Axes;
+                    characterPhysics.MoveVelocity.XVelocity = velocity.x;
+                    characterPhysics.MoveVelocity.ZVelocity = velocity.y;
+                    characterPhysics.MoveVelocity.Velocity = (forward * velocity.y) + (Vector3.Cross(-forward, Vector3.up) * velocity.x);
+                }
+
                 float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
                 float gravity = settings.Gravity * settings.JumpGravityFactor;
 

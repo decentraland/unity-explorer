@@ -14,6 +14,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using DCL.AvatarRendering.DemoScripts.Components;
+using DCL.CharacterMotion.Utils;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -160,7 +161,8 @@ namespace DCL.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // Apply vertical velocity
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
+            var forward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jump, forward, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
