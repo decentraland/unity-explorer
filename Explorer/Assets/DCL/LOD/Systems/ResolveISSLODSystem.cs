@@ -115,7 +115,7 @@ namespace DCL.LOD.Systems
             //Means that PositionAsset failed. We need to handle this situation
             if (assetBundleResult.IsConsumed)
             {
-                creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                MarkAssetAsFailed();
                 World.Destroy(entity);
             }
 
@@ -126,12 +126,15 @@ namespace DCL.LOD.Systems
                     if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
                         PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
                     else
-                    {
-                        ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
-                        creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
-                    }
+                        MarkAssetAsFailed();
                 }
                 World.Destroy(entity);
+            }
+
+            void MarkAssetAsFailed()
+            {
+                ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
+                creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
             }
         }
 
