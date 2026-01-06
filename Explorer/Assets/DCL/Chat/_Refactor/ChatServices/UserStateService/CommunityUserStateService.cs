@@ -101,15 +101,15 @@ namespace DCL.Chat.ChatServices
 
             string? localPlayerAddress = web3IdentityCache.Identity?.Address;
 
-            foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
+            foreach (ICommunityMemberData memberData in response.data.results)
             {
-                if ((!string.IsNullOrEmpty(localPlayerAddress) && memberData.memberAddress == localPlayerAddress) || (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.memberAddress)))
+                if ((!string.IsNullOrEmpty(localPlayerAddress) && memberData.Address == localPlayerAddress) || (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address)))
                     continue;
 
-                if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.memberAddress))
-                    onlineParticipants.blocked.Add(memberData.memberAddress);
+                if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address))
+                    onlineParticipants.blocked.Add(memberData.Address);
                 else
-                    onlineParticipants.normal.Add(memberData.memberAddress);
+                    onlineParticipants.normal.Add(memberData.Address);
             }
 
             // Edge case - the channel is initialized AFTER the community is selected

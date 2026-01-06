@@ -551,28 +551,6 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            var minimap = new MinimapController(
-                mainUIView.MinimapView.EnsureNotNull(),
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                staticContainer.RealmData,
-                realmNavigator,
-                staticContainer.ScenesCache,
-                mapPathEventBus,
-                staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel.Peek(),
-                sharedSpaceManager,
-                clipboard,
-                bootstrapContainer.DecentralandUrlsSource,
-                chatMessagesBus,
-                reloadSceneChatCommand,
-                roomHub,
-                staticContainer.LoadingStatus,
-                includeBannedUsersFromScene,
-                homePlaceEventBus
-            );
-
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
@@ -633,7 +611,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
@@ -768,7 +746,26 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
-                new MinimapPlugin(mvcManager, minimap),
+                new MinimapPlugin(
+                    mainUIView.MinimapView.EnsureNotNull(),
+                    mapRendererContainer.MapRenderer,
+                    mvcManager,
+                    placesAPIService,
+                    staticContainer.RealmData,
+                    realmNavigator,
+                    staticContainer.ScenesCache,
+                    mapPathEventBus,
+                    staticContainer.SceneRestrictionBusController,
+                    dynamicWorldParams.StartParcel.Peek(),
+                    sharedSpaceManager,
+                    clipboard,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    chatMessagesBus,
+                    reloadSceneChatCommand,
+                    roomHub,
+                    staticContainer.LoadingStatus,
+                    includeBannedUsersFromScene,
+                    homePlaceEventBus),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
@@ -892,7 +889,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
-                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder, staticContainer.WebRequestsContainer.ChromeDevtoolProtocolClient, localSceneDevelopment),
+                staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,

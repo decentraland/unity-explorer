@@ -1,11 +1,8 @@
-﻿using DCL.Diagnostics;
-using MVC;
+﻿using MVC;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public readonly struct AuthStateContext { }
-
-    public abstract class AuthStateBase : MVCState<AuthStateBase, AuthStateContext>
+    public abstract class AuthStateBase : IExitableState
     {
         protected readonly AuthenticationScreenView viewInstance;
 
@@ -14,14 +11,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.viewInstance = viewInstance;
         }
 
-        public override void Enter()
-        {
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Enter state {GetType().Name}");
-        }
-
-        public override void Exit()
-        {
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Exit state {GetType().Name}");
-        }
+        public virtual void Exit() {}
     }
 }
