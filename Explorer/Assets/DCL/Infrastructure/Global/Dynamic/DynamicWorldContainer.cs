@@ -457,7 +457,6 @@ namespace Global.Dynamic
 
             var chatHistory = new ChatHistory();
             var emotesBus = new EmotesBus();
-            //ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
