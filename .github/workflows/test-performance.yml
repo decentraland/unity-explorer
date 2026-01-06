@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
   # Using pull_request_target allows running even when PR has merge conflicts
   # This is safe for read-only performance tests that don't modify code
+  # Note: paths filter removed because pull_request_target evaluates paths on base branch
   pull_request_target:
-    paths:
-      - 'Explorer/**'
     types:
       - opened
       - reopened
