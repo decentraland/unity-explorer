@@ -537,6 +537,9 @@ def generate_summary_page(
         # Group by parallelism category
         case_results = {cat: [] for cat in parallelism_order}
 
+        # Determine the mode based on whether endpoint is specified
+        list_only_mode = not endpoint  # No comparison, just list metrics
+
         for method_key, scenarios in matching_methods.items():
             # Extract concurrency from method key
             args_match = re.search(r"\(([^)]+)\)", method_key)
@@ -547,6 +550,27 @@ def generate_summary_page(
                 concurrency = 1
 
             cat_key, _ = get_parallelism_category(concurrency, config)
+
+            if list_only_mode:
+                # List-only mode: show metrics for all scenarios without comparison
+                for scenario_label, result in scenarios.items():
+                    if not result or not result.sample_groups:
+                        continue
+
+                    for metric_key in metric_keys:
+                        sg = result.sample_groups.get(metric_key)
+                        if sg:
+                            case_results[cat_key].append({
+                                "metric": metric_key,
+                                "scenario": scenario_label,
+                                "median": sg.median,
+                                "p95": sg.p95,
+                                "p99": sg.p99,
+                                "unit": sg.unit,
+                                "concurrency": concurrency,
+                                "mode": "list",
+                            })
+                continue
 
             # The configured endpoint is our test subject
             if endpoint not in scenarios:
@@ -636,6 +660,7 @@ def generate_summary_page(
             "compare_test": compare_test,
             "metric_keys": metric_keys,
             "results": case_results,
+            "list_only_mode": list_only_mode,
         })
 
     # Create summary page
@@ -655,12 +680,18 @@ def generate_summary_page(
         compare_test = case_data.get("compare_test", "")
         metric_keys = case_data.get("metric_keys", [])
         results = case_data["results"]
+        list_only_mode = case_data.get("list_only_mode", False)
 
         # Test header
         ax.text(0.0, y_pos, f"{test_name}", fontsize=11, fontweight="bold",
                 transform=ax.transAxes)
 
-        if compare_test:
+        if list_only_mode:
+            # List-only mode: no comparison subtitle
+            ax.text(0.0, y_pos - line_height,
+                    "Metrics by scenario",
+                    fontsize=9, fontstyle="italic", transform=ax.transAxes, color="#555555")
+        elif compare_test:
             # Cross-test comparison mode
             ax.text(0.0, y_pos - line_height,
                     f"Endpoint: {endpoint} (vs {compare_test} endpoints)",
@@ -684,26 +715,68 @@ def generate_summary_page(
                     transform=ax.transAxes)
             y_pos -= line_height * 1.2
 
-            # Group by metric and average
-            metric_averages = defaultdict(list)
-            for r in cat_results:
-                metric_averages[r["metric"]].append(r["pct_diff"])
+            if list_only_mode:
+                # List-only mode: show metrics grouped by scenario
+                # Group by scenario -> metric -> values
+                scenario_metrics = defaultdict(lambda: defaultdict(list))
+                for r in cat_results:
+                    scenario_metrics[r["scenario"]][r["metric"]].append({
+                        "median": r["median"],
+                        "p95": r["p95"],
+                        "unit": r["unit"],
+                    })
 
-            # Iterate in the order specified by metric_keys
-            for metric_key in metric_keys:
-                pct_diffs = metric_averages.get(metric_key)
-                if not pct_diffs:
-                    continue
-                avg_diff = sum(pct_diffs) / len(pct_diffs)
-                metric_name, metric_desc = get_metric_display_name(metric_key, config)
-                diff_label, diff_color = get_difference_category(avg_diff, config)
+                for scenario in sorted(scenario_metrics.keys()):
+                    ax.text(0.04, y_pos, f"{scenario}:", fontsize=9, fontweight="bold",
+                            transform=ax.transAxes, color="#333333")
+                    y_pos -= line_height
 
-                sign = "+" if avg_diff >= 0 else ""
-                text = f"  • {metric_name}: {sign}{avg_diff:.1f}% ({diff_label})"
+                    for metric_key in metric_keys:
+                        values = scenario_metrics[scenario].get(metric_key)
+                        if not values:
+                            continue
 
-                ax.text(0.04, y_pos, text, fontsize=9, transform=ax.transAxes,
-                        color=diff_color)
-                y_pos -= line_height
+                        # Average the values if multiple
+                        avg_median = sum(v["median"] for v in values) / len(values)
+                        avg_p95 = sum(v["p95"] for v in values) / len(values)
+                        unit = values[0]["unit"]
+
+                        metric_name, _ = get_metric_display_name(metric_key, config)
+
+                        # Format based on unit (microseconds -> ms)
+                        if unit == SAMPLE_UNIT_MICROSECOND:
+                            median_ms = avg_median / 1000
+                            p95_ms = avg_p95 / 1000
+                            text = f"    • {metric_name}: {median_ms:.1f}ms (P95: {p95_ms:.1f}ms)"
+                        else:
+                            text = f"    • {metric_name}: {avg_median:.2f} (P95: {avg_p95:.2f})"
+
+                        ax.text(0.06, y_pos, text, fontsize=8, transform=ax.transAxes,
+                                color="#444444")
+                        y_pos -= line_height
+
+                    y_pos -= line_height * 0.3
+            else:
+                # Comparison mode: show percentage differences
+                metric_averages = defaultdict(list)
+                for r in cat_results:
+                    metric_averages[r["metric"]].append(r["pct_diff"])
+
+                # Iterate in the order specified by metric_keys
+                for metric_key in metric_keys:
+                    pct_diffs = metric_averages.get(metric_key)
+                    if not pct_diffs:
+                        continue
+                    avg_diff = sum(pct_diffs) / len(pct_diffs)
+                    metric_name, metric_desc = get_metric_display_name(metric_key, config)
+                    diff_label, diff_color = get_difference_category(avg_diff, config)
+
+                    sign = "+" if avg_diff >= 0 else ""
+                    text = f"  • {metric_name}: {sign}{avg_diff:.1f}% ({diff_label})"
+
+                    ax.text(0.04, y_pos, text, fontsize=9, transform=ax.transAxes,
+                            color=diff_color)
+                    y_pos -= line_height
 
             y_pos -= line_height * 0.5
 
@@ -739,11 +812,14 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
         compare_test = case_data.get("compare_test", "")
         metric_keys = case_data.get("metric_keys", [])
         results = case_data["results"]
+        list_only_mode = case_data.get("list_only_mode", False)
 
         # Test header
         lines.append(f"### {test_name}\n")
 
-        if compare_test:
+        if list_only_mode:
+            lines.append("*Metrics by scenario*\n")
+        elif compare_test:
             lines.append(f"*Endpoint: `{endpoint}` vs `{compare_test}` endpoints*\n")
         else:
             lines.append(f"*Endpoint: `{endpoint}` (performance vs other endpoints)*\n")
@@ -764,31 +840,62 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
 
             lines.append(f"**{cat_label}:**\n")
 
-            # Group by metric and average
-            metric_averages = defaultdict(list)
-            for r in cat_results:
-                metric_averages[r["metric"]].append(r["pct_diff"])
+            if list_only_mode:
+                # List-only mode: show metrics grouped by scenario
+                scenario_metrics = defaultdict(lambda: defaultdict(list))
+                for r in cat_results:
+                    scenario_metrics[r["scenario"]][r["metric"]].append({
+                        "median": r["median"],
+                        "p95": r["p95"],
+                        "unit": r["unit"],
+                    })
 
-            # Iterate in the order specified by metric_keys
-            for metric_key in metric_keys:
-                pct_diffs = metric_averages.get(metric_key)
-                if not pct_diffs:
-                    continue
-                avg_diff = sum(pct_diffs) / len(pct_diffs)
-                metric_name, _ = get_metric_display_name(metric_key, config)
-                diff_label, diff_color = get_difference_category(avg_diff, config)
+                for scenario in sorted(scenario_metrics.keys()):
+                    lines.append(f"\n**{scenario}:**\n")
 
-                sign = "+" if avg_diff >= 0 else ""
+                    for metric_key in metric_keys:
+                        values = scenario_metrics[scenario].get(metric_key)
+                        if not values:
+                            continue
 
-                # Use emoji for visual indication
-                if "Improvement" in diff_label:
-                    emoji = "🟢"
-                elif "Regression" in diff_label:
-                    emoji = "🔴"
-                else:
-                    emoji = "⚪"
+                        avg_median = sum(v["median"] for v in values) / len(values)
+                        avg_p95 = sum(v["p95"] for v in values) / len(values)
+                        unit = values[0]["unit"]
 
-                lines.append(f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})\n")
+                        metric_name, _ = get_metric_display_name(metric_key, config)
+
+                        if unit == SAMPLE_UNIT_MICROSECOND:
+                            median_ms = avg_median / 1000
+                            p95_ms = avg_p95 / 1000
+                            lines.append(f"- {metric_name}: {median_ms:.1f}ms (P95: {p95_ms:.1f}ms)\n")
+                        else:
+                            lines.append(f"- {metric_name}: {avg_median:.2f} (P95: {avg_p95:.2f})\n")
+            else:
+                # Comparison mode: show percentage differences
+                metric_averages = defaultdict(list)
+                for r in cat_results:
+                    metric_averages[r["metric"]].append(r["pct_diff"])
+
+                # Iterate in the order specified by metric_keys
+                for metric_key in metric_keys:
+                    pct_diffs = metric_averages.get(metric_key)
+                    if not pct_diffs:
+                        continue
+                    avg_diff = sum(pct_diffs) / len(pct_diffs)
+                    metric_name, _ = get_metric_display_name(metric_key, config)
+                    diff_label, diff_color = get_difference_category(avg_diff, config)
+
+                    sign = "+" if avg_diff >= 0 else ""
+
+                    # Use emoji for visual indication
+                    if "Improvement" in diff_label:
+                        emoji = "🟢"
+                    elif "Regression" in diff_label:
+                        emoji = "🔴"
+                    else:
+                        emoji = "⚪"
+
+                    lines.append(f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})\n")
 
             lines.append("\n")
 

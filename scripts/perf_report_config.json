@@ -106,6 +106,12 @@
     {
       "test": "AssetBundleRegistryPerformanceTests.GetEntitiesStatusAsync",
       "endpoint": "gateway.zone"
+    },
+    {
+      "test": "RPCFriendsServiceBenchmark.GetFriendsAsync"
+    },
+	{
+      "test": "RPCFriendsServiceBenchmark.GetBlockedUsersAsync"
     }
   ]
 }
