@@ -74,6 +74,9 @@ MonoBehaviour:
   <LongJumpTime>k__BackingField: 0.5
   <LongJumpGravityScale>k__BackingField: 0.5
   <JumpGravityFactor>k__BackingField: 4
+  <AirJumpCount>k__BackingField: 1
+  <CooldownBetweenJumps>k__BackingField: 0.3
+  <AirJumpDirectionChangeImpulse>k__BackingField: 8
   <JumpGraceTime>k__BackingField: 0.15
   <JumpHeightStun>k__BackingField: 8
   <LongFallStunTime>k__BackingField: 0.75
@@ -123,7 +126,6 @@ MonoBehaviour:
   <WallSlideDetectionDistance>k__BackingField: 0.5
   <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
   <StepOffset>k__BackingField: 0.35
-  <HeadIKWeightChangeSpeed>k__BackingField: 2
   <RotationSpeed>k__BackingField: 400
   <MoveAnimBlendMaxWalkSpeed>k__BackingField: 1.5
   <MoveAnimBlendMaxJogSpeed>k__BackingField: 8
@@ -156,5 +158,7 @@ MonoBehaviour:
   <HeadIKHorizontalAngleLimit>k__BackingField: 50
   <HeadIKHorizontalAngleReset>k__BackingField: 120
   <HeadIKRotationSpeed>k__BackingField: 360
+  <HeadIKWeightChangeSpeed>k__BackingField: 2
+  <HeadIKRemotePlayersDistance>k__BackingField: 10
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
