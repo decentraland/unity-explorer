@@ -34,6 +34,10 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField] [field: Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
 
+        [field: SerializeField] [field: Header("Air Jumps")] public int AirJumpCount { get; private set; }
+        [field: SerializeField] public float CooldownBetweenJumps { get; private set; }
+        [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; private set; }
+
         [field: SerializeField] [field: Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
 
         [field: SerializeField] [field: Header("Hard fall stun")] public float JumpHeightStun { get; private set; } = 10f;
@@ -53,7 +57,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        
+
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
         [field: SerializeField] public float MoveAnimBlendMaxJogSpeed { get; private set; } = 3f;
