@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PluginSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -15,7 +14,6 @@ using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -113,6 +111,13 @@ namespace DCL.LOD.Systems
         {
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
+
+            //Means that PositionAsset failed. We need to handle this situation
+            if (assetBundleResult.IsConsumed)
+            {
+                creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                World.Destroy(entity);
+            }
 
             if (assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
