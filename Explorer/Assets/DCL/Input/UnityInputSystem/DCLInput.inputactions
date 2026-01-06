@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "DCLInput",
     "maps": [
         {
@@ -2225,6 +2226,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Discover",
+                    "type": "Button",
+                    "id": "5a2cd426-7e96-4f96-93ad-0679ed95b588",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2412,6 +2422,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Communities",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a3339e67-4780-405e-972d-b7389939500b",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Discover",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

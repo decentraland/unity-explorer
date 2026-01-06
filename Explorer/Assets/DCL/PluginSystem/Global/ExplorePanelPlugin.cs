@@ -44,6 +44,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Discover;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -137,6 +138,7 @@ namespace DCL.PluginSystem.Global
         private readonly HomePlaceEventBus homePlaceEventBus;
 
         private readonly bool includeCameraReel;
+        private readonly bool includeDiscover;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -151,6 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private DiscoverController? discoverController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -203,6 +206,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
+            bool includeDiscover,
             IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
@@ -267,6 +271,7 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
+            this.includeDiscover = includeDiscover;
             this.appArgs = appArgs;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -298,6 +303,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
+            discoverController?.Dispose();
             upscalingController?.Dispose();
         }
 
@@ -484,6 +490,9 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
+            DiscoverView discoverView = explorePanelView.GetComponentInChildren<DiscoverView>();
+            discoverController = new DiscoverController(discoverView, cursor);
+
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
                     navmapController,
@@ -506,8 +515,10 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
+                    discoverController,
                     inputBlock,
                     includeCameraReel,
+                    includeDiscover,
                     sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
