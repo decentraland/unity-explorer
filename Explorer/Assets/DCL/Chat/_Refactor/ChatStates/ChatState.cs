@@ -2,10 +2,8 @@ using MVC;
 
 namespace DCL.Chat.ChatStates
 {
-    public abstract class ChatState : IState
+    public abstract class ChatState : IExitableState
     {
-        public virtual void Enter() { }
-
         public virtual void Exit() { }
 
         public virtual void OnClickOutside() { }

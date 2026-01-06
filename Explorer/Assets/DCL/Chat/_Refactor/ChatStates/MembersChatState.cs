@@ -2,7 +2,7 @@
 
 namespace DCL.Chat.ChatStates
 {
-    public class MembersChatState : ChatState
+    public class MembersChatState : ChatState, IState
     {
         private readonly MVCStateMachine<ChatState> chatStateMachine;
         private readonly ChatUIMediator mediator;
@@ -13,12 +13,10 @@ namespace DCL.Chat.ChatStates
             this.mediator = mediator;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             mediator.SetupForMembersState();
         }
-
-        public override void Exit() { }
 
         public override void OnToggleMembers() =>
             chatStateMachine.Enter<FocusedChatState>();

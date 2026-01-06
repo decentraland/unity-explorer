@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatInput
                     fsm.DisposalCt
                 )
             );
-            fsm .Enter<InitializingChatInputState>();
+            fsm.Enter<InitializingChatInputState>();
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));

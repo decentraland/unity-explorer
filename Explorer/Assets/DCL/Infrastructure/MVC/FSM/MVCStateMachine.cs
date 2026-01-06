@@ -10,14 +10,14 @@ namespace MVC
     ///     Generic state machine with typed CurrentState and support for payloaded states.
     /// </summary>
     /// <typeparam name="TBaseState">Base type for all states in this machine</typeparam>
-    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IState
+    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IExitableState
     {
         public event Action<TBaseState>? OnStateChanged;
 
         private readonly Dictionary<Type, TBaseState> states = new ();
         private readonly CancellationTokenSource disposalCts = new ();
 
-        private TBaseState? previousState;
+        public TBaseState? PreviousState { get; private set; }
         public TBaseState? CurrentState { get; private set; }
 
         public CancellationToken DisposalCt => disposalCts.Token;
@@ -38,9 +38,9 @@ namespace MVC
         public void Dispose() =>
             disposalCts.SafeCancelAndDispose();
 
-        public void Enter<TState>() where TState: TBaseState, IState
+        public void Enter<TState>(bool allowReEnterSameState = false) where TState: TBaseState, IState
         {
-            if (TryChangeState(out TState state))
+            if (TryChangeState(out TState state, allowReEnterSameState))
             {
                 state.Enter();
                 OnStateChanged?.Invoke(state);
@@ -48,13 +48,23 @@ namespace MVC
             }
         }
 
-        private bool TryChangeState<TState>(out TState state) where TState: TBaseState
+        public void Enter<TState, TPayload>(TPayload payload, bool allowReEnterSameState = false) where TState: TBaseState, IPayloadedState<TPayload>
+        {
+            if (TryChangeState(out TState state, allowReEnterSameState))
+            {
+                state.Enter(payload);
+                OnStateChanged?.Invoke(state);
+                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Enter: {CurrentState?.GetType().Name} with payload: {payload.GetType().Name}");
+            }
+        }
+
+        private bool TryChangeState<TState>(out TState state, bool allowReEnterSameState = false) where TState: TBaseState
         {
             Type newType = typeof(TState);
             ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> trying to change states: {CurrentState?.GetType().Name} -> {newType.Name}");
 
             // Avoid changing to the same state
-            if (CurrentState != null && CurrentState.GetType() == newType)
+            if (!allowReEnterSameState && IsSameState())
             {
                 state = (TState)CurrentState;
                 ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> is already in {CurrentState?.GetType().Name}");
@@ -71,11 +81,13 @@ namespace MVC
                 throw new Exception(error);
             }
 
-            previousState = CurrentState;
+            PreviousState = CurrentState;
             CurrentState = newState;
 
             state = (TState)newState;
             return true;
+
+            bool IsSameState() => CurrentState != null && CurrentState.GetType() == newType;
         }
 
         /// <summary>
@@ -84,15 +96,15 @@ namespace MVC
         public bool TryPopState()
         {
             // Ensure there is a previous state to go back to and we can Enter it without payload (IState).
-            if (previousState is not IState prevState)
+            if (PreviousState is not IState prevState)
             {
                 ReportHub.LogWarning(ReportCategory.MVC, $"Can't pop the state. Previous state is not of type {nameof(IState)}!");
                 return false;
             }
 
             CurrentState?.Exit();
-            CurrentState = previousState;
-            previousState = null;
+            CurrentState = PreviousState;
+            PreviousState = null;
 
             prevState.Enter();
             OnStateChanged?.Invoke(CurrentState);

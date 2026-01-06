@@ -2,7 +2,7 @@
 
 namespace DCL.Chat.ChatStates
 {
-    public class MinimizedChatState : ChatState
+    public class MinimizedChatState : ChatState, IState
     {
         private readonly MVCStateMachine<ChatState> stateMachine;
         private readonly ChatUIMediator mediator;
@@ -13,13 +13,11 @@ namespace DCL.Chat.ChatStates
             this.mediator = mediator;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             mediator.SetupForMinimizedState();
             mediator.chatInputPresenter.OnMinimize();
         }
-
-        public override void Exit() { }
 
         public override void OnFocusRequested() =>
             stateMachine.Enter<FocusedChatState>();

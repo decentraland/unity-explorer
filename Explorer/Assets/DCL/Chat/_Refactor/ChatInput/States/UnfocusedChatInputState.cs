@@ -4,7 +4,7 @@ using Utility;
 
 namespace DCL.Chat.ChatInput
 {
-    public class UnfocusedChatInputState : ChatInputState
+    public class UnfocusedChatInputState : ChatInputState, IState
     {
         private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatInput
             this.eventBus = eventBus;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             view.Show();
             view.SetDefault();

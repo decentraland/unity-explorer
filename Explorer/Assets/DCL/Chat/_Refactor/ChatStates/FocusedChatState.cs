@@ -3,7 +3,7 @@ using MVC;
 
 namespace DCL.Chat.ChatStates
 {
-    public class FocusedChatState : ChatState
+    public class FocusedChatState : ChatState, IState
     {
         private readonly MVCStateMachine<ChatState> stateMachine;
         private readonly ChatUIMediator mediator;
@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatStates
             this.inputBlocker = inputBlocker;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             mediator.SetupForFocusedState();
 

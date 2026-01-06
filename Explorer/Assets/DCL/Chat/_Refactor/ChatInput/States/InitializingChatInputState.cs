@@ -5,7 +5,7 @@ namespace DCL.Chat.ChatInput
     /// <summary>
     ///     Denotes the state when the capability to send messages is being resolved
     /// </summary>
-    public class InitializingChatInputState : ChatInputState
+    public class InitializingChatInputState : ChatInputState, IState
     {
         private readonly MVCStateMachine<ChatInputState> chatInputStateMachine;
 
@@ -13,6 +13,8 @@ namespace DCL.Chat.ChatInput
         {
             this.chatInputStateMachine = chatInputStateMachine;
         }
+
+        public void Enter() { }
 
         protected override void OnInputUnblocked()
         {

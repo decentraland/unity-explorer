@@ -17,7 +17,6 @@ namespace DCL.Chat.ChatInput
     public class SuggestionPanelChatInputState : IndependentMVCState, IDisposable
     {
         private readonly ChatInputView view;
-        private readonly EmojiMapping emojiMapping;
         private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
@@ -41,7 +40,6 @@ namespace DCL.Chat.ChatInput
             GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
             this.view = view;
-            this.emojiMapping = emojiMapping;
             this.getParticipantProfilesCommand = getParticipantProfilesCommand;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
 

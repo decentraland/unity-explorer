@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatInput
     /// <summary>
     ///     Can type in the chat
     /// </summary>
-    public class TypingEnabledChatInputState : ChatInputState, IDisposable
+    public class TypingEnabledChatInputState : ChatInputState, IState, IDisposable
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
@@ -30,8 +30,6 @@ namespace DCL.Chat.ChatInput
         private readonly SuggestionPanelChatInputState suggestionPanelState;
         private readonly EmojiPanelChatInputState emojiPanelState;
         private readonly CustomInputField inputField;
-
-        private readonly CancellationToken stateMachineDisposalCt;
 
         private CancellationTokenSource? suggestionCloseCts;
         private bool isLocked;
@@ -50,7 +48,6 @@ namespace DCL.Chat.ChatInput
             this.view = view;
             this.chatEventBus = chatEventBus;
             this.sendMessageCommand = sendMessageCommand;
-            this.stateMachineDisposalCt = stateMachineDisposalCt;
 
             pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
             suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
@@ -63,7 +60,7 @@ namespace DCL.Chat.ChatInput
             suggestionPanelState?.Dispose();
         }
 
-        public override void Enter()
+        public void Enter()
         {
             LockInputField(true);
             view.Show();

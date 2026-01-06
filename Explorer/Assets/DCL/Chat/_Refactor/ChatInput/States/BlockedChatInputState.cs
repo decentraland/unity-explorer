@@ -9,7 +9,7 @@ namespace DCL.Chat.ChatInput
     ///     Due to a reason writing to a user (private conversations) is not allowed.
     ///     Blocked State is valid only if teh chat view is focused
     /// </summary>
-    public class BlockedChatInputState : ChatInputState
+    public class BlockedChatInputState : ChatInputState, IState
     {
         private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
@@ -26,7 +26,7 @@ namespace DCL.Chat.ChatInput
             this.currentChannelService = currentChannelService;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             view.Show();
 

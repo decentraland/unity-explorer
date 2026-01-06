@@ -5,7 +5,7 @@ namespace DCL.Chat.ChatStates
     /// <summary>
     ///     Blurred/Unfocused state of the chat.
     /// </summary>
-    public class DefaultChatState : ChatState
+    public class DefaultChatState : ChatState, IState
     {
         private readonly MVCStateMachine<ChatState> chatStateMachine;
         private readonly ChatUIMediator uiMediator;
@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatStates
             this.uiMediator = uiMediator;
         }
 
-        public override void Enter()
+        public void Enter()
         {
             uiMediator.SetupForDefaultState(animate: true);
             uiMediator.chatInputPresenter.OnBlur();
