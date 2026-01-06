@@ -34,9 +34,9 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField] [field: Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
 
-        [field: SerializeField] [field: Header("Air Jumps")] public int AirJumpCount { get; private set; }
-        [field: SerializeField] public float CooldownBetweenJumps { get; private set; }
-        [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; private set; }
+        [field: SerializeField] [field: Header("Air Jumps")] public int AirJumpCount { get; set; }
+        [field: SerializeField] public float CooldownBetweenJumps { get; set; }
+        [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; set; }
 
         [field: SerializeField] [field: Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
 

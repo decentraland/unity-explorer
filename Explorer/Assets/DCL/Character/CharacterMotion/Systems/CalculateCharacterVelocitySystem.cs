@@ -30,7 +30,6 @@ namespace DCL.CharacterMotion.Systems
         private SingleInstanceEntity entitySettings;
 
         private readonly ElementBinding<float> cameraRunFov = new (0);
-        private readonly ElementBinding<float> cameraFovSpeed = new (0);
         private readonly ElementBinding<float> walkSpeed = new (0);
         private readonly ElementBinding<float> jogSpeed = new (0);
         private readonly ElementBinding<float> runSpeed = new (0);
@@ -44,10 +43,14 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> airDrag = new (0);
         private readonly ElementBinding<float> stopTime = new (0);
 
+        private readonly ElementBinding<int> airJumpCount = new (0);
+        private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
+        private readonly ElementBinding<float> airJumpImpulse = new (0);
+
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.TryAddWidget("Locomotion: Base")
-                       ?.AddFloatField("Camera Run FOV", cameraRunFov)
+            debugBuilder.TryAddWidget("Locomotion: Base")?
+                        .AddFloatField("Camera Run FOV", cameraRunFov)
                         .AddFloatField("Walk Speed", walkSpeed)
                         .AddFloatField("Jog Speed", jogSpeed)
                         .AddFloatField("Run Speed", runSpeed)
@@ -59,8 +62,12 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Air Acceleration", airAcc)
                         .AddFloatField("Max Air Acceleration", maxAirAcc)
                         .AddFloatField("Air Drag", airDrag)
-                        .AddFloatField("Grounded Stop Time", stopTime)
-                ;
+                        .AddFloatField("Grounded Stop Time", stopTime);
+
+            debugBuilder.TryAddWidget("Locomotion: Air Jumping")?
+                        .AddControl( new DebugConstLabelDef("Air Jump Count"), new DebugIntFieldDef(airJumpCount) )
+                        .AddFloatField("Cooldown", cooldownBetweenJumps)
+                        .AddFloatField("Direction Change Impulse", airJumpImpulse);
         }
 
         public override void Initialize()
@@ -83,6 +90,9 @@ namespace DCL.CharacterMotion.Systems
             maxAirAcc.Value = settings.MaxAirAcceleration;
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
+            airJumpCount.Value = settings.AirJumpCount;
+            cooldownBetweenJumps.Value = settings.CooldownBetweenJumps;
+            airJumpImpulse.Value = settings.AirJumpDirectionChangeImpulse;
         }
 
         protected override void Update(float t)
@@ -102,6 +112,9 @@ namespace DCL.CharacterMotion.Systems
             settings.MaxAirAcceleration = maxAirAcc.Value;
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
+            settings.AirJumpCount = airJumpCount.Value;
+            settings.CooldownBetweenJumps = cooldownBetweenJumps.Value;
+            settings.AirJumpDirectionChangeImpulse = airJumpImpulse.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
             ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
