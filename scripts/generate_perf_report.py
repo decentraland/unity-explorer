@@ -12,6 +12,10 @@ Analyzes Unity Performance Test Framework JSON output and creates bar charts for
 Usage:
     python generate_perf_report.py <input_json> [output_pdf]
     python generate_perf_report.py PerformanceTestResults.json report.pdf
+
+Compare two reports:
+    python generate_perf_report.py --compare <report1.json> <report2.json> <output.pdf> --fixture <TestFixtureName>
+    python generate_perf_report.py --compare old.json new.json comparison.pdf --fixture ProfilesPerformanceTest
 """
 
 import json
@@ -797,6 +801,293 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
     print(f"  Generated GitHub summary: {output_path}")
 
 
+def create_comparison_chart_dual_report(
+    ax: plt.Axes,
+    title: str,
+    scenarios: list[str],
+    values1: list[float],
+    values2: list[float],
+    baseline_idx: int,
+    std_devs1: Optional[list[float]] = None,
+    std_devs2: Optional[list[float]] = None,
+    show_std_dev: bool = True,
+    no_data_indices1: Optional[list[int]] = None,
+    no_data_indices2: Optional[list[int]] = None,
+    report1_label: str = "Report 1",
+    report2_label: str = "Report 2",
+):
+    """Create a grouped bar chart comparing two reports for the same scenarios."""
+    if no_data_indices1 is None:
+        no_data_indices1 = []
+    if no_data_indices2 is None:
+        no_data_indices2 = []
+
+    n = len(scenarios)
+    x = np.arange(n)
+    width = 0.35
+
+    # Colors for each report
+    color1 = "#1f77b4"  # Blue for Report 1
+    color2 = "#ff7f0e"  # Orange for Report 2
+
+    # Create bars
+    bars1 = ax.bar(x - width/2, values1, width, label=report1_label, color=color1, edgecolor="black", linewidth=0.5)
+    bars2 = ax.bar(x + width/2, values2, width, label=report2_label, color=color2, edgecolor="black", linewidth=0.5)
+
+    # Mark no-data bars with gray
+    for idx in no_data_indices1:
+        bars1[idx].set_color((0.7, 0.7, 0.7, 1.0))
+    for idx in no_data_indices2:
+        bars2[idx].set_color((0.7, 0.7, 0.7, 1.0))
+
+    # Add error bars if provided
+    if show_std_dev and std_devs1:
+        valid_x1 = [xi - width/2 for i, xi in enumerate(x) if i not in no_data_indices1]
+        valid_vals1 = [v for i, v in enumerate(values1) if i not in no_data_indices1]
+        valid_stds1 = [s for i, s in enumerate(std_devs1) if i not in no_data_indices1]
+        if valid_x1:
+            ax.errorbar(valid_x1, valid_vals1, yerr=valid_stds1, fmt="none", ecolor="black", capsize=2, capthick=1)
+
+    if show_std_dev and std_devs2:
+        valid_x2 = [xi + width/2 for i, xi in enumerate(x) if i not in no_data_indices2]
+        valid_vals2 = [v for i, v in enumerate(values2) if i not in no_data_indices2]
+        valid_stds2 = [s for i, s in enumerate(std_devs2) if i not in no_data_indices2]
+        if valid_x2:
+            ax.errorbar(valid_x2, valid_vals2, yerr=valid_stds2, fmt="none", ecolor="black", capsize=2, capthick=1)
+
+    # Use baseline from Report 1 for percentage calculations
+    baseline_value = values1[baseline_idx] if baseline_idx not in no_data_indices1 else 0
+    max_val = max(max(values1) if values1 else 1, max(values2) if values2 else 1)
+
+    # Annotate Report 1 bars
+    for i, (bar, val) in enumerate(zip(bars1, values1)):
+        if i in no_data_indices1:
+            ax.annotate("N/A", xy=(bar.get_x() + bar.get_width() / 2, max_val * 0.05),
+                        ha="center", va="bottom", fontsize=7, color="red")
+        elif i == baseline_idx:
+            ax.annotate("base", xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                        xytext=(0, 3), textcoords="offset points", ha="center", va="bottom",
+                        fontsize=7, color="blue", fontstyle="italic")
+
+    # Annotate Report 2 bars (compare to Report 1 baseline)
+    for i, (bar, val) in enumerate(zip(bars2, values2)):
+        if i in no_data_indices2:
+            ax.annotate("N/A", xy=(bar.get_x() + bar.get_width() / 2, max_val * 0.05),
+                        ha="center", va="bottom", fontsize=7, color="red")
+        elif baseline_value > 0:
+            pct_diff = calculate_percentage_diff(val, baseline_value)
+            sign = "+" if pct_diff >= 0 else ""
+            color = "green" if pct_diff <= 0 else "red"
+            ax.annotate(f"{sign}{pct_diff:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                        xytext=(0, 3), textcoords="offset points", ha="center", va="bottom",
+                        fontsize=7, color=color)
+
+    ax.set_title(title, fontsize=10, fontweight="bold")
+    ax.set_xticks(x)
+
+    max_label_len = max(len(s) for s in scenarios) if scenarios else 0
+    if max_label_len > 10:
+        ax.set_xticklabels(scenarios, fontsize=7, rotation=30, ha="right")
+    else:
+        ax.set_xticklabels(scenarios, fontsize=8)
+
+    ax.set_ylim(bottom=0)
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
+    ax.legend(loc="upper right", fontsize=8)
+
+
+def generate_comparison_report(
+    json_path1: str,
+    json_path2: str,
+    output_path: str,
+    fixture_filter: str,
+    config_path: Optional[Path] = None,
+    report1_label: str = "Report 1",
+    report2_label: str = "Report 2",
+):
+    """Generate a PDF comparing two performance reports for a specific test fixture."""
+    # Load configuration
+    config = load_config(config_path) if config_path else load_config()
+
+    print(f"Comparing reports for fixture: {fixture_filter}")
+    print(f"  Report 1: {json_path1}")
+    print(f"  Report 2: {json_path2}")
+
+    # Load both reports
+    data1 = load_performance_results(json_path1)
+    data2 = load_performance_results(json_path2)
+
+    # Group results
+    grouped1 = group_test_results(data1)
+    grouped2 = group_test_results(data2)
+
+    # Find matching classes for the fixture filter
+    matching_class1 = None
+    matching_class2 = None
+
+    for class_name in grouped1.keys():
+        if fixture_filter in class_name:
+            matching_class1 = class_name
+            break
+
+    for class_name in grouped2.keys():
+        if fixture_filter in class_name:
+            matching_class2 = class_name
+            break
+
+    if not matching_class1:
+        print(f"Error: No matching class found for '{fixture_filter}' in Report 1")
+        return
+
+    if not matching_class2:
+        print(f"Error: No matching class found for '{fixture_filter}' in Report 2")
+        return
+
+    methods1 = grouped1[matching_class1]
+    methods2 = grouped2[matching_class2]
+
+    # Filter to comparable methods (multiple scenarios in at least one report)
+    all_method_keys = set(methods1.keys()) | set(methods2.keys())
+
+    print(f"Found {len(all_method_keys)} methods to compare")
+
+    with PdfPages(output_path) as pdf:
+        for method_key in sorted(all_method_keys):
+            scenarios1 = methods1.get(method_key, {})
+            scenarios2 = methods2.get(method_key, {})
+
+            # Get all scenario labels from both reports
+            all_scenarios = sorted(set(scenarios1.keys()) | set(scenarios2.keys()))
+
+            if len(all_scenarios) < 1:
+                continue
+
+            # Determine baseline from Report 1
+            if scenarios1:
+                baseline_label = determine_baseline(scenarios1)
+            elif scenarios2:
+                baseline_label = determine_baseline(scenarios2)
+            else:
+                continue
+
+            if baseline_label not in all_scenarios:
+                baseline_label = all_scenarios[0]
+
+            baseline_idx = all_scenarios.index(baseline_label)
+
+            # Collect all unique time-based sample groups
+            time_based_groups: set[str] = set()
+            for result in list(scenarios1.values()) + list(scenarios2.values()):
+                for sg_name, sg_data in result.sample_groups.items():
+                    if sg_data.is_time_based():
+                        time_based_groups.add(sg_name)
+
+            time_based_groups = sorted(time_based_groups)
+
+            if not time_based_groups:
+                continue
+
+            # Create charts for each sample group
+            for sg_name in time_based_groups:
+                medians1, median_stds1, no_data1 = [], [], []
+                medians2, median_stds2, no_data2 = [], [], []
+                p95s1, p95_stds1 = [], []
+                p95s2, p95_stds2 = [], []
+                p99s1, p99_stds1 = [], []
+                p99s2, p99_stds2 = [], []
+
+                for idx, label in enumerate(all_scenarios):
+                    # Report 1 data
+                    result1 = scenarios1.get(label)
+                    sg1 = result1.sample_groups.get(sg_name) if result1 else None
+
+                    if sg1:
+                        medians1.append(sg1.median)
+                        median_stds1.append(sg1.std_dev)
+                        p95s1.append(sg1.p95)
+                        p99s1.append(sg1.p99)
+                        p95_stds1.append(sg1.std_dev * 0.8 if sg1.samples else 0)
+                        p99_stds1.append(sg1.std_dev * 0.9 if sg1.samples else 0)
+                    else:
+                        no_data1.append(idx)
+                        medians1.append(0)
+                        median_stds1.append(0)
+                        p95s1.append(0)
+                        p99s1.append(0)
+                        p95_stds1.append(0)
+                        p99_stds1.append(0)
+
+                    # Report 2 data
+                    result2 = scenarios2.get(label)
+                    sg2 = result2.sample_groups.get(sg_name) if result2 else None
+
+                    if sg2:
+                        medians2.append(sg2.median)
+                        median_stds2.append(sg2.std_dev)
+                        p95s2.append(sg2.p95)
+                        p99s2.append(sg2.p99)
+                        p95_stds2.append(sg2.std_dev * 0.8 if sg2.samples else 0)
+                        p99_stds2.append(sg2.std_dev * 0.9 if sg2.samples else 0)
+                    else:
+                        no_data2.append(idx)
+                        medians2.append(0)
+                        median_stds2.append(0)
+                        p95s2.append(0)
+                        p99s2.append(0)
+                        p95_stds2.append(0)
+                        p99_stds2.append(0)
+
+                # Skip if both reports have no data
+                if len(no_data1) == len(all_scenarios) and len(no_data2) == len(all_scenarios):
+                    continue
+
+                # Create figure with 3 subplots
+                fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+                short_class = matching_class1.split(".")[-1]
+
+                # Get test case args from whichever report has data
+                sample_result = next(iter(scenarios1.values()), None) or next(iter(scenarios2.values()), None)
+                test_case_args = sample_result.test_case_args if sample_result else ""
+
+                fig.suptitle(
+                    f"{short_class}.{sample_result.method_name if sample_result else method_key} - {sg_name}\n"
+                    f"Params: {test_case_args}",
+                    fontsize=11, fontweight="bold"
+                )
+
+                # Median chart
+                create_comparison_chart_dual_report(
+                    axes[0], "Median", all_scenarios, medians1, medians2, baseline_idx,
+                    std_devs1=median_stds1, std_devs2=median_stds2, show_std_dev=True,
+                    no_data_indices1=no_data1, no_data_indices2=no_data2,
+                    report1_label=report1_label, report2_label=report2_label
+                )
+
+                # P95 chart
+                create_comparison_chart_dual_report(
+                    axes[1], "P95", all_scenarios, p95s1, p95s2, baseline_idx,
+                    std_devs1=p95_stds1, std_devs2=p95_stds2, show_std_dev=True,
+                    no_data_indices1=no_data1, no_data_indices2=no_data2,
+                    report1_label=report1_label, report2_label=report2_label
+                )
+
+                # P99 chart
+                create_comparison_chart_dual_report(
+                    axes[2], "P99", all_scenarios, p99s1, p99s2, baseline_idx,
+                    std_devs1=p99_stds1, std_devs2=p99_stds2, show_std_dev=True,
+                    no_data_indices1=no_data1, no_data_indices2=no_data2,
+                    report1_label=report1_label, report2_label=report2_label
+                )
+
+                plt.tight_layout()
+                pdf.savefig(fig, bbox_inches="tight")
+                plt.close(fig)
+
+            print(f"  Generated comparison charts for: {method_key}")
+
+    print(f"\nComparison report saved to: {output_path}")
+
+
 def generate_report(
     json_path: str,
     output_path: str,
@@ -988,10 +1279,72 @@ def main():
         print("\nOptions:")
         print("  --summary-only              Generate only the summary page (useful for debugging)")
         print("  --github-summary <path>     Output markdown summary for GitHub Actions")
+        print("\nCompare mode:")
+        print("  --compare <report1.json> <report2.json> <output.pdf> --fixture <name>")
+        print("  --label1 <name>             Label for first report (default: 'Report 1')")
+        print("  --label2 <name>             Label for second report (default: 'Report 2')")
         sys.exit(1)
 
     # Parse arguments
     args = sys.argv[1:]
+
+    # Check for compare mode
+    if "--compare" in args:
+        args.remove("--compare")
+
+        # Parse fixture filter
+        fixture_filter = None
+        if "--fixture" in args:
+            idx = args.index("--fixture")
+            if idx + 1 < len(args):
+                fixture_filter = args[idx + 1]
+                args.pop(idx)
+                args.pop(idx)
+            else:
+                print("Error: --fixture requires a name argument")
+                sys.exit(1)
+        else:
+            print("Error: --fixture is required for compare mode")
+            sys.exit(1)
+
+        # Parse optional labels
+        report1_label = "Report 1"
+        report2_label = "Report 2"
+
+        if "--label1" in args:
+            idx = args.index("--label1")
+            if idx + 1 < len(args):
+                report1_label = args[idx + 1]
+                args.pop(idx)
+                args.pop(idx)
+
+        if "--label2" in args:
+            idx = args.index("--label2")
+            if idx + 1 < len(args):
+                report2_label = args[idx + 1]
+                args.pop(idx)
+                args.pop(idx)
+
+        if len(args) < 3:
+            print("Error: Compare mode requires <report1.json> <report2.json> <output.pdf>")
+            sys.exit(1)
+
+        json_path1, json_path2, output_pdf = args[0], args[1], args[2]
+
+        if not Path(json_path1).exists():
+            print(f"Error: Report 1 not found: {json_path1}")
+            sys.exit(1)
+        if not Path(json_path2).exists():
+            print(f"Error: Report 2 not found: {json_path2}")
+            sys.exit(1)
+
+        generate_comparison_report(
+            json_path1, json_path2, output_pdf, fixture_filter,
+            report1_label=report1_label, report2_label=report2_label
+        )
+        return
+
+    # Standard single-report mode
     summary_only = "--summary-only" in args
     if summary_only:
         args.remove("--summary-only")
