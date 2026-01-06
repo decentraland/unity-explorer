@@ -551,28 +551,6 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            var minimap = new MinimapController(
-                mainUIView.MinimapView.EnsureNotNull(),
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                staticContainer.RealmData,
-                realmNavigator,
-                staticContainer.ScenesCache,
-                mapPathEventBus,
-                staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel.Peek(),
-                sharedSpaceManager,
-                clipboard,
-                bootstrapContainer.DecentralandUrlsSource,
-                chatMessagesBus,
-                reloadSceneChatCommand,
-                roomHub,
-                staticContainer.LoadingStatus,
-                includeBannedUsersFromScene,
-                homePlaceEventBus
-            );
-
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
@@ -768,7 +746,26 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
-                new MinimapPlugin(mvcManager, minimap),
+                new MinimapPlugin(
+                    mainUIView.MinimapView.EnsureNotNull(),
+                    mapRendererContainer.MapRenderer,
+                    mvcManager,
+                    placesAPIService,
+                    staticContainer.RealmData,
+                    realmNavigator,
+                    staticContainer.ScenesCache,
+                    mapPathEventBus,
+                    staticContainer.SceneRestrictionBusController,
+                    dynamicWorldParams.StartParcel.Peek(),
+                    sharedSpaceManager,
+                    clipboard,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    chatMessagesBus,
+                    reloadSceneChatCommand,
+                    roomHub,
+                    staticContainer.LoadingStatus,
+                    includeBannedUsersFromScene,
+                    homePlaceEventBus),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
