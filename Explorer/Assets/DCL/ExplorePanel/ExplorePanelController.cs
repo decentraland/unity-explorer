@@ -35,7 +35,7 @@ namespace DCL.ExplorePanel
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private bool includeCommunities;
-        private bool includeDiscover;
+        private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
