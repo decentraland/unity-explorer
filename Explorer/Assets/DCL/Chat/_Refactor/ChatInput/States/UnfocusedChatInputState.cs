@@ -4,7 +4,7 @@ namespace DCL.Chat.ChatInput
 {
     public class UnfocusedChatInputState : ChatInputState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.ChatInputView.Show();
             context.ChatInputView.SetDefault();
@@ -23,14 +23,14 @@ namespace DCL.Chat.ChatInput
             context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }
 
-        public override void End()
+        public override void Exit()
         {
             context.ChatInputView.inputField.onSelect.RemoveListener(OnInputSelected);
         }
 
         protected override void OnInputBlocked()
         {
-            ChangeState<BlockedChatInputState>();
+            machine.Enter<BlockedChatInputState>();
         }
     }
 }

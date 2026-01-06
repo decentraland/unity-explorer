@@ -2,7 +2,7 @@
 {
     public class HiddenChatInputState : ChatInputState
     {
-        public override void Begin()
+        public override void Enter()
         {
             context.ChatInputView.Hide();
         }
