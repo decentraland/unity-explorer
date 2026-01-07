@@ -4,7 +4,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common;

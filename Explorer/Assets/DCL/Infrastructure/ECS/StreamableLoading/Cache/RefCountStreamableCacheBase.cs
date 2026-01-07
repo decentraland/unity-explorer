@@ -1,10 +1,9 @@
-﻿﻿using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
- using DCL.Diagnostics;
- using Unity.Profiling;
+using Unity.Profiling;
 
 namespace ECS.StreamableLoading.Cache
 {
@@ -58,7 +57,6 @@ namespace ECS.StreamableLoading.Cache
         public void AddReference(in TLoadingIntention _, TAssetData asset)
         {
             asset.AddReference();
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"[Cache] RefCount INCREASED to {asset.referenceCount} for asset");
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
