@@ -2,10 +2,7 @@ name: Unity Performance Test
 
 on:
   workflow_dispatch:
-  # Using pull_request_target allows running even when PR has merge conflicts
-  # This is safe for read-only performance tests that don't modify code
-  # Note: paths filter removed because pull_request_target evaluates paths on base branch
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
@@ -51,8 +48,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # For pull_request_target, explicitly checkout the PR head commit
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           lfs: true
           submodules: recursive
