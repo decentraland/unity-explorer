@@ -1,13 +1,13 @@
 using DCL.Diagnostics.Sentry;
 using Sentry.Unity;
 using System;
-using UnityEditor;
+// using UnityEditor;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Editor
 {
-    [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Build Time Configuration")]
-    public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
+    /*[CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Build Time Configuration")]
+    public class SentryBuildTimeConfiguration : SentryOptionsConfiguration
     {
         private const string SENTRY_ASSET_PATH = "Assets/Resources/Sentry/SentryOptions.asset";
         private const string CLI_ASSET_PATH = "Assets/Plugins/Sentry/SentryCliOptions.asset";
@@ -19,7 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
         /// Additionally, because iOS, macOS and Android native error handling is configured at build time,
         /// you can make changes to these options here.
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
-        public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
+        public override void Configure(SentryUnityOptions options)
         {
             // Force options to enabled=true to be able to deploy debug symbols during build-time
             options.Enabled = Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
@@ -109,5 +109,5 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
             asset.UploadSymbols = cliOptions.UploadSymbols;
             EditorUtility.SetDirty(asset);
         }
-    }
+    }*/
 }

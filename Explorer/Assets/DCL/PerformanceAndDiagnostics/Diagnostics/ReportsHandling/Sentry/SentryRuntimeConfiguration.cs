@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Diagnostics.Sentry
 {
     [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Runtime Configuration")]
-    public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
+    public class SentryRuntimeConfiguration : OptionsConfiguration
     {
         // This file should be never committed since it may contain secrets
         [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
