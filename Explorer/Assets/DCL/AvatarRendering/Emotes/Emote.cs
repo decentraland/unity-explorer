@@ -12,10 +12,10 @@ namespace DCL.AvatarRendering.Emotes
     public class Emote : IEmote
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
+        public StreamableLoadingResult<AttachmentRegularAsset>? AssetResult { get; set; }
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
-        public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
+        public StreamableLoadingResult<AudioClipData>? AudioAssetResult { get; set; }
         public int Amount { get; set; }
         public bool IsLoading { get; private set; }
 
@@ -54,14 +54,5 @@ namespace DCL.AvatarRendering.Emotes
             //to avoid a breaking null reference we provide safe access to the loop property by using the is pattern
             Model.Asset is { metadata: { emoteDataADR74: { loop: true } } };
 
-        public bool HasSameClipForAllGenders()
-        {
-            IAvatarAttachment attachment = this;
-
-            attachment.TryGetMainFileHash(BodyShape.MALE, out string? maleHash);
-            attachment.TryGetMainFileHash(BodyShape.FEMALE, out string? femaleHash);
-
-            return maleHash == femaleHash;
-        }
     }
 }

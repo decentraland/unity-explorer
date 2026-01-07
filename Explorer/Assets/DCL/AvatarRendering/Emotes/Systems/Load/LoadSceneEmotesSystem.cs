@@ -127,9 +127,10 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (CreatePromiseIfRequired(ref emote, ref intention, partitionComponent)) return;
 
-            if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
+            if (emote.AssetResult is { Succeeded: true })
             {
-                emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+                //Asset cannot be null if succeeded is true
+                emote.AssetResult.Value.Asset!.AddReference();
             }
             else if (intention is GetSceneEmoteFromLocalSceneIntention)
             {
@@ -146,7 +147,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             IPartitionComponent partitionComponent)
             where TIntention : struct, IEmoteAssetIntention
         {
-            if (emote.AssetResults[intention.BodyShape] != null) return false;
+            if (emote.AssetResult is { IsInitialized: true }) return false;
 
             intention.CreateAndAddPromiseToWorld(World, partitionComponent, customStreamingSubdirectory, emote);
 

@@ -9,12 +9,10 @@ namespace DCL.AvatarRendering.Emotes
     {
         int Amount { get; set; }
 
-        StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
-        StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+        StreamableLoadingResult<AudioClipData>? AudioAssetResult { get; set; }
+        StreamableLoadingResult<AttachmentRegularAsset>? AssetResult { get; set; }
 
         bool IsLooping();
-
-        bool HasSameClipForAllGenders();
 
         public static IEmote NewEmpty() =>
             new Emote();

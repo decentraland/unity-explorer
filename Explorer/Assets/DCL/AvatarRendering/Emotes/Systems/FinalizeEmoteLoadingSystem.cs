@@ -73,18 +73,20 @@ namespace DCL.AvatarRendering.Emotes
         private void FinalizeAssetBundleLoading(
             Entity entity,
             ref AssetBundlePromise promise,
-            ref IEmote emote,
-            in BodyShape bodyShape)
+            ref IEmote emote)
         {
-            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+            if (IsCancellationRequested(entity, ref promise, ref emote))
                 return;
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
-                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                    emote.AssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
                 else
+                {
+                    emote.AssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(GetReportData(), new Exception("LOADING ESCEPTION"));
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+                }
 
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
@@ -95,16 +97,15 @@ namespace DCL.AvatarRendering.Emotes
         private void FinalizeGltfLoading(
             Entity entity,
             ref GltfPromise promise,
-            ref IEmote emote,
-            in BodyShape bodyShape)
+            ref IEmote emote)
         {
-            if (IsCancellationRequested(entity, ref promise, ref emote, in bodyShape))
+            if (IsCancellationRequested(entity, ref promise, ref emote))
                 return;
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<GLTFData> gltfAssetResult))
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
-                    AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                    emote.AssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
                 else
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
 
@@ -113,29 +114,15 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
-        private void AssignEmoteResult(IEmote emote, BodyShape bodyShape, AttachmentRegularAsset regularAssetResult)
-        {
-            var asset = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
-
-            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
-            {
-                emote.AssetResults[BodyShape.MALE] = asset;
-                emote.AssetResults[BodyShape.FEMALE] = asset;
-            }
-            else
-                emote.AssetResults[bodyShape] = asset;
-        }
-
         private bool IsCancellationRequested<TAsset, TLoadingIntention>(
             Entity entity,
             ref AssetPromise<TAsset, TLoadingIntention> promise,
-            ref IEmote emote,
-            in BodyShape bodyShape)
+            ref IEmote emote)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                ResetEmoteResultOnCancellation(emote, bodyShape);
+                emote.UpdateLoadingStatus(false);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return true;
@@ -159,7 +146,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
 
             if (result.Succeeded)
-                emote.AudioAssetResults[bodyShape] = result;
+                emote.AudioAssetResult = result;
 
             World.Destroy(entity);
         }
@@ -175,12 +162,5 @@ namespace DCL.AvatarRendering.Emotes
             World.Destroy(entity);
         }
 
-        private static void ResetEmoteResultOnCancellation(IEmote emote, in BodyShape bodyShape)
-        {
-            emote.UpdateLoadingStatus(false);
-
-            if (emote.AssetResults[bodyShape] is { IsInitialized: false })
-                emote.AssetResults[bodyShape] = null;
-        }
     }
 }

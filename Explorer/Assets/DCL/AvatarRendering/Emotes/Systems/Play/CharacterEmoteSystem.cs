@@ -262,15 +262,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
-                    BodyShape bodyShape = avatarShapeComponent.BodyShape;
-
                     //Loading not complete
-                    if (emote.AssetResults[bodyShape] == null)
+                    //TODO (JUANI): Can we take this away?
+                    if (emote.AssetResult == null)
                         return;
 
-                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
+                    StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResult.Value;
                     GameObject? mainAsset;
 
+                    //TODO (JUANI): Can this really happen?
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
                     {
                         // We can't play emote, remove intent, otherwise there is no place to remove it
@@ -279,7 +279,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     emoteComponent.EmoteUrn = emoteId;
-                    StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
+                    StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResult;
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))

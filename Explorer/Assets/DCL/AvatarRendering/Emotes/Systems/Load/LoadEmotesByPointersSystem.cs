@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.PluginSystem;
 using DCL.SDKComponents.AudioSources;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -62,7 +63,6 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override void Update(float t)
         {
             base.Update(t);
-
             GetEmotesByPointersQuery(World, t);
         }
 
@@ -135,25 +135,22 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (emote.IsLoading) continue;
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
 
-                if (emote.AssetResults[intention.BodyShape] != null)
-
-                    // TODO: it may occur that the requested emote does not support the body shape
-                    // If that is the case, the promise will never be resolved
-                    emotesWithResponse++;
-
-                if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
-
+                if (emote.AssetResult is { Succeeded: true })
+                {
                     // Reference must be added only once when the wearable is resolved
                     if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
                     {
                         intention.SuccessfulPointers.Add(emote.GetUrn());
 
                         // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        emote.AssetResults[intention.BodyShape]?.Asset?.AddReference();
+                        // Asset cannot be null if the AssetResult is Succeeded
+                        emote.AssetResult.Value.Asset!.AddReference();
                     }
+                }
+
             }
 
-            return emotesWithResponse == intention.Pointers.Count;
+            return (intention.SuccessfulPointers.Count + emotesWithResponse) == intention.Pointers.Count;
         }
 
         private bool RequestMissingPointers(ICollection<URN> missingPointers, IPartitionComponent partitionComponent, BodyShape forBodyShape)
@@ -211,11 +208,10 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
-                return false;
-
-            if (component.AssetResults[intention.BodyShape] == null)
+            if (component.AssetResult == null)
             {
+                component.TryGetContentHashByKey(component.DTO.Metadata.AbstractData.representations[0].mainFile, out string? hash);
+
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
@@ -234,10 +230,10 @@ namespace DCL.AvatarRendering.Emotes.Load
                 TryCreateAudioClipPromises(component, intention.BodyShape, partitionComponent);
 
                 component.UpdateLoadingStatus(true);
+
                 World!.Create(promise, component, intention.BodyShape);
                 return true;
             }
-
             return false;
         }
 

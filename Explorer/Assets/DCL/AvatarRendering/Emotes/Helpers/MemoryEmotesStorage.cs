@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
             URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
-        
+
 
         public List<URN> EmbededURNs { get; } = new ();
 
@@ -112,25 +112,23 @@ namespace DCL.AvatarRendering.Emotes
 
         private static bool TryUnloadAllWearableAssets(IEmote emote)
         {
+            //TODO (JUANI): Revise this whole method. Its so strange
             var countNullOrEmpty = 0;
 
-            for (var i = 0; i < emote.AssetResults.Length; i++)
+            StreamableLoadingResult<AttachmentRegularAsset>? result = emote.AssetResult;
+            AttachmentRegularAsset? wearableAsset = emote.AssetResult?.Asset;
+
+            if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
             {
-                StreamableLoadingResult<AttachmentRegularAsset>? result = emote.AssetResults[i];
-                AttachmentRegularAsset? wearableAsset = emote.AssetResults[i]?.Asset;
-
-                if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
-                {
-                    wearableAsset?.Dispose();
-                    emote.AssetResults[i] = null;
-                }
-
-                // TODO obscure logic - it's not clear what's happening here
-                if ((!emote.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
-                    countNullOrEmpty++;
+                wearableAsset?.Dispose();
+                emote.AssetResult = null;
             }
 
-            return countNullOrEmpty == emote.AssetResults.Length;
+            // TODO obscure logic - it's not clear what's happening here
+            if ((!emote.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
+                countNullOrEmpty++;
+
+            return countNullOrEmpty == 1;
         }
 
         private static void DisposeThumbnail(IEmote wearable)
@@ -141,11 +139,8 @@ namespace DCL.AvatarRendering.Emotes
 
         private static void DisposeAudioClips(IEmote emote)
         {
-            foreach (StreamableLoadingResult<AudioClipData>? audioAssetResult in emote.AudioAssetResults)
-            {
-                if (audioAssetResult is { Succeeded: true })
-                    audioAssetResult.Value.Asset!.Dereference();
-            }
+            if (emote.AudioAssetResult is { Succeeded: true })
+                emote.AudioAssetResult.Value.Asset!.Dereference();
         }
     }
 }

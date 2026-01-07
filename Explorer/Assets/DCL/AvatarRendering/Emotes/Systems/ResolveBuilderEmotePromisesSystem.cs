@@ -77,18 +77,8 @@ namespace DCL.AvatarRendering.Emotes.Systems
             // Check if we already have this emote in storage with assets
             if (emoteStorage.TryGetElement(emote.GetUrn(), out IEmote existingEmote))
             {
-                // For unisex emotes with same clip, check if either bodyshape has assets
-                if (existingEmote.IsUnisex() && existingEmote.HasSameClipForAllGenders())
-                {
-                    if (existingEmote.AssetResults[BodyShape.MALE] != null || existingEmote.AssetResults[BodyShape.FEMALE] != null)
-                        return false; // Already processed
-                }
-                else
-                {
-                    // For non-unisex emotes, check both bodyshapes
-                    if (existingEmote.AssetResults[BodyShape.MALE] != null && existingEmote.AssetResults[BodyShape.FEMALE] != null)
-                        return false; // Already processed
-                }
+                if (existingEmote.AssetResult is { IsInitialized: true })
+                    return false; // Already processed
             }
 
             bool foundGlb = false;
@@ -110,7 +100,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
                             continue;
 
                         // Skip if this bodyshape already has an asset result
-                        if (emote.AssetResults[bodyShape] != null)
+                        if (emote.AssetResult is { Succeeded: true })
                             continue;
 
                         var gltfPromise = GltfPromise.Create(World!, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);

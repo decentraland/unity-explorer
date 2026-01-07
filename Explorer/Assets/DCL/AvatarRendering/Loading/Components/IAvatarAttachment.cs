@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.Loading.Components
 
         int Amount { get; }
         void SetAmount(int amount);
-        
+
         public string ToString() =>
             $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
 
@@ -165,10 +165,14 @@ namespace DCL.AvatarRendering.Loading.Components
                 var representation = dto.Metadata.AbstractData.representations[i];
 
                 for (var id = 0; id < representation.bodyShapes.Length; id++)
+                {
                     if (Equals(representation.bodyShapes[id], (string)bodyShape))
+                    {
                         return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
-            }
+                    }
+                }
 
+            }
             hash = null;
             return false;
         }

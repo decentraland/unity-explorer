@@ -153,54 +153,21 @@ namespace DCL.AvatarRendering.Emotes.Tests
             var promiseResult = new StreamableLoadingResult<GLTFData>(gltfData);
             world.Add(promise.Entity, promiseResult);
 
-            Assert.IsFalse(mockEmote.AssetResults[bodyShape].HasValue);
+            Assert.IsFalse(mockEmote.AssetResult.HasValue);
 
             system.Update(0);
 
             Assert.IsFalse(world.IsAlive(emoteEntity));
             Assert.IsFalse(world.IsAlive(promise.Entity));
 
-            Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue);
-            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].Value;
+            Assert.IsTrue(mockEmote.AssetResult.HasValue);
+            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResult.Value;
             Assert.IsTrue(resultValue.Succeeded);
 
             AttachmentRegularAsset? resultingAttachment = resultValue.Asset;
             Assert.IsNotNull(resultingAttachment);
             Assert.AreSame(mockGameObject, resultingAttachment!.MainAsset);
             Assert.AreSame(gltfData, resultingAttachment.assetData);
-        }
-
-        [Test]
-        public void FinalizeGltfEmoteLoadingUnisexCorrectly()
-        {
-            var emoteURN = new URN("urn:gltf:emote_unisex");
-            IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage) { MockIsUnisexValue = true, MockHasSameClipForAllGendersValue = true };
-            mockEmote.ApplyAndMarkAsLoaded(CreateEmoteDTO(emoteURN, true)); // Mark as unisex for DTO properties
-
-            BodyShape loadingBodyShape = BodyShape.MALE; // System will apply to both if unisex
-            var intention = new GetGLTFIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
-            Entity emoteEntity = CreateEmoteEntityWithPromise<GLTFData, GetGLTFIntention>(mockEmote, intention, loadingBodyShape, out GltfPromise promise);
-            Entity resultHolderEntity = promise.Entity;
-
-            var gltfData = new GLTFData(null, mockGameObject);
-            world.Add(resultHolderEntity, new StreamableLoadingResult<GLTFData>(gltfData));
-
-            system.Update(0);
-
-            Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
-            Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed.");
-
-            // Check assets for both body shapes
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].HasValue, "Male asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].Value.Succeeded, "Male asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE].Value.Asset.MainAsset, "Male asset game object should match.");
-
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].HasValue, "Female asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].Value.Succeeded, "Female asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset.MainAsset, "Female asset game object should match.");
-            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE].Value.Asset, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset, "Male and Female assets should be the same instance for unisex.");
-
-            Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after successful unisex load.");
         }
 
         [Test]
@@ -225,7 +192,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed by AssetPromise framework (even on failure).");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result for body shape should be null on failure.");
+            Assert.IsNull(mockEmote.AssetResult, "Asset result for body shape should be null on failure.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after a failed asset load attempt (status updated).");
         }
 
@@ -250,7 +217,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed on cancellation.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should have been destroyed by ForgetLoading.");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result should be null after cancellation.");
+            Assert.IsNull(mockEmote.AssetResult, "Asset result should be null after cancellation.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after cancellation (status updated).");
         }
 
@@ -273,15 +240,15 @@ namespace DCL.AvatarRendering.Emotes.Tests
             var promiseResult = new StreamableLoadingResult<AssetBundleData>(assetBundleData);
             world.Add(promise.Entity, promiseResult);
 
-            Assert.IsFalse(mockEmote.AssetResults[bodyShape].HasValue);
+            Assert.IsFalse(mockEmote.AssetResult.HasValue);
 
             system.Update(0);
 
             Assert.IsFalse(world.IsAlive(emoteEntity));
             Assert.IsFalse(world.IsAlive(promise.Entity));
 
-            Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue);
-            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResults[bodyShape].Value;
+            Assert.IsTrue(mockEmote.AssetResult.HasValue);
+            StreamableLoadingResult<AttachmentRegularAsset> resultValue = mockEmote.AssetResult.Value;
             Assert.IsTrue(resultValue.Succeeded);
 
             AttachmentRegularAsset? resultingAttachment = resultValue.Asset;
@@ -310,14 +277,9 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed.");
 
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].HasValue, "Male asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.MALE].Value.Succeeded, "Male asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.MALE].Value.Asset.MainAsset, "Male asset game object should match.");
-
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].HasValue, "Female asset should be set for unisex.");
-            Assert.IsTrue(mockEmote.AssetResults[BodyShape.FEMALE].Value.Succeeded, "Female asset should succeed.");
-            Assert.AreSame(mockGameObject, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset.MainAsset, "Female asset game object should match.");
-            Assert.AreSame(mockEmote.AssetResults[BodyShape.MALE].Value.Asset, mockEmote.AssetResults[BodyShape.FEMALE].Value.Asset, "Male and Female assets should be the same instance for unisex.");
+            Assert.IsTrue(mockEmote.AssetResult.HasValue, "Asset should be set for unisex.");
+            Assert.IsTrue(mockEmote.AssetResult.Value.Succeeded, "Asset should succeed.");
+            Assert.AreSame(mockGameObject, mockEmote.AssetResult.Value.Asset.MainAsset, "Asset game object should match.");
 
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after successful unisex load.");
         }
@@ -345,7 +307,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed (even on failure).");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result should be null on failure.");
+            Assert.IsNull(mockEmote.AssetResult, "Asset result should be null on failure.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote loading status should be false after failure.");
         }
 
@@ -370,7 +332,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed on cancellation.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed by ForgetLoading.");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result should be null after cancellation.");
+            Assert.IsNull(mockEmote.AssetResult, "Asset result should be null after cancellation.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote loading status should be false after cancellation.");
         }
 
@@ -392,9 +354,9 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             Assert.IsFalse(world.IsAlive(targetEntity));
             Assert.IsFalse(world.IsAlive(promise.Entity));
-            Assert.IsTrue(mockEmote.AudioAssetResults[bodyShape].HasValue);
-            Assert.IsTrue(mockEmote.AudioAssetResults[bodyShape].Value.Succeeded);
-            Assert.AreSame(audioClipData, mockEmote.AudioAssetResults[bodyShape].Value.Asset);
+            Assert.IsTrue(mockEmote.AudioAssetResult.HasValue);
+            Assert.IsTrue(mockEmote.AudioAssetResult.Value.Succeeded);
+            Assert.AreSame(audioClipData, mockEmote.AudioAssetResult.Value.Asset);
         }
 
         [Test]
@@ -420,7 +382,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(carrierEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed (even on failure).");
 
-            Assert.IsNull(mockEmote.AudioAssetResults[bodyShape], "Audio asset result should be null on failure.");
+            Assert.IsNull(mockEmote.AudioAssetResult, "Audio asset result should be null on failure.");
 
             // IsLoading is not directly managed by FinalizeAudioClipPromise for the IEmote itself, only asset is set or not.
         }
@@ -445,7 +407,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(carrierEntity), "Carrier entity should be destroyed on cancellation.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should have been destroyed by ForgetLoading.");
 
-            Assert.IsNull(mockEmote.AudioAssetResults[bodyShape], "Audio asset result should be null after cancellation.");
+            Assert.IsNull(mockEmote.AudioAssetResult, "Audio asset result should be null after cancellation.");
         }
 
         [Test]
@@ -596,7 +558,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly MockEmoteStorage storageRef;
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-            public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+            public StreamableLoadingResult<AttachmentRegularAsset>? AssetResult { get; set;  }
             public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
             public bool IsSocial { get; }
             public int Amount { get; set; }
@@ -606,7 +568,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 Amount = amount;
             }
 
-            public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
+            public StreamableLoadingResult<AudioClipData>? AudioAssetResult { get; set;  }
             public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }
             public int ApplyAndMarkAsLoadedCallCount { get; private set; }
@@ -622,8 +584,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             {
                 Urn = urn;
                 storageRef = storage;
-                AssetResults = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
-                AudioAssetResults = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
                 IsLoading = true;
             }
 

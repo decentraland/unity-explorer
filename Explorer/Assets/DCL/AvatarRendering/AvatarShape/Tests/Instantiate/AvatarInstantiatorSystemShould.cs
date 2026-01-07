@@ -110,8 +110,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
         {
             (IEmote mockWearable, AttachmentRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
 
-            mockWearable.AssetResults.Returns(
-                new StreamableLoadingResult<AttachmentRegularAsset>?[] { new StreamableLoadingResult<AttachmentRegularAsset>(wearableAsset) });
+            mockWearable.AssetResult.Returns(
+                new StreamableLoadingResult<AttachmentRegularAsset>(wearableAsset));
 
             return mockWearable;
         }

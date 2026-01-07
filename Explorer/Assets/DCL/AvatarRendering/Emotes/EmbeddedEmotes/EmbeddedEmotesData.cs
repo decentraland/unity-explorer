@@ -22,8 +22,6 @@ namespace DCL.AvatarRendering.Emotes
 
         // Represents unisex prefab
         public GameObject prefab;
-        public GameObject male;
-        public GameObject female;
         public EmoteDTO.EmoteMetadataDto.Data entity;
     }
 
@@ -70,41 +68,13 @@ namespace DCL.AvatarRendering.Emotes
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
                 emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
 
-                if (embeddedEmote.male != null)
-                {
-                    AttachmentRegularAsset maleAsset = CreateAttachmentAsset(embeddedEmote.male);
-                    maleAsset.AddReference();
-                    var maleAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(maleAsset);
-                    emote.AssetResults[BodyShape.MALE] = maleAssetResult;
-                }
 
-                if (embeddedEmote.female != null)
-                {
-                    AttachmentRegularAsset femaleAsset = CreateAttachmentAsset(embeddedEmote.female);
-                    femaleAsset.AddReference();
-                    var femaleAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(femaleAsset);
-                    emote.AssetResults[BodyShape.FEMALE] = femaleAssetResult;
-                }
+                AttachmentRegularAsset unisexAsset = CreateAttachmentAsset(embeddedEmote.prefab);
+                unisexAsset.AddReference();
+                var unisexAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(unisexAsset);
+                emote.AssetResult = unisexAssetResult;
 
-                if (embeddedEmote.male == null || embeddedEmote.female == null)
-                {
-                    // If possible, only one allocation for both genders
-                    AttachmentRegularAsset unisexAsset = CreateAttachmentAsset(embeddedEmote.prefab);
-                    unisexAsset.AddReference();
-                    var unisexAssetResult = new StreamableLoadingResult<AttachmentRegularAsset>(unisexAsset);
-
-                    if (embeddedEmote.male == null)
-                        emote.AssetResults[BodyShape.MALE] = unisexAssetResult;
-
-                    if (embeddedEmote.female == null)
-                        emote.AssetResults[BodyShape.FEMALE] = unisexAssetResult;
-                }
-
-                if (embeddedEmote.audioClip != null)
-                {
-                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
-                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
-                }
+                emote.AudioAssetResult = new StreamableLoadingResult<AudioClipData>(new AudioClipData(embeddedEmote.audioClip));
 
                 emote.ManifestResult = null;
 
