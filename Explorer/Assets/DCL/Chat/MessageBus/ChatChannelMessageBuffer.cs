@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace DCL.Chat.MessageBus
 {
@@ -14,7 +15,6 @@ namespace DCL.Chat.MessageBus
         private const int DEFAULT_MILLISECONDS_BETWEEN_RELEASES = 50;
         private const int DEFAULT_MAX_MESSAGES_PER_BURST = 1;
         private const int DEFAULT_MAX_BUFFER_SIZE = 1000;
-        private readonly object loopLock = new ();
 
         private int millisecondsBetweenReleases = DEFAULT_MILLISECONDS_BETWEEN_RELEASES;
         private int maxMessagesPerBurst = DEFAULT_MAX_MESSAGES_PER_BURST;
@@ -26,6 +26,7 @@ namespace DCL.Chat.MessageBus
 
         private volatile bool isLoopRunning;
         private CancellationToken? externalCancellationToken;
+        private CancellationTokenSource cts = new ();
 
         public event Action<ChatMessage>? MessageReleased;
 
@@ -38,13 +39,8 @@ namespace DCL.Chat.MessageBus
 
             messageQueue.Enqueue(message);
 
-            if (isLoopRunning) return true;
-
-            lock (loopLock)
-            {
-                if (!isLoopRunning && externalCancellationToken?.IsCancellationRequested != true)
-                    RestartLoop();
-            }
+            if (!isLoopRunning && externalCancellationToken?.IsCancellationRequested != true)
+                RestartLoop();
 
             return true;
         }
@@ -61,8 +57,9 @@ namespace DCL.Chat.MessageBus
             if (externalCancellationToken == null)
                 return;
 
+            cts = cts.SafeRestartLinked(externalCancellationToken.Value);
             isLoopRunning = true;
-            ReleaseBufferedMessagesAsync(externalCancellationToken.Value).Forget();
+            ReleaseBufferedMessagesAsync(cts.Token).Forget();
         }
 
         private void LoadConfigurationFromFeatureFlag()
@@ -91,6 +88,7 @@ namespace DCL.Chat.MessageBus
         {
             messageQueue.Clear();
             lastReleaseTime = DateTime.MinValue;
+            cts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid ReleaseBufferedMessagesAsync(CancellationToken ct)
@@ -118,10 +116,10 @@ namespace DCL.Chat.MessageBus
                         }
                         catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
 
-                        await UniTask.Yield(PlayerLoopTiming.Update);
+                        await UniTask.Yield(PlayerLoopTiming.Update, ct);
                     }
 
-                    await UniTask.Delay(millisecondsBetweenReleases, cancellationToken: ct);
+                    await UniTask.Delay(millisecondsBetweenReleases, DelayType.Realtime, PlayerLoopTiming.Update, ct);
                 }
                 catch (OperationCanceledException)
                 {
