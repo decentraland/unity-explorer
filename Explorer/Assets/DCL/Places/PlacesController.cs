@@ -3,28 +3,30 @@ using DCL.UI;
 using System;
 using UnityEngine;
 
-namespace DCL.Discover
+namespace DCL.Places
 {
-    public class DiscoverController : ISection, IDisposable
+    public class PlacesController : ISection, IDisposable
     {
-        private readonly DiscoverView view;
+        private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
 
-        public DiscoverController(
-            DiscoverView view,
+        public PlacesController(
+            PlacesView view,
             ICursor cursor)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+
+            view.OnSectionChanged += OnSectionChanged;
         }
 
         public void Dispose()
         {
-
+            view.OnSectionChanged -= OnSectionChanged;
         }
 
         public void Activate()
@@ -34,6 +36,7 @@ namespace DCL.Discover
 
             isSectionActivated = true;
             view.SetViewActive(true);
+            view.OpenSection(PlacesSections.DISCOVER, true);
             cursor.Unlock();
         }
 
@@ -52,6 +55,9 @@ namespace DCL.Discover
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-
+        private void OnSectionChanged(PlacesSections section)
+        {
+            Debug.Log($"[SANTI LOG] Section changed to {section}");
+        }
     }
 }

@@ -44,7 +44,6 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
-using DCL.Discover;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -58,6 +57,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Places;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private DiscoverController? discoverController;
+        private PlacesController? discoverController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -490,8 +490,8 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
-            DiscoverView discoverView = explorePanelView.GetComponentInChildren<DiscoverView>();
-            discoverController = new DiscoverController(discoverView, cursor);
+            PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
+            discoverController = new PlacesController(placesView, cursor);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,

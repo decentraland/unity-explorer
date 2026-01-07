@@ -2314,7 +2314,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Discover"",
+                    ""name"": ""Places"",
                     ""type"": ""Button"",
                     ""id"": ""5a2cd426-7e96-4f96-93ad-0679ed95b588"",
                     ""expectedControlType"": """",
@@ -2514,11 +2514,11 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""a3339e67-4780-405e-972d-b7389939500b"",
-                    ""path"": ""<Keyboard>/x"",
+                    ""path"": ""<Keyboard>/q"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Discover"",
+                    ""action"": ""Places"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3942,7 +3942,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
         m_Shortcuts_Communities = m_Shortcuts.FindAction("Communities", throwIfNotFound: true);
-        m_Shortcuts_Discover = m_Shortcuts.FindAction("Discover", throwIfNotFound: true);
+        m_Shortcuts_Places = m_Shortcuts.FindAction("Places", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4992,7 +4992,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_Controls;
     private readonly InputAction m_Shortcuts_FriendPanel;
     private readonly InputAction m_Shortcuts_Communities;
-    private readonly InputAction m_Shortcuts_Discover;
+    private readonly InputAction m_Shortcuts_Places;
     /// <summary>
     /// Provides access to input actions defined in input action map "Shortcuts".
     /// </summary>
@@ -5065,9 +5065,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Communities => m_Wrapper.m_Shortcuts_Communities;
         /// <summary>
-        /// Provides access to the underlying input action "Shortcuts/Discover".
+        /// Provides access to the underlying input action "Shortcuts/Places".
         /// </summary>
-        public InputAction @Discover => m_Wrapper.m_Shortcuts_Discover;
+        public InputAction @Places => m_Wrapper.m_Shortcuts_Places;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -5139,9 +5139,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Communities.started += instance.OnCommunities;
             @Communities.performed += instance.OnCommunities;
             @Communities.canceled += instance.OnCommunities;
-            @Discover.started += instance.OnDiscover;
-            @Discover.performed += instance.OnDiscover;
-            @Discover.canceled += instance.OnDiscover;
+            @Places.started += instance.OnPlaces;
+            @Places.performed += instance.OnPlaces;
+            @Places.canceled += instance.OnPlaces;
         }
 
         /// <summary>
@@ -5198,9 +5198,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Communities.started -= instance.OnCommunities;
             @Communities.performed -= instance.OnCommunities;
             @Communities.canceled -= instance.OnCommunities;
-            @Discover.started -= instance.OnDiscover;
-            @Discover.performed -= instance.OnDiscover;
-            @Discover.canceled -= instance.OnDiscover;
+            @Places.started -= instance.OnPlaces;
+            @Places.performed -= instance.OnPlaces;
+            @Places.canceled -= instance.OnPlaces;
         }
 
         /// <summary>
@@ -6496,12 +6496,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCommunities(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Discover" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Places" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnDiscover(InputAction.CallbackContext context);
+        void OnPlaces(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Emotes" which allows adding and removing callbacks.

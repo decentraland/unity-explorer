@@ -2228,7 +2228,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Discover",
+                    "name": "Places",
                     "type": "Button",
                     "id": "5a2cd426-7e96-4f96-93ad-0679ed95b588",
                     "expectedControlType": "",
@@ -2428,11 +2428,11 @@
                 {
                     "name": "",
                     "id": "a3339e67-4780-405e-972d-b7389939500b",
-                    "path": "<Keyboard>/x",
+                    "path": "<Keyboard>/q",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Discover",
+                    "action": "Places",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

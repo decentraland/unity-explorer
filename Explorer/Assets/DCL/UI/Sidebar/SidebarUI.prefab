@@ -71,7 +71,7 @@ MonoBehaviour:
   <profileMenu>k__BackingField: {fileID: 617051157247145518}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
   <InWorldCameraButton>k__BackingField: {fileID: 1734187727223042766}
-  <discoverButton>k__BackingField: {fileID: 8832370077985518119}
+  <placesButton>k__BackingField: {fileID: 8832370077985518119}
   <communitiesButton>k__BackingField: {fileID: 9067792495595083366}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
@@ -2640,7 +2640,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 556587912230755051, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 98
+      value: 85
       objectReference: {fileID: 0}
     - target: {fileID: 791050805523401173, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2664,7 +2664,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 84.39
+      value: 70.12
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
@@ -2852,7 +2852,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Name
-      value: DiscoverButton
+      value: PlacesButton
       objectReference: {fileID: 0}
     - target: {fileID: 5790594399661718223, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_IsActive
@@ -2860,7 +2860,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_text
-      value: Discover <color=#716B7C>[X]</color>
+      value: Places <color=#716B7C>[Q]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_HorizontalAlignment

@@ -162,9 +162,9 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
 
             if (includeDiscover)
-                viewInstance.discoverButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Discover).Forget());
+                viewInstance.placesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget());
             else
-                viewInstance.discoverButton.gameObject.SetActive(false);
+                viewInstance.placesButton.gameObject.SetActive(false);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
