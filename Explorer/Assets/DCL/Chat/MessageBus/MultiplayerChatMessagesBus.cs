@@ -34,6 +34,7 @@ namespace DCL.Chat.MessageBus
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
+        private readonly bool isChatMessageRateLimiterEnabled;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
@@ -49,7 +50,8 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT))
+            this.isChatMessageRateLimiterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT);
+            if (isChatMessageRateLimiterEnabled)
             {
                 messageRateLimiter = new ChatMessageRateLimiter();
                 messageRateLimiter.LoadConfigurationFromFeatureFlag();
@@ -122,15 +124,18 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                if (messageRateLimiter != null && !messageRateLimiter.TryAllow(receivedMessage.FromWalletId)) return;
+                string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
+                    : receivedMessage.FromWalletId;
 
                 // If the Communities shape is disabled, ignores the community conversation messages
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
                     return;
 
-                if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
-                    || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
+                if (messageDeduplication.TryPass(walletId, receivedMessage.Payload.Timestamp) == false
+                    || IsUserBlockedAndMessagesHidden(walletId))
                     return;
+
+                if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(walletId)) return;
 
                 ChatChannel.ChannelId parsedChannelId;
 
@@ -149,10 +154,6 @@ namespace DCL.Chat.MessageBus
                         parsedChannelId = new ChatChannel.ChannelId();
                         break;
                 }
-
-                string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
-                                                                           : receivedMessage.FromWalletId;
-
 
                 if (channelType == ChatChannel.ChatChannelType.NEARBY)
                 {

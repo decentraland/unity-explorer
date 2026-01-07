@@ -523,10 +523,6 @@ namespace Global.Dynamic
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
             var currentChannelService = new CurrentChannelService();
 
-            var tempChatMessagesBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment, identityCache)
-                                     .WithSelfResend(identityCache, chatMessageFactory)
-                                     .WithIgnoreSymbols();
-
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -546,7 +542,10 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = tempChatMessagesBus
+
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment, identityCache)
+                                                 .WithSelfResend(identityCache, chatMessageFactory)
+                                                 .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
                                                  .WithDebugPanel(debugBuilder);
 

@@ -3,15 +3,19 @@ using DCL.FeatureFlags;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.Chat.MessageBus
 {
     public class ChatMessageRateLimiter
     {
         private const int DEFAULT_MESSAGES_PER_SECOND = 1;
-        private const int MAX_DICTIONARY_SIZE = 1000;
+        private const int MAX_DICTIONARY_SIZE = 256;
+        private const int CLEANUP_BATCH_SIZE = 50;
 
-        private readonly Dictionary<string, UserRateLimitData> userRateLimitData = new ();
+        private readonly string[] keysToRemoveBuffer = new string[CLEANUP_BATCH_SIZE];
+        private readonly Dictionary<string, UserRateLimitData> userRateLimitData = new (MAX_DICTIONARY_SIZE);
+
         private int messagesPerSecond = DEFAULT_MESSAGES_PER_SECOND;
         private long cachedCurrentSecond = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
         private DateTime lastTimeCheck = DateTime.UtcNow;
@@ -51,7 +55,8 @@ namespace DCL.Chat.MessageBus
 
         public void LoadConfigurationFromFeatureFlag()
         {
-            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT, FeatureFlagsStrings.CONFIG_VARIANT, out ChatMessageRateLimitConfig? config) && config.HasValue)
+            if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT, FeatureFlagsStrings.CONFIG_VARIANT, out ChatMessageRateLimitConfig? config)
+                && config.HasValue)
             {
                 ChatMessageRateLimitConfig value = config.Value;
                 messagesPerSecond = value.MessagesPerSecond > 0 ? value.MessagesPerSecond : DEFAULT_MESSAGES_PER_SECOND;
@@ -72,16 +77,21 @@ namespace DCL.Chat.MessageBus
         private void CleanupOldEntries()
         {
             long currentSecond = GetCurrentSecond();
-            var keysToRemove = new List<string>();
+            var count = 0;
 
             foreach (var kvp in userRateLimitData)
             {
                 if (currentSecond - kvp.Value.CurrentSecond > 1)
-                    keysToRemove.Add(kvp.Key);
+                {
+                    keysToRemoveBuffer[count] = kvp.Key;
+                    count++;
+                    if (count >= CLEANUP_BATCH_SIZE)
+                        break;
+                }
             }
 
-            foreach (string key in keysToRemove)
-                userRateLimitData.Remove(key);
+            for (var i = 0; i < count; i++)
+                userRateLimitData.Remove(keysToRemoveBuffer[i]);
         }
 
         [Serializable]
