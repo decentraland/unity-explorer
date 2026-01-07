@@ -97,8 +97,7 @@ namespace DCL.Profiles
                     : (false, TimeSpan.Zero);
             }
 
-            // The implicit cast that happens in the loop `profile = candidate;` can lead to a ProfileTier containing null Value that is not caught by further systems when candidate is null
-            return profile != null && profile.HasValue && profile.Value != null ? profile : null;
+            return profile;
         }
 
         public static async UniTask<Result<IList<T>>> PostAsync<T>(IWebRequestController webRequestController, URLAddress url, IReadOnlyCollection<string> ids, IList<T> batch, CancellationToken ct)
