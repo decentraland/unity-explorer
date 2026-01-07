@@ -10,15 +10,19 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LoginStartAuthState : AuthStateBase, IPayloadedState<PopupType>
+    public class LoginStartAuthState : AuthStateBase, IState, IPayloadedState<PopupType>
     {
+        private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SplashScreen splashScreen;
 
-        public LoginStartAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
+        public LoginStartAuthState(
+            MVCStateMachine<AuthStateBase> machine,
+            AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen) : base(viewInstance)
         {
+            this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
             this.splashScreen = splashScreen;
@@ -44,10 +48,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        public override void Enter()
+        public void Enter()
         {
-            base.Enter();
-
             if (machine.PreviousState is InitAuthScreenState)
                 splashScreen.Hide();
 
@@ -74,7 +76,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            base.Exit();
             viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance!.ErrorPopupRoot.SetActive(false);
 

@@ -1,5 +1,7 @@
 ﻿using DCL.Chat.ChatServices;
+using MVC;
 using UnityEngine.Assertions;
+using Utility;
 
 namespace DCL.Chat.ChatInput
 {
@@ -7,23 +9,29 @@ namespace DCL.Chat.ChatInput
     ///     Due to a reason writing to a user (private conversations) is not allowed.
     ///     Blocked State is valid only if teh chat view is focused
     /// </summary>
-    public class BlockedChatInputState : ChatInputState
+    public class BlockedChatInputState : ChatInputState, IState
     {
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
+        private readonly ChatInputView view;
+        private readonly IEventBus eventBus;
         private readonly ChatConfig.ChatConfig config;
         private readonly CurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
+        public BlockedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
         {
+            this.stateMachine = stateMachine;
+            this.view = view;
+            this.eventBus = eventBus;
             this.config = config;
             this.currentChannelService = currentChannelService;
         }
 
-        public override void Enter()
+        public void Enter()
         {
-            context.ChatInputView.Show();
+            view.Show();
 
             UpdateBlockedReason();
-            context.ChatInputView.maskButton.onClick.AddListener(RequestFocusedState);
+            view.maskButton.onClick.AddListener(RequestFocusedState);
         }
 
         private void UpdateBlockedReason()
@@ -46,17 +54,17 @@ namespace DCL.Chat.ChatInput
             else
                 blockedReason = currentChannelService.InputState.ErrorMessage!;
 
-            context.ChatInputView.maskButton.onClick.RemoveListener(BlockedInputClicked);
+            view.maskButton.onClick.RemoveListener(BlockedInputClicked);
             if (currentChannelService.InputState is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER })
-                context.ChatInputView.maskButton.onClick.AddListener(BlockedInputClicked);
+                view.maskButton.onClick.AddListener(BlockedInputClicked);
 
-            context.ChatInputView.SetBlocked(blockedReason);
+            view.SetBlocked(blockedReason);
         }
 
         public override void Exit()
         {
-            context.ChatInputView.maskButton.onClick.RemoveListener(RequestFocusedState);
-            context.ChatInputView.maskButton.onClick.RemoveListener(BlockedInputClicked);
+            view.maskButton.onClick.RemoveListener(RequestFocusedState);
+            view.maskButton.onClick.RemoveListener(BlockedInputClicked);
         }
 
         protected override void OnInputBlocked()
@@ -66,17 +74,17 @@ namespace DCL.Chat.ChatInput
 
         protected override void OnInputUnblocked()
         {
-            machine.Enter<TypingEnabledChatInputState>();
+            stateMachine.Enter<TypingEnabledChatInputState>();
         }
 
         private void BlockedInputClicked() =>
-            context.ChatEventBus.Publish(new ChatEvents.ClickableBlockedInputClickedEvent());
+            eventBus.Publish(new ChatEvents.ClickableBlockedInputClickedEvent());
 
         private void RequestFocusedState()
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }
     }
 }
