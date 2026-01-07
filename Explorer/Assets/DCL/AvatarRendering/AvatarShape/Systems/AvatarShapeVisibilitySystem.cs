@@ -92,7 +92,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private void AddPlayerCachedVisibilityComponent([Data] in CameraComponent cameraComponent, in Entity entity, ref AvatarShapeComponent avatarShape, in AvatarBase avatarBase)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea || cameraComponent.Mode == CameraMode.FirstPerson;
-            var cachedVisibility = InitializeCachedComponent(shouldBeHidden, ref avatarShape, in avatarBase);
+            bool shouldPlayFootstepFX = !avatarShape.HiddenByModifierArea;
+            var cachedVisibility = InitializeCachedComponent(shouldBeHidden, shouldPlayFootstepFX, ref avatarShape, in avatarBase);
             World.Add(entity, cachedVisibility);
         }
 
@@ -102,7 +103,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private void AddOthersCachedVisibilityComponent(in Entity entity, ref AvatarShapeComponent avatarShape, in AvatarBase avatarBase)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
-            var cachedVisibility = InitializeCachedComponent(shouldBeHidden, ref avatarShape, in avatarBase);
+            bool shouldPlayFootstepFX = !avatarShape.HiddenByModifierArea;
+            var cachedVisibility = InitializeCachedComponent(shouldBeHidden, shouldPlayFootstepFX, ref avatarShape, in avatarBase);
             World.Add(entity, cachedVisibility);
         }
 
@@ -207,7 +209,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 shouldBeHidden = currentDistance < startFadeDithering;
             }
 
-            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden);
+            bool shouldPlayFootstepFX = !avatarShape.HiddenByModifierArea;
+            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden, shouldPlayFootstepFX);
         }
 
         [Query]
@@ -222,7 +225,8 @@ namespace DCL.AvatarRendering.AvatarShape
             if (cameraComponent.Mode == CameraMode.FirstPerson) return;
 
             bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
-            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden);
+            bool shouldPlayFootstepFX = !avatarShape.HiddenByModifierArea;
+            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden, shouldPlayFootstepFX);
         }
 
         [Query]
@@ -230,50 +234,51 @@ namespace DCL.AvatarRendering.AvatarShape
         private void UpdateAvatarsVisibilityState(in Entity entity, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, in AvatarBase avatarBase)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
-            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden);
+            bool shouldPlayFootstepFX = !avatarShape.HiddenByModifierArea;
+            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref avatarCachedVisibility, shouldBeHidden, shouldPlayFootstepFX);
         }
 
-        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, Animator avatarAnimator, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
+        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, Animator avatarAnimator, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden, bool shouldPlayFootstepFX)
         {
-            if (avatarCachedVisibility.IsVisible == shouldBeHidden)
+            if (avatarCachedVisibility.IsVisible == shouldBeHidden
+                && avatarAnimator.enabled == shouldPlayFootstepFX)
                 return;
 
             if (shouldBeHidden)
-                Hide(ref avatarShape, avatarAnimator);
+                Hide(ref avatarShape);
             else
-                Show(ref avatarShape, avatarAnimator);
+                Show(ref avatarShape);
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
+            avatarAnimator.enabled = shouldPlayFootstepFX;
+            avatarAnimator.fireEvents = avatarAnimator.enabled; // even when disabled the Animator fires events...
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Show(ref AvatarShapeComponent avatarShape, Animator avatarAnimator)
+        private static void Show(ref AvatarShapeComponent avatarShape)
         {
-            ToggleAvatarShape(ref avatarShape, avatarAnimator, true);
+            ToggleAvatarShape(ref avatarShape, true);
             avatarShape.IsVisible = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Hide(ref AvatarShapeComponent avatarShape, Animator avatarAnimator)
+        private static void Hide(ref AvatarShapeComponent avatarShape)
         {
-            ToggleAvatarShape(ref avatarShape, avatarAnimator, false);
+            ToggleAvatarShape(ref avatarShape, false);
             avatarShape.IsVisible = false;
         }
 
-        private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, Animator avatarAnimator, bool toggle)
+        private static void ToggleAvatarShape(ref AvatarShapeComponent avatarShape, bool toggle)
         {
             foreach (var wearable in avatarShape.InstantiatedWearables)
                 foreach (Renderer renderer in wearable.Renderers)
                     renderer.enabled = toggle;
-
-            avatarAnimator.enabled = !avatarShape.HiddenByModifierArea;
-            avatarAnimator.fireEvents = avatarAnimator.enabled; // even when disabled the Animator fires events...
         }
 
-        private AvatarCachedVisibilityComponent InitializeCachedComponent(bool shouldBeHidden, ref AvatarShapeComponent avatarShape, in AvatarBase avatarBase)
+        private AvatarCachedVisibilityComponent InitializeCachedComponent(bool shouldBeHidden, bool shouldPlayFootstepFX, ref AvatarShapeComponent avatarShape, in AvatarBase avatarBase)
         {
             var cachedVisibility = new AvatarCachedVisibilityComponent();
-            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref cachedVisibility, shouldBeHidden);
+            UpdateVisibilityState(ref avatarShape, avatarBase.AvatarAnimator, ref cachedVisibility, shouldBeHidden, shouldPlayFootstepFX);
             return cachedVisibility;
         }
     }
