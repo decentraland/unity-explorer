@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.UI.InputFieldFormatting;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -35,7 +34,6 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsGoalsOfTheWeekSubController(
             MarketplaceCreditsGoalsOfTheWeekSubView subView,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            IWebRequestController webRequestController,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             ITextFormatter textFormatter,

@@ -125,7 +125,6 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
                 viewInstance.GoalsOfTheWeekSubView,
                 marketplaceCreditsAPIClient,
-                webRequestController,
                 viewInstance.TotalCreditsWidget,
                 this,
                 textFormatter,
