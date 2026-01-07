@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using System.Threading;
 

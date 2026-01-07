@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
