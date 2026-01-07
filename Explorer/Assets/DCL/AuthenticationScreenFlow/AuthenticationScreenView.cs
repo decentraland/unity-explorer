@@ -41,7 +41,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
-        public GameObject PendingAuthentication { get; private set; } = null!;
+        public GameObject VerificationContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public Animator VerificationAnimator { get; private set; } = null!;

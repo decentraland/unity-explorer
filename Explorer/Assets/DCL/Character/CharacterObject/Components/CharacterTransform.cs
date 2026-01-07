@@ -1,4 +1,3 @@
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using UnityEngine;
@@ -42,6 +41,11 @@ namespace DCL.Character.Components
         {
             Transform.position = position;
             TrySetDirty(position);
+        }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            Transform.rotation = rotation;
         }
 
         public void ClearDirty()

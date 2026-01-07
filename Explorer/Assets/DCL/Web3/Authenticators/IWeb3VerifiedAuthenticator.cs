@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
@@ -7,11 +8,10 @@ namespace DCL.Web3.Authenticators
     public interface IWeb3VerifiedAuthenticator : IWeb3Authenticator
     {
         /// <summary>
-        ///     Callback for displaying verification code to user (Magic/Dapp flow - push-based)
+        /// Raised when verification code should be displayed to the user.
+        /// Always invoked on the main thread.
         /// </summary>
-        public delegate void VerificationDelegate(int code, DateTime expiration, string requestID);
-
-        void SetVerificationListener(VerificationDelegate? callback);
+        event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
         void CancelCurrentWeb3Operation();
         /// <summary>

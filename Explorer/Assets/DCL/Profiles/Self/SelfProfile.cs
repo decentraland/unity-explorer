@@ -72,7 +72,7 @@ namespace DCL.Profiles.Self
             Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
                 ct,
-                batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET
+                batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET
             );
 
             if (profile == null) return null;
@@ -136,32 +136,21 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
-            newProfile.UserNameColor = NameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
-            profileCache.Set(newProfile.UserId, newProfile);
 
             if (!updateAvatarInWorld)
             {
                 await profileRepository.SetAsync(newProfile, ct);
-
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
-
-                if (savedProfile != null)
-                {
-                    profileCache.Set(savedProfile.UserId, savedProfile);
-                    copyOfOwnProfile?.Dispose();
-                    copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
-                }
-
-                return savedProfile;
+                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
             }
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
             // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
+            profileCache.Set(newProfile.UserId, newProfile);
             UpdateAvatarInWorld(newProfile);
 
             try
@@ -169,7 +158,7 @@ namespace DCL.Profiles.Self
                 await profileRepository.SetAsync(newProfile, ct);
                 Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
+                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack

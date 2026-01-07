@@ -3,7 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -11,7 +11,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
@@ -47,9 +46,26 @@ namespace CrdtEcsBridge.RestrictedActions
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
-        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
+        public async UniTask<bool> MoveAndRotatePlayerAsync(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration, CancellationToken ct)
         {
-            // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
+            if (duration > 0f)
+            {
+                // Smooth movement over duration (through MovePlayerWithDurationSystem)
+                Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
+
+                var completionSource = new UniTaskCompletionSource<bool>();
+                world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
+                    startPosition,
+                    newPlayerPosition,
+                    newCameraTarget,
+                    newAvatarTarget,
+                    completionSource,
+                    duration));
+
+                return await completionSource.Task.AttachExternalCancellation(ct);
+            }
+
+            // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
             world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
 
@@ -64,6 +80,9 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
             }
+
+            // Instant teleport is always successful
+            return true;
         }
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
@@ -78,13 +97,11 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping)
         {
-            //TODO (Juani Emotes Refactor): Re-analyze this if, probably remove it
-            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape)) return;
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent (urn, triggerSource: TriggerSource.SCENE, spatial: true ));
-
-            messageBus.Send(urn, isLooping, false, -1, false, string.Empty, string.Empty, false, 0);
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            messageBus.Send(urn, isLooping);
         }
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
@@ -116,12 +133,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
-            //TODO (Juani Emotes Refactor): Re-analyze this if, probably remove it.
-            // I left the previous behaviour here, just in case we want to consider it
-            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape)) return;
-
-            //if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
-            //    throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
+                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
             if (!avatarShape.IsVisible) return;
 

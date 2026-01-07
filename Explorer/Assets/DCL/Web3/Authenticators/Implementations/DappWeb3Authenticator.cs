@@ -47,9 +47,11 @@ namespace DCL.Web3.Authenticators
         private ClientWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
+
         public delegate void VerificationDelegate(int code, DateTime expiration);
         private VerificationDelegate? signatureVerificationCallback;
+
+        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
@@ -177,7 +179,7 @@ namespace DCL.Web3.Authenticators
                 if (codeVerificationFeatureFlag.ShouldWaitForCodeVerificationFromServer)
                     WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
                 else
-                    codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
+                    VerificationRequired?.Invoke((authenticationResponse.code, signatureExpiration, authenticationResponse.requestId));
 
                 LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
@@ -223,9 +225,6 @@ namespace DCL.Web3.Authenticators
             // Also cancel code verification if that's what was hanging (during Login)
             codeVerificationTask?.TrySetCanceled();
         }
-        
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            codeVerificationCallback = callback;
 
         public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback)
         {
@@ -523,7 +522,7 @@ namespace DCL.Web3.Authenticators
 
         /// <summary>
         /// Waits until we receive the verification status from the server
-        /// So then we execute the loginVerificationCallback
+        /// So then we raise the VerificationRequired event
         /// </summary>
         private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
         {
@@ -541,7 +540,7 @@ namespace DCL.Web3.Authenticators
                 if (validation.requestId == requestId)
                 {
                     await UniTask.SwitchToMainThread(ct);
-                    codeVerificationCallback?.Invoke(code, expiration, requestId);
+                    VerificationRequired?.Invoke((code, expiration, requestId));
                 }
             }
             catch (TimeoutException e) { throw new CodeVerificationException($"Code verification expired: {expiration}", e); }

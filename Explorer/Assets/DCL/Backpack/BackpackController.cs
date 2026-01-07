@@ -242,15 +242,18 @@ namespace DCL.Backpack
 
             isAvatarLoaded = false;
 
-            world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
+            var avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
             backpackGridController.RequestPage(1, true);
             backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
-            if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);
+            while (!avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+                await UniTask.Yield();
+            }
 
             if (ct.IsCancellationRequested) return;
 
