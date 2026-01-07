@@ -56,17 +56,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 IsVisible = isVisible,
             };
 
+            var inputModifier = new InputModifierComponent { DisableEmote = disableEmote };
             var entity = world.Create(
                 new PlayerComponent(testGameObject.transform),
                 profile,
-                avatarShape
+                avatarShape,
+                inputModifier
             );
-
-            if (disableEmote)
-            {
-                var inputModifier = new InputModifierComponent { DisableEmote = true };
-                world.Add(entity, inputModifier);
-            }
 
             return entity;
         }
@@ -210,13 +206,15 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 var entity1 = world.Create(
                     new PlayerComponent(testGameObject.transform),
                     profile1,
-                    avatarShape1
+                    avatarShape1,
+                    new InputModifierComponent()
                 );
 
                 var entity2 = world.Create(
                     new PlayerComponent(testGo2.transform),
                     profile2,
-                    avatarShape2
+                    avatarShape2,
+                    new InputModifierComponent()
                 );
 
                 world.Add(entity1, new TriggerEmoteBySlotIntent { Slot = 0 });
