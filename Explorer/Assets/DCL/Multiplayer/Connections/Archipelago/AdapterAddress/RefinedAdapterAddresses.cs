@@ -36,10 +36,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 
         private string AddWSSPreInfoIfProtocolMissing(string url)
         {
-            if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
-                return url;
-
             if (url.StartsWith("ws-room:"))
                 return $"wss://{url.Substring(8)}";
 
