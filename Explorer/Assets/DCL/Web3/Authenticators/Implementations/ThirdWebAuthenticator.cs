@@ -319,7 +319,7 @@ namespace DCL.Web3.Authenticators
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) { }
+        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
         public void CancelCurrentWeb3Operation()
         {

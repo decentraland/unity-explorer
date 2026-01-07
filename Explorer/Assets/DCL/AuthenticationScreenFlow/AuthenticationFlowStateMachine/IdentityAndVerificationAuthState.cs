@@ -89,7 +89,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
                 web3Authenticator.VerificationRequired += ShowVerification;
-                IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
+                IWeb3Identity identity = await web3Authenticator.LoginAsync(null, ct);
 
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }

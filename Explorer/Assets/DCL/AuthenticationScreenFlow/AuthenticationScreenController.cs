@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
+using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Input;
@@ -22,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Utility;
+using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -81,6 +83,7 @@ namespace DCL.AuthenticationScreenFlow
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
@@ -94,7 +97,8 @@ namespace DCL.AuthenticationScreenFlow
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
-            IAppArgs appArgs)
+            IAppArgs appArgs, IWearablesProvider wearablesProvider,
+            IWebRequestController webRequestController)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -160,7 +164,6 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;

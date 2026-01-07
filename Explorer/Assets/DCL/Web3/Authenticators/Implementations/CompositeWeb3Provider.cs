@@ -16,7 +16,7 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3Authenticator dappAuth;
 
-        private AuthMethod currentMethod = AuthMethod.ThirdWebOTP;
+        private AuthMethod currentMethod = AuthMethod.DappWallet;
 
         public AuthMethod CurrentMethod
         {
@@ -30,6 +30,12 @@ namespace DCL.Web3.Authenticators
                     OnMethodChanged?.Invoke(value);
                 }
             }
+        }
+
+        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
+        {
+            add => dappAuth.VerificationRequired += value;
+            remove => dappAuth.VerificationRequired -= value;
         }
 
         /// <summary>
@@ -47,9 +53,9 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         public bool IsDappWallet => currentMethod == AuthMethod.DappWallet;
 
-        private IWeb3VerifiedAuthenticator CurrentAuthenticator => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
+        private IWeb3VerifiedAuthenticator CurrentAuthenticator => dappAuth; //currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth; //
 
-        private IEthereumApi CurrentEthereumApi => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
+        private IEthereumApi CurrentEthereumApi => dappAuth; //currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth)
         {
@@ -57,21 +63,11 @@ namespace DCL.Web3.Authenticators
             this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
         }
 
-#region IWeb3Authenticator
         public UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct) =>
             CurrentAuthenticator.LoginAsync(email, ct);
 
         public UniTask LogoutAsync(CancellationToken ct) =>
             CurrentAuthenticator.LogoutAsync(ct);
-#endregion
-
-#region IWeb3VerifiedAuthenticator
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback)
-        {
-            // Set on both - only the active one will call the callback
-            thirdWebAuth.SetVerificationListener(callback);
-            dappAuth.SetVerificationListener(callback);
-        }
 
         public void CancelCurrentWeb3Operation()
         {
@@ -85,19 +81,14 @@ namespace DCL.Web3.Authenticators
             thirdWebAuth.SetOtpRequestListener(callback);
             dappAuth.SetOtpRequestListener(callback);
         }
-#endregion
 
-#region IEthereumApi
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);
-#endregion
 
-#region IDisposable
         public void Dispose()
         {
             thirdWebAuth.Dispose();
             dappAuth.Dispose();
         }
-#endregion
     }
 }

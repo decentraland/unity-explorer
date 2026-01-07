@@ -1,4 +1,5 @@
 ﻿using DCL.Web3.Authenticators;
+using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
