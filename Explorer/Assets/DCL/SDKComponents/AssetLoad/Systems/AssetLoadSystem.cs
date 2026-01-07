@@ -6,15 +6,16 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.AssetLoad.Components;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
-using System.Linq;
+using System;
 using UnityEngine.Pool;
+using UnityEngine;
 
 namespace DCL.SDKComponents.AssetLoad.Systems
 {
@@ -72,24 +73,28 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             var assetPathHash = DictionaryPool<string ,string>.Get();
 
             foreach (string assetPath in sdkComponent.Assets)
-            {
                 if (sceneData.TryGetHash(assetPath, out string hash))
                     assetPathHash.Add(assetPath, hash);
                 else
                     ReportHub.LogWarning(GetReportData(), $"Asset {assetPath} not found in scene content");
 
-                if (!existingComponent.LoadingAssetPaths.Contains(assetPath)
-                    && existingComponent.LoadingEntities.TryGetValue(assetPath, out var loadingEntity)
-                    && World.IsAlive(loadingEntity)
-                    && World.TryGet(loadingEntity, out GetAssetBundleIntention intention))
-                {
-                    intention.CancellationTokenSource?.Cancel();
-                    World.Destroy(loadingEntity);
-                    existingComponent.LoadingEntities.Remove(assetPath);
-                }
+            var toRemove = ListPool<string>.Get();
+            foreach (var kvp in existingComponent.LoadingEntities)
+            {
+                string assetPath = kvp.Key;
+                if (!assetPathHash.ContainsKey(assetPath))
+                    toRemove.Add(assetPath);
             }
 
-            existingComponent.LoadingAssetPaths = sdkComponent.Assets;
+            foreach (string assetPath in toRemove)
+            {
+                if (!existingComponent.LoadingEntities.TryGetValue(assetPath, out var loadingEntity)) continue;
+
+                //TODO: stop each loading properly and then destroy
+                World.Destroy(loadingEntity);
+                existingComponent.LoadingEntities.Remove(assetPath);
+            }
+            ListPool<string>.Release(toRemove);
 
             // Create loading entities for new assets
             foreach (var kvp in assetPathHash)
@@ -101,18 +106,52 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                 if (existingComponent.LoadingEntities.ContainsKey(path))
                    continue;
 
-                // Create asset bundle loading intention
-                // ExpectedObjectType is null because we don't know what type of asset it is
-                var intention = GetAssetBundleIntention.Create(
-                    expectedAssetType: null,
-                    hash: hash,
-                    name: path
-                );
+                Entity loadingEntity;
 
-                // Create a new entity for this asset loading
-                Entity loadingEntity = World.Create(intention, new StreamableLoadingState(), partitionComponent);
+                // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
+                if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
+                    || path.EndsWith(".wav", StringComparison.InvariantCultureIgnoreCase)
+                    || path.EndsWith(".ogg", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    PBAudioSource component = new PBAudioSource
+                    {
+                        AudioClipUrl = path,
+                    };
+                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY);
+                }
+                else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
+                         || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
+                         || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var intention = new GetTextureIntention(
+                        url: path,
+                        fileHash: hash,
+                        wrapMode: TextureWrapMode.Clamp,
+                        filterMode: FilterMode.Bilinear,
+                        textureType: TextureType.Albedo,
+                        reportSource: nameof(AssetLoadSystem),
+                        attemptsCount: StreamableLoadingDefaults.ATTEMPTS_COUNT
+                    );
+                    loadingEntity = World.Create(intention, PartitionComponent.MIN_PRIORITY);
+                }
+                else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
+                         || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    PBGltfContainer component = new PBGltfContainer
+                    {
+                        Src = path,
+                    };
+                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY);
+                }
+                else
+                {
+                    ReportHub.LogWarning(GetReportData(), $"Asset {path} has unsupported format");
+                    continue;
+                }
+
                 existingComponent.LoadingEntities.Add(path, loadingEntity);
             }
+            existingComponent.LoadingAssetPaths = sdkComponent.Assets;
 
             DictionaryPool<string, string>.Release(assetPathHash);
         }
