@@ -23,6 +23,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
     {
+        private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SentryTransactionManager sentryTransactionManager;
@@ -32,7 +33,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private readonly StringVariable? profileNameLabel;
 
-        public ProfileFetchingAuthState(AuthenticationScreenView viewInstance,
+        public ProfileFetchingAuthState(
+            MVCStateMachine<AuthStateBase> machine,
+            AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
             SentryTransactionManager sentryTransactionManager,
@@ -40,6 +43,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile) : base(viewInstance)
         {
+            this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
             this.sentryTransactionManager = sentryTransactionManager;
@@ -50,22 +54,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
-        public override void Enter()
-        {
-            // TODO (Vit): remove after refactoring state-machine to interfaces instead of its current CRTP (Curiously Recurring Template Pattern) approach
-            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"Trying to enter state {nameof(ProfileFetchingAuthState)} that doesn't support entering without payload.");
-        }
-
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
-            base.Enter();
             FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
         }
 
         public override void Exit()
         {
-            base.Exit();
-
             if (machine.PreviousState is InitAuthScreenState)
                 splashScreen.Hide();
         }

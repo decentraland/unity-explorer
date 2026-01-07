@@ -27,7 +27,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerMoveToWithDurationIntent))]
         private void ResolvePlatformMovement(
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,

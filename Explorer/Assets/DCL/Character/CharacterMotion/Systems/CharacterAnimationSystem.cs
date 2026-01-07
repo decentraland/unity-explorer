@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(DisableAnimationTransitionOnTeleport))]
+        [None(typeof(PlayerMoveToWithDurationIntent), typeof(DisableAnimationTransitionOnTeleport))]
         private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,

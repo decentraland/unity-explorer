@@ -19,6 +19,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<CancellationToken>
     {
+        private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
@@ -27,7 +28,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private CancellationTokenSource? verificationCountdownCancellationToken;
 
-        public IdentityAndVerificationAuthState(AuthenticationScreenView viewInstance,
+        public IdentityAndVerificationAuthState(
+            MVCStateMachine<AuthStateBase> machine,
+            AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -35,6 +38,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             List<Resolution> possibleResolutions,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
+            this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
             this.web3Authenticator = web3Authenticator;
@@ -43,16 +47,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
-        public override void Enter()
-        {
-            // TODO (Vit): remove after refactoring state-machine to interfaces instead of its current CRTP (Curiously Recurring Template Pattern) approach
-            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"Trying to enter state {nameof(IdentityAndVerificationAuthState)} that doesn't support entering without payload.");
-        }
-
         public void Enter(CancellationToken ct)
         {
-            base.Enter();
-
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
@@ -62,7 +58,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            base.Exit();
             RestoreResolutionAndScreenMode();
 
             CancelVerificationCountdown();
