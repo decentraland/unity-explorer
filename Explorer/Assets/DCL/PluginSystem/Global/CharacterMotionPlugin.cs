@@ -77,6 +77,7 @@ namespace DCL.PluginSystem.Global
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+            MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
