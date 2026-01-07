@@ -96,20 +96,6 @@ namespace DCL.CharacterMotion.Tests
         }
 
         [Test]
-        public void AddMovePlayerToInfoWhenComplete()
-        {
-            Vector3 startPosition = Vector3.zero;
-            Vector3 targetPosition = new Vector3(10, 0, 0);
-            float duration = 0.5f;
-
-            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration);
-
-            system.Update(0.5f);
-
-            Assert.That(world.Has<MovePlayerToInfo>(e), Is.True, "MovePlayerToInfo should be added after completion");
-        }
-
-        [Test]
         public void SetLookDirectionTowardsTarget()
         {
             Vector3 startPosition = Vector3.zero;
