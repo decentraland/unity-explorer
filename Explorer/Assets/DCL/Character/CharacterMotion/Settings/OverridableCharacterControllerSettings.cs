@@ -316,6 +316,16 @@ namespace DCL.CharacterMotion.Settings
             set => impl.StepOffset = value;
         }
 
-        public float HeadIKWeightChangeSpeed => impl.HeadIKWeightChangeSpeed;
+        public float HeadIKWeightChangeSpeed
+        {
+            get => impl.HeadIKWeightChangeSpeed;
+            set => impl.HeadIKWeightChangeSpeed = value;
+        }
+
+        public float HeadIKRemotePlayersDistance
+        {
+            get => impl.HeadIKRemotePlayersDistance;
+            set => impl.HeadIKRemotePlayersDistance = value;
+        }
     }
 }

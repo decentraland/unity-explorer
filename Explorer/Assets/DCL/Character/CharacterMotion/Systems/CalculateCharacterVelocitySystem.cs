@@ -107,7 +107,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(RandomAvatar))]
+        [None(typeof(DeleteEntityIntention), typeof(RandomAvatar), typeof(PlayerMoveToWithDurationIntent))]
         private void ResolveVelocity(
             [Data] float dt,
             [Data] int physicsTick,

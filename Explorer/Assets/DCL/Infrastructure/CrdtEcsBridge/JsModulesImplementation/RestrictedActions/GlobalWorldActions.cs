@@ -3,7 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -11,7 +11,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
@@ -47,9 +46,26 @@ namespace CrdtEcsBridge.RestrictedActions
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
         }
 
-        public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
+        public async UniTask<bool> MoveAndRotatePlayerAsync(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration, CancellationToken ct)
         {
-            // Move player to new position (through TeleportCharacterSystem -> TeleportPlayerQuery)
+            if (duration > 0f)
+            {
+                // Smooth movement over duration (through MovePlayerWithDurationSystem)
+                Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
+
+                var completionSource = new UniTaskCompletionSource<bool>();
+                world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
+                    startPosition,
+                    newPlayerPosition,
+                    newCameraTarget,
+                    newAvatarTarget,
+                    completionSource,
+                    duration));
+
+                return await completionSource.Task.AttachExternalCancellation(ct);
+            }
+
+            // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
             world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
 
@@ -64,6 +80,9 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
             }
+
+            // Instant teleport is always successful
+            return true;
         }
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)

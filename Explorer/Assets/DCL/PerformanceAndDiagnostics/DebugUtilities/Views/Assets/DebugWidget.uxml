@@ -1,6 +1,7 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/DebugUtilitiesStyle.uss?fileID=7433441132597879392&amp;guid=70ae98e6ae8672b459c006796556f879&amp;type=3#DebugUtilitiesStyle" />
+    <Style src="project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/BetterSliders.uss?fileID=7433441132597879392&amp;guid=98f287e0ba7684141893f47032a07846&amp;type=3#BetterSliders" />
     <DCL.DebugUtilities.Views.DebugWidget>
-        <ui:Foldout text="CATEGORY NAME" value="true" class="debug-text--header"
-                    style="transition-property: all; transition-duration: 0s; transition-timing-function: ease; transition-delay: 0s; flex-direction: column; align-items: stretch; align-self: auto; text-overflow: ellipsis; overflow: hidden; -unity-text-align: upper-left;"/>
+        <ui:Foldout text="CATEGORY NAME" value="true" class="debug-text--header" style="transition-property: all; transition-duration: 0s; transition-timing-function: ease; transition-delay: 0s; flex-direction: column; align-items: stretch; align-self: auto; text-overflow: ellipsis; overflow: hidden; -unity-text-align: upper-left;" />
     </DCL.DebugUtilities.Views.DebugWidget>
 </ui:UXML>
