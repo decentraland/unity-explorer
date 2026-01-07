@@ -23,7 +23,7 @@ namespace DCL.Profiles
         }
 
         [Query]
-        private void CompleteProfilePictureDownload(in Entity entity, ref Profile profile, ref Promise promise)
+        private void CompleteProfilePictureDownload(in Entity entity, ref ProfileTier profile, ref Promise promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
