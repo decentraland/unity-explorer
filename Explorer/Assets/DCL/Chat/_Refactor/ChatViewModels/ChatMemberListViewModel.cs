@@ -1,31 +1,23 @@
-﻿using DCL.UI.ProfileElements;
+﻿using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.Utilities;
-using UnityEngine;
 
 namespace DCL.Chat.ChatViewModels
 {
     public class ChatMemberListViewModel
     {
-        public readonly string UserId;
-        public readonly string WalletId;
-        public readonly string UserName;
+        public Profile.CompactInfo Profile;
         public readonly bool IsOnline;
-        public readonly Color ProfileColor;
-        public readonly bool HasClaimedName;
-
         public readonly IReactiveProperty<ProfileThumbnailViewModel> ProfileThumbnail;
 
-        public ChatMemberListViewModel(string userId, string walletId, string userName, bool isOnline, Color profileColor,
-            bool hasClaimedName)
-        {
-            UserId = userId;
-            WalletId = walletId;
-            UserName = userName;
-            IsOnline = isOnline;
-            ProfileColor = profileColor;
-            HasClaimedName = hasClaimedName;
+        public string UserName => Profile.ValidatedName;
 
-            ProfileThumbnail = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
+        public ChatMemberListViewModel(Profile.CompactInfo profile, bool isOnline)
+        {
+            Profile = profile;
+            IsOnline = isOnline;
+
+            ProfileThumbnail = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default(profile.UserNameColor));
         }
     }
 }
