@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            ApplyModifiersQuery(World);
+            ApplyModifiersQuery(World, false);
             HandleComponentRemovalQuery(World);
         }
 
@@ -64,11 +64,11 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         }
 
         [Query]
-        private void ApplyModifiers(Entity entity, in PBInputModifier pbInputModifier, in CRDTEntity crdtEntity)
+        private void ApplyModifiers([Data] bool skipDirtyCheck, Entity entity, in PBInputModifier pbInputModifier, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY
                 || pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None
-                || !pbInputModifier.IsDirty) return;
+                || (!skipDirtyCheck && !pbInputModifier.IsDirty)) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
@@ -106,7 +106,9 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            if (!value)
+            if (value)
+                ApplyModifiersQuery(World, true);
+            else
                 ResetModifiers();
         }
 
