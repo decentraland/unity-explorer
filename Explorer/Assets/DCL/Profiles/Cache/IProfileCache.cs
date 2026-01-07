@@ -23,8 +23,11 @@ namespace DCL.Profiles
 
         public bool TryGetCompact(string id, out Profile.CompactInfo profile)
         {
-            if (TryGet(id, ProfileTier.Kind.Full, out ProfileTier tiered) && tiered.IsCompact(out profile!))
+            if (TryGet(id, ProfileTier.Kind.Compact, out ProfileTier tiered))
+            {
+                profile = tiered;
                 return true;
+            }
 
             profile = default(Profile.CompactInfo);
             return false;
