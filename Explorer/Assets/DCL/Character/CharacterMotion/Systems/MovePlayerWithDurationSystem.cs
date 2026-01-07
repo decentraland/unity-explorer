@@ -85,7 +85,6 @@ namespace DCL.CharacterMotion.Systems
 
                 moveIntent.CompletionSource.TrySetResult(true);
                 World.Remove<PlayerMoveToWithDurationIntent>(entity);
-                World.AddOrSet(entity, new MovePlayerToInfo(UnityEngine.Time.frameCount));
             }
         }
 
