@@ -57,8 +57,6 @@ namespace DCL.LOD.Systems
                     {
                         if (Result.Asset!.InitialSceneStateMetadata.HasValue)
                         {
-                            UnityEngine.Debug.Log("JUANI DOING ISS LOD INSTANTIATION");
-
                             InitialSceneStateMetadata initialSceneStateMetadata = Result.Asset!.InitialSceneStateMetadata.Value;
                             initialSceneStateLOD.Initialize(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition, Result.Asset,
                                 gltfCache, initialSceneStateMetadata.assetHash.Count);
@@ -68,13 +66,9 @@ namespace DCL.LOD.Systems
                                 string assetHash = initialSceneStateMetadata.assetHash[i];
 
                                 if (gltfCache.TryGet(assetHash, out var asset))
-                                {
-                                    UnityEngine.Debug.Log("JUANI ASSET IS IN CACHE");
                                     PositionAsset(initialSceneStateLOD, assetHash, asset, initialSceneStateLOD.ParentContainer.transform, initialSceneStateMetadata, i);
-                                }
                                 else
                                 {
-                                    UnityEngine.Debug.Log("JUANI ASSET IS NOT IN CACHE");
                                     //Little bit redundant, but needed for correct ref counting
                                     AssetBundlePromise promise = AssetBundlePromise.Create(World,
                                         GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id),
@@ -112,29 +106,28 @@ namespace DCL.LOD.Systems
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
-            //Means that PositionAsset failed. We need to handle this situation
-            if (assetBundleResult.IsConsumed)
-            {
-                MarkAssetAsFailed();
-                World.Destroy(entity);
-            }
-
             if (assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
             {
                 if (Result.Succeeded)
                 {
-                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
-                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                    if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.UNINITIALIZED)
+                    {
+                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                            PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
+                                creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                        else
+                        {
+                            ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
+                            creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                        }
+                    }
                     else
-                        MarkAssetAsFailed();
+                    {
+                        //Means that the ISS loading has been cancelled. We need to remove the reference to keep counting correctly
+                        Result.Asset!.Dereference();
+                    }
                 }
                 World.Destroy(entity);
-            }
-
-            void MarkAssetAsFailed()
-            {
-                ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
-                creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
             }
         }
 

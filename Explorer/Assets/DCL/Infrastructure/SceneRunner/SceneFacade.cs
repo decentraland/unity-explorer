@@ -222,14 +222,8 @@ namespace SceneRunner
             // Let the scene loop finish gracefully to prevent synchronous exceptions:
             // Microsoft.ClearScript.ScriptEngineException
             // Error: Cannot access a disposed object.
-            UnityEngine.Debug.Log("JUANI BEFORE YIELD");
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
-
-            await UniTask.Yield(PlayerLoopTiming.Initialization);
-            await UniTask.Yield(PlayerLoopTiming.Initialization);
-
-            UnityEngine.Debug.Log("JUANI AFTER YIELD");
 
             DisposeInternal();
             SceneData.InitialSceneStateInfo.Dispose();
@@ -239,8 +233,6 @@ namespace SceneRunner
 
         private void DisposeInternal()
         {
-            UnityEngine.Debug.Log("JUANI DOING THE SCENE FACADE DISPOSE");
-
             deps.Dispose();
         }
     }
