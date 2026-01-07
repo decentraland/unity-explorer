@@ -31,8 +31,8 @@ namespace DCL.AvatarRendering.Emotes
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-        
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus) 
+
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
@@ -79,9 +79,12 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
+        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in AvatarShapeComponent avatarShapeComponent)
         {
-            if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
+            if(!avatarShapeComponent.IsVisible) return;
+
+            if (World.TryGet(entity, out InputModifierComponent inputModifierComponent) && inputModifierComponent.DisableEmote)
+                return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
