@@ -52,6 +52,11 @@ namespace DCL.FeatureFlags
         public const string HEAD_SYNC = "alfa-head-sync";
         public const string DONATIONS = "alfa-donations";
         public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
     }
 
     public enum FeatureFlag

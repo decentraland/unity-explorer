@@ -4,19 +4,21 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class BandwidthUp : IRequestMetric
+    public class BandwidthUp : RequestMetricBase
     {
         private ulong bandwidth { get; set; }
 
-        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.Bytes;
+        public override DebugLongMarkerDef.Unit GetUnit() =>
+            DebugLongMarkerDef.Unit.Bytes;
 
-        public ulong GetMetric() => bandwidth;
+        public override ulong GetMetric() =>
+            bandwidth;
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
         {
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
         {
             if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
             {

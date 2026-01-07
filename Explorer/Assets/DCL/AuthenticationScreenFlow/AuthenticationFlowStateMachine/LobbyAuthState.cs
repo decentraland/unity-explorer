@@ -1,10 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI;
+using MVC;
 using Utility;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyAuthState : AuthStateBase
+    public class LobbyAuthState : AuthStateBase, IState
     {
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly AuthenticationScreenController controller;
@@ -16,9 +17,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.characterPreviewController = characterPreviewController;
         }
 
-        public override void Enter()
+        public void Enter()
         {
-            base.Enter();
             viewInstance.FinalizeContainer.SetActive(true);
 
             viewInstance.FinalizeAnimator.ResetAnimator();
@@ -34,7 +34,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            base.Exit();
             viewInstance!.FinalizeContainer.SetActive(false);
 
             characterPreviewController?.OnHide();

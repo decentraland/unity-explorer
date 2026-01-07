@@ -50,7 +50,7 @@ namespace DCL.Donations.UI
                 donationDefaultView.loadingView.HideLoading();
         }
 
-        public void ShowLoading(Profile? profile, string creatorAddress, decimal donationAmount, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public void ShowLoading(Profile.CompactInfo? profile, string creatorAddress, decimal donationAmount, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             ShowSubView(SubViews.LOADING);
             donationLoadingView.ConfigurePanel(profile, creatorAddress, donationAmount, profileRepositoryWrapper);
@@ -69,14 +69,14 @@ namespace DCL.Donations.UI
             donationLoadingView.gameObject.SetActive(newSubView == SubViews.LOADING);
         }
 
-        public async UniTask ShowTxConfirmedAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public async UniTask ShowTxConfirmedAsync(Profile.CompactInfo? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             ShowSubView(SubViews.TX_CONFIRMED);
 
             await donationConfirmedView.ShowAsync(profile, creatorAddress, ct, profileRepositoryWrapper);
         }
 
-        public void ConfigureDefaultPanel(Profile? profile,
+        public void ConfigureDefaultPanel(Profile.CompactInfo? profile,
             string sceneCreatorAddress,
             string sceneName,
             decimal currentBalance,

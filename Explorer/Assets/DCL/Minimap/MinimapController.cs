@@ -26,6 +26,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Donations;
 using DCL.Donations.UI;
+using DCL.Minimap.Settings;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
@@ -76,6 +77,7 @@ namespace DCL.Minimap
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IDonationsService donationsService;
+        private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
@@ -113,6 +115,7 @@ namespace DCL.Minimap
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
+            MinimapContextMenuSettings minimapContextMenuSettings,
             IDonationsService donationsService)
                 : base(() => minimapView)
         {
@@ -134,7 +137,9 @@ namespace DCL.Minimap
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.minimapContextMenuSettings = minimapContextMenuSettings;
             this.donationsService = donationsService;
+
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
 
@@ -211,13 +216,14 @@ namespace DCL.Minimap
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
             contextMenu = new GenericContextMenu()
-                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings(minimapContextMenuSettings.SetAsHomeText, SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.CopyLinkText, minimapContextMenuSettings.CopyLinkSprite, CopyJumpInLink))
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
             EvaluateDonateToCreatorButton(donationsService.DonationsEnabledCurrentScene.Value);
             SetInitialHomeToggleValue();
-            viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+            viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
             {
@@ -237,7 +243,7 @@ namespace DCL.Minimap
         {
             SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
+                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
         }
 
@@ -516,10 +522,13 @@ namespace DCL.Minimap
                             .Forget();
             }
 
-            return () => chatMessagesBus.SendWithUtcNowTimestamp(
+            return ReloadScene;
+        }
+
+        private void ReloadScene() =>
+            chatMessagesBus.SendWithUtcNowTimestamp(
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP
             );
-        }
 
         private void SetAnimatorController(bool isGenesisModeActivated)
         {

@@ -25,7 +25,7 @@ namespace DCL.UI.ProfileElements
             });
         }
 
-        public void Setup(Profile profile)
+        public void Setup(Profile.CompactInfo profile)
         {
             currentProfileId = profile.UserId;
             Element.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";

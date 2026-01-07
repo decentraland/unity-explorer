@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatInput
 
         private CancellationTokenSource cts = new ();
 
-        private readonly MVCStateMachine<ChatInputState, ChatInputStateContext> fsm;
+        private readonly MVCStateMachine<ChatInputState> fsm;
 
         public ChatInputPresenter(
             ChatInputView view,
@@ -40,21 +40,21 @@ namespace DCL.Chat.ChatInput
 
             this.resolveInputStateCommand = resolveInputStateCommand;
 
-            var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
-                new EmojiMapping(view.emojiContainer.emojiPanelConfiguration));
-
-            fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(
-                context,
-                states: new ChatInputState[]
-                {
-                    new InitializingChatInputState(),
-                    new HiddenChatInputState(),
-                    new BlockedChatInputState(chatConfig, currentChannelService),
-                    new UnfocusedChatInputState(),
-                    new TypingEnabledChatInputState(chatEventBus),
-                }
+            fsm = new MVCStateMachine<ChatInputState>();
+            fsm.AddStates(
+                new InitializingChatInputState(fsm),
+                new HiddenChatInputState(view),
+                new BlockedChatInputState(fsm, view, eventBus, chatConfig, currentChannelService),
+                new UnfocusedChatInputState(fsm, view, eventBus),
+                new TypingEnabledChatInputState(fsm, view,
+                    chatEventBus,
+                    sendMessageCommand,
+                    new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
+                    profileRepositoryWrapper,
+                    getParticipantProfilesCommand,
+                    fsm.DisposalCt
+                )
             );
-
             fsm.Enter<InitializingChatInputState>();
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
@@ -126,7 +126,7 @@ namespace DCL.Chat.ChatInput
 
         private void OnBlockedUpdated(Result<PrivateConversationUserStateService.ChatUserState> result)
         {
-            fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
+            fsm.CurrentState!.OnBlockedUpdated(result is { Success: true, Value: PrivateConversationUserStateService.ChatUserState.CONNECTED });
         }
 
         public void Dispose()

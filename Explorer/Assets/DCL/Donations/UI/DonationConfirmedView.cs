@@ -23,11 +23,11 @@ namespace DCL.Donations.UI
         [field: SerializeField] internal Button okButton { get; set; } = null!;
         [field: SerializeField] internal Button backgroundButton { get; set; } = null!;
 
-        public async UniTask ShowAsync(Profile? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public async UniTask ShowAsync(Profile.CompactInfo? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             userNameElement.gameObject.SetActive(profile != null);
 
-            if (profile == null)
+            if (!profile.HasValue)
             {
                 profilePictureView.SetBackgroundColor(NoProfileColor);
                 profilePictureView.SetDefaultThumbnail();
@@ -36,8 +36,8 @@ namespace DCL.Donations.UI
             }
             else
             {
-                profilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
-                userNameElement.Setup(profile);
+                profilePictureView.Setup(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl);
+                userNameElement.Setup(profile.Value);
                 tipSentText.text = PROFILE_TEXT;
             }
 

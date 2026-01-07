@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,9 +24,9 @@ namespace DCL.Ipfs
         public URLDomain LambdasBaseUrl => URLDomain.EMPTY;
         public IReadOnlyList<string> SceneUrns { get; } = new List<string>();
         public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
-        public URLDomain AssetBundleRegistry => URLDomain.EMPTY;
+        public URLDomain AssetBundleRegistryEntitiesActive => URLDomain.EMPTY;
 
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
+        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
             throw new NotSupportedException();
 
         public string GetFileHash(byte[] file) =>

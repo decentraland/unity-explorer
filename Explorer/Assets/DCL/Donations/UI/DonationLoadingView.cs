@@ -24,7 +24,7 @@ namespace DCL.Donations.UI
             creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
         }
 
-        public void ConfigurePanel(Profile? profile,
+        public void ConfigurePanel(Profile.CompactInfo? profile,
             string sceneCreatorAddress,
             decimal donationAmount,
             ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -33,10 +33,10 @@ namespace DCL.Donations.UI
 
             userNameElement.gameObject.SetActive(profile != null);
 
-            if (profile != null)
+            if (profile.HasValue)
             {
-                profilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
-                userNameElement.Setup(profile);
+                profilePictureView.Setup(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl);
+                userNameElement.Setup(profile.Value);
                 profilePictureView.ConfigureThumbnailClickData(userAddress: sceneCreatorAddress);
             }
             else

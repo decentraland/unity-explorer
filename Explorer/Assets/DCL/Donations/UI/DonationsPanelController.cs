@@ -41,7 +41,7 @@ namespace DCL.Donations.UI
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
-        private Profile? currentCreatorProfile;
+        private Profile.CompactInfo? currentCreatorProfile;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -164,8 +164,8 @@ namespace DCL.Donations.UI
                     baseParcel = donationStatus.baseParcel!.Value;
                 }
 
-                (Profile? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
-                    await UniTask.WhenAll(profileRepository.GetAsync(creatorAddress, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET, CatalystRetryPolicy.SIMPLE),
+                (Profile.CompactInfo? creatorProfile, decimal currentBalance, decimal manaPriceUsd, string sceneName) =
+                    await UniTask.WhenAll(profileRepository.GetCompactAsync(creatorAddress, ct, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET),
                         donationsService.GetCurrentBalanceAsync(ct),
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));

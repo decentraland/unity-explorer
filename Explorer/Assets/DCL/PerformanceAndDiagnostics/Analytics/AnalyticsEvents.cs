@@ -108,6 +108,24 @@
             public const string UNBLOCK_USER = "unblock_user";
         }
 
+        /// <summary>
+        ///     Events related to endpoint performance
+        /// </summary>
+        public static class Endpoints
+        {
+            /// <summary>
+            ///     Complemented with:
+            ///     duration
+            /// </summary>
+            public const string PROFILE_RETRIEVED = "profile_retrieved";
+
+            /// <summary>
+            ///     user_id
+            ///     duration
+            /// </summary>
+            public const string PROFILE_FAILED = "profile_retrieval_failed";
+        }
+
         public static class Donations
         {
             public const string DONATION_STARTED = "donation_started";
