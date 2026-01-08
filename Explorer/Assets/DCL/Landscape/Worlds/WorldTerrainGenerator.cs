@@ -102,10 +102,7 @@ namespace DCL.Landscape
 
             Trees.Instantiate();
             if (landscapeData.RenderTrees)
-            {
-                ReportHub.Log(ReportCategory.LANDSCAPE, "WorldTerrainGenerator: GenerateTerrain - Showing trees");
                 Trees.Show();
-            }
             else
                 Trees.Hide();
 

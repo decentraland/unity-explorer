@@ -109,8 +109,6 @@ namespace DCL.Landscape
             int stride = treeMaxParcel.x - treeMinParcel.x;
             var transforms = new List<Matrix4x4>[terrainData.treeAssets.Length];
 
-            ReportHub.Log(ReportCategory.LANDSCAPE, $"TreeData: Instantiating/Uploading trees. Min: {treeMinParcel}, Max: {treeMaxParcel}, Stride: {stride}");
-
             for (int i = 0; i < transforms.Length; i++)
                 transforms[i] = new List<Matrix4x4>();
 
@@ -299,10 +297,8 @@ namespace DCL.Landscape
         public void Show()
         {
             for (int prototypeIndex = 0; prototypeIndex < rendererKeys.Length; prototypeIndex++)
-            {
                 GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
                     instanceCounts[prototypeIndex]);
-            }
         }
     }
 }

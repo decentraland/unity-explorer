@@ -203,10 +203,7 @@ namespace DCL.Landscape
                     Trees.Instantiate();
 
                     if (landscapeData.RenderTrees)
-                    {
-                        ReportHub.Log(reportData, "TerrainGenerator: ShowAsync - Showing trees");
                         Trees.Show();
-                    }
                     else
                         Trees.Hide();
 
