@@ -1,12 +1,9 @@
-using Cysharp.Threading.Tasks;
-using DCL.CharacterPreview;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -16,12 +13,11 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
+    public class ProfileFetchingOTPAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -30,10 +26,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SplashScreen splashScreen;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
+        private readonly StringVariable profileNameLabel;
 
-        private readonly StringVariable? profileNameLabel;
-
-        public ProfileFetchingAuthState(
+        public ProfileFetchingOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -57,12 +52,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
             FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
-        }
-
-        public override void Exit()
-        {
-            if (machine.PreviousState is InitAuthScreenState)
-                splashScreen.Hide();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
@@ -93,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    await FetchProfileAsync(ct);
+                    // await FetchProfileAsync(ct);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     currentState.Value = isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
@@ -121,41 +110,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
-        }
-
-        private void ShowLoadingSpinner()
-        {
-            viewInstance.LoginContainer.SetActive(true);
-
-            viewInstance.LoginAnimator.ResetAnimator();
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            viewInstance.LoginButton.gameObject.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-
-            viewInstance.LoadingSpinner.SetActive(true);
-        }
-
-        private async UniTask FetchProfileAsync(CancellationToken ct)
-        {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
-
-            if (profile == null)
-                throw new ProfileNotFoundException();
-
-            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
-            profile.IsDirty = true;
-
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
-
-            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-
-            return;
-
-            bool IsNewUser() =>
-                profile.Version == 1;
         }
 
         private static bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)

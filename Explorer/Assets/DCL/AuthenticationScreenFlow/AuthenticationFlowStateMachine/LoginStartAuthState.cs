@@ -2,6 +2,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
+using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -16,16 +17,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SplashScreen splashScreen;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
-        public LoginStartAuthState(
-            MVCStateMachine<AuthStateBase> machine,
+        public LoginStartAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen) : base(viewInstance)
+            ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen,
+            ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
             this.splashScreen = splashScreen;
+            this.compositeWeb3Provider = compositeWeb3Provider;
 
             // Cancel button persists in the Verification state (until code is shown)
             viewInstance.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
@@ -72,6 +75,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
+
+            // ThirdWeb
+            viewInstance.LoginWithOtpButton.onClick.AddListener(OTPLogin);
         }
 
         public override void Exit()
@@ -84,15 +90,35 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ErrorPopupCloseButton.onClick.RemoveListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(Login);
+
+            // ThirdWeb
+            viewInstance.LoginWithOtpButton.onClick.RemoveListener(OTPLogin);
         }
 
         private void Login()
         {
+            compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
+
             viewInstance.LoginButton.gameObject.SetActive(false);
             viewInstance.LoginButton.interactable = false;
             viewInstance!.LoadingSpinner.SetActive(true);
 
             machine.Enter<IdentityAndVerificationAuthState, CancellationToken>(controller.GetRestartedLoginToken());
+        }
+
+        private void OTPLogin()
+        {
+            compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
+
+            // Anim-OUT non-interactable Login Screen
+            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+
+            viewInstance.LoginButton.gameObject.SetActive(true);
+            viewInstance.LoginButton.interactable = false;
+            viewInstance.LoadingSpinner.SetActive(false);
+
+            machine.Enter<IdentityAndOTPConfirmationState, (string, CancellationToken)>(
+                payload: (viewInstance.EmailInputField.text, controller.GetRestartedLoginToken()));
         }
 
         private void CancelLoginAndRestartFromBeginning()

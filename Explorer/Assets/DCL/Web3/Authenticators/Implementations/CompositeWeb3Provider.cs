@@ -53,9 +53,9 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         public bool IsDappWallet => currentMethod == AuthMethod.DappWallet;
 
-        private IWeb3VerifiedAuthenticator CurrentAuthenticator => dappAuth; //currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth; //
+        private IWeb3VerifiedAuthenticator CurrentAuthenticator => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
 
-        private IEthereumApi CurrentEthereumApi => dappAuth; //currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
+        private IEthereumApi CurrentEthereumApi => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth)
         {

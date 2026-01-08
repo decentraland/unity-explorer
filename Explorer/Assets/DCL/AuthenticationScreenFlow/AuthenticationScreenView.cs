@@ -65,6 +65,9 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("VERIFICATION OTP")]
         [field: SerializeField]
+        public GameObject VerificationOTPContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public GameObject VerificationOTP { get; private set; } = null!;
 
         [field: SerializeField]
@@ -72,9 +75,6 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public OtpInputBox OTPInputField { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button RegisterButton { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CancelAuthenticationProcessOTP { get; private set; } = null!;

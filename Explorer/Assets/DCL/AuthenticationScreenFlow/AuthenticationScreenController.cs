@@ -50,6 +50,7 @@ namespace DCL.AuthenticationScreenFlow
         internal const string LOADING_TRANSACTION_NAME = "loading_process";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
@@ -102,6 +103,7 @@ namespace DCL.AuthenticationScreenFlow
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
@@ -149,10 +151,11 @@ namespace DCL.AuthenticationScreenFlow
             fsm = new MVCStateMachine<AuthStateBase>();
             fsm.AddStates(
                 new InitAuthScreenState(viewInstance, buildData.InstallSource),
-                new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen),
+                new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
                 new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
-                new LobbyAuthState(viewInstance, this, characterPreviewController)
+                new LobbyAuthState(viewInstance, this, characterPreviewController),
+                new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager)
                 );
             fsm.Enter<InitAuthScreenState>();
         }
