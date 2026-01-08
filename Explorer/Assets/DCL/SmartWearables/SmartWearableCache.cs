@@ -105,6 +105,14 @@ namespace Runtime.Wearables
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
         }
 
+        public void Clear()
+        {
+            cache.Clear();
+            AuthorizedSmartWearables.Clear();
+            RunningSmartWearables.Clear();
+            KilledPortableExperiences.Clear();
+        }
+
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
             string id = GetCacheId(wearable);
@@ -130,7 +138,7 @@ namespace Runtime.Wearables
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
             item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
             if (ct.IsCancellationRequested) return null;
 
             item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;

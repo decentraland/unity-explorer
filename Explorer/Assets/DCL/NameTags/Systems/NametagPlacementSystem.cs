@@ -149,7 +149,7 @@ namespace DCL.Nametags
             NametagHolder nametagHolder, in AvatarBase avatarBase, in CharacterTransform characterTransform,
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
-            if (avatarShape.HiddenByModifierArea 
+            if (avatarShape.HiddenByModifierArea
                 || partitionComponent.IsBehind
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
@@ -205,12 +205,7 @@ namespace DCL.Nametags
             nametagHolder.Nametag.ProfileID = avatarShape.ID;
             nametagHolder.Nametag.ProfileVersion = profile?.Version ?? 0;
 
-            Color usernameColor;
-
-            if (profile != null)
-                usernameColor = profile.UserNameColor != Color.white ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
-            else
-                usernameColor = NameColorHelper.GetNameColor(avatarShape.Name);
+            Color usernameColor = profile?.UserNameColor ?? NameColorHelper.GetNameColor(avatarShape.Name);
 
             string walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()

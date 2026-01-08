@@ -2,8 +2,10 @@
 
 namespace DCL.Chat.ChatInput
 {
-    public abstract class ChatInputState : MVCState<ChatInputState, ChatInputStateContext>
+    public abstract class ChatInputState : IExitableState
     {
+        public virtual void Exit() { }
+
         internal void OnBlockedUpdated(bool isUnblocked)
         {
             if (isUnblocked)
