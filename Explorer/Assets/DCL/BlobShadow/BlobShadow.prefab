@@ -56,7 +56,7 @@ MonoBehaviour:
     m_Bits: 1
   m_ScaleMode: 0
   m_Offset: {x: 0, y: 0, z: 5}
-  m_Size: {x: 1.2, y: 1.2, z: 10}
+  m_Size: {x: 1, y: 1, z: 10}
   m_FadeFactor: 1
   version: 1
   m_DecalLayerMask: 1
