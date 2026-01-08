@@ -3250,10 +3250,11 @@ MonoBehaviour:
   countdownLabel: {fileID: 7030463916409028714}
   <CancelAuthenticationProcess>k__BackingField: {fileID: 7578292249645083079}
   <VerificationOTPContainer>k__BackingField: {fileID: 5423474796469121246}
-  <VerificationOTP>k__BackingField: {fileID: 0}
+  <DescriptionOTP>k__BackingField: {fileID: 4764930226798731911}
   <VerificationOTPAnimator>k__BackingField: {fileID: 6630927926417701516}
   <OTPInputField>k__BackingField: {fileID: 2366643432980967021}
   <CancelAuthenticationProcessOTP>k__BackingField: {fileID: 6681403874914594065}
+  <ResendOTPButton>k__BackingField: {fileID: 973394669380710363}
   <OTPSubmitResultText>k__BackingField: {fileID: 7529627513758509504}
   <OTPSubmitResultSucessIcon>k__BackingField: {fileID: 6909699731557221918}
   <OTPSubmitResultErrorIcon>k__BackingField: {fileID: 1260398953688086628}
@@ -5988,6 +5989,17 @@ PrefabInstance:
       addedObject: {fileID: 3397202983138163552}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}
+--- !u!114 &973394669380710363 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5275018112713514160, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}
+  m_PrefabInstance: {fileID: 4951303501242725227}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &2366643432980967021 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7236882063200034054, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}
@@ -6004,6 +6016,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7905462993268012880, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}
   m_PrefabInstance: {fileID: 4951303501242725227}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4764930226798731911 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 474846665256489452, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}
+  m_PrefabInstance: {fileID: 4951303501242725227}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5423474796469121246 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1149154417470800821, guid: 69914e9f4e88ea64d8055732a89a4bd5, type: 3}

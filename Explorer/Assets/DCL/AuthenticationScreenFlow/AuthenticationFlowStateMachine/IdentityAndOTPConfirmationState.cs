@@ -45,6 +45,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationOTPAnimator.ResetAnimator();
             viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.IN);
 
+            // Update description with user email
+            viewInstance.DescriptionOTP.text = viewInstance.DescriptionOTP.text.Replace("your@email.com", payload.email);
+
             // Reset OTP result UI
             viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
 
