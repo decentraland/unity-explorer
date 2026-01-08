@@ -41,6 +41,8 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
+            ReportHub.Log(ReportCategory.LANDSCAPE, "TreeData: Dispose");
+
             if (treeIndices.IsCreated)
                 treeIndices.Dispose();
 
@@ -99,6 +101,7 @@ namespace DCL.Landscape
         [Conditional("GPUI_PRO_PRESENT")]
         public void Hide()
         {
+            ReportHub.Log(ReportCategory.LANDSCAPE, "TreeData: Hide");
             foreach (int rendererKey in rendererKeys)
                 GPUICoreAPI.SetInstanceCount(rendererKey, 0);
         }
