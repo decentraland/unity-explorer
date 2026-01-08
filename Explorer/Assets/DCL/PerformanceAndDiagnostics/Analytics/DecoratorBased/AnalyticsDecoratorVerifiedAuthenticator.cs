@@ -13,6 +13,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             remove => core.VerificationRequired -= value;
         }
 
+        public event Action? OtpRequired
+        {
+            add => core.OtpRequired += value;
+            remove => core.OtpRequired -= value;
+        }
+
         public AnalyticsDecoratorVerifiedAuthenticator(IWeb3VerifiedAuthenticator core, IAnalyticsController analytics)
             : base(core, analytics)
         {
@@ -24,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.CancelCurrentWeb3Operation();
         }
 
-        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
-            core.SetOtpRequestListener(callback);
+        public void SubmitOtp(string otp) =>
+            core.SubmitOtp(otp);
     }
 }

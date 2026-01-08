@@ -52,6 +52,7 @@ namespace DCL.Web3.Authenticators
         private VerificationDelegate? signatureVerificationCallback;
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
+        public event Action? OtpRequired;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
@@ -226,7 +227,7 @@ namespace DCL.Web3.Authenticators
             codeVerificationTask?.TrySetCanceled();
         }
 
-        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback)
+        public void SubmitOtp(string otp)
         {
             // Not used in Dapp flow - OTP is handled via browser, not in-app UI
         }

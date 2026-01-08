@@ -21,8 +21,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly SentryTransactionManager sentryTransactionManager;
 
-        private UniTaskCompletionSource<string>? otpCompletionSource;
-
         public IdentityAndOTPConfirmationState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
@@ -49,7 +47,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Listeners
             viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OnCodeComplete += SendRegistration;
+            viewInstance.OTPInputField.OnCodeComplete += OnOtpEntered;
 
             AuthenticateAsync(payload.email, payload.ct).Forget();
         }
@@ -58,11 +56,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OnCodeComplete -= SendRegistration;
-
-            otpCompletionSource?.TrySetCanceled();
-            otpCompletionSource = null;
-            web3Authenticator.SetOtpRequestListener(null);
+            viewInstance.OTPInputField.OnCodeComplete -= OnOtpEntered;
         }
 
         private void CancelLoginProcess()
@@ -87,10 +81,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
-                web3Authenticator.SetOtpRequestListener(RequestOtpFromUserAsync);
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
-                web3Authenticator.SetOtpRequestListener(null);
-                otpCompletionSource = null;
 
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
@@ -123,35 +114,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
-            finally
-            {
-                web3Authenticator.SetOtpRequestListener(null);
-                otpCompletionSource = null;
-            }
         }
 
-        private UniTask<string> RequestOtpFromUserAsync(CancellationToken ct)
-        {
-            otpCompletionSource = new UniTaskCompletionSource<string>();
-
-            // Register cancellation to clean up if cancelled
-            ct.Register(() =>
-            {
-                otpCompletionSource?.TrySetCanceled(ct);
-                otpCompletionSource = null;
-            });
-
-            return otpCompletionSource.Task;
-        }
-
-        private void SendRegistration(string otp)
-        {
-            // If we're waiting for OTP input, complete the task with the entered code
-            if (otpCompletionSource == null) return;
-
-            // string? otp = viewInstance!.OTPInputField.Code;
-            otpCompletionSource.TrySetResult(otp);
-        }
+        private void OnOtpEntered(string otp) =>
+            web3Authenticator.SubmitOtp(otp);
 
         //  async UniTaskVoid StartLoginFlowUntilEndAsync(CancellationToken ct)
         // {

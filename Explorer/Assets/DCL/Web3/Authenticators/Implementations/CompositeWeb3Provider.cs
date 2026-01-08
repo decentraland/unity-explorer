@@ -38,6 +38,12 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
+        public event Action? OtpRequired
+        {
+            add => thirdWebAuth.OtpRequired += value;
+            remove => thirdWebAuth.OtpRequired -= value;
+        }
+
         /// <summary>
         ///     Event fired when the authentication method changes
         /// </summary>
@@ -75,12 +81,8 @@ namespace DCL.Web3.Authenticators
             dappAuth.CancelCurrentWeb3Operation();
         }
 
-        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback)
-        {
-            // Set on both - only ThirdWeb uses this
-            thirdWebAuth.SetOtpRequestListener(callback);
-            dappAuth.SetOtpRequestListener(callback);
-        }
+        public void SubmitOtp(string otp) =>
+            thirdWebAuth.SubmitOtp(otp);
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);

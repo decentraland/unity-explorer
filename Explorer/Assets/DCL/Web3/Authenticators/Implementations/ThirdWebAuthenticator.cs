@@ -27,7 +27,7 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         private BigInteger chainId;
-        private IWeb3VerifiedAuthenticator.OtpRequestDelegate? otpRequestCallback;
+        private UniTaskCompletionSource<string>? otpCompletionSource;
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
@@ -112,7 +112,15 @@ namespace DCL.Web3.Authenticators
             await wallet.SendOTP();
 
             Debug.Log("OTP sent to email");
-            string otp = await otpRequestCallback!.Invoke(ct);
+
+            otpCompletionSource = new UniTaskCompletionSource<string>();
+            ct.Register(() => otpCompletionSource?.TrySetCanceled(ct));
+
+            OtpRequired?.Invoke();
+
+            string otp = await otpCompletionSource.Task;
+            otpCompletionSource = null;
+
             Debug.Log($"passing OTP {otp}");
 
             try { _ = await wallet.LoginWithOtp(otp); }
@@ -320,13 +328,14 @@ namespace DCL.Web3.Authenticators
             $"https://{chainId}.rpc.thirdweb.com";
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
+        public event Action? OtpRequired;
 
         public void CancelCurrentWeb3Operation()
         {
             throw new NotImplementedException();
         }
 
-        public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
-            otpRequestCallback = callback;
+        public void SubmitOtp(string otp) =>
+            otpCompletionSource?.TrySetResult(otp);
     }
 }

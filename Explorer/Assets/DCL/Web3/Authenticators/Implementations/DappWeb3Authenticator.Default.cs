@@ -23,6 +23,12 @@ namespace DCL.Web3.Authenticators
                 remove => originAuth.VerificationRequired -= value;
             }
 
+            public event Action? OtpRequired
+            {
+                add => originAuth.OtpRequired += value;
+                remove => originAuth.OtpRequired -= value;
+            }
+
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
                 URLAddress authApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth));
@@ -86,8 +92,8 @@ namespace DCL.Web3.Authenticators
                 originAuth.CancelCurrentWeb3Operation();
             }
 
-            public void SetOtpRequestListener(IWeb3VerifiedAuthenticator.OtpRequestDelegate? callback) =>
-                originAuth.SetOtpRequestListener(callback);
+            public void SubmitOtp(string otp) =>
+                originAuth.SubmitOtp(otp);
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {

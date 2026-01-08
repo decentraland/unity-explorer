@@ -1,7 +1,4 @@
-using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using System;
-using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -13,12 +10,16 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
-        void CancelCurrentWeb3Operation();
         /// <summary>
-        ///     Callback for requesting OTP input from user (ThirdWeb flow - pull-based)
+        ///     Raised when OTP input is required from user (ThirdWeb flow).
         /// </summary>
-        public delegate UniTask<string> OtpRequestDelegate(CancellationToken ct);
+        event Action? OtpRequired;
 
-        public void SetOtpRequestListener(OtpRequestDelegate? callback);
+        void CancelCurrentWeb3Operation();
+
+        /// <summary>
+        /// Submit OTP code entered by user.
+        /// </summary>
+        void SubmitOtp(string otp);
     }
 }
