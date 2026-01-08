@@ -212,8 +212,6 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (component.AssetResult == null)
             {
-                UnityEngine.Debug.Log($"JUANI STARTING ASSET RESULT {component.DTO.id}");
-
                 component.TryGetContentHashByKey(component.DTO.Metadata.AbstractData.representations[0].mainFile, out string? hash);
 
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem

@@ -10,7 +10,6 @@ namespace DCL.AvatarRendering.Emotes
     {
         public static GetEmotesByPointersIntention CreateGetEmotesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> emotes)
         {
-            UnityEngine.Debug.Log($"JUANI WHERE THIS IS COMING FROM {Environment.StackTrace}");
             List<URN> pointers = POINTERS_POOL.Get()!;
 
             foreach (URN emote in emotes)
