@@ -56,7 +56,7 @@ namespace DCL.ChatArea
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-            mvcManager.CloseAllNonPersistentControllers();
+            mvcManager.CloseAllNonPersistentViews();
         }
 
         protected override void OnViewShow()
@@ -104,6 +104,7 @@ namespace DCL.ChatArea
                 mvcManager.OnViewClosed -= OnMvcViewClosed;
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
+                dclInput.UI.Submit.performed -= OnUISubmitPerformed;
             }
 
             eventScope.Dispose();

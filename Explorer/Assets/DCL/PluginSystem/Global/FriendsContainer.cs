@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -83,7 +82,6 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
-            ChatEventBus chatEventBus,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
@@ -135,7 +133,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
-                chatEventBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 profileRepositoryWrapper

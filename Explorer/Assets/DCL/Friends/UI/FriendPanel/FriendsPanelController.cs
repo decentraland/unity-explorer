@@ -36,8 +36,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly bool includeUserBlocking;
-        private readonly ChatEventBus chatEventBus;
-        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -59,14 +57,11 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            ChatEventBus chatEventBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            this.mvcManager = mvcManager;
-            this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
 
             if (isConnectivityStatusEnabled)
@@ -79,8 +74,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    friendsConnectivityStatusTracker,
-                    chatEventBus);
+                    friendsConnectivityStatusTracker);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -97,9 +91,7 @@ namespace DCL.Friends.UI.FriendPanel
                         FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
-                    realmNavigator,
-                    chatEventBus,
-                    mvcManager);
+                    realmNavigator);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
@@ -141,14 +133,7 @@ namespace DCL.Friends.UI.FriendPanel
             requestsSectionController.Dispose();
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            closeTaskCompletionSource.TrySetResult();
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
-        private void OnlineFriendClick(string targetAddress) =>
-            OnlineFriendClicked?.Invoke(targetAddress);
+        private void OnlineFriendClick(string targetAddress) => OnlineFriendClicked?.Invoke(targetAddress);
 
         private void JumpToFriendClick(string targetAddress, Vector2Int parcel)
         {
@@ -156,8 +141,7 @@ namespace DCL.Friends.UI.FriendPanel
             JumpToFriendClicked?.Invoke(targetAddress, parcel);
         }
 
-        public UniTask InitAsync(CancellationToken ct) =>
-            requestsSectionController.InitAsync(ct);
+        public UniTask InitAsync(CancellationToken ct) => requestsSectionController.InitAsync(ct);
 
         public void Reset()
         {
@@ -167,18 +151,10 @@ namespace DCL.Friends.UI.FriendPanel
             blockedSectionController.Reset();
         }
 
-        private void OnOpenConversationClicked(Web3Address web3Address)
-        {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(web3Address);
-        }
+        private void OnOpenConversationClicked(Web3Address web3Address) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(web3Address);
 
-
-        protected override void OnViewShow()
-        {
-            FriendsPanelOpened?.Invoke();
-        }
+        protected override void OnViewShow() => FriendsPanelOpened?.Invoke();
 
         protected override void OnBeforeViewShow()
         {
@@ -203,30 +179,16 @@ namespace DCL.Friends.UI.FriendPanel
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }
 
-        private void OnFriendsTabButtonClicked()
-        {
-            ToggleTabs(FriendsPanelTab.FRIENDS);
-        }
+        private void OnFriendsTabButtonClicked() => ToggleTabs(FriendsPanelTab.FRIENDS);
 
-        private void OnRequestsTabButtonClicked()
-        {
-            ToggleTabs(FriendsPanelTab.REQUESTS);
-        }
+        private void OnRequestsTabButtonClicked() => ToggleTabs(FriendsPanelTab.REQUESTS);
 
-        private void OnBlockedTabButtonClicked()
-        {
-            ToggleTabs(FriendsPanelTab.BLOCKED);
-        }
+        private void OnBlockedTabButtonClicked() => ToggleTabs(FriendsPanelTab.BLOCKED);
 
-        public void CloseFriendsPanel()
-        {
-            closeTaskCompletionSource.TrySetResult();
-        }
+        public void CloseFriendsPanel() => closeTaskCompletionSource.TrySetResult();
 
-        private void FriendRequestCountChanged(int count)
-        {
-            sidebarRequestNotificationIndicator.SetNotificationCount(count);
-        }
+        private void FriendRequestCountChanged(int count) => sidebarRequestNotificationIndicator.SetNotificationCount(count);
+
 
         internal void ToggleTabs(FriendsPanelTab tab)
         {

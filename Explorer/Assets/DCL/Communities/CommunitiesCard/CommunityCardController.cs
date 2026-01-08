@@ -177,7 +177,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
-                viewInstance.OpenChatRequested -= OnOpenCommunityChatAsync;
+                viewInstance.OpenChatRequested -= OnOpenCommunityChat;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
@@ -336,26 +336,14 @@ namespace DCL.Communities.CommunitiesCard
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
 
-        private async void OnOpenCommunityChatAsync()
-        {
-            try
-            {
-                mvcManager.CloseAllNonPersistentControllers();
-                chatEventBus.RaiseFocusRequestedEvent();
-                chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityData.id);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-            }
-        }
+        private void OnOpenCommunityChat() =>
+            ChatOpener.Instance.OpenCommunityConversationWithId(communityData.id);
 
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
-            viewInstance.OpenChatRequested += OnOpenCommunityChatAsync;
+            viewInstance.OpenChatRequested += OnOpenCommunityChat;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
@@ -416,11 +404,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        private void OnClosePanel()
-        {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-        }
+        private void OnClosePanel() => ChatOpener.Instance.CloseAllViewsAndFocusChat();
 
         protected override void OnViewShow()
         {

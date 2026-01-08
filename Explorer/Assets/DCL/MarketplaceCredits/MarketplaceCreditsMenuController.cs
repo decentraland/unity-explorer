@@ -170,12 +170,6 @@ namespace DCL.MarketplaceCredits
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            closeTaskCompletionSource.TrySetResult();
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
         public void OpenSection(MarketplaceCreditsSection section)
         {
             CloseAllSections();

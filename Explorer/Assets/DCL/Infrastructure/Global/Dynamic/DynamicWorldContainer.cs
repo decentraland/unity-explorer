@@ -34,7 +34,6 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
@@ -86,7 +85,6 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -567,6 +565,8 @@ namespace Global.Dynamic
                 currentChannelService
             );
 
+            ChatOpener.Initialize(new ChatOpener(chatEventBus, mvcManager));
+
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
@@ -863,7 +863,6 @@ namespace Global.Dynamic
                     galleryEventBus,
                     thumbnailProvider,
                     passportBridge,
-                    chatEventBus,
                     homePlaceEventBus,
                     staticContainer.SmartWearableCache,
                     bootstrapContainer.Analytics!,
@@ -958,7 +957,6 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     profileChangesBus,
                     includeCommunities,
-                    chatEventBus,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     galleryEventBus,
@@ -1039,7 +1037,6 @@ namespace Global.Dynamic
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
-                    chatEventBus,
                     socialServiceEventBus,
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,

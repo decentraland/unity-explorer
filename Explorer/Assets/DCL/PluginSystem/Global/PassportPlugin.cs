@@ -7,7 +7,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
@@ -62,8 +61,6 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly bool enableFriends;
-        private readonly bool includeUserBlocking;
-        private readonly ChatEventBus chatEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -100,7 +97,6 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
             bool includeCommunities,
-            ChatEventBus chatEventBus,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
@@ -132,7 +128,6 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.chatEventBus = chatEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
@@ -192,7 +187,6 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 includeCommunities,
-                chatEventBus,
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
@@ -213,40 +207,28 @@ namespace DCL.PluginSystem.Global
 
         public class PassportSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(PassportPlugin) + "." + nameof(PassportSettings))]
             [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject PassportPrefab;
+            [field: SerializeField] public AssetReferenceGameObject PassportPrefab;
 
-            [field: SerializeField]
-            public AssetReferenceGameObject Badges3DCamera;
+            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera;
 
-            [field: SerializeField]
-            public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; }
+            [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
 
-            [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; }
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
 
-            [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; }
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
 
-            [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; }
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; } = null!;
 
-            [field: SerializeField]
-            public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
 
-            [field: SerializeField]
-            public int ThumbnailHeight { get; private set; }
+            [field: SerializeField] public int ThumbnailHeight { get; private set; }
 
-            [field: SerializeField]
-            public int ThumbnailWidth { get; private set; }
+            [field: SerializeField] public int ThumbnailWidth { get; private set; }
 
-            [field: SerializeField]
-            public AssetReferenceGameObject NameEditorPrefab;
+            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
 
-            [field: SerializeField]
-            public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }
+            [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }
     }
 }

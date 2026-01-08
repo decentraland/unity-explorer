@@ -42,7 +42,6 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
-        private readonly ChatEventBus chatEventBus;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -75,7 +74,6 @@ namespace DCL.UI
 
         public CommunityPlayerEntryContextMenu(
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ChatEventBus chatEventBus,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -86,7 +84,6 @@ namespace DCL.UI
             IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider)
         {
             this.friendServiceProxy = friendServiceProxy;
-            this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -286,9 +283,7 @@ namespace DCL.UI
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(userId);
         }
 
         private void OnJumpInClicked(string userId)

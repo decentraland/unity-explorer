@@ -25,6 +25,7 @@ using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 
@@ -55,7 +56,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserEventBus browserEventBus;
         private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
-        private readonly ChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
@@ -92,7 +92,6 @@ namespace DCL.Communities.CommunitiesBrowser
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             ICommunityCallOrchestrator orchestrator,
-            ChatEventBus chatEventBus,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus)
@@ -104,7 +103,6 @@ namespace DCL.Communities.CommunitiesBrowser
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
-            this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
             this.analytics = analytics;
             this.communityDataService = communityDataService;
@@ -114,7 +112,7 @@ namespace DCL.Communities.CommunitiesBrowser
             browserEventBus = new CommunitiesBrowserEventBus();
             browserStateService = new CommunitiesBrowserStateService(browserEventBus, orchestrator);
             var thumbnailLoader = new ThumbnailLoader(spriteCache);
-            commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
+            commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
 
             myCommunitiesPresenter = new CommunitiesBrowserMyCommunitiesPresenter(view.MyCommunitiesView, dataProvider, browserStateService, thumbnailLoader, browserEventBus, orchestrator);
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
@@ -143,9 +141,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityInvitationRejected += RejectCommunityInvitation;
             view.CreateCommunityButtonClicked += CreateCommunity;
             view.OpenProfilePassportRequested += OpenProfilePassport;
-            view.OpenUserChatRequested += OpenUserChatAsync;
-            view.CallUserRequested += CallUserAsync;
-            view.BlockUserRequested += BlockUserAsync;
+            view.OpenUserChatRequested += OnOpenUserChat;
+            view.CallUserRequested += OnCallUser;
+            view.BlockUserRequested += OnBlockUserAsync;
             view.ManageRequestReceivedRequested += ManageRequestReceived;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
@@ -170,9 +168,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityInvitationAccepted -= AcceptCommunityInvitation;
             view.CommunityInvitationRejected -= RejectCommunityInvitation;
             view.OpenProfilePassportRequested -= OpenProfilePassport;
-            view.OpenUserChatRequested -= OpenUserChatAsync;
-            view.CallUserRequested -= CallUserAsync;
-            view.BlockUserRequested -= BlockUserAsync;
+            view.OpenUserChatRequested -= OnOpenUserChat;
+            view.CallUserRequested -= OnCallUser;
+            view.BlockUserRequested -= OnBlockUserAsync;
             view.ManageRequestReceivedRequested -= ManageRequestReceived;
 
             myCommunitiesPresenter.ViewAllMyCommunitiesButtonClicked -= ViewAllMyCommunitiesResults;
@@ -432,10 +430,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
             // Get the current invites & received requests to update the invite counter on the main page
             updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
-            RefreshInvitesCounterAsync(updateInvitesCounterCts.Token).Forget();
+            RefreshInvitesCounterAsync().Forget();
             return;
 
-            async UniTaskVoid RefreshInvitesCounterAsync(CancellationToken ct)
+            async UniTaskVoid RefreshInvitesCounterAsync()
             {
                 int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
                 int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
@@ -461,6 +459,7 @@ namespace DCL.Communities.CommunitiesBrowser
             AwaitAndSendSearchAsync(searchText, searchCancellationCts.Token, skipAwait: true).Forget();
         }
 
+        [SuppressMessage("ReSharper", "MethodHasAsyncOverload")]
         private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct, bool skipAwait = false)
         {
             if (!skipAwait)
@@ -860,34 +859,18 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OpenProfilePassport(ICommunityMemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(profile.Address)), CancellationToken.None).Forget();
 
-        private async void OpenUserChatAsync(ICommunityMemberData profile)
+        private void OnOpenUserChat(ICommunityMemberData profile)
         {
-            try
-            {
-                mvcManager.CloseAllNonPersistentControllers();
-                chatEventBus.RaiseFocusRequestedEvent();
-                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-            }
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(profile.Address);
         }
 
-        private async void CallUserAsync(ICommunityMemberData profile)
+        private void OnCallUser(ICommunityMemberData profile)
         {
-            try
-            {
-                mvcManager.CloseAllNonPersistentControllers();
-                chatEventBus.RaiseFocusRequestedEvent();
-                orchestrator.StartPrivateCallWithUserId(profile.Address);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            orchestrator.StartPrivateCallWithUserId(profile.Address);
         }
 
-        private async void BlockUserAsync(ICommunityMemberData profile)
+        private async void OnBlockUserAsync(ICommunityMemberData profile)
         {
             try
             {

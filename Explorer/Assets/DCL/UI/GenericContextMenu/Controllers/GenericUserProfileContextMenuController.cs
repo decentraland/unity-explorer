@@ -321,24 +321,20 @@ namespace DCL.UI
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
             chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(userId);
         }
 
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 

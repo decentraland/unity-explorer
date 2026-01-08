@@ -77,7 +77,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SetAllViewsCanvasActive(IController except, bool isActive) =>
             core.SetAllViewsCanvasActive(except, isActive);
 
-        public void CloseAllNonPersistentControllers(CancellationToken ct = default) =>
-            core.CloseAllNonPersistentControllers(ct);
+        public void CloseAllNonPersistentViews(CancellationToken ct = default) =>
+            core.CloseAllNonPersistentViews(ct);
     }
 }

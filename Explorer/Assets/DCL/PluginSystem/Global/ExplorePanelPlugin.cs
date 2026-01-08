@@ -38,7 +38,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
-using DCL.Chat;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
@@ -132,7 +131,6 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly ChatEventBus chatEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private readonly GalleryEventBus galleryEventBus;
@@ -214,7 +212,6 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             IThumbnailProvider thumbnailProvider,
             IPassportBridge passportBridge,
-            ChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
             IAnalyticsController analytics,
@@ -274,7 +271,6 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
-            this.chatEventBus = chatEventBus;
             dclInput = DCLInput.Instance;
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
@@ -488,7 +484,6 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 nftNamesProvider,
                 communityCallOrchestrator,
-                chatEventBus,
                 analytics,
                 communityDataService,
                 loadingStatus);

@@ -1,9 +1,10 @@
 using DCL.Web3.Abstract;
 using System;
+using Unity.Burst;
 
 namespace DCL.Web3
 {
-    public readonly struct Web3Address
+    public readonly struct Web3Address : IEquatable<Web3Address>
     {
         // ETH wallet address constants
         public const int ETH_ADDRESS_LENGTH = 42; // "0x" + 40 hex characters
@@ -14,8 +15,9 @@ namespace DCL.Web3
         public Web3Address(IWeb3Account web3Account) : this(web3Account.Address.address) {
         }
 
-        public Web3Address(string address)
+        public Web3Address(string? address)
         {
+            address ??= string.Empty;
             OriginalFormat = address;
             this.address = address.ToLower();
         }
@@ -26,6 +28,7 @@ namespace DCL.Web3
         public override int GetHashCode() =>
             address.GetHashCode();
 
+        [BurstDiscard]
         public override bool Equals(object? obj)
         {
             if (obj == null) return false;

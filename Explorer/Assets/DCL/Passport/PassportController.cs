@@ -12,7 +12,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -116,7 +115,6 @@ namespace DCL.Passport
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly ChatEventBus chatEventBus;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -192,7 +190,6 @@ namespace DCL.Passport
             int thumbnailHeight,
             int thumbnailWidth,
             bool includeCommunities,
-            ChatEventBus chatEventBus,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             BadgePreviewCameraView badge3DPreviewCameraPrefab,
@@ -231,7 +228,6 @@ namespace DCL.Passport
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
-            this.chatEventBus = chatEventBus;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
@@ -397,17 +393,12 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
             voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
         }
 
-        private void OnChatButtonClicked()
-        {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(inputData.UserId);
-        }
+        private void OnChatButtonClicked() =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(inputData.UserId);
 
         private void OnJumpToFriendButtonClicked()
         {
@@ -825,7 +816,7 @@ namespace DCL.Passport
             ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {inputData.UserId}");
 
             // Open gifting popup and close passport popup
-            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile?.UserId, targetProfile?.DisplayName)));
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile!.UserId, targetProfile!.DisplayName)));
         }
 
         private void BlockUserClicked()

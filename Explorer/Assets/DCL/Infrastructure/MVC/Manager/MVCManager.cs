@@ -66,7 +66,7 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
-        public void CloseAllNonPersistentControllers(CancellationToken ct = default)
+        public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();
 

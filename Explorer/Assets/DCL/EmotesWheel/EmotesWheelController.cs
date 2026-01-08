@@ -76,13 +76,6 @@ namespace DCL.EmotesWheel
             UnregisterSlotsInput(emoteWheelInput);
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            Close();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
         protected override void OnViewInstantiated()
         {
             viewInstance!.Closed += Close;

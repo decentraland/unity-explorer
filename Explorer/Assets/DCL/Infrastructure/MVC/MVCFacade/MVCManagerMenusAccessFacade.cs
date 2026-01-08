@@ -145,7 +145,7 @@ namespace MVC
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
-                friendServiceProxy, chatEventBus, mvcManager,
+                friendServiceProxy, mvcManager,
                 contextMenuSettings, analytics, onlineUsersProvider,
                 realmNavigator, friendOnlineStatusCacheProxy,
                 voiceChatContextMenuSettings, voiceChatOrchestrator, communitiesDataProvider);

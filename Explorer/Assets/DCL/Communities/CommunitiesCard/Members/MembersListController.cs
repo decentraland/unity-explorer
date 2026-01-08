@@ -98,7 +98,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.ElementManageRequestClicked += OnManageRequestClicked;
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
-            this.view.OpenUserChatRequested += OpenChatWithUserAsync;
+            this.view.OpenUserChatRequested += OpenChatWithUser;
             this.view.GiftUserRequested += OnGiftUserRequested;
             this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
@@ -137,7 +137,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.ElementManageRequestClicked -= OnManageRequestClicked;
 
             view.OpenProfilePassportRequested -= OpenProfilePassport;
-            view.OpenUserChatRequested -= OpenChatWithUserAsync;
+            view.OpenUserChatRequested -= OpenChatWithUser;
             view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
             view.GiftUserRequested -= OnGiftUserRequested;
@@ -395,9 +395,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                mvcManager.CloseAllNonPersistentControllers();
-                chatEventBus.RaiseFocusRequestedEvent();
-                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
+                ChatOpener.Instance.OpenPrivateConversationWithUserId(profile.Address);
                 //TODO FRAN & DAVIDE: This is not clean or pretty, but works for now. Ideally we should be able to await
                 await UniTask.Delay(500);
                 chatEventBus.RaiseStartCallEvent();
@@ -406,17 +404,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
         }
 
-        private async void OpenChatWithUserAsync(ICommunityMemberData profile)
-        {
-            try
-            {
-                mvcManager.CloseAllNonPersistentControllers();
-                chatEventBus.RaiseFocusRequestedEvent();
-                chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
-        }
+        private void OpenChatWithUser(ICommunityMemberData profile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(profile.Address);
+
 
         private void OpenProfilePassport(ICommunityMemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(profile.Address)), cancellationToken).Forget();

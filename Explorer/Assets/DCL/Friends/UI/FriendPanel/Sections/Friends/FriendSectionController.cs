@@ -18,8 +18,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly ChatEventBus chatEventBus;
-        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
         private CancellationTokenSource popupCts = new ();
@@ -29,15 +27,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator,
-            ChatEventBus chatEventBus,
-            IMVCManager mvcManager) : base(view, requestManager)
+            IRealmNavigator realmNavigator) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.chatEventBus = chatEventBus;
-            this.mvcManager = mvcManager;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -61,7 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask.TrySetResult();
 
             contextMenuTask = new UniTaskCompletionSource();
-            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
+            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask!.Task, contextMenuTask.Task);
 
             ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
@@ -73,11 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override void ElementClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
 
-        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
-        {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(elementViewUserProfile.Address);
-        }
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(elementViewUserProfile.Address);
     }
 }

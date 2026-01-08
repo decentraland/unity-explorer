@@ -271,7 +271,7 @@ namespace DCL.Chat
 
         private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
         {
-            request.WalletAddress = new Web3Address(currentViewModel.Id);
+            request.WalletAddress = new Web3Address(currentViewModel?.Id);
 
             chatContextMenuService
                 .ShowUserProfileMenuAsync(request)

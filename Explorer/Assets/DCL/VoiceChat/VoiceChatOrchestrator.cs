@@ -116,8 +116,7 @@ namespace DCL.VoiceChat
             var notification = (CommunityVoiceChatStartedNotification)parameters[0];
 
             JoinCommunityVoiceChat(notification.Metadata.CommunityId, true);
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenCommunityConversationRequestedEvent(notification.Metadata.CommunityId);
+            ChatOpener.Instance.OpenCommunityConversationWithId(notification.Metadata.CommunityId);
         }
 
         public void StartCall(string callId, VoiceChatType callType)

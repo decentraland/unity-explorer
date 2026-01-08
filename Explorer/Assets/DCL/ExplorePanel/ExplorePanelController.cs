@@ -98,13 +98,6 @@ namespace DCL.ExplorePanel
                 ShowSection(sectionToShow);
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            isControlClosing = true;
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
         protected override void OnViewInstantiated()
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();

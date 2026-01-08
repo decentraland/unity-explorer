@@ -23,7 +23,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IRealmNavigator realmNavigator;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly ChatEventBus chatEventBus;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private CancellationTokenSource openPassportCts = new ();
@@ -42,15 +41,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            ChatEventBus chatEventBus)
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.chatEventBus = chatEventBus;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
@@ -131,11 +128,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
         }
 
-        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
-        {
-            mvcManager.CloseAllNonPersistentControllers();
-            chatEventBus.RaiseFocusRequestedEvent();
-            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(elementViewUserProfile.Address);
-        }
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(elementViewUserProfile.Address);
     }
 }

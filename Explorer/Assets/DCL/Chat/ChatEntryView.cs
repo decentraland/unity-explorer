@@ -4,7 +4,6 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
-using DCL.FeatureFlags;
 using DCL.Translation;
 using DCL.Utilities;
 using MVC;
