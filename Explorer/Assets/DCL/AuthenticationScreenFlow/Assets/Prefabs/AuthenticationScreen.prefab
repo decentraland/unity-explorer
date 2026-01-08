@@ -2983,7 +2983,7 @@ MonoBehaviour:
   <LoginButton>k__BackingField: {fileID: 4708745492529117082}
   <CancelLoginButton>k__BackingField: {fileID: 7148045455480499345}
   <LoadingSpinner>k__BackingField: {fileID: 101159986873043013}
-  <PendingAuthentication>k__BackingField: {fileID: 9139651224223642632}
+  <VerificationContainer>k__BackingField: {fileID: 9139651224223642632}
   <CancelAuthenticationProcess>k__BackingField: {fileID: 7578292249645083079}
   <FinalizeContainer>k__BackingField: {fileID: 3916047686447302749}
   <JumpIntoWorldButton>k__BackingField: {fileID: 8577423537029511}

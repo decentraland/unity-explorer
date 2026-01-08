@@ -24,7 +24,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (wearableStorage.TryGetElement(pointer, out var wearable))
             {
+                // Wearables could be in the storage but still loading their data. Wait until they finish loading.
+                await UniTask.WaitWhile(() => wearable.IsLoading, cancellationToken: ct);
+
+                await UniTask.SwitchToMainThread();
                 onWearableFetched(wearable);
+                
                 return;
             }
 
@@ -41,6 +46,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     foreach (var result in results)
                         if (result.GetUrn() == pointer)
                         {
+                            await UniTask.SwitchToMainThread();
                             onWearableFetched(result);
                             return;
                         }

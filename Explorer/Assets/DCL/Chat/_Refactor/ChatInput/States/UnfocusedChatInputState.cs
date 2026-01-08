@@ -1,36 +1,49 @@
-﻿using UnityEngine.EventSystems;
+﻿using MVC;
+using UnityEngine.EventSystems;
+using Utility;
 
 namespace DCL.Chat.ChatInput
 {
-    public class UnfocusedChatInputState : ChatInputState
+    public class UnfocusedChatInputState : ChatInputState, IState
     {
-        public override void Begin()
+        private readonly MVCStateMachine<ChatInputState> stateMachine;
+        private readonly ChatInputView view;
+        private readonly IEventBus eventBus;
+
+        public UnfocusedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus)
         {
-            context.ChatInputView.Show();
-            context.ChatInputView.SetDefault();
-            context.ChatInputView.RefreshHeight();
-            
+            this.stateMachine = stateMachine;
+            this.view = view;
+            this.eventBus = eventBus;
+        }
+
+        public void Enter()
+        {
+            view.Show();
+            view.SetDefault();
+            view.RefreshHeight();
+
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(null);
 
-            context.ChatInputView.inputField.onSelect.AddListener(OnInputSelected);
+            view.inputField.onSelect.AddListener(OnInputSelected);
         }
 
         private void OnInputSelected(string _)
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            context.ChatEventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
         }
 
-        public override void End()
+        public override void Exit()
         {
-            context.ChatInputView.inputField.onSelect.RemoveListener(OnInputSelected);
+            view.inputField.onSelect.RemoveListener(OnInputSelected);
         }
 
         protected override void OnInputBlocked()
         {
-            ChangeState<BlockedChatInputState>();
+            stateMachine.Enter<BlockedChatInputState>();
         }
     }
 }
