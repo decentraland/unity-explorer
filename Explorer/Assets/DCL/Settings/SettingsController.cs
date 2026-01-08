@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
@@ -61,7 +60,7 @@ namespace DCL.Settings
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
-        public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+        public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
@@ -185,7 +184,7 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;

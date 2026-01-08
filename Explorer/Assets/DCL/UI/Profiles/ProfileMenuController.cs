@@ -18,7 +18,6 @@ namespace DCL.UI.Profiles
     public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IProfileRepository profileRepository;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IWebBrowser webBrowser;
@@ -35,7 +34,6 @@ namespace DCL.UI.Profiles
         public ProfileMenuController(
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -47,7 +45,6 @@ namespace DCL.UI.Profiles
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
-            this.profileRepository = profileRepository;
             this.world = world;
             this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
@@ -62,7 +59,7 @@ namespace DCL.UI.Profiles
         {
             base.OnViewInstantiated();
 
-            profileSectionPresenter = new ProfileSectionPresenter(viewInstance!.ProfileMenu, identityCache, profileRepository, profileDataProvider);
+            profileSectionPresenter = new ProfileSectionPresenter(viewInstance!.ProfileMenu, identityCache, profileDataProvider);
             systemSectionPresenter = new SystemSectionPresenter(viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
             systemSectionPresenter.OnClosed += OnClose;
         }

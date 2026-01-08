@@ -45,11 +45,11 @@ namespace MVC
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource? cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
         private ChatOptionsContextMenuController? chatOptionsContextMenuController;
-        private CommunityContextMenuController communityContextMenuController;
+        private CommunityContextMenuController? communityContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,

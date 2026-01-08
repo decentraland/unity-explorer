@@ -9,7 +9,7 @@ namespace DCL.Settings.Configuration
     [CreateAssetMenu(fileName = "Settings Menu Configuration", menuName = "DCL/Settings/Settings Menu Configuration")]
     public class SettingsMenuConfiguration : ScriptableObject
     {
-        [field: SerializeField] public SettingsGroupViewRef SettingsGroupPrefab { get; set; }
+        [field: SerializeField] public SettingsGroupViewRef? SettingsGroupPrefab { get; set; }
         [field: SerializeField] internal SettingsSectionConfig GeneralSectionConfig { get; set; }
         [field: SerializeField] internal SettingsSectionConfig GraphicsSectionConfig { get; set; }
         [field: SerializeField] internal SettingsSectionConfig SoundSectionConfig { get; set; }

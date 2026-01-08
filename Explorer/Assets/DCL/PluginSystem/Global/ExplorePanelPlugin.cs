@@ -503,7 +503,6 @@ namespace DCL.PluginSystem.Global
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView,
                         web3IdentityCache,
-                        profileRepository,
                         world,
                         playerEntity,
                         webBrowser,

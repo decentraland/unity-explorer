@@ -24,6 +24,7 @@ using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Chat;
+using DCL.Profiles;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 

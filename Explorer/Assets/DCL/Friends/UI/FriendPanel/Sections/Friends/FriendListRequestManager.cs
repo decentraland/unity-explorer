@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
