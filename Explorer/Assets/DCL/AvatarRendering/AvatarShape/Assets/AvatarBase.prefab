@@ -4396,7 +4396,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 686808736605679747, guid: 77042a6626e1a064f90b622d0381d7df, type: 3}
       propertyPath: m_Name
-      value: BlobShadow
+      value: JumpIndicator
       objectReference: {fileID: 0}
     - target: {fileID: 3343016136156413571, guid: 77042a6626e1a064f90b622d0381d7df, type: 3}
       propertyPath: m_LocalPosition.x
