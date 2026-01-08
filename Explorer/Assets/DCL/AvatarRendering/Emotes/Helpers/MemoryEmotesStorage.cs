@@ -18,9 +18,9 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
             URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly List<URN> baseEmotesUrns = new ();
 
-
-        public List<URN> EmbededURNs { get; } = new ();
+        public IReadOnlyList<URN> BaseEmotesUrns => baseEmotesUrns;
 
         public bool TryGetElement(URN urn, out IEmote element)
         {
@@ -46,13 +46,12 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
-
-        public void AddEmbeded(URN urn, IEmote emote)
+        public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns)
         {
             lock (lockObject)
             {
-                EmbededURNs.Add(urn);
-                emotes[urn] = emote;
+                baseEmotesUrns.Clear();
+                baseEmotesUrns.AddRange(urns);
             }
         }
 

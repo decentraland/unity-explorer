@@ -143,6 +143,14 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
+
+            // Initialize the embedded emote URN mapping for legacy emote conversion
+            EmoteComponentsUtils.InitializeLegacyToOnChainEmoteMapping(baseEmotesUrns);
+
+            // Set default emotes (used in case of empty emote wheel)
+            emoteStorage.SetBaseEmotesUrns(baseEmotesUrns);
+
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
@@ -151,7 +159,7 @@ namespace DCL.PluginSystem.Global
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
-                emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
+                emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
@@ -194,10 +202,8 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public string[] BaseEmotes { get; private set; }
 
-            public IReadOnlyCollection<URN> BaseEmotesAsURN()
-            {
-                return BaseEmotes.Select(s => new URN(s)).ToArray();
-            }
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
+                BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }
