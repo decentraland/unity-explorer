@@ -51,12 +51,13 @@ namespace DCL.Chat.MessageBus
             IRoomHub roomHub)
         {
             this.messagePipesHub = messagePipesHub;
-            this.messageDeduplication = new MessageDeduplication<double>();
+            messageDeduplication = new MessageDeduplication<double>();
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
 
-            this.isChatMessageRateLimiterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT);
+            isChatMessageRateLimiterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_MESSAGE_RATE_LIMIT);
+
             if (isChatMessageRateLimiterEnabled)
             {
                 messageRateLimiter = new ChatMessageRateLimiter();
@@ -97,7 +98,8 @@ namespace DCL.Chat.MessageBus
 
         private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.ClientInitiated)
+            //We clear the buffer if we disconnect from the island, so we dont keep receiving messages from that nearby area.
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.UnknownReason)
                 nearbyChannelBuffer!.Reset();
         }
 
