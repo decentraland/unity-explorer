@@ -150,7 +150,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            var intent = new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW };
+            var intent = new CharacterEmoteIntent(emoteId, triggerSource: TriggerSource.PREVIEW);
 
             if (globalWorld.Has<CharacterEmoteIntent>(characterPreviewEntity))
                 globalWorld.Set(characterPreviewEntity, intent);

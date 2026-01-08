@@ -130,7 +130,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.InteractionId = interactionId;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.SendTo() <color=green>SENT TO [{emote.Payload.IncrementalId}]: {emote.Payload.Urn} reacting? {emote.Payload.IsReacting} initiator: {emote.Payload.SocialEmoteInitiator} isStopping: {isStopping} isRepeating: {isRepeating} interactionId: {interactionId} target: {targetAvatarWalletAddress}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.SendTo() <color=green>SENT TO [{emote.Payload.IncrementalId}]: {emote.Payload.Urn} outcome index: {emote.Payload.SocialEmoteOutcome} reacting? {emote.Payload.IsReacting} initiator: {emote.Payload.SocialEmoteInitiator} isStopping: {emote.Payload.IsStopping} isRepeating: {emote.Payload.IsRepeating} interactionId: {emote.Payload.InteractionId} target: {emote.Payload.TargetAvatar}</color>");
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote, string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, bool isRepeating, int interactionId)
