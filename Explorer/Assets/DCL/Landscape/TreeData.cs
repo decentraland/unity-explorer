@@ -41,8 +41,6 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            ReportHub.Log(ReportCategory.LANDSCAPE, "TreeData: Dispose");
-
             if (treeIndices.IsCreated)
                 treeIndices.Dispose();
 
@@ -101,7 +99,6 @@ namespace DCL.Landscape
         [Conditional("GPUI_PRO_PRESENT")]
         public void Hide()
         {
-            ReportHub.Log(ReportCategory.LANDSCAPE, "TreeData: Hide");
             foreach (int rendererKey in rendererKeys)
                 GPUICoreAPI.SetInstanceCount(rendererKey, 0);
         }
@@ -138,9 +135,6 @@ namespace DCL.Landscape
             {
                 List<Matrix4x4> matrices = transforms[prototypeIndex];
                 instanceCounts[prototypeIndex] = matrices.Count;
-
-                ReportHub.Log(ReportCategory.LANDSCAPE, $"TreeData: Uploading {matrices.Count} transforms for prototype {prototypeIndex} (Key: {rendererKeys[prototypeIndex]})");
-
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
                     matrices, 0, 0, matrices.Count);
             }
@@ -306,7 +300,6 @@ namespace DCL.Landscape
         {
             for (int prototypeIndex = 0; prototypeIndex < rendererKeys.Length; prototypeIndex++)
             {
-                ReportHub.Log(ReportCategory.LANDSCAPE, $"TreeData: Showing {instanceCounts[prototypeIndex]} instances for Key: {rendererKeys[prototypeIndex]}");
                 GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
                     instanceCounts[prototypeIndex]);
             }
