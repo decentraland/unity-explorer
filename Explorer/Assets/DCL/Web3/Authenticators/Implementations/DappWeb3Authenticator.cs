@@ -231,6 +231,10 @@ namespace DCL.Web3.Authenticators
             // Not used in Dapp flow - OTP is handled via browser, not in-app UI
             UniTask.CompletedTask;
 
+        public UniTask ResendOtp() =>
+            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
+            UniTask.CompletedTask;
+
         public void AddVerificationListener(VerificationDelegate callback) =>
             signatureVerificationCallback = callback;
 

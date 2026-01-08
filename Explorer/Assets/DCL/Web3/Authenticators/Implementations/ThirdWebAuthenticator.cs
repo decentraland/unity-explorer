@@ -345,5 +345,15 @@ namespace DCL.Web3.Authenticators
             }
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect code", e); }
         }
+
+        public async UniTask ResendOtp()
+        {
+            if (pendingWallet == null)
+                throw new InvalidOperationException("ResendOtp called but no pending wallet");
+
+            Debug.Log("Resending OTP");
+            await pendingWallet.SendOTP();
+            Debug.Log("OTP resent to email");
+        }
     }
 }

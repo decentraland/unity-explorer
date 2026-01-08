@@ -89,6 +89,9 @@ namespace DCL.Web3.Authenticators
             public UniTask SubmitOtp(string otp) =>
                 originAuth.SubmitOtp(otp);
 
+            public UniTask ResendOtp() =>
+                originAuth.ResendOtp();
+
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {
                 public bool ShouldWaitForCodeVerificationFromServer => false;

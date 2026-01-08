@@ -29,5 +29,8 @@ namespace DCL.Web3.Authenticators
 
         public UniTask SubmitOtp(string otp) =>
             authenticator.SubmitOtp(otp);
+
+        public UniTask ResendOtp() =>
+            authenticator.ResendOtp();
     }
 }

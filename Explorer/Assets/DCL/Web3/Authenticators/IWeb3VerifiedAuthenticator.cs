@@ -18,5 +18,11 @@ namespace DCL.Web3.Authenticators
         ///     Throws <see cref="OtpValidationException"/> if code is invalid/expired.
         /// </summary>
         UniTask SubmitOtp(string otp);
+
+        /// <summary>
+        ///     Resend OTP code to the same email.
+        ///     Can only be called during active login session.
+        /// </summary>
+        UniTask ResendOtp();
     }
 }

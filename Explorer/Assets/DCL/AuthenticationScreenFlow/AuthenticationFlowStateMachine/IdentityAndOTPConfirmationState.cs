@@ -53,6 +53,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Listeners
             viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
+            viewInstance.ResendOTPButton.onClick.AddListener(ResendOtp);
             viewInstance.OTPInputField.OtpCodeEntered += OnOtpEntered;
 
             AuthenticateAsync(payload.email, payload.ct).Forget();
@@ -62,6 +63,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(CancelLoginProcess);
+            viewInstance.ResendOTPButton.onClick.RemoveListener(ResendOtp);
             viewInstance.OTPInputField.OtpCodeEntered -= OnOtpEntered;
         }
 
@@ -69,6 +71,25 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             controller.CancelLoginProcess();
             machine.Enter<LoginStartAuthState>();
+        }
+
+        private void ResendOtp()
+        {
+            ResendOtpAsync().Forget();
+            return;
+
+            async UniTaskVoid ResendOtpAsync()
+            {
+                viewInstance.ResendOTPButton.interactable = false;
+
+                try
+                {
+                    await web3Authenticator.ResendOtp();
+                    viewInstance.OTPInputField.ClearAndFocus();
+                }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
+                finally { viewInstance.ResendOTPButton.interactable = true; }
+            }
         }
 
         private async UniTaskVoid AuthenticateAsync(string email, CancellationToken ct)

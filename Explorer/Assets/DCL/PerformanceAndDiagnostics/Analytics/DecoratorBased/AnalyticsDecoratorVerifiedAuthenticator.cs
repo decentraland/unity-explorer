@@ -27,5 +27,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public UniTask SubmitOtp(string otp) =>
             core.SubmitOtp(otp);
+
+        public UniTask ResendOtp() =>
+            core.ResendOtp();
     }
 }

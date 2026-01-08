@@ -78,6 +78,9 @@ namespace DCL.Web3.Authenticators
         public UniTask SubmitOtp(string otp) =>
             thirdWebAuth.SubmitOtp(otp);
 
+        public UniTask ResendOtp() =>
+            thirdWebAuth.ResendOtp();
+
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);
 
