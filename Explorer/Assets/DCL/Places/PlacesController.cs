@@ -7,11 +7,15 @@ namespace DCL.Places
 {
     public class PlacesController : ISection, IDisposable
     {
+        public Action<PlacesSections?, PlacesSections>? SectionChanged;
+        public Action? PlacesClosed;
+
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
+        private readonly DiscoverSectionController discoverSectionController;
 
         public PlacesController(
             PlacesView view,
@@ -21,12 +25,15 @@ namespace DCL.Places
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
 
-            view.OnSectionChanged += OnSectionChanged;
+            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView);
+
+            view.SectionChanged += OnSectionChanged;
         }
 
         public void Dispose()
         {
-            view.OnSectionChanged -= OnSectionChanged;
+            view.SectionChanged -= OnSectionChanged;
+            discoverSectionController.Dispose();
         }
 
         public void Activate()
@@ -44,6 +51,7 @@ namespace DCL.Places
         {
             isSectionActivated = false;
             view.SetViewActive(false);
+            PlacesClosed?.Invoke();
         }
 
         public void Animate(int triggerId) =>
@@ -55,9 +63,9 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        private void OnSectionChanged(PlacesSections section)
+        private void OnSectionChanged(PlacesSections? fromSection, PlacesSections toSection)
         {
-            Debug.Log($"[SANTI LOG] Section changed to {section}");
+            SectionChanged?.Invoke(fromSection, toSection);
         }
     }
 }

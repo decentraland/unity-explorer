@@ -6,13 +6,15 @@ namespace DCL.Places
 {
     public class PlacesView : MonoBehaviour
     {
-        public Action<PlacesSections>? OnSectionChanged;
+        public Action<PlacesSections?, PlacesSections>? SectionChanged;
+
+        public DiscoverSectionView DiscoverView => discoverSectionView;
 
         private PlacesSections? currentSection;
 
         [Header("Sections")]
         [SerializeField] private ButtonWithSelectableStateView discoverSectionTab = null!;
-        [SerializeField] private GameObject discoverSectionView = null!;
+        [SerializeField] private DiscoverSectionView discoverSectionView = null!;
         [SerializeField] private ButtonWithSelectableStateView favoritesSectionTab = null!;
         [SerializeField] private GameObject favoritesSectionView = null!;
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
@@ -59,7 +61,7 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSections section, bool force = false)
         {
-            if (currentSection == section)
+            if (currentSection == section && !force)
                 return;
 
             discoverSectionTab.SetSelected(false);
@@ -91,7 +93,7 @@ namespace DCL.Places
                     break;
             }
 
-            OnSectionChanged?.Invoke(section);
+            SectionChanged?.Invoke(currentSection, section);
             currentSection = section;
         }
     }
