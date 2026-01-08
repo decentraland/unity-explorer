@@ -65,6 +65,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebRequestController webRequestController;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -118,6 +120,8 @@ namespace DCL.AuthenticationScreenFlow
             this.backgroundMusic = backgroundMusic;
             this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
+            this.wearablesProvider = wearablesProvider;
+            this.webRequestController = webRequestController;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -149,13 +153,17 @@ namespace DCL.AuthenticationScreenFlow
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
+            var profileFetchingOTP = new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile, storedIdentityProvider, wearablesProvider, webRequestController);
+
             fsm.AddStates(
                 new InitAuthScreenState(viewInstance, buildData.InstallSource),
                 new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
                 new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
-                new LobbyAuthState(viewInstance, this, characterPreviewController),
-                new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager)
+                new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, splashScreen, selfProfile),
+                new LobbyAuthState(viewInstance, this, CurrentState, characterPreviewController),
+                new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
+                profileFetchingOTP,
+                new LobbyOTPAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, profileFetchingOTP)
                 );
             fsm.Enter<InitAuthScreenState>();
         }

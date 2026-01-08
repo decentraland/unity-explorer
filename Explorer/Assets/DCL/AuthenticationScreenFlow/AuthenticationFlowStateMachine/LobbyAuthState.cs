@@ -1,24 +1,48 @@
 using Cysharp.Threading.Tasks;
+using DCL.CharacterPreview;
+using DCL.Profiles;
 using DCL.UI;
+using DCL.Utilities;
 using MVC;
+using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
+using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyAuthState : AuthStateBase, IState
+    public class LobbyAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
     {
-        private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly AuthenticationScreenController controller;
+        private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
+        private readonly StringVariable? profileNameLabel;
+        private readonly ReactiveProperty<AuthenticationStatus> currentState;
 
-        public LobbyAuthState(AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
+        public LobbyAuthState(
+            AuthenticationScreenView viewInstance,
+            AuthenticationScreenController controller,
+            ReactiveProperty<AuthenticationStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
             this.controller = controller;
+            this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
+
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
-        public void Enter()
+        public void Enter((Profile profile, bool isCached) payload)
         {
+            currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
+
+            Profile? profile = payload.profile;
+
+            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
+
+            viewInstance.JumpIntoWorldButton.gameObject.SetActive(true);
+            viewInstance.ProfileNameLabel.gameObject.SetActive(true);
+            viewInstance.Description.SetActive(true);
+            viewInstance.DiffAccountButton.SetActive(true);
+
             viewInstance.FinalizeContainer.SetActive(true);
 
             viewInstance.FinalizeAnimator.ResetAnimator();
@@ -26,10 +50,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             viewInstance.JumpIntoWorldButton.interactable = true;
 
+            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
+            return;
+
+            bool IsNewUser() =>
+                profile.Version == 1;
         }
 
         public override void Exit()
@@ -53,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await UniTask.Delay(AuthenticationScreenController.ANIMATION_DELAY);
+                await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
 
                 controller.TrySetLifeCycle();

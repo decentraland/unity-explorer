@@ -92,7 +92,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 web3Authenticator.SetOtpRequestListener(null);
                 otpCompletionSource = null;
 
-                machine.Enter<ProfileFetchingOTPAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
+                machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
             catch (OperationCanceledException)
             {
