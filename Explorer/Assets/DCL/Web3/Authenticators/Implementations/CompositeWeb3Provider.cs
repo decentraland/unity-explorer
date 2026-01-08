@@ -75,7 +75,7 @@ namespace DCL.Web3.Authenticators
             dappAuth.CancelCurrentWeb3Operation();
         }
 
-        public void SubmitOtp(string otp) =>
+        public UniTask SubmitOtp(string otp) =>
             thirdWebAuth.SubmitOtp(otp);
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>

@@ -27,7 +27,8 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         private BigInteger chainId;
-        private UniTaskCompletionSource<string>? otpCompletionSource;
+        private InAppWallet? pendingWallet;
+        private UniTaskCompletionSource<bool>? loginCompletionSource;
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
@@ -104,30 +105,28 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log("Login via OTP");
 
-            InAppWallet wallet = await InAppWallet.Create(
+            pendingWallet = await InAppWallet.Create(
                 ThirdWebManager.Instance.Client,
                 email,
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
-            await wallet.SendOTP();
+            await pendingWallet.SendOTP();
 
             Debug.Log("OTP sent to email");
 
-            otpCompletionSource = new UniTaskCompletionSource<string>();
-            ct.Register(() => otpCompletionSource?.TrySetCanceled(ct));
+            // Wait for successful login via SubmitOtp
+            loginCompletionSource = new UniTaskCompletionSource<bool>();
+            ct.Register(() => loginCompletionSource?.TrySetCanceled(ct));
 
-            string otp = await otpCompletionSource.Task;
-            otpCompletionSource = null;
+            await loginCompletionSource.Task;
+            loginCompletionSource = null;
 
-            Debug.Log($"passing OTP {otp}");
+            Debug.Log($"ThirdWeb logged in as wallet {pendingWallet.WalletId}");
 
-            try { _ = await wallet.LoginWithOtp(otp); }
-            catch (Exception e) { Debug.LogException(e); }
-
-            Debug.Log($"ThirdWeb logged in as wallet {wallet.WalletId}");
-
-            ThirdWebManager.Instance.ActiveWallet = wallet;
-            return wallet;
+            ThirdWebManager.Instance.ActiveWallet = pendingWallet;
+            InAppWallet result = pendingWallet;
+            pendingWallet = null;
+            return result;
         }
 
         public void Dispose()
@@ -332,7 +331,19 @@ namespace DCL.Web3.Authenticators
             throw new NotImplementedException();
         }
 
-        public void SubmitOtp(string otp) =>
-            otpCompletionSource?.TrySetResult(otp);
+        public async UniTask SubmitOtp(string otp)
+        {
+            if (pendingWallet == null)
+                throw new InvalidOperationException("SubmitOtp called but no pending wallet");
+
+            Debug.Log($"Validating OTP: {otp}");
+
+            try
+            {
+                await pendingWallet.LoginWithOtp(otp);
+                loginCompletionSource?.TrySetResult(true);
+            }
+            catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect code", e); }
+        }
     }
 }

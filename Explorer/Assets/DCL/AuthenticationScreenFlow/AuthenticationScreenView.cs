@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
-using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -78,6 +77,15 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public Button CancelAuthenticationProcessOTP { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text OTPSubmitResultText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject OTPSubmitResultSucessIcon { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject OTPSubmitResultErrorIcon { get; private set; } = null!;
 
         [field: Header("FINALIZE")]
         [field: SerializeField]
@@ -172,9 +180,9 @@ namespace DCL.AuthenticationScreenFlow
             while (expiration > DateTime.UtcNow);
         }
 
-        public void ShowVerificationContainer(AuthMethod authMethod)
+        public void ShakeOtpInputField()
         {
-            if (authMethod == AuthMethod.DappWallet) { }
+            // To be implemented
         }
 
         public void OnPointerClick(PointerEventData eventData)

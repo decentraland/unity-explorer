@@ -1,4 +1,5 @@
-﻿using DCL.Web3.Authenticators;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Web3.Authenticators;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -24,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.CancelCurrentWeb3Operation();
         }
 
-        public void SubmitOtp(string otp) =>
+        public UniTask SubmitOtp(string otp) =>
             core.SubmitOtp(otp);
     }
 }

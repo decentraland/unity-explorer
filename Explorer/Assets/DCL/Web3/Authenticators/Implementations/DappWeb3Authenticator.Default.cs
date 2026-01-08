@@ -86,7 +86,7 @@ namespace DCL.Web3.Authenticators
                 originAuth.CancelCurrentWeb3Operation();
             }
 
-            public void SubmitOtp(string otp) =>
+            public UniTask SubmitOtp(string otp) =>
                 originAuth.SubmitOtp(otp);
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag

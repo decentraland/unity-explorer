@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 
 namespace DCL.Web3.Authenticators
@@ -13,8 +14,9 @@ namespace DCL.Web3.Authenticators
         void CancelCurrentWeb3Operation();
 
         /// <summary>
-        /// Submit OTP code entered by user.
+        ///     Submit OTP code entered by user.
+        ///     Throws <see cref="OtpValidationException"/> if code is invalid/expired.
         /// </summary>
-        void SubmitOtp(string otp);
+        UniTask SubmitOtp(string otp);
     }
 }

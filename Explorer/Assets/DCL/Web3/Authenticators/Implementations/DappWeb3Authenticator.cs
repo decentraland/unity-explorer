@@ -226,10 +226,10 @@ namespace DCL.Web3.Authenticators
             codeVerificationTask?.TrySetCanceled();
         }
 
-        public void SubmitOtp(string otp)
-        {
+        public UniTask SubmitOtp(string otp) =>
+
             // Not used in Dapp flow - OTP is handled via browser, not in-app UI
-        }
+            UniTask.CompletedTask;
 
         public void AddVerificationListener(VerificationDelegate callback) =>
             signatureVerificationCallback = callback;

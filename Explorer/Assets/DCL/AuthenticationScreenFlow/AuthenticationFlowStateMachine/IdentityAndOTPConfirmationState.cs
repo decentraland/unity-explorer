@@ -45,9 +45,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationOTPAnimator.ResetAnimator();
             viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.IN);
 
+            // Reset OTP result UI
+            viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
+
             // Listeners
             viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OtpCodeEntered += OtpOtpEntered;
+            viewInstance.OTPInputField.OtpCodeEntered += OnOtpEntered;
 
             AuthenticateAsync(payload.email, payload.ct).Forget();
         }
@@ -56,7 +59,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OtpCodeEntered -= OtpOtpEntered;
+            viewInstance.OTPInputField.OtpCodeEntered -= OnOtpEntered;
         }
 
         private void CancelLoginProcess()
@@ -117,7 +120,45 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void OtpOtpEntered(string otp) =>
-            web3Authenticator.SubmitOtp(otp);
+        private void OnOtpEntered(string otp)
+        {
+            viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
+            viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
+            viewInstance.OTPSubmitResultErrorIcon.SetActive(false);
+
+            OnOtpEnteredAsync().Forget();
+            return;
+
+            async UniTask OnOtpEnteredAsync()
+            {
+                try
+                {
+                    await web3Authenticator.SubmitOtp(otp);
+                    ShowOtpSuccess();
+                }
+                catch (CodeVerificationException)
+                {
+                    ShowOtpError();
+                    viewInstance.OTPInputField.ClearAndFocus();
+                }
+            }
+        }
+
+        private void ShowOtpSuccess()
+        {
+            viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
+            viewInstance.OTPSubmitResultText.text = "Success";
+            viewInstance.OTPSubmitResultSucessIcon.SetActive(true);
+            viewInstance.OTPSubmitResultErrorIcon.SetActive(false);
+        }
+
+        private void ShowOtpError()
+        {
+            viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
+            viewInstance.OTPSubmitResultText.text = "Incorrect code";
+            viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
+            viewInstance.OTPSubmitResultErrorIcon.SetActive(true);
+            viewInstance.ShakeOtpInputField();
+        }
     }
 }
