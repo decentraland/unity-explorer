@@ -102,8 +102,18 @@ namespace DCL.Chat.MessageBus
                 if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
                     return;
 
-                if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
-                    || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
+                string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
+                    : receivedMessage.FromWalletId;
+
+                if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
+                    return;
+
+                // If the user that sends the message is banned from the current scene, we ignore the message
+                if (channelType == ChatChannel.ChatChannelType.NEARBY && BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
+                    return;
+
+                // If the user that sends the message is blocked and the settings indicate to hide messages from blocked users, we ignore the message
+                if (IsUserBlockedAndMessagesHidden(walletId))
                     return;
 
                 ChatChannel.ChannelId parsedChannelId;
@@ -123,13 +133,6 @@ namespace DCL.Chat.MessageBus
                         parsedChannelId = new ChatChannel.ChannelId();
                         break;
                 }
-
-                string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
-                                                                           : receivedMessage.FromWalletId;
-
-                // If the user that sends the message is banned from the current scene, we ignore the message
-                if (channelType == ChatChannel.ChatChannelType.NEARBY && BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId))
-                    return;
 
                 ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
