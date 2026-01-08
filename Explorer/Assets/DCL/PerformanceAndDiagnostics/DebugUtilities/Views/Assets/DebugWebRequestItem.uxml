@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="DebugWebRequestItem" style="flex-grow: 1; flex-direction: row;">
+        <ui:Label text="GET" name="Method" style="flex-shrink: 1; flex-direction: row;" />
+        <ui:Label text="/profiles/0x3434342342gbdsff22" name="URL" style="flex-grow: 1; flex-shrink: 1; white-space: normal;" />
+        <ui:Label text="500ms" name="Duration" />
+    </ui:VisualElement>
+</ui:UXML>

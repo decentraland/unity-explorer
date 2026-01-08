@@ -49,6 +49,12 @@ namespace DCL.FeatureFlags
         public const string OUTFITS_ENABLED = "alfa-outfits";
         public const string GIFTING_ENABLED = "alfa-gifting";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
+        public const string HEAD_SYNC = "alfa-head-sync";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
     }
 
     public enum FeatureFlag
