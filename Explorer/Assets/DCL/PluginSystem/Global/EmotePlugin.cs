@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
@@ -184,6 +185,18 @@ namespace DCL.PluginSystem.Global
             public class EmoteAudioSourceReference : AssetReferenceGameObject
             {
                 public EmoteAudioSourceReference(string guid) : base(guid) { }
+            }
+
+            /// <summary>
+            /// Ordered list of base emote URNs.
+            /// The order defines the default emote order for users with no equipped emotes.
+            /// </summary>
+            [field: SerializeField]
+            public string[] BaseEmotes { get; private set; }
+
+            public IReadOnlyCollection<URN> BaseEmotesAsURN()
+            {
+                return BaseEmotes.Select(s => new URN(s)).ToArray();
             }
         }
     }
