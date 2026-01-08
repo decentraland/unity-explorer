@@ -30,7 +30,7 @@ namespace MVC
         /// <summary>
         ///     Closes all POPUPS, FULLSCREEN and OVERLAY views currently open, leaving only PERSISTENT ones.
         /// </summary>
-        void CloseAllNonPersistent(CancellationToken ct = default);
+        void CloseAllNonPersistentControllers(CancellationToken ct = default);
     }
 
     public static class ManagerExtensions

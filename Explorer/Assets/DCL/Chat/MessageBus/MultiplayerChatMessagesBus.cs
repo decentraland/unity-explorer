@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -156,8 +155,6 @@ namespace DCL.Chat.MessageBus
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
                     SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), routingUser);
-                    break;
-                default:
                     break;
             }
 

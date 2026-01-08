@@ -20,7 +20,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         /// <param name="communityId">The community ID to join</param>
         public void Execute(string communityId)
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityId);
         }

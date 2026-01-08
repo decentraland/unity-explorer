@@ -321,7 +321,7 @@ namespace DCL.UI
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
         }
@@ -329,7 +329,7 @@ namespace DCL.UI
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }
@@ -337,7 +337,7 @@ namespace DCL.UI
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }

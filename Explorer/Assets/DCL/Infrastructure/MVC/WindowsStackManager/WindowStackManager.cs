@@ -175,7 +175,7 @@ namespace MVC
                 topMostPopup.controller);
         }
 
-        public CloseAllNonPersistentInfo GetCloseAllNonPersistentInfo() =>
+        public NonPersistentControllersInfo GetNonPersistentControllersInfo() =>
             new (popupStack, fullscreenController, overlayController);
 
         private void RemovePopup(IController controller)
@@ -267,13 +267,13 @@ namespace MVC
         }
     }
 
-    public readonly struct CloseAllNonPersistentInfo
+    public readonly struct NonPersistentControllersInfo
     {
         public readonly List<(IController, int)> PopupControllers;
         public readonly IController? FullscreenController;
         public readonly IController? OverlayController;
 
-        public CloseAllNonPersistentInfo(List<(IController, int)> popupControllers, IController? fullscreenController, IController? overlayController)
+        public NonPersistentControllersInfo(List<(IController, int)> popupControllers, IController? fullscreenController, IController? overlayController)
         {
             PopupControllers = popupControllers;
             FullscreenController = fullscreenController;

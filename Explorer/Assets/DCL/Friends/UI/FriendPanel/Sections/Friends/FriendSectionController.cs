@@ -75,7 +75,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(elementViewUserProfile.Address);
         }

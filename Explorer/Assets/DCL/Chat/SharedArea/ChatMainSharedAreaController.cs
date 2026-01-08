@@ -56,7 +56,7 @@ namespace DCL.ChatArea
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
         }
 
         protected override void OnViewShow()

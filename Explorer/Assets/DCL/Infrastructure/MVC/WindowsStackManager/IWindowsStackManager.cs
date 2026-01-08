@@ -38,6 +38,6 @@ namespace MVC
         /// </summary>
         PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true);
 
-        CloseAllNonPersistentInfo GetCloseAllNonPersistentInfo();
+        NonPersistentControllersInfo GetNonPersistentControllersInfo();
     }
 }

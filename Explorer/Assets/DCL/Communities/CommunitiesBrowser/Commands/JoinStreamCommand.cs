@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid JoinStreamAsync()
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
 
                 if (shouldOpenConversation)

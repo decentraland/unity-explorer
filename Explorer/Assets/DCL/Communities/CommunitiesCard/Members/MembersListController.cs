@@ -395,7 +395,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
                 chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
                 //TODO FRAN & DAVIDE: This is not clean or pretty, but works for now. Ideally we should be able to await
@@ -410,7 +410,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
                 chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
             }

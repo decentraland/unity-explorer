@@ -62,9 +62,10 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
+        private readonly IInputBlock inputBlock;
+        private readonly MVCStateMachine<AuthStateBase> fsm;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
-        private readonly IInputBlock inputBlock;
 
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
@@ -73,10 +74,9 @@ namespace DCL.AuthenticationScreenFlow
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
         public string CurrentRequestID { get; internal set; } = string.Empty;
 
-        public event Action DiscordButtonClicked;
+        public event Action? DiscordButtonClicked;
 
-        private MVCStateMachine<AuthStateBase> fsm;
-        private AuthenticationScreenAudio audio;
+        private AuthenticationScreenAudio? authenticationScreenAudio;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -114,6 +114,7 @@ namespace DCL.AuthenticationScreenFlow
             this.appArgs = appArgs;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
+            fsm = new MVCStateMachine<AuthStateBase>();
         }
 
         public override void Dispose()
@@ -122,7 +123,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController?.Dispose();
 
             CancelLoginProcess();
-            audio.Dispose();
+            authenticationScreenAudio?.Dispose();
             fsm.Dispose();
         }
 
@@ -130,8 +131,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            authenticationScreenAudio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             // Subscriptions
             foreach (Button button in viewInstance.UseAnotherAccountButton)
@@ -142,7 +143,6 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 
             // States
-            fsm = new MVCStateMachine<AuthStateBase>();
             fsm.AddStates(
                 new InitAuthScreenState(viewInstance, buildData.InstallSource),
                 new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen),
@@ -182,7 +182,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            audio.OnShow();
+            authenticationScreenAudio?.OnShow();
         }
 
         protected override void OnViewClose()
@@ -193,7 +193,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            audio.OnHide();
+            authenticationScreenAudio?.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

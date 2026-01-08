@@ -340,7 +340,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             try
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
                 chatEventBus.RaiseOpenCommunityConversationRequestedEvent(communityData.id);
             }
@@ -418,7 +418,7 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnClosePanel()
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
         }
 

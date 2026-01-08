@@ -864,7 +864,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
                 chatEventBus.RaiseOpenPrivateConversationRequestedEvent(profile.Address);
             }
@@ -879,7 +879,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             try
             {
-                mvcManager.CloseAllNonPersistent();
+                mvcManager.CloseAllNonPersistentControllers();
                 chatEventBus.RaiseFocusRequestedEvent();
                 orchestrator.StartPrivateCallWithUserId(profile.Address);
             }

@@ -286,7 +286,7 @@ namespace DCL.UI
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }

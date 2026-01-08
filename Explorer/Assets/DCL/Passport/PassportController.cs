@@ -397,14 +397,14 @@ namespace DCL.Passport
 
         private void OnStartCallButtonClicked()
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
         }
 
         private void OnChatButtonClicked()
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(inputData.UserId);
         }

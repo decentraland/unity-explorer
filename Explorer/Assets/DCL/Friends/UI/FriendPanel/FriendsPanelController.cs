@@ -169,7 +169,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void OnOpenConversationClicked(Web3Address web3Address)
         {
-            mvcManager.CloseAllNonPersistent();
+            mvcManager.CloseAllNonPersistentControllers();
             chatEventBus.RaiseFocusRequestedEvent();
             chatEventBus.RaiseOpenPrivateConversationRequestedEvent(web3Address);
         }

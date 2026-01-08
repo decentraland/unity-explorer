@@ -4,6 +4,7 @@ using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace MVC
 {
@@ -35,7 +36,7 @@ namespace MVC
             foreach (IController controllersValue in controllers.Values)
                 controllersValue.Dispose();
 
-            destructionCancellationTokenSource?.Dispose();
+            destructionCancellationTokenSource.SafeCancelAndDispose();
             windowsStackManager.Dispose();
         }
 
@@ -65,9 +66,9 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
-        public void CloseAllNonPersistent(CancellationToken ct = default)
+        public void CloseAllNonPersistentControllers(CancellationToken ct = default)
         {
-            var info = windowsStackManager.GetCloseAllNonPersistentInfo();
+            var info = windowsStackManager.GetNonPersistentControllersInfo();
 
             // Hide all popups in the stack and clear it
             CloseAllPopups(info.PopupControllers);
@@ -117,7 +118,7 @@ namespace MVC
 
                 OnViewClosed?.Invoke(controller);
             }
-            catch (OperationCanceledException _)
+            catch (OperationCanceledException)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
                 ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
