@@ -3,6 +3,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -67,7 +69,9 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
-            world.AddOrSet(playerEntity, new MovePlayerToInfo(MultithreadingUtility.FrameCount));
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6246
+            // We need to add a delay before we can start transitioning in the animator, or we might encounter artifacts
+            world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(Time.frameCount + 20));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)
