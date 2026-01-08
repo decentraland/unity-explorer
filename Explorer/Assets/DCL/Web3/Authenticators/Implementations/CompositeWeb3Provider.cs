@@ -38,12 +38,6 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        public event Action? OtpRequired
-        {
-            add => thirdWebAuth.OtpRequired += value;
-            remove => thirdWebAuth.OtpRequired -= value;
-        }
-
         /// <summary>
         ///     Event fired when the authentication method changes
         /// </summary>

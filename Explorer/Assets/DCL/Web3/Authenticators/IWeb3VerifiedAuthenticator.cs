@@ -10,11 +10,6 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
-        /// <summary>
-        ///     Raised when OTP input is required from user (ThirdWeb flow).
-        /// </summary>
-        event Action? OtpRequired;
-
         void CancelCurrentWeb3Operation();
 
         /// <summary>

@@ -23,12 +23,6 @@ namespace DCL.Web3.Authenticators
                 remove => originAuth.VerificationRequired -= value;
             }
 
-            public event Action? OtpRequired
-            {
-                add => originAuth.OtpRequired += value;
-                remove => originAuth.OtpRequired -= value;
-            }
-
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
                 URLAddress authApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth));

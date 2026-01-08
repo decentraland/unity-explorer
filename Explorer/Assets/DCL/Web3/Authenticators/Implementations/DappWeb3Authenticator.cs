@@ -52,7 +52,6 @@ namespace DCL.Web3.Authenticators
         private VerificationDelegate? signatureVerificationCallback;
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
-        public event Action? OtpRequired;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,

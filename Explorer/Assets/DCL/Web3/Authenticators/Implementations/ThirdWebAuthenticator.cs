@@ -116,8 +116,6 @@ namespace DCL.Web3.Authenticators
             otpCompletionSource = new UniTaskCompletionSource<string>();
             ct.Register(() => otpCompletionSource?.TrySetCanceled(ct));
 
-            OtpRequired?.Invoke();
-
             string otp = await otpCompletionSource.Task;
             otpCompletionSource = null;
 
@@ -328,7 +326,6 @@ namespace DCL.Web3.Authenticators
             $"https://{chainId}.rpc.thirdweb.com";
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
-        public event Action? OtpRequired;
 
         public void CancelCurrentWeb3Operation()
         {

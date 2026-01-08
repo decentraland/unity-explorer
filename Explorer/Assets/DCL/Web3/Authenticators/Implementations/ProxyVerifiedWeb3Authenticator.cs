@@ -13,12 +13,6 @@ namespace DCL.Web3.Authenticators
             remove => authenticator.VerificationRequired -= value;
         }
 
-        public event Action? OtpRequired
-        {
-            add => authenticator.OtpRequired += value;
-            remove => authenticator.OtpRequired -= value;
-        }
-
         public ProxyVerifiedWeb3Authenticator(
             IWeb3VerifiedAuthenticator authenticator,
             IWeb3IdentityCache identityCache)

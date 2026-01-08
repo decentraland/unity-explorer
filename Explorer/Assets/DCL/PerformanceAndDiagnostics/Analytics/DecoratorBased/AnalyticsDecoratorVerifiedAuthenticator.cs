@@ -13,12 +13,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             remove => core.VerificationRequired -= value;
         }
 
-        public event Action? OtpRequired
-        {
-            add => core.OtpRequired += value;
-            remove => core.OtpRequired -= value;
-        }
-
         public AnalyticsDecoratorVerifiedAuthenticator(IWeb3VerifiedAuthenticator core, IAnalyticsController analytics)
             : base(core, analytics)
         {
