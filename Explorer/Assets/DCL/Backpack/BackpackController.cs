@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Export;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -27,7 +26,6 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using ECS;
-using ECS.StreamableLoading.Common;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -201,7 +199,7 @@ namespace DCL.Backpack
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
-            view.vrmExportButton.onClick.AddListener(OnVRMExportClickedAsync);
+            view.vrmExportButton.onClick.AddListener(OnExportAvatarClickedAsync);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
@@ -240,57 +238,31 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
         }
 
-        private async void OnVRMExportClickedAsync()
+        private async void OnExportAvatarClickedAsync()
         {
             try
             {
-                await backpackCharacterPreviewController.ExportAvatarAsync();
-
-                /*if (!world.TryGet(playerEntity, out Profile? profile)
+                if (!world.TryGet(playerEntity, out Profile? profile)
                     || profile == null)
-                {
-                    ReportHub.LogError(ReportCategory.AVATAR_EXPORT,
-                        "Cannot export: No profile found");
+                    throw new InvalidOperationException("Player has no profile");
 
+                string? fileName = null;
+
+                FileBrowser.Instance.SaveFileAsync(cb => fileName = cb,
+                    "Export Avatar",
+                    Environment.GetFolderPath(Environment.SpecialFolder.Personal),
+                    profile.Name, new ExtensionFilter("vrm", "vrm"));
+
+                while (fileName == null)
+                    await UniTask.Yield();
+
+                if (string.IsNullOrEmpty(fileName))
                     return;
-                }
 
-                string savePath = await TryGetExportPathAsync(profile.Name);
-
-                if (string.IsNullOrEmpty(savePath))
-                    return;
-
-                VrmExportRequestBuilder.CreateExportRequest(world, profile,
-                    savePath, () =>
-                    {
-                        if (view.gameObject.activeInHierarchy)
-                            view.ToastMessage.ShowToastMessage(
-                                ToastMessageType.SUCCESS,
-                                "VRM avatar successfully exported.");
-                    });
-
-                ReportHub.Log(ReportCategory.AVATAR_EXPORT,
-                    "VRM Export requested...");*/
+                await backpackCharacterPreviewController.ExportAvatarAsync(
+                    fileName, profile.Name);
             }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex,
-                    ReportCategory.AVATAR_EXPORT);
-            }
-        }
-
-        private async UniTask<string> TryGetExportPathAsync(string name)
-        {
-            string? savePath = null;
-
-            FileBrowser.Instance.SaveFileAsync(cb => savePath = cb,
-                "Save avatar VRM", Application.persistentDataPath,
-                $"{name} avatar", new ExtensionFilter("vrm", "vrm"));
-
-            while (savePath == null)
-                await UniTask.Yield();
-
-            return savePath;
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.AVATAR_EXPORT); }
         }
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)

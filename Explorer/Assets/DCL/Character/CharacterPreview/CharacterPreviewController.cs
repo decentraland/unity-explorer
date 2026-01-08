@@ -99,18 +99,22 @@ namespace DCL.CharacterPreview
         }
 
         // TODO: Use the event bus instead.
-        public async UniTask ExportAvatarAsync(CharacterPreviewAvatarModel avatarModel)
+        public async UniTask ExportAvatarAsync(string fileName,
+            string profileName, CharacterPreviewAvatarModel avatarModel)
         {
             if (avatarModel.Wearables == null)
-                throw new Exception("Tried to export an empty avatar");
+                throw new ArgumentException("Tried to export an empty avatar");
+
+            if (FacialFeaturesTexturesByBodyShape == null)
+                throw new InvalidOperationException(
+                    $"{nameof(FacialFeaturesTexturesByBodyShape)} is null");
+
+            using var loadingIntention = WearableComponentsUtils.CreateGetWearablesByPointersIntention(
+                BodyShape.FromStringSafe(avatarModel.BodyShape),
+                avatarModel.Wearables, avatarModel.ForceRenderCategories);
 
             var wearablesPromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
-                globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(
-                    BodyShape.FromStringSafe(avatarModel.BodyShape),
-                    avatarModel.Wearables, avatarModel.ForceRenderCategories),
-                PartitionComponent.TOP_PRIORITY
-            );
+                globalWorld, loadingIntention, PartitionComponent.TOP_PRIORITY);
 
             StreamableLoadingResult<WearablesResolution> wearablesResult;
 
@@ -120,13 +124,11 @@ namespace DCL.CharacterPreview
             if (!wearablesResult.Succeeded)
                 throw new Exception("Wearables promise failed");
 
-            if (FacialFeaturesTexturesByBodyShape == null)
-                throw new Exception($"{nameof(FacialFeaturesTexturesByBodyShape)} is null");
-
+            using WearablesResolution wearablesAsset = wearablesResult.Asset;
             var wearableCache = new AttachmentAssetsDontCache();
             var usedCategories = new HashSet<string>();
 
-            var facialFeaturesTextures = new FacialFeaturesTextures(
+            var faceTextures = new FacialFeaturesTextures(
                 new Dictionary<string, Dictionary<int, Texture>>());
 
             var avatarShape = new AvatarShapeComponent("", "")
@@ -135,24 +137,17 @@ namespace DCL.CharacterPreview
             };
 
             FacialFeaturesTexturesByBodyShape[avatarShape.BodyShape]
-               .CopyInto(ref facialFeaturesTextures);
+               .CopyInto(ref faceTextures);
 
             GameObject parentObject = new GameObject("ExportAvatar");
             Transform parent = parentObject.transform;
-            parent.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-
-            parent.SetLocalPositionAndRotation(
-                new Vector3(exportAvatarCount++ * 2f, -512f, 0f),
-                Quaternion.Euler(90f, 0f, 0f));
-
             var wearableInfos = new List<WearableExportInfo>();
             GameObject? bodyShape = null;
 
-            foreach (var wearable in wearablesResult.Asset.Wearables)
+            foreach (var wearable in wearablesAsset.Wearables)
             {
                 GameObject? instance = wearable.AppendToAvatar(wearableCache,
-                    usedCategories, ref facialFeaturesTextures,
-                    ref avatarShape, parent);
+                    usedCategories, ref faceTextures, ref avatarShape, parent);
 
                 wearableInfos.Add(
                     AvatarExportUtilities.CreateWearableInfo(wearable));
@@ -164,40 +159,45 @@ namespace DCL.CharacterPreview
             WearableComponentsUtils.HideBodyShape(bodyShape,
                 wearablesResult.Asset.HiddenCategories, usedCategories);
 
-            wearablesPromise.LoadingIntention.Dispose();
-            wearablesResult.Asset.Dispose();
-
-            // At this point, we should have a tree of game objects parented to
-            // the ExportAvatar game object and a dictionary of face textures
-            // ready to be massaged into a format acceptable to UniVRM.
-            // AvatarBase is not needed because bodyShape has the same
-            // structure already.
+            // At this point, we have a tree of game objects parented to the
+            // ExportAvatar game object and a dictionary of face textures ready
+            // to be massaged into a format acceptable to UniVRM. AvatarBase is
+            // not needed because bodyShape has the same structure already.
 
             if (bodyShape == null)
                 throw new Exception("Avatar has no body shape");
 
-            var bodyRenderers = bodyShape.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            Transform bodyTransform = bodyShape.transform;
+
+            // AvatarBase has an Armature object that's the parent of
+            // Avatar_Hips, and has a transform like this.
+            bodyTransform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            bodyTransform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+            SkinnedMeshRenderer[] bodyRenderers = bodyShape
+               .GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
             Transform[] bodyBones = bodyRenderers[0].bones;
-            Transform bodyRoot = bodyRenderers[0].rootBone;
+            Transform bodyRoot = bodyRenderers[0].rootBone; // Avatar_Hips
+            var mainFaceTextures = new Dictionary<string, Texture>();
+            var maskFaceTextures = new Dictionary<string, Texture>();
 
-            var mainTextures = new Dictionary<string, Texture>();
-            var maskTextures = new Dictionary<string, Texture>();
-
-            foreach (var item in facialFeaturesTextures.Value)
+            foreach (var item in faceTextures.Value)
             {
-                if (item.Value.TryGetValue(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, out var mainTex) && mainTex != null)
-                    mainTextures[item.Key] = mainTex;
+                if (item.Value.TryGetValue(
+                        TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE,
+                        out var mainTexture) && mainTexture != null)
+                    mainFaceTextures[item.Key] = mainTexture;
 
-                if (item.Value.TryGetValue(TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID, out var maskTex) && maskTex != null)
-                    maskTextures[item.Key] = maskTex;
+                if (item.Value.TryGetValue(
+                        TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID,
+                        out var maskTexture) && maskTexture != null)
+                    maskFaceTextures[item.Key] = maskTexture;
             }
 
             using var materialConverter = new VrmMaterialConverter(
-                avatarModel.SkinColor,
-                avatarModel.HairColor,
-                avatarModel.EyesColor,
-                mainTextures,
-                maskTextures);
+                avatarModel.SkinColor, avatarModel.HairColor,
+                avatarModel.EyesColor, mainFaceTextures, maskFaceTextures);
 
             foreach (var renderer in bodyRenderers)
             {
@@ -208,11 +208,15 @@ namespace DCL.CharacterPreview
                     Object.Destroy(renderer.gameObject);
             }
 
+            // Start from 1 because 0 is the bodyShape.
             for (var i = 1; i < parent.childCount; i++)
             {
                 Transform wearable = parent.GetChild(i);
 
-                foreach (var renderer in wearable.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                SkinnedMeshRenderer[] wearableRenderers = wearable
+                   .GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+                foreach (var renderer in wearableRenderers)
                 {
                     foreach (Transform bone in renderer.bones)
                         if (bone != null)
@@ -246,7 +250,9 @@ namespace DCL.CharacterPreview
                 throw new Exception("Could not create human avatar");
 
             parentObject.AddComponent<VRMMeta>().Meta = AvatarExportUtilities
-               .CreateVrmMetaObject("Anonymous", wearableInfos);
+               .CreateVrmMetaObject(profileName, wearableInfos);
+
+            await VRMBoneNormalizer.Execute(parentObject, true, false);
 
             var data = new ExportingGltfData();
             var settings = new GltfExportSettings();
@@ -258,14 +264,13 @@ namespace DCL.CharacterPreview
                 exporter.Export();
             }
 
-            await File.WriteAllBytesAsync("/Users/ansis/Desktop/test.glb",
-                data.ToGlbBytes());
+            await File.WriteAllBytesAsync(fileName, data.ToGlbBytes());
+
+            Object.Destroy(parentObject);
         }
 
         // TODO: Ask Misha how to do this correctly.
         public static FacialFeaturesTextures[]? FacialFeaturesTexturesByBodyShape;
-
-        private static int exportAvatarCount = 0;
 
         public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {

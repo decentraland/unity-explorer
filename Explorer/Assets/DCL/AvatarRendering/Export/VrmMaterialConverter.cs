@@ -92,7 +92,7 @@ namespace DCL.AvatarRendering.Export
                 else
                     result[i] = ConvertToMToon(sourceMaterials[i]);
 
-                //createdMaterials.Add(result[i]);
+                createdMaterials.Add(result[i]);
             }
 
             return result;

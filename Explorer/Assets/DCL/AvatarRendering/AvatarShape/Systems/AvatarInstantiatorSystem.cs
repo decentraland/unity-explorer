@@ -1,4 +1,3 @@
-using System;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -20,9 +19,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.AvatarRendering.Export;
-using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -91,7 +87,6 @@ namespace DCL.AvatarRendering.AvatarShape
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
-            InstantiateExportAvatarQuery(World);
         }
 
         [Query]
@@ -240,163 +235,5 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
-
-        [Query]
-        [All(typeof(VrmExportIntention))]
-        [None(typeof(VrmExportDataComponent))]
-        private void InstantiateExportAvatar(
-            in Entity entity,
-            ref AvatarShapeComponent avatarShapeComponent,
-            ref VrmExportIntention exportIntent)
-        {
-            ref readonly var wearablePromise = ref avatarShapeComponent.WearablePromise;
-
-            if (!wearablePromise.TryConsume(World, out StreamableLoadingResult<WearablesResolution> wearablesResult))
-                return;
-
-            if (!wearablesResult.Succeeded)
-            {
-                ReportHub.LogError(GetReportCategory(), "VRM Export: Failed to load wearables");
-                World.Destroy(entity);
-                return;
-            }
-
-            try
-            {
-                InstantiateExportAvatarInternal(entity, ref avatarShapeComponent, ref exportIntent, wearablesResult);
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, GetReportCategory());
-                World.Destroy(entity);
-            }
-        }
-
-        private void InstantiateExportAvatarInternal(
-            Entity entity,
-            ref AvatarShapeComponent avatarShapeComponent,
-            ref VrmExportIntention exportIntent,
-            StreamableLoadingResult<WearablesResolution> wearablesResult)
-        {
-            // Create temporary avatar base for export
-            AvatarBase exportAvatarBase = avatarPoolRegistry.Get();
-            exportAvatarBase.name = "VRM_Export_Avatar";
-            exportAvatarBase.transform.parent = null;
-            exportAvatarBase.transform.localPosition = Vector3.zero;
-            exportAvatarBase.gameObject.SetActive(true);
-
-            var attachPoint = exportAvatarBase.transform;
-
-            // Use original textures, export is fast enough that user will not be able to change avatar in a meantime.
-            FacialFeaturesTextures facialFeatureTextures = facialFeaturesTexturesByBodyShape[avatarShapeComponent.BodyShape];
-
-            HashSet<string> wearablesToHide = wearablesResult.Asset.HiddenCategories;
-            HashSet<string> usedCategories = HashSetPool<string>.Get();
-
-            GameObject bodyShape = null;
-            IList<IWearable> visibleWearables = wearablesResult.Asset.Wearables;
-            var wearableInfos = new List<WearableExportInfo>();
-
-            for (var i = 0; i < visibleWearables.Count; i++)
-            {
-                IWearable resultWearable = visibleWearables[i];
-
-                wearableInfos.Add(AvatarExportUtilities.CreateWearableInfo(resultWearable));
-
-                // Handle facial features, just populate textures, don't instantiate
-                if (resultWearable.Type == WearableType.FacialFeature)
-                {
-                    string category = resultWearable.GetCategory();
-                    var originalAssets = resultWearable.WearableAssetResults[avatarShapeComponent.BodyShape].Results;
-
-                    if (originalAssets?[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]?.Asset != null)
-                    {
-                        var mainAsset = originalAssets[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX].Value.Asset;
-                        var texturesSet = facialFeatureTextures.Value[category];
-                        texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = ((AttachmentTextureAsset)mainAsset).Texture;
-
-                        var maskAssetRes = originalAssets[WearablePolymorphicBehaviour.MASK_ASSET_INDEX];
-                        if (maskAssetRes is { Asset: not null })
-                            texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID] = ((AttachmentTextureAsset)maskAssetRes.Value.Asset).Texture;
-                    }
-
-                    continue;
-                }
-
-                // Instantiate regular wearables
-                GameObject? instance = resultWearable.AppendToAvatar(
-                    wearableAssetsCache,
-                    usedCategories,
-                    ref facialFeatureTextures,
-                    ref avatarShapeComponent,
-                    attachPoint);
-
-                if (resultWearable.Type == WearableType.BodyShape)
-                    bodyShape = instance;
-            }
-
-            // Hide body parts
-            WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
-            HashSetPool<string>.Release(usedCategories);
-
-            // Extracted facial feature textures
-            var mainTextures = new Dictionary<string, Texture>();
-            var maskTextures = new Dictionary<string, Texture>();
-
-            foreach (var category in facialFeatureTextures.Value.Keys)
-            {
-                var textureDict = facialFeatureTextures.Value[category];
-
-                if (textureDict.TryGetValue(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE, out var mainTex) && mainTex != null)
-                    mainTextures[category] = mainTex;
-
-                if (textureDict.TryGetValue(TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID, out var maskTex) && maskTex != null)
-                    maskTextures[category] = maskTex;
-            }
-
-            var instantiatedWearables = avatarShapeComponent.InstantiatedWearables;
-
-            var exportData = new VrmExportDataComponent()
-            {
-                AvatarBase = exportAvatarBase,
-                InstantiatedWearables = instantiatedWearables,
-                SkinColor = avatarShapeComponent.SkinColor,
-                HairColor = avatarShapeComponent.HairColor,
-                EyesColor = avatarShapeComponent.EyesColor,
-                FacialFeatureMainTextures = mainTextures,
-                FacialFeatureMaskTextures = maskTextures,
-                WearableInfos = wearableInfos,
-                AuthorName = exportIntent.AuthorName,
-                SavePath = exportIntent.SavePath,
-                OnFinishedAction = exportIntent.OnFinishedAction,
-
-                CleanupAction = () =>
-                {
-                    // Release avatar back to pool
-                    if (exportAvatarBase != null)
-                    {
-                        exportAvatarBase.gameObject.SetActive(false);
-                        avatarPoolRegistry.Release(exportAvatarBase);
-                    }
-
-                    // Dispose wearables
-                    foreach (var attachment in instantiatedWearables)
-                        if(attachment.Instance != null)
-                            attachment.Dispose();
-
-                    instantiatedWearables.Clear();
-                }
-            };
-
-            // Replace intent with export data component
-            World.Remove<VrmExportIntention>(entity);
-            World.Add(entity, exportData);
-
-            // Dispose wearables result
-            if (wearablesResult.Succeeded)
-                wearablesResult.Asset.Dispose();
-
-            ReportHub.Log(GetReportCategory(), $"VRM Export: Avatar instantiated with {avatarShapeComponent.InstantiatedWearables.Count} wearables");
-        }
     }
 }

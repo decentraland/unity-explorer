@@ -1,58 +1,10 @@
 using System.Collections.Generic;
-using System.Linq;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Loading.Assets;
 using UnityEngine;
-using UnityEngine.Animations.Rigging;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.AvatarRendering.Export
 {
     public sealed class ExportSkeletonBuilder
     {
-        public ExportSkeletonMapping BuildFromAvatarBase(AvatarBase avatarBase, IReadOnlyList<CachedAttachment> instantiatedWearables)
-        {
-            if (instantiatedWearables.Count <= 0 || instantiatedWearables[0].OriginalAsset.MainAsset == null)
-                return null;
-
-            var armature = avatarBase.Armature;
-
-            var duplicateRoot = new GameObject("DCL_Avatar_Export").transform;
-            duplicateRoot.position = armature.position;
-            duplicateRoot.rotation = armature.rotation;
-
-            var bones = InstantiateBones(instantiatedWearables[0].OriginalAsset.MainAsset.transform, duplicateRoot).transform;
-            bones.SetParent(duplicateRoot);
-
-            // DCL skeleton is in 0.01 scale, we need to scale it to uniform (1,1,1) scale.
-            duplicateRoot.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-            ApplyParentScaleToChildren(duplicateRoot);
-
-            duplicateRoot.gameObject.AddComponent<Animator>();
-
-            var mapping = new ExportSkeletonMapping(duplicateRoot.gameObject);
-            MapBonesRecursive(mapping, bones);
-
-            // Ansis here. I don't know why this is commented out.
-            // mapping.AddBone(new ExportBoneData(HumanBodyBones.Hips, bones, bones.name));
-
-#if UNITY_EDITOR
-            var boneRenderer = duplicateRoot.gameObject.AddComponent<BoneRenderer>();
-            boneRenderer.transforms = mapping.Bones.Select(x => x.TargetTransform).ToArray();
-#endif
-
-            return mapping;
-        }
-
-        private static void MapBonesRecursive(ExportSkeletonMapping mapping, Transform bone)
-        {
-            if (BONE_DEFINITIONS.TryGetValue(bone.name, out var humanBone))
-                mapping.AddBone(new ExportBoneData(humanBone, bone, bone.name));
-
-            foreach (Transform child in bone)
-                MapBonesRecursive(mapping, child);
-        }
-
         public static void MapBonesRecursive(
             Dictionary<HumanBodyBones, Transform> mapping, Transform bone)
         {
@@ -61,55 +13,6 @@ namespace DCL.AvatarRendering.Export
 
             foreach (Transform child in bone)
                 MapBonesRecursive(mapping, child);
-        }
-
-        private GameObject InstantiateBones(Transform sourceRoot, Transform parent)
-        {
-            const string HIPS_NAME = "Avatar_Hips";
-
-            var hipsTransform = FindChildRecursive(sourceRoot, HIPS_NAME);
-            var hipsInstance = Object.Instantiate(hipsTransform.gameObject, parent);
-            hipsInstance.transform.localPosition = hipsTransform.localPosition;
-            hipsInstance.name = hipsTransform.name;
-
-            return hipsInstance;
-        }
-
-        private static Transform FindChildRecursive(Transform parent, string name)
-        {
-            if (parent.name == name)
-                return parent;
-
-            foreach (Transform child in parent)
-            {
-                Transform found = FindChildRecursive(child, name);
-
-                if (found != null)
-                    return found;
-            }
-
-            return null;
-        }
-
-        private static void ApplyParentScaleToChildren(Transform parent)
-        {
-            var childPositions = new List<(Transform child, Vector3 position)>();
-            StoreChildPositionsRecursive(parent, childPositions);
-
-            parent.localScale = Vector3.one;
-
-            foreach (var (child, position) in childPositions) { child.position = position; }
-
-            return;
-
-            void StoreChildPositionsRecursive(Transform sourceParent, List<(Transform, Vector3)> list)
-            {
-                foreach (Transform child in sourceParent)
-                {
-                    list.Add((child, child.position));
-                    StoreChildPositionsRecursive(child, list);
-                }
-            }
         }
 
         private static readonly Dictionary<string, HumanBodyBones> BONE_DEFINITIONS = new ()

@@ -299,8 +299,8 @@ namespace DCL.CharacterPreview
             return spinner;
         }
 
-        public UniTask ExportAvatarAsync() =>
-            previewController?.ExportAvatarAsync(previewAvatarModel) ?? UniTask.CompletedTask;
+        public UniTask ExportAvatarAsync(string fileName, string profileName) =>
+            previewController?.ExportAvatarAsync(fileName, profileName, previewAvatarModel) ?? UniTask.CompletedTask;
 
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);
