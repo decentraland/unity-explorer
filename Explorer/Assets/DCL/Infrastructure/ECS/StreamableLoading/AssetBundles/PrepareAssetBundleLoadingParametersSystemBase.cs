@@ -36,6 +36,11 @@ namespace ECS.StreamableLoading.AssetBundles
             // Remove not supported flags
             assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
 
+            if (assetBundleIntention.Hash.Contains("staticscene_bafkreie2ethh6vd2nh2yix6gdqfcnkodm46uj5qjea54cjbqb4qowe66sy_mac"))
+            {
+                Debug.Log("FOR THE DEBUG");
+            }
+
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
             {

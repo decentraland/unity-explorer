@@ -117,7 +117,7 @@ namespace DCL.LOD.Systems
                                 creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
                         else
                         {
-                            ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
+                            ReportHub.LogWarning(GetReportData(), $"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct");
                             creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
                         }
                     }
