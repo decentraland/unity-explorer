@@ -10,8 +10,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.AssetBundles;
-using System;
 
 namespace DCL.SDKComponents.AssetLoad.Systems
 {
@@ -37,21 +35,11 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(Entity entity, ref AssetLoadComponent component, CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref AssetLoadComponent component, CRDTEntity sdkEntity)
         {
             // Cancel and destroy all loading entities
             foreach (var kvp in component.LoadingEntities)
-            {
-                Entity loadingEntity = kvp.Value;
-                if (World.IsAlive(loadingEntity))
-                {
-                    if (World.TryGet(loadingEntity, out GetAssetBundleIntention intention))
-                    {
-                        intention.CancellationTokenSource?.Cancel();
-                    }
-                    World.Destroy(loadingEntity);
-                }
-            }
+                AssetLoadUtils.RemoveAssetLoading(World, kvp.Value, kvp.Key, ref component);
 
             // Delete loading state message
             ecsToCRDTWriter.DeleteMessage<PBAssetLoadLoadingState>(sdkEntity);

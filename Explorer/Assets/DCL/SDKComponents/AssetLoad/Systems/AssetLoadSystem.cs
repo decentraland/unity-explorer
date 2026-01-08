@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
         [Query]
         [None(typeof(AssetLoadComponent))]
-        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent, ref PartitionComponent partitionComponent)
+        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
@@ -54,20 +54,20 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             AssetLoadComponent component = new AssetLoadComponent(sdkComponent.Assets);
             World.Add(entity, component);
 
-            ProcessAssetList(ref sdkComponent, ref component, partitionComponent);
+            ProcessAssetList(ref sdkComponent, ref component);
         }
 
         [Query]
-        private void UpdateAssetLoading(ref PBAssetLoad sdkComponent, ref AssetLoadComponent component, ref PartitionComponent partitionComponent)
+        private void UpdateAssetLoading(ref PBAssetLoad sdkComponent, ref AssetLoadComponent component)
         {
             if (!sdkComponent.IsDirty) return;
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             sdkComponent.IsDirty = false;
-            ProcessAssetList(ref sdkComponent, ref component, partitionComponent);
+            ProcessAssetList(ref sdkComponent, ref component);
         }
 
-        private void ProcessAssetList(ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent, IPartitionComponent partitionComponent)
+        private void ProcessAssetList(ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent)
         {
             // Build set of current asset hashes
             var assetPathHash = DictionaryPool<string ,string>.Get();
@@ -90,9 +90,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             {
                 if (!existingComponent.LoadingEntities.TryGetValue(assetPath, out var loadingEntity)) continue;
 
-                //TODO: stop each loading properly and then destroy
-                World.Destroy(loadingEntity);
-                existingComponent.LoadingEntities.Remove(assetPath);
+                AssetLoadUtils.RemoveAssetLoading(World, loadingEntity, assetPath, ref existingComponent);
             }
             ListPool<string>.Release(toRemove);
 
