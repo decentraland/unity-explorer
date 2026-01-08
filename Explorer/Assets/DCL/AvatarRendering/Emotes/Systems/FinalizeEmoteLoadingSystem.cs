@@ -132,7 +132,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise, in BodyShape bodyShape)
+        private void FinalizeAudioClipPromise(Entity entity, ref IEmote emote, ref AudioPromise promise)
         {
             if (promise.IsCancellationRequested(World))
             {

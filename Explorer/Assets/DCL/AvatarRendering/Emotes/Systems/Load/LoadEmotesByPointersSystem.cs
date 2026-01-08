@@ -132,7 +132,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                     continue;
                 }
 
-                if (emote.IsLoading) continue;
+                if (emote.IsLoading)
+                    continue;
+
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
 
                 if (emote.AssetResult is { Succeeded: true })
@@ -210,6 +212,8 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (component.AssetResult == null)
             {
+                UnityEngine.Debug.Log($"JUANI STARTING ASSET RESULT {component.DTO.id}");
+
                 component.TryGetContentHashByKey(component.DTO.Metadata.AbstractData.representations[0].mainFile, out string? hash);
 
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
@@ -227,17 +231,17 @@ namespace DCL.AvatarRendering.Emotes.Load
                     partitionComponent
                 );
 
-                TryCreateAudioClipPromises(component, intention.BodyShape, partitionComponent);
+                TryCreateAudioClipPromises(component, partitionComponent);
 
                 component.UpdateLoadingStatus(true);
 
-                World!.Create(promise, component, intention.BodyShape);
+                World!.Create(promise, component);
                 return true;
             }
             return false;
         }
 
-        private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
+        private void TryCreateAudioClipPromises(IEmote component, IPartitionComponent partitionComponent)
         {
             ContentDefinition[]? content = component.Model.Asset!.content;
 
@@ -254,7 +258,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
-                World!.Create(promise, component, bodyShape);
+                World!.Create(promise, component);
             }
         }
     }

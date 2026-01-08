@@ -24,7 +24,7 @@ namespace DCL.CharacterPreview
         {
             "wave", "fistpump", "dab"
         };
-        
+
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -116,7 +116,6 @@ namespace DCL.CharacterPreview
             initialized = true;
 
             ResetAvatarMovement();
-            OnModelUpdated();
         }
 
         public void Dispose()
