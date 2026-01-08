@@ -1,4 +1,5 @@
-﻿using DCL.UI;
+﻿using DCL.PlacesAPIService;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace DCL.Places
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
 
         private IObjectPool<ButtonWithSelectableStateView> categoryButtonsPool = null!;
-        private readonly List<ButtonWithSelectableStateView> currentCategories = new ();
+        private readonly List<KeyValuePair<string, ButtonWithSelectableStateView>> currentCategories = new ();
 
         private void Awake()
         {
@@ -31,16 +32,29 @@ namespace DCL.Places
         public void SetActive(bool active) =>
             gameObject.SetActive(active);
 
-        public void SetCategories(string[] categories)
+        public void SetCategories(PlaceCategoryData[] categories)
         {
-            foreach (string categoryName in categories)
-                CreateAndSetupCategoryButton(categoryName);
+            var allCategoryData = new PlaceCategoryData
+            {
+                name = "all",
+                i18n = new PlaceCategoryLocalizationData
+                {
+                    en = "All",
+                },
+            };
+
+            CreateAndSetupCategoryButton(allCategoryData);
+
+            foreach (PlaceCategoryData categoryData in categories)
+                CreateAndSetupCategoryButton(categoryData);
+
+            SelectCategory(allCategoryData.name);
         }
 
         public void ClearCategories()
         {
             foreach (var categoryButton in currentCategories)
-                categoryButtonsPool.Release(categoryButton);
+                categoryButtonsPool.Release(categoryButton.Value);
 
             currentCategories.Clear();
         }
@@ -51,18 +65,26 @@ namespace DCL.Places
             return invitedCommunityCardView;
         }
 
-        private void CreateAndSetupCategoryButton(string categoryName)
+        private void CreateAndSetupCategoryButton(PlaceCategoryData categoryData)
         {
             ButtonWithSelectableStateView categoryButtonView = categoryButtonsPool.Get();
 
             // Setup card data
-            categoryButtonView.Text.text = categoryName;
+            categoryButtonView.Text.text = categoryData.i18n.en;
 
             // Setup card events
             categoryButtonView.Button.onClick.RemoveAllListeners();
-            categoryButtonView.Button.onClick.AddListener(() => CategorySelected?.Invoke(categoryName));
+            categoryButtonView.Button.onClick.AddListener(() => SelectCategory(categoryData.name));
 
-            currentCategories.Add(categoryButtonView);
+            currentCategories.Add(new KeyValuePair<string, ButtonWithSelectableStateView>(categoryData.name, categoryButtonView));
+        }
+
+        private void SelectCategory(string categoryId)
+        {
+            foreach (var category in currentCategories)
+                category.Value.SetSelected(category.Key == categoryId);
+
+            CategorySelected?.Invoke(categoryId);
         }
     }
 }

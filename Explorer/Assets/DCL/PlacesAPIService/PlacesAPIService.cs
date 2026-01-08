@@ -139,6 +139,9 @@ namespace DCL.PlacesAPIService
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
 
+        public async UniTask<PlacesCategoriesAPIResponse> GetPlacesCategoriesAsync(CancellationToken ct) =>
+            await client.GetPlacesCategoriesAsync(ct);
+
         public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
@@ -167,7 +170,7 @@ namespace DCL.PlacesAPIService
             // Pre-warming cache with change for instant return in case of repeated call from different places.
             // Example: Explore's PlaceInfoPanel and minimap race.
             TryUpdateCachedPlaceFavorite(placeId, isFavorite);
-            
+
             try
             {
                 await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
@@ -184,7 +187,7 @@ namespace DCL.PlacesAPIService
         {
             if (string.IsNullOrEmpty(placeId) || !placesById.TryGetValue(placeId, out var place))
                 return;
-            
+
             place.user_favorite = isFavorite;
         }
 

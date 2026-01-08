@@ -27,6 +27,7 @@ namespace DCL.PlacesAPIService
         UniTask<PlacesData.PlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
 
         UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct);
+        UniTask<PlacesCategoriesAPIResponse> GetPlacesCategoriesAsync(CancellationToken ct);
 
         UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct);
 

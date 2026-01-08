@@ -491,7 +491,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            discoverController = new PlacesController(placesView, cursor);
+            discoverController = new PlacesController(placesView, cursor, placesAPIService);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,

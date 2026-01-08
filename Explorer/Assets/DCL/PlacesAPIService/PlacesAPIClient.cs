@@ -33,6 +33,7 @@ namespace DCL.PlacesAPIService
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
+        private URLAddress placesCategoriesURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.PlacesCategories));
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -305,6 +306,17 @@ namespace DCL.PlacesAPIService
                 throw new Exception($"No Places for category {category} retrieved");
 
             return categoryPlaces;
+        }
+
+        public async UniTask<PlacesCategoriesAPIResponse> GetPlacesCategoriesAsync(CancellationToken ct)
+        {
+            PlacesCategoriesAPIResponse placesCategories = await webRequestController.GetAsync(placesCategoriesURL, ct, ReportCategory.UI)
+                                                                                     .CreateFromJson<PlacesCategoriesAPIResponse>(WRJsonParser.Newtonsoft);
+
+            if (placesCategories == null)
+                throw new Exception("No Categories info retrieved");
+
+            return placesCategories;
         }
 
         public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)

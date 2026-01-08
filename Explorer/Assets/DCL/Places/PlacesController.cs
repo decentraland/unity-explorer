@@ -1,4 +1,5 @@
 ﻿using DCL.Input;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -19,13 +20,14 @@ namespace DCL.Places
 
         public PlacesController(
             PlacesView view,
-            ICursor cursor)
+            ICursor cursor,
+            IPlacesAPIService placesAPIService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
 
-            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView);
+            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService);
 
             view.SectionChanged += OnSectionChanged;
         }
@@ -63,9 +65,7 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        private void OnSectionChanged(PlacesSections? fromSection, PlacesSections toSection)
-        {
+        private void OnSectionChanged(PlacesSections? fromSection, PlacesSections toSection) =>
             SectionChanged?.Invoke(fromSection, toSection);
-        }
     }
 }
