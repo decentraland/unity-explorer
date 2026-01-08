@@ -1,9 +1,11 @@
 using System;
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -22,9 +24,6 @@ using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
 
-using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
-
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
     [TestFixture]
@@ -34,12 +33,18 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private Entity playerEntity;
         private MockEmotesMessageBus mockMessageBus;
         private GlobalWorldActions globalWorldActions;
+        private GameObject playerGameObject;
 
         [SetUp]
         public void SetUp()
         {
             world = World.Create();
-            playerEntity = world.Create();
+
+            // Create a player game object with transform for CharacterTransform
+            playerGameObject = new GameObject("TestPlayer");
+            playerGameObject.transform.position = Vector3.zero;
+
+            playerEntity = world.Create(new CharacterTransform(playerGameObject.transform));
             mockMessageBus = new MockEmotesMessageBus();
             globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
 
@@ -51,13 +56,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void TearDown()
         {
             world.Dispose();
+
+            if (playerGameObject != null)
+                UnityEngine.Object.DestroyImmediate(playerGameObject);
         }
 
         [Test]
         public void ApplyTeleportIntent()
         {
             var newPosition = new Vector3(10, 0, 10);
-            globalWorldActions.MoveAndRotatePlayer(newPosition, null, null);
+            globalWorldActions.MoveAndRotatePlayerAsync(newPosition, null, null, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerTeleportIntent>(playerEntity));
             var intent = world.Get<PlayerTeleportIntent>(playerEntity);
@@ -73,7 +81,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var expectedLookAt = playerPos + (avatarTarget - playerPos).normalized;
             expectedLookAt.y = playerPos.y;
 
-            globalWorldActions.MoveAndRotatePlayer(playerPos, null, avatarTarget);
+            globalWorldActions.MoveAndRotatePlayerAsync(playerPos, null, avatarTarget, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerLookAtIntent>(playerEntity));
             var intent = world.Get<PlayerLookAtIntent>(playerEntity);
@@ -88,11 +96,74 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var playerPos = new Vector3(5, 0, 5);
             var cameraTarget = new Vector3(5, 0, 10);
 
-            globalWorldActions.MoveAndRotatePlayer(playerPos, cameraTarget, null);
+            globalWorldActions.MoveAndRotatePlayerAsync(playerPos, cameraTarget, null, 0f, CancellationToken.None).Forget();
 
             Assert.IsTrue(world.Has<PlayerLookAtIntent>(playerEntity));
             var intent = world.Get<PlayerLookAtIntent>(playerEntity);
             Assert.AreEqual(cameraTarget, intent.LookAtTarget);
+        }
+
+        [Test]
+        public void ApplyMoveToWithDurationIntentWhenDurationIsPositive()
+        {
+            var startPosition = new Vector3(0, 0, 0);
+            playerGameObject.transform.position = startPosition;
+
+            var targetPosition = new Vector3(10, 0, 10);
+            var cameraTarget = new Vector3(10, 5, 10);
+            var avatarTarget = new Vector3(15, 0, 10);
+            var duration = 2.5f;
+
+            globalWorldActions.MoveAndRotatePlayerAsync(targetPosition, cameraTarget, avatarTarget, duration, CancellationToken.None).Forget();
+
+            Assert.IsTrue(world.Has<PlayerMoveToWithDurationIntent>(playerEntity));
+            Assert.IsFalse(world.Has<PlayerTeleportIntent>(playerEntity));
+
+            var moveIntent = world.Get<PlayerMoveToWithDurationIntent>(playerEntity);
+            Assert.AreEqual(startPosition, moveIntent.StartPosition);
+            Assert.AreEqual(targetPosition, moveIntent.TargetPosition);
+            Assert.AreEqual(cameraTarget, moveIntent.CameraTarget);
+            Assert.AreEqual(avatarTarget, moveIntent.AvatarTarget);
+            Assert.AreEqual(duration, moveIntent.Duration);
+            Assert.AreEqual(0f, moveIntent.ElapsedTime);
+        }
+
+        [Test]
+        public void NotApplyMoveToWithDurationIntentWhenDurationIsZero()
+        {
+            var targetPosition = new Vector3(10, 0, 10);
+
+            globalWorldActions.MoveAndRotatePlayerAsync(targetPosition, null, null, 0f, CancellationToken.None).Forget();
+
+            Assert.IsFalse(world.Has<PlayerMoveToWithDurationIntent>(playerEntity));
+            Assert.IsTrue(world.Has<PlayerTeleportIntent>(playerEntity));
+        }
+
+        [Test]
+        public void NotApplyMoveToWithDurationIntentWhenDurationIsNegative()
+        {
+            var targetPosition = new Vector3(10, 0, 10);
+
+            globalWorldActions.MoveAndRotatePlayerAsync(targetPosition, null, null, -1f, CancellationToken.None).Forget();
+
+            Assert.IsFalse(world.Has<PlayerMoveToWithDurationIntent>(playerEntity));
+            Assert.IsTrue(world.Has<PlayerTeleportIntent>(playerEntity));
+        }
+
+        [Test]
+        public void InitializeMoveToWithDurationIntentWithCorrectStartPosition()
+        {
+            var startPosition = new Vector3(5, 2, 8);
+            playerGameObject.transform.position = startPosition;
+
+            var targetPosition = new Vector3(15, 2, 18);
+            var duration = 1f;
+
+            globalWorldActions.MoveAndRotatePlayerAsync(targetPosition, null, null, duration, CancellationToken.None).Forget();
+
+            var moveIntent = world.Get<PlayerMoveToWithDurationIntent>(playerEntity);
+            Assert.AreEqual(startPosition, moveIntent.StartPosition);
+            Assert.AreEqual(startPosition, moveIntent.LastFramePosition);
         }
 
         [Test]
