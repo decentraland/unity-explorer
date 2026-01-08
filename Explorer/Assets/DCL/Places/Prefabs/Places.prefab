@@ -211,13 +211,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Discover.DiscoverView
   discoverSectionTab: {fileID: 4247004538758472372}
-  discoverSectionContent: {fileID: 6205169134274485670}
+  discoverSectionView: {fileID: 6205169134274485670}
   favoritesSectionTab: {fileID: 3398764929377972935}
-  favoritesSectionContent: {fileID: 1222201140797684429}
+  favoritesSectionView: {fileID: 1222201140797684429}
   recentlyVisitedSectionTab: {fileID: 3695010204622054615}
-  recentlyVisitedSectionContent: {fileID: 7165985540606919870}
+  recentlyVisitedSectionView: {fileID: 7165985540606919870}
   myPlacesSectionTab: {fileID: 1490185357193856950}
-  myPlacesSectionContent: {fileID: 1677357497298438062}
+  myPlacesSectionView: {fileID: 1677357497298438062}
   panelAnimator: {fileID: 4109777772948560957}
   headerAnimator: {fileID: 4498467503974795581}
 --- !u!1001 &3000100315164276983

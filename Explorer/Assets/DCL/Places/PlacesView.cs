@@ -18,7 +18,7 @@ namespace DCL.Places
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
         [SerializeField] private GameObject recentlyVisitedSectionView = null!;
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
-        [SerializeField] private GameObject myPlacesSectionContent = null!;
+        [SerializeField] private GameObject myPlacesSectionView = null!;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -69,7 +69,7 @@ namespace DCL.Places
             recentlyVisitedSectionTab.SetSelected(false);
             recentlyVisitedSectionView.SetActive(false);
             myPlacesSectionTab.SetSelected(false);
-            myPlacesSectionContent.SetActive(false);
+            myPlacesSectionView.SetActive(false);
 
             switch (section)
             {
@@ -87,7 +87,7 @@ namespace DCL.Places
                     break;
                 case PlacesSections.MY_PLACES:
                     myPlacesSectionTab.SetSelected(true);
-                    myPlacesSectionContent.SetActive(true);
+                    myPlacesSectionView.SetActive(true);
                     break;
             }
 
