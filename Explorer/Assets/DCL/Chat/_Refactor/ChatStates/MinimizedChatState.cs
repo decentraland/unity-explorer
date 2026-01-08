@@ -1,17 +1,26 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using MVC;
+
+namespace DCL.Chat.ChatStates
 {
-    public class MinimizedChatState : ChatState
+    public class MinimizedChatState : ChatState, IState
     {
-        public override void Begin()
+        private readonly MVCStateMachine<ChatState> stateMachine;
+        private readonly ChatUIMediator mediator;
+
+        public MinimizedChatState(MVCStateMachine<ChatState> stateMachine, ChatUIMediator mediator)
         {
-            context.UIMediator.SetupForMinimizedState();
-            context.UIMediator.chatInputPresenter.OnMinimize();
+            this.stateMachine = stateMachine;
+            this.mediator = mediator;
         }
 
-        public override void End() { }
+        public void Enter()
+        {
+            mediator.SetupForMinimizedState();
+            mediator.chatInputPresenter.OnMinimize();
+        }
 
         public override void OnFocusRequested() =>
-            ChangeState<FocusedChatState>();
+            stateMachine.Enter<FocusedChatState>();
 
         public override void OnMinimizeRequested() { }
     }

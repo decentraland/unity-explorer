@@ -20,7 +20,7 @@ namespace DCL.UI.ProfileElements
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ProfileWidgetView view;
 
-        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> thumbnail = new (ProfileThumbnailViewModel.WithColor.Default());
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -77,11 +77,11 @@ namespace DCL.UI.ProfileElements
         {
             if (identityCache.Identity == null) return;
 
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity.Address, ct);
+            Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(identityCache.Identity.Address, ct);
 
-            if (profile == null) return;
-
-            thumbnail.UpdateValue(thumbnail.Value.SetLoading(profile.UserNameColor));
+            if (compactInfo == null) return;
+            Profile.CompactInfo profile = compactInfo.Value;
+            thumbnail.SetLoading(profile.UserNameColor);
 
             if (view.NameLabel != null)
                 view.NameLabel.text = string.IsNullOrEmpty(profile.ValidatedName) ? GUEST_NAME : profile.ValidatedName;
@@ -90,7 +90,7 @@ namespace DCL.UI.ProfileElements
                 if (profile.HasClaimedName == false)
                     view.AddressLabel.text = profile.WalletId;
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, identityCache.Identity.Address, profile.Avatar.FaceSnapshotUrl, ct);
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, null, profile, ct);
         }
     }
 }

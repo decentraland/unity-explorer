@@ -123,7 +123,7 @@ namespace DCL.Chat.ChatCommands
 
         private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct).SuppressAnyExceptionWithFallback(null);
+            Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct).SuppressAnyExceptionWithFallback(null);
 
             if (ct.IsCancellationRequested) return;
 
@@ -131,13 +131,13 @@ namespace DCL.Chat.ChatCommands
 
             if (profile != null)
             {
-                viewModel.DisplayName = profile.ValidatedName;
-                viewModel.HasClaimedName = profile.HasClaimedName;
+                viewModel.DisplayName = profile.Value.ValidatedName;
+                viewModel.HasClaimedName = profile.Value.HasClaimedName;
                 viewModel.IsOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(userId);
 
-                viewModel.ProfilePicture.UpdateValue(viewModel.ProfilePicture.Value.SetColor(profile.UserNameColor));
+                viewModel.ProfilePicture.SetColor(profile.Value.UserNameColor);
 
-                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfilePicture, chatConfig.DefaultProfileThumbnail, profile.Value, ct);
             }
             else
             {
@@ -145,8 +145,7 @@ namespace DCL.Chat.ChatCommands
                 viewModel.HasClaimedName = false;
 
                 viewModel.ProfilePicture
-                    .UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true),
-                        ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
+                         .UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true));
             }
 
             eventBus.RaiseChannelUpdatedEvent(viewModel);

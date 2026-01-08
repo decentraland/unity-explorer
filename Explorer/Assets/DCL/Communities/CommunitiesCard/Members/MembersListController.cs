@@ -174,7 +174,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                     profile.Role = CommunityMemberRole.member;
                     List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.MEMBERS].Items;
                     memberList.Add(profile);
-                    MembersSorter.SortMembersList(memberList);
                 }
 
                 RefreshGrid(true);
@@ -253,8 +252,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                 List<ICommunityMemberData> memberList = sectionsFetchData[MembersListView.MemberListSections.BANNED].Items;
                 profile.Role = CommunityMemberRole.none;
                 memberList.Add(profile);
-
-                MembersSorter.SortMembersList(memberList);
 
                 RefreshGrid(true);
             }
@@ -356,8 +353,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                         break;
                     }
 
-                MembersSorter.SortMembersList(memberList);
-
                 RefreshGrid(true);
             }
         }
@@ -390,8 +385,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                         member.Role = CommunityMemberRole.member;
                         break;
                     }
-
-                MembersSorter.SortMembersList(memberList);
 
                 RefreshGrid(true);
             }
@@ -443,7 +436,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Reset();
         }
 
-        private async void HandleContextMenuUserProfileButtonAsync(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private async void HandleContextMenuUserProfileButtonAsync(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             try
             {
@@ -453,34 +446,34 @@ namespace DCL.Communities.CommunitiesCard.Members
                 switch (friendshipStatus)
                 {
                     case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct)
+                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.UserId, ct)
                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
                         await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
-                            OneShotFriendAccepted = userData.ToFriendProfile()
+                            OneShotFriendAccepted = userData,
                         }), ct: ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
                         await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(
-                                new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
+                                new Web3Address(userData.UserId), userData.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
                             ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
                         await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
                         {
-                            UserId = new Web3Address(userData.userAddress),
+                            UserId = new Web3Address(userData.UserId),
                         }), ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
                         await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
-                            DestinationUser = new Web3Address(userData.userAddress),
+                            DestinationUser = new Web3Address(userData.UserId),
                         }), ct);
 
                         break;
@@ -489,7 +482,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (ct.IsCancellationRequested)
                     return;
 
-                await FetchFriendshipStatusAndRefreshAsync(userData.userAddress, ct);
+                await FetchFriendshipStatusAndRefreshAsync(userData.UserId, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
@@ -534,8 +527,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             foreach (var member in response.Value.members)
                 if (!membersData.Items.Contains(member))
                     membersData.Items.Add(member);
-
-            MembersSorter.SortMembersList(membersData.Items);
 
             if (currentSection == MembersListView.MemberListSections.REQUESTS)
                 RequestsAmount = response.Value.total;
@@ -594,7 +585,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             OpenProfilePassport(profile);
 
         private void OnFriendButtonClicked(ICommunityMemberData profile) =>
-            HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.FriendshipStatus.Convert());
+            HandleContextMenuUserProfileButtonAsync(profile.Profile, profile.FriendshipStatus.Convert());
 
         private void OnUnbanButtonClicked(ICommunityMemberData profile)
         {

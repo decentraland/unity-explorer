@@ -494,10 +494,27 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             explorePanelController = new
-                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
+                ExplorePanelController(
+                    viewFactoryMethod,
+                    navmapController,
+                    settingsController,
+                    backpackSubPlugin.backpackController!,
+                    cameraReelController,
                     new SidebarProfileButtonPresenter(explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                    communitiesBrowserController, inputBlock, mvcManager);
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView,
+                        web3IdentityCache,
+                        profileRepository,
+                        world,
+                        playerEntity,
+                        webBrowser,
+                        web3Authenticator,
+                        userInAppInitializationFlow,
+                        profileCache,
+                        passportBridge,
+                        profileRepositoryWrapper),
+                    communitiesBrowserController,
+                    inputBlock,
+                    mvcManager);
 
             mvcManager.RegisterController(explorePanelController);
 

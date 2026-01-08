@@ -5,7 +5,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
@@ -26,6 +25,7 @@ using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Chat;
+using Newtonsoft.Json;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -36,13 +36,13 @@ namespace DCL.UI
     [Serializable]
     public struct GiftData
     {
-        public string userId;
-        public string userName;
+        [JsonProperty("userId")] public string UserId;
+        [JsonProperty("userName")] public string UserName;
 
         public GiftData(string userId, string userName)
         {
-            this.userId = userId;
-            this.userName = userName;
+            this.UserId = userId;
+            this.UserName = userName;
         }
     }
     public class GenericUserProfileContextMenuController
@@ -82,13 +82,12 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
-        private readonly GenericContextMenuElement contextGiftButton;
 
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource cancellationTokenSource = new();
         private UniTaskCompletionSource closeContextMenuTask = new ();
-        private Profile targetProfile;
+        private Profile.CompactInfo targetProfile;
 
-        private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private readonly CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -130,7 +129,7 @@ namespace DCL.UI
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
-            contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
+            var contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -153,7 +152,7 @@ namespace DCL.UI
             }
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
         {
@@ -191,7 +190,7 @@ namespace DCL.UI
                 }
             }
 
-            userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(profile, contextMenuFriendshipStatus);
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
@@ -211,7 +210,7 @@ namespace DCL.UI
             contextMenu.ChangeOffsetFromTarget(offset);
 
             if (includeCommunities)
-                invitationButtonHandler.SetUserToInvite(profile.UserId);
+                invitationButtonHandler!.SetUserToInvite(profile.UserId);
 
             if (ct.IsCancellationRequested) return;
 
@@ -232,21 +231,21 @@ namespace DCL.UI
                    };
         }
 
-        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userData.userAddress);
+                    SendFriendRequest(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userData.userAddress);
+                    RemoveFriend(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userData.userAddress);
+                    CancelFriendRequest(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userData.userAddress);
+                    AcceptFriendship(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -348,7 +347,7 @@ namespace DCL.UI
             ShowBlockUserPromptAsync(targetProfile).Forget();
         }
 
-        private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)
         {
             await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }
@@ -377,7 +376,7 @@ namespace DCL.UI
                 try
                 {
                     var data = JsonUtility.FromJson<GiftData>(payload);
-                    ShowGiftingPopupAsync(data.userId, data.userName).Forget();
+                    ShowGiftingPopupAsync(data.UserId, data.UserName).Forget();
                 }
                 catch
                 {

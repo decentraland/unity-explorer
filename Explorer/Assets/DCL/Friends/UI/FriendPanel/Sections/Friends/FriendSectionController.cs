@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
+using DCL.Profiles;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -52,7 +53,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
-        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
+        private void ContextMenuClicked(Profile.CompactInfo friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             elementView.CanUnHover = false;
 
@@ -62,17 +63,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
 
-            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
-        private void JumpInClicked(FriendProfile profile) =>
+        private void JumpInClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
 
-        protected override void ElementClicked(FriendProfile profile) =>
+        protected override void ElementClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
 
-        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
         {
             mvcManager.CloseAllNonPersistent();
             chatEventBus.RaiseFocusRequestedEvent();

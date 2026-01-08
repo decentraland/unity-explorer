@@ -23,6 +23,7 @@ using DCL.UI;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Minimap.Settings;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
@@ -70,18 +71,19 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
         private SideMenuPresenter? sideMenuPresenter;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
-        private CancellationTokenSource? favoriteCancellationToken = new ();
-        private CancellationTokenSource showBannedTooltipCts;
+        private CancellationTokenSource favoriteCancellationToken = new ();
+        private CancellationTokenSource showBannedTooltipCts = new ();
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
-        private ToggleContextMenuControlSettings homeToggleSettings;
+        private ToggleContextMenuControlSettings? homeToggleSettings;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -106,7 +108,8 @@ namespace DCL.Minimap
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            MinimapContextMenuSettings minimapContextMenuSettings)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -126,6 +129,8 @@ namespace DCL.Minimap
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.minimapContextMenuSettings = minimapContextMenuSettings;
+
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
@@ -189,16 +194,18 @@ namespace DCL.Minimap
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
             contextMenu = new GenericContextMenu()
+
                           // Add title control to prevent incorrect layout height when the context menu has a single control
                           // May be removed if a new control is added
-                         .AddControl(new TextContextMenuControlSettings("Scene's Options"))
+                         .AddControl(new TextContextMenuControlSettings(minimapContextMenuSettings.ContextMenuTitle))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings("Set as Home", SetAsHomeToggledAsync))
+                         .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings(minimapContextMenuSettings.SetAsHomeText, SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
-                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.CopyLinkText, minimapContextMenuSettings.CopyLinkSprite, CopyJumpInLink))
+                         .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
             SetInitialHomeToggleValue();
-            viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+            viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
             {
@@ -216,14 +223,13 @@ namespace DCL.Minimap
         private void SetInitialHomeToggleValue()
         {
             bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
-            homeToggleSettings.SetInitialValue(isHome);
+            homeToggleSettings!.SetInitialValue(isHome);
         }
 
         private void ShowContextMenu()
         {
-            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuConfig.button.transform.position)))
+                           new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
         }
 
@@ -501,10 +507,13 @@ namespace DCL.Minimap
                             .Forget();
             }
 
-            return () => chatMessagesBus.SendWithUtcNowTimestamp(
+            return ReloadScene;
+        }
+
+        private void ReloadScene() =>
+            chatMessagesBus.SendWithUtcNowTimestamp(
                 ChatChannel.NEARBY_CHANNEL, $"/{reloadSceneCommand.Command}", ChatMessageOrigin.MINIMAP
             );
-        }
 
         private void SetAnimatorController(bool isGenesisModeActivated)
         {

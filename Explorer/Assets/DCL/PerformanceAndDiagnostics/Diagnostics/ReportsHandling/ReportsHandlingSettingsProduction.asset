@@ -408,6 +408,8 @@ MonoBehaviour:
       Severity: 1
     - Category: SOCIAL
       Severity: 0
+    - Category: REALM
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
