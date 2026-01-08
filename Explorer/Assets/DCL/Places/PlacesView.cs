@@ -12,9 +12,13 @@ namespace DCL.Places
 
         [Header("Sections")]
         [SerializeField] private ButtonWithSelectableStateView discoverSectionTab = null!;
+        [SerializeField] private GameObject discoverSectionContent = null!;
         [SerializeField] private ButtonWithSelectableStateView favoritesSectionTab = null!;
+        [SerializeField] private GameObject favoritesSectionContent = null!;
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
+        [SerializeField] private GameObject recentlyVisitedSectionContent = null!;
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
+        [SerializeField] private GameObject myPlacesSectionContent = null!;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -59,23 +63,31 @@ namespace DCL.Places
                 return;
 
             discoverSectionTab.SetSelected(false);
+            discoverSectionContent.SetActive(false);
             favoritesSectionTab.SetSelected(false);
+            favoritesSectionContent.SetActive(false);
             recentlyVisitedSectionTab.SetSelected(false);
+            recentlyVisitedSectionContent.SetActive(false);
             myPlacesSectionTab.SetSelected(false);
+            myPlacesSectionContent.SetActive(false);
 
             switch (section)
             {
                 case PlacesSections.DISCOVER:
                     discoverSectionTab.SetSelected(true);
+                    discoverSectionContent.SetActive(true);
                     break;
                 case PlacesSections.FAVORITES:
                     favoritesSectionTab.SetSelected(true);
+                    favoritesSectionContent.SetActive(true);
                     break;
                 case PlacesSections.RECENTLY_VISITED:
                     recentlyVisitedSectionTab.SetSelected(true);
+                    recentlyVisitedSectionContent.SetActive(true);
                     break;
                 case PlacesSections.MY_PLACES:
                     myPlacesSectionTab.SetSelected(true);
+                    myPlacesSectionContent.SetActive(true);
                     break;
             }
 
