@@ -8,28 +8,11 @@ namespace DCL.Diagnostics.Sentry
     public static class SentryJsonConfigLoader
     {
         [Serializable]
-        private struct CliFileScheme
-        {
-            public string auth;
-        }
-
-        [Serializable]
         private struct FileScheme
         {
             public string environment;
             public string dsn;
             public string release;
-            public CliFileScheme cli;
-        }
-
-        public static void Apply(string filePath, SentryCliOptions cliOptions)
-        {
-            if (!File.Exists(filePath)) return;
-
-            string fileContent = File.ReadAllText(filePath);
-            FileScheme scheme = JsonConvert.DeserializeObject<FileScheme>(fileContent);
-
-            cliOptions.Auth = string.IsNullOrEmpty(scheme.cli.auth) ? cliOptions.Auth : scheme.cli.auth;
         }
 
         public static void Apply(string filePath, SentryUnityOptions options)

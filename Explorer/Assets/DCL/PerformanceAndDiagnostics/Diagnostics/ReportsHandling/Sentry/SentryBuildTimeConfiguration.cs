@@ -1,17 +1,16 @@
-using DCL.Diagnostics.Sentry;
+using Sentry;
 using Sentry.Unity;
 using System;
-// using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
-namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Editor
+namespace DCL.Diagnostics.Sentry
 {
-    /*[CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Build Time Configuration")]
+    [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Build Time Configuration")]
     public class SentryBuildTimeConfiguration : SentryOptionsConfiguration
     {
-        private const string SENTRY_ASSET_PATH = "Assets/Resources/Sentry/SentryOptions.asset";
-        private const string CLI_ASSET_PATH = "Assets/Plugins/Sentry/SentryCliOptions.asset";
-
         // This file should be never committed since it may contain secrets
         [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
 
@@ -21,42 +20,50 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options)
         {
+#if UNITY_EDITOR
             // Force options to enabled=true to be able to deploy debug symbols during build-time
             options.Enabled = Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
             if (!options.Enabled) return; // No need to configure sentry
 
             options.Release = Application.version ?? options.Release;
 
-            try { ApplyFromEnvironmentVars(options, cliOptions); }
+            try { ApplyFromEnvironmentVars(options); }
             catch (Exception e) { Debug.LogException(e); }
 
-            try { ApplyFromJsonFile(options, cliOptions); }
+            try { ApplyFromJsonFile(options); }
             catch (Exception e) { Debug.LogException(e); }
 
-            try { ApplyFromProgramArgs(options, cliOptions); }
+            try { ApplyFromProgramArgs(options); }
             catch (Exception e) { Debug.LogException(e); }
 
             try
             {
                 // SentryOptions.asset must be modified so the app is built with the expected information
-                PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
-                PersistIntoCliAssetFile(CLI_ASSET_PATH, cliOptions);
+                PersistIntoAssetFile(GetAssetPath("SentryOptions"), options);
             }
             catch (Exception e) { Debug.LogException(e); }
+#endif
+
+            options.SetBeforeSend(AddUnspecifiedCategory);
         }
 
-        private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
+        private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
+        {
+            if (!@event.Tags.ContainsKey("category"))
+                @event.SetTag("category", "UNSPECIFIED");
+
+            return @event;
+        }
+
+#if UNITY_EDITOR
+        private static void ApplyFromEnvironmentVars(SentryUnityOptions options)
         {
             options.Environment = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
             options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
             options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
-            cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_CLI_AUTH_TOKEN") ?? cliOptions.Auth;
-
-            string envUploadSymbols = Environment.GetEnvironmentVariable("SENTRY_UPLOAD_DEBUG_SYMBOLS");
-            cliOptions.UploadSymbols = envUploadSymbols != null ? bool.Parse(envUploadSymbols) : cliOptions.UploadSymbols;
         }
 
-        private static void ApplyFromProgramArgs(SentryUnityOptions options, SentryCliOptions cliOptions)
+        private static void ApplyFromProgramArgs(SentryUnityOptions options)
         {
             string[] args = Environment.GetCommandLineArgs();
 
@@ -75,20 +82,13 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
                     case "-sentryRelease":
                         options.Release = args[i + 1];
                         break;
-                    case "-sentryCliAuthToken":
-                        cliOptions.Auth = args[i + 1];
-                        break;
-                    case "-sentryUploadDebugSymbols":
-                        cliOptions.UploadSymbols = bool.Parse(args[i + 1]);
-                        break;
                 }
             }
         }
 
-        private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
+        private void ApplyFromJsonFile(SentryUnityOptions options)
         {
             SentryJsonConfigLoader.Apply(configJsonFilePath, options);
-            SentryJsonConfigLoader.Apply(configJsonFilePath, cliOptions);
         }
 
         private void PersistIntoAssetFile(string path, SentryUnityOptions options)
@@ -100,14 +100,6 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
             asset.EnvironmentOverride = options.Environment;
             EditorUtility.SetDirty(asset);
         }
-
-        private void PersistIntoCliAssetFile(string path, SentryCliOptions cliOptions)
-        {
-            SentryCliOptions asset = AssetDatabase.LoadAssetAtPath<SentryCliOptions>(path);
-            if (asset == null) return;
-            asset.Auth = cliOptions.Auth;
-            asset.UploadSymbols = cliOptions.UploadSymbols;
-            EditorUtility.SetDirty(asset);
-        }
-    }*/
+#endif
+    }
 }
