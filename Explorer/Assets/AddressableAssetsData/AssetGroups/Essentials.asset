@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
+  - m_GUID: 000895e935900fa43b53faf506ee15fa
+    m_Address: Assets/DCL/AvatarRendering/Emotes/SocialEmotesSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 00657accebbe6c348b5208e385e5ec73
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Facial_Features.mat
     m_ReadOnly: 0
@@ -137,6 +142,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79f752bc43a65384bab431cb6a44d8bd
+    m_Address: Assets/DCL/AvatarRendering/Emotes/UI/SocialEmoteOutcomesContextMenuSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

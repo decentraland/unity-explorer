@@ -59,9 +59,12 @@ namespace DCL.UI
         /// <param name="offsetFromAnchor">The offset to apply to the submenu panel from the parent context menu's anchor.</param>
         /// <param name="buttonText">The text to show in the new button.</param>
         /// <param name="buttonIcon">The icon to show next to the new button.</param>
-        public void AddSubmenuControlToContextMenu(GenericContextMenu contextMenu, Vector2 offsetFromAnchor, string buttonText, Sprite buttonIcon)
+        /// <returns>
+        /// The just created button.
+        /// </returns>
+        public GenericContextMenuElement AddSubmenuControlToContextMenu(GenericContextMenu contextMenu, Vector2 offsetFromAnchor, string buttonText, Sprite buttonIcon)
         {
-            contextMenu.AddControl(new SubMenuContextMenuButtonSettings(buttonText,
+            SubMenuContextMenuButtonSettings newButtonSettings = new SubMenuContextMenuButtonSettings(buttonText,
                                                                         buttonIcon,
                                                                         new GenericContextMenu(MAXIMUM_WIDTH_OF_SUBMENU,
                                                                                          elementsSpacing: contextMenu.elementsSpacing,
@@ -69,7 +72,10 @@ namespace DCL.UI
                                                                                          verticalLayoutPadding: SUBMENU_VERTICAL_PADDINGS),
                                                                         anchorPadding: SUBMENU_ANCHOR_PADDING,
                                                                         asyncControlSettingsFillingDelegate: CreateInvitationSubmenuItemsAsync,
-                                                                        asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync));
+                                                                        asyncVisibilityResolverDelegate: ResolveInvitationSubmenuVisibilityAsync);
+            GenericContextMenuElement newButton = new GenericContextMenuElement(newButtonSettings);
+            contextMenu.AddControl(newButton);
+            return newButton;
         }
 
         /// <summary>

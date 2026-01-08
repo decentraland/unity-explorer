@@ -36,3 +36,6 @@ MonoBehaviour:
   <InviteToCommunityConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: 8be81fdf59a094b458426c66803c47e3, type: 3}
     Text: Invite to Community
+  <SocialEmoteButtonConfig>k__BackingField:
+    Sprite: {fileID: 21300000, guid: ac3a8adf84ad448889163798f9c57442, type: 3}
+    Text: Send Emote

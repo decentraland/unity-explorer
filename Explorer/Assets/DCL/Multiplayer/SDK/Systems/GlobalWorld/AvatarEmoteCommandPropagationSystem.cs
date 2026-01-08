@@ -8,6 +8,7 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
@@ -36,6 +37,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!playerCRDTEntity.AssignedToScene) return;
 
             if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
+
+            if (emote.IsLoading)
+                return;
 
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;

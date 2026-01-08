@@ -310,8 +310,28 @@ namespace DCL.AvatarRendering.Emotes.Tests
             }
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
+
+            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() =>
+                throw new NotImplementedException();
+
+            public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote,
+                string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId)
+            {
+                throw new NotImplementedException();
+            }
+
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+
+            public void SaveForRetry(LookAtPositionIntention intention)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
