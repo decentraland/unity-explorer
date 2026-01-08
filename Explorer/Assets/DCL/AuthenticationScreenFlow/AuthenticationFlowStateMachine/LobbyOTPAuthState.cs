@@ -48,6 +48,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, bool isCached, bool baseWearablesLoaded, CancellationToken ct) payload)
         {
+            viewInstance.NextRandomButton.enabled = false;
             baseWearablesLoaded = payload.baseWearablesLoaded;
             ct = ct;
 
@@ -85,6 +86,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
             viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
 
+            // Toggle listeners for terms agreement
+            viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
+            viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
+            viewInstance.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
+            viewInstance.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
+            UpdateFinalizeButtonState();
+
             return;
 
             bool IsNewUser() =>
@@ -93,6 +101,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
+            viewInstance.NextRandomButton.enabled = false;
+
             viewInstance!.FinalizeContainer.SetActive(false);
             viewInstance.NewUserContainer.SetActive(false);
 
@@ -102,6 +112,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
             viewInstance.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
             viewInstance.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
+            viewInstance.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            viewInstance.AgreeLicenseToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
+            viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
         }
 
         private readonly List<Avatar> avatarHistory = new ();
@@ -175,6 +189,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.PrevRandomButton.interactable = currentAvatarIndex > 0;
             viewInstance.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
+
+        private void OnToggleChanged(bool _)
+        {
+            viewInstance.FinalizeNewUserButton.interactable =
+                viewInstance.SubscribeToggle.isOn && viewInstance.AgreeLicenseToggle.isOn;
+        }
+
+        private void UpdateFinalizeButtonState() =>
+            OnToggleChanged(false);
 
         private Avatar CreateDefaultAvatar()
         {

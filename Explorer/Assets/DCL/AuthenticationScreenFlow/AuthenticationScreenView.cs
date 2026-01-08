@@ -132,9 +132,9 @@ namespace DCL.AuthenticationScreenFlow
         public Button RandomizeButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button SubscribeToggle { get; private set; } = null!;
+        public Toggle SubscribeToggle { get; private set; } = null!;
         [field: SerializeField]
-        public Button AgreeLicenseToggle { get; private set; } = null!;
+        public Toggle AgreeLicenseToggle { get; private set; } = null!;
 
         [field: Header("ERROR POPUP")]
         [field: SerializeField]

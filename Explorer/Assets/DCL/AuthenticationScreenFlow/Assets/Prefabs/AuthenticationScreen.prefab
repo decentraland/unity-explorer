@@ -3266,14 +3266,14 @@ MonoBehaviour:
   <CharacterPreviewView>k__BackingField: {fileID: 8398316715096862839}
   <ProfileNameLabel>k__BackingField: {fileID: 4361419286345902860}
   <NewUserContainer>k__BackingField: {fileID: 1918019997244002784}
-  <ProfileNameInputField>k__BackingField: {fileID: 0}
+  <ProfileNameInputField>k__BackingField: {fileID: 2578013125625939499}
   <BackButton>k__BackingField: {fileID: 2965701487413565490}
   <FinalizeNewUserButton>k__BackingField: {fileID: 5745262274627170148}
   <PrevRandomButton>k__BackingField: {fileID: 7772950271388452884}
   <NextRandomButton>k__BackingField: {fileID: 7075375835433852221}
   <RandomizeButton>k__BackingField: {fileID: 590468861109488093}
-  <SubscribeToggle>k__BackingField: {fileID: 0}
-  <AgreeLicenseToggle>k__BackingField: {fileID: 0}
+  <SubscribeToggle>k__BackingField: {fileID: 4860854759091301750}
+  <AgreeLicenseToggle>k__BackingField: {fileID: 3403667638804191727}
   <ErrorPopupRoot>k__BackingField: {fileID: 4110952997660909746}
   <ErrorPopupRetryButton>k__BackingField: {fileID: 5282751778771004027}
   <ErrorPopupExitButton>k__BackingField: {fileID: 5023013163994910719}
@@ -5230,6 +5230,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5235776119985308652, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8909398026496194027, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5342,6 +5346,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2129180332014665064, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
   m_PrefabInstance: {fileID: 509596415147142280}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2578013125625939499 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2653889541807729315, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+  m_PrefabInstance: {fileID: 509596415147142280}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &2965701487413565490 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3331039708612031674, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
@@ -5353,6 +5368,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3403667638804191727 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2895307215101687143, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+  m_PrefabInstance: {fileID: 509596415147142280}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Toggle
 --- !u!1 &3916047686447302749 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3551910338184537301, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
@@ -5380,6 +5406,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4860854759091301750 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4928990347093017086, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+  m_PrefabInstance: {fileID: 509596415147142280}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Toggle
 --- !u!95 &5416563332575766553 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5492435077365089425, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
