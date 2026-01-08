@@ -47,7 +47,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Listeners
             viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OnCodeComplete += OnOtpEntered;
+            viewInstance.OTPInputField.OtpCodeEntered += OtpOtpEntered;
 
             AuthenticateAsync(payload.email, payload.ct).Forget();
         }
@@ -56,7 +56,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(CancelLoginProcess);
-            viewInstance.OTPInputField.OnCodeComplete -= OnOtpEntered;
+            viewInstance.OTPInputField.OtpCodeEntered -= OtpOtpEntered;
         }
 
         private void CancelLoginProcess()
@@ -81,6 +81,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
+                // awaits OTP code being entered
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(email, ct);
 
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
@@ -116,7 +117,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void OnOtpEntered(string otp) =>
+        private void OtpOtpEntered(string otp) =>
             web3Authenticator.SubmitOtp(otp);
     }
 }

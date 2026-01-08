@@ -59,7 +59,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             RestoreResolutionAndScreenMode();
-
             CancelVerificationCountdown();
 
             viewInstance.VerificationCodeHintContainer.SetActive(false);

@@ -42,7 +42,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     public event Action<string> OnCodeChanged;
 
     /// <summary>Вызывается когда все цифры введены</summary>
-    public event Action<string> OnCodeComplete;
+    public event Action<string> OtpCodeEntered;
 
     /// <summary>Текущий введённый код</summary>
     public string Code { get; private set; } = "";
@@ -153,7 +153,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
             OnCodeChanged?.Invoke(Code);
 
             if (Code.Length == codeLength)
-                OnCodeComplete?.Invoke(Code);
+                OtpCodeEntered?.Invoke(Code);
         }
     }
 
@@ -296,7 +296,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         OnCodeChanged?.Invoke(Code);
 
         if (Code.Length == codeLength)
-            OnCodeComplete?.Invoke(Code);
+            OtpCodeEntered?.Invoke(Code);
     }
 
     private void OnDestroy()
