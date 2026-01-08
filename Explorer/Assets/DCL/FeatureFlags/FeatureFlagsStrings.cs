@@ -53,6 +53,7 @@ namespace DCL.FeatureFlags
         public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
         public const string CONFIG_VARIANT = "config";
         public const string HEAD_SYNC = "alfa-head-sync";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
 
         public static class Endpoints
         {

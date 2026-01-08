@@ -38,6 +38,7 @@ namespace DCL.Chat.MessageBus
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
         private readonly bool isChatMessageRateLimiterEnabled;
         private readonly bool isNearbyChannelBufferEnabled;
+        private readonly bool isPrivateChatRequiresTopicEnabled;
 
         private bool isCommunitiesIncluded;
 
@@ -73,6 +74,8 @@ namespace DCL.Chat.MessageBus
                 roomHub.IslandRoom().ConnectionUpdated += OnIslandConnectionUpdated;
             }
 
+            isPrivateChatRequiresTopicEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC);
+
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
             // Depending on the selected environment, we send the community messages to one user or another
@@ -98,7 +101,7 @@ namespace DCL.Chat.MessageBus
 
         private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
-            //We clear the buffer if we disconnect from the island, so we dont keep receiving messages from that nearby area.
+            //We clear the buffer if we disconnect from the island, so we won't keep receiving messages from that nearby area.
             if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.UnknownReason)
                 nearbyChannelBuffer!.Reset();
         }
@@ -159,7 +162,7 @@ namespace DCL.Chat.MessageBus
                     parsedChannelId = new ChatChannel.ChannelId(receivedMessage.Topic);
                     channelType = ChatChannel.ChatChannelType.COMMUNITY;
                 }
-                else if (string.Equals(receivedMessage.Topic, identityCache.Identity?.Address, StringComparison.InvariantCultureIgnoreCase))
+                else if (!isPrivateChatRequiresTopicEnabled || string.Equals(receivedMessage.Topic, identityCache.Identity?.Address, StringComparison.InvariantCultureIgnoreCase))
                 {
                     parsedChannelId = new ChatChannel.ChannelId(receivedMessage.FromWalletId);
                     channelType = ChatChannel.ChatChannelType.USER;
