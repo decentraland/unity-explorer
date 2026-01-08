@@ -25,7 +25,11 @@ namespace DCL.Places
             categoryButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
                 InstantiateCategoryButtonPrefab,
                 defaultCapacity: CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY,
-                actionOnGet: categoryButtonView => categoryButtonView.gameObject.SetActive(true),
+                actionOnGet: categoryButtonView =>
+                {
+                    categoryButtonView.gameObject.SetActive(true);
+                    categoryButtonView.transform.SetAsLastSibling();
+                },
                 actionOnRelease: categoryButtonView => categoryButtonView.gameObject.SetActive(false));
         }
 
