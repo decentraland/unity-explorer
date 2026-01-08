@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Emotes
 
         private void OnLookAtPositionMessageReceived(ReceivedMessage<LookAtPosition> lookAtPositionMessage)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnLookAtPositionMessageReceived() <color=green>RECEIVED Look at: {new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ).ToString("F6")} ADDRESS: {lookAtPositionMessage.Payload.TargetAvatarWalletAddress}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnLookAtPositionMessageReceived() <color=green>RECEIVED Look at: {new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ).ToString("F6")} ADDRESS: {lookAtPositionMessage.Payload.TargetAvatarWalletAddress}</color> From {lookAtPositionMessage.FromWalletId}");
             lookAtPositionIntentions.Add(new LookAtPositionIntention(lookAtPositionMessage.Payload.TargetAvatarWalletAddress, new Vector3(lookAtPositionMessage.Payload.PositionX, lookAtPositionMessage.Payload.PositionY, lookAtPositionMessage.Payload.PositionZ)));
         }
 
@@ -154,7 +154,7 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnMessageReceived() <color=green>RECEIVED [{receivedMessage.Payload.IncrementalId}]</color>");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"MultiplayerEmotesMessageBus.OnMessageReceived() <color=green>RECEIVED [{receivedMessage.Payload.IncrementalId}]</color> From {receivedMessage.FromWalletId}");
 
                 Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, receivedMessage.Payload.SocialEmoteOutcome > -1, receivedMessage.Payload.SocialEmoteOutcome, receivedMessage.Payload.IsReacting, receivedMessage.Payload.SocialEmoteInitiator, receivedMessage.Payload.TargetAvatar, receivedMessage.Payload.IsStopping, receivedMessage.Payload.IsRepeating, receivedMessage.Payload.InteractionId);
             }
