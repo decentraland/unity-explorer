@@ -16,6 +16,7 @@ namespace DCL.Places
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
+        private readonly PlacesStateService placesStateService;
         private readonly DiscoverSectionController discoverSectionController;
 
         public PlacesController(
@@ -27,7 +28,8 @@ namespace DCL.Places
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
 
-            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService);
+            placesStateService = new PlacesStateService();
+            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService, placesStateService);
 
             view.SectionChanged += OnSectionChanged;
         }
@@ -35,6 +37,8 @@ namespace DCL.Places
         public void Dispose()
         {
             view.SectionChanged -= OnSectionChanged;
+
+            placesStateService.Dispose();
             discoverSectionController.Dispose();
         }
 
