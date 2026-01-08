@@ -12,7 +12,7 @@ namespace DCL.Places
 
         [Header("Sections")]
         [SerializeField] private ButtonWithSelectableStateView discoverSectionTab = null!;
-        [SerializeField] public GameObject discoverSectionView = null!;
+        [SerializeField] private GameObject discoverSectionView = null!;
         [SerializeField] private ButtonWithSelectableStateView favoritesSectionTab = null!;
         [SerializeField] private GameObject favoritesSectionView = null!;
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
