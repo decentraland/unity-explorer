@@ -44,7 +44,6 @@ namespace DCL.AvatarRendering.Emotes
                         // The entity was not created yet, so we wait until its created to be able to consume the intent
                         if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
-                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "RemoteEmotesSystem.Update() <color=magenta>The entity was not created yet, so we wait until its created to be able to consume the intent " + remoteEmoteIntention.WalletId + "</color>");
                             savedIntentions!.Add(remoteEmoteIntention);
                             continue;
                         }
