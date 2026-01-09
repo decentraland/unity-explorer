@@ -20,7 +20,7 @@ namespace DCL.Places
         public event Action? PlacesGridScrollAtTheBottom;
 
         [Header("Categories")]
-        [SerializeField] private ButtonWithSelectableStateView categoryButtonPrefab = null!;
+        [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
         [SerializeField] private Transform categoriesContainer = null!;
 
         [Header("Places")]
@@ -33,14 +33,14 @@ namespace DCL.Places
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
 
         private PlacesStateService placesStateService = null!;
-        private IObjectPool<ButtonWithSelectableStateView> categoryButtonsPool = null!;
-        private readonly List<KeyValuePair<string, ButtonWithSelectableStateView>> currentCategories = new ();
+        private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
+        private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
         private readonly List<string> currentPlacesIds = new ();
         private bool isResultsScrollPositionAtBottom => placesResultsScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
         private void Awake()
         {
-            categoryButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
+            categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
                 InstantiateCategoryButtonPrefab,
                 defaultCapacity: CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: categoryButtonView =>
@@ -126,30 +126,30 @@ namespace DCL.Places
         public void SetPlacesGridLoadingMoreActive(bool isActive) =>
             placesResultsLoadingMoreSpinner.SetActive(isActive);
 
-        private ButtonWithSelectableStateView InstantiateCategoryButtonPrefab()
+        private PlaceCategoryButton InstantiateCategoryButtonPrefab()
         {
-            ButtonWithSelectableStateView invitedCommunityCardView = Instantiate(categoryButtonPrefab, categoriesContainer);
+            PlaceCategoryButton invitedCommunityCardView = Instantiate(categoryButtonPrefab, categoriesContainer);
             return invitedCommunityCardView;
         }
 
         private void CreateAndSetupCategoryButton(PlaceCategoryData categoryData)
         {
-            ButtonWithSelectableStateView categoryButtonView = categoryButtonsPool.Get();
+            PlaceCategoryButton categoryButtonView = categoryButtonsPool.Get();
 
             // Setup card data
-            categoryButtonView.Text.text = categoryData.i18n.en;
+            categoryButtonView.Configure(categoryData.name, categoryData.i18n.en);
 
             // Setup card events
-            categoryButtonView.Button.onClick.RemoveAllListeners();
-            categoryButtonView.Button.onClick.AddListener(() => SelectCategory(categoryData.name));
+            categoryButtonView.buttonView.Button.onClick.RemoveAllListeners();
+            categoryButtonView.buttonView.Button.onClick.AddListener(() => SelectCategory(categoryData.name));
 
-            currentCategories.Add(new KeyValuePair<string, ButtonWithSelectableStateView>(categoryData.name, categoryButtonView));
+            currentCategories.Add(new KeyValuePair<string, PlaceCategoryButton>(categoryData.name, categoryButtonView));
         }
 
         private void SelectCategory(string categoryId, bool invokeEvent = true)
         {
             foreach (var category in currentCategories)
-                category.Value.SetSelected(category.Key == categoryId);
+                category.Value.buttonView.SetSelected(category.Key == categoryId);
 
             if (invokeEvent)
                 CategorySelected?.Invoke(categoryId != ALL_CATEGORY_ID ? categoryId : null);
