@@ -92,6 +92,9 @@ namespace DCL.Web3.Authenticators
             public UniTask ResendOtp() =>
                 originAuth.ResendOtp();
 
+            public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
+                originAuth.TryAutoConnectAsync(ct);
+
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {
                 public bool ShouldWaitForCodeVerificationFromServer => false;

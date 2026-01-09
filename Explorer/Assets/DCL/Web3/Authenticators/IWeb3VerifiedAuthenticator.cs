@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -24,5 +25,7 @@ namespace DCL.Web3.Authenticators
         ///     Can only be called during active login session.
         /// </summary>
         UniTask ResendOtp();
+
+        UniTask<bool> TryAutoConnectAsync(CancellationToken ct);
     }
 }

@@ -81,6 +81,9 @@ namespace DCL.Web3.Authenticators
         public UniTask ResendOtp() =>
             thirdWebAuth.ResendOtp();
 
+        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
+            thirdWebAuth.TryAutoConnectAsync(ct);
+
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);
 

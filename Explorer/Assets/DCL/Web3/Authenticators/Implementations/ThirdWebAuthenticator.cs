@@ -1,5 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Prefs;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -42,6 +43,40 @@ namespace DCL.Web3.Authenticators
             this.identityExpirationDuration = identityExpirationDuration;
 
             chainId = EnvChainsUtils.GetChainIdAsInt(environment);
+        }
+
+        public async UniTask<bool> TryAutoConnectAsync(CancellationToken ct)
+        {
+            string? email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, null);
+            Debug.Log("[ThirdWeb] Session expired, auto-connect failed");
+
+            if (string.IsNullOrEmpty(email))
+                return false;
+
+            try
+            {
+                await UniTask.SwitchToMainThread(ct);
+
+                InAppWallet? wallet = await InAppWallet.Create(
+                    ThirdWebManager.Instance.Client,
+                    email,
+                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
+
+                if (!await wallet.IsConnected())
+                {
+                    Debug.Log("[ThirdWeb] Session expired, auto-connect failed");
+                    return false;
+                }
+
+                ThirdWebManager.Instance.ActiveWallet = wallet;
+                Debug.Log("[ThirdWeb] Auto-connect successful");
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ThirdWeb] Auto-connect failed: {e.Message}");
+                return false;
+            }
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct)
@@ -123,6 +158,9 @@ namespace DCL.Web3.Authenticators
 
             Debug.Log($"ThirdWeb logged in as wallet {pendingWallet.WalletId}");
 
+            // Store email for auto-login
+            DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, email);
+
             ThirdWebManager.Instance.ActiveWallet = pendingWallet;
             InAppWallet result = pendingWallet;
             pendingWallet = null;
@@ -131,11 +169,13 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose()
         {
-            LogoutAsync(CancellationToken.None).Forget();
+            // Loging out on Dispose will break ThirdWeb auto-login
         }
 
-        public async UniTask LogoutAsync(CancellationToken ct) =>
+        public async UniTask LogoutAsync(CancellationToken ct)
+        {
             await ThirdWebManager.Instance?.DisconnectWallet();
+        }
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
         {

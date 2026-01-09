@@ -182,6 +182,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
+
+                web3Authenticator.TryAutoConnectAsync(loginCancellationTokenSource.Token).Forget();
                 fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, loginCancellationTokenSource.Token));
             }
             else

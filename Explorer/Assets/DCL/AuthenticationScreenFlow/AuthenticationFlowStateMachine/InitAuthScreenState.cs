@@ -19,6 +19,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.LoginContainer.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
+            viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.FinalizeContainer.SetActive(false);
 
             viewInstance.ErrorPopupRoot.SetActive(false);

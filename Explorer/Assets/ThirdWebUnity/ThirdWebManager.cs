@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using System.Threading.Tasks;
 using Thirdweb;
 using UnityEngine;
@@ -54,7 +55,7 @@ namespace ThirdWebUnity
                 try { await ActiveWallet.Disconnect(); }
                 finally { ActiveWallet = null; }
 
-            // PlayerPrefs.DeleteKey(THIRDWEB_AUTO_CONNECT_OPTIONS_KEY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL);
         }
     }
 }

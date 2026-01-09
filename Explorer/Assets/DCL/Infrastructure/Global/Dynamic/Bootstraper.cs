@@ -295,20 +295,18 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            var autoLogin = false;
-            if (autoLogin)
-                try
-                {
-                    await new TokenFileAuthenticator(
-                              URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                              webRequestsContainer.WebRequestController,
-                              bootstrapContainer.Web3AccountFactory)
-                         .WithIdentityCache(bootstrapContainer.IdentityCache)
-                         .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
-                         .LoginAsync("", ct);
-                }
-                catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            try
+            {
+                await new TokenFileAuthenticator(
+                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                          webRequestsContainer.WebRequestController,
+                          bootstrapContainer.Web3AccountFactory)
+                     .WithIdentityCache(bootstrapContainer.IdentityCache)
+                     .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
+                     .LoginAsync("", ct);
+            }
+            catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
