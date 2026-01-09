@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -91,6 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
             viewInstance.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
             viewInstance.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
+            viewInstance.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
             UpdateFinalizeButtonState();
 
             return;
@@ -114,6 +115,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
             viewInstance.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
             viewInstance.AgreeLicenseToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            viewInstance.ProfileNameInputField.onValueChanged.RemoveListener(OnProfileNameChanged);
             viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
             viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
         }
@@ -190,14 +192,19 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
 
-        private void OnToggleChanged(bool _)
+        private void OnToggleChanged(bool _) =>
+            UpdateFinalizeButtonState();
+
+        private void OnProfileNameChanged(string _) =>
+            UpdateFinalizeButtonState();
+
+        private void UpdateFinalizeButtonState()
         {
             viewInstance.FinalizeNewUserButton.interactable =
-                viewInstance.SubscribeToggle.isOn && viewInstance.AgreeLicenseToggle.isOn;
+                viewInstance.SubscribeToggle.isOn &&
+                viewInstance.AgreeLicenseToggle.isOn &&
+                !string.IsNullOrWhiteSpace(viewInstance.ProfileNameInputField.text);
         }
-
-        private void UpdateFinalizeButtonState() =>
-            OnToggleChanged(false);
 
         private Avatar CreateDefaultAvatar()
         {

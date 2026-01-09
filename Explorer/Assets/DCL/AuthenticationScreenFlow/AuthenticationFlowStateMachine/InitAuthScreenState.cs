@@ -24,6 +24,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
 
+            viewInstance.CharacterPreviewView.gameObject.SetActive(true);
+
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildDataInstallSource}"
                 : $"{Application.version} - {buildDataInstallSource}";

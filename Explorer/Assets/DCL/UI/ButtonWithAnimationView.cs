@@ -22,14 +22,20 @@ namespace DCL.UI
         private void OnEnable()
         {
             Button.onClick.AddListener(OnClick);
-            ButtonAnimator.enabled = true;
-            ButtonAnimator.Rebind();
-            ButtonAnimator.Update(0);
+
+            // if (ButtonAnimator != null)
+            {
+                ButtonAnimator.enabled = true;
+                ButtonAnimator.Rebind();
+                ButtonAnimator.Update(0);
+            }
         }
 
         private void OnDisable()
         {
             Button.onClick.RemoveListener(OnClick);
+
+            // if (ButtonAnimator != null)
             ButtonAnimator.enabled = false;
         }
 

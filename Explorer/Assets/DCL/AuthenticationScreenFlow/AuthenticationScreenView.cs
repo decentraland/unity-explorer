@@ -38,6 +38,15 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Button MoreOptionsButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public RectTransform MoreOptionsButtonDirIcon { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject MoreOptionsPanel { get; private set; } = null!;
+
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
         public GameObject VerificationContainer { get; private set; } = null!;

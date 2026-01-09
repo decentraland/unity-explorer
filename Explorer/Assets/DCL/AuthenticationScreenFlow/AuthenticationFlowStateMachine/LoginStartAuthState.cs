@@ -6,6 +6,7 @@ using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
@@ -18,6 +19,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
+
+        private bool areOptionsExpanded;
 
         public LoginStartAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
@@ -68,6 +71,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoginButton.interactable = true;
 
             viewInstance.LoadingSpinner.SetActive(false);
+            areOptionsExpanded = false;
+            viewInstance.MoreOptionsPanel.SetActive(false);
+            viewInstance.MoreOptionsButtonDirIcon.localScale = Vector3.one;
 
             // Listeners
             viewInstance.LoginButton.onClick.AddListener(Login);
@@ -75,6 +81,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
+
+            viewInstance.MoreOptionsButton.onClick.AddListener(OnMoreOptionsClicked);
 
             // ThirdWeb
             viewInstance.LoginWithOtpButton.onClick.AddListener(OTPLogin);
@@ -91,8 +99,29 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(Login);
 
+            viewInstance.MoreOptionsButton.onClick.RemoveListener(OnMoreOptionsClicked);
+
             // ThirdWeb
             viewInstance.LoginWithOtpButton.onClick.RemoveListener(OTPLogin);
+        }
+
+        private void OnMoreOptionsClicked()
+        {
+            areOptionsExpanded = !areOptionsExpanded;
+            viewInstance.MoreOptionsButtonDirIcon.localScale = new Vector3(1, -viewInstance.MoreOptionsButtonDirIcon.localScale.y, 1);
+
+            if (areOptionsExpanded)
+            {
+                viewInstance.MoreOptionsPanel.SetActive(true);
+
+                // subscribe
+            }
+            else
+            {
+                viewInstance.MoreOptionsPanel.SetActive(false);
+
+                // unsubscribe
+            }
         }
 
         private void Login()
