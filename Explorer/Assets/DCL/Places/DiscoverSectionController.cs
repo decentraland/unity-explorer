@@ -24,6 +24,7 @@ namespace DCL.Places
         private bool isSectionOpen;
         private int currentPageNumberFilter = 1;
         private bool isGridResultsLoadingItems;
+        private string? currentCategorySelected;
 
         private CancellationTokenSource? getCategoriesCts;
         private CancellationTokenSource? getPlacesCts;
@@ -41,6 +42,7 @@ namespace DCL.Places
 
             placesController.SectionChanged += OnSectionChanged;
             placesController.PlacesClosed += OnPlacesSectionClosed;
+            view.CategorySelected += OnCategorySelected;
 
             view.SetDependencies(placesStateService);
             view.InitializePlacesGrid();
@@ -49,6 +51,9 @@ namespace DCL.Places
         public void Dispose()
         {
             placesController.SectionChanged -= OnSectionChanged;
+            placesController.PlacesClosed -= OnPlacesSectionClosed;
+            view.CategorySelected -= OnCategorySelected;
+
             UnloadSection();
         }
 
@@ -86,9 +91,12 @@ namespace DCL.Places
         private void UnloadSection()
         {
             getCategoriesCts?.SafeCancelAndDispose();
-            getPlacesCts?.SafeCancelAndDispose();
             view.ClearCategories();
+
+            getPlacesCts?.SafeCancelAndDispose();
             view.ClearPlacesResults();
+
+            currentCategorySelected = null;
         }
 
         private async UniTask LoadCategoriesAsync(CancellationToken ct)
@@ -105,6 +113,14 @@ namespace DCL.Places
             }
 
             view.SetCategories(categoriesResult.Value.data);
+        }
+
+        private void OnCategorySelected(string? categoryId)
+        {
+            currentCategorySelected = categoryId;
+
+            getPlacesCts = getPlacesCts.SafeRestart();
+            LoadPlacesAsync(0, getPlacesCts.Token).Forget();
         }
 
         private async UniTask LoadPlacesAsync(int pageNumber, CancellationToken ct)
@@ -126,7 +142,7 @@ namespace DCL.Places
                                                           searchText: null,
                                                           sortBy: IPlacesAPIService.SortBy.MOST_ACTIVE,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                          category: null)
+                                                          category: currentCategorySelected)
                                                      .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested)

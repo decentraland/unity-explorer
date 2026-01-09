@@ -13,15 +13,17 @@ namespace DCL.Places
 {
     public class DiscoverSectionView : MonoBehaviour
     {
-        public event Action<string>? CategorySelected;
+        private const string ALL_CATEGORY_ID = "all";
+
+        public event Action<string?>? CategorySelected;
 
         [Header("Categories")]
         [SerializeField] private ButtonWithSelectableStateView categoryButtonPrefab = null!;
-        [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private Transform categoriesContainer = null!;
 
         [Header("Places")]
         [SerializeField] private LoopGridView placesResultLoopGrid = null!;
+        [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
@@ -55,7 +57,7 @@ namespace DCL.Places
         {
             var allCategoryData = new PlaceCategoryData
             {
-                name = "all",
+                name = ALL_CATEGORY_ID,
                 i18n = new PlaceCategoryLocalizationData
                 {
                     en = "All",
@@ -67,7 +69,7 @@ namespace DCL.Places
             foreach (PlaceCategoryData categoryData in categories)
                 CreateAndSetupCategoryButton(categoryData);
 
-            SelectCategory(allCategoryData.name);
+            SelectCategory(allCategoryData.name, invokeEvent: false);
         }
 
         public void ClearCategories()
@@ -135,12 +137,13 @@ namespace DCL.Places
             currentCategories.Add(new KeyValuePair<string, ButtonWithSelectableStateView>(categoryData.name, categoryButtonView));
         }
 
-        private void SelectCategory(string categoryId)
+        private void SelectCategory(string categoryId, bool invokeEvent = true)
         {
             foreach (var category in currentCategories)
                 category.Value.SetSelected(category.Key == categoryId);
 
-            CategorySelected?.Invoke(categoryId);
+            if (invokeEvent)
+                CategorySelected?.Invoke(categoryId != ALL_CATEGORY_ID ? categoryId : null);
         }
 
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
