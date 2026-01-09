@@ -173,7 +173,7 @@ namespace DCL.Navmap
         }
 
         private void DonateToSceneCreator() =>
-            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.scene_creator, place!.base_position_processed)));
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address, place!.base_position_processed)));
 
         public void Set(PlacesData.PlaceInfo place)
         {
@@ -195,7 +195,7 @@ namespace DCL.Navmap
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
-            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.scene_creator));
+            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);

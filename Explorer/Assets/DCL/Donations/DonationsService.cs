@@ -18,6 +18,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Donations
 {
@@ -53,6 +54,7 @@ namespace DCL.Donations
 
         private DateTime lastManaRateQueryTime;
         private decimal lastManaRate;
+        private CancellationTokenSource sceneCreatorAddressCts;
 
         public DonationsService(IScenesCache scenesCache,
             IEthereumApi ethereumApi,
@@ -88,12 +90,39 @@ namespace DCL.Donations
         public void Dispose()
         {
             scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+            sceneCreatorAddressCts.SafeCancelAndDispose();
         }
 
         private void OnCurrentSceneChanged(ISceneFacade? currentScene)
         {
-            string? creatorAddress = currentScene?.SceneData.GetCreatorAddress();
-            donationsEnabledCurrentScene.UpdateValue((creatorAddress != null, creatorAddress, currentScene?.Info.BaseParcel));
+            if (currentScene == null)
+            {
+                donationsEnabledCurrentScene.UpdateValue((false, string.Empty, null));
+                return;
+            }
+
+            sceneCreatorAddressCts = sceneCreatorAddressCts.SafeRestart();
+            FetchCreatorAddressAsync(sceneCreatorAddressCts.Token).Forget();
+            return;
+
+            async UniTaskVoid FetchCreatorAddressAsync(CancellationToken ct)
+            {
+                try
+                {
+                    string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
+                    string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
+
+                    if (addressFromScene != addressFromApis)
+                        ReportHub.LogWarning(ReportCategory.DONATIONS, $"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name}.");
+
+                    donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.DONATIONS);
+                }
+            }
         }
 
         public async UniTask<string> GetSceneNameAsync(Vector2Int parcelPosition, CancellationToken ct)
@@ -104,6 +133,18 @@ namespace DCL.Donations
                 return realmData.RealmName.Replace(".dcl.eth", string.Empty);
 
             return placeInfo?.title ?? UNKNOWN_PLACE_TEXT;
+        }
+
+        private async UniTask<string?> GetSceneCreatorAddressAsync(ISceneFacade currentScene, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? placeInfo;
+
+            if (realmData.ScenesAreFixed)
+                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+            else
+                placeInfo = await GetPlaceInfoAsync(currentScene.Info.BaseParcel, ct);
+
+            return placeInfo?.creator_address;
         }
 
         private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(Vector2Int parcelPosition, CancellationToken ct)
