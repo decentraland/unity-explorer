@@ -87,6 +87,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
         private bool IsCollectible() =>
             false;
 
-        public string GetMarketplaceLink() => "https://www.decentraland.com/fake_url";
+        public string GetMarketplaceUrl() => "https://decentraland.invalid/fake";
     }
 }

@@ -49,12 +49,8 @@ namespace DCL.AvatarRendering.Export
             else
                 name = "null";
 
-            return new WearableExportInfo
-            {
-                Name = name,
-                Category = wearable.GetCategory(),
-                MarketPlaceUrl = wearable.GetMarketplaceLink()
-            };
+            return new WearableExportInfo(name, wearable.GetCategory(),
+                wearable.GetMarketplaceUrl());
         }
 
         public static VRMMetaObject CreateVrmMetaObject(string authorName,
@@ -91,18 +87,26 @@ namespace DCL.AvatarRendering.Export
 
                 sb.Append(wearable.Category).Append(": ").Append(wearable.Name);
 
-                if (!string.IsNullOrEmpty(wearable.MarketPlaceUrl))
-                    sb.Append(": ").Append(wearable.MarketPlaceUrl);
+                if (!string.IsNullOrEmpty(wearable.MarketplaceUrl))
+                    sb.Append(": ").Append(wearable.MarketplaceUrl);
             }
 
             return sb.ToString();
         }
     }
 
-    public struct WearableExportInfo
+    public readonly struct WearableExportInfo
     {
-        public string Name { get; set; }
-        public string Category { get; set; }
-        public string MarketPlaceUrl { get; set; }
+        public readonly string Name;
+        public readonly string Category;
+        public readonly string MarketplaceUrl;
+
+        public WearableExportInfo(string name, string category,
+            string marketplaceUrl)
+        {
+            Name = name;
+            Category = category;
+            MarketplaceUrl = marketplaceUrl;
+        }
     }
 }

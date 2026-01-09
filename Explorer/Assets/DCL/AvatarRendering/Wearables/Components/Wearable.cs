@@ -203,7 +203,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             return !string.IsNullOrEmpty(id) && !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
         }
 
-        public string GetMarketplaceLink()
+        public string GetMarketplaceUrl()
         {
             const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
 
