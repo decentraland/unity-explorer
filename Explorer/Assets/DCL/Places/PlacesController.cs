@@ -57,7 +57,8 @@ namespace DCL.Places
 
         private void OnSectionChanged(PlacesSections section)
         {
-            Debug.Log($"[SANTI LOG] Section changed to {section}");
+            // TODO (Santi): Implement this!
+            // ...
         }
     }
 }
