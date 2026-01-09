@@ -2,21 +2,24 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
 using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.AssetLoad.Components;
-using DCL.WebRequests;
+using DCL.SDKComponents.AudioSources;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using UnityEngine.Pool;
-using UnityEngine;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.AssetLoad.Systems
 {
@@ -118,26 +121,22 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                     || path.EndsWith(".wav", StringComparison.InvariantCultureIgnoreCase)
                     || path.EndsWith(".ogg", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    PBAudioSource component = new PBAudioSource
-                    {
-                        AudioClipUrl = path,
-                    };
-                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise);
+
+                    loadingEntity = World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var intention = new GetTextureIntention(
-                        url: path,
-                        fileHash: hash,
-                        wrapMode: TextureWrapMode.Clamp,
-                        filterMode: FilterMode.Bilinear,
-                        textureType: TextureType.Albedo,
-                        reportSource: nameof(AssetLoadSystem),
-                        attemptsCount: StreamableLoadingDefaults.ATTEMPTS_COUNT
-                    );
-                    loadingEntity = World.Create(intention, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    var promise = TexturePromise.Create(World,
+                        new GetTextureIntention
+                        {
+                            CommonArguments = new CommonLoadingArguments(URLAddress.FromString(path)),
+                            ReportSource = GetReportCategory(),
+                        },
+                        PartitionComponent.MIN_PRIORITY);
+                    loadingEntity = World.Create(promise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))

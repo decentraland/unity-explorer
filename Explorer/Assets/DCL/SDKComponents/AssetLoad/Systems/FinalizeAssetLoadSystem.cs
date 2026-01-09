@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.AssetLoad.Components;
@@ -13,9 +12,8 @@ using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.Visibility.Systems;
-using SceneRunner.Scene;
-using System;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.AssetLoad.Systems
 {
@@ -41,10 +39,8 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
         protected override void Update(float t)
         {
-            if (!capBudget.TrySpendBudget())
-                return;
-
             FinalizeGltfLoadingQuery(World);
+            FinalizeAudioClipLoadingQuery(World);
         }
 
         [Query]
@@ -52,6 +48,9 @@ namespace DCL.SDKComponents.AssetLoad.Systems
         [None(typeof(CRDTEntity))]
         private void FinalizeGltfLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref GltfContainerComponent component)
         {
+            if (!capBudget.TrySpendBudget())
+                return;
+
             if (component.State == LoadingState.Loading
                 && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
@@ -63,6 +62,34 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                 else
                     assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, component.Name);
             }
+        }
+
+        [Query]
+        [None(typeof(CRDTEntity))]
+        private void FinalizeAudioClipLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref AudioPromise audioPromise)
+        {
+            if (audioPromise.IsConsumed
+                || !capBudget.TrySpendBudget())
+                return;
+
+            if (!audioPromise.TryConsume(World!, out var promiseResult))
+                return;
+
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, audioPromise.LoadingIntention.CommonArguments.URL);
+        }
+
+        [Query]
+        [None(typeof(CRDTEntity))]
+        private void FinalizeTextureLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref TexturePromise texturePromise)
+        {
+            if (texturePromise.IsConsumed
+                || !capBudget.TrySpendBudget())
+                return;
+
+            if (!texturePromise.TryConsume(World!, out var promiseResult))
+                return;
+
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, texturePromise.LoadingIntention.CommonArguments.URL);
         }
     }
 }
