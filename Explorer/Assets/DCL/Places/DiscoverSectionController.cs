@@ -22,9 +22,10 @@ namespace DCL.Places
         private readonly PlacesStateService placesStateService;
 
         private bool isSectionOpen;
-        private int currentPageNumberFilter = 1;
-        private bool isGridResultsLoadingItems;
         private string? currentCategorySelected;
+        private int currentPlacesPageNumber = 1;
+        private bool isPlacesGridLoadingItems;
+        private int currentPlacesTotalAmount;
 
         private CancellationTokenSource? getCategoriesCts;
         private CancellationTokenSource? getPlacesCts;
@@ -43,6 +44,7 @@ namespace DCL.Places
             placesController.SectionChanged += OnSectionChanged;
             placesController.PlacesClosed += OnPlacesSectionClosed;
             view.CategorySelected += OnCategorySelected;
+            view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
 
             view.SetDependencies(placesStateService);
             view.InitializePlacesGrid();
@@ -53,6 +55,7 @@ namespace DCL.Places
             placesController.SectionChanged -= OnSectionChanged;
             placesController.PlacesClosed -= OnPlacesSectionClosed;
             view.CategorySelected -= OnCategorySelected;
+            view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
 
             UnloadSection();
         }
@@ -95,6 +98,7 @@ namespace DCL.Places
 
             getPlacesCts?.SafeCancelAndDispose();
             view.ClearPlacesResults();
+            placesStateService.ClearPlaces();
 
             currentCategorySelected = null;
         }
@@ -126,12 +130,22 @@ namespace DCL.Places
             LoadPlacesAsync(0, getPlacesCts.Token).Forget();
         }
 
+        private void TryLoadMorePlaces()
+        {
+            if (isPlacesGridLoadingItems || placesStateService.CurrentPlaces.Count >= currentPlacesTotalAmount)
+                return;
+
+            getPlacesCts = getPlacesCts.SafeRestart();
+            LoadPlacesAsync(currentPlacesPageNumber + 1, getPlacesCts.Token).Forget();
+        }
+
         private async UniTask LoadPlacesAsync(int pageNumber, CancellationToken ct)
         {
-            isGridResultsLoadingItems = true;
+            isPlacesGridLoadingItems = true;
 
             if (pageNumber == 0)
             {
+                placesStateService.ClearPlaces();
                 view.ClearPlacesResults();
                 view.SetPlacesGridAsLoading(true);
             }
@@ -143,7 +157,7 @@ namespace DCL.Places
                                                           pageSize: PLACES_PER_PAGE,
                                                           ct: ct,
                                                           searchText: null,
-                                                          sortBy: IPlacesAPIService.SortBy.MOST_ACTIVE,
+                                                          sortBy: IPlacesAPIService.SortBy.LIKE_SCORE,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                           category: currentCategorySelected)
                                                      .SuppressToResultAsync(ReportCategory.PLACES);
@@ -159,17 +173,19 @@ namespace DCL.Places
 
             if (placesResult.Value.Data.Count > 0)
             {
-                currentPageNumberFilter = pageNumber;
+                currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
                 view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
             }
+
+            currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)
                 view.SetPlacesGridAsLoading(false);
 
             view.SetPlacesGridLoadingMoreActive(false);
 
-            isGridResultsLoadingItems = false;
+            isPlacesGridLoadingItems = false;
         }
     }
 }

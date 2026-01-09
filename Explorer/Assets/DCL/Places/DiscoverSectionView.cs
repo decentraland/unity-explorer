@@ -14,8 +14,10 @@ namespace DCL.Places
     public class DiscoverSectionView : MonoBehaviour
     {
         private const string ALL_CATEGORY_ID = "all";
+        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
         public event Action<string?>? CategorySelected;
+        public event Action? PlacesGridScrollAtTheBottom;
 
         [Header("Categories")]
         [SerializeField] private ButtonWithSelectableStateView categoryButtonPrefab = null!;
@@ -23,16 +25,18 @@ namespace DCL.Places
 
         [Header("Places")]
         [SerializeField] private LoopGridView placesResultLoopGrid = null!;
+        [SerializeField] private ScrollRect placesResultsScrollRect = null!;
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
 
-        private PlacesStateService placesStateService;
+        private PlacesStateService placesStateService = null!;
         private IObjectPool<ButtonWithSelectableStateView> categoryButtonsPool = null!;
         private readonly List<KeyValuePair<string, ButtonWithSelectableStateView>> currentCategories = new ();
         private readonly List<string> currentPlacesIds = new ();
+        private bool isResultsScrollPositionAtBottom => placesResultsScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
         private void Awake()
         {
@@ -45,7 +49,12 @@ namespace DCL.Places
                     categoryButtonView.transform.SetAsLastSibling();
                 },
                 actionOnRelease: categoryButtonView => categoryButtonView.gameObject.SetActive(false));
+
+            placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
+
+        private void OnDestroy() =>
+            placesResultsScrollRect.onValueChanged.RemoveAllListeners();
 
         public void SetDependencies(PlacesStateService stateService) =>
             this.placesStateService = stateService;
@@ -165,6 +174,14 @@ namespace DCL.Places
         {
             placesResultsEmptyContainer.SetActive(isEmpty);
             placesResultLoopGrid.gameObject.SetActive(!isEmpty);
+        }
+
+        private void OnScrollRectValueChanged(Vector2 _)
+        {
+            if (!isResultsScrollPositionAtBottom)
+                return;
+
+            PlacesGridScrollAtTheBottom?.Invoke();
         }
     }
 }

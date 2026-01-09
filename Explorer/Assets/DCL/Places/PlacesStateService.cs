@@ -6,20 +6,21 @@ namespace DCL.Places
 {
     public class PlacesStateService : IDisposable
     {
-        private readonly Dictionary<string, PlacesData.PlaceInfo> allPlaces = new();
+        public Dictionary<string, PlacesData.PlaceInfo> CurrentPlaces { get; } = new();
 
         public PlacesData.PlaceInfo GetPlaceInfoById(string placeId) =>
-            allPlaces.GetValueOrDefault(placeId);
+            CurrentPlaces.GetValueOrDefault(placeId);
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
             foreach (PlacesData.PlaceInfo place in places)
-                allPlaces[place.id] = place;
+                CurrentPlaces[place.id] = place;
         }
 
-        public void Dispose()
-        {
-            allPlaces.Clear();
-        }
+        public void ClearPlaces() =>
+            CurrentPlaces.Clear();
+
+        public void Dispose() =>
+            ClearPlaces();
     }
 }
