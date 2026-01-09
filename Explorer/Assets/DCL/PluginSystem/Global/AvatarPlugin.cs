@@ -68,7 +68,6 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<AvatarBase> avatarPoolRegistry = null!;
         private IAvatarMaterialPoolHandler avatarMaterialPoolHandler = null!;
         private IExtendedObjectPool<ComputeShader> computeShaderPool = null!;
-        private AvatarBase avatarBasePrefab = null!;
 
         private readonly NametagsData nametagsData;
 
@@ -187,8 +186,8 @@ namespace DCL.PluginSystem.Global
 
         private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            var avatarBaseAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct);
-            avatarBasePrefab = avatarBaseAsset.Value.EnsureGetComponent<AvatarBase>();
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
+
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
