@@ -22,7 +22,6 @@ using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.AvatarRendering.Export;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.CharacterPreview;
 using DCL.Friends.UserBlocking;

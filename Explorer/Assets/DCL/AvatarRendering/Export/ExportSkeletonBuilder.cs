@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Export
 {
-    public sealed class ExportSkeletonBuilder
+    public static class ExportSkeletonBuilder
     {
         public static void MapBonesRecursive(
             Dictionary<HumanBodyBones, Transform> mapping, Transform bone)

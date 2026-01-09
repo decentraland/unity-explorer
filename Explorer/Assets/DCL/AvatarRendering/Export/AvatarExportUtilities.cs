@@ -37,10 +37,21 @@ namespace DCL.AvatarRendering.Export
 
         public static WearableExportInfo CreateWearableInfo(IWearable wearable)
         {
-            var dto = wearable.DTO;
+            var metadata = wearable.DTO?.Metadata;
+            string name;
+
+            if (metadata == null)
+                name = "null";
+            else if (!string.IsNullOrEmpty(metadata.name))
+                name = metadata.name;
+            else if (!string.IsNullOrEmpty(metadata.id))
+                name = metadata.id;
+            else
+                name = "null";
+
             return new WearableExportInfo
             {
-                Name = !string.IsNullOrEmpty(dto.Metadata.name) ? dto.Metadata.name : dto.Metadata.id,
+                Name = name,
                 Category = wearable.GetCategory(),
                 MarketPlaceUrl = wearable.GetMarketplaceLink()
             };
@@ -86,5 +97,12 @@ namespace DCL.AvatarRendering.Export
 
             return sb.ToString();
         }
+    }
+
+    public struct WearableExportInfo
+    {
+        public string Name { get; set; }
+        public string Category { get; set; }
+        public string MarketPlaceUrl { get; set; }
     }
 }
