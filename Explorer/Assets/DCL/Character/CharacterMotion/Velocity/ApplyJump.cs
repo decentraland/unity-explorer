@@ -45,7 +45,7 @@ namespace DCL.CharacterMotion
             {
                 TryApplyDirectionChangeImpulse(settings, characterPhysics, viewerForward, viewerRight, inputComponent);
 
-                float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
+                float jumpHeight = GetJumpHeight(characterPhysics.JumpCount, characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
                 float gravity = settings.Gravity * settings.JumpGravityFactor;
 
                 // Override velocity in a jump direction
@@ -98,19 +98,27 @@ namespace DCL.CharacterMotion
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float GetJumpHeight(Vector3 flatHorizontalVelocity, ICharacterControllerSettings settings, in MovementInputComponent input)
+        private static float GetJumpHeight(int jumpCount, Vector3 flatHorizontalVelocity, ICharacterControllerSettings settings, in MovementInputComponent input)
         {
-            float maxJumpHeight = input.Kind switch
-                                  {
-                                      MovementKind.WALK => settings.JogJumpHeight,
-                                      MovementKind.JOG => settings.JogJumpHeight,
-                                      MovementKind.IDLE => settings.JogJumpHeight,
-                                      MovementKind.RUN => settings.RunJumpHeight,
-                                      _ => throw new ArgumentOutOfRangeException(),
-                                  };
+            float jumpHeight;
 
-            float currentSpeed = flatHorizontalVelocity.magnitude;
-            float jumpHeight = Mathf.Lerp(settings.JogJumpHeight, maxJumpHeight, currentSpeed / settings.RunSpeed);
+            if (jumpCount == 0)
+            {
+                float maxJumpHeight = input.Kind switch
+                                      {
+                                          MovementKind.WALK => settings.JogJumpHeight,
+                                          MovementKind.JOG => settings.JogJumpHeight,
+                                          MovementKind.IDLE => settings.JogJumpHeight,
+                                          MovementKind.RUN => settings.RunJumpHeight,
+                                          _ => throw new ArgumentOutOfRangeException(),
+                                      };
+
+                float currentSpeed = flatHorizontalVelocity.magnitude;
+                jumpHeight = Mathf.Lerp(settings.JogJumpHeight, maxJumpHeight, currentSpeed / settings.RunSpeed);
+            }
+            else
+                jumpHeight = settings.AirJumpHeight;
+
             return jumpHeight;
         }
     }

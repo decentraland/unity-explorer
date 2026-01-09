@@ -28,6 +28,7 @@ namespace DCL.CharacterMotion.Settings
         float LongJumpGravityScale { get; set; }
         float JumpGravityFactor { get; }
         int AirJumpCount { get; set; }
+        float AirJumpHeight { get; set; }
         float CooldownBetweenJumps { get;set; }
         float AirJumpDirectionChangeImpulse { get; set; }
         float JumpGraceTime { get; }

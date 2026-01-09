@@ -75,6 +75,7 @@ MonoBehaviour:
   <LongJumpGravityScale>k__BackingField: 0.5
   <JumpGravityFactor>k__BackingField: 4
   <AirJumpCount>k__BackingField: 1
+  <AirJumpHeight>k__BackingField: 2
   <CooldownBetweenJumps>k__BackingField: 0.3
   <AirJumpDirectionChangeImpulse>k__BackingField: 8
   <JumpGraceTime>k__BackingField: 0.15

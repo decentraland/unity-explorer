@@ -118,6 +118,12 @@ namespace DCL.CharacterMotion.Settings
             set => impl.AirJumpCount = value;
         }
 
+        public float AirJumpHeight
+        {
+            get => impl.AirJumpHeight;
+            set => impl.AirJumpHeight = value;
+        }
+
         public float CooldownBetweenJumps
         {
             get => impl.CooldownBetweenJumps;

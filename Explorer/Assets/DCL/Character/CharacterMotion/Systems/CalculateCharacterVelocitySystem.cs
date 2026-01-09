@@ -44,6 +44,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> stopTime = new (0);
 
         private readonly ElementBinding<int> airJumpCount = new (0);
+        private readonly ElementBinding<float> airJumpHeight = new (0);
         private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
         private readonly ElementBinding<float> airJumpImpulse = new (0);
 
@@ -66,6 +67,7 @@ namespace DCL.CharacterMotion.Systems
 
             debugBuilder.TryAddWidget("Locomotion: Air Jumping")?
                         .AddControl( new DebugConstLabelDef("Air Jump Count"), new DebugIntFieldDef(airJumpCount) )
+                        .AddFloatField("Height", airJumpHeight)
                         .AddFloatField("Cooldown", cooldownBetweenJumps)
                         .AddFloatField("Direction Change Impulse", airJumpImpulse);
         }
@@ -91,6 +93,7 @@ namespace DCL.CharacterMotion.Systems
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
             airJumpCount.Value = settings.AirJumpCount;
+            airJumpHeight.Value = settings.AirJumpHeight;
             cooldownBetweenJumps.Value = settings.CooldownBetweenJumps;
             airJumpImpulse.Value = settings.AirJumpDirectionChangeImpulse;
         }
@@ -113,6 +116,7 @@ namespace DCL.CharacterMotion.Systems
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
             settings.AirJumpCount = airJumpCount.Value;
+            settings.AirJumpHeight = airJumpHeight.Value;
             settings.CooldownBetweenJumps = cooldownBetweenJumps.Value;
             settings.AirJumpDirectionChangeImpulse = airJumpImpulse.Value;
 
