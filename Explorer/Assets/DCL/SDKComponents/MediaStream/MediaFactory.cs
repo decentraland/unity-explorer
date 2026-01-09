@@ -159,10 +159,18 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             var address = MediaAddress.New(url);
-
+            
             MultiMediaPlayer player = address.Match(
                 (streamingRoom, mediaPlayerPool),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onUrlMediaAddress: static (ctx, address) =>
+                {
+                    bool isContentServerResource = address.Url.Contains(CONTENT_SERVER_PREFIX);
+                    bool shouldUseLowLatency =
+                        !isContentServerResource
+                        && address.Url.IsValidUrl();
+                    
+                    return MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url, shouldUseLowLatency), ctx.mediaPlayerPool));
+                },
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
             );
 
