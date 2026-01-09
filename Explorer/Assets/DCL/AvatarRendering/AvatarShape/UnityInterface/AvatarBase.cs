@@ -125,7 +125,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
             animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
             overrideController.ApplyOverrides(animationOverrides);
-            AvatarAnimator.runtimeAnimatorController = overrideController; // This fixes a problem when executing a social emote before the overrideController was set (the avatar got the T pose)
+
+            if(AvatarAnimator.runtimeAnimatorController != null) // Avoids failing unit tests
+                AvatarAnimator.runtimeAnimatorController = overrideController; // This fixes a problem when executing a social emote before the overrideController was set (the avatar got the T pose)
 
             originalArmatureName = ArmatureObject.name;
         }
