@@ -41,6 +41,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
                 mediaPlayer.PlatformOptionsWindows._audioMode = Windows.AudioOutput.Unity;
+                mediaPlayer.PlatformOptionsWindows.useLowLatency = true;
                 mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
             }
 
