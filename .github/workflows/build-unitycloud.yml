@@ -558,16 +558,12 @@ jobs:
           if-no-files-found: error
           
       - name: Upload debug symbols to Sentry
-        #if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' && needs.prebuild.outputs.sentry_upload_symbols == 'true' }}
         shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
         run: |
-          echo "sentry_enabled=${{ needs.prebuild.outputs.sentry_enabled }}"
-          echo "sentry_upload_symbols=${{ needs.prebuild.outputs.sentry_upload_symbols }}"
-          
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
             --project "$SENTRY_PROJECT" \
