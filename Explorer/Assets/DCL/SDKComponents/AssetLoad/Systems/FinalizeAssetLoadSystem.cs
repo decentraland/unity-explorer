@@ -1,8 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.SDKComponents.AssetLoad.Components;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
@@ -11,6 +14,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
+using SceneRunner.Scene;
 using System;
 
 namespace DCL.SDKComponents.AssetLoad.Systems
@@ -21,13 +25,17 @@ namespace DCL.SDKComponents.AssetLoad.Systems
     {
         private readonly IPerformanceBudget capBudget;
         private readonly IGltfContainerAssetsCache gltfCache;
+        private readonly AssetLoadUtils assetLoadUtils;
 
         internal FinalizeAssetLoadSystem(World world,
             IPerformanceBudget capBudget,
-            IGltfContainerAssetsCache gltfCache) : base(world)
+            IGltfContainerAssetsCache gltfCache,
+            AssetLoadUtils assetLoadUtils)
+            : base(world)
         {
             this.capBudget = capBudget;
             this.gltfCache = gltfCache;
+            this.assetLoadUtils = assetLoadUtils;
         }
 
 
@@ -41,13 +49,19 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
         [Query]
         [All(typeof(PBGltfContainer))]
-        private void FinalizeGltfLoading(in Entity entity, ref GltfContainerComponent component)
+        [None(typeof(CRDTEntity))]
+        private void FinalizeGltfLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref GltfContainerComponent component)
         {
             if (component.State == LoadingState.Loading
-                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result)
-                && result.Succeeded)
+                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
-                gltfCache.Dereference(component.Hash, result.Asset);
+                if (result.Succeeded)
+                {
+                    gltfCache.Dereference(component.Hash, result.Asset);
+                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, component.Name);
+                }
+                else
+                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, component.Name);
             }
         }
     }

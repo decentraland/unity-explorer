@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -30,11 +31,17 @@ namespace DCL.SDKComponents.AssetLoad.Systems
     {
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
+        private readonly AssetLoadUtils assetLoadUtils;
 
-        internal AssetLoadSystem(World world, ISceneData sceneData, IPerformanceBudget frameTimeBudgetProvider) : base(world)
+        internal AssetLoadSystem(World world,
+            ISceneData sceneData,
+            IPerformanceBudget frameTimeBudgetProvider,
+            AssetLoadUtils assetLoadUtils)
+            : base(world)
         {
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+            this.assetLoadUtils = assetLoadUtils;
         }
 
         protected override void Update(float t)
@@ -45,7 +52,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
         [Query]
         [None(typeof(AssetLoadComponent))]
-        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent)
+        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent, ref CRDTEntity crdtEntity)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
@@ -54,20 +61,20 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             AssetLoadComponent component = new AssetLoadComponent(sdkComponent.Assets);
             World.Add(entity, component);
 
-            ProcessAssetList(ref sdkComponent, ref component);
+            ProcessAssetList(crdtEntity, ref sdkComponent, ref component);
         }
 
         [Query]
-        private void UpdateAssetLoading(ref PBAssetLoad sdkComponent, ref AssetLoadComponent component)
+        private void UpdateAssetLoading(in CRDTEntity entity, ref PBAssetLoad sdkComponent, ref AssetLoadComponent component)
         {
             if (!sdkComponent.IsDirty) return;
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             sdkComponent.IsDirty = false;
-            ProcessAssetList(ref sdkComponent, ref component);
+            ProcessAssetList(entity, ref sdkComponent, ref component);
         }
 
-        private void ProcessAssetList(ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent)
+        private void ProcessAssetList(in CRDTEntity crdtEntity, ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent)
         {
             // Build set of current asset hashes
             var assetPathHash = DictionaryPool<string ,string>.Get();
@@ -115,7 +122,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                     {
                         AudioClipUrl = path,
                     };
-                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY);
+                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
@@ -130,7 +137,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                         reportSource: nameof(AssetLoadSystem),
                         attemptsCount: StreamableLoadingDefaults.ATTEMPTS_COUNT
                     );
-                    loadingEntity = World.Create(intention, PartitionComponent.MIN_PRIORITY);
+                    loadingEntity = World.Create(intention, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
@@ -139,13 +146,15 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY);
+                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} has unsupported format");
                     continue;
                 }
+
+                assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.Loading, path);
 
                 existingComponent.LoadingEntities.Add(path, loadingEntity);
             }

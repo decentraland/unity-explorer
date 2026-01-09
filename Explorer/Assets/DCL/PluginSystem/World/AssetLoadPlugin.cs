@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.AssetLoad;
 using DCL.SDKComponents.AssetLoad.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -25,9 +26,11 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            AssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalDeps.FrameTimeBudget);
+            var utilsClass = new AssetLoadUtils(sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
+
+            AssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalDeps.FrameTimeBudget, utilsClass);
             CleanUpAssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
-            FinalizeAssetLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetsCache);
+            FinalizeAssetLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetsCache, utilsClass);
         }
     }
 }
