@@ -160,7 +160,22 @@ namespace DCL.Profiles
                    && Language == profile.Language
                    && Profession == profile.Profession
                    && Birthdate == profile.Birthdate
-                   && Version == profile.Version;
+                   && Version == profile.Version
+                   && AreLinksSame(links, profile.links);
+        }
+
+        private static bool AreLinksSame(List<LinkJsonDto>? links1, List<LinkJsonDto>? links2)
+        {
+            if (links1 == null && links2 == null) return true;
+            if (links1 == null || links2 == null) return false;
+            if (links1.Count != links2.Count) return false;
+
+            for (int i = 0; i < links1.Count; i++)
+            {
+                if (links1[i].title != links2[i].title || links1[i].url != links2[i].url)
+                    return false;
+            }
+            return true;
         }
     }
 }
