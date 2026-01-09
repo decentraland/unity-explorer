@@ -568,9 +568,7 @@ jobs:
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
             --project "$SENTRY_PROJECT" \
-            "build" \
-            --ext dSYM \
-            --ext pdb
+            "build"
 
       # Will run always (even if failing)
       - name: Upload cloud logs
