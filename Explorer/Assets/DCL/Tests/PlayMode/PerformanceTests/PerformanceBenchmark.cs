@@ -15,11 +15,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
-using Unity.Profiling;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    public class PerformanceBenchmark
+    public abstract class PerformanceBenchmark
     {
         protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
         protected SampleGroup? iterationTotalTime;
@@ -42,7 +41,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void TearDown() =>
             reportScope?.Dispose();
 
-        public void CreateController(int concurrency, bool disableABCache = false)
+        protected void CreateController(int concurrency, bool disableABCache = false)
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 

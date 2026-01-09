@@ -99,12 +99,16 @@
         "Iteration Downloaded Data"
       ]
     },
+	{
+      "test": "AssetBundleRegistryOrgPerformanceTests.GetScenesEntities",
+      "endpoint": "gateway.org"
+    },
     {
-      "test": "AssetBundleRegistryPerformanceTests.GetEntitiesActive",
+      "test": "AssetBundleRegistryZonePerformanceTests.GetEntitiesActive",
       "endpoint": "gateway.zone"
     },
     {
-      "test": "AssetBundleRegistryPerformanceTests.GetEntitiesStatusAsync",
+      "test": "AssetBundleRegistryZonePerformanceTests.GetEntitiesStatusAsync",
       "endpoint": "gateway.zone"
     },
     {
