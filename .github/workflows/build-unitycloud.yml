@@ -565,6 +565,9 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
         run: |
+          echo "sentry_enabled=${{ needs.prebuild.outputs.sentry_enabled }}"
+          echo "sentry_upload_symbols=${{ needs.prebuild.outputs.sentry_upload_symbols }}"
+          
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
             --project "$SENTRY_PROJECT" \
