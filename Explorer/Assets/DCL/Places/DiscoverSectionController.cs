@@ -117,6 +117,9 @@ namespace DCL.Places
 
         private void OnCategorySelected(string? categoryId)
         {
+            if (currentCategorySelected == categoryId)
+                return;
+
             currentCategorySelected = categoryId;
 
             getPlacesCts = getPlacesCts.SafeRestart();
