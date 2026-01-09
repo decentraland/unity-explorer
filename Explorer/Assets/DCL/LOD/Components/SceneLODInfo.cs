@@ -3,7 +3,6 @@ using Arch.Core;
 using DCL.LOD.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility;
