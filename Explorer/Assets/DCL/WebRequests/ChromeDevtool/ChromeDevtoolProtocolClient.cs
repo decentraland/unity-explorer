@@ -1,10 +1,10 @@
 using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.ThreadSafePool;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace DCL.WebRequests.ChromeDevtool
@@ -21,7 +21,8 @@ namespace DCL.WebRequests.ChromeDevtool
 
         private readonly IBridge bridge;
         private readonly CancellationTokenSource cancellationTokenSource;
-        private int atomicRequestIdIncrement;
+
+        private readonly List<NotifyWebRequestScope?> webRequestScopes = new (500);
 
         public BridgeStatus Status => bridge.Status;
 
@@ -29,7 +30,8 @@ namespace DCL.WebRequests.ChromeDevtool
         {
             this.bridge = bridge;
             cancellationTokenSource = new CancellationTokenSource();
-            atomicRequestIdIncrement = 1;
+
+            bridge.OnMethodInvoked = OnCdpMethodInvoked;
         }
 
 #if UNITY_INCLUDE_TESTS || UNITY_EDITOR
@@ -57,10 +59,10 @@ namespace DCL.WebRequests.ChromeDevtool
         {
             BridgeStartResult result = bridge.Start();
 
-            if (result.IsBridgeStartError(out BridgeStartError? error))
+            if (result.IsBridgeStartError(out BridgeStartError error))
                 ReportHub.LogError(
                     ReportCategory.CHROME_DEVTOOL_PROTOCOL,
-                    $"Cannot start bridge on creation: {error!.Value}"
+                    $"Cannot start bridge on creation: {error!}"
                 );
 
             return result;
@@ -69,11 +71,20 @@ namespace DCL.WebRequests.ChromeDevtool
         /// <summary>
         /// CAUTION headers must not be repooled until the scope is no longer needed
         /// </summary>
-        public NotifyWebRequestScope NotifyWebRequestStart(string url, string method, Dictionary<string, string> headers)
+        public NotifyWebRequestScope NotifyWebRequestStart(string url, string method, Dictionary<string, string> headers, string? postData)
         {
-            int id = Interlocked.Add(ref atomicRequestIdIncrement, 1);
+            // Reserve an index in the list
+            int index;
+
+            lock (webRequestScopes)
+            {
+                index = webRequestScopes.Count;
+                webRequestScopes.Add(null);
+            }
+
+            int id = index + 1;
             HttpMethod httpMethod = FromString(method);
-            Request request = new Request(url, httpMethod, headers, ReferrerPolicy.Origin());
+            var request = new Request(url, httpMethod, headers, ReferrerPolicy.Origin(), postData);
 
             CDPEvent.Network_requestWillBeSent network = new CDPEvent.Network_requestWillBeSent(
                 id,
@@ -87,7 +98,34 @@ namespace DCL.WebRequests.ChromeDevtool
 
             CDPEvent cdpEvent = CDPEvent.FromNetwork_requestWillBeSent(network);
             bridge.SendEventAsync(cdpEvent, cancellationTokenSource.Token).Forget();
-            return new NotifyWebRequestScope(id, url, headers, bridge, cancellationTokenSource.Token);
+
+            var scope = new NotifyWebRequestScope(id, url, headers, bridge, cancellationTokenSource.Token);
+
+            lock (webRequestScopes) { webRequestScopes[index] = scope; }
+
+            return scope;
+        }
+
+        private void OnCdpMethodInvoked(int messageId, CDPMethod method)
+        {
+            if (method.GetKind() == CDPMethod.Kind.Unknown)
+                return;
+
+            CDPResult? result = null;
+
+            if (method.IsGetResponseBody(out CDPMethod.GetResponseBody getResponseBody))
+            {
+                lock (webRequestScopes)
+                {
+                    NotifyWebRequestScope? scope = webRequestScopes.ElementAtOrDefault(getResponseBody.RequestId - 1);
+
+                    if (scope != null)
+                        result = getResponseBody.RespondWith(new CDPResult.GetResponseBody(scope.responseBody, false));
+                }
+            }
+
+            if (result.HasValue)
+                bridge.SendResponse(messageId, result.Value, cancellationTokenSource.Token);
         }
 
         public void Dispose()
@@ -103,79 +141,6 @@ namespace DCL.WebRequests.ChromeDevtool
                 ReportHub.LogError(ReportCategory.CHROME_DEVTOOL_PROTOCOL, $"Cannot parse http method: {raw}");
 
             return result;
-        }
-    }
-
-    public readonly struct NotifyWebRequestScope
-    {
-        private const string DEFAULT_CHARSET = "utf-8";
-        private const bool DEFAULT_CONNECTION_REUSED = true; // consider connection as reused by default
-        private const int DEFAULT_CONNECTION_ID = 1;
-        private const string SUCCESS_STATUS_TEXT = "OK"; // Unity doesn't provide status texts
-        private const string DEFAULT_CACHE_STORAGE_CACHE_NAME = "DEFAULT";
-        private const string DEFAULT_PROTOCOL = "HTTP/v1.1"; // Unity doesn't expose protocol
-
-        private readonly int id;
-        private readonly string url;
-        private readonly Dictionary<string, string> requestHeaders;
-        private readonly IBridge bridge;
-        private readonly CancellationToken token;
-
-        public NotifyWebRequestScope(int id, string url, Dictionary<string, string> requestHeaders, IBridge bridge, CancellationToken token)
-        {
-            this.id = id;
-            this.url = url;
-            this.requestHeaders = requestHeaders;
-            this.bridge = bridge;
-            this.token = token;
-        }
-
-        public async UniTaskVoid NotifyFinishAsync(int status, Dictionary<string, string>? headers, string mimeType, int encodedDataLength)
-        {
-            // create a copy to don't mess up lifetimes and pooling
-            using var _ = ThreadSafeDictionaryPool<string, string>.SHARED.Get(out Dictionary<string, string> headersCopy);
-
-            if (headers != null)
-                foreach ((string key, string value) in headers)
-                    headersCopy.Add(key, value);
-
-            TimeSinceEpoch epochTimestamp = TimeSinceEpoch.Now;
-
-            NetworkResponse response = new NetworkResponse(
-                url,
-                status,
-                SUCCESS_STATUS_TEXT,
-                headersCopy,
-                mimeType,
-                DEFAULT_CHARSET,
-                requestHeaders,
-                DEFAULT_CONNECTION_REUSED,
-                DEFAULT_CONNECTION_ID,
-                encodedDataLength,
-                epochTimestamp,
-                DEFAULT_CACHE_STORAGE_CACHE_NAME,
-                DEFAULT_PROTOCOL,
-                SecurityState.Secure()
-            );
-
-            CDPEvent.Network_responseReceived network = new CDPEvent.Network_responseReceived(id, ChromeDevtoolProtocolClient.LOADER_ID, MonotonicTime.Now, ResourceType.Fetch, response);
-            CDPEvent cdp = CDPEvent.FromNetwork_responseReceived(network);
-            await bridge.SendEventAsync(cdp, token);
-
-            CDPEvent.Network_dataReceived dataReceived = new CDPEvent.Network_dataReceived(id, MonotonicTime.Now, encodedDataLength, encodedDataLength); // reason of duplication of encodedDataLength: Unity provides only downloadedBytes
-            cdp = CDPEvent.FromNetwork_dataReceived(dataReceived);
-            await bridge.SendEventAsync(cdp, token);
-
-            CDPEvent.Network_loadingFinished finished = new CDPEvent.Network_loadingFinished(id, MonotonicTime.Now, encodedDataLength);
-            cdp = CDPEvent.FromNetwork_loadingFinished(finished);
-            await bridge.SendEventAsync(cdp, token);
-        }
-
-        public void NotifyFailed(string errorText, bool hasBeenCancelled)
-        {
-            CDPEvent.Network_loadingFailed failed = new CDPEvent.Network_loadingFailed(id, MonotonicTime.Now, ResourceType.Fetch, errorText, hasBeenCancelled);
-            CDPEvent cdp = CDPEvent.FromNetwork_loadingFailed(failed);
-            bridge.SendEventAsync(cdp, token).Forget();
         }
     }
 }

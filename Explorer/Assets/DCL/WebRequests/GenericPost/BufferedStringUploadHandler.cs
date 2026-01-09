@@ -32,6 +32,8 @@ namespace DCL.WebRequests
         ///     UploadHandler will dispose the created underlying buffer
         /// </summary>
         public UploadHandlerRaw CreateUploadHandler() =>
+
+            // TODO memory leak - the original array is not disposed of
             new (buffer.AsArray(), true);
 
         /// <summary>
