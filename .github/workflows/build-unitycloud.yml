@@ -564,16 +564,10 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
-          SENTRY_RELEASE: ${{ needs.prebuild.outputs.version }}
         run: |
-          echo "SENTRY_RELEASE=$SENTRY_RELEASE"
-          echo "SENTRY_ORG=$SENTRY_ORG"
-          echo "SENTRY_PROJECT=$SENTRY_PROJECT"
-
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
             --project "$SENTRY_PROJECT" \
-            --release "$SENTRY_RELEASE" \
             "build" \
             --ext dSYM \
             --ext pdb
