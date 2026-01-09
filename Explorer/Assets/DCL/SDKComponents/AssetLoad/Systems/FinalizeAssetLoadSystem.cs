@@ -17,7 +17,6 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 {
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
-    [UpdateBefore(typeof(GltfContainerVisibilitySystem))]
     public partial class FinalizeAssetLoadSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget capBudget;
