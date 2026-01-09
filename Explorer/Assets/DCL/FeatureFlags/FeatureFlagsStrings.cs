@@ -50,6 +50,7 @@ namespace DCL.FeatureFlags
         public const string GIFTING_ENABLED = "alfa-gifting";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
         public const string HEAD_SYNC = "alfa-head-sync";
+        public const string DISCOVER = "alfa-discover";
         public const string DONATIONS = "alfa-donations";
         public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
 
