@@ -566,6 +566,8 @@ jobs:
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
           SENTRY_RELEASE: ${{ needs.prebuild.outputs.version }}
         run: |
+          echo "SENTRY_RELEASE=$SENTRY_RELEASE"
+
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
             --project "$SENTRY_PROJECT" \
