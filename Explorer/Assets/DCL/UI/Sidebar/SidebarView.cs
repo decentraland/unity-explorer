@@ -30,7 +30,7 @@ namespace DCL.UI.Sidebar
         [field: Header("Explore Panel Shortcuts")]
         [field: SerializeField] public Button InWorldCameraButton { get; private set; } = null!;
         [field: SerializeField] internal Button communitiesButton { get; private set; } = null!;
-        [field: SerializeField] internal Button placesButton { get; private set; }
+        [field: SerializeField] internal Button? placesButton { get; private set; } //Waiting for full implementation, for now this is null
         [field: SerializeField] internal Button mapButton { get; private set; } = null!;
         [field: SerializeField] internal Button backpackButton { get; private set; } = null!;
         [field: SerializeField] internal Button cameraReelButton { get; private set; } = null!;

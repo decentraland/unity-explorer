@@ -157,7 +157,9 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
             viewInstance.cameraReelButton.gameObject.SetActive(isCameraReelFeatureEnabled);
             viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
-            viewInstance.placesButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+
+            //The button doesn't exist ATM?
+            viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
 
             SubscribeToEvents();
 
@@ -210,7 +212,7 @@ namespace DCL.UI.Sidebar
 
             if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
-            if (isDiscoverFeatureEnabled) viewInstance.placesButton.onClick.AddListener(OnPlacesButtonClicked);
+            if (isDiscoverFeatureEnabled) viewInstance.placesButton?.onClick.AddListener(OnPlacesButtonClicked);
 
         }
 
