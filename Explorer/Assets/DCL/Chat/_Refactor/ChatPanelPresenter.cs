@@ -17,6 +17,7 @@ using System;
 using System.Threading;
 using DCL.Translation;
 using DCL.Translation.Service;
+using MVC;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -220,13 +221,26 @@ namespace DCL.Chat
             chatStateMachine.SetToggleState();
         }
 
-        private void OnFullscreenOpened(ChatSharedAreaEvents.FullscreenViewOpenEvent evt)
+        private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
         {
-            chatStateMachine.SetVisibility(false);
+            //We only need to hide the chat if a fullscreen view is shown
+            //Otherwise if it's a popup and the chat is focused, we must deselect the input box
+            switch (evt.ViewSortingLayer)
+            {
+                case CanvasOrdering.SortingLayer.FULLSCREEN:
+                    chatStateMachine.SetVisibility(false);
+                    break;
+                case CanvasOrdering.SortingLayer.POPUP:
+                    if (chatStateMachine.IsFocused)
+                        chatStateMachine.SetVisibility(true);
+                    break;
+            }
         }
 
-        private void OnFullscreenClosed(ChatSharedAreaEvents.FullscreenClosedEvent evt)
+        private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();
         }
@@ -238,8 +252,8 @@ namespace DCL.Chat
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FocusChatPanelEvent>(SetFocusState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(ToggleState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelViewShowEvent>(OnViewShow));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenViewOpenEvent>(OnFullscreenOpened));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FullscreenClosedEvent>(OnFullscreenClosed));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewOpenEvent>(OnMVCViewOpened));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewClosedEvent>(OnMVCViewClosed));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.UISubmitPerformedEvent>(OnUISubmitPerformed));
         }
 

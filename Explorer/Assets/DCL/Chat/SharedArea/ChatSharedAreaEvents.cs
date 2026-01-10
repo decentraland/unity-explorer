@@ -1,3 +1,5 @@
+using MVC;
+
 namespace DCL.ChatArea
 {
     public static class ChatSharedAreaEvents
@@ -7,11 +9,29 @@ namespace DCL.ChatArea
         public struct FocusChatPanelEvent { }
         public struct ToggleChatPanelEvent { }
         public struct ChatPanelViewShowEvent { }
-        public struct FullscreenViewOpenEvent { }
-        public struct FullscreenClosedEvent { }
+
+        public readonly struct MVCViewOpenEvent
+        {
+            public readonly CanvasOrdering.SortingLayer ViewSortingLayer;
+
+            public MVCViewOpenEvent(CanvasOrdering.SortingLayer viewSortingLayer)
+            {
+                ViewSortingLayer = viewSortingLayer;
+            }
+        }
+
+        public readonly struct MVCViewClosedEvent
+        {
+            public readonly CanvasOrdering.SortingLayer ViewSortingLayer;
+
+            public MVCViewClosedEvent(CanvasOrdering.SortingLayer viewSortingLayer)
+            {
+                ViewSortingLayer = viewSortingLayer;
+            }
+        }
         public struct UISubmitPerformedEvent { }
 
-        public struct ChatPanelVisibilityStateChangedEvent
+        public readonly struct ChatPanelVisibilityStateChangedEvent
         {
             public bool IsVisible { get; }
 

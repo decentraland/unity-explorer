@@ -1,3 +1,4 @@
+using MVC;
 using System;
 using Utility;
 
@@ -28,11 +29,11 @@ namespace DCL.ChatArea
         public void RaiseViewShowEvent() =>
             Publish(new ChatSharedAreaEvents.ChatPanelViewShowEvent());
 
-        public void RaiseFullscreenOpenEvent() =>
-            Publish(new ChatSharedAreaEvents.FullscreenViewOpenEvent());
+        public void RaiseMVCViewOpenEvent(CanvasOrdering.SortingLayer viewSortingLayer) =>
+            Publish(new ChatSharedAreaEvents.MVCViewOpenEvent(viewSortingLayer));
 
-        public void RaiseFullscreenClosedEvent() =>
-            Publish(new ChatSharedAreaEvents.FullscreenClosedEvent());
+        public void RaiseMVCViewClosedEvent(CanvasOrdering.SortingLayer viewSortingLayer) =>
+            Publish(new ChatSharedAreaEvents.MVCViewClosedEvent(viewSortingLayer));
 
         public void RaiseVisibilityStateChangedEvent(bool isVisible) =>
             Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisible));

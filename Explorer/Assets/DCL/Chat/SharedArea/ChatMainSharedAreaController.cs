@@ -114,18 +114,18 @@ namespace DCL.ChatArea
 
         private void OnMvcViewShowed(IController controller)
         {
-            //We only need to hide the chat if a fullscreen view is shown
-            if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
-
-            chatSharedAreaEventBus.RaiseFullscreenOpenEvent();
+            //We disable submit shortcut recognition to avoid opening the chat when we have a popup on top
+            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
+            chatSharedAreaEventBus.RaiseMVCViewOpenEvent(controller.Layer);
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            if (controller.Layer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            //We restore the chat to its previous appearance if the view is closed, as well as the shortcut for it
+            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
+            dclInput.UI.Submit.performed += OnUISubmitPerformed;
 
-            //We restore the chat to its previous appearance if the fullscreen view is closed
-            chatSharedAreaEventBus.RaiseFullscreenClosedEvent();
+            chatSharedAreaEventBus.RaiseMVCViewClosedEvent(controller.Layer);
         }
 
         private void HandleVisibilityStateChanged(ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent evt)
