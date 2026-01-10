@@ -65,29 +65,6 @@ namespace DCL.Communities
             return result;
         }
 
-        public bool CanMembersCounterBeDisplayer()
-        {
-            if (storedMembersCounterResult != null)
-                return storedMembersCounterResult.Value;
-
-            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
-            storedMembersCounterResult = result;
-            return result;
-        }
-
-        public bool IsAnnouncementsFeatureEnabled()
-        {
-            if (storedAnnouncementsResult != null)
-                return storedAnnouncementsResult.Value;
-
-            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) ||
-                          (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) ||
-                          Application.isEditor;
-
-            storedAnnouncementsResult = result;
-            return result;
-        }
-
         public bool TryGetCommunityIdFromAppArgs(out string? communityId) =>
             appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId);
 

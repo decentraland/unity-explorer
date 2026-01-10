@@ -26,26 +26,31 @@ namespace DCL.FeatureFlags
         {
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
+            bool isEditor = Application.isEditor;
+
             SetFeatureStates(new Dictionary<FeatureId, bool>
             {
-                [FeatureId.CAMERA_REEL] = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor,
-                [FeatureId.FRIENDS] = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !isLocalSceneDevelopment,
+                [FeatureId.CAMERA_REEL] = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || isEditor,
+                [FeatureId.FRIENDS] = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || isEditor) && !isLocalSceneDevelopment,
                 [FeatureId.FRIENDS_USER_BLOCKING] = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)),
                 [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
-                [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
+                [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || isEditor,
                 [FeatureId.CHAT_TRANSLATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED),
                 [FeatureId.GIFTING_ENABLED] = featureFlags.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = isLocalSceneDevelopment,
-                [FeatureId.BANNED_USERS_FROM_SCENE] = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor,
+                [FeatureId.BANNED_USERS_FROM_SCENE] = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || isEditor,
                 [FeatureId.BACKPACK_OUTFITS] = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED),
-                [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
-                [FeatureId.DISCOVER_PLACES] = featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DISCOVER)) || Application.isEditor,
+                [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || isEditor,
+                [FeatureId.DISCOVER_PLACES] = featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DISCOVER)) || isEditor,
+                [FeatureId.FRIENDS_CONNECTIVITY_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
+                [FeatureId.COMMUNITIES_ANNOUNCEMENTS]  = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
+                [FeatureId.COMMUNITIES_MEMBERS_COUNTER]= FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
 
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT as it depends on them.
-            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
+            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
         }
 
@@ -143,5 +148,6 @@ namespace DCL.FeatureFlags
         AUTH_CODE_VALIDATION = 33,
         GPUI_ENABLED = 34,
         DISCOVER_PLACES = 35,
+        FRIENDS_CONNECTIVITY_STATUS = 36, COMMUNITIES_ANNOUNCEMENTS
     }
 }

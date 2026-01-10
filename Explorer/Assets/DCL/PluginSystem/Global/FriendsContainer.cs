@@ -25,7 +25,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
-using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
@@ -45,8 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
-        private readonly bool includeUserBlocking;
-        private readonly IAppArgs appArgs;
+        private readonly bool isUserBlockingFeatureEnabled;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -65,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsService friendsService;
         private readonly FriendsCache friendsCache;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly bool isConnectivityStatusEnabled;
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -78,8 +77,6 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking,
-            IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             ISocialServiceEventBus socialServiceEventBus,
@@ -98,8 +95,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.includeUserBlocking = includeUserBlocking;
-            this.appArgs = appArgs;
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
@@ -112,8 +108,7 @@ namespace DCL.PluginSystem.Global
             friendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(rpcFriendsService, analyticsController!) : rpcFriendsService;
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
-
-            bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
+            this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
 
             friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
 
@@ -133,8 +128,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
-                includeUserBlocking,
-                isConnectivityStatusEnabled,
                 profileRepositoryWrapper
             );
 
@@ -199,7 +192,7 @@ namespace DCL.PluginSystem.Global
 
             dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformed;
 
-            if (includeUserBlocking)
+            if (isUserBlockingFeatureEnabled)
                 await InitUserBlockingAsync();
 
             return;
@@ -269,9 +262,6 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private bool IsConnectivityStatusEnabled() =>
-            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-            || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
 
         private void OnRPCClientReconnected()
         {
@@ -291,10 +281,10 @@ namespace DCL.PluginSystem.Global
         {
             rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
 
-            if (IsConnectivityStatusEnabled())
+            if (isConnectivityStatusEnabled)
                 rpcFriendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
-            if (includeUserBlocking)
+            if (isUserBlockingFeatureEnabled)
                 rpcFriendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
         }
     }

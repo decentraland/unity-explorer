@@ -53,7 +53,6 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly IAppArgs appParameters;
@@ -78,7 +77,6 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
             IAppArgs appParameters)
@@ -98,7 +96,6 @@ namespace DCL.Settings
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.upscalingController = upscalingController;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.appParameters = appParameters;
@@ -216,7 +213,6 @@ namespace DCL.Settings
                                 upscalingController,
                                 assetsProvisioner,
                                 volumeBus,
-                                isTranslationChatEnabled,
                                 eventBus,
                                 appParameters);
 

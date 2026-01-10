@@ -58,7 +58,6 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
             IAppArgs appParameters)
         {

@@ -143,11 +143,6 @@ namespace DCL.PluginSystem.Global
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
 
-        private readonly bool isVoiceChatEnabled;
-        private readonly bool isTranslationChatEnabled;
-        private readonly bool includeCameraReel;
-        private readonly bool includeDiscover;
-
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -270,7 +265,6 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.isTranslationChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_TRANSLATIONS);
             this.galleryEventBus = galleryEventBus;
             this.communityCallOrchestrator = communityCallOrchestrator;
             this.thumbnailProvider = thumbnailProvider;
@@ -434,7 +428,6 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 volumeBus,
                 upscalingController,
-                isTranslationChatEnabled,
                 assetsProvisioner,
                 eventBus,
                 appArgs);

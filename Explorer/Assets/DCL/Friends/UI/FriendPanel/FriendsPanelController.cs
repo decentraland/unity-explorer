@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -35,7 +36,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendSectionController? friendSectionController;
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
-        private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -57,13 +57,11 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            bool includeUserBlocking,
-            bool isConnectivityStatusEnabled,
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            this.includeUserBlocking = includeUserBlocking;
 
+            bool isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
             if (isConnectivityStatusEnabled)
             {
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
@@ -98,8 +96,7 @@ namespace DCL.Friends.UI.FriendPanel
                 friendEventBus,
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, profileDataProvider, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
-                passportBridge,
-                includeUserBlocking);
+                passportBridge);
 
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,
@@ -175,20 +172,16 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.CloseButton.onClick.AddListener(CloseFriendsPanel);
             viewInstance.BackgroundCloseButton.onClick.AddListener(CloseFriendsPanel);
 
-            viewInstance.BlockedTabButton.gameObject.SetActive(includeUserBlocking);
+            bool isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            viewInstance.BlockedTabButton.gameObject.SetActive(isUserBlockingFeatureEnabled);
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }
 
         private void OnFriendsTabButtonClicked() => ToggleTabs(FriendsPanelTab.FRIENDS);
-
         private void OnRequestsTabButtonClicked() => ToggleTabs(FriendsPanelTab.REQUESTS);
-
         private void OnBlockedTabButtonClicked() => ToggleTabs(FriendsPanelTab.BLOCKED);
-
         public void CloseFriendsPanel() => closeTaskCompletionSource.TrySetResult();
-
         private void FriendRequestCountChanged(int count) => sidebarRequestNotificationIndicator.SetNotificationCount(count);
-
 
         internal void ToggleTabs(FriendsPanelTab tab)
         {
@@ -200,9 +193,7 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
-        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
-        {
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-        }
     }
 }

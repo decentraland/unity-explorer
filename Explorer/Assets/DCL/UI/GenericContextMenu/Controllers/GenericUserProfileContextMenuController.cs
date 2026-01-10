@@ -60,12 +60,12 @@ namespace DCL.UI
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly ChatEventBus chatEventBus;
-        private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly bool includeVoiceChat;
-        private readonly bool includeCommunities;
+        private readonly bool isVoiceChatFeatureEnabled;
+        private readonly bool isCommunitiesFeatureEnabled;
+        private readonly bool isUserBlockingFeatureEnabled;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
 
         private readonly string[] getUserPositionBuffer = new string[1];
@@ -95,26 +95,24 @@ namespace DCL.UI
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
-            bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            bool includeCommunities,
+            bool isCommunitiesFeatureEnabled,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
-            this.includeUserBlocking = includeUserBlocking;
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
-            this.includeUserBlocking = includeUserBlocking;
+            this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.includeCommunities = includeCommunities;
+            this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
@@ -145,7 +143,7 @@ namespace DCL.UI
             contextMenu.AddControl(contextMenuJumpInButton)
                        .AddControl(contextMenuBlockUserButton);
 
-            if (includeCommunities)
+            if (isCommunitiesFeatureEnabled)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
@@ -183,7 +181,7 @@ namespace DCL.UI
                     string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
                     giftButtonControlSettings.SetData(json);
 
-                    contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                    contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
                                                       friendOnlineStatusCacheProxy is { Configured: true, Object: not null } &&
                                                       friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
@@ -196,9 +194,9 @@ namespace DCL.UI
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
 
-            if (includeVoiceChat)
+            if (isVoiceChatFeatureEnabled)
             {
-                contextMenuCallButton.Enabled = includeVoiceChat;
+                contextMenuCallButton.Enabled = isVoiceChatFeatureEnabled;
                 startCallButtonControlSettings.SetData(profile.UserId);
             }
 
@@ -209,7 +207,7 @@ namespace DCL.UI
 
             contextMenu.ChangeOffsetFromTarget(offset);
 
-            if (includeCommunities)
+            if (isCommunitiesFeatureEnabled)
                 invitationButtonHandler!.SetUserToInvite(profile.UserId);
 
             if (ct.IsCancellationRequested) return;

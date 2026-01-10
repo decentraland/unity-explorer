@@ -10,6 +10,7 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
@@ -391,7 +392,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
             {
                 announcementsSectionController = new AnnouncementsSectionController(
                     viewInstance.AnnouncementsSectionView,
@@ -429,11 +430,10 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
                     viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
                 else
                     viewInstance.MembersListView.SetLoadingStateActive(true);
-
 
                 if (spriteCache == null)
                 {

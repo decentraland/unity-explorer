@@ -446,10 +446,8 @@ namespace Global.Dynamic
 
             bool includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             bool includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            bool includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             bool includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = FeaturesRegistry.Instance.IsEnabled(FeatureId.BANNED_USERS_FROM_SCENE);
-            bool includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
@@ -1033,8 +1031,6 @@ namespace Global.Dynamic
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking,
-                    appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     socialServiceEventBus,

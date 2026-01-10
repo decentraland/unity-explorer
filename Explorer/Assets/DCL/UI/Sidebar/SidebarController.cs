@@ -116,12 +116,12 @@ namespace DCL.UI.Sidebar
                 viewInstance.helpButton.onClick.RemoveListener(OnHelpButtonClicked);
                 viewInstance.controlsButton.onClick.RemoveListener(OnControlsButtonClicked);
                 viewInstance.InWorldCameraButton.onClick.RemoveListener(OnOpenCameraButtonClicked);
-                viewInstance.marketplaceButton.onClick.RemoveListener(OpenMarketplace);
+                viewInstance.marketplaceButton.onClick.RemoveListener(OnMarketplaceButtonClicked);
                 viewInstance.emotesWheelButton.onClick.RemoveListener(OnEmotesWheelButtonClicked);
                 viewInstance.NotificationsButton.onClick.RemoveListener(OpenNotificationsPanel);
                 viewInstance.skyboxButton.onClick.RemoveListener(OpenSkyboxSettingsPanel);
-                viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OpenProfilePanel);
-                viewInstance.sidebarConfigButton.onClick.RemoveListener(OpenSidebarSettings);
+                viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfilePanelButtonClicked);
+                viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarSettingsButtonClicked);
                 viewInstance.unreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
@@ -193,13 +193,13 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
-            viewInstance.marketplaceButton.onClick.AddListener(OpenMarketplace);
+            viewInstance.marketplaceButton.onClick.AddListener(OnMarketplaceButtonClicked);
 
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClicked);
             viewInstance.NotificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsPanel);
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePanel);
-            viewInstance.sidebarConfigButton.onClick.AddListener(OpenSidebarSettings);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfilePanelButtonClicked);
+            viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarSettingsButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
@@ -213,11 +213,7 @@ namespace DCL.UI.Sidebar
             if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
             if (isDiscoverFeatureEnabled) viewInstance.placesButton?.onClick.AddListener(OnPlacesButtonClicked);
-
         }
-
-        private void OnPlacesButtonClicked() =>
-            OpenExplorePanelInSection(ExploreSections.Places);
 
         private void OnMvcManagerViewClosed(IController closedController)
         {
@@ -247,25 +243,6 @@ namespace DCL.UI.Sidebar
                     viewInstance.friendsButton.Select();
                     break;
             }
-        }
-
-
-        private void OnOpenCameraButtonClicked()
-        {
-            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
-        }
-
-        private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
-
-        private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
-
-        private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
-        private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
-        private void OnBackpackButtonClicked()
-        {
-            viewInstance!.backpackNotificationIndicator.SetActive(false);
-            OpenExplorePanelInSection(ExploreSections.Backpack);
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -309,10 +286,7 @@ namespace DCL.UI.Sidebar
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
 
         private void OnAutoHideToggleChanged(bool value) => viewInstance?.SetAutoHideSidebarStatus(value);
-
-
         private void OnRewardNotificationClicked(object[] parameters) => viewInstance!.backpackNotificationIndicator.SetActive(false);
-
         private void OnRewardNotificationReceived(INotification newNotification) => viewInstance!.backpackNotificationIndicator.SetActive(true);
 
         protected override void OnViewShow()
@@ -349,10 +323,25 @@ namespace DCL.UI.Sidebar
         }
 
 #region Sidebar button handlers
+        private void OnOpenCameraButtonClicked()
+        {
+            if (globalWorld.Get<CameraComponent>(camera!.Value).CameraInputChangeEnabled && !globalWorld.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
+        }
+
+        private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
+        private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
+        private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
+        private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
+        private void OnPlacesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Places);
+
+        private void OnBackpackButtonClicked()
+        {
+            viewInstance!.backpackNotificationIndicator.SetActive(false);
+            OpenExplorePanelInSection(ExploreSections.Backpack);
+        }
         private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
-
         private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
-
         private void OnFriendsButtonClicked() =>
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
 
@@ -366,30 +355,19 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked() =>
-            OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
-
-        private void OpenSidebarSettings() =>
-            OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
-
-        private void OpenProfilePanel() =>
-            OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
-
-        private void OpenSkyboxSettingsPanel() =>
-            OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
-
-        private void OpenNotificationsPanel() =>
-            OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
+        private void OnControlsButtonClicked() => OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
+        private void OnSidebarSettingsButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
+        private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
+        private void OpenSkyboxSettingsPanel() => OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
+        private void OpenNotificationsPanel() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar) =>
             OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection))).Forget();
 
-        private void OnSmartWearablesButtonHover() =>
-            OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
-
+        private void OnSmartWearablesButtonHover() => OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
         private void OnSmartWearablesButtonUnhover() => smartWearablesTooltipController.Close();
 
-        private void OpenMarketplace()
+        private void OnMarketplaceButtonClicked()
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));

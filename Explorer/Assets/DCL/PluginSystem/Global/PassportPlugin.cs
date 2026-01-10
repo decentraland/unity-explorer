@@ -60,13 +60,12 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly bool enableFriends;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ISystemClipboard systemClipboard;
-        private readonly bool includeCommunities;
+        private readonly bool isCommunitiesFeatureEnabled;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private PassportController? passportController;
@@ -96,7 +95,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
-            bool includeCommunities,
+            bool isCommunitiesFeatureEnabled,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             GalleryEventBus galleryEventBus,
@@ -133,7 +132,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.galleryEventBus = galleryEventBus;
             this.systemClipboard = systemClipboard;
-            this.includeCommunities = includeCommunities;
+            this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.communitiesDataProvider = communitiesDataProvider;
         }
 
@@ -186,7 +185,7 @@ namespace DCL.PluginSystem.Global
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                includeCommunities,
+                isCommunitiesFeatureEnabled,
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 passport3DPreviewCamera,
@@ -209,25 +208,15 @@ namespace DCL.PluginSystem.Global
         {
             [field: Space]
             [field: SerializeField] public AssetReferenceGameObject PassportPrefab;
-
             [field: SerializeField] public AssetReferenceGameObject Badges3DCamera;
-
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
-
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
-
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
-
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; } = null!;
-
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
-
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
-
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
-
             [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
-
             [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }
     }

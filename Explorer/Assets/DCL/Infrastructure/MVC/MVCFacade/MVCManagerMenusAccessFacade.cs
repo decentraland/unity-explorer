@@ -6,7 +6,6 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
-using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Multiplayer.Connectivity;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -34,7 +33,6 @@ namespace MVC
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ChatEventBus chatEventBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
-        private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -71,7 +69,6 @@ namespace MVC
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
             this.contextMenuSettings = contextMenuSettings;
-            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -137,7 +134,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 
