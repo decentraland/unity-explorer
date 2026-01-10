@@ -56,6 +56,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Places;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -68,7 +69,6 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
-using System.Diagnostics.CodeAnalysis;
 using Runtime.Wearables;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -145,6 +145,8 @@ namespace DCL.PluginSystem.Global
 
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
+        private readonly bool includeCameraReel;
+        private readonly bool includeDiscover;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -158,6 +160,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
+        private PlacesController? discoverController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -290,6 +293,7 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             upscalingController.Dispose();
             explorePanelController?.Dispose();
+            discoverController?.Dispose();
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -301,13 +305,15 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES))
+                dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
                 dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
@@ -488,6 +494,9 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
+            PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
+            discoverController = new PlacesController(placesView, cursor);
+
             explorePanelController = new
                 ExplorePanelController(
                     viewFactoryMethod,
@@ -507,6 +516,7 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
+                    discoverController,
                     inputBlock,
                     mvcManager);
 
@@ -515,7 +525,7 @@ namespace DCL.PluginSystem.Global
             bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             if (isCommunitiesFeatureEnabled)
-                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
+                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -555,36 +565,26 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _)
-        {
+        private void OnInputShortcutsBackpackPerformedAsync(InputAction.CallbackContext _) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)));
-        }
 
-        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _)
-        {
+        private void OnInputShortcutsSettingsPerformedAsync(InputAction.CallbackContext _) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Settings)));
-        }
 
-        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _)
-        {
+        private void OnInputShortcutsMapPerformedAsync(InputAction.CallbackContext _) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
-        }
 
-        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _)
-        {
+        private void OnInputShortcutsMainMenuPerformedAsync(InputAction.CallbackContext _) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(default(ExplorePanelParameter)));
-        }
 
-        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj)
-        {
+        private void OnInputShortcutsCameraReelPerformedAsync(InputAction.CallbackContext obj) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
-        }
 
-        private void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
-        {
+        private void OnInputShortcutsCommunitiesPerformed(InputAction.CallbackContext obj) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Communities)));
-        }
 
+        private void OnInputShortcutsPlacesPerformed(InputAction.CallbackContext obj) =>
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
 
         private async UniTask<ObjectPool<EventScheduleElementView>> InitializeEventScheduleElementsPoolAsync(EventInfoPanelView view, CancellationToken ct)
         {

@@ -42,8 +42,6 @@ namespace DCL.UI.Sidebar
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly IWebBrowser webBrowser;
-        private readonly bool includeCameraReel;
-        private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
@@ -52,13 +50,17 @@ namespace DCL.UI.Sidebar
         private readonly World globalWorld;
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly ChatEventBus chatEventBus;
-        private readonly IDisposable? chatEventBusSubscription;
-        private bool includeMarketplaceCredits;
+        private readonly IDisposable chatEventBusSubscription;
+        private readonly bool isCameraReelFeatureEnabled;
+        private readonly bool isFriendsFeatureEnabled;
+        private readonly bool isDiscoverFeatureEnabled;
+
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
-        private CancellationTokenSource? referralNotificationCts = new ();
+        private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
         private CancellationTokenSource openPanelCts = new ();
         private SingleInstanceEntity? cameraInternal;
+        private bool isMarketplaceCreditsFeatureEnabled;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
@@ -89,9 +91,10 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
-            includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
-            includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
+            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
+            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -100,7 +103,7 @@ namespace DCL.UI.Sidebar
         {
             base.Dispose();
 
-            chatEventBusSubscription?.Dispose();
+            chatEventBusSubscription.Dispose();
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
 
@@ -124,13 +127,13 @@ namespace DCL.UI.Sidebar
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
 
-                if (includeCameraReel)
+                if (isCameraReelFeatureEnabled)
                     viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
 
-                if (includeFriends)
+                if (isFriendsFeatureEnabled)
                     viewInstance.friendsButton.onClick.RemoveListener(OnFriendsButtonClicked);
 
-                if (includeMarketplaceCredits)
+                if (isMarketplaceCreditsFeatureEnabled)
                     viewInstance.marketplaceCreditsButton.onClick.RemoveListener(OnMarketplaceCreditsButtonClicked);
             }
 
@@ -151,9 +154,10 @@ namespace DCL.UI.Sidebar
         {
             viewInstance!.backpackNotificationIndicator.SetActive(false);
             viewInstance.skyboxButton.Button.interactable = true;
-            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
-            viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
-            viewInstance.InWorldCameraButton.gameObject.SetActive(includeCameraReel);
+            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
+            viewInstance.cameraReelButton.gameObject.SetActive(isCameraReelFeatureEnabled);
+            viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
+            viewInstance.placesButton.gameObject.SetActive(isDiscoverFeatureEnabled);
 
             SubscribeToEvents();
 
@@ -168,6 +172,11 @@ namespace DCL.UI.Sidebar
 
         private void SubscribeToEvents()
         {
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
@@ -199,9 +208,14 @@ namespace DCL.UI.Sidebar
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
 
-            if (includeCameraReel) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
-            if (includeFriends) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
+            if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
+            if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
+            if (isDiscoverFeatureEnabled) viewInstance.placesButton.onClick.AddListener(OnPlacesButtonClicked);
+
         }
+
+        private void OnPlacesButtonClicked() =>
+            OpenExplorePanelInSection(ExploreSections.Places);
 
         private void OnMvcManagerViewClosed(IController closedController)
         {
@@ -240,30 +254,16 @@ namespace DCL.UI.Sidebar
                 globalWorld.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !globalWorld.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
-        private void OnSettingsButtonClicked()
-        {
-            OpenExplorePanelInSection(ExploreSections.Settings);
-        }
+        private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
 
-        private void OnCommunitiesButtonClicked()
-        {
-            OpenExplorePanelInSection(ExploreSections.Communities);
-        }
+        private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
 
-        private void OnMapButtonClicked()
-        {
-            OpenExplorePanelInSection(ExploreSections.Navmap);
-        }
-
+        private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
+        private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
         private void OnBackpackButtonClicked()
         {
             viewInstance!.backpackNotificationIndicator.SetActive(false);
             OpenExplorePanelInSection(ExploreSections.Backpack);
-        }
-
-        private void OnCameraReelButtonClicked()
-        {
-            OpenExplorePanelInSection(ExploreSections.CameraReel);
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -292,10 +292,8 @@ namespace DCL.UI.Sidebar
             }
         }
 
-        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)
-        {
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage, int _)  =>
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
-        }
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
@@ -305,25 +303,15 @@ namespace DCL.UI.Sidebar
                 viewInstance?.unreadMessagesButton.Deselect();
         }
 
-        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
-        {
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel) =>
             viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
-        }
 
-        private void OnAutoHideToggleChanged(bool value)
-        {
-            viewInstance?.SetAutoHideSidebarStatus(value);
-        }
+        private void OnAutoHideToggleChanged(bool value) => viewInstance?.SetAutoHideSidebarStatus(value);
 
-        private void OnRewardNotificationClicked(object[] parameters)
-        {
-            viewInstance!.backpackNotificationIndicator.SetActive(false);
-        }
 
-        private void OnRewardNotificationReceived(INotification newNotification)
-        {
-            viewInstance!.backpackNotificationIndicator.SetActive(true);
-        }
+        private void OnRewardNotificationClicked(object[] parameters) => viewInstance!.backpackNotificationIndicator.SetActive(false);
+
+        private void OnRewardNotificationReceived(INotification newNotification) => viewInstance!.backpackNotificationIndicator.SetActive(true);
 
         protected override void OnViewShow()
         {
@@ -344,14 +332,10 @@ namespace DCL.UI.Sidebar
             if (ownProfile == null)
                 return;
 
-            includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
-                includeMarketplaceCredits,
-                ownProfile.UserId,
-                ct);
+            isMarketplaceCreditsFeatureEnabled = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);
+            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(isMarketplaceCreditsFeatureEnabled);
 
-            viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
-
-            if (includeMarketplaceCredits)
+            if (isMarketplaceCreditsFeatureEnabled)
                 viewInstance?.marketplaceCreditsButton.onClick.AddListener(OnMarketplaceCreditsButtonClicked);
         }
 
@@ -363,26 +347,16 @@ namespace DCL.UI.Sidebar
         }
 
 #region Sidebar button handlers
-        private void OnUnreadMessagesButtonClicked()
-        {
-            chatEventBus.RaiseToggleChatEvent();
-        }
+        private void OnUnreadMessagesButtonClicked() => chatEventBus.RaiseToggleChatEvent();
 
-        private void OnEmotesWheelButtonClicked()
-        {
-            OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
-        }
+        private void OnEmotesWheelButtonClicked() => OpenPanelAsync(viewInstance!.emotesWheelButton, EmotesWheelController.IssueCommand()).Forget();
 
-        private void OnFriendsButtonClicked()
-        {
+        private void OnFriendsButtonClicked() =>
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
-        }
 
-        private void OnMarketplaceCreditsButtonClicked()
-        {
+        private void OnMarketplaceCreditsButtonClicked() =>
             OpenPanelAsync(viewInstance!.sidebarConfigButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
-        }
 
         private void OnHelpButtonClicked()
         {
@@ -390,47 +364,28 @@ namespace DCL.UI.Sidebar
             HelpOpened?.Invoke();
         }
 
-        private void OnControlsButtonClicked()
-        {
-            //We don't "select" the controls button as it doesn't have any visual change of state.
+        private void OnControlsButtonClicked() =>
             OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
-        }
 
-        private void OpenSidebarSettings()
-        {
+        private void OpenSidebarSettings() =>
             OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
-        }
 
-        private void OpenProfilePanel()
-        {
-            //We don't "select" the profile button as it doesn't have any visual change of state.
+        private void OpenProfilePanel() =>
             OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
-        }
 
-        private void OpenSkyboxSettingsPanel()
-        {
+        private void OpenSkyboxSettingsPanel() =>
             OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
-        }
 
-        private void OpenNotificationsPanel()
-        {
+        private void OpenNotificationsPanel() =>
             OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
-        }
 
-        private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
-        {
+        private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar) =>
             OpenPanelAsync(null, ExplorePanelController.IssueCommand(new ExplorePanelParameter(section, backpackSection))).Forget();
-        }
 
-        private void OnSmartWearablesButtonHover()
-        {
+        private void OnSmartWearablesButtonHover() =>
             OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
-        }
 
-        private void OnSmartWearablesButtonUnhover()
-        {
-            smartWearablesTooltipController.Close();
-        }
+        private void OnSmartWearablesButtonUnhover() => smartWearablesTooltipController.Close();
 
         private void OpenMarketplace()
         {

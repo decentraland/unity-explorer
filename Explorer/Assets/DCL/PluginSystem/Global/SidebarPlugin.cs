@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly Arch.Core.World world;
+        private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -60,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
-        private readonly Arch.Core.World globalWorld;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -83,7 +82,7 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            Arch.Core.World world,
+            Arch.Core.World globalWorld,
             Entity playerEntity,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
@@ -94,8 +93,7 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
-            SmartWearableCache smartWearableCache,
-            Arch.Core.World globalWorld
+            SmartWearableCache smartWearableCache
             )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -109,7 +107,7 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.world = world;
+            this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
             this.chatHistory = chatHistory;
             profileRepositoryWrapper = profileDataProvider;
@@ -120,7 +118,6 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrls = decentralandUrls;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
-            this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
         }
 
@@ -151,7 +148,7 @@ namespace DCL.PluginSystem.Global
             controlsPanelController = new ControlsPanelController(() => controlsPanelView);
             notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper);
             profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
-            profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
+            profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);

@@ -449,6 +449,7 @@ namespace Global.Dynamic
             bool includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             bool includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = FeaturesRegistry.Instance.IsEnabled(FeatureId.BANNED_USERS_FROM_SCENE);
+            bool includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
@@ -751,8 +752,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     passportBridge,
                     chatEventBus,
-                    staticContainer.SmartWearableCache,
-                    globalWorld),
+                    staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
