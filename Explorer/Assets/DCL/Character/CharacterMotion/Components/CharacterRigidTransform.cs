@@ -27,6 +27,7 @@ namespace DCL.CharacterMotion.Components
         public int LastGroundedFrame;
         public int LastJumpFrame;
         public bool JustJumped;
+        public int JumpCount;
 
         // Current velocity of the gravity
         public Vector3 GravityVelocity;

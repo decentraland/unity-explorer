@@ -112,6 +112,30 @@ namespace DCL.CharacterMotion.Settings
 
         public float JumpGravityFactor => impl.JumpGravityFactor;
 
+        public int AirJumpCount
+        {
+            get => impl.AirJumpCount;
+            set => impl.AirJumpCount = value;
+        }
+
+        public float AirJumpHeight
+        {
+            get => impl.AirJumpHeight;
+            set => impl.AirJumpHeight = value;
+        }
+
+        public float CooldownBetweenJumps
+        {
+            get => impl.CooldownBetweenJumps;
+            set => impl.CooldownBetweenJumps = value;
+        }
+
+        public float AirJumpDirectionChangeImpulse
+        {
+            get => impl.AirJumpDirectionChangeImpulse;
+            set => impl.AirJumpDirectionChangeImpulse = value;
+        }
+
         public float JumpGraceTime => impl.JumpGraceTime;
 
         public float JumpHeightStun => impl.JumpHeightStun;

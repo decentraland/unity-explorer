@@ -14,6 +14,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using DCL.AvatarRendering.DemoScripts.Components;
+using DCL.CharacterMotion.Utils;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -29,7 +30,6 @@ namespace DCL.CharacterMotion.Systems
         private SingleInstanceEntity entitySettings;
 
         private readonly ElementBinding<float> cameraRunFov = new (0);
-        private readonly ElementBinding<float> cameraFovSpeed = new (0);
         private readonly ElementBinding<float> walkSpeed = new (0);
         private readonly ElementBinding<float> jogSpeed = new (0);
         private readonly ElementBinding<float> runSpeed = new (0);
@@ -43,10 +43,15 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> airDrag = new (0);
         private readonly ElementBinding<float> stopTime = new (0);
 
+        private readonly ElementBinding<int> airJumpCount = new (0);
+        private readonly ElementBinding<float> airJumpHeight = new (0);
+        private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
+        private readonly ElementBinding<float> airJumpImpulse = new (0);
+
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.TryAddWidget("Locomotion: Base")
-                       ?.AddFloatField("Camera Run FOV", cameraRunFov)
+            debugBuilder.TryAddWidget("Locomotion: Base")?
+                        .AddFloatField("Camera Run FOV", cameraRunFov)
                         .AddFloatField("Walk Speed", walkSpeed)
                         .AddFloatField("Jog Speed", jogSpeed)
                         .AddFloatField("Run Speed", runSpeed)
@@ -58,8 +63,13 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Air Acceleration", airAcc)
                         .AddFloatField("Max Air Acceleration", maxAirAcc)
                         .AddFloatField("Air Drag", airDrag)
-                        .AddFloatField("Grounded Stop Time", stopTime)
-                ;
+                        .AddFloatField("Grounded Stop Time", stopTime);
+
+            debugBuilder.TryAddWidget("Locomotion: Air Jumping")?
+                        .AddControl( new DebugConstLabelDef("Air Jump Count"), new DebugIntFieldDef(airJumpCount) )
+                        .AddFloatField("Height", airJumpHeight)
+                        .AddFloatField("Cooldown", cooldownBetweenJumps)
+                        .AddFloatField("Direction Change Impulse", airJumpImpulse);
         }
 
         public override void Initialize()
@@ -82,6 +92,10 @@ namespace DCL.CharacterMotion.Systems
             maxAirAcc.Value = settings.MaxAirAcceleration;
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
+            airJumpCount.Value = settings.AirJumpCount;
+            airJumpHeight.Value = settings.AirJumpHeight;
+            cooldownBetweenJumps.Value = settings.CooldownBetweenJumps;
+            airJumpImpulse.Value = settings.AirJumpDirectionChangeImpulse;
         }
 
         protected override void Update(float t)
@@ -101,6 +115,10 @@ namespace DCL.CharacterMotion.Systems
             settings.MaxAirAcceleration = maxAirAcc.Value;
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
+            settings.AirJumpCount = airJumpCount.Value;
+            settings.AirJumpHeight = airJumpHeight.Value;
+            settings.CooldownBetweenJumps = cooldownBetweenJumps.Value;
+            settings.AirJumpDirectionChangeImpulse = airJumpImpulse.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
             ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
@@ -150,8 +168,11 @@ namespace DCL.CharacterMotion.Systems
             in MovementInputComponent movementInput,
             Transform viewerTransform)
         {
+            var viewerForward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
+            var viewerRight = Vector3.Cross(-viewerForward, Vector3.up);
+
             // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerTransform, in movementInput, dt);
+            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerForward, viewerRight, in movementInput, dt);
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
@@ -160,7 +181,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // Apply vertical velocity
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jump, viewerForward, viewerRight, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
