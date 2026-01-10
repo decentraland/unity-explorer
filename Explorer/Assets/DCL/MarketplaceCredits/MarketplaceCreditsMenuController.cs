@@ -319,8 +319,7 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true,
-                    ownProfile.UserId, ct);
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
 

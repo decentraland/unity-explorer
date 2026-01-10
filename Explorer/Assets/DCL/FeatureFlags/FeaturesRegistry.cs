@@ -39,6 +39,8 @@ namespace DCL.FeatureFlags
                 [FeatureId.BANNED_USERS_FROM_SCENE] = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor,
                 [FeatureId.BACKPACK_OUTFITS] = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED),
                 [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
+                [FeatureId.DISCOVER_PLACES] = featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DISCOVER)) || Application.isEditor,
+
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -58,8 +60,9 @@ namespace DCL.FeatureFlags
         ///     Use this for features that depend on user identity or allowlists or anything else that cannot be handled by FF or appArgs.
         ///     Examples of user-specific features: COMMUNITIES
         ///     For global features, this returns the same result as IsEnabled().
+        ///     Changed name because of intellisense suggesting to use async method instead of normal IsEnabled one.
         /// </summary>
-        public async UniTask<bool> IsEnabledAsync(FeatureId featureId, CancellationToken ct)
+        public async UniTask<bool> CheckIsEnabledAsync(FeatureId featureId, CancellationToken ct)
         {
             // Check if there's a registered provider for this feature
             if (featureProviders.TryGetValue(featureId, out IFeatureProvider? provider))
@@ -139,5 +142,6 @@ namespace DCL.FeatureFlags
         COMMUNITIES_MEMBERS_COUNTER = 32,
         AUTH_CODE_VALIDATION = 33,
         GPUI_ENABLED = 34,
+        DISCOVER_PLACES = 35,
     }
 }
