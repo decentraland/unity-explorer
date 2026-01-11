@@ -156,6 +156,16 @@ namespace DCL.Chat.History
             MessageAdded?.Invoke(this, message, 0);
         }
 
+        public void InsertAsOldestMessage(ChatMessage message)
+        {
+            TryInitializeChannel();
+
+            // Adds at the end of the list (oldest message)
+            messages.Add(message);
+
+            MessageAdded?.Invoke(this, message, messages.Count - 1);
+        }
+
         public void TryInitializeChannel()
         {
             if (isInitialized)

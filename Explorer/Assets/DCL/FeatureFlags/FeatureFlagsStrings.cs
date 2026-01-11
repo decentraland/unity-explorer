@@ -54,6 +54,7 @@ namespace DCL.FeatureFlags
         public const string CONFIG_VARIANT = "config";
         public const string HEAD_SYNC = "alfa-head-sync";
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
+        public const string DISCOVER = "alfa-discover";
 
         public static class Endpoints
         {
