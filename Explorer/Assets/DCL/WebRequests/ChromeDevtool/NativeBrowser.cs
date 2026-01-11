@@ -11,7 +11,11 @@ namespace DCL.WebRequests.ChromeDevtool
         {
             try
             {
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+#if UNITY_WEBGL
+                return BrowserOpenResult.FromBrowserOpenError(
+                    BrowserOpenError.FromException(new NotSupportedException("Browser launching is not supported on WebGL platform"))
+                );
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
                 const string CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
                 if (!System.IO.File.Exists(CHROME_PATH))

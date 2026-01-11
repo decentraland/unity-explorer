@@ -261,8 +261,9 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
+#if !UNITY_WEBGL //We only verify hardware on non-webGL platforms
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
-
+#endif
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
@@ -392,6 +393,8 @@ namespace Global.Dynamic
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
+#if !UNITY_WEBGL //For now, until we have Livekit Working, we ignore all these checks for WebGL.
+
             //If Livekit is down, stop bootstrapping
             if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;
@@ -399,7 +402,7 @@ namespace Global.Dynamic
             //If application requires version update, stop bootstrapping
             if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
                 return false;
-
+#endif
             //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
             await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
 
@@ -430,6 +433,9 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
+#if UNITY_WEBGL //In WebGL we don't do versionCheck
+            return false;
+#else
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
@@ -457,6 +463,7 @@ namespace Global.Dynamic
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
             return true;
+#endif
         }
 
         private void DisableInputs()

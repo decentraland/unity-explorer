@@ -30,16 +30,20 @@ namespace DCL.Utility
 
         public static string GetCurrentPlatform()
         {
-            if (platformSuffix == null)
+            if (platformSuffix != null) return platformSuffix;
+
+            switch (Application.platform)
             {
-                if (Application.platform is RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer)
-                    platformSuffix = "_windows";
-                else if (Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer)
-                    platformSuffix = "_mac";
-                else if (Application.platform is RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer)
-                    platformSuffix = "_linux";
-                else
-                    platformSuffix = string.Empty; // WebGL requires no platform suffix
+                case RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer:
+                    platformSuffix = "_windows"; break;
+                case RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer:
+                    platformSuffix = "_mac"; break;
+                case RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer:
+                    platformSuffix = "_linux"; break;
+                case RuntimePlatform.WebGLPlayer:
+                    platformSuffix = "_webGL"; break;
+                default:
+                    platformSuffix = string.Empty; break;
             }
 
             return platformSuffix;
@@ -115,14 +119,11 @@ namespace DCL.Utility
                     : "Unknown error";
                 throw new Exception($"error {code}: {message}");
             }
-#else
-            throw new NotImplementedException();
 #endif
         }
 
 
 #if UNITY_STANDALONE_WIN
-
         private static List<DriveData> GetWindowsDrivesInfo()
         {
             var allDrivesData = new List<DriveData>();
@@ -232,6 +233,7 @@ namespace DCL.Utility
 
          // P/Invoke declaration for getfsstat, which retrieves info for all mounted file systems.
          // We use EntryPoint "getfsstat" which is correct for 64-bit systems.
+
          [DllImport("libc", SetLastError = true)]
          private static extern int getfsstat(IntPtr buf, int bufsize, int flags);
 
@@ -296,6 +298,5 @@ namespace DCL.Utility
         [DllImport("libc")]
         private static extern int strerror_r(int errnum, StringBuilder buf, int buflen);
 #endif
-
     }
 }
