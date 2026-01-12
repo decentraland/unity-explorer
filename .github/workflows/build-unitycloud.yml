@@ -558,7 +558,7 @@ jobs:
           if-no-files-found: error
           
       - name: Upload debug symbols to Sentry
-        if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' && needs.prebuild.outputs.sentry_upload_symbols == 'true' }}
+        if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
         shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
