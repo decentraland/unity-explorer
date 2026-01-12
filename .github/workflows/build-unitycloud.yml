@@ -204,7 +204,7 @@ jobs:
         run: |
           #!/bin/bash
           
-          echo "environment=development" >> "$GITHUB_OUTPUT"
+          echo "environment=production" >> "$GITHUB_OUTPUT"
           echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
           echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
 
