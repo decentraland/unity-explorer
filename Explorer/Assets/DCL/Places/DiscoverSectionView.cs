@@ -62,23 +62,12 @@ namespace DCL.Places
         public void SetActive(bool active) =>
             gameObject.SetActive(active);
 
-        public void SetCategories(PlaceCategoryData[] categories)
+        public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
-            var allCategoryData = new PlaceCategoryData
-            {
-                name = ALL_CATEGORY_ID,
-                i18n = new PlaceCategoryLocalizationData
-                {
-                    en = "All",
-                },
-            };
-
-            CreateAndSetupCategoryButton(allCategoryData);
-
-            foreach (PlaceCategoryData categoryData in categories)
+            foreach (PlaceCategoriesSO.PlaceCategoryData categoryData in categories)
                 CreateAndSetupCategoryButton(categoryData);
 
-            SelectCategory(allCategoryData.name, invokeEvent: false);
+            SelectCategory(ALL_CATEGORY_ID, invokeEvent: false);
         }
 
         public void ClearCategories()
@@ -132,18 +121,18 @@ namespace DCL.Places
             return invitedCommunityCardView;
         }
 
-        private void CreateAndSetupCategoryButton(PlaceCategoryData categoryData)
+        private void CreateAndSetupCategoryButton(PlaceCategoriesSO.PlaceCategoryData categoryData)
         {
             PlaceCategoryButton categoryButtonView = categoryButtonsPool.Get();
 
             // Setup card data
-            categoryButtonView.Configure(categoryData.name, categoryData.i18n.en);
+            categoryButtonView.Configure(categoryData);
 
             // Setup card events
             categoryButtonView.buttonView.Button.onClick.RemoveAllListeners();
-            categoryButtonView.buttonView.Button.onClick.AddListener(() => SelectCategory(categoryData.name));
+            categoryButtonView.buttonView.Button.onClick.AddListener(() => SelectCategory(categoryData.id));
 
-            currentCategories.Add(new KeyValuePair<string, PlaceCategoryButton>(categoryData.name, categoryButtonView));
+            currentCategories.Add(new KeyValuePair<string, PlaceCategoryButton>(categoryData.id, categoryButtonView));
         }
 
         private void SelectCategory(string categoryId, bool invokeEvent = true)

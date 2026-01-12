@@ -5887,6 +5887,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.Social::DCL.Places.DiscoverSectionView
   categoryButtonPrefab: {fileID: 5869153357844121079, guid: c8cf20a07ddc8b145ab139afe16db8f6, type: 3}
   categoriesContainer: {fileID: 2902282380338628767}
+  categoryIconsMapping: {fileID: 11400000, guid: 1b01546578c9fd04295ef780cc129efc, type: 2}
   placesResultLoopGrid: {fileID: 8726532756759323616}
   placesResultsScrollRect: {fileID: 2227786447393534025}
   placesResultsEmptyContainer: {fileID: 7867544057796369780}

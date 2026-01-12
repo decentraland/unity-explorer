@@ -22,14 +22,15 @@ namespace DCL.Places
         public PlacesController(
             PlacesView view,
             ICursor cursor,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            PlaceCategoriesSO placesCategories)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
 
             placesStateService = new PlacesStateService();
-            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService, placesStateService);
+            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService, placesStateService, placesCategories);
 
             view.SectionChanged += OnSectionChanged;
         }

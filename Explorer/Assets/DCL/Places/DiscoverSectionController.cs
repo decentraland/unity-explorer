@@ -12,7 +12,6 @@ namespace DCL.Places
 {
     public class DiscoverSectionController : IDisposable
     {
-        private const string GET_CATEGORIES_ERROR_MESSAGE = "There was an error loading categories. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
@@ -20,6 +19,7 @@ namespace DCL.Places
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
+        private readonly PlaceCategoriesSO placesCategories;
 
         private bool isSectionOpen;
         private string? currentCategorySelected;
@@ -27,19 +27,20 @@ namespace DCL.Places
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
 
-        private CancellationTokenSource? getCategoriesCts;
         private CancellationTokenSource? getPlacesCts;
 
         public DiscoverSectionController(
             PlacesController placesController,
             DiscoverSectionView view,
             IPlacesAPIService placesAPIService,
-            PlacesStateService placesStateService)
+            PlacesStateService placesStateService,
+            PlaceCategoriesSO placesCategories)
         {
             this.view = view;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
+            this.placesCategories = placesCategories;
 
             placesController.SectionChanged += OnSectionChanged;
             placesController.PlacesClosed += OnPlacesSectionClosed;
@@ -84,8 +85,7 @@ namespace DCL.Places
 
         private void LoadSection()
         {
-            getCategoriesCts = getCategoriesCts.SafeRestart();
-            LoadCategoriesAsync(getCategoriesCts.Token).Forget();
+            view.SetCategories(placesCategories.categories);
 
             getPlacesCts = getPlacesCts.SafeRestart();
             LoadPlacesAsync(0, getPlacesCts.Token).Forget();
@@ -93,7 +93,6 @@ namespace DCL.Places
 
         private void UnloadSection()
         {
-            getCategoriesCts?.SafeCancelAndDispose();
             view.ClearCategories();
 
             getPlacesCts?.SafeCancelAndDispose();
@@ -101,22 +100,6 @@ namespace DCL.Places
             placesStateService.ClearPlaces();
 
             currentCategorySelected = null;
-        }
-
-        private async UniTask LoadCategoriesAsync(CancellationToken ct)
-        {
-            view.ClearCategories();
-
-            var categoriesResult = await placesAPIService.GetPlacesCategoriesAsync(ct)
-                                                         .SuppressToResultAsync(ReportCategory.PLACES);
-
-            if (!categoriesResult.Success)
-            {
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_CATEGORIES_ERROR_MESSAGE));
-                return;
-            }
-
-            view.SetCategories(categoriesResult.Value.data);
         }
 
         private void OnCategorySelected(string? categoryId)

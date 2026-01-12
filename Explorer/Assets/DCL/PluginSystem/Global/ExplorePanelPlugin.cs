@@ -362,6 +362,8 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
+            ProvidedAsset<PlaceCategoriesSO> placeCategoriesSO = await assetsProvisioner.ProvideMainAssetAsync(settings.PlaceCategoriesSO, ct);
+
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
@@ -491,7 +493,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            discoverController = new PlacesController(placesView, cursor, placesAPIService);
+            discoverController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -660,6 +662,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int PlaceThumbnailWidth { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

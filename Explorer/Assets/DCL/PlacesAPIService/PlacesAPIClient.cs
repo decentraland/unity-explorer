@@ -308,17 +308,6 @@ namespace DCL.PlacesAPIService
             return categoryPlaces;
         }
 
-        public async UniTask<PlacesCategoriesAPIResponse> GetPlacesCategoriesAsync(CancellationToken ct)
-        {
-            PlacesCategoriesAPIResponse placesCategories = await webRequestController.GetAsync(placesCategoriesURL, ct, ReportCategory.UI)
-                                                                                     .CreateFromJson<PlacesCategoriesAPIResponse>(WRJsonParser.Newtonsoft);
-
-            if (placesCategories == null)
-                throw new Exception("No Categories info retrieved");
-
-            return placesCategories;
-        }
-
         public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)
         {
             // POST for getting a signed url

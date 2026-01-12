@@ -10,13 +10,12 @@ namespace DCL.Places
     {
         [SerializeField] private Image iconImage = null!;
         [SerializeField] private TMP_Text text = null!;
-        [SerializeField] private PlaceCategoryIconsMapping categoryIconsMapping = null!;
         [SerializeField] public ButtonWithSelectableStateView buttonView = null!;
 
-        public void Configure(string categoryId, string categoryName)
+        public void Configure(PlaceCategoriesSO.PlaceCategoryData placeData)
         {
-            text.text = RemoveNonAsciiCharacters(categoryName).ToUpper().Trim();
-            iconImage.sprite = categoryIconsMapping.GetCategoryImage(categoryId);
+            text.text = RemoveNonAsciiCharacters(placeData.name).ToUpper().Trim();
+            iconImage.sprite = placeData.icon;
             iconImage.gameObject.SetActive(iconImage.sprite != null);
         }
 
