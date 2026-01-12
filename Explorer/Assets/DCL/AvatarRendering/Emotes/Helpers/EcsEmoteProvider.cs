@@ -100,12 +100,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             output.Clear();
 
-            var convertedEmoteIds = new List<URN>(emoteIds.Count);
-
-            foreach (URN emoteId in emoteIds)
-                convertedEmoteIds.Add(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(emoteId));
-
-            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, convertedEmoteIds);
+            GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
             var promise = PromiseByPointers.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
