@@ -5,6 +5,7 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.AssetLoad.Components;
+using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
@@ -90,6 +91,21 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                 return;
 
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, texturePromise.LoadingIntention.CommonArguments.URL);
+        }
+
+        [Query]
+        [All(typeof(PBVideoPlayer))]
+        [None(typeof(CRDTEntity))]
+        private void FinalizeVideoLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
+        {
+            //UpdateMediaPlayerSystem already tried to consume the promise, so we just need to check if it was consumed or not
+            if (mediaPlayerComponent.OpenMediaPromise?.IsConsumed == false
+                || !capBudget.TrySpendBudget())
+                return;
+
+            mediaPlayerComponent.Dispose();
+
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, mediaPlayerComponent.MediaAddress.ToString());
         }
     }
 }

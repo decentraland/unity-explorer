@@ -125,6 +125,14 @@ namespace DCL.SDKComponents.AssetLoad.Systems
 
                     loadingEntity = World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
+                else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    PBVideoPlayer component = new PBVideoPlayer
+                    {
+                        Src = path,
+                    };
+                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
