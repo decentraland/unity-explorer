@@ -150,19 +150,22 @@ namespace DCL.Profiles
 
             return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
-                   && Description == profile.Description
+                   && AreStringsEquivalent(Description, profile.Description)
                    && TutorialStep == profile.TutorialStep
-                   && Email == profile.Email
-                   && Country == profile.Country
-                   && EmploymentStatus == profile.EmploymentStatus
-                   && Gender == profile.Gender
-                   && Pronouns == profile.Pronouns
-                   && Language == profile.Language
-                   && Profession == profile.Profession
+                   && AreStringsEquivalent(Email, profile.Email)
+                   && AreStringsEquivalent(Country, profile.Country)
+                   && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
+                   && AreStringsEquivalent(Gender, profile.Gender)
+                   && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(Language, profile.Language)
+                   && AreStringsEquivalent(Profession, profile.Profession)
                    && Birthdate == profile.Birthdate
                    && Version == profile.Version
                    && AreLinksSame(links, profile.links);
         }
+        
+        private static bool AreStringsEquivalent(string? a, string? b) =>
+            (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || a == b;
 
         private static bool AreLinksSame(List<LinkJsonDto>? links1, List<LinkJsonDto>? links2)
         {
