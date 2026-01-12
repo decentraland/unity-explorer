@@ -31,6 +31,14 @@ namespace DCL.Web3.Authenticators
         private InAppWallet? pendingWallet;
         private UniTaskCompletionSource<bool>? loginCompletionSource;
 
+        // Function signatures (first 4 bytes of keccak256 hash)
+        private const string TRANSFER_FROM_SIGNATURE = "0x23b872dd"; // transferFrom(address,address,uint256) - ERC721
+        private const string TRANSFER_SIGNATURE = "0xa9059cbb"; // transfer(address,uint256) - ERC20
+
+        // Minimal ABIs for common token operations
+        private const string ERC721_TRANSFER_FROM_ABI = @"[{""name"":""transferFrom"",""type"":""function"",""inputs"":[{""name"":""from"",""type"":""address""},{""name"":""to"",""type"":""address""},{""name"":""tokenId"",""type"":""uint256""}],""outputs"":[]}]";
+        private const string ERC20_TRANSFER_ABI = @"[{""name"":""transfer"",""type"":""function"",""inputs"":[{""name"":""to"",""type"":""address""},{""name"":""amount"",""type"":""uint256""}],""outputs"":[{""name"":"""",""type"":""bool""}]}]";
+
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
             IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
@@ -169,7 +177,7 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose()
         {
-            // Loging out on Dispose will break ThirdWeb auto-login
+            // Logout on Dispose will close session and break ThirdWeb auto-login. So we need to keep session open for auto-login.
         }
 
         public async UniTask LogoutAsync(CancellationToken ct)
@@ -279,23 +287,9 @@ namespace DCL.Web3.Authenticators
                 };
             }
 
-            // For contract interactions with data
-            // Pass empty ABI to avoid fetching contract metadata
-            ThirdwebContract? contract = await ThirdwebContract.Create(
-                ThirdWebManager.Instance.Client,
-                to,
-                chainId,
-                abi: "[]" // Empty ABI - we already have encoded data
-            );
-
-            ThirdwebTransaction? transaction = await ThirdwebContract.Prepare(
-                ThirdWebManager.Instance.ActiveWallet,
-                contract,
-                data,
-                weiValue
-            );
-
-            string? txHash = await ThirdwebTransaction.Send(transaction);
+            // For contract interactions, decode the data and use ThirdwebContract.Prepare with proper ABI
+            // This is the recommended approach by Thirdweb SDK
+            string txHash = await ExecuteContractCallAsync(to, data, weiValue);
 
             return new EthApiResponse
             {
@@ -303,6 +297,100 @@ namespace DCL.Web3.Authenticators
                 jsonrpc = "2.0",
                 result = txHash,
             };
+        }
+
+        /// <summary>
+        ///     Executes a contract call by decoding the pre-encoded data and using ThirdwebContract.Prepare
+        ///     with the appropriate ABI. This is the recommended approach by Thirdweb SDK.
+        /// </summary>
+        private async UniTask<string> ExecuteContractCallAsync(string contractAddress, string data, BigInteger weiValue)
+        {
+            // Extract function signature (first 4 bytes = 8 hex chars after 0x)
+            string signature = data.Length >= 10 ? data[..10].ToLowerInvariant() : data;
+
+            string abi;
+            string methodName;
+            object[] parameters;
+
+            switch (signature)
+            {
+                case TRANSFER_FROM_SIGNATURE:
+                    // transferFrom(address from, address to, uint256 tokenId)
+                    abi = ERC721_TRANSFER_FROM_ABI;
+                    methodName = "transferFrom";
+                    parameters = DecodeTransferFromParams(data);
+                    break;
+
+                case TRANSFER_SIGNATURE:
+                    // transfer(address to, uint256 amount)
+                    abi = ERC20_TRANSFER_ABI;
+                    methodName = "transfer";
+                    parameters = DecodeTransferParams(data);
+                    break;
+
+                default:
+                    throw new Web3Exception($"Unsupported function signature: {signature}. " +
+                                            "Only transferFrom (0x23b872dd) and transfer (0xa9059cbb) are currently supported.");
+            }
+
+            ThirdwebContract contract = await ThirdwebContract.Create(
+                ThirdWebManager.Instance.Client,
+                contractAddress,
+                chainId,
+                abi
+            );
+
+            ThirdwebTransaction transaction = await ThirdwebContract.Prepare(
+                ThirdWebManager.Instance.ActiveWallet,
+                contract,
+                methodName,
+                weiValue,
+                parameters
+            );
+
+            return await ThirdwebTransaction.Send(transaction);
+        }
+
+        /// <summary>
+        ///     Decodes parameters from transferFrom(address,address,uint256) encoded data
+        ///     Data format: 0x23b872dd + from(32 bytes) + to(32 bytes) + tokenId(32 bytes)
+        /// </summary>
+        private static object[] DecodeTransferFromParams(string data)
+        {
+            // Skip "0x" + 8 chars signature = 10 chars
+            string paramsHex = data[10..];
+
+            // Each parameter is 64 hex chars (32 bytes)
+            string fromHex = paramsHex[..64];
+            string toHex = paramsHex[64..128];
+            string tokenIdHex = paramsHex[128..192];
+
+            // Addresses are in the last 40 chars of the 64-char slot
+            string from = "0x" + fromHex[24..];
+            string to = "0x" + toHex[24..];
+            var tokenId = BigInteger.Parse(tokenIdHex, System.Globalization.NumberStyles.HexNumber);
+
+            return new object[] { from, to, tokenId };
+        }
+
+        /// <summary>
+        ///     Decodes parameters from transfer(address,uint256) encoded data
+        ///     Data format: 0xa9059cbb + to(32 bytes) + amount(32 bytes)
+        /// </summary>
+        private static object[] DecodeTransferParams(string data)
+        {
+            // Skip "0x" + 8 chars signature = 10 chars
+            string paramsHex = data[10..];
+
+            // Each parameter is 64 hex chars (32 bytes)
+            string toHex = paramsHex[..64];
+            string amountHex = paramsHex[64..128];
+
+            // Address is in the last 40 chars of the 64-char slot
+            string to = "0x" + toHex[24..];
+            var amount = BigInteger.Parse(amountHex, System.Globalization.NumberStyles.HexNumber);
+
+            return new object[] { to, amount };
         }
 
         private static BigInteger ParseHexToBigInteger(string hexValue)
