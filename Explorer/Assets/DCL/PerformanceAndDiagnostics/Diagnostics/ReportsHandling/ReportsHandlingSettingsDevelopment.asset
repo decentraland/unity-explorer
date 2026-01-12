@@ -630,6 +630,10 @@ MonoBehaviour:
       Severity: 0
     - Category: SOCIAL_EMOTE
       Severity: 4
+    - Category: AVATAR
+      Severity: 3
+    - Category: AVATAR
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
