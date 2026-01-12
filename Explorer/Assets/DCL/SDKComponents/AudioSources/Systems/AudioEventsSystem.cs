@@ -55,14 +55,12 @@ namespace DCL.SDKComponents.AudioSources
             PropagateStateInAudioEvent(in sdkEntity, state);
         }
 
-        // TODO MAURIZIO check with Pravus if this logic is correct
         private static MediaState GetAudioSourceState(ref AudioSourceComponent audioSourceComponent)
         {
             // Check if clip is still loading
             if (!audioSourceComponent.ClipPromise.IsConsumed)
                 return MediaState.MsLoading;
 
-            // Check if AudioSource is assigned and has a clip
             AudioSource? audioSource = audioSourceComponent.AudioSource;
 
             // If we have a URL but no clip yet, it might be loading or failed
@@ -77,15 +75,11 @@ namespace DCL.SDKComponents.AudioSources
 
         private MediaState GetAudioStreamState(ref MediaPlayerComponent mediaPlayer)
         {
-            // Convert VideoState to MediaState (they have the same numeric values)
             VideoState videoState = mediaPlayer.State;
             return (MediaState)videoState;
         }
 
         private void PropagateStateInAudioEvent(in CRDTEntity sdkEntity, MediaState mediaState) =>
-
-            // Always update the PBAudioEvent component with the current state
-            // The CRDT system will handle deduplication based on timestamp
             ecsToCRDTWriter.AppendMessage<PBAudioEvent, (MediaState state, uint timestamp)>
             (
                 prepareMessage: static (pbAudioEvent, data) =>
