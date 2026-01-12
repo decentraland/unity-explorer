@@ -12,13 +12,14 @@ namespace DCL.Navmap
     {
         private const float TRANSITION_TIME = 0.5f;
 
-        private IMapCameraController cameraController;
+        private IMapCameraController? cameraController;
         private CharacterTransform playerTransformComponent;
 
         private readonly NavmapLocationView view;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
+        private readonly INavmapBus navmapBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
 
         public NavmapLocationController(
@@ -33,19 +34,19 @@ namespace DCL.Navmap
             this.world = world;
             this.playerEntity = playerEntity;
             this.navmapFilterPanelController = navmapFilterPanelController;
+            this.navmapBus = navmapBus;
             this.homePlaceEventBus = homePlaceEventBus;
             world.TryGet(playerEntity, out playerTransformComponent);
 
+            this.view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
             this.view.CenterToHomeButton.onClick.AddListener(CenterToHome);
             this.view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
-            this.view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
-
             navmapBus.OnMoveCameraTo += MoveCameraTo;
         }
 
         private void MoveCameraTo(Vector2 destination, float speed = 0)
         {
-            cameraController.TranslateTo(destination, speed == 0 ? TRANSITION_TIME : speed);
+            cameraController?.TranslateTo(destination, speed == 0 ? TRANSITION_TIME : speed);
         }
 
         private void ToggleFilterPanel()
@@ -61,13 +62,13 @@ namespace DCL.Navmap
                 cameraController.SetPosition(coordinates);
         }
 
-        private void CenterToHome() => 
+        private void CenterToHome() =>
             homePlaceEventBus.DisplayPlacesInfoPanel(homePlaceEventBus.CurrentHomeCoordinates ?? Vector2Int.zero);
 
         private void CenterToPlayer()
         {
             if (TryGetPlayerCoordinates(out var coordinates))
-                cameraController.TranslateTo(coordinates, TRANSITION_TIME);
+                cameraController?.TranslateTo(coordinates, TRANSITION_TIME);
         }
 
         private bool TryGetPlayerCoordinates(out Vector2 coordinates)

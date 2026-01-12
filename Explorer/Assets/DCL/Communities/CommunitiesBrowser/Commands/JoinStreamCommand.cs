@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
-using DCL.UI.SharedSpaceManager;
+using DCL.Chat;
 using DCL.VoiceChat;
 
 namespace DCL.Communities.CommunitiesBrowser.Commands
@@ -14,17 +12,11 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         private const int UI_CLOSE_DELAY = 600;
 
         private readonly ICommunityCallOrchestrator orchestrator;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
 
         public JoinStreamCommand(
-            ICommunityCallOrchestrator orchestrator,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            ICommunityCallOrchestrator orchestrator)
         {
             this.orchestrator = orchestrator;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.chatEventBus = chatEventBus;
         }
 
         /// <summary>
@@ -43,10 +35,10 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
             async UniTaskVoid JoinStreamAsync()
             {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
-
                 if (shouldOpenConversation)
-                    chatEventBus.OpenCommunityConversationUsingCommunityId(communityId);
+                    ChatOpener.Instance.OpenCommunityConversationWithId(communityId);
+                else
+                    ChatOpener.Instance.CloseAllViewsAndFocusChat();
 
                 // We wait until the panel has disappeared before starting the call, so the UX feels better.
                 await UniTask.Delay(UI_CLOSE_DELAY);

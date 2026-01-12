@@ -40,7 +40,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController communityThumbnailImageController;
         private ImageController giftToastImageController;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,

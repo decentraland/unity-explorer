@@ -15,7 +15,6 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
-using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -28,6 +27,7 @@ using System.Threading;
 using ECS.SceneLifeCycle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -56,11 +56,11 @@ namespace DCL.PluginSystem.Global
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
         private readonly bool localSceneDevelopment;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly DCLInput dclInput;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -78,7 +78,6 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             string builderContentURL,
             bool localSceneDevelopment,
-            ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
@@ -99,11 +98,11 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.dclInput = DCLInput.Instance;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -131,7 +130,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -159,11 +158,19 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
-                inputBlock, cursor, sharedSpaceManager);
-
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
+                inputBlock, cursor, mvcManager);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            dclInput.Shortcuts.EmoteWheel.canceled += OnEmoteWheelShortcutPerformed;
+        }
+
+        private void OnEmoteWheelShortcutPerformed(InputAction.CallbackContext obj)
+        {
+            if (emotesWheelController?.State is ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
+            else
+                emotesWheelController?.Close();
         }
 
         [Serializable]

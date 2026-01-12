@@ -11,11 +11,9 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.SharedSpaceManager;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Threading;
@@ -24,12 +22,12 @@ using Utility;
 
 namespace DCL.MarketplaceCredits
 {
-    public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
+    public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public event Action<bool> MarketplaceCreditsOpened;
 
@@ -37,7 +35,6 @@ namespace DCL.MarketplaceCredits
         private MarketplaceCreditsSection? currentSection;
         private bool isCreditsUnlockedPanelOpen;
 
-        [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
 
         private static readonly int SIDEBAR_BUTTON_ANIMATOR_IS_ALERT_ID = Animator.StringToHash("isAlert");
@@ -53,7 +50,6 @@ namespace DCL.MarketplaceCredits
         private readonly Animator sidebarCreditsButtonAnimator;
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
@@ -83,7 +79,6 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter) : base(viewFactory)
@@ -98,7 +93,6 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
@@ -173,14 +167,7 @@ namespace DCL.MarketplaceCredits
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-        }
-
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            closeTaskCompletionSource.TrySetResult();
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         public void OpenSection(MarketplaceCreditsSection section)
@@ -313,7 +300,7 @@ namespace DCL.MarketplaceCredits
             if (!isFeatureActivated)
                 return;
 
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: true));
+            mvcManager.ShowAndForget(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: true)));
         }
 
         private void CheckForSidebarButtonState()
@@ -332,8 +319,7 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true,
-                    ownProfile.UserId, ct);
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
 
@@ -346,7 +332,7 @@ namespace DCL.MarketplaceCredits
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
                     await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
-                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                    await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 
                 web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;

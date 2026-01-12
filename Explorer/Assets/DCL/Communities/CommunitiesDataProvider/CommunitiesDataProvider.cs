@@ -65,7 +65,7 @@ namespace DCL.Communities.CommunitiesDataProvider
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
         {
             var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
-            if (isStreaming) //TODO FRAN & DAVIDE: FIX THIS, IT WORKS BUT IS NOT PROPER :)
+            if (isStreaming) //TODO FRAN & DAVIDE: Fix this, we should be paginating results here.
                 url = $"{communitiesBaseUrl}?onlyWithActiveVoiceChat={isStreaming}";//&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
 

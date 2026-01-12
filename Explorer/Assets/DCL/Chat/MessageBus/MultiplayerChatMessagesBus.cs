@@ -1,4 +1,3 @@
-#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -28,7 +27,7 @@ namespace DCL.Chat.MessageBus
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
-        private bool isCommunitiesIncluded;
+        private bool isCommunitiesFeatureEnabled;
         private readonly CancellationTokenSource setupExploreSectionsCts = new ();
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
@@ -59,7 +58,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
-            isCommunitiesIncluded = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -99,7 +98,7 @@ namespace DCL.Chat.MessageBus
             using (receivedMessage)
             {
                 // If the Communities shape is disabled, ignores the community conversation messages
-                if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
+                if(!isCommunitiesFeatureEnabled && channelType == ChatChannel.ChatChannelType.COMMUNITY)
                     return;
 
                 string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
@@ -159,8 +158,6 @@ namespace DCL.Chat.MessageBus
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
                     SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), routingUser);
-                    break;
-                default:
                     break;
             }
 

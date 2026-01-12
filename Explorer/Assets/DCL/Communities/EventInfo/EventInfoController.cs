@@ -28,7 +28,7 @@ namespace DCL.Communities.EventInfo
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();

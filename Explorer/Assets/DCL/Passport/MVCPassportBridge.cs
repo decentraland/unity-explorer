@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Passport;
-using DCL.Web3;
 using MVC;
-using System;
 
 namespace DCL.Friends.Passport
 {

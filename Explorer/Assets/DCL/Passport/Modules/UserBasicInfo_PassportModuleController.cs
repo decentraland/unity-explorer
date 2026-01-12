@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -16,15 +17,15 @@ namespace DCL.Passport.Modules
 {
     public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
-        private readonly UserNameElementController nameElementController;
-        private readonly UserWalletAddressElementController walletAddressElementController;
+        private readonly UserNameElementPresenter userNameElementPresenter;
+        private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly bool isNameEditorEnabled;
+        private readonly bool isNameEditorFeatureEnabled;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
@@ -38,8 +39,7 @@ namespace DCL.Passport.Modules
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            bool isNameEditorEnabled)
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -47,9 +47,10 @@ namespace DCL.Passport.Modules
             this.mvcManager = mvcManager;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.isNameEditorEnabled = isNameEditorEnabled;
-            nameElementController = new UserNameElementController(view.UserNameElement);
-            walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
+            isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PROFILE_NAME_EDITOR);
+
+            userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
+            walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
 
             view.ClaimNameButton.onClick.AddListener(ClaimName);
             view.EditNameButton.onClick.AddListener(ShowNameEditor);
@@ -59,8 +60,8 @@ namespace DCL.Passport.Modules
         {
             currentProfile = profile;
 
-            nameElementController.Setup(profile.Compact);
-            walletAddressElementController.Setup(profile.Compact);
+            userNameElementPresenter.Setup(profile.Compact);
+            walletAddressElementPresenter.Setup(profile.Compact);
 
             checkNameEditionCancellationToken = checkNameEditionCancellationToken.SafeRestart();
             CheckForEditionAvailabilityAsync(checkNameEditionCancellationToken.Token).Forget();
@@ -68,15 +69,16 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
-            nameElementController.Element.CopyNameWarningNotification.Hide(true);
-            walletAddressElementController.Element.CopyWalletWarningNotification.Hide(true);
+            userNameElementPresenter.Element.CopyNameWarningNotification.Hide(true);
+            walletAddressElementPresenter.Element.CopyWalletWarningNotification.Hide(true);
         }
 
         public void Dispose()
         {
-            nameElementController.Element.CopyUserNameButton.onClick.RemoveAllListeners();
-            walletAddressElementController.Element.CopyWalletAddressButton.onClick.RemoveAllListeners();
-            Clear();
+            userNameElementPresenter.Dispose();
+            walletAddressElementPresenter.Dispose();
+            view.ClaimNameButton.onClick.RemoveListener(ClaimName);
+            view.EditNameButton.onClick.RemoveListener(ShowNameEditor);
         }
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
@@ -92,10 +94,10 @@ namespace DCL.Passport.Modules
 
                 if (ownProfile.UserId == currentProfile?.UserId)
                 {
-                    view.EditNameButton.gameObject.SetActive(isNameEditorEnabled);
+                    view.EditNameButton.gameObject.SetActive(isNameEditorFeatureEnabled);
                     view.ClaimNameButton.gameObject.SetActive(false);
 
-                    if (isNameEditorEnabled)
+                    if (isNameEditorFeatureEnabled)
                     {
                         using var names =
                             await nftNamesProvider.GetAsync(new Web3Address(currentProfile.UserId), 1, 1, ct);

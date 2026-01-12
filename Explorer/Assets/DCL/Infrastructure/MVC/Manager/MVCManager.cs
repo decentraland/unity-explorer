@@ -4,6 +4,7 @@ using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace MVC
 {
@@ -35,7 +36,7 @@ namespace MVC
             foreach (IController controllersValue in controllers.Values)
                 controllersValue.Dispose();
 
-            destructionCancellationTokenSource?.Dispose();
+            destructionCancellationTokenSource.SafeCancelAndDispose();
             windowsStackManager.Dispose();
         }
 
@@ -65,6 +66,24 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
+        public void CloseAllNonPersistentViews(CancellationToken ct = default)
+        {
+            var info = windowsStackManager.GetNonPersistentControllersInfo();
+
+            // Hide all popups in the stack and clear it
+            CloseAllPopups(info.PopupControllers);
+
+            // Hide fullscreen UI if any
+            if (info.FullscreenController != null)
+                windowsStackManager.PopFullscreen(info.FullscreenController);
+
+            if (info.OverlayController != null)
+                windowsStackManager.PopOverlay(info.OverlayController);
+
+            // Hide the popup closer
+            popupCloser.HideAsync(ct).Forget();
+        }
+
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
             // Find the controller
@@ -83,30 +102,30 @@ namespace MVC
 
                 switch (controller.Layer)
                 {
-                    case CanvasOrdering.SortingLayer.Popup:
+                    case CanvasOrdering.SortingLayer.POPUP:
                         await ShowPopupAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Fullscreen:
+                    case CanvasOrdering.SortingLayer.FULLSCREEN:
                         await ShowFullScreenAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Persistent:
+                    case CanvasOrdering.SortingLayer.PERSISTENT:
                         await ShowPersistentAsync(command, controller, ct);
                         break;
-                    case CanvasOrdering.SortingLayer.Overlay:
-                        await ShowTopAsync(command, controller, ct);
+                    case CanvasOrdering.SortingLayer.OVERLAY:
+                        await ShowOverlayAsync(command, controller, ct);
                         break;
                 }
 
                 OnViewClosed?.Invoke(controller);
             }
-            catch (OperationCanceledException _)
+            catch (OperationCanceledException)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
                 ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
             }
         }
 
-        private async UniTask ShowTopAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowOverlayAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
             // Push new fullscreen controller
@@ -131,7 +150,7 @@ namespace MVC
         private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
-            // Push a new fullscreen controller
+            // Push a new persistent controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
             try { await UniTask.WhenAny(command.Execute(controller, persistentPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct)); }
@@ -224,7 +243,7 @@ namespace MVC
             do
             {
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
-                    UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused));
+                    UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused, cancellationToken: ct));
             }
             while (currentController != windowsStackManager.TopMostPopup.controller);
         }

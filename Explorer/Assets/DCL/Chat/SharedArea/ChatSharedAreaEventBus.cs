@@ -1,3 +1,4 @@
+using MVC;
 using System;
 using Utility;
 
@@ -7,40 +8,37 @@ namespace DCL.ChatArea
     {
         private readonly IEventBus eventBus = new EventBus(invokeSubscribersOnMainThread: true);
 
-        public void Publish<T>(T evt) => eventBus.Publish(evt);
-        public IDisposable Subscribe<T>(Action<T> handler) => eventBus.Subscribe(handler);
+        public void Publish<T>(T evt) =>
+            eventBus.Publish(evt);
+
+        public IDisposable Subscribe<T>(Action<T> handler) =>
+            eventBus.Subscribe(handler);
 
         public void RaisePointerEnter() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelPointerEnterEvent());
+            Publish(new ChatSharedAreaEvents.PointerEnterChatPanelEvent());
 
         public void RaisePointerExit() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelPointerExitEvent());
+            Publish(new ChatSharedAreaEvents.PointerExitChatPanelEvent());
 
         public void RaiseFocusEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelFocusEvent());
-
-        public void RaiseVisibilityEvent(bool isVisible) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityEvent(isVisible));
+            Publish(new ChatSharedAreaEvents.FocusChatPanelEvent());
 
         public void RaiseToggleEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelToggleEvent());
+            Publish(new ChatSharedAreaEvents.ToggleChatPanelEvent());
 
         public void RaiseViewShowEvent() =>
             Publish(new ChatSharedAreaEvents.ChatPanelViewShowEvent());
 
-        public void RaiseShownInSharedSpaceEvent(bool focus) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent(focus));
+        public void RaiseMVCViewOpenEvent(CanvasOrdering.SortingLayer viewSortingLayer) =>
+            Publish(new ChatSharedAreaEvents.MVCViewOpenEvent(viewSortingLayer));
 
-        public void RaiseHiddenInSharedSpaceEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent());
+        public void RaiseMVCViewClosedEvent(CanvasOrdering.SortingLayer viewSortingLayer) =>
+            Publish(new ChatSharedAreaEvents.MVCViewClosedEvent(viewSortingLayer));
 
-        public void RaiseMvcViewShowedEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent());
+        public void RaiseVisibilityStateChangedEvent(bool isVisible) =>
+            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisible));
 
-        public void RaiseMvcViewClosedEvent() =>
-            Publish(new ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent());
-
-        public void RaiseVisibilityStateChangedEvent(bool isVisibleInSharedSpace) =>
-            Publish(new ChatSharedAreaEvents.ChatPanelVisibilityStateChangedEvent(isVisibleInSharedSpace));
+        public void RaiseUISubmitEvent() =>
+            Publish(new ChatSharedAreaEvents.UISubmitPerformedEvent());
     }
 }

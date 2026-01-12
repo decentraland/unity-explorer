@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.Serialization;
 using DCL.NotificationsBus;
@@ -37,15 +38,17 @@ namespace DCL.Notifications
         public NotificationsRequestController(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache,
-            bool includeFriendsNotifications
+            IWeb3IdentityCache web3IdentityCache
         )
         {
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
 
-            serializerSettings = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter(includeFriendsNotifications) } };
+            serializerSettings = new () { Converters = new JsonConverter[]
+            {
+                new NotificationJsonDtoConverter(FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS))
+            } };
 
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 

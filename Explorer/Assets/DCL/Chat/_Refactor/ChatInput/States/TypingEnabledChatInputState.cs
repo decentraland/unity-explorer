@@ -1,6 +1,5 @@
 ﻿using DCL.Audio;
 using DCL.Chat.ChatCommands;
-using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
@@ -23,7 +22,7 @@ namespace DCL.Chat.ChatInput
 
         private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly SendMessageCommand sendMessageCommand;
 
         private readonly PasteToastState pasteToastState;
@@ -32,12 +31,13 @@ namespace DCL.Chat.ChatInput
         private readonly CustomInputField inputField;
 
         private CancellationTokenSource? suggestionCloseCts;
+
         private bool isLocked;
 
         public TypingEnabledChatInputState(
             MVCStateMachine<ChatInputState> stateMachine,
             ChatInputView view,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,
             EmojiMapping emojiMapping,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -57,7 +57,7 @@ namespace DCL.Chat.ChatInput
 
         public void Dispose()
         {
-            suggestionPanelState?.Dispose();
+            suggestionPanelState.Dispose();
         }
 
         public void Enter()
@@ -67,8 +67,8 @@ namespace DCL.Chat.ChatInput
             view.ApplyFocusStyle();
             view.SetActiveTyping();
 
-            chatEventBus.InsertTextInChatRequested += InsertText;
-            chatEventBus.ClearAndInsertTextInChatRequested += ClearAndInsertText;
+            eventsScope.Add(chatEventBus.Subscribe<ChatEvents.InsertTextInChatRequestedEvent>(evt => InsertText(evt.Text)));
+            eventsScope.Add(chatEventBus.Subscribe<ChatEvents.ClearAndInsertTextInChatRequestedEvent>(evt => ClearAndInsertText(evt.Text)));
 
             ViewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             inputField.onSubmit.AddListener(HandleMessageSubmitted);
@@ -85,8 +85,7 @@ namespace DCL.Chat.ChatInput
         public override void Exit()
         {
             LockInputField(false);
-            chatEventBus.InsertTextInChatRequested -= InsertText;
-            chatEventBus.ClearAndInsertTextInChatRequested -= ClearAndInsertText;
+            eventsScope.Dispose();
 
             ViewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);

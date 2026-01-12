@@ -50,7 +50,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private bool isClosing;
         private int currentReelIndex;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public PhotoDetailController(ViewFactoryMethod viewFactory,
             PhotoDetailInfoController photoDetailInfoController,

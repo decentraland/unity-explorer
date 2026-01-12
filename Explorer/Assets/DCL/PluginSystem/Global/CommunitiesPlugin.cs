@@ -2,7 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.InWorldCamera;
 using DCL.Input;
 using DCL.Clipboard;
@@ -21,7 +21,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
@@ -53,8 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly IProfileRepository profileRepository;
@@ -84,8 +82,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
@@ -110,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.profileRepository = profileRepository;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -154,7 +150,6 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                sharedSpaceManager,
                 chatEventBus,
                 decentralandUrlsSource,
                 web3IdentityCache,

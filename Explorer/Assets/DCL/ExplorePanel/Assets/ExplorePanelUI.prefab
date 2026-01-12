@@ -2732,7 +2732,6 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 4259832855745683082}
   <ProfileWidget>k__BackingField: {fileID: 6577566074449924958}
   <ProfileMenuView>k__BackingField: {fileID: 9068095027754513088}
-  <SkyMenuView>k__BackingField: {fileID: 0}
   <WarningNotificationView>k__BackingField: {fileID: 4074465637664490191}
   <BackgroundMusic>k__BackingField: {fileID: 11400000, guid: 1667cfb9246eccd4e896cf95e870dc9b, type: 2}
   <OpenMenu>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
@@ -4292,7 +4291,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2691165131008456202, guid: ad0eada9babef44e5bb3f06b080eef83, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2790077499931452016, guid: ad0eada9babef44e5bb3f06b080eef83, type: 3}
       propertyPath: m_AnchorMax.y
@@ -10628,11 +10627,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8968749121595387193, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_Size
-      value: 0.99999994
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8968749121595387193, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_Value
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9095025335429269016, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_AnchorMax.y
@@ -11367,7 +11366,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1392110839221365254, guid: a3814bfe2ead6e84f8771fe1d77b714f, type: 3}
       propertyPath: m_Size
-      value: 1
+      value: 0.9320036
       objectReference: {fileID: 0}
     - target: {fileID: 1548344895350258684, guid: a3814bfe2ead6e84f8771fe1d77b714f, type: 3}
       propertyPath: m_SizeDelta.x

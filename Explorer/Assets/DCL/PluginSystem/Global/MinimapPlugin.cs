@@ -12,15 +12,12 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PlacesAPIService;
 using DCL.RealmNavigation;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.UI.SharedSpaceManager;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -36,7 +33,6 @@ namespace DCL.PluginSystem.Global
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -59,7 +55,6 @@ namespace DCL.PluginSystem.Global
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             Vector2Int startParcelInGenesis,
-            ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
@@ -79,7 +74,6 @@ namespace DCL.PluginSystem.Global
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
@@ -99,7 +93,7 @@ namespace DCL.PluginSystem.Global
             minimapController?.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
 
-        public async UniTask InitializeAsync(MinimapPluginSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(MinimapPluginSettings settings, CancellationToken ct)
         {
             minimapController = new MinimapController(
                 minimapView,
@@ -112,7 +106,6 @@ namespace DCL.PluginSystem.Global
                 mapPathEventBus,
                 sceneRestrictionBusController,
                 startParcelInGenesis,
-                sharedSpaceManager,
                 systemClipboard,
                 decentralandUrls,
                 chatMessagesBus,
@@ -125,11 +118,13 @@ namespace DCL.PluginSystem.Global
             );
 
             mvcManager.RegisterController(minimapController);
+
+            return UniTask.CompletedTask;
         }
 
         public class MinimapPluginSettings : IDCLPluginSettings
         {
-            [field: SerializeField] public MinimapContextMenuSettings MinimapContextMenuSettings;
+            [field: SerializeField] public MinimapContextMenuSettings MinimapContextMenuSettings = null!;
         }
     }
 }
