@@ -8,7 +8,8 @@ namespace DCL.Places
 {
     public class PlacesController : ISection, IDisposable
     {
-        public Action<PlacesSections?, PlacesSections>? SectionChanged;
+        public Action<PlacesSection>? SectionChanged;
+        public event Action<string?>? CategorySelected;
         public Action? PlacesClosed;
 
         private readonly PlacesView view;
@@ -17,7 +18,8 @@ namespace DCL.Places
 
         private bool isSectionActivated;
         private readonly PlacesStateService placesStateService;
-        private readonly DiscoverSectionController discoverSectionController;
+        private readonly PlacesResultsController placesResultsController;
+        private readonly PlaceCategoriesSO placesCategories;
 
         public PlacesController(
             PlacesView view,
@@ -28,19 +30,23 @@ namespace DCL.Places
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+            this.placesCategories = placesCategories;
 
             placesStateService = new PlacesStateService();
-            discoverSectionController = new DiscoverSectionController(this, view.DiscoverView, placesAPIService, placesStateService, placesCategories);
+            placesResultsController = new PlacesResultsController(view.DiscoverView, this, placesAPIService, placesStateService);
 
             view.SectionChanged += OnSectionChanged;
+            view.CategorySelected += OnCategorySelected;
         }
 
         public void Dispose()
         {
+
             view.SectionChanged -= OnSectionChanged;
+            view.CategorySelected -= OnCategorySelected;
 
             placesStateService.Dispose();
-            discoverSectionController.Dispose();
+            placesResultsController.Dispose();
         }
 
         public void Activate()
@@ -50,7 +56,7 @@ namespace DCL.Places
 
             isSectionActivated = true;
             view.SetViewActive(true);
-            view.OpenSection(PlacesSections.DISCOVER, true);
+            view.OpenSection(PlacesSection.DISCOVER, true);
             cursor.Unlock();
         }
 
@@ -58,6 +64,7 @@ namespace DCL.Places
         {
             isSectionActivated = false;
             view.SetViewActive(false);
+            view.ClearCategories();
             PlacesClosed?.Invoke();
         }
 
@@ -70,7 +77,18 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        private void OnSectionChanged(PlacesSections? fromSection, PlacesSections toSection) =>
-            SectionChanged?.Invoke(fromSection, toSection);
+        private void OnSectionChanged(PlacesSection section)
+        {
+            view.SetCategoriesVisible(section == PlacesSection.DISCOVER);
+            if (section == PlacesSection.DISCOVER)
+                view.SetCategories(placesCategories.categories);
+            else
+                view.ClearCategories();
+
+            SectionChanged?.Invoke(section);
+        }
+
+        private void OnCategorySelected(string? categoryId) =>
+            CategorySelected?.Invoke(categoryId);
     }
 }

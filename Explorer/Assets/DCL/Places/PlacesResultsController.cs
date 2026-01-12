@@ -10,18 +10,17 @@ using Utility;
 
 namespace DCL.Places
 {
-    public class DiscoverSectionController : IDisposable
+    public class PlacesResultsController : IDisposable
     {
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
-        private readonly DiscoverSectionView view;
+        private readonly PlacesResultsView placesResultsView;
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly PlaceCategoriesSO placesCategories;
 
-        private bool isSectionOpen;
+        private PlacesSection? currentSection;
         private string? currentCategorySelected;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
@@ -29,77 +28,44 @@ namespace DCL.Places
 
         private CancellationTokenSource? getPlacesCts;
 
-        public DiscoverSectionController(
+        public PlacesResultsController(
+            PlacesResultsView placesResultsView,
             PlacesController placesController,
-            DiscoverSectionView view,
             IPlacesAPIService placesAPIService,
-            PlacesStateService placesStateService,
-            PlaceCategoriesSO placesCategories)
+            PlacesStateService placesStateService)
         {
-            this.view = view;
+            this.placesResultsView = placesResultsView;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
-            this.placesCategories = placesCategories;
 
             placesController.SectionChanged += OnSectionChanged;
-            placesController.PlacesClosed += OnPlacesSectionClosed;
-            view.CategorySelected += OnCategorySelected;
-            view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
+            placesController.PlacesClosed += UnloadPlaces;
+            placesController.CategorySelected += OnCategorySelected;
+            placesResultsView.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
 
-            view.SetDependencies(placesStateService);
-            view.InitializePlacesGrid();
+            placesResultsView.SetDependencies(placesStateService);
+            placesResultsView.InitializePlacesGrid();
         }
 
         public void Dispose()
         {
             placesController.SectionChanged -= OnSectionChanged;
-            placesController.PlacesClosed -= OnPlacesSectionClosed;
-            view.CategorySelected -= OnCategorySelected;
-            view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
-
-            UnloadSection();
+            placesController.PlacesClosed -= UnloadPlaces;
+            placesController.CategorySelected -= OnCategorySelected;
+            placesResultsView.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
         }
 
-        private void OnSectionChanged(PlacesSections? fromSection, PlacesSections toSection)
+        private void OnSectionChanged(PlacesSection section)
         {
-            if (toSection == PlacesSections.DISCOVER)
-            {
-                LoadSection();
-                isSectionOpen = true;
-            }
-            else if (fromSection == PlacesSections.DISCOVER)
-            {
-                UnloadSection();
-                isSectionOpen = false;
-            }
-        }
-
-        private void OnPlacesSectionClosed()
-        {
-            if (!isSectionOpen)
+            if (currentSection == section)
                 return;
 
-            UnloadSection();
-        }
-
-        private void LoadSection()
-        {
-            view.SetCategories(placesCategories.categories);
+            currentSection = section;
+            currentCategorySelected = null;
 
             getPlacesCts = getPlacesCts.SafeRestart();
             LoadPlacesAsync(0, getPlacesCts.Token).Forget();
-        }
-
-        private void UnloadSection()
-        {
-            view.ClearCategories();
-
-            getPlacesCts?.SafeCancelAndDispose();
-            view.ClearPlacesResults();
-            placesStateService.ClearPlaces();
-
-            currentCategorySelected = null;
         }
 
         private void OnCategorySelected(string? categoryId)
@@ -129,11 +95,11 @@ namespace DCL.Places
             if (pageNumber == 0)
             {
                 placesStateService.ClearPlaces();
-                view.ClearPlacesResults();
-                view.SetPlacesGridAsLoading(true);
+                placesResultsView.ClearPlacesResults();
+                placesResultsView.SetPlacesGridAsLoading(true);
             }
             else
-                view.SetPlacesGridLoadingMoreActive(true);
+                placesResultsView.SetPlacesGridLoadingMoreActive(true);
 
             var placesResult = await placesAPIService.SearchPlacesAsync(
                                                           pageNumber: pageNumber,
@@ -158,17 +124,26 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
+                placesResultsView.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
             }
 
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)
-                view.SetPlacesGridAsLoading(false);
+                placesResultsView.SetPlacesGridAsLoading(false);
 
-            view.SetPlacesGridLoadingMoreActive(false);
+            placesResultsView.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
+        }
+
+        private void UnloadPlaces()
+        {
+            getPlacesCts?.SafeCancelAndDispose();
+            placesResultsView.ClearPlacesResults();
+            placesStateService.ClearPlaces();
+
+            currentCategorySelected = null;
         }
     }
 }

@@ -6,22 +6,15 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DCL.Places
 {
-    public class DiscoverSectionView : MonoBehaviour
+    public class PlacesResultsView : MonoBehaviour
     {
-        private const string ALL_CATEGORY_ID = "all";
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
-        public event Action<string?>? CategorySelected;
         public event Action? PlacesGridScrollAtTheBottom;
-
-        [Header("Categories")]
-        [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
-        [SerializeField] private Transform categoriesContainer = null!;
 
         [Header("Places")]
         [SerializeField] private LoopGridView placesResultLoopGrid = null!;
@@ -30,53 +23,18 @@ namespace DCL.Places
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
-        private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
-
         private PlacesStateService placesStateService = null!;
-        private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
-        private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
         private readonly List<string> currentPlacesIds = new ();
         private bool isResultsScrollPositionAtBottom => placesResultsScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
-        private void Awake()
-        {
-            categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
-                InstantiateCategoryButtonPrefab,
-                defaultCapacity: CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY,
-                actionOnGet: categoryButtonView =>
-                {
-                    categoryButtonView.gameObject.SetActive(true);
-                    categoryButtonView.transform.SetAsLastSibling();
-                },
-                actionOnRelease: categoryButtonView => categoryButtonView.gameObject.SetActive(false));
-
+        private void Awake() =>
             placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-        }
 
         private void OnDestroy() =>
             placesResultsScrollRect.onValueChanged.RemoveAllListeners();
 
         public void SetDependencies(PlacesStateService stateService) =>
             this.placesStateService = stateService;
-
-        public void SetActive(bool active) =>
-            gameObject.SetActive(active);
-
-        public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
-        {
-            foreach (PlaceCategoriesSO.PlaceCategoryData categoryData in categories)
-                CreateAndSetupCategoryButton(categoryData);
-
-            SelectCategory(ALL_CATEGORY_ID, invokeEvent: false);
-        }
-
-        public void ClearCategories()
-        {
-            foreach (var categoryButton in currentCategories)
-                categoryButtonsPool.Release(categoryButton.Value);
-
-            currentCategories.Clear();
-        }
 
         public void InitializePlacesGrid()
         {
@@ -114,35 +72,6 @@ namespace DCL.Places
 
         public void SetPlacesGridLoadingMoreActive(bool isActive) =>
             placesResultsLoadingMoreSpinner.SetActive(isActive);
-
-        private PlaceCategoryButton InstantiateCategoryButtonPrefab()
-        {
-            PlaceCategoryButton invitedCommunityCardView = Instantiate(categoryButtonPrefab, categoriesContainer);
-            return invitedCommunityCardView;
-        }
-
-        private void CreateAndSetupCategoryButton(PlaceCategoriesSO.PlaceCategoryData categoryData)
-        {
-            PlaceCategoryButton categoryButtonView = categoryButtonsPool.Get();
-
-            // Setup card data
-            categoryButtonView.Configure(categoryData);
-
-            // Setup card events
-            categoryButtonView.buttonView.Button.onClick.RemoveAllListeners();
-            categoryButtonView.buttonView.Button.onClick.AddListener(() => SelectCategory(categoryData.id));
-
-            currentCategories.Add(new KeyValuePair<string, PlaceCategoryButton>(categoryData.id, categoryButtonView));
-        }
-
-        private void SelectCategory(string categoryId, bool invokeEvent = true)
-        {
-            foreach (var category in currentCategories)
-                category.Value.buttonView.SetSelected(category.Key == categoryId);
-
-            if (invokeEvent)
-                CategorySelected?.Invoke(categoryId != ALL_CATEGORY_ID ? categoryId : null);
-        }
 
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
