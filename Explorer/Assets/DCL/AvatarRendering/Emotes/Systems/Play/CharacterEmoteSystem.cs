@@ -536,11 +536,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata.IsSocialEmote &&
                     emoteIntent.TriggerSource != TriggerSource.PREVIEW &&
                     emoteComponent.SocialEmote.IsPlayingOutcome &&
-                    emote.SocialEmoteOutcomeAudioAssetResults != null && emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].HasValue)
+                    emote.SocialEmoteOutcomeAudioAssetResults != null)
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "PlayNewEmote() AUDIO for outcome " + emoteComponent.SocialEmote.CurrentOutcome);
 
-                    audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome]!.Value.Asset;
+                    if (emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome].HasValue)
+                        audioClip = emote.SocialEmoteOutcomeAudioAssetResults[emoteComponent.SocialEmote.CurrentOutcome]!.Value.Asset;
+                    else
+                        audioClip = null; // Playing outcome animation without sound after a start animation that had a sound
                 }
 
                 bool playedSuccessfully = emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent);
