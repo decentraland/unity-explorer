@@ -205,7 +205,7 @@ jobs:
           #!/bin/bash
 
 #          if [[ "${{ github.event.inputs.sentry_enabled || inputs.sentry_enabled }}" == "true" ]]; then
-            echo "environment=production" >> "$GITHUB_OUTPUT"
+            echo "environment=development" >> "$GITHUB_OUTPUT"
             echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
             echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
 #          else
