@@ -31,7 +31,7 @@ namespace DCL.Profiles
             profileTier.Match(c => c, f => f.Compact);
 
         public static implicit operator ProfileTier?(Profile? profile) =>
-            profile == null ? (ProfileTier?)null : FromFull(profile);
+            profile == null ? (ProfileTier?) null : FromFull(profile);
 
         public static implicit operator ProfileTier(Profile profile) =>
             FromFull(profile);
