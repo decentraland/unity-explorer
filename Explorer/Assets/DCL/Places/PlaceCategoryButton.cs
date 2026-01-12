@@ -15,12 +15,12 @@ namespace DCL.Places
 
         public void Configure(string categoryId, string categoryName)
         {
-            text.text = RemoveNonASCIICharacters(categoryName).ToUpper().Trim();
+            text.text = RemoveNonAsciiCharacters(categoryName).ToUpper().Trim();
             iconImage.sprite = categoryIconsMapping.GetCategoryImage(categoryId);
             iconImage.gameObject.SetActive(iconImage.sprite != null);
         }
 
-        private static string RemoveNonASCIICharacters(string text)
+        private static string RemoveNonAsciiCharacters(string text)
         {
             StringBuilder sb = new StringBuilder();
 
