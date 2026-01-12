@@ -165,11 +165,20 @@ namespace DCL.SDKComponents.MediaStream
                 onUrlMediaAddress: static (ctx, address) =>
                 {
                     bool isContentServerResource = address.Url.Contains(CONTENT_SERVER_PREFIX);
-                    bool shouldUseLowLatency =
-                        !isContentServerResource
-                        && address.Url.IsValidUrl();
+
+                    // TEMP: Whitelist low-latency for known ICY radio stream.
+                    // Probe-based detection to be added after QA. confirms approach is good
+                    bool shouldUseLowLatency = !isContentServerResource && ShouldUseLowLatencyWhitelist(address.Url);
+
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"AVPro lowLatency={shouldUseLowLatency} url={address.Url}");
+
                     
-                    return MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url, shouldUseLowLatency), ctx.mediaPlayerPool));
+                    return MultiMediaPlayer.FromAvProPlayer(
+                        new AvProPlayer(
+                            ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url, shouldUseLowLatency),
+                            ctx.mediaPlayerPool
+                        )
+                    );
                 },
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
             );
@@ -194,6 +203,12 @@ namespace DCL.SDKComponents.MediaStream
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 
             return component;
+        }
+        
+        private static bool ShouldUseLowLatencyWhitelist(string url)
+        {
+            // QA scope: enable only for the known choppy ICY stream (Windows fix)
+            return url.Contains("radioislanegra.org/listen/slow/stream", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
