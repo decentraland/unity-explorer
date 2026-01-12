@@ -15,7 +15,7 @@ namespace DCL.Places
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
-        private readonly PlacesResultsView placesResultsView;
+        private readonly PlacesResultsView view;
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
@@ -28,28 +28,28 @@ namespace DCL.Places
         private CancellationTokenSource? getPlacesCts;
 
         public PlacesResultsController(
-            PlacesResultsView placesResultsView,
+            PlacesResultsView view,
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService)
         {
-            this.placesResultsView = placesResultsView;
+            this.view = view;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
 
             placesController.FiltersChanged += OnFiltersChanged;
-            placesResultsView.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
+            view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
             placesController.PlacesClosed += UnloadPlaces;
 
-            placesResultsView.SetDependencies(placesStateService);
-            placesResultsView.InitializePlacesGrid();
+            view.SetDependencies(placesStateService);
+            view.InitializePlacesGrid();
         }
 
         public void Dispose()
         {
             placesController.FiltersChanged -= OnFiltersChanged;
-            placesResultsView.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
+            view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
             placesController.PlacesClosed -= UnloadPlaces;
         }
 
@@ -75,7 +75,10 @@ namespace DCL.Places
                 LoadPlacesAsync(pageNumber, getPlacesCts.Token).Forget();
             }
             else
-                placesResultsView.ClearPlacesResults();
+            {
+                view.ClearPlacesResults();
+                view.SetPlacesCounterActive(false);
+            }
         }
 
         private async UniTask LoadPlacesAsync(int pageNumber, CancellationToken ct)
@@ -85,11 +88,12 @@ namespace DCL.Places
             if (pageNumber == 0)
             {
                 placesStateService.ClearPlaces();
-                placesResultsView.ClearPlacesResults();
-                placesResultsView.SetPlacesGridAsLoading(true);
+                view.ClearPlacesResults();
+                view.SetPlacesGridAsLoading(true);
+                view.SetPlacesCounterActive(false);
             }
             else
-                placesResultsView.SetPlacesGridLoadingMoreActive(true);
+                view.SetPlacesGridLoadingMoreActive(true);
 
             var placesResult = await placesAPIService.SearchPlacesAsync(
                                                           pageNumber: pageNumber,
@@ -114,15 +118,17 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                placesResultsView.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
+                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
+                view.SetPlacesCounter(placesResult.Value.Total);
             }
 
+            view.SetPlacesCounterActive(placesResult.Value.Data.Count > 0);
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)
-                placesResultsView.SetPlacesGridAsLoading(false);
+                view.SetPlacesGridAsLoading(false);
 
-            placesResultsView.SetPlacesGridLoadingMoreActive(false);
+            view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
         }
@@ -130,7 +136,7 @@ namespace DCL.Places
         private void UnloadPlaces()
         {
             getPlacesCts?.SafeCancelAndDispose();
-            placesResultsView.ClearPlacesResults();
+            view.ClearPlacesResults();
             placesStateService.ClearPlaces();
         }
     }

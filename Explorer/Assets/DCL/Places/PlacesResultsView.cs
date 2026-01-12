@@ -16,8 +16,11 @@ namespace DCL.Places
 
         public event Action? PlacesGridScrollAtTheBottom;
 
-        [Header("Places")]
-        [SerializeField] private LoopGridView placesResultLoopGrid = null!;
+        [Header("Places Counter")]
+        [SerializeField] private TMP_Text placesResultsCounter = null!;
+
+        [Header("Places Grid")]
+        [SerializeField] private LoopGridView placesResultsLoopGrid = null!;
         [SerializeField] private ScrollRect placesResultsScrollRect = null!;
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
@@ -36,10 +39,16 @@ namespace DCL.Places
         public void SetDependencies(PlacesStateService stateService) =>
             this.placesStateService = stateService;
 
+        public void SetPlacesCounter(int placesTotalAmount) =>
+            placesResultsCounter.text = $"Results ({placesTotalAmount})";
+
+        public void SetPlacesCounterActive(bool isActive) =>
+            placesResultsCounter.gameObject.SetActive(isActive);
+
         public void InitializePlacesGrid()
         {
-            placesResultLoopGrid.InitGridView(0, SetupPlaceResultCardByIndex);
-            placesResultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            placesResultsLoopGrid.InitGridView(0, SetupPlaceResultCardByIndex);
+            placesResultsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos)
@@ -47,18 +56,18 @@ namespace DCL.Places
             foreach (PlacesData.PlaceInfo placeInfo in places)
                 currentPlacesIds.Add(placeInfo.id);
 
-            placesResultLoopGrid.SetListItemCount(currentPlacesIds.Count, resetPos);
+            placesResultsLoopGrid.SetListItemCount(currentPlacesIds.Count, resetPos);
 
             SetPlacesGridAsEmpty(currentPlacesIds.Count == 0);
 
             if (resetPos)
-                placesResultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
+                placesResultsLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
         public void ClearPlacesResults()
         {
             currentPlacesIds.Clear();
-            placesResultLoopGrid.SetListItemCount(0, false);
+            placesResultsLoopGrid.SetListItemCount(0, false);
             SetPlacesGridAsEmpty(true);
         }
 
@@ -91,7 +100,7 @@ namespace DCL.Places
         private void SetPlacesGridAsEmpty(bool isEmpty)
         {
             placesResultsEmptyContainer.SetActive(isEmpty);
-            placesResultLoopGrid.gameObject.SetActive(!isEmpty);
+            placesResultsLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
         private void OnScrollRectValueChanged(Vector2 _)
