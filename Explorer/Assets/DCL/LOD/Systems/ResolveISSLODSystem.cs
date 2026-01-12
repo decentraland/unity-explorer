@@ -46,7 +46,7 @@ namespace DCL.LOD.Systems
         {
             InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
 
-            if (initialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING)
+            if (initialSceneStateLOD.CurrentState == InitialSceneStateLOD.State.PROCESSING)
             {
                 // Skip if promise hasn't been created yet or is already consumed
                 if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -110,7 +110,7 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.InitialSceneStateLODState.UNINITIALIZED)
+                    if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.UNINITIALIZED)
                     {
                         if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
                             PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
@@ -148,7 +148,7 @@ namespace DCL.LOD.Systems
         private static void MarkAssetBundleAsFailed(ref SceneLODInfo sceneLODInfo, string message)
         {
             ReportHub.Log(ReportCategory.LOD, message);
-            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.FAILED;
+            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.FAILED;
             //We need to re-evaluate the LOD to see if we can get the old method
             sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
         }
