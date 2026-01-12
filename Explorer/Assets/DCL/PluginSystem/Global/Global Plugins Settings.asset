@@ -59,6 +59,7 @@ MonoBehaviour:
   - rid: 1154744868092248158
   - rid: 745469515127586908
   - rid: 5190442831932031144
+  - rid: 5526985638232195369
   references:
     version: 2
     RefIds:
@@ -107,15 +108,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GiftTransferPopupStatusTitle: Preparing Gift for
-        GiftTransferPopupStatusWaitingMessage: A browser window should open for you
-          to confirm the transaction.
-        GiftTransferPopupStatusProcessingMessage: Processing...
-        GiftTransferErrorPopupTitle: Something went wrong
-        GiftTransferErrorPopupAdditionalUrlTitle: Your gift wasn't delivered. Please
-          try again of contact Support.
-        GiftTransferErrorPopupCloseButtonText: CLOSE
-        GiftTransferErrorPopupConfirmButtonText: TRY AGAIN
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
@@ -949,6 +941,16 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 5526985638232195369
+      type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <JumpIndicatorPrefab>k__BackingField:
+          m_AssetGUID: 77042a6626e1a064f90b622d0381d7df
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <GroundCheckRadius>k__BackingField: 0.1
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:

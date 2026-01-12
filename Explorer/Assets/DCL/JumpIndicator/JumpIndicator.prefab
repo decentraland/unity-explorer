@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3343016136156413571}
   - component: {fileID: 8288574274878392488}
-  - component: {fileID: -8238752448306166048}
   m_Layer: 0
   m_Name: JumpIndicator
   m_TagString: Untagged
@@ -61,16 +60,3 @@ MonoBehaviour:
   m_FadeFactor: 1
   version: 1
   m_DecalLayerMask: 1
---- !u!114 &-8238752448306166048
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 686808736605679747}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1c3b385ef3b49e28cf78c139bf61f8c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DCL.JumpIndicator.JumpIndicatorController
-  groundCheckRadius: 0.1

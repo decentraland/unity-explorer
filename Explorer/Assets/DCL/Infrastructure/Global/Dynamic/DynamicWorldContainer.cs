@@ -992,6 +992,7 @@ namespace Global.Dynamic
                     identityCache),
                 new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
                 new AvatarLocomotionOverridesGlobalPlugin(),
+                new JumpIndicatorPlugin(assetsProvisioner)
             };
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
