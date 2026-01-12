@@ -1,6 +1,11 @@
-﻿using NUnit.Framework;
+﻿using DCL.WebRequests;
+using DCL.WebRequests.Dumper;
+using NUnit.Framework;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.PerformanceTesting;
+using UnityEngine;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
@@ -84,7 +89,21 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             "urn:decentraland:matic:collections-v2:0x996b51131698ba70dcfb3fb5956e6816c5778eda:0",
         };
 
+        private const int DEFAULT_CORE_CONCURRENCY = 15;
+
+        internal static readonly string TEST_DUMP = $"{Application.dataPath + "/../TestResources/Entities/web_requests_dump.json"}";
+
+        private WebRequestDump? entitiesActiveDump;
+        private AssetBundleLoadingMutex? loadingMutex;
+
         public AssetBundleRegistryOrgPerformanceTests(string assetBundleRegistryUrl) : base(assetBundleRegistryUrl) { }
+
+        [SetUp]
+        public void ReadDump()
+        {
+            loadingMutex = new AssetBundleLoadingMutex();
+            entitiesActiveDump = WebRequestsDumper.Deserialize(TEST_DUMP);
+        }
 
         [Test]
         [Performance]
@@ -99,5 +118,14 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         [TestCaseSource(nameof(TEST_CASES_SOURCE))]
         public Task GetWearablesEntities(int concurrency, int iterations, double delayBetweenIterations, int totalRequests) =>
             GetEntitiesActiveAsync(concurrency, iterations, delayBetweenIterations, totalRequests, WEARABLES);
+
+        [Test]
+        [Performance]
+        [Timeout(10 * 60 * 1000)]
+        public async Task LoadFromDumpProdModeAsync()
+        {
+            CreateController(DEFAULT_CORE_CONCURRENCY);
+            await BenchmarkAsync(dump => dump.RecreateWithTiming(controller!, loadingMutex!, CancellationToken.None), new[] { entitiesActiveDump }, 1, 1, 5, TimeSpan.Zero);
+        }
     }
 }
