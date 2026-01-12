@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Newtonsoft.Json.Linq;
@@ -66,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
 
-            throw new Exception("TEST chat error");
+            ReportHub.LogException(new Exception("TEST chat error"), ReportCategory.CHAT_MESSAGES, ReportHandler.Sentry);
         }
 
         private bool CheckIfIsMention(string message)
