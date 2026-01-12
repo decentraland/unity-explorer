@@ -31,7 +31,7 @@ namespace DCL.WebRequests.ChromeDevtool
             this.bridge = bridge;
             cancellationTokenSource = new CancellationTokenSource();
 
-            bridge.OnMethodInvoked = OnCdpMethodInvoked;
+            bridge.HandleMethod = HandleCdpMethod;
         }
 
 #if UNITY_INCLUDE_TESTS || UNITY_EDITOR
@@ -106,10 +106,10 @@ namespace DCL.WebRequests.ChromeDevtool
             return scope;
         }
 
-        private void OnCdpMethodInvoked(int messageId, CDPMethod method)
+        private CDPResult? HandleCdpMethod(int messageId, CDPMethod method)
         {
             if (method.GetKind() == CDPMethod.Kind.Unknown)
-                return;
+                return null;
 
             CDPResult? result = null;
 
@@ -124,8 +124,7 @@ namespace DCL.WebRequests.ChromeDevtool
                 }
             }
 
-            if (result.HasValue)
-                bridge.SendResponse(messageId, result.Value, cancellationTokenSource.Token);
+            return result;
         }
 
         public void Dispose()

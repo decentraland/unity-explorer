@@ -143,7 +143,7 @@
         "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
         "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4"
       },
-      "hash": "6b7d64b624edaf468888561e0f9d40f2b487056c"
+      "hash": "e55ac8d09c6cd112303181b44820769a1c4798b3"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
