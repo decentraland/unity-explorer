@@ -53,7 +53,7 @@ on:
         description: 'Enable Sentry'
         required: false
         type: boolean
-        default: false
+        default: true
       delta_threshold_macos_mb:
         description: 'Warn if macOS growth > this MB (0 = off)'
         required: false
@@ -98,7 +98,7 @@ on:
       sentry_enabled:
         required: false
         type: boolean
-        default: false
+        default: true
       is_release_build:
         type: boolean
         required: false
@@ -558,6 +558,7 @@ jobs:
           if-no-files-found: error
           
       - name: Upload debug symbols to Sentry
+        if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' && needs.prebuild.outputs.sentry_upload_symbols == 'true' }}
         shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
