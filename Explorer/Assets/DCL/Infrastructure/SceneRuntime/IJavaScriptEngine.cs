@@ -1,4 +1,3 @@
-using Microsoft.ClearScript.JavaScript;
 using System;
 
 namespace SceneRuntime
@@ -17,13 +16,5 @@ namespace SceneRuntime
 
     public interface ICompiledScript
     {
-    }
-
-    public interface IScriptObject
-    {
-        object InvokeAsFunction(params object[] args);
-        object GetProperty(string name);
-        void SetProperty(string name, object value);
-        IScriptObject Invoke(bool asConstructor, params object[] args);
     }
 }

@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using SceneRunner.Scene;
 
 namespace SceneRuntime
 {

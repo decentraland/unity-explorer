@@ -9,7 +9,6 @@ using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
-using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
@@ -27,10 +26,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private bool reportedSceneReady;
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
             MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
-            crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
+            crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrdtMessagesProvider,
             systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner) { }
 
         public void TryAddSubscription(string eventId)
@@ -198,11 +197,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         case ComponentID.AVATAR_BASE: // profileChanged observable
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
                             {
-                                if (!userIdEntitiesMap.ContainsKey(message.Entity)) break;
+                                if (!userIdEntitiesMap.TryGetValue(message.Entity, out string? id)) break;
 
                                 sdkObservableEvents.Add(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
-                                    ethAddress = userIdEntitiesMap[message.Entity],
+                                    ethAddress = id,
                                     version = 0,
                                 }));
                             }

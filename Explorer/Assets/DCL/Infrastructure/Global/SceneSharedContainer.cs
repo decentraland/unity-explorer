@@ -18,6 +18,7 @@ using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Web;
 
 namespace Global
 {
@@ -31,7 +32,7 @@ namespace Global
         /// <summary>
         /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
         /// </summary>
-        public ISceneFactory SceneFactory { get; private set; }
+        public ISceneFactory? SceneFactory { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -55,11 +56,17 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
+#if UNITY_WEBGL
+            IJavaScriptEngineFactory engineFactory = new WebGLJavaScriptEngineFactory();
+#else
+            IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
+#endif
+
             return new SceneSharedContainer
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
                         webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),

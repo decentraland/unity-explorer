@@ -196,7 +196,7 @@ namespace Global.Dynamic
         {
 #if UNITY_WEBGL
             // WebGL doesn't support native Rust libraries, use debug analytics
-            ReportHub.LogInfo(ReportCategory.ANALYTICS, $"WebGL platform detected. Using {nameof(DebugAnalyticsService)} instead of RustSegment.");
+            ReportHub.Log(ReportCategory.ANALYTICS, $"WebGL platform detected. Using {nameof(DebugAnalyticsService)} instead of RustSegment.");
             return new DebugAnalyticsService();
 #else
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))

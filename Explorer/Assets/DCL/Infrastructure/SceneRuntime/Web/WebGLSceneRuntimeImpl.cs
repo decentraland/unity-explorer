@@ -2,10 +2,6 @@ using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8;
-using SceneRunner.Scene;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
@@ -13,33 +9,31 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Assertions;
+using Utility;
 
-namespace SceneRuntime
+namespace SceneRuntime.Web
 {
-    // Avoid the same name for Namespace and Class
-    public sealed class SceneRuntimeImpl : ISceneRuntime, IJsOperations
+    public sealed class WebGLSceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
-        internal readonly V8ScriptEngine engine;
-        private readonly ScriptObject arrayCtor;
-        private readonly ScriptObject unit8ArrayCtor;
-        private readonly List<ITypedArray<byte>> uint8Arrays;
+        private readonly IJavaScriptEngine engine;
+        private readonly WebGLScriptObject arrayCtor;
+        private readonly WebGLScriptObject unit8ArrayCtor;
+        private WebGLScriptObject updateFunc;
+        private WebGLScriptObject startFunc;
+        private readonly List<IDCLTypedArray<byte>> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
 
-        // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
 
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
         private int nextUint8Array;
-
-        private ScriptObject updateFunc;
-        private ScriptObject startFunc;
         private EngineApiWrapper? engineApi;
 
         public IRuntimeHeapInfo? RuntimeHeapInfo { get; private set; }
 
-        CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
+        CancellationTokenSource ISceneRuntime.IsDisposingTokenSource => isDisposingTokenSource;
 
-        public SceneRuntimeImpl(
+        public WebGLSceneRuntimeImpl(
             string sourceCode,
             string initCode,
             IReadOnlyDictionary<string, string> jsModules,
@@ -49,46 +43,30 @@ namespace SceneRuntime
         {
             resetableSource = new JSTaskResolverResetable();
 
-            IJavaScriptEngine jsEngine = engineFactory.Create(sceneShortInfo);
-            if (jsEngine is V8JavaScriptEngineAdapter v8Adapter)
-                engine = v8Adapter.V8Engine;
-            else
-                throw new NotSupportedException("SceneRuntimeImpl currently only supports V8 engine. Use WebGLSceneRuntimeImpl for WebGL.");
+            engine = engineFactory.Create(sceneShortInfo);
             jsApiBunch = new JsApiBunch(engine);
 
             var moduleHub = new SceneModuleHub(engine);
 
             moduleHub.LoadAndCompileJsModules(jsModules);
 
-            // Compile Scene Code
-            V8Script sceneScript = engine.Compile(sourceCode).EnsureNotNull();
+            ICompiledScript sceneScript = engine.Compile(sourceCode).EnsureNotNull();
 
-            // Initialize init API
-            // TODO: This is only needed for the LifeCycle
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            // engine.Execute(initCode.validateCode!);
             engine.Execute(initCode);
 
-            // Set global SDK configuration flags
             engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
 
-            // Setup unitask resolver
             engine.AddHostObject("__resetableSource", resetableSource);
 
-            arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
-            unit8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
-            uint8Arrays = new List<ITypedArray<byte>>();
+            arrayCtor = (WebGLScriptObject)engine.Global.GetProperty("Array");
+            unit8ArrayCtor = (WebGLScriptObject)engine.Global.GetProperty("Uint8Array");
+            uint8Arrays = new List<IDCLTypedArray<byte>>();
             nextUint8Array = 0;
         }
 
-        /// <remarks>
-        ///     <see cref="SceneFacade" /> is a component in the global scene as an
-        ///     <see cref="ISceneFacade" />. It owns its <see cref="SceneRuntimeImpl" /> through its
-        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
-        ///     shall be the chain of Dispose calls.
-        /// </remarks>
         public void Dispose()
         {
             engine.Dispose();
@@ -117,8 +95,8 @@ namespace SceneRuntime
             }
         ");
 
-            updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate").EnsureNotNull();
-            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart").EnsureNotNull();
+            updateFunc = (WebGLScriptObject)engine.Evaluate("__internalOnUpdate");
+            startFunc = (WebGLScriptObject)engine.Evaluate("__internalOnStart");
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -152,8 +130,8 @@ namespace SceneRuntime
         public UniTask UpdateScene(float dt)
         {
             nextUint8Array = 0;
-            V8RuntimeHeapInfo? v8HeapInfo = engine.GetRuntimeHeapInfo();
-            RuntimeHeapInfo = v8HeapInfo != null ? new V8RuntimeHeapInfoAdapter(v8HeapInfo) : null;
+            IRuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
+            RuntimeHeapInfo = heapInfo;
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
@@ -163,21 +141,29 @@ namespace SceneRuntime
         {
             PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);
 
-            // Initial messages are not expected to return anything
             Assert.IsTrue(result.IsEmpty);
         }
 
-        ScriptObject IJsOperations.NewArray() =>
-            (ScriptObject)arrayCtor.Invoke(true);
+        IScriptObject IJsOperations.NewArray()
+        {
+            IScriptObject result = arrayCtor.Invoke(true);
+            WebGLScriptObject webglResult = (WebGLScriptObject)result;
+            return webglResult;
+        }
 
-        ITypedArray<byte> IJsOperations.NewUint8Array(int length) =>
-            (ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length);
+        IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length)
+        {
+            object result = unit8ArrayCtor.Invoke(true, length);
+            return (IDCLTypedArray<byte>)result;
+        }
 
-        ITypedArray<byte> IJsOperations.GetTempUint8Array()
+        IDCLTypedArray<byte> IJsOperations.GetTempUint8Array()
         {
             if (nextUint8Array >= uint8Arrays.Count)
-                uint8Arrays.Add((ITypedArray<byte>)unit8ArrayCtor.Invoke(true,
-                    IJsOperations.LIVEKIT_MAX_SIZE));
+            {
+                object result = unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
+                uint8Arrays.Add((IDCLTypedArray<byte>)result);
+            }
 
             return uint8Arrays[nextUint8Array++];
         }

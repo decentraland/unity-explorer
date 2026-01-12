@@ -1,7 +1,8 @@
+using DLC.SceneRuntime.V8;
 using Microsoft.ClearScript.V8;
 using System;
 
-namespace SceneRuntime
+namespace SceneRuntime.V8
 {
     public class V8JavaScriptEngineAdapter : IJavaScriptEngine
     {

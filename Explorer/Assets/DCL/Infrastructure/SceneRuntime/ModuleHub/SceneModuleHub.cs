@@ -1,5 +1,4 @@
-﻿using Microsoft.ClearScript.V8;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -7,10 +6,10 @@ namespace SceneRuntime.ModuleHub
 {
     public class SceneModuleHub : ISceneModuleHub
     {
-        private readonly V8ScriptEngine engine;
-        private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new ();
+        private readonly IJavaScriptEngine engine;
+        private readonly Dictionary<string, ICompiledScript> jsNodulesCompiledScripts = new ();
 
-        public SceneModuleHub(V8ScriptEngine engine)
+        public SceneModuleHub(IJavaScriptEngine engine)
         {
             this.engine = engine;
         }
@@ -19,8 +18,8 @@ namespace SceneRuntime.ModuleHub
         {
             foreach (KeyValuePair<string, string> source in sources)
             {
-                V8Script script = engine.Compile(source.Value);
-                string moduleName = $"system/{source.Key}";
+                ICompiledScript script = engine.Compile(source.Value);
+                var moduleName = $"system/{source.Key}";
                 string extension = Path.GetExtension(moduleName);
 
                 // "system/foo.js"
@@ -40,13 +39,13 @@ namespace SceneRuntime.ModuleHub
         }
 
         /// <summary>
-        ///     Gets the compiled V8Script for the specified module name.
+        ///     Gets the compiled script for the specified module name.
         /// </summary>
-        /// <param name="moduleName">The name of the module to get the V8Script for.</param>
-        /// <returns>The compiled V8Script for the specified module name.</returns>
-        public V8Script ModuleScript(string moduleName)
+        /// <param name="moduleName">The name of the module to get the script for.</param>
+        /// <returns>The compiled script for the specified module name.</returns>
+        public ICompiledScript ModuleScript(string moduleName)
         {
-            if (jsNodulesCompiledScripts.TryGetValue(moduleName, out V8Script code))
+            if (jsNodulesCompiledScripts.TryGetValue(moduleName, out ICompiledScript code))
                 return code!;
             else
                 throw new ArgumentException($"Module '{moduleName}' not found.");

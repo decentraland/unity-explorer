@@ -1,20 +1,19 @@
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
 using System;
+using Utility;
 
 namespace SceneRuntime
 {
     /// <summary>
-    ///     Operations bound to the instance of <see cref="IScriptEngine" />. If it is disposed of, calling methods will throw <see cref="ObjectDisposedException" />
+    ///     Operations bound to the instance of <see cref="IJavaScriptEngine" />. If it is disposed of, calling methods will throw <see cref="ObjectDisposedException" />
     /// </summary>
     public interface IJsOperations : IDisposable
     {
         public const int LIVEKIT_MAX_SIZE = 1024 * 13;
 
-        ITypedArray<byte> GetTempUint8Array();
+        IDCLTypedArray<byte> GetTempUint8Array();
 
-        ScriptObject NewArray();
+        IScriptObject NewArray();
 
-        ITypedArray<byte> NewUint8Array(int length);
+        IDCLTypedArray<byte> NewUint8Array(int length);
     }
 }

@@ -1,8 +1,7 @@
 using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
-using SceneRunner.Scene;
 
-namespace SceneRuntime
+namespace SceneRuntime.V8
 {
     public sealed class V8EngineFactory : IJavaScriptEngineFactory
     {

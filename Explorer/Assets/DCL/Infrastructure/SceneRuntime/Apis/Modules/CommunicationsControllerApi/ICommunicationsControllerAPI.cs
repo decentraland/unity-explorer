@@ -1,5 +1,4 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using Microsoft.ClearScript;
 using System;
 using System.Collections.Generic;
 
@@ -9,6 +8,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
     {
         void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null);
 
-        ScriptObject GetResult();
+        IScriptObject GetResult();
     }
 }

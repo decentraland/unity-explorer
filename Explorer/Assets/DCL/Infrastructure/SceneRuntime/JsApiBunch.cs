@@ -1,16 +1,14 @@
-using Microsoft.ClearScript.V8;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace SceneRuntime
 {
     public class JsApiBunch : IDisposable
     {
-        private readonly V8ScriptEngine engine;
+        private readonly IJavaScriptEngine engine;
         private readonly List<JsApiWrapper> wraps = new ();
 
-        public JsApiBunch(V8ScriptEngine engine)
+        public JsApiBunch(IJavaScriptEngine engine)
         {
             this.engine = engine;
         }

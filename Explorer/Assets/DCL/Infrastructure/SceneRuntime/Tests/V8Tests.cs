@@ -2,6 +2,7 @@
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NUnit.Framework;
+using SceneRuntime.V8;
 using UnityEngine;
 
 namespace SceneRuntime.Tests

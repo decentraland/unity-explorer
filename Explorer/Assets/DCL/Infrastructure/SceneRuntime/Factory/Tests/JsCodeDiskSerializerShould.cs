@@ -53,7 +53,7 @@ namespace SceneRuntime.Factory.Tests
                 slicedOwnedMemory.Memory.Span[i] = output[i];
 
             string deserializedResult = await serializer.DeserializeAsync(slicedOwnedMemory, token);
-            
+
             // Assert
             Assert.AreEqual(data, deserializedResult);
         }

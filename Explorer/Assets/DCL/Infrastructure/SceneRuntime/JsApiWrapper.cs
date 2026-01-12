@@ -19,7 +19,7 @@ namespace SceneRuntime
 
     public class JsApiWrapper<TApi> : JsApiWrapper where TApi: IDisposable
     {
-        internal readonly TApi api;
+        public readonly TApi api;
 
         protected JsApiWrapper(TApi api, CancellationTokenSource disposeCts) : base(disposeCts)
         {
