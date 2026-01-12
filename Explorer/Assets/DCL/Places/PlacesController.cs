@@ -8,9 +8,8 @@ namespace DCL.Places
 {
     public class PlacesController : ISection, IDisposable
     {
-        public Action<PlacesSection>? SectionChanged;
-        public event Action<string?>? CategorySelected;
-        public Action? PlacesClosed;
+        public event Action<PlacesFilters>? FiltersChanged;
+        public event Action? PlacesClosed;
 
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
@@ -20,6 +19,8 @@ namespace DCL.Places
         private readonly PlacesStateService placesStateService;
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
+
+        private PlacesFilters currentFilters;
 
         public PlacesController(
             PlacesView view,
@@ -54,6 +55,7 @@ namespace DCL.Places
             if (isSectionActivated)
                 return;
 
+            ResetCurrentFilters();
             isSectionActivated = true;
             view.SetViewActive(true);
             view.OpenSection(PlacesSection.DISCOVER, true);
@@ -79,16 +81,34 @@ namespace DCL.Places
 
         private void OnSectionChanged(PlacesSection section)
         {
+            if (currentFilters.Section == section)
+                return;
+
             view.SetCategoriesVisible(section == PlacesSection.DISCOVER);
+
             if (section == PlacesSection.DISCOVER)
                 view.SetCategories(placesCategories.categories);
             else
                 view.ClearCategories();
 
-            SectionChanged?.Invoke(section);
+            currentFilters.Section = section;
+            currentFilters.CategoryId = null;
+            FiltersChanged?.Invoke(currentFilters);
         }
 
-        private void OnCategorySelected(string? categoryId) =>
-            CategorySelected?.Invoke(categoryId);
+        private void OnCategorySelected(string? categoryId)
+        {
+            if (currentFilters.CategoryId == categoryId)
+                return;
+
+            currentFilters.CategoryId = categoryId;
+            FiltersChanged?.Invoke(currentFilters);
+        }
+
+        private void ResetCurrentFilters()
+        {
+            currentFilters.Section = null;
+            currentFilters.CategoryId = null;
+        }
     }
 }

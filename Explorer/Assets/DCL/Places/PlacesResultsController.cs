@@ -20,8 +20,7 @@ namespace DCL.Places
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
 
-        private PlacesSection? currentSection;
-        private string? currentCategorySelected;
+        private PlacesFilters currentFilters;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
@@ -39,10 +38,9 @@ namespace DCL.Places
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
 
-            placesController.SectionChanged += OnSectionChanged;
-            placesController.PlacesClosed += UnloadPlaces;
-            placesController.CategorySelected += OnCategorySelected;
+            placesController.FiltersChanged += OnFiltersChanged;
             placesResultsView.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
+            placesController.PlacesClosed += UnloadPlaces;
 
             placesResultsView.SetDependencies(placesStateService);
             placesResultsView.InitializePlacesGrid();
@@ -50,33 +48,15 @@ namespace DCL.Places
 
         public void Dispose()
         {
-            placesController.SectionChanged -= OnSectionChanged;
-            placesController.PlacesClosed -= UnloadPlaces;
-            placesController.CategorySelected -= OnCategorySelected;
+            placesController.FiltersChanged -= OnFiltersChanged;
             placesResultsView.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
+            placesController.PlacesClosed -= UnloadPlaces;
         }
 
-        private void OnSectionChanged(PlacesSection section)
+        private void OnFiltersChanged(PlacesFilters filters)
         {
-            if (currentSection == section)
-                return;
-
-            currentSection = section;
-            currentCategorySelected = null;
-
-            getPlacesCts = getPlacesCts.SafeRestart();
-            LoadPlacesAsync(0, getPlacesCts.Token).Forget();
-        }
-
-        private void OnCategorySelected(string? categoryId)
-        {
-            if (currentCategorySelected == categoryId)
-                return;
-
-            currentCategorySelected = categoryId;
-
-            getPlacesCts = getPlacesCts.SafeRestart();
-            LoadPlacesAsync(0, getPlacesCts.Token).Forget();
+            currentFilters = filters;
+            LoadPlaces(0);
         }
 
         private void TryLoadMorePlaces()
@@ -84,8 +64,18 @@ namespace DCL.Places
             if (isPlacesGridLoadingItems || placesStateService.CurrentPlaces.Count >= currentPlacesTotalAmount)
                 return;
 
-            getPlacesCts = getPlacesCts.SafeRestart();
-            LoadPlacesAsync(currentPlacesPageNumber + 1, getPlacesCts.Token).Forget();
+            LoadPlaces(currentPlacesPageNumber + 1);
+        }
+
+        private void LoadPlaces(int pageNumber)
+        {
+            if (currentFilters.Section == PlacesSection.DISCOVER)
+            {
+                getPlacesCts = getPlacesCts.SafeRestart();
+                LoadPlacesAsync(pageNumber, getPlacesCts.Token).Forget();
+            }
+            else
+                placesResultsView.ClearPlacesResults();
         }
 
         private async UniTask LoadPlacesAsync(int pageNumber, CancellationToken ct)
@@ -108,7 +98,7 @@ namespace DCL.Places
                                                           searchText: null,
                                                           sortBy: IPlacesAPIService.SortBy.LIKE_SCORE,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                          category: currentCategorySelected)
+                                                          category: currentFilters.CategoryId)
                                                      .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested)
@@ -142,8 +132,6 @@ namespace DCL.Places
             getPlacesCts?.SafeCancelAndDispose();
             placesResultsView.ClearPlacesResults();
             placesStateService.ClearPlaces();
-
-            currentCategorySelected = null;
         }
     }
 }
