@@ -65,6 +65,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
+
+            throw new Exception("TEST chat error");
         }
 
         private bool CheckIfIsMention(string message)
