@@ -85,20 +85,13 @@ namespace DCL.Profiles
 
             IIpfsRealm ipfs = realm.Ipfs;
 
-            // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
-            byte[] faceSnapshotTextureFile = whiteTexturePng;
-            byte[] bodySnapshotTextureFile = whiteTexturePng;
+            // We don't send snapshots anymore. See ADR-290
+            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(string.Empty, string.Empty));
 
-            string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
-            string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile, string.Empty, string.Empty);
 
-            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(faceHash, bodyHash));
-
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, bodyHash, faceHash);
-
+            // Clear files just in case, though we don't add any
             files.Clear();
-            files[bodyHash] = bodySnapshotTextureFile;
-            files[faceHash] = faceSnapshotTextureFile;
 
             try
             {
@@ -114,8 +107,7 @@ namespace DCL.Profiles
                 version = IpfsProfileEntity.DEFAULT_VERSION,
                 content = new ContentDefinition[]
                 {
-                    new () { file = "body.png", hash = bodyHash },
-                    new () { file = "face256.png", hash = faceHash },
+                    // Snapshots are not sent anymore
                 },
                 pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
@@ -333,7 +325,10 @@ namespace DCL.Profiles
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles)
                 {
-                    profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
+                    var url = PostUrl(fromCatalyst, ProfileTier.Kind.Full);
+                    ReportHub.Log(ReportCategory.PROFILE, $"Executing Single Get via Centralized: {useCentralizedProfiles}, URL: {url}");
+                    
+                    profile = await ProfilesRequest.PostSingleAsync(webRequestController, url, id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);
 
                     if (profile != null)
