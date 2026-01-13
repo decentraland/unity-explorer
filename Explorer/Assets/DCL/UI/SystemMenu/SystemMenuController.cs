@@ -36,8 +36,7 @@ namespace DCL.UI.SystemMenu
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public SystemMenuController(
-            ViewFactoryMethod viewFactory,
+        public SystemMenuController(ViewFactoryMethod viewFactory,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -47,14 +46,14 @@ namespace DCL.UI.SystemMenu
             IWeb3IdentityCache web3IdentityCache,
             IPassportBridge passportBridge) : base(viewFactory)
         {
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
             this.passportBridge = passportBridge;
-            this.playerEntity = playerEntity;
-            this.world = world;
         }
 
         public override void Dispose()

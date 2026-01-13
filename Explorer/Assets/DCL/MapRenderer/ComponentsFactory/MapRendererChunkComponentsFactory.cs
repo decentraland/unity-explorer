@@ -192,6 +192,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             for (var i = 0; i < clusterMarkerObject.renderers.Length; i++)
                 clusterMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.CATEGORIES;
 
+            clusterMarkerObject.categorySprite.sortingOrder = MapRendererDrawOrder.CATEGORIES - 1;
             clusterMarkerObject.title.sortingOrder = MapRendererDrawOrder.CATEGORIES + 1;
             coordsUtils.SetObjectScale(clusterMarkerObject);
             return clusterMarkerObject;
@@ -204,6 +205,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             for (var i = 0; i < searchResultClusterObject.renderers.Length; i++)
                 searchResultClusterObject.renderers[i].sortingOrder = MapRendererDrawOrder.SEARCH_RESULTS;
 
+            searchResultClusterObject.categorySprite.sortingOrder = MapRendererDrawOrder.SEARCH_RESULTS - 1;
             searchResultClusterObject.title.sortingOrder = MapRendererDrawOrder.SEARCH_RESULTS + 1;
             coordsUtils.SetObjectScale(searchResultClusterObject);
             return searchResultClusterObject;

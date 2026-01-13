@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <DCL.DebugUtilities.Views.DebugOngoingWebRequestWidget>
+        <ui:Foldout text="Ongoing Requests" name="DebugInnerFoldout" enabled="true" value="false">
+            <ui:ListView virtualization-method="DynamicHeight" show-border="false" show-add-remove-footer="false" allow-add="false" allow-remove="false" item-template="project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/DebugWebRequestItem.uxml?fileID=9197481963319205126&amp;guid=1239f8fea9ee9464ca907cddf5c4a856&amp;type=3#DebugWebRequestItem" style="flex-shrink: 0; min-height: 10px;" />
+        </ui:Foldout>
+    </DCL.DebugUtilities.Views.DebugOngoingWebRequestWidget>
+</ui:UXML>

@@ -4,9 +4,11 @@ namespace DCL.Web3.Authenticators
 {
     public interface IWeb3VerifiedAuthenticator : IWeb3Authenticator
     {
-        public delegate void VerificationDelegate(int code, DateTime expiration, string requestID);
-
-        void SetVerificationListener(VerificationDelegate? callback);
+        /// <summary>
+        /// Raised when verification code should be displayed to the user.
+        /// Always invoked on the main thread.
+        /// </summary>
+        event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
         void CancelCurrentWeb3Operation();
     }
