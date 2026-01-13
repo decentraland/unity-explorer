@@ -1,9 +1,12 @@
 using DCL.Optimization.Pools;
+using DCL.Rendering.RenderSystem;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Unity.Collections;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -11,7 +14,7 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, out GltfContainerAsset gltfContainerAsset)
+        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, ref MaterialManager materialManager, out GltfContainerAsset gltfContainerAsset)
         {
             if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))
             {
@@ -34,6 +37,15 @@ namespace ECS.Unity.GLTFContainer
             {
                 instance.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
+            }
+
+            if (materialManager != null)
+            {
+                foreach (var rend in result.Renderers)
+                {
+                    if (rend is MeshRenderer)
+                        materialManager.AddMaterial(rend);
+                }
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
