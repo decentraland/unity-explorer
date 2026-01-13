@@ -140,11 +140,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTask<(Profile profile, bool isNewUser)> FetchProfileAsync(string email, IWeb3Identity identity, CancellationToken ct)
         {
-            var walletAddress = identity.Address.ToString();
-            bool profileExists = await CheckProfileExistsAsync(walletAddress, ct);
-            bool isNewUser = !profileExists && ThirdWebManager.Instance.ActiveWallet != null;
+            // var walletAddress = identity.Address.ToString();
+            // bool profileExists = await CheckProfileExistsAsync(walletAddress, ct);
+            Profile? profile = await selfProfile.ProfileAsync(ct);
 
-            if (isNewUser)
+            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
             {
                 IWeb3Identity? identity1 = storedIdentityProvider.Identity;
 
@@ -160,7 +160,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 return (newUserProfile, true);
             }
 
-            Profile? profile = await selfProfile.ProfileAsync(ct);
             profile!.IsDirty = true;
             profile.HasConnectedWeb3 = true;
             return (profile, false);

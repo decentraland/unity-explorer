@@ -48,9 +48,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, bool isCached, bool baseWearablesLoaded, CancellationToken ct) payload)
         {
-            viewInstance.NextRandomButton.enabled = false;
+            viewInstance.NextRandomButton.interactable = false;
             baseWearablesLoaded = payload.baseWearablesLoaded;
-            ct = ct;
+            ct = payload.ct;
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
 
@@ -63,13 +63,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.FinalizeAnimator.ResetAnimator();
             viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
 
-            viewInstance.JumpIntoWorldButton.interactable = true;
-
             characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
             viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
+            viewInstance.JumpIntoWorldButton.interactable = true;
+
             viewInstance.ProfileNameLabel.gameObject.SetActive(false);
             viewInstance.Description.SetActive(false);
             viewInstance.DiffAccountButton.SetActive(false);
@@ -102,7 +102,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            viewInstance.NextRandomButton.enabled = false;
+            viewInstance.NextRandomButton.interactable = false;
 
             viewInstance!.FinalizeContainer.SetActive(false);
             viewInstance.NewUserContainer.SetActive(false);
@@ -211,7 +211,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             // If base wearables loaded from backend - use randomizer
-            if (baseWearablesLoaded && profileFetchingState.maleWearablesByCategory != null && profileFetchingState.femaleWearablesByCategory != null)
+            if (baseWearablesLoaded && profileFetchingState is { maleWearablesByCategory: not null, femaleWearablesByCategory: not null })
             {
                 Dictionary<string, List<URN>>? wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
                     ? profileFetchingState.maleWearablesByCategory
@@ -261,7 +261,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await UniTask.Delay(ANIMATION_DELAY);
+                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 characterPreviewController?.OnHide();
 
                 controller.TrySetLifeCycle();
