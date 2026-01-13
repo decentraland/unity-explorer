@@ -20,8 +20,6 @@ namespace DCL.Places
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
 
-        private PlacesFilters currentFilters;
-
         public PlacesController(
             PlacesView view,
             ICursor cursor,
@@ -34,17 +32,18 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.DiscoverView, this, placesAPIService, placesStateService, placesCategories);
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories);
 
             view.SectionChanged += OnSectionChanged;
             view.CategorySelected += OnCategorySelected;
+            view.SortByChanged += OnSortByChanged;
         }
 
         public void Dispose()
         {
-
             view.SectionChanged -= OnSectionChanged;
             view.CategorySelected -= OnCategorySelected;
+            view.SortByChanged -= OnSortByChanged;
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
@@ -55,9 +54,11 @@ namespace DCL.Places
             if (isSectionActivated)
                 return;
 
-            ResetCurrentFilters();
             isSectionActivated = true;
             view.SetViewActive(true);
+            view.ResetCurrentFilters();
+            view.SetupSortByFilter();
+            view.SetCategories(placesCategories.categories);
             view.OpenSection(PlacesSection.DISCOVER, true);
             cursor.Unlock();
         }
@@ -66,6 +67,7 @@ namespace DCL.Places
         {
             isSectionActivated = false;
             view.SetViewActive(false);
+            view.ClearSortByFilter();
             view.ClearCategories();
             PlacesClosed?.Invoke();
         }
@@ -81,34 +83,14 @@ namespace DCL.Places
 
         private void OnSectionChanged(PlacesSection section)
         {
-            if (currentFilters.Section == section)
-                return;
-
             view.SetCategoriesVisible(section == PlacesSection.DISCOVER);
-
-            if (section == PlacesSection.DISCOVER)
-                view.SetCategories(placesCategories.categories);
-            else
-                view.ClearCategories();
-
-            currentFilters.Section = section;
-            currentFilters.CategoryId = null;
-            FiltersChanged?.Invoke(currentFilters);
+            FiltersChanged?.Invoke(view.CurrentFilters);
         }
 
-        private void OnCategorySelected(string? categoryId)
-        {
-            if (currentFilters.CategoryId == categoryId)
-                return;
+        private void OnCategorySelected(string? categoryId) =>
+            FiltersChanged?.Invoke(view.CurrentFilters);
 
-            currentFilters.CategoryId = categoryId;
-            FiltersChanged?.Invoke(currentFilters);
-        }
-
-        private void ResetCurrentFilters()
-        {
-            currentFilters.Section = null;
-            currentFilters.CategoryId = null;
-        }
+        private void OnSortByChanged(IPlacesAPIService.SortBy sortBy) =>
+            FiltersChanged?.Invoke(view.CurrentFilters);
     }
 }

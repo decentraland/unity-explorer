@@ -1,8 +1,11 @@
-﻿namespace DCL.Places
+﻿using DCL.PlacesAPIService;
+
+namespace DCL.Places
 {
-    public struct PlacesFilters
+    public class PlacesFilters
     {
         public PlacesSection? Section;
         public string? CategoryId;
+        public IPlacesAPIService.SortBy SortBy;
     }
 }

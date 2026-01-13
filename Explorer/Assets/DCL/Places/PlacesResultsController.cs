@@ -6,6 +6,7 @@ using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Places
@@ -98,12 +99,13 @@ namespace DCL.Places
             else
                 view.SetPlacesGridLoadingMoreActive(true);
 
+            Debug.Log("SANTI LOG ---> Loading places...");
             var placesResult = await placesAPIService.SearchPlacesAsync(
                                                           pageNumber: pageNumber,
                                                           pageSize: PLACES_PER_PAGE,
                                                           ct: ct,
                                                           searchText: null,
-                                                          sortBy: IPlacesAPIService.SortBy.LIKE_SCORE,
+                                                          sortBy: currentFilters.SortBy,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                           category: currentFilters.CategoryId)
                                                      .SuppressToResultAsync(ReportCategory.PLACES);

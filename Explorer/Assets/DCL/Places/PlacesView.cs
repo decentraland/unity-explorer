@@ -1,4 +1,6 @@
-﻿using DCL.UI;
+﻿using DCL.PlacesAPIService;
+using DCL.UI;
+using DCL.UI.SelectorButton;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +10,9 @@ namespace DCL.Places
 {
     public class PlacesView : MonoBehaviour
     {
+        private const string SORT_BY_FILTER_MOST_ACTIVE_OPTION = "Most Active";
+        private const string SORT_BY_FILTER_BEST_RATED_OPTION = "Best Rated";
+        private const int SORT_BY_FILTER_DEFAULT_OPTION_INDEX = 1;
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
         private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
@@ -15,10 +20,11 @@ namespace DCL.Places
 
         public Action<PlacesSection>? SectionChanged;
         public event Action<string?>? CategorySelected;
+        public event Action<IPlacesAPIService.SortBy>? SortByChanged;
 
-        public PlacesResultsView DiscoverView => placesResultsView;
+        public PlacesResultsView PlacesResultsView => placesResultsView;
+        public PlacesFilters CurrentFilters { get; } = new ();
 
-        private PlacesSection? currentSection;
         private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
         private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
 
@@ -27,6 +33,9 @@ namespace DCL.Places
         [SerializeField] private ButtonWithSelectableStateView favoritesSectionTab = null!;
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
+
+        [Header("Filters")]
+        [SerializeField] private SelectorButtonView sortByDropdown = null!;
 
         [Header("Categories")]
         [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
@@ -47,6 +56,8 @@ namespace DCL.Places
             recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RECENTLY_VISITED));
             myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
 
+            sortByDropdown.OptionClicked += OnSortByChanged;
+
             categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
                 InstantiateCategoryButtonPrefab,
                 defaultCapacity: CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY,
@@ -64,6 +75,7 @@ namespace DCL.Places
             favoritesSectionTab.Button.onClick.RemoveAllListeners();
             recentlyVisitedSectionTab.Button.onClick.RemoveAllListeners();
             myPlacesSectionTab.Button.onClick.RemoveAllListeners();
+            sortByDropdown.OptionClicked -= OnSortByChanged;
         }
 
         public void SetViewActive(bool isActive) =>
@@ -85,7 +97,7 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSection section, bool force = false)
         {
-            if (currentSection == section && !force)
+            if (CurrentFilters.Section == section && !force)
                 return;
 
             discoverSectionTab.SetSelected(false);
@@ -109,9 +121,18 @@ namespace DCL.Places
                     break;
             }
 
+            CurrentFilters.Section = section;
             SectionChanged?.Invoke(section);
-            currentSection = section;
         }
+
+        public void SetupSortByFilter()
+        {
+            sortByDropdown.SetOptions(new List<string> { SORT_BY_FILTER_MOST_ACTIVE_OPTION, SORT_BY_FILTER_BEST_RATED_OPTION });
+            sortByDropdown.SelectedIndex = SORT_BY_FILTER_DEFAULT_OPTION_INDEX;
+        }
+
+        public void ClearSortByFilter() =>
+            sortByDropdown.ClearOptions();
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
@@ -133,6 +154,13 @@ namespace DCL.Places
         {
             categoriesContainer.gameObject.SetActive(isVisible);
             placesResultsTransform.offsetMax = new Vector2(placesResultsTransform.offsetMax.x, isVisible ? PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX : PLACES_RESULTS_TOP_Y_OFFSET_MAX);
+        }
+
+        public void ResetCurrentFilters()
+        {
+            CurrentFilters.Section = null;
+            CurrentFilters.CategoryId = null;
+            CurrentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
         }
 
         private PlaceCategoryButton InstantiateCategoryButtonPrefab()
@@ -160,8 +188,23 @@ namespace DCL.Places
             foreach (var category in currentCategories)
                 category.Value.buttonView.SetSelected(category.Key == categoryId);
 
+            string? selectedCategory = categoryId != ALL_CATEGORY_ID ? categoryId : null;
+
+            if (CurrentFilters.CategoryId == selectedCategory && invokeEvent)
+                return;
+
+            CurrentFilters.CategoryId = selectedCategory;
+
             if (invokeEvent)
-                CategorySelected?.Invoke(categoryId != ALL_CATEGORY_ID ? categoryId : null);
+                CategorySelected?.Invoke(selectedCategory);
+        }
+
+        private void OnSortByChanged(int index)
+        {
+            var selectedSortBy = index == 0 ? IPlacesAPIService.SortBy.MOST_ACTIVE : IPlacesAPIService.SortBy.LIKE_SCORE;
+
+            CurrentFilters.SortBy = selectedSortBy;
+            SortByChanged?.Invoke(selectedSortBy);
         }
     }
 }
