@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using DCL.ECS.Unity.AssetLoad.Cache;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.AssetLoad.Components;
@@ -9,7 +10,6 @@ using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
-using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
@@ -23,17 +23,17 @@ namespace DCL.SDKComponents.AssetLoad.Systems
     public partial class FinalizeAssetLoadSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget capBudget;
-        private readonly IGltfContainerAssetsCache gltfCache;
+        private readonly AssetLoadCache assetLoadCache;
         private readonly AssetLoadUtils assetLoadUtils;
 
         internal FinalizeAssetLoadSystem(World world,
             IPerformanceBudget capBudget,
-            IGltfContainerAssetsCache gltfCache,
+            AssetLoadCache assetLoadCache,
             AssetLoadUtils assetLoadUtils)
             : base(world)
         {
             this.capBudget = capBudget;
-            this.gltfCache = gltfCache;
+            this.assetLoadCache = assetLoadCache;
             this.assetLoadUtils = assetLoadUtils;
         }
 
@@ -42,6 +42,8 @@ namespace DCL.SDKComponents.AssetLoad.Systems
         {
             FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipLoadingQuery(World);
+            FinalizeTextureLoadingQuery(World);
+            FinalizeVideoLoadingQuery(World);
         }
 
         [Query]
@@ -57,7 +59,8 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             {
                 if (result.Succeeded)
                 {
-                    gltfCache.Dereference(component.Hash, result.Asset);
+
+                    assetLoadCache.TryAdd(component.Name, result.Asset);
                     assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, component.Name);
                 }
                 else
@@ -76,6 +79,9 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             if (!audioPromise.TryConsume(World!, out var promiseResult))
                 return;
 
+            if (promiseResult.Succeeded)
+                assetLoadCache.TryAdd(audioPromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
+
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, audioPromise.LoadingIntention.CommonArguments.URL);
         }
 
@@ -90,6 +96,9 @@ namespace DCL.SDKComponents.AssetLoad.Systems
             if (!texturePromise.TryConsume(World!, out var promiseResult))
                 return;
 
+            if (promiseResult.Succeeded)
+                assetLoadCache.TryAdd(texturePromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
+
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, texturePromise.LoadingIntention.CommonArguments.URL);
         }
 
@@ -103,7 +112,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
                 || !capBudget.TrySpendBudget())
                 return;
 
-            mediaPlayerComponent.Dispose();
+            assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, mediaPlayerComponent.MediaAddress.ToString());
         }

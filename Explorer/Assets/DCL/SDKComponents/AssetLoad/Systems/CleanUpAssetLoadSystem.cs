@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECS.Unity.AssetLoad.Cache;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AssetLoad.Components;
 using ECS.Abstract;
@@ -22,10 +23,15 @@ namespace DCL.SDKComponents.AssetLoad.Systems
     public partial class CleanUpAssetLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly AssetLoadCache assetLoadCache;
 
-        internal CleanUpAssetLoadSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        internal CleanUpAssetLoadSystem(World world,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            AssetLoadCache assetLoadCache)
+            : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.assetLoadCache = assetLoadCache;
         }
 
         protected override void Update(float t)
@@ -48,6 +54,7 @@ namespace DCL.SDKComponents.AssetLoad.Systems
         public void FinalizeComponents(in Query query)
         {
             HandleComponentRemovalQuery(World);
+            assetLoadCache.Dispose();
         }
     }
 }
