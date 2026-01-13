@@ -1,10 +1,8 @@
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
-using SceneRuntime;
 using System;
 using System.Collections.Generic;
 using Utility;
-using System.Runtime.InteropServices;
 
 namespace SceneRuntime.V8
 {
@@ -22,8 +20,6 @@ namespace SceneRuntime.V8
         public ITypedArray<byte> TypedArray => typedArray;
         public ScriptObject ScriptObject => scriptObject;
 
-        //TODO FRAN: FIX THIS
-        public static implicit operator ITypedArray<byte>(V8TypedArrayAdapter adapter) => adapter.typedArray;
         public static implicit operator ScriptObject(V8TypedArrayAdapter adapter) => adapter.scriptObject;
 
         ulong IDCLTypedArray<byte>.Length => typedArray.Length;
