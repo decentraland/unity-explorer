@@ -1,13 +1,18 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -16,14 +21,22 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyOTPAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, bool baseWearablesLoaded, CancellationToken ct)>
+    public class LobbyOTPAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {
         private readonly StringVariable profileNameLabel;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
-        private readonly ProfileFetchingOTPAuthState profileFetchingState;
+
+        private readonly IWearablesProvider wearablesProvider;
+
+        private readonly List<Avatar> avatarHistory = new ();
+
+        private Dictionary<string, List<URN>>? maleWearablesByCategory;
+        private Dictionary<string, List<URN>>? femaleWearablesByCategory;
+
+        private int currentAvatarIndex = -1;
         private bool baseWearablesLoaded;
 
         public LobbyOTPAuthState(
@@ -32,13 +45,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ReactiveProperty<AuthenticationStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
-            ProfileFetchingOTPAuthState profileFetchingState) : base(viewInstance)
+            IWearablesProvider wearablesProvider) : base(viewInstance)
         {
             this.controller = controller;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
-            this.profileFetchingState = profileFetchingState;
+            this.wearablesProvider = wearablesProvider;
 
             profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
         }
@@ -46,10 +59,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private Profile newUserProfile;
         private CancellationToken ct;
 
-        public void Enter((Profile profile, bool isCached, bool baseWearablesLoaded, CancellationToken ct) payload)
+        public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
             viewInstance.NextRandomButton.interactable = false;
-            baseWearablesLoaded = payload.baseWearablesLoaded;
             ct = payload.ct;
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
@@ -67,7 +79,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
-            viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
+            viewInstance.JumpIntoWorldButton.gameObject.SetActive(!IsNewUser());
             viewInstance.JumpIntoWorldButton.interactable = true;
 
             viewInstance.ProfileNameLabel.gameObject.SetActive(false);
@@ -94,10 +106,81 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
             UpdateFinalizeButtonState();
 
+            InitializeAvatarAsync().Forget();
             return;
 
             bool IsNewUser() =>
                 newUserProfile.Version == 1;
+        }
+
+        private async UniTask InitializeAvatarAsync()
+        {
+            await LoadBaseWearablesAsync(ct);
+            InitializeAvatarHistory(newUserProfile.Avatar);
+        }
+
+        private async UniTask LoadBaseWearablesAsync(CancellationToken ct)
+        {
+            if (baseWearablesLoaded)
+                return;
+
+            try
+            {
+                // Load base wearables catalog from backend (pageSize 300 to get all)
+                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetAsync(
+                    pageSize: 300,
+                    pageNumber: 1,
+                    ct,
+                    collectionType: IWearablesProvider.CollectionType.Base);
+
+                maleWearablesByCategory = new Dictionary<string, List<URN>>();
+                femaleWearablesByCategory = new Dictionary<string, List<URN>>();
+
+                foreach (ITrimmedWearable? wearable in wearables)
+                {
+                    string category = wearable.GetCategory();
+
+                    // Skip body shapes
+                    if (category == "body_shape")
+                        continue;
+
+                    // Add to male dictionary if compatible
+                    if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
+                    {
+                        if (!maleWearablesByCategory.ContainsKey(category))
+                            maleWearablesByCategory[category] = new List<URN>();
+
+                        maleWearablesByCategory[category].Add(wearable.GetUrn());
+                    }
+
+                    // Add to female dictionary if compatible
+                    if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
+                    {
+                        if (!femaleWearablesByCategory.ContainsKey(category))
+                            femaleWearablesByCategory[category] = new List<URN>();
+
+                        femaleWearablesByCategory[category].Add(wearable.GetUrn());
+                    }
+                }
+
+                baseWearablesLoaded = true;
+                ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items, male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                // Fallback to hardcoded defaults will be used
+                baseWearablesLoaded = false;
+            }
+        }
+
+        private void InitializeAvatarHistory(Avatar initialAvatar)
+        {
+            avatarHistory.Clear();
+            avatarHistory.Add(initialAvatar);
+            currentAvatarIndex = 0;
+            UpdateAvatarNavigationButtons();
         }
 
         public override void Exit()
@@ -119,9 +202,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
             viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
         }
-
-        private readonly List<Avatar> avatarHistory = new ();
-        private int currentAvatarIndex = -1;
 
         private void FinalizeNewUser()
         {
@@ -211,11 +291,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             // If base wearables loaded from backend - use randomizer
-            if (baseWearablesLoaded && profileFetchingState is { maleWearablesByCategory: not null, femaleWearablesByCategory: not null })
+            if (baseWearablesLoaded)
             {
                 Dictionary<string, List<URN>>? wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
-                    ? profileFetchingState.maleWearablesByCategory
-                    : profileFetchingState.femaleWearablesByCategory;
+                    ? maleWearablesByCategory
+                    : femaleWearablesByCategory;
 
                 HashSet<URN> wearablesSet = GetRandomWearablesFromCategories(wearablesByCategory);
 

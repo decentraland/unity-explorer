@@ -153,8 +153,6 @@ namespace DCL.AuthenticationScreenFlow
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
-            var profileFetchingOTP = new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile, storedIdentityProvider, wearablesProvider, webRequestController);
-
             fsm.AddStates(
                 new InitAuthScreenState(viewInstance, buildData.InstallSource),
                 new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
@@ -162,8 +160,8 @@ namespace DCL.AuthenticationScreenFlow
                 new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, splashScreen, selfProfile),
                 new LobbyAuthState(viewInstance, this, CurrentState, characterPreviewController),
                 new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
-                profileFetchingOTP,
-                new LobbyOTPAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, profileFetchingOTP)
+                new ProfileFetchingOTPAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
+                new LobbyOTPAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
                 );
             fsm.Enter<InitAuthScreenState>();
         }

@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,6 +44,14 @@ namespace DCL.Profiles
             SkinColor = skinColor;
             BodySnapshotUrl = URLAddress.EMPTY;
         }
+
+        public static Avatar CreateDefault(BodyShape bodyShape) =>
+            new (
+                bodyShape,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
 
         public bool IsEmotesWheelEmpty()
         {

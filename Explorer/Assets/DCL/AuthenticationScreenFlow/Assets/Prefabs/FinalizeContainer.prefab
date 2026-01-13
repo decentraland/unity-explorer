@@ -3891,7 +3891,7 @@ PrefabInstance:
     - target: {fileID: 3171233690257926112, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: eaad235cc6bf34bdf899e5095b412398, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 3171233690257926112, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 2.5
