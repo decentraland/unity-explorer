@@ -46,8 +46,8 @@ namespace DCL.Diagnostics.Sentry
 
             options.SetBeforeSend(AddUnspecifiedCategory);
 
-            Debug.Log($"SentryBuildTimeConfiguration.options.enabled: ${options.Enabled}");
-            Debug.Log($"SentryBuildTimeConfiguration.options.EnvironmentOverride: ${options.Environment}");
+            Debug.Log($"SentryBuildTimeConfiguration.options.enabled: {options.Enabled}");
+            Debug.Log($"SentryBuildTimeConfiguration.options.EnvironmentOverride: {options.Environment}");
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
@@ -102,6 +102,7 @@ namespace DCL.Diagnostics.Sentry
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
             EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssetIfDirty(asset);
         }
 #endif
     }
