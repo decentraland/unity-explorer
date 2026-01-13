@@ -313,6 +313,7 @@ namespace DCL.PluginSystem.Global
         {
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
+
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
@@ -328,7 +329,6 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
-                settings.EmbeddedEmotesAsURN(),
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -456,6 +456,7 @@ namespace DCL.PluginSystem.Global
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
+
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(
                     cameraReelView.CameraReelGalleryView,
@@ -475,6 +476,7 @@ namespace DCL.PluginSystem.Global
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+
             communitiesBrowserController = new CommunitiesBrowserController(
                 communitiesBrowserView,
                 cursor,
@@ -606,9 +608,6 @@ namespace DCL.PluginSystem.Global
             public BackpackSettings BackpackSettings { get; private set; }
 
             [field: SerializeField]
-            public string[] EmbeddedEmotes { get; private set; }
-
-            [field: SerializeField]
             public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
@@ -653,7 +652,6 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailWidth { get; private set; }
 
             [field: Header("Place Reel")]
-
             [field: SerializeField]
             public int PlaceGridLayoutFixedColumnCount { get; private set; }
 
@@ -665,9 +663,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
-
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
-                EmbeddedEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }
