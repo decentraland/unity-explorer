@@ -19,7 +19,7 @@ namespace DCL.Profiles
         }
 
         internal void OnProfileRetrievalStarted(string id) =>
-            startedRequests[id] = DateTime.Now;
+            startedRequests.TryAdd(id, DateTime.Now);
 
         internal void OnProfileResolved(string id, bool asAggregated)
         {
