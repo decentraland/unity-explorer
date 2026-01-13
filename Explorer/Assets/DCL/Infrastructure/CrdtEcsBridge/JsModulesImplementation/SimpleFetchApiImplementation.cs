@@ -4,12 +4,11 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
-using Microsoft.ClearScript;
+using SceneRuntime;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -17,7 +16,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SimpleFetchApiImplementation : ISimpleFetchApi
     {
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum RequestMethod
         {
             GET,
@@ -116,7 +114,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             var webRequestHeaders = new WebRequestHeadersInfo();
 
-            if (headers is IScriptObject scriptObject)
+            if (headers is IDCLScriptObject scriptObject)
             {
                 IEnumerable<string> propertyNames = scriptObject.PropertyNames.EnsureNotNull();
 
