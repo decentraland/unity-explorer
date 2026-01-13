@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
-using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
@@ -111,7 +110,7 @@ namespace SceneRunner
                 // Start the scene
                 await runtimeInstance.StartScene();
             }
-            catch (ScriptEngineException e)
+            catch (JavaScriptExecutionException e)
             {
                 sceneExceptionsHandler.OnJavaScriptException(e);
                 return;
@@ -142,7 +141,7 @@ namespace SceneRunner
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
-                    catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
+                    catch (JavaScriptExecutionException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
                     finally { sceneCodeIsRunning.Reset(); }
 
                     SceneStateProvider.TickNumber++;

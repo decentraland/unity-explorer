@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.ClearScript;
+using SceneRuntime;
 
 namespace SceneRuntime.Apis
 {
@@ -24,7 +24,7 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Reject(string message)
         {
-            source.TrySetException(new ScriptEngineException(message));
+            source.TrySetException(new JavaScriptExecutionException(message));
         }
     }
 }

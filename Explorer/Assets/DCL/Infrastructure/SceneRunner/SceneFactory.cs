@@ -19,7 +19,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
-using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
@@ -278,9 +277,9 @@ namespace SceneRunner
 
         private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
-            // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
-            if (e is ScriptEngineException scriptEngineException)
-                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
+            // JavaScriptExecutionException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+            if (e is JavaScriptExecutionException javascriptExecutionException)
+                exceptionsHandler.OnJavaScriptException(new JavaScriptExecutionException(javascriptExecutionException.ErrorDetails));
 
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
             deps.Dispose();

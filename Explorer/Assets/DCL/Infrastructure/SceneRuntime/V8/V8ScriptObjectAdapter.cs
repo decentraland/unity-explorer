@@ -1,7 +1,5 @@
 using Microsoft.ClearScript;
 using System.Collections.Generic;
-using System.IO;
-using System;
 
 namespace SceneRuntime.V8
 {
@@ -36,6 +34,8 @@ namespace SceneRuntime.V8
             set => ScriptObject[name, args] = value;
         }
 
+
+        //TODO FRAN: Check this logic
         /// <inheritdoc/>
         public void SetProperty(int index, object value)
         {

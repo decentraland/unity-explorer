@@ -5,6 +5,7 @@ using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using SceneRuntime;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
@@ -131,7 +132,14 @@ namespace SceneRuntime.V8
         public UniTask StartScene()
         {
             resetableSource.Reset();
-            startFunc.InvokeAsFunction();
+            try
+            {
+                startFunc.InvokeAsFunction();
+            }
+            catch (ScriptEngineException e)
+            {
+                throw new JavaScriptExecutionException(e.ErrorDetails ?? e.Message, e);
+            }
             return resetableSource.Task;
         }
 
@@ -140,7 +148,14 @@ namespace SceneRuntime.V8
             nextUint8Array = 0;
             RuntimeHeapInfo = (V8RuntimeHeapInfoAdapter)engineAdapter.GetRuntimeHeapInfo();
             resetableSource.Reset();
-            updateFunc.InvokeAsFunction(dt);
+            try
+            {
+                updateFunc.InvokeAsFunction(dt);
+            }
+            catch (ScriptEngineException e)
+            {
+                throw new JavaScriptExecutionException(e.ErrorDetails ?? e.Message, e);
+            }
             return resetableSource.Task;
         }
 
