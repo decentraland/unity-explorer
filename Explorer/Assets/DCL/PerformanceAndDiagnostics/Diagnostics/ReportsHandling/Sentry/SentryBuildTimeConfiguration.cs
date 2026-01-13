@@ -21,8 +21,6 @@ namespace DCL.Diagnostics.Sentry
         public override void Configure(SentryUnityOptions options)
         {
 #if UNITY_EDITOR
-            Debug.Log("Sentry build time configuration loaded");
-
             // Force options to enabled=true to be able to deploy debug symbols during build-time
             options.Enabled = Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
             if (!options.Enabled) return; // No need to configure sentry
@@ -101,6 +99,7 @@ namespace DCL.Diagnostics.Sentry
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
             EditorUtility.SetDirty(asset);
+            Debug.Log($"ScriptableSentryUnityOptions: {JsonUtility.ToJson(asset)}");
         }
 #endif
     }
