@@ -82,8 +82,8 @@ namespace DCL.Profiles.Self
                     profile.Avatar.emotes[slot] = forcedEmotes[slot];
 
             if (profile.Avatar.IsEmotesWheelEmpty())
-                for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
-                    profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
+                for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
+                    profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
 
             if (OwnProfile == null || profile.Version > OwnProfile.Version)
                 OwnProfile = profile;
