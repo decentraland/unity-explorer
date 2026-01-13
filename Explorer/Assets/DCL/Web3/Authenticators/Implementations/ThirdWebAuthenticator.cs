@@ -23,9 +23,12 @@ namespace DCL.Web3.Authenticators
         private readonly SemaphoreSlim mutex = new (1, 1);
 
         private readonly HashSet<string> whitelistMethods;
+        private readonly HashSet<string> readOnlyMethods;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
+
+        private TransactionConfirmationDelegate? transactionConfirmationCallback;
 
         private BigInteger chainId;
         private InAppWallet? pendingWallet;
@@ -36,17 +39,23 @@ namespace DCL.Web3.Authenticators
         private const string MINIMAL_ABI = @"[{""name"":""execute"",""type"":""function"",""inputs"":[],""outputs"":[]}]";
 
         public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
-            IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
+            HashSet<string> readOnlyMethods, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
             Instance?.Dispose();
             Instance = this;
 
             this.identityCache = identityCache;
             this.whitelistMethods = whitelistMethods;
+            this.readOnlyMethods = readOnlyMethods;
             this.web3AccountFactory = web3AccountFactory;
             this.identityExpirationDuration = identityExpirationDuration;
 
             chainId = EnvChainsUtils.GetChainIdAsInt(environment);
+        }
+
+        public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate callback)
+        {
+            transactionConfirmationCallback = callback;
         }
 
         public async UniTask<bool> TryAutoConnectAsync(CancellationToken ct)
@@ -196,36 +205,29 @@ namespace DCL.Web3.Authenticators
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
 
-            // Wallet signing methods
-            if (string.Equals(request.method, "personal_sign"))
-            {
-                // personal_sign params: [message, address]
-                var message = request.@params[0].ToString();
-                string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(message);
+            if (IsReadOnly(request))
+                return await SendWithoutConfirmationAsync(request, ct);
 
-                return new EthApiResponse
-                {
-                    id = request.id,
-                    jsonrpc = "2.0",
-                    result = signature,
-                };
-            }
-            if (string.Equals(request.method, "eth_signTypedData_v4"))
-            {
-                // eth_signTypedData_v4 params: [address, typedData]
-                var typedDataJson = request.@params[1].ToString();
-                string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+            return await SendWithConfirmationAsync(request, ct);
+        }
 
-                return new EthApiResponse
-                {
-                    id = request.id,
-                    jsonrpc = "2.0",
-                    result = signature,
-                };
-            }
+        private bool IsReadOnly(EthApiRequest request)
+        {
+            foreach (string method in readOnlyMethods)
+                if (string.Equals(method, request.method, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Handles read-only RPC methods that don't require user confirmation
+        /// </summary>
+        private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
+        {
+            // eth_getBalance - can be handled locally for the active wallet
             if (string.Equals(request.method, "eth_getBalance"))
             {
-                // eth_getBalance params: [address, blockParameter]
                 var address = request.@params[0].ToString();
                 string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
@@ -241,11 +243,89 @@ namespace DCL.Web3.Authenticators
                     };
                 }
             }
+
+            // All other read-only RPC methods - delegate to low-level RPC calls
+            return await SendRpcRequestAsync(request);
+        }
+
+        /// <summary>
+        ///     Handles methods that require user confirmation (signing, transactions)
+        /// </summary>
+        private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
+        {
+            // Request user confirmation before proceeding
+            if (transactionConfirmationCallback != null)
+            {
+                TransactionConfirmationRequest confirmationRequest = CreateConfirmationRequest(request);
+                bool confirmed = await transactionConfirmationCallback(confirmationRequest);
+
+                if (!confirmed)
+                    throw new Web3Exception("Transaction rejected by user");
+            }
+
+            // Wallet signing methods
+            if (string.Equals(request.method, "personal_sign"))
+            {
+                // personal_sign params: [message, address]
+                var message = request.@params[0].ToString();
+                string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(message);
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = signature,
+                };
+            }
+
+            if (string.Equals(request.method, "eth_signTypedData_v4"))
+            {
+                // eth_signTypedData_v4 params: [address, typedData]
+                var typedDataJson = request.@params[1].ToString();
+                string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = signature,
+                };
+            }
+
             if (string.Equals(request.method, "eth_sendTransaction"))
                 return await HandleSendTransactionAsync(request);
 
-            // All other RPC methods are read-only (off-chain) - delegate to low-level RPC calls
-            return await SendRpcRequestAsync(request);
+            // Fallback for any other non-read-only methods
+            throw new Web3Exception($"Unsupported method requiring confirmation: {request.method}");
+        }
+
+        /// <summary>
+        ///     Creates a confirmation request object with transaction details for the UI
+        /// </summary>
+        private TransactionConfirmationRequest CreateConfirmationRequest(EthApiRequest request)
+        {
+            var confirmationRequest = new TransactionConfirmationRequest
+            {
+                Method = request.method,
+                Params = request.@params,
+            };
+
+            // Extract additional details for eth_sendTransaction
+            if (string.Equals(request.method, "eth_sendTransaction") && request.@params?.Length > 0)
+            {
+                try
+                {
+                    Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
+                    confirmationRequest.To = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
+                    confirmationRequest.Value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() : null;
+                    confirmationRequest.Data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() : null;
+                }
+                catch
+                { /* Ignore parsing errors, UI will show what it can */
+                }
+            }
+
+            return confirmationRequest;
         }
 
         private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request)

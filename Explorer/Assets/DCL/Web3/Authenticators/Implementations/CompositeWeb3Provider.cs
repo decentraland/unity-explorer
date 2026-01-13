@@ -38,19 +38,8 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        /// <summary>
-        ///     Event fired when the authentication method changes
-        /// </summary>
         public event Action<AuthMethod>? OnMethodChanged;
-
-        /// <summary>
-        ///     Returns true if ThirdWeb OTP method is currently selected
-        /// </summary>
         public bool IsThirdWebOTP => currentMethod == AuthMethod.ThirdWebOTP;
-
-        /// <summary>
-        ///     Returns true if Dapp Wallet method is currently selected
-        /// </summary>
         public bool IsDappWallet => currentMethod == AuthMethod.DappWallet;
 
         private IWeb3VerifiedAuthenticator CurrentAuthenticator => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
@@ -86,6 +75,11 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);
+
+        public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback)
+        {
+            thirdWebAuth.SetTransactionConfirmationCallback(callback);
+        }
 
         public void Dispose()
         {

@@ -199,6 +199,9 @@ namespace DCL.AuthenticationScreenFlow
 
             BlockUnwantedInputs();
             audio.OnShow();
+
+            // Setup transaction confirmation callback for ThirdWeb (Instance is guaranteed to exist at this point)
+            SetupTransactionConfirmationCallback();
         }
 
         protected override void OnViewClose()
@@ -274,5 +277,84 @@ namespace DCL.AuthenticationScreenFlow
 
         private void UnblockUnwantedInputs() =>
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+
+        private void SetupTransactionConfirmationCallback()
+        {
+            compositeWeb3Provider.SetTransactionConfirmationCallback(ShowTransactionConfirmationAsync);
+        }
+
+        private UniTask<bool> ShowTransactionConfirmationAsync(TransactionConfirmationRequest request)
+        {
+            viewInstance!.ConfPopupRootText.text = BuildTransactionInfoText(request);
+
+            // Show popup
+            viewInstance.ConfPopupRoot.transform.parent = null;
+            viewInstance.ConfPopupRoot.SetActive(true);
+
+            var tcs = new UniTaskCompletionSource<bool>();
+
+            viewInstance.ConfPopupRootConfirmButton.onClick.AddListener(OnConfirm);
+            viewInstance.ConfPopupRootCancelButton.onClick.AddListener(OnCancel);
+
+            return tcs.Task;
+
+            void OnCancel()
+            {
+                Cleanup();
+                tcs.TrySetResult(false);
+            }
+
+            void OnConfirm()
+            {
+                Cleanup();
+                tcs.TrySetResult(true);
+            }
+
+            void Cleanup()
+            {
+                viewInstance.ConfPopupRootConfirmButton.onClick.RemoveListener(OnConfirm);
+                viewInstance.ConfPopupRootCancelButton.onClick.RemoveListener(OnCancel);
+                viewInstance.ConfPopupRoot.SetActive(false);
+            }
+        }
+
+        private static string BuildTransactionInfoText(TransactionConfirmationRequest request)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append($"Method: {request.Method}");
+
+            if (!string.IsNullOrEmpty(request.To))
+                sb.Append($" | To: {request.To}");
+
+            if (!string.IsNullOrEmpty(request.Value) && request.Value != "0x0" && request.Value != "0x")
+                sb.Append($" | Value: {request.Value}");
+
+            if (!string.IsNullOrEmpty(request.Data) && request.Data != "0x")
+            {
+                // Show truncated data if too long
+                string dataPreview = request.Data.Length > 20
+                    ? request.Data[..20] + "..."
+                    : request.Data;
+
+                sb.Append($" | Data: {dataPreview}");
+            }
+
+            // For signing methods, show the message being signed
+            if (string.Equals(request.Method, "personal_sign") && request.Params?.Length > 0)
+            {
+                string message = request.Params[0]?.ToString() ?? "";
+                string messagePreview = message.Length > 50 ? message[..50] + "..." : message;
+                sb.Append($" | Message: {messagePreview}");
+            }
+
+            if (string.Equals(request.Method, "eth_signTypedData_v4") && request.Params?.Length > 1)
+            {
+                string typedData = request.Params[1]?.ToString() ?? "";
+                string dataPreview = typedData.Length > 50 ? typedData[..50] + "..." : typedData;
+                sb.Append($" | TypedData: {dataPreview}");
+            }
+
+            return sb.ToString();
+        }
     }
 }

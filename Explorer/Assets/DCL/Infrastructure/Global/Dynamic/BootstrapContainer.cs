@@ -222,6 +222,7 @@ namespace Global.Dynamic
                 dclEnvironment,
                 identityCache,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 web3AccountFactory,
                 identityExpirationDuration
             );

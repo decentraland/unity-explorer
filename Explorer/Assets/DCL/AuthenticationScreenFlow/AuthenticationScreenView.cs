@@ -16,36 +16,9 @@ namespace DCL.AuthenticationScreenFlow
     {
         private StringVariable? countdownLabelParameter;
 
-        [field: Header("LOGIN")]
+        [field: Space]
         [field: SerializeField]
-        public GameObject LoginContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator LoginAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button LoginButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button CancelLoginButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_InputField EmailInputField { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button LoginWithOtpButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject LoadingSpinner { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button MoreOptionsButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public RectTransform MoreOptionsButtonDirIcon { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject MoreOptionsPanel { get; private set; } = null!;
+        public AuthLoginScreenView AuthLoginScreenView { get; private set; } = null!;
 
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
@@ -161,6 +134,19 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button[] UseAnotherAccountButton { get; private set; } = null!;
 
+        [field: Header("CONFIRMATION POPUP")]
+        [field: SerializeField]
+        public GameObject ConfPopupRoot { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text ConfPopupRootText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ConfPopupRootConfirmButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ConfPopupRootCancelButton { get; private set; } = null!;
+
         [field: Header("OTHER")]
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
@@ -204,14 +190,12 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnDisable()
         {
-            LoginAnimator.enabled = false;
             VerificationAnimator.enabled = false;
             FinalizeAnimator.enabled = false;
         }
 
         private void OnEnable()
         {
-            LoginAnimator.enabled = true;
             VerificationAnimator.enabled = true;
             FinalizeAnimator.enabled = true;
         }

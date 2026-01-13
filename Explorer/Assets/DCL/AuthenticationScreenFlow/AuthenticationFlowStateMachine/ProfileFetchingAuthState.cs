@@ -111,19 +111,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void ShowLoadingSpinner()
-        {
-            viewInstance.LoginContainer.SetActive(true);
-
-            viewInstance.LoginAnimator.ResetAnimator();
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            viewInstance.LoginButton.gameObject.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-
-            viewInstance.LoadingSpinner.SetActive(true);
-        }
-
         private async UniTask<Profile> FetchProfileAsync(CancellationToken ct)
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);

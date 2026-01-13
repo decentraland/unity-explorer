@@ -17,7 +17,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter()
         {
-            viewInstance.LoginContainer.SetActive(false);
+            viewInstance.AuthLoginScreenView.gameObject.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.VerificationOTPContainer.SetActive(false);
             viewInstance.FinalizeContainer.SetActive(false);
