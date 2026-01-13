@@ -15,7 +15,6 @@ using System.Threading;
 using ThirdWebUnity;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
@@ -25,9 +24,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly ISelfProfile selfProfile;
-
-
-        private Profile newUserProfile;
 
         public ProfileFetchingOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -111,17 +107,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
-            if (profile == null && ThirdWebManager.Instance.ActiveWallet != null)
-            {
-                newUserProfile = Profile.NewRandomProfile(identity.Address.ToString());
+            bool isNewUser = profile == null && ThirdWebManager.Instance.ActiveWallet != null;
 
-                // = BuildDefaultProfile(identity.Address.ToString(), email);
-                return (newUserProfile, true);
-            }
+            if (isNewUser)
+                profile = Profile.NewRandomProfile(identity.Address.ToString());
 
             profile!.IsDirty = true;
             profile.HasConnectedWeb3 = true;
-            return (profile, false);
+
+            return (profile, isNewUser);
         }
 
         private static bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
@@ -140,34 +134,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
-        }
-
-        private static Profile BuildDefaultProfile(string walletAddress, string name = "")
-        {
-            // Randomize body shape between MALE and FEMALE
-            var avatar = Avatar.CreateDefault(UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE);
-
-            // Extract name from email (everything before @) or use default
-            var profile = Profile.Create(walletAddress, name, avatar);
-            profile.HasClaimedName = false;
-            profile.HasConnectedWeb3 = true;
-            profile.Description = string.Empty;
-            profile.Country = string.Empty;
-            profile.EmploymentStatus = string.Empty;
-            profile.Gender = string.Empty;
-            profile.Pronouns = string.Empty;
-            profile.RelationshipStatus = string.Empty;
-            profile.SexualOrientation = string.Empty;
-            profile.Language = string.Empty;
-            profile.Profession = string.Empty;
-            profile.RealName = string.Empty;
-            profile.Hobbies = string.Empty;
-            profile.TutorialStep = 0;
-            profile.Version = 0;
-            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
-            profile.IsDirty = true;
-
-            return profile;
         }
     }
 }

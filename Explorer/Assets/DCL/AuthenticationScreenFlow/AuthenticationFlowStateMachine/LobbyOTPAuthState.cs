@@ -61,8 +61,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
-            viewInstance.NextRandomButton.interactable = false;
             ct = payload.ct;
+
+            InitializeAvatarAsync().Forget();
+
+            viewInstance.PrevRandomButton.interactable = false;
+            viewInstance.NextRandomButton.interactable = false;
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
 
@@ -75,11 +79,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.FinalizeAnimator.ResetAnimator();
             viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
 
-            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
-
-            viewInstance.JumpIntoWorldButton.gameObject.SetActive(!IsNewUser());
+            viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
             viewInstance.JumpIntoWorldButton.interactable = true;
 
             viewInstance.ProfileNameLabel.gameObject.SetActive(false);
@@ -106,7 +106,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
             UpdateFinalizeButtonState();
 
-            InitializeAvatarAsync().Forget();
             return;
 
             bool IsNewUser() =>
@@ -116,6 +115,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private async UniTask InitializeAvatarAsync()
         {
             await LoadBaseWearablesAsync(ct);
+            RandomizeAvatar();
+
+            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController?.OnBeforeShow();
+            characterPreviewController?.OnShow();
+
             InitializeAvatarHistory(newUserProfile.Avatar);
         }
 
