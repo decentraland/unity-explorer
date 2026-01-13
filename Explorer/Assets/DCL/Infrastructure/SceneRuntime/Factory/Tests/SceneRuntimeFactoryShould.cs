@@ -59,8 +59,7 @@ namespace SceneRuntime.Factory.Tests
                 using ISceneRuntime sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                //TODO FRAN: FIX THIS
-                //sceneRuntime.ExecuteSceneJson();
+                sceneRuntime.ExecuteSceneJson();
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
@@ -90,8 +89,7 @@ namespace SceneRuntime.Factory.Tests
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);
-                //TODO FRAN: FIX THIS
-                //sceneRuntime.ExecuteSceneJson();
+                sceneRuntime.ExecuteSceneJson();
 
                 // Assert
                 Assert.NotNull(sceneRuntime);

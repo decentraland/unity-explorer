@@ -15,9 +15,6 @@ namespace SceneRuntime.V8
 
         public IArrayBuffer ArrayBuffer => arrayBuffer;
 
-        //TODO FRAN: Fix this
-        //public static implicit operator IArrayBuffer(V8ArrayBufferAdapter adapter) => adapter.arrayBuffer;
-
         ulong IDCLArrayBuffer.Size => arrayBuffer.Size;
 
         ulong IDCLArrayBuffer.ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex) =>

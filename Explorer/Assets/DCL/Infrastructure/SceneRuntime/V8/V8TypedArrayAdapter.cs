@@ -2,6 +2,7 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Utility;
 
 namespace SceneRuntime.V8
@@ -82,6 +83,7 @@ namespace SceneRuntime.V8
         void IDCLScriptObject.SetProperty(int index, object value) =>
             scriptObject.SetProperty(index, value);
 
+        //TODO FRAN: Check this logic
         object IDCLScriptObject.Invoke(bool asConstructor, params object[] args)
         {
             object result = scriptObject.Invoke(asConstructor, args);
@@ -92,24 +94,27 @@ namespace SceneRuntime.V8
             return result;
         }
 
+        //TODO FRAN: Check this logic
         object IDCLScriptObject.InvokeMethod(string name, params object[] args)
         {
             object result = scriptObject.InvokeMethod(name, args);
+
             if (result is ITypedArray<byte> ta)
-                return new V8TypedArrayAdapter(ta);
-            if (result is ScriptObject so)
             {
-                try
-                {
-                    ITypedArray<byte> typedArray = (ITypedArray<byte>)so;
-                    return new V8TypedArrayAdapter(typedArray);
-                }
-                catch
-                {
-                    return new V8ScriptObjectAdapter(so);
-                }
+                return new V8TypedArrayAdapter(ta);
             }
-            return result;
+
+            if (result is not ScriptObject so) return result;
+
+            try
+            {
+                ITypedArray<byte> typedArray = (ITypedArray<byte>)so;
+                return new V8TypedArrayAdapter(typedArray);
+            }
+            catch
+            {
+                return new V8ScriptObjectAdapter(so);
+            }
         }
 
         object IDCLScriptObject.InvokeAsFunction(params object[] args) =>

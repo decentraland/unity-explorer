@@ -5,6 +5,7 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
@@ -110,7 +111,43 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     }
                 }
 
-            return api.GetResult();
+
+            //TODO FRAN: FIX THIS!! Cant use reflection and all these hacks
+            IDCLScriptObject result = api.GetResult();
+            // Convert V8ScriptObjectAdapter to ScriptObject for JavaScript enumeration support
+            // ClearScript can handle ScriptObject natively but not adapter wrappers
+            // When passed to JavaScript, ScriptObject is enumerable but V8ScriptObjectAdapter is not
+            // Use reflection to avoid circular assembly reference
+#if UNITY_WEBGL
+            if (result != null)
+            {
+                Type resultType = result.GetType();
+                // Check if it's a V8ScriptObjectAdapter without directly referencing the type
+                if (resultType.Name == "V8ScriptObjectAdapter" && resultType.Namespace == "SceneRuntime.V8")
+                {
+                    // Get the ScriptObject property via reflection
+                    PropertyInfo? scriptObjectProperty = resultType.GetProperty("ScriptObject", BindingFlags.Public | BindingFlags.Instance);
+                    if (scriptObjectProperty != null)
+                    {
+                        object? scriptObject = scriptObjectProperty.GetValue(result);
+                        if (scriptObject is ScriptObject so)
+                            return so;
+                    }
+                }
+                // Check if it's a V8TypedArrayAdapter and unwrap it
+                if (resultType.Name == "V8TypedArrayAdapter" && resultType.Namespace == "SceneRuntime.V8")
+                {
+                    PropertyInfo? scriptObjectProperty = resultType.GetProperty("ScriptObject", BindingFlags.Public | BindingFlags.Instance);
+                    if (scriptObjectProperty != null)
+                    {
+                        object? scriptObject = scriptObjectProperty.GetValue(result);
+                        if (scriptObject is ScriptObject so)
+                            return so;
+                    }
+                }
+            }
+#endif
+            return result;
         }
     }
 }

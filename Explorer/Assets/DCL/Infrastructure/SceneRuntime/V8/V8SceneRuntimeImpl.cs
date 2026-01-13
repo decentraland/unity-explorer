@@ -150,8 +150,11 @@ namespace SceneRuntime.V8
             Assert.IsTrue(result.IsEmpty);
         }
 
-        IDCLScriptObject IJsOperations.NewArray() =>
-            new V8ScriptObjectAdapter((ScriptObject)arrayCtor.Invoke(true));
+        IDCLScriptObject IJsOperations.NewArray()
+        {
+            ScriptObject result = (ScriptObject)arrayCtor.Invoke(true);
+            return new V8ScriptObjectAdapter(result);
+        }
 
         IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length) =>
             new V8TypedArrayAdapter((ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length));
