@@ -8,13 +8,13 @@ namespace DCL.Places
     {
         [SerializeField] public PlaceCategoryData[] categories;
 
-        public PlaceCategoryData? GetCategoryData(string categoryId)
+        public string GetCategoryName(string categoryId)
         {
             foreach (var category in categories)
                 if (category.id == categoryId)
-                    return category;
+                    return category.name;
 
-            return null;
+            return string.Empty;
         }
 
         [Serializable]

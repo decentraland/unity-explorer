@@ -146,8 +146,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 20, y: -20}
-  m_SizeDelta: {x: 0, y: 41.59}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 80}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5068279002033984445
 MonoBehaviour:
@@ -162,16 +162,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
   m_Padding:
-    m_Left: 0
+    m_Left: 20
     m_Right: 0
-    m_Top: 0
+    m_Top: 20
     m_Bottom: 0
   m_ChildAlignment: 0
   m_Spacing: 10
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
+  m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
@@ -286,12 +286,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Discover.DiscoverView
   discoverSectionTab: {fileID: 4247004538758472372}
-  placesResultsView: {fileID: 5612743292271442441}
   favoritesSectionTab: {fileID: 3398764929377972935}
   recentlyVisitedSectionTab: {fileID: 3695010204622054615}
   myPlacesSectionTab: {fileID: 1490185357193856950}
   categoryButtonPrefab: {fileID: 5869153357844121079, guid: c8cf20a07ddc8b145ab139afe16db8f6, type: 3}
   categoriesContainer: {fileID: 1727187272598082472}
+  placesResultsView: {fileID: 5612743292271442441}
+  placesResultsTransform: {fileID: 5316842326606138641}
   panelAnimator: {fileID: 4109777772948560957}
   headerAnimator: {fileID: 4498467503974795581}
 --- !u!1001 &4254762304009158433
@@ -551,7 +552,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1377372082448828196, guid: 6f90aa00e52c6d9419d21d6da4850a93, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -94
+      value: -80
       objectReference: {fileID: 0}
     - target: {fileID: 1377372082448828196, guid: 6f90aa00e52c6d9419d21d6da4850a93, type: 3}
       propertyPath: m_LocalPosition.x
@@ -587,7 +588,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1377372082448828196, guid: 6f90aa00e52c6d9419d21d6da4850a93, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -47
+      value: -40
       objectReference: {fileID: 0}
     - target: {fileID: 1377372082448828196, guid: 6f90aa00e52c6d9419d21d6da4850a93, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

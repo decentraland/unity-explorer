@@ -19,6 +19,7 @@ namespace DCL.Places
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
+        private readonly PlaceCategoriesSO placesCategories;
 
         private PlacesFilters currentFilters;
         private int currentPlacesPageNumber = 1;
@@ -31,12 +32,14 @@ namespace DCL.Places
             PlacesResultsView view,
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
-            PlacesStateService placesStateService)
+            PlacesStateService placesStateService,
+            PlaceCategoriesSO placesCategories)
         {
             this.view = view;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
+            this.placesCategories = placesCategories;
 
             placesController.FiltersChanged += OnFiltersChanged;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
@@ -119,7 +122,14 @@ namespace DCL.Places
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
                 view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
-                view.SetPlacesCounter(placesResult.Value.Total);
+
+                if (currentFilters.CategoryId != null)
+                {
+                    string? selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
+                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                }
+                else
+                    view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})");
             }
 
             view.SetPlacesCounterActive(placesResult.Value.Data.Count > 0);

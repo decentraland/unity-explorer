@@ -34,7 +34,7 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.DiscoverView, this, placesAPIService, placesStateService);
+            placesResultsController = new PlacesResultsController(view.DiscoverView, this, placesAPIService, placesStateService, placesCategories);
 
             view.SectionChanged += OnSectionChanged;
             view.CategorySelected += OnCategorySelected;

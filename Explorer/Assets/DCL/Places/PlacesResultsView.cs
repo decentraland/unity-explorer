@@ -39,8 +39,8 @@ namespace DCL.Places
         public void SetDependencies(PlacesStateService stateService) =>
             this.placesStateService = stateService;
 
-        public void SetPlacesCounter(int placesTotalAmount) =>
-            placesResultsCounter.text = $"Results ({placesTotalAmount})";
+        public void SetPlacesCounter(string text) =>
+            placesResultsCounter.text = text;
 
         public void SetPlacesCounterActive(bool isActive) =>
             placesResultsCounter.gameObject.SetActive(isActive);

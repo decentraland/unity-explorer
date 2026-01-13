@@ -10,6 +10,8 @@ namespace DCL.Places
     {
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
+        private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
+        private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
 
         public Action<PlacesSection>? SectionChanged;
         public event Action<string?>? CategorySelected;
@@ -32,6 +34,7 @@ namespace DCL.Places
 
         [Header("Places Results")]
         [SerializeField] private PlacesResultsView placesResultsView = null!;
+        [SerializeField] private RectTransform placesResultsTransform = null!;
 
         [Header("Animators")]
         [SerializeField] private Animator panelAnimator = null!;
@@ -126,8 +129,11 @@ namespace DCL.Places
             currentCategories.Clear();
         }
 
-        public void SetCategoriesVisible(bool isVisible) =>
+        public void SetCategoriesVisible(bool isVisible)
+        {
             categoriesContainer.gameObject.SetActive(isVisible);
+            placesResultsTransform.offsetMax = new Vector2(placesResultsTransform.offsetMax.x, isVisible ? PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX : PLACES_RESULTS_TOP_Y_OFFSET_MAX);
+        }
 
         private PlaceCategoryButton InstantiateCategoryButtonPrefab()
         {
