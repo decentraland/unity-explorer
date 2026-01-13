@@ -45,6 +45,9 @@ namespace DCL.Diagnostics.Sentry
 #endif
 
             options.SetBeforeSend(AddUnspecifiedCategory);
+
+            Debug.Log($"SentryBuildTimeConfiguration.options.enabled: ${options.Enabled}");
+            Debug.Log($"SentryBuildTimeConfiguration.options.EnvironmentOverride: ${options.Environment}");
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
@@ -99,7 +102,6 @@ namespace DCL.Diagnostics.Sentry
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
             EditorUtility.SetDirty(asset);
-            Debug.Log($"ScriptableSentryUnityOptions: {JsonUtility.ToJson(asset)}");
         }
 #endif
     }
