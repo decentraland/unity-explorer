@@ -15,28 +15,30 @@ using System.Threading;
 using UnityEngine;
 
 #if UNITY_WEBGL
+
 // ReSharper disable once RedundantUsingDirective
 using SceneRuntime.Web;
-//#else
+
+#else
 using SceneRuntime.V8;
 #endif
+
 namespace SceneRuntime.Factory
 {
     public sealed class SceneRuntimeFactory
     {
-        private readonly IRealmData? realmData;
-        private readonly IJavaScriptEngineFactory engineFactory;
-
         public enum InstantiationBehavior
         {
             STAY_ON_MAIN_THREAD,
             SWITCH_TO_THREAD_POOL,
         }
 
+        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
+        private readonly IRealmData? realmData;
+        private readonly IJavaScriptEngineFactory engineFactory;
+
         private readonly IWebJsSources webJsSources;
         private readonly IJsSourcesCache jsSourcesCache;
-
-        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
         public SceneRuntimeFactory(IRealmData? realmData, IJavaScriptEngineFactory engineFactory, IWebJsSources webJsSources)
@@ -48,10 +50,10 @@ namespace SceneRuntime.Factory
         }
 
         /// <summary>
-        /// How to use it
-        /// 1. Ensure that the directory exists at the path DIR
-        /// 2. Launch the Unity Editor and play scenes normally
-        /// 3. Check the directory DIR for the cached files
+        ///     How to use it
+        ///     1. Ensure that the directory exists at the path DIR
+        ///     2. Launch the Unity Editor and play scenes normally
+        ///     3. Check the directory DIR for the cached files
         ///     3.1 Some of them can be minified, use https://www.unminify2.com/ to explore them comfortably
         /// </summary>
         /// <returns>Cache for scenes</returns>
@@ -98,8 +100,8 @@ namespace SceneRuntime.Factory
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL
-//            return new WebGLSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
-//#else
+            return new WebGLSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
+#else
             return new V8SceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
 #endif
         }

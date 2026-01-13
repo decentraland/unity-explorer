@@ -1,15 +1,15 @@
 using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using Utility;
+
 #if !UNITY_WEBGL
 using SceneRuntime.V8;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 #endif
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
@@ -48,24 +48,15 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 {
                     IDCLTypedArray<byte> dclTypedArray;
                     object dataItem = dataList[i];
-                    
-                    if (dataItem is IDCLTypedArray<byte> alreadyDcl)
-                    {
-                        dclTypedArray = alreadyDcl;
-                    }
-                    else if (dataItem is ITypedArray<byte> typedArray)
-                    {
-#if !UNITY_WEBGL
-                        dclTypedArray = new V8TypedArrayAdapter(typedArray);
-#else
-                        throw new InvalidOperationException("ITypedArray<byte> must be converted to IDCLTypedArray<byte> for WebGL");
-#endif
-                    }
-                    else
-                    {
-                        throw new InvalidCastException($"Expected ITypedArray<byte> or IDCLTypedArray<byte>, but got {dataItem?.GetType()}");
-                    }
 
+                    if (dataItem is IDCLTypedArray<byte> alreadyDcl) dclTypedArray = alreadyDcl;
+#if UNITY_WEBGL
+                    else throw new InvalidCastException($"WebGL needs IDCLTypedArray<byte> but got {dataItem?.GetType()}");
+#else
+                    else if (dataItem is ITypedArray<byte> typedArray)
+                        dclTypedArray = new V8TypedArrayAdapter(typedArray);
+                    else throw new InvalidCastException($"Expected ITypedArray<byte> or IDCLTypedArray<byte>, but got {dataItem?.GetType()}");
+#endif
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
@@ -92,10 +83,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
                 api.SendBinary(lastInput, recipient);
             }
-            catch (Exception e)
-            {
-                sceneExceptionsHandler.OnEngineException(e);
-            }
+            catch (Exception e) { sceneExceptionsHandler.OnEngineException(e); }
         }
 
         [UsedImplicitly]
@@ -114,8 +102,8 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
                     if (obj is IDCLScriptObject perRecipientStruct)
                     {
-                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
-                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
+                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address");
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data");
 
                         if (data.Count is 0)
                             continue;
@@ -134,43 +122,18 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     }
                 }
 
-
-            //TODO FRAN: FIX THIS!! Cant use reflection and all these hacks
             IDCLScriptObject result = api.GetResult();
-            // Convert V8ScriptObjectAdapter to ScriptObject for JavaScript enumeration support
+
+            // Get the native JavaScript object for proper enumeration support
             // ClearScript can handle ScriptObject natively but not adapter wrappers
             // When passed to JavaScript, ScriptObject is enumerable but V8ScriptObjectAdapter is not
-            // Use reflection to avoid circular assembly reference
-#if UNITY_WEBGL
-            if (result != null)
-            {
-                Type resultType = result.GetType();
-                // Check if it's a V8ScriptObjectAdapter without directly referencing the type
-                if (resultType.Name == "V8ScriptObjectAdapter" && resultType.Namespace == "SceneRuntime.V8")
-                {
-                    // Get the ScriptObject property via reflection
-                    PropertyInfo? scriptObjectProperty = resultType.GetProperty("ScriptObject", BindingFlags.Public | BindingFlags.Instance);
-                    if (scriptObjectProperty != null)
-                    {
-                        object? scriptObject = scriptObjectProperty.GetValue(result);
-                        if (scriptObject is ScriptObject so)
-                            return so;
-                    }
-                }
-                // Check if it's a V8TypedArrayAdapter and unwrap it
-                if (resultType.Name == "V8TypedArrayAdapter" && resultType.Namespace == "SceneRuntime.V8")
-                {
-                    PropertyInfo? scriptObjectProperty = resultType.GetProperty("ScriptObject", BindingFlags.Public | BindingFlags.Instance);
-                    if (scriptObjectProperty != null)
-                    {
-                        object? scriptObject = scriptObjectProperty.GetValue(result);
-                        if (scriptObject is ScriptObject so)
-                            return so;
-                    }
-                }
-            }
+            object nativeObject = result.GetNativeObject();
+#if !UNITY_WEBGL
+            // For V8, ensure we return ScriptObject for proper JavaScript enumeration
+            if (nativeObject is ScriptObject so)
+                return so;
 #endif
-            return result;
+            return nativeObject;
         }
     }
 }

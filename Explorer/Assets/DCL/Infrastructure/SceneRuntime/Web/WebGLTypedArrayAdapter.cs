@@ -6,22 +6,13 @@ namespace SceneRuntime.Web
 {
     public class WebGLTypedArrayAdapter : IDCLTypedArray<byte>, IDCLScriptObject
     {
-        private readonly WebGLScriptObject scriptObject;
-
-        public WebGLTypedArrayAdapter(WebGLScriptObject scriptObject)
-        {
-            this.scriptObject = scriptObject;
-        }
-
-        public WebGLScriptObject ScriptObject => scriptObject;
-
-        public static implicit operator WebGLScriptObject(WebGLTypedArrayAdapter adapter) => adapter.scriptObject;
+        public WebGLScriptObject ScriptObject { get; }
 
         public ulong Length
         {
             get
             {
-                object length = scriptObject.GetProperty("length");
+                object length = ScriptObject.GetProperty("length");
                 return length != null ? Convert.ToUInt64(length) : 0;
             }
         }
@@ -30,7 +21,7 @@ namespace SceneRuntime.Web
         {
             get
             {
-                object length = scriptObject.GetProperty("length");
+                object length = ScriptObject.GetProperty("length");
                 return length != null ? Convert.ToUInt64(length) : 0;
             }
         }
@@ -39,12 +30,30 @@ namespace SceneRuntime.Web
         {
             get
             {
-                object buffer = scriptObject.GetProperty("buffer");
+                object buffer = ScriptObject.GetProperty("buffer");
+
                 if (buffer is WebGLScriptObject bufferObj)
                     return new WebGLArrayBufferAdapter(bufferObj);
+
                 throw new InvalidOperationException("Failed to get buffer property from typed array");
             }
         }
+
+        IEnumerable<string> IDCLScriptObject.PropertyNames => ScriptObject.PropertyNames;
+
+        object IDCLScriptObject.this[string name, params object[] args]
+        {
+            get => ScriptObject[name, args];
+            set => ScriptObject[name, args] = value;
+        }
+
+        public WebGLTypedArrayAdapter(WebGLScriptObject scriptObject)
+        {
+            ScriptObject = scriptObject;
+        }
+
+        public static implicit operator WebGLScriptObject(WebGLTypedArrayAdapter adapter) =>
+            adapter.ScriptObject;
 
         ulong IDCLTypedArray<byte>.Read(ulong index, ulong length, byte[] destination, ulong destinationIndex)
         {
@@ -52,16 +61,15 @@ namespace SceneRuntime.Web
                 return 0;
 
             ulong actualLength = Math.Min(length, (ulong)destination.LongLength - destinationIndex);
-            actualLength = Math.Min(actualLength, this.Length - index);
+            actualLength = Math.Min(actualLength, Length - index);
 
             for (ulong i = 0; i < actualLength; i++)
             {
-                object byteValue = scriptObject.GetProperty((index + i).ToString());
-                if (byteValue != null)
-                {
-                    destination[destinationIndex + i] = Convert.ToByte(byteValue);
-                }
+                object byteValue = ScriptObject.GetProperty((index + i).ToString());
+
+                if (byteValue != null) { destination[destinationIndex + i] = Convert.ToByte(byteValue); }
             }
+
             return actualLength;
         }
 
@@ -77,15 +85,13 @@ namespace SceneRuntime.Web
                 return;
 
             ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
-            actualCount = Math.Min(actualCount, this.Length - offset);
+            actualCount = Math.Min(actualCount, Length - offset);
 
             for (ulong i = 0; i < actualCount; i++)
             {
-                object byteValue = scriptObject.GetProperty((offset + i).ToString());
-                if (byteValue != null)
-                {
-                    destination[destinationIndex + i] = Convert.ToByte(byteValue);
-                }
+                object byteValue = ScriptObject.GetProperty((offset + i).ToString());
+
+                if (byteValue != null) { destination[destinationIndex + i] = Convert.ToByte(byteValue); }
             }
         }
 
@@ -95,48 +101,45 @@ namespace SceneRuntime.Web
                 return;
 
             ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
-            actualCount = Math.Min(actualCount, this.Length - offset);
+            actualCount = Math.Min(actualCount, Length - offset);
 
-            for (ulong i = 0; i < actualCount; i++)
-            {
-                scriptObject.SetProperty((offset + i).ToString(), source[sourceIndex + i]);
-            }
+            for (ulong i = 0; i < actualCount; i++) { ScriptObject.SetProperty((offset + i).ToString(), source[sourceIndex + i]); }
         }
 
         object IDCLScriptObject.GetProperty(string name, params object[] args) =>
-            scriptObject.GetProperty(name, args);
+            ScriptObject.GetProperty(name, args);
 
         void IDCLScriptObject.SetProperty(string name, params object[] args) =>
-            scriptObject.SetProperty(name, args);
-
-        IEnumerable<string> IDCLScriptObject.PropertyNames => scriptObject.PropertyNames;
-
-        object IDCLScriptObject.this[string name, params object[] args]
-        {
-            get => scriptObject[name, args];
-            set => scriptObject[name, args] = value;
-        }
+            ScriptObject.SetProperty(name, args);
 
         void IDCLScriptObject.SetProperty(int index, object value) =>
-            scriptObject.SetProperty(index, value);
+            ScriptObject.SetProperty(index, value);
 
         object IDCLScriptObject.Invoke(bool asConstructor, params object[] args)
         {
-            object result = scriptObject.Invoke(asConstructor, args);
+            object result = ScriptObject.Invoke(asConstructor, args);
+
             if (result is WebGLScriptObject wso)
                 return new WebGLTypedArrayAdapter(wso);
+
             return result;
         }
 
         object IDCLScriptObject.InvokeMethod(string name, params object[] args)
         {
-            object result = scriptObject.InvokeMethod(name, args);
+            object result = ScriptObject.InvokeMethod(name, args);
+
             if (result is WebGLScriptObject wso)
                 return new WebGLTypedArrayAdapter(wso);
+
             return result;
         }
 
         object IDCLScriptObject.InvokeAsFunction(params object[] args) =>
-            scriptObject.InvokeAsFunction(args);
+            ScriptObject.InvokeAsFunction(args);
+
+        /// <inheritdoc />
+        object IDCLScriptObject.GetNativeObject() =>
+            ScriptObject;
     }
 }
