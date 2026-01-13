@@ -571,6 +571,10 @@ def generate_summary_page(
                     if not result or not result.sample_groups:
                         continue
 
+                    # Get total request count from WebRequest.Send samples
+                    send_sg = result.sample_groups.get("WebRequest.Send")
+                    total_requests = len(send_sg.samples) if send_sg else 0
+
                     for metric_key in metric_keys:
                         sg = result.sample_groups.get(metric_key)
                         if sg:
@@ -582,6 +586,9 @@ def generate_summary_page(
                                 "p95": sg.p95,
                                 "p99": sg.p99,
                                 "unit": sg.unit,
+                                "sum_val": sg.sum_val,
+                                "sample_count": len(sg.samples),
+                                "total_requests": total_requests,
                                 "concurrency": concurrency,
                                 "mode": "list",
                             })
@@ -619,6 +626,10 @@ def generate_summary_page(
 
                 compare_scenarios = compare_methods[compare_method_key]
 
+                # Get total request count from WebRequest.Send samples
+                subject_send_sg = subject_result.sample_groups.get("WebRequest.Send")
+                subject_total_requests = len(subject_send_sg.samples) if subject_send_sg else 0
+
                 # Compare against ALL endpoints in the compare test
                 for compare_label, compare_result in compare_scenarios.items():
                     if not compare_result or not compare_result.sample_groups:
@@ -627,6 +638,19 @@ def generate_summary_page(
                     for metric_key in metric_keys:
                         subject_sg = subject_result.sample_groups.get(metric_key)
                         compare_sg = compare_result.sample_groups.get(metric_key)
+
+                        # Check if this is a failed_count metric
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
+                        if metric_config.get("format") == "failed_count":
+                            if subject_sg and subject_sg.sum_val > 0:
+                                case_results[cat_key].append({
+                                    "metric": metric_key,
+                                    "failed_count": int(subject_sg.sum_val),
+                                    "total_requests": subject_total_requests,
+                                    "concurrency": concurrency,
+                                    "mode": "failed_count",
+                                })
+                            continue
 
                         if subject_sg and compare_sg and compare_sg.median > 0:
                             # Calculate how subject compares to compare_test endpoints
@@ -655,6 +679,26 @@ def generate_summary_page(
                 if not other_endpoints:
                     continue
 
+                # Get total request count from WebRequest.Send samples
+                subject_send_sg = subject_result.sample_groups.get("WebRequest.Send")
+                subject_total_requests = len(subject_send_sg.samples) if subject_send_sg else 0
+
+                # Handle failed_count metrics first (only need to add once per category)
+                failed_count_added = set()
+                for metric_key in metric_keys:
+                    metric_config = config.get("metrics", {}).get(metric_key, {})
+                    if metric_config.get("format") == "failed_count" and metric_key not in failed_count_added:
+                        subject_sg = subject_result.sample_groups.get(metric_key)
+                        if subject_sg and subject_sg.sum_val > 0:
+                            case_results[cat_key].append({
+                                "metric": metric_key,
+                                "failed_count": int(subject_sg.sum_val),
+                                "total_requests": subject_total_requests,
+                                "concurrency": concurrency,
+                                "mode": "failed_count",
+                            })
+                            failed_count_added.add(metric_key)
+
                 # Calculate metrics for each non-subject endpoint
                 for other_label in other_endpoints:
                     other_result = scenarios[other_label]
@@ -663,6 +707,11 @@ def generate_summary_page(
                         continue
 
                     for metric_key in metric_keys:
+                        # Skip failed_count metrics (already handled above)
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
+                        if metric_config.get("format") == "failed_count":
+                            continue
+
                         other_sg = other_result.sample_groups.get(metric_key)
                         subject_sg = subject_result.sample_groups.get(metric_key)
 
@@ -752,20 +801,38 @@ def generate_summary_page(
                 # List-only mode: show metrics grouped by scenario
                 # Group by scenario -> metric -> values
                 scenario_metrics = defaultdict(lambda: defaultdict(list))
+                scenario_failed = defaultdict(lambda: defaultdict(lambda: {"failed": 0, "total": 0}))
                 for r in cat_results:
-                    scenario_metrics[r["scenario"]][r["metric"]].append({
-                        "median": r["median"],
-                        "p75": r["p75"],
-                        "p95": r["p95"],
-                        "unit": r["unit"],
-                    })
+                    metric_config = config.get("metrics", {}).get(r["metric"], {})
+                    if metric_config.get("format") == "failed_count":
+                        scenario_failed[r["scenario"]][r["metric"]]["failed"] += r.get("sum_val", 0)
+                        scenario_failed[r["scenario"]][r["metric"]]["total"] = r.get("total_requests", 0)
+                    else:
+                        scenario_metrics[r["scenario"]][r["metric"]].append({
+                            "median": r["median"],
+                            "p75": r["p75"],
+                            "p95": r["p95"],
+                            "unit": r["unit"],
+                        })
 
-                for scenario in sorted(scenario_metrics.keys()):
+                for scenario in sorted(set(list(scenario_metrics.keys()) + list(scenario_failed.keys()))):
                     ax.text(0.04, y_pos, f"{scenario}:", fontsize=9, fontweight="bold",
                             transform=ax.transAxes, color="#333333")
                     y_pos -= line_height
 
                     for metric_key in metric_keys:
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
+
+                        # Handle failed_count format
+                        if metric_config.get("format") == "failed_count":
+                            failed_data = scenario_failed[scenario].get(metric_key)
+                            if failed_data and failed_data["failed"] > 0:
+                                text = f"    • Failed: {int(failed_data['failed'])}/{failed_data['total']}"
+                                ax.text(0.06, y_pos, text, fontsize=8, transform=ax.transAxes,
+                                        color="#8B0000")
+                                y_pos -= line_height
+                            continue
+
                         values = scenario_metrics[scenario].get(metric_key)
                         if not values:
                             continue
@@ -777,7 +844,6 @@ def generate_summary_page(
                         unit = values[0]["unit"]
 
                         metric_name, _ = get_metric_display_name(metric_key, config)
-                        metric_config = config.get("metrics", {}).get(metric_key, {})
 
                         # Format based on unit (microseconds -> ms)
                         if unit == SAMPLE_UNIT_MICROSECOND:
@@ -804,15 +870,32 @@ def generate_summary_page(
                 metric_averages = defaultdict(list)
                 metric_p75_averages = defaultdict(list)
                 metric_p95_averages = defaultdict(list)
+                metric_failed = defaultdict(lambda: {"failed": 0, "total": 0})
                 for r in cat_results:
-                    metric_averages[r["metric"]].append(r["pct_diff"])
-                    if "p75_diff" in r:
-                        metric_p75_averages[r["metric"]].append(r["p75_diff"])
-                    if "p95_diff" in r:
-                        metric_p95_averages[r["metric"]].append(r["p95_diff"])
+                    if r.get("mode") == "failed_count":
+                        metric_failed[r["metric"]]["failed"] += r.get("failed_count", 0)
+                        metric_failed[r["metric"]]["total"] = r.get("total_requests", 0)
+                    elif "pct_diff" in r:
+                        metric_averages[r["metric"]].append(r["pct_diff"])
+                        if "p75_diff" in r:
+                            metric_p75_averages[r["metric"]].append(r["p75_diff"])
+                        if "p95_diff" in r:
+                            metric_p95_averages[r["metric"]].append(r["p95_diff"])
 
                 # Iterate in the order specified by metric_keys
                 for metric_key in metric_keys:
+                    metric_config = config.get("metrics", {}).get(metric_key, {})
+
+                    # Handle failed_count format
+                    if metric_config.get("format") == "failed_count":
+                        failed_data = metric_failed.get(metric_key)
+                        if failed_data and failed_data["failed"] > 0:
+                            text = f"  • Failed: {int(failed_data['failed'])}/{failed_data['total']}"
+                            ax.text(0.04, y_pos, text, fontsize=9, transform=ax.transAxes,
+                                    color="#8B0000")
+                            y_pos -= line_height
+                        continue
+
                     pct_diffs = metric_averages.get(metric_key)
                     if not pct_diffs:
                         continue
@@ -824,7 +907,6 @@ def generate_summary_page(
                     text = f"  • {metric_name}: {sign}{avg_diff:.1f}% ({diff_label})"
 
                     # Check if P75/P95 should be shown for this metric
-                    metric_config = config.get("metrics", {}).get(metric_key, {})
                     p75_diffs = metric_p75_averages.get(metric_key)
                     p95_diffs = metric_p95_averages.get(metric_key)
                     if metric_config.get("show_p75") and p75_diffs:
@@ -905,18 +987,33 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
             if list_only_mode:
                 # List-only mode: show metrics grouped by scenario
                 scenario_metrics = defaultdict(lambda: defaultdict(list))
+                scenario_failed = defaultdict(lambda: defaultdict(lambda: {"failed": 0, "total": 0}))
                 for r in cat_results:
-                    scenario_metrics[r["scenario"]][r["metric"]].append({
-                        "median": r["median"],
-                        "p75": r["p75"],
-                        "p95": r["p95"],
-                        "unit": r["unit"],
-                    })
+                    metric_config = config.get("metrics", {}).get(r["metric"], {})
+                    if metric_config.get("format") == "failed_count":
+                        scenario_failed[r["scenario"]][r["metric"]]["failed"] += r.get("sum_val", 0)
+                        scenario_failed[r["scenario"]][r["metric"]]["total"] = r.get("total_requests", 0)
+                    else:
+                        scenario_metrics[r["scenario"]][r["metric"]].append({
+                            "median": r["median"],
+                            "p75": r["p75"],
+                            "p95": r["p95"],
+                            "unit": r["unit"],
+                        })
 
-                for scenario in sorted(scenario_metrics.keys()):
+                for scenario in sorted(set(list(scenario_metrics.keys()) + list(scenario_failed.keys()))):
                     lines.append(f"\n**{scenario}:**\n")
 
                     for metric_key in metric_keys:
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
+
+                        # Handle failed_count format
+                        if metric_config.get("format") == "failed_count":
+                            failed_data = scenario_failed[scenario].get(metric_key)
+                            if failed_data and failed_data["failed"] > 0:
+                                lines.append(f"- 🔴 **Failed**: {int(failed_data['failed'])}/{failed_data['total']}\n")
+                            continue
+
                         values = scenario_metrics[scenario].get(metric_key)
                         if not values:
                             continue
@@ -927,7 +1024,6 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                         unit = values[0]["unit"]
 
                         metric_name, _ = get_metric_display_name(metric_key, config)
-                        metric_config = config.get("metrics", {}).get(metric_key, {})
 
                         if unit == SAMPLE_UNIT_MICROSECOND:
                             median_ms = avg_median / 1000
@@ -949,15 +1045,29 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                 metric_averages = defaultdict(list)
                 metric_p75_averages = defaultdict(list)
                 metric_p95_averages = defaultdict(list)
+                metric_failed = defaultdict(lambda: {"failed": 0, "total": 0})
                 for r in cat_results:
-                    metric_averages[r["metric"]].append(r["pct_diff"])
-                    if "p75_diff" in r:
-                        metric_p75_averages[r["metric"]].append(r["p75_diff"])
-                    if "p95_diff" in r:
-                        metric_p95_averages[r["metric"]].append(r["p95_diff"])
+                    if r.get("mode") == "failed_count":
+                        metric_failed[r["metric"]]["failed"] += r.get("failed_count", 0)
+                        metric_failed[r["metric"]]["total"] = r.get("total_requests", 0)
+                    elif "pct_diff" in r:
+                        metric_averages[r["metric"]].append(r["pct_diff"])
+                        if "p75_diff" in r:
+                            metric_p75_averages[r["metric"]].append(r["p75_diff"])
+                        if "p95_diff" in r:
+                            metric_p95_averages[r["metric"]].append(r["p95_diff"])
 
                 # Iterate in the order specified by metric_keys
                 for metric_key in metric_keys:
+                    metric_config = config.get("metrics", {}).get(metric_key, {})
+
+                    # Handle failed_count format
+                    if metric_config.get("format") == "failed_count":
+                        failed_data = metric_failed.get(metric_key)
+                        if failed_data and failed_data["failed"] > 0:
+                            lines.append(f"- 🔴 **Failed**: {int(failed_data['failed'])}/{failed_data['total']}\n")
+                        continue
+
                     pct_diffs = metric_averages.get(metric_key)
                     if not pct_diffs:
                         continue
@@ -978,7 +1088,6 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                     text = f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})"
 
                     # Check if P75/P95 should be shown for this metric
-                    metric_config = config.get("metrics", {}).get(metric_key, {})
                     p75_diffs = metric_p75_averages.get(metric_key)
                     p95_diffs = metric_p95_averages.get(metric_key)
                     if metric_config.get("show_p75") and p75_diffs:

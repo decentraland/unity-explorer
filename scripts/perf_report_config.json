@@ -63,12 +63,18 @@
     "Iteration Downloaded Data": {
       "name": "Downloaded Data",
       "description": "amount of data downloaded"
+    },
+    "WebRequest.Failed": {
+      "name": "Failed Requests",
+      "description": "number of failed web requests",
+      "format": "failed_count"
     }
   },
   "default_summary_metrics": [
     "WebRequest.Send",
     "WebRequest.ProcessData",
-    "Iteration Total Time"
+    "Iteration Total Time",
+    "WebRequest.Failed"
   ],
   "parallelism": {
     "no_concurrency": {

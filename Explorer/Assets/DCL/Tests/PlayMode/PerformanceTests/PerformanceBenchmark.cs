@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -72,7 +73,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 var tasks = new UniTask[targetRequestsCount];
 
                 for (int j = 0; j < targetRequestsCount; j++)
-                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync();
+                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync(ReportCategory.GENERIC_WEB_REQUEST);
 
                 await UniTask.WhenAll(tasks);
 
