@@ -13,8 +13,15 @@ namespace SceneRuntime
             this.engine = engine;
         }
 
+        public void Dispose()
+        {
+            foreach (JsApiWrapper wrap in wraps)
+                wrap.Dispose();
+        }
+
         public void AddHostObject<T>(string itemName, T target) where T: JsApiWrapper
         {
+            target.engine = engine;
             engine.AddHostObject(itemName, target);
             wraps.Add(target);
         }
@@ -23,12 +30,6 @@ namespace SceneRuntime
         {
             foreach (JsApiWrapper wrap in wraps)
                 wrap.OnSceneIsCurrentChanged(isCurrent);
-        }
-
-        public void Dispose()
-        {
-            foreach (JsApiWrapper wrap in wraps)
-                wrap.Dispose();
         }
     }
 }
