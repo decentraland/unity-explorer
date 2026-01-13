@@ -48,7 +48,6 @@ namespace DCL.Backpack.EmotesSection
         private readonly BackpackEmoteGridItemView?[] loadingResults = new BackpackEmoteGridItemView[CURRENT_PAGE_SIZE];
         private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
-        private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
@@ -74,7 +73,6 @@ namespace DCL.Backpack.EmotesSection
             PageButtonView pageButtonView,
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
-            IReadOnlyCollection<URN> embeddedEmoteIds,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
             IAppArgs appArgs,
@@ -91,7 +89,6 @@ namespace DCL.Backpack.EmotesSection
             this.backpackSortController = backpackSortController;
             this.gridItemsPool = gridItemsPool;
             this.emoteProvider = emoteProvider;
-            this.embeddedEmoteIds = embeddedEmoteIds;
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
@@ -175,18 +172,18 @@ namespace DCL.Backpack.EmotesSection
                     emotes = customOwnedEmotes;
                 else
                 {
-                    using var scope = ListPool<IEmote>.Get(out var embeddedEmotes);
-                    embeddedEmotes = embeddedEmotes.EnsureNotNull();
+                    using var scope = ListPool<IEmote>.Get(out var baseEmotes);
+                    baseEmotes = baseEmotes.EnsureNotNull();
 
-                    await emoteProvider.GetEmotesAsync(embeddedEmoteIds, currentBodyShape, ct, embeddedEmotes);
+                    await emoteProvider.GetEmotesAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
 
-                    IEnumerable<IEmote> filteredEmotes = embeddedEmotes;
+                    IEnumerable<IEmote> filteredEmotes = baseEmotes;
 
                     if (!string.IsNullOrEmpty(currentSearch!))
-                        filteredEmotes = embeddedEmotes.Where(emote => emote.GetName().Contains(currentSearch));
+                        filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch));
 
                     if (!string.IsNullOrEmpty(currentCategory!))
-                        filteredEmotes = embeddedEmotes.Where(emote => emote.GetCategory() == currentCategory);
+                        filteredEmotes = baseEmotes.Where(emote => emote.GetCategory() == currentCategory);
 
                     filteredEmotes = currentOrder.By switch
                                      {
@@ -196,16 +193,16 @@ namespace DCL.Backpack.EmotesSection
                                          _ => filteredEmotes,
                                      };
 
-                    embeddedEmotes = filteredEmotes.ToList();
+                    baseEmotes = filteredEmotes.ToList();
 
                     int customOwnedEmotesAmount = totalAmount;
-                    totalAmount += embeddedEmotes.Count;
+                    totalAmount += baseEmotes.Count;
 
-                    var embeddedEmotesToSkip = 0;
+                    var baseEmotesToSkip = 0;
                     int emotesPageIndex = (pageNumber - 1) * CURRENT_PAGE_SIZE;
 
                     if (emotesPageIndex > customOwnedEmotesAmount)
-                        embeddedEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
+                        baseEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
 
                     // We always need to concat embedded emotes at the end, no matter the filter & sorting
                     // otherwise the pagination in the realm provider get inconsistent with the union of the embedded emotes
@@ -215,7 +212,7 @@ namespace DCL.Backpack.EmotesSection
                     // 2. Page 1 will contain some embedded emotes & owned emotes
                     // 3. Request page 2, the realm will not provide any of the owned emotes since they are part of page 1
                     // 4. We will probably skip most of the owned emotes in the grid becoming inconsistent
-                    emotes = customOwnedEmotes.Concat(embeddedEmotes.Skip(embeddedEmotesToSkip))
+                    emotes = customOwnedEmotes.Concat(baseEmotes.Skip(baseEmotesToSkip))
                                               .Take(CURRENT_PAGE_SIZE)
                                               .ToArray();
                 }
