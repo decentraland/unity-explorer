@@ -1,4 +1,3 @@
-using DLC.SceneRuntime.V8;
 using Microsoft.ClearScript.V8;
 using System;
 
@@ -32,11 +31,11 @@ namespace SceneRuntime.V8
 
         public void AddHostObject(string itemName, object target) => engine.AddHostObject(itemName, target);
 
-        public IScriptObject Global => new V8ScriptObjectAdapter(engine.Global);
+        public IDCLScriptObject Global => new V8ScriptObjectAdapter(engine.Global);
 
         public IRuntimeHeapInfo? GetRuntimeHeapInfo()
         {
-            V8RuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
+            V8RuntimeHeapInfo heapInfo = engine.GetRuntimeHeapInfo();
             return heapInfo != null ? new V8RuntimeHeapInfoAdapter(heapInfo) : null;
         }
 

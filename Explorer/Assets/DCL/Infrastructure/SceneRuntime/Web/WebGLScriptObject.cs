@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Utility;
 
 namespace SceneRuntime.Web
 {
-    public class WebGLScriptObject : IScriptObject
+    public class WebGLScriptObject : IDCLScriptObject
     {
         private readonly WebGLJavaScriptEngine engine;
         private readonly string propertyPath;
@@ -13,6 +14,53 @@ namespace SceneRuntime.Web
         {
             this.engine = engine;
             this.propertyPath = propertyPath;
+        }
+
+        public object InvokeMethod(string name, params object[] args)
+        {
+            if (!IsObjectId(propertyPath))
+                throw new InvalidOperationException($"Cannot invoke method on non-object path: {propertyPath}");
+
+            string argsJson = Newtonsoft.Json.JsonConvert.SerializeObject(args);
+            IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(propertyPath);
+            IntPtr methodNamePtr = Marshal.StringToHGlobalAnsi(name);
+            IntPtr argsJsonPtr = Marshal.StringToHGlobalAnsi(argsJson);
+            try
+            {
+                int bufferSize = 1024 * 64;
+                IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
+                try
+                {
+                    IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
+                    try
+                    {
+                        int result = JSContext_InvokeObjectMethod(contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr, resultPtr, bufferSize);
+                        if (result > 0)
+                        {
+                            string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                            object deserialized = Newtonsoft.Json.JsonConvert.DeserializeObject(resultStr);
+                            if (deserialized is string str && IsObjectId(str))
+                                return new WebGLScriptObject(engine, str);
+                            return deserialized;
+                        }
+                        throw new InvalidOperationException($"Failed to invoke method {name} on object {propertyPath}");
+                    }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(contextIdPtr);
+                    }
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(resultPtr);
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(objectIdPtr);
+                Marshal.FreeHGlobal(methodNamePtr);
+                Marshal.FreeHGlobal(argsJsonPtr);
+            }
         }
 
         public object InvokeAsFunction(params object[] args)
@@ -178,6 +226,40 @@ namespace SceneRuntime.Web
             }
         }
 
+        public object GetProperty(string name, params object[] args)
+        {
+            if (args.Length > 0)
+                throw new NotImplementedException("GetProperty with args not supported");
+            return GetProperty(name);
+        }
+
+        public void SetProperty(string name, params object[] args)
+        {
+            if (args.Length == 0)
+                throw new ArgumentException("SetProperty requires at least one argument (the value)", nameof(args));
+            object value = args[args.Length - 1];
+            SetProperty(name, value);
+        }
+
+        public IEnumerable<string> PropertyNames => Array.Empty<string>();
+
+        public object this[string name, params object[] args]
+        {
+            get
+            {
+                if (args.Length > 0)
+                    throw new NotImplementedException("Indexer get with args not supported");
+                return GetProperty(name);
+            }
+
+            set
+            {
+                if (args.Length > 0)
+                    throw new NotImplementedException("Indexer set with args not supported");
+                SetProperty(name, value);
+            }
+        }
+
         public void SetProperty(int index, object value)
         {
             throw new NotImplementedException();
@@ -188,7 +270,7 @@ namespace SceneRuntime.Web
             return !string.IsNullOrEmpty(path) && path.StartsWith("__obj_");
         }
 
-        public IScriptObject Invoke(bool asConstructor, params object[] args)
+        public object Invoke(bool asConstructor, params object[] args)
         {
             if (asConstructor)
             {
@@ -244,7 +326,7 @@ namespace SceneRuntime.Web
             throw new NotImplementedException();
         }
 
-        public IDCLTypedArray<byte> InvokeMethod(string subarray, int i, int dataOffset) =>
+        public object InvokeMethod(string subarray, int i, int dataOffset) =>
             throw new NotImplementedException();
 
         [DllImport("__Internal")]

@@ -50,12 +50,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
             }
 
-            //TODO FRAN: FIX THIS ->
-            //Suspicious cast: there is no type in the solution which is inherited from both 'Utility.IDCLTypedArray<byte>' and 'SceneRuntime.IScriptObject'
-            var arrayObj = (IScriptObject)array;
-
-            var subArray = arrayObj.InvokeMethod("subarray", 0,
-                dataOffset + dataLength);
+            IDCLScriptObject arrayObj = (IDCLScriptObject)array;
+            object subArrayResult = arrayObj.InvokeMethod("subarray", 0, dataOffset + dataLength);
+            IDCLTypedArray<byte> subArray = (IDCLTypedArray<byte>)subArrayResult;
 
             lock (eventsToProcess)
             {

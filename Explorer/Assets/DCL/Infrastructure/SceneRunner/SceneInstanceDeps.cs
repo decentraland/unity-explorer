@@ -17,7 +17,6 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;

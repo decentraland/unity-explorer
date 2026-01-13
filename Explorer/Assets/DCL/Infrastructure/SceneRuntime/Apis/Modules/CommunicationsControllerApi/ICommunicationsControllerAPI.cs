@@ -8,6 +8,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
     {
         void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null);
 
-        IScriptObject GetResult();
+        IDCLScriptObject GetResult();
     }
 }

@@ -12,7 +12,7 @@
     "excludePlatforms": [
         "WebGL"
     ],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

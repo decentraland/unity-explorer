@@ -1,44 +1,43 @@
 using Microsoft.ClearScript;
-using System;
-using Utility;
-using IScriptObject = SceneRuntime.IScriptObject;
+using System.Collections.Generic;
 
-namespace DLC.SceneRuntime.V8
+namespace SceneRuntime.V8
 {
-    public class V8ScriptObjectAdapter : IScriptObject
+    public class V8ScriptObjectAdapter : IDCLScriptObject
     {
-        private readonly ScriptObject scriptObject;
-
         public V8ScriptObjectAdapter(ScriptObject scriptObject)
         {
-            this.scriptObject = scriptObject;
+            this.ScriptObject = scriptObject;
         }
 
-        public object InvokeAsFunction(params object[] args) => scriptObject.InvokeAsFunction(args);
-        public object GetProperty(string name) => scriptObject.GetProperty(name);
-        public void SetProperty(string name, object value) => scriptObject.SetProperty(name, value);
-        public void SetProperty(int index, object value) => scriptObject.SetProperty(index, value);
+        public ScriptObject ScriptObject { get; }
 
-        public IScriptObject Invoke(bool asConstructor, params object[] args)
+        /// <inheritdoc/>
+        public object InvokeMethod(string name, params object[] args) => ScriptObject.InvokeMethod(name, args);
+
+        /// <inheritdoc/>
+        public object InvokeAsFunction(params object[] args) => ScriptObject.InvokeAsFunction(args);
+
+        /// <inheritdoc/>
+        public object GetProperty(string name, params object[] args) => ScriptObject.GetProperty(name, args);
+
+        /// <inheritdoc/>
+        public void SetProperty(string name, params object[] args) => ScriptObject.SetProperty(name, args);
+
+        public IEnumerable<string> PropertyNames => ScriptObject.PropertyNames;
+
+        public object this[string name, params object[] args]
         {
-            object result = scriptObject.Invoke(asConstructor, args);
-            if (result is ScriptObject so)
-                return new V8ScriptObjectAdapter(so);
-
-            //TODO FRAN: CHECK THIS -> Possible 'System.InvalidCastException'
-            return new V8ScriptObjectAdapter((ScriptObject)result);
+            get => ScriptObject[name, args];
+            set => ScriptObject[name, args] = value;
         }
 
-        public void SetProperty(int index, IDCLTypedArray<byte> value)
-        {
-            throw new NotImplementedException();
-        }
+        /// <inheritdoc/>
+        public void SetProperty(int index, object value) => ScriptObject.SetProperty(index, value);
 
-        public IDCLTypedArray<byte> InvokeMethod(string subarray, int i, int dataOffset) =>
-            throw new NotImplementedException();
+        /// <inheritdoc/>
+        public object Invoke(bool asConstructor, params object[] args) => ScriptObject.Invoke(asConstructor, args);
 
-        public ScriptObject ScriptObject => scriptObject;
-
-        public static implicit operator ScriptObject(V8ScriptObjectAdapter adapter) => adapter.scriptObject;
+        public static implicit operator ScriptObject(V8ScriptObjectAdapter adapter) => adapter.ScriptObject;
     }
 }

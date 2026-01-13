@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;
@@ -17,21 +18,20 @@ namespace SceneRuntime.V8
 {
     public sealed class V8SceneRuntimeImpl : ISceneRuntime
     {
-        private readonly IJavaScriptEngine engine;
-        public V8ScriptEngine V8Engine => ((V8JavaScriptEngineAdapter)engine).V8Engine;
+        private readonly V8JavaScriptEngineAdapter engineAdapter;
         private readonly ScriptObject arrayCtor;
         private readonly ScriptObject unit8ArrayCtor;
-        private ScriptObject updateFunc;
-        private ScriptObject startFunc;
         private readonly List<IDCLTypedArray<byte>> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
-
         private readonly JSTaskResolverResetable resetableSource;
-
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
+
         private int nextUint8Array;
         private EngineApiWrapper? engineApi;
+        private ScriptObject updateFunc;
+        private ScriptObject startFunc;
 
+        public V8ScriptEngine V8Engine => engineAdapter.V8Engine;
         public IRuntimeHeapInfo? RuntimeHeapInfo { get; private set; }
 
         CancellationTokenSource ISceneRuntime.IsDisposingTokenSource => isDisposingTokenSource;
@@ -46,39 +46,44 @@ namespace SceneRuntime.V8
         {
             resetableSource = new JSTaskResolverResetable();
 
-            engine = engineFactory.Create(sceneShortInfo);
-            jsApiBunch = new JsApiBunch(engine);
+            engineAdapter = (V8JavaScriptEngineAdapter)engineFactory.Create(sceneShortInfo);
+            jsApiBunch = new JsApiBunch(engineAdapter);
 
-            var moduleHub = new SceneModuleHub(engine);
+            var moduleHub = new SceneModuleHub(engineAdapter);
 
             moduleHub.LoadAndCompileJsModules(jsModules);
 
-            ICompiledScript sceneScript = engine.Compile(sourceCode).EnsureNotNull();
+            // Compile Scene Code
+            ICompiledScript sceneScript = engineAdapter.Compile(sourceCode).EnsureNotNull();
 
-            var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
-            engine.AddHostObject("UnityOpsApi", unityOpsApi);
+            // Initialize init API
+            // TODO: This is only needed for the LifeCycle
+            var unityOpsApi = new UnityOpsApi(engineAdapter, moduleHub, sceneScript, sceneShortInfo);
+            engineAdapter.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            engine.Execute(initCode);
+            engineAdapter.Execute(initCode);
 
-            engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+            // Set global SDK configuration flags
+            engineAdapter.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
 
-            engine.AddHostObject("__resetableSource", resetableSource);
+            // Setup unitask resolver
+            engineAdapter.AddHostObject("__resetableSource", resetableSource);
 
-            arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
-            unit8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
+            arrayCtor = (ScriptObject)engineAdapter.Global.GetProperty("Array");
+            unit8ArrayCtor = (ScriptObject)engineAdapter.Global.GetProperty("Uint8Array");
             uint8Arrays = new List<IDCLTypedArray<byte>>();
             nextUint8Array = 0;
         }
 
         public void Dispose()
         {
-            engine.Dispose();
+            engineAdapter.Dispose();
             jsApiBunch.Dispose();
         }
 
         public void ExecuteSceneJson()
         {
-            engine.Execute(@"
+            engineAdapter.Execute(@"
             const __internalScene = require('~scene.js')
             const __internalOnStart = async function () {
                 try {
@@ -98,8 +103,8 @@ namespace SceneRuntime.V8
             }
         ");
 
-            updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate").EnsureNotNull();
-            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart").EnsureNotNull();
+            updateFunc = (ScriptObject)engineAdapter.Evaluate("__internalOnUpdate").EnsureNotNull();
+            startFunc = (ScriptObject)engineAdapter.Evaluate("__internalOnStart").EnsureNotNull();
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -133,9 +138,7 @@ namespace SceneRuntime.V8
         public UniTask UpdateScene(float dt)
         {
             nextUint8Array = 0;
-            IRuntimeHeapInfo? v8HeapInfo = engine.GetRuntimeHeapInfo();
-            //TODO FRAN: FIX THIS
-            //RuntimeHeapInfo = v8HeapInfo != null ? new V8RuntimeHeapInfoAdapter(v8HeapInfo) : null;
+            RuntimeHeapInfo = (V8RuntimeHeapInfoAdapter)engineAdapter.GetRuntimeHeapInfo();
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
@@ -144,21 +147,22 @@ namespace SceneRuntime.V8
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
             PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);
-
             Assert.IsTrue(result.IsEmpty);
         }
 
-        IScriptObject IJsOperations.NewArray() =>
-            (IScriptObject)arrayCtor.Invoke(true);
+        IDCLScriptObject IJsOperations.NewArray() =>
+            new V8ScriptObjectAdapter((ScriptObject)arrayCtor.Invoke(true));
 
         IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length) =>
-            (IDCLTypedArray<byte>)unit8ArrayCtor.Invoke(true, length);
+            new V8TypedArrayAdapter((ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length));
 
         IDCLTypedArray<byte> IJsOperations.GetTempUint8Array()
         {
             if (nextUint8Array >= uint8Arrays.Count)
-                uint8Arrays.Add((IDCLTypedArray<byte>)unit8ArrayCtor.Invoke(true,
-                    IJsOperations.LIVEKIT_MAX_SIZE));
+            {
+                var result = (ITypedArray<byte>)unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
+                uint8Arrays.Add(new V8TypedArrayAdapter(result));
+            }
 
             return uint8Arrays[nextUint8Array++];
         }

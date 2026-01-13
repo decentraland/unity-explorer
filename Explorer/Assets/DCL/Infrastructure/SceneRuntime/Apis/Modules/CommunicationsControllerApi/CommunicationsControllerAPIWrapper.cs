@@ -88,7 +88,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 {
                     object? obj = peerData[i];
 
-                    if (obj is IScriptObject perRecipientStruct)
+                    if (obj is IDCLScriptObject perRecipientStruct)
                     {
                         var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
                         var data = (IList<object>)perRecipientStruct.GetProperty("data")!;

@@ -174,7 +174,7 @@ namespace SceneRuntime.Web
             }
         }
 
-        public IScriptObject Global
+        public IDCLScriptObject Global
         {
             get
             {

@@ -12,7 +12,7 @@ namespace SceneRuntime
 
         IDCLTypedArray<byte> GetTempUint8Array();
 
-        IScriptObject NewArray();
+        IDCLScriptObject NewArray();
 
         IDCLTypedArray<byte> NewUint8Array(int length);
     }

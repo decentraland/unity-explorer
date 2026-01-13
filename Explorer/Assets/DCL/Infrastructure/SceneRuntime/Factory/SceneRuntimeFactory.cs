@@ -7,7 +7,6 @@ using ECS;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
-using SceneRuntime.Web;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,11 +15,11 @@ using System.Threading;
 using UnityEngine;
 
 #if UNITY_WEBGL
-
-#else
+// ReSharper disable once RedundantUsingDirective
+using SceneRuntime.Web;
+//#else
 using SceneRuntime.V8;
 #endif
-
 namespace SceneRuntime.Factory
 {
     public sealed class SceneRuntimeFactory
@@ -99,9 +98,9 @@ namespace SceneRuntime.Factory
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL
-            return new WebGLSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
-#else
-            return new V8SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo, engineFactory);
+//            return new WebGLSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
+//#else
+            return new V8SceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
 #endif
         }
 

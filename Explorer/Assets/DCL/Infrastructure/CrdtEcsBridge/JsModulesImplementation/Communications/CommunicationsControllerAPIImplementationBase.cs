@@ -25,7 +25,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-        private readonly IScriptObject eventArray;
+        private readonly IDCLScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
@@ -92,13 +92,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public IScriptObject GetResult()
+        public IDCLScriptObject GetResult()
         {
             lock (eventsToProcess)
             {
                 eventArray.SetProperty("length", eventsToProcess.Count);
 
-                for (int i = 0; i < eventsToProcess.Count; i++)
+                for (var i = 0; i < eventsToProcess.Count; i++)
                     eventArray.SetProperty(i, eventsToProcess[i]);
 
                 eventsToProcess.Clear();

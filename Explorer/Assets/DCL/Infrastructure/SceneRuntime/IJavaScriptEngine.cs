@@ -9,7 +9,7 @@ namespace SceneRuntime
         object Evaluate(ICompiledScript script);
         object Evaluate(string expression);
         void AddHostObject(string itemName, object target);
-        IScriptObject Global { get; }
+        IDCLScriptObject Global { get; }
         IRuntimeHeapInfo? GetRuntimeHeapInfo();
         string GetStackTrace();
     }

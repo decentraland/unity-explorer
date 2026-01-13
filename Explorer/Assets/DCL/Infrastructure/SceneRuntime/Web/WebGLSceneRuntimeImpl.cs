@@ -13,7 +13,7 @@ using Utility;
 
 namespace SceneRuntime.Web
 {
-    public sealed class WebGLSceneRuntimeImpl : ISceneRuntime, IJsOperations
+    public sealed class WebGLSceneRuntimeImpl : ISceneRuntime
     {
         private readonly IJavaScriptEngine engine;
         private readonly WebGLScriptObject arrayCtor;
@@ -144,9 +144,9 @@ namespace SceneRuntime.Web
             Assert.IsTrue(result.IsEmpty);
         }
 
-        IScriptObject IJsOperations.NewArray()
+        IDCLScriptObject IJsOperations.NewArray()
         {
-            IScriptObject result = arrayCtor.Invoke(true);
+            object result = arrayCtor.Invoke(true);
             WebGLScriptObject webglResult = (WebGLScriptObject)result;
             return webglResult;
         }
@@ -154,7 +154,9 @@ namespace SceneRuntime.Web
         IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length)
         {
             object result = unit8ArrayCtor.Invoke(true, length);
-            return (IDCLTypedArray<byte>)result;
+            if (result is WebGLScriptObject webglScriptObject)
+                return new WebGLTypedArrayAdapter(webglScriptObject);
+            throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
         }
 
         IDCLTypedArray<byte> IJsOperations.GetTempUint8Array()
@@ -162,7 +164,10 @@ namespace SceneRuntime.Web
             if (nextUint8Array >= uint8Arrays.Count)
             {
                 object result = unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
-                uint8Arrays.Add((IDCLTypedArray<byte>)result);
+                if (result is WebGLScriptObject webglScriptObject)
+                    uint8Arrays.Add(new WebGLTypedArrayAdapter(webglScriptObject));
+                else
+                    throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
             }
 
             return uint8Arrays[nextUint8Array++];
