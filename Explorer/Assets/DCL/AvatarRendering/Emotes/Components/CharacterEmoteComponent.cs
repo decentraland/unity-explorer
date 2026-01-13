@@ -42,6 +42,12 @@ namespace DCL.AvatarRendering.Emotes
             /// The ID of the current interaction, set when an avatar starts a social emote.
             /// </summary>
             public int InteractionId;
+
+            /// <summary>
+            /// Whether the last time an emote was played it was reacting to the start animation of an initiator.
+            /// This is the only way to know the type of emote when an Animator event occurs.
+            /// </summary>
+            public bool WasReacting;
         }
 
         public URN EmoteUrn;
@@ -96,6 +102,7 @@ namespace DCL.AvatarRendering.Emotes
             CurrentEmoteReference = null;
             // These fields are not reset, on purpose (old code depends on it)
             //        CurrentAnimationTag = 0;
+            //        SocialEmote.WasReacting = false;
         }
     }
 }

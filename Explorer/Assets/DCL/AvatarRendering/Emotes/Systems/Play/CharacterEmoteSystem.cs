@@ -533,6 +533,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 emoteComponent.SocialEmote.IsPlayingOutcome = emoteIntent.SocialEmote.UseOutcomeAnimation;
                 emoteComponent.SocialEmote.CurrentOutcome = emoteIntent.SocialEmote.OutcomeIndex;
                 emoteComponent.SocialEmote.IsReacting = emoteIntent.SocialEmote.UseOutcomeReactionAnimation;
+                emoteComponent.SocialEmote.WasReacting = emoteComponent.SocialEmote.IsReacting; // This is the only way to know the type of emote when OnEmoteStateExiting is called
                 emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.SocialEmote.InitiatorWalletAddress;
                 emoteComponent.SocialEmote.InteractionId = emoteIntent.SocialEmote.InteractionId;
                 emoteComponent.SocialEmote.TargetAvatarWalletAddress = emoteIntent.SocialEmote.TargetAvatarWalletAddress;
@@ -800,7 +801,19 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
 
                     // Interpolates the position of the object the camera is looking at, from current position to original position in the controller
-                    World.Add(entity, new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform, cameraFocusHeight));
+                    InterpolateCameraTargetTowardsNewParentIntent interpolateCameraIntent = new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform, cameraFocusHeight);
+
+                    if (World.Has<InterpolateCameraTargetTowardsNewParentIntent>(entity))
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() InterpolateCameraTargetTowardsNewParentIntent already existed");
+                        World.Set(entity, interpolateCameraIntent); // It may occur that the component is already there because it did not finish the previous interpolation
+                    }
+                    else
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() new InterpolateCameraTargetTowardsNewParentIntent");
+                        World.Add(entity, interpolateCameraIntent);
+                    }
+
                 }
             }
             catch // The try/catch is necessary to avoid that playerComponent.CameraFocus ends up without parent due to an exception
@@ -844,8 +857,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             avatarStateMachineEventHandler.EmoteStateExiting = null;
 
-            // This must occur right at the moment the Emote or Emote Loop states transition to Movement
-            ResetAvatarAndControllerTransforms(entity);
+            if (World.Get<CharacterEmoteComponent>(entity).SocialEmote.WasReacting)
+            {
+                // This must occur right at the moment the Emote or Emote Loop states transition to Movement
+                ResetAvatarAndControllerTransforms(entity);
+            }
         }
     }
 }
