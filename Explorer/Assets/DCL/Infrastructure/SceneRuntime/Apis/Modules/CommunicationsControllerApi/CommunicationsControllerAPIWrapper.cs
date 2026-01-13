@@ -7,6 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
+using Utility;
+#if !UNITY_WEBGL
+using SceneRuntime.V8;
+#endif
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
@@ -42,18 +46,37 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 for (var i = 0; i < dataList.Count; i++)
                 {
-                    var message = (ITypedArray<byte>)dataList[i];
+                    IDCLTypedArray<byte> dclTypedArray;
+                    object dataItem = dataList[i];
+                    
+                    if (dataItem is IDCLTypedArray<byte> alreadyDcl)
+                    {
+                        dclTypedArray = alreadyDcl;
+                    }
+                    else if (dataItem is ITypedArray<byte> typedArray)
+                    {
+#if !UNITY_WEBGL
+                        dclTypedArray = new V8TypedArrayAdapter(typedArray);
+#else
+                        throw new InvalidOperationException("ITypedArray<byte> must be converted to IDCLTypedArray<byte> for WebGL");
+#endif
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Expected ITypedArray<byte> or IDCLTypedArray<byte>, but got {dataItem?.GetType()}");
+                    }
+
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
                     {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
                         lastInput.Add(element);
                     }
                     else
                     {
                         element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
                         lastInput[i] = element;
                     }
                 }

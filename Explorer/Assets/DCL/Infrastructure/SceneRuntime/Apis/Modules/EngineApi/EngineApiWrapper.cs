@@ -7,6 +7,10 @@ using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility;
+#if !UNITY_WEBGL
+using SceneRuntime.V8;
+#endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -41,7 +45,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+                IDCLTypedArray<byte> dclTypedArray = data as IDCLTypedArray<byte> ?? 
+#if !UNITY_WEBGL
+                    new V8TypedArrayAdapter(data);
+#else
+                    throw new InvalidOperationException("ITypedArray<byte> must be converted to IDCLTypedArray<byte> for WebGL");
+#endif
+
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
 
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
