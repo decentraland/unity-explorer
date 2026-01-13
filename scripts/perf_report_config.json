@@ -46,7 +46,9 @@
   "metrics": {
     "WebRequest.Send": {
       "name": "Web Request Send Time",
-      "description": "time to send the web request"
+      "description": "time to send the web request",
+      "show_p75": true,
+      "show_p95": true
     },
     "WebRequest.ProcessData": {
       "name": "Data Processing Time",
@@ -54,7 +56,9 @@
     },
     "Iteration Total Time": {
       "name": "Total Iteration Time",
-      "description": "total time for the complete operation"
+      "description": "total time for the complete operation",
+      "show_p75": true,
+      "show_p95": true
     },
     "Iteration Downloaded Data": {
       "name": "Downloaded Data",
@@ -104,6 +108,9 @@
       "endpoint": "gateway.org"
     },
     {
+      "test": "AssetBundleRegistryOrgPerformanceTests.LoadFromDumpProdModeAsync"
+    },
+	{
       "test": "AssetBundleRegistryZonePerformanceTests.GetEntitiesActive",
       "endpoint": "gateway.zone"
     },

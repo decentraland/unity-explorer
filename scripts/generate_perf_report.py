@@ -145,6 +145,7 @@ class SampleGroupData:
     samples: list[float]
     median: float
     std_dev: float
+    p75: float
     p95: float
     p99: float
     min_val: float
@@ -155,12 +156,14 @@ class SampleGroupData:
     def from_json(cls, data: dict) -> "SampleGroupData":
         samples = data.get("Samples", [])
 
-        # Calculate P95 and P99 from samples if available
+        # Calculate percentiles from samples if available
         if samples:
+            p75 = float(np.percentile(samples, 75))
             p95 = float(np.percentile(samples, 95))
             p99 = float(np.percentile(samples, 99))
             std_dev = float(np.std(samples))
         else:
+            p75 = data.get("Median", 0)
             p95 = data.get("Max", 0)
             p99 = data.get("Max", 0)
             std_dev = data.get("StandardDeviation", 0)
@@ -171,6 +174,7 @@ class SampleGroupData:
             samples=samples,
             median=data.get("Median", 0),
             std_dev=std_dev,
+            p75=p75,
             p95=p95,
             p99=p99,
             min_val=data.get("Min", 0),
@@ -202,9 +206,12 @@ class TestResult:
         Example formats:
         - DCL.Tests.PlayMode.PerformanceTests.ProfilesPerformanceTest(url,False).PostProfilesAsync(1,5,0.25d,100)
         - DCL.Tests.PlayMode.PerformanceTests.AbCdnPerformanceTests.LoadFromDumpAsync(1,3,0,186)
+        - DCL.Tests.PlayMode.PerformanceTests.AssetBundleRegistryOrgPerformanceTests(url).LoadFromDumpProdModeAsync
         """
-        # Pattern for class with TestFixture args
+        # Pattern for class with TestFixture args and method with params
         fixture_pattern = r"^(.+?)\.([^.]+)\(([^)]*)\)\.([^.]+)\(([^)]*)\)$"
+        # Pattern for class with TestFixture args but method without params
+        fixture_no_params_pattern = r"^(.+?)\.([^.]+)\(([^)]*)\)\.([^.]+)$"
         # Pattern for class without TestFixture args
         simple_pattern = r"^(.+?)\.([^.]+)\.([^.]+)\(([^)]*)\)$"
 
@@ -212,6 +219,11 @@ class TestResult:
         if fixture_match:
             namespace, class_name, fixture_args, method_name, test_case_args = fixture_match.groups()
             return f"{namespace}.{class_name}", fixture_args, method_name, test_case_args
+
+        fixture_no_params_match = re.match(fixture_no_params_pattern, full_name)
+        if fixture_no_params_match:
+            namespace, class_name, fixture_args, method_name = fixture_no_params_match.groups()
+            return f"{namespace}.{class_name}", fixture_args, method_name, ""
 
         simple_match = re.match(simple_pattern, full_name)
         if simple_match:
@@ -542,11 +554,13 @@ def generate_summary_page(
 
         for method_key, scenarios in matching_methods.items():
             # Extract concurrency from method key
-            args_match = re.search(r"\(([^)]+)\)", method_key)
-            if args_match:
+            # Use [^)]* to match zero or more chars (handles empty parentheses)
+            args_match = re.search(r"\(([^)]*)\)", method_key)
+            if args_match and args_match.group(1):
                 parsed = parse_test_case_args(args_match.group(1))
                 concurrency = parsed.get("concurrency", 1)
             else:
+                # No parameters or empty parentheses -> default to 1 (no_concurrency)
                 concurrency = 1
 
             cat_key, _ = get_parallelism_category(concurrency, config)
@@ -564,6 +578,7 @@ def generate_summary_page(
                                 "metric": metric_key,
                                 "scenario": scenario_label,
                                 "median": sg.median,
+                                "p75": sg.p75,
                                 "p95": sg.p95,
                                 "p99": sg.p99,
                                 "unit": sg.unit,
@@ -588,12 +603,16 @@ def generate_summary_page(
                 # Find matching compare method by concurrency
                 compare_method_key = None
                 for ck in compare_methods.keys():
-                    cargs_match = re.search(r"\(([^)]+)\)", ck)
-                    if cargs_match:
+                    cargs_match = re.search(r"\(([^)]*)\)", ck)
+                    if cargs_match and cargs_match.group(1):
                         cparsed = parse_test_case_args(cargs_match.group(1))
-                        if cparsed.get("concurrency", 1) == concurrency:
-                            compare_method_key = ck
-                            break
+                        compare_concurrency = cparsed.get("concurrency", 1)
+                    else:
+                        # No parameters or empty parentheses -> default to 1
+                        compare_concurrency = 1
+                    if compare_concurrency == concurrency:
+                        compare_method_key = ck
+                        break
 
                 if not compare_method_key:
                     continue
@@ -614,14 +633,21 @@ def generate_summary_page(
                             # Negative = subject is faster (improvement)
                             # Positive = subject is slower (regression)
                             pct_diff = calculate_percentage_diff(subject_sg.median, compare_sg.median)
-                            case_results[cat_key].append({
+                            result_entry = {
                                 "metric": metric_key,
                                 "pct_diff": pct_diff,
                                 "compare_endpoint": compare_label,
                                 "subject_median": subject_sg.median,
                                 "compare_median": compare_sg.median,
                                 "concurrency": concurrency,
-                            })
+                            }
+                            # Add P75 comparison if available
+                            if compare_sg.p75 > 0:
+                                result_entry["p75_diff"] = calculate_percentage_diff(subject_sg.p75, compare_sg.p75)
+                            # Add P95 comparison if available
+                            if compare_sg.p95 > 0:
+                                result_entry["p95_diff"] = calculate_percentage_diff(subject_sg.p95, compare_sg.p95)
+                            case_results[cat_key].append(result_entry)
             else:
                 # Standard mode: Compare endpoint against other endpoints in same test
                 other_endpoints = [label for label in scenarios.keys() if label != endpoint]
@@ -645,14 +671,21 @@ def generate_summary_page(
                             # Negative = subject is faster (improvement)
                             # Positive = subject is slower (regression)
                             pct_diff = calculate_percentage_diff(subject_sg.median, other_sg.median)
-                            case_results[cat_key].append({
+                            result_entry = {
                                 "metric": metric_key,
                                 "pct_diff": pct_diff,
                                 "other_endpoint": other_label,
                                 "other_median": other_sg.median,
                                 "subject_median": subject_sg.median,
                                 "concurrency": concurrency,
-                            })
+                            }
+                            # Add P75 comparison if available
+                            if other_sg.p75 > 0:
+                                result_entry["p75_diff"] = calculate_percentage_diff(subject_sg.p75, other_sg.p75)
+                            # Add P95 comparison if available
+                            if other_sg.p95 > 0:
+                                result_entry["p95_diff"] = calculate_percentage_diff(subject_sg.p95, other_sg.p95)
+                            case_results[cat_key].append(result_entry)
 
         summary_data.append({
             "test": test_name,
@@ -722,6 +755,7 @@ def generate_summary_page(
                 for r in cat_results:
                     scenario_metrics[r["scenario"]][r["metric"]].append({
                         "median": r["median"],
+                        "p75": r["p75"],
                         "p95": r["p95"],
                         "unit": r["unit"],
                     })
@@ -738,18 +772,27 @@ def generate_summary_page(
 
                         # Average the values if multiple
                         avg_median = sum(v["median"] for v in values) / len(values)
+                        avg_p75 = sum(v["p75"] for v in values) / len(values)
                         avg_p95 = sum(v["p95"] for v in values) / len(values)
                         unit = values[0]["unit"]
 
                         metric_name, _ = get_metric_display_name(metric_key, config)
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
 
                         # Format based on unit (microseconds -> ms)
                         if unit == SAMPLE_UNIT_MICROSECOND:
                             median_ms = avg_median / 1000
-                            p95_ms = avg_p95 / 1000
-                            text = f"    • {metric_name}: {median_ms:.1f}ms (P95: {p95_ms:.1f}ms)"
+                            text = f"    • {metric_name}: {median_ms:.1f}ms"
+                            if metric_config.get("show_p75"):
+                                text += f" (P75: {avg_p75 / 1000:.1f}ms)"
+                            if metric_config.get("show_p95"):
+                                text += f" (P95: {avg_p95 / 1000:.1f}ms)"
                         else:
-                            text = f"    • {metric_name}: {avg_median:.2f} (P95: {avg_p95:.2f})"
+                            text = f"    • {metric_name}: {avg_median:.2f}"
+                            if metric_config.get("show_p75"):
+                                text += f" (P75: {avg_p75:.2f})"
+                            if metric_config.get("show_p95"):
+                                text += f" (P95: {avg_p95:.2f})"
 
                         ax.text(0.06, y_pos, text, fontsize=8, transform=ax.transAxes,
                                 color="#444444")
@@ -759,8 +802,14 @@ def generate_summary_page(
             else:
                 # Comparison mode: show percentage differences
                 metric_averages = defaultdict(list)
+                metric_p75_averages = defaultdict(list)
+                metric_p95_averages = defaultdict(list)
                 for r in cat_results:
                     metric_averages[r["metric"]].append(r["pct_diff"])
+                    if "p75_diff" in r:
+                        metric_p75_averages[r["metric"]].append(r["p75_diff"])
+                    if "p95_diff" in r:
+                        metric_p95_averages[r["metric"]].append(r["p95_diff"])
 
                 # Iterate in the order specified by metric_keys
                 for metric_key in metric_keys:
@@ -773,6 +822,19 @@ def generate_summary_page(
 
                     sign = "+" if avg_diff >= 0 else ""
                     text = f"  • {metric_name}: {sign}{avg_diff:.1f}% ({diff_label})"
+
+                    # Check if P75/P95 should be shown for this metric
+                    metric_config = config.get("metrics", {}).get(metric_key, {})
+                    p75_diffs = metric_p75_averages.get(metric_key)
+                    p95_diffs = metric_p95_averages.get(metric_key)
+                    if metric_config.get("show_p75") and p75_diffs:
+                        avg_p75_diff = sum(p75_diffs) / len(p75_diffs)
+                        p75_sign = "+" if avg_p75_diff >= 0 else ""
+                        text += f" | P75: {p75_sign}{avg_p75_diff:.1f}%"
+                    if metric_config.get("show_p95") and p95_diffs:
+                        avg_p95_diff = sum(p95_diffs) / len(p95_diffs)
+                        p95_sign = "+" if avg_p95_diff >= 0 else ""
+                        text += f" | P95: {p95_sign}{avg_p95_diff:.1f}%"
 
                     ax.text(0.04, y_pos, text, fontsize=9, transform=ax.transAxes,
                             color=diff_color)
@@ -846,6 +908,7 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                 for r in cat_results:
                     scenario_metrics[r["scenario"]][r["metric"]].append({
                         "median": r["median"],
+                        "p75": r["p75"],
                         "p95": r["p95"],
                         "unit": r["unit"],
                     })
@@ -859,22 +922,39 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                             continue
 
                         avg_median = sum(v["median"] for v in values) / len(values)
+                        avg_p75 = sum(v["p75"] for v in values) / len(values)
                         avg_p95 = sum(v["p95"] for v in values) / len(values)
                         unit = values[0]["unit"]
 
                         metric_name, _ = get_metric_display_name(metric_key, config)
+                        metric_config = config.get("metrics", {}).get(metric_key, {})
 
                         if unit == SAMPLE_UNIT_MICROSECOND:
                             median_ms = avg_median / 1000
-                            p95_ms = avg_p95 / 1000
-                            lines.append(f"- {metric_name}: {median_ms:.1f}ms (P95: {p95_ms:.1f}ms)\n")
+                            text = f"- {metric_name}: {median_ms:.1f}ms"
+                            if metric_config.get("show_p75"):
+                                text += f" (P75: {avg_p75 / 1000:.1f}ms)"
+                            if metric_config.get("show_p95"):
+                                text += f" (P95: {avg_p95 / 1000:.1f}ms)"
+                            lines.append(text + "\n")
                         else:
-                            lines.append(f"- {metric_name}: {avg_median:.2f} (P95: {avg_p95:.2f})\n")
+                            text = f"- {metric_name}: {avg_median:.2f}"
+                            if metric_config.get("show_p75"):
+                                text += f" (P75: {avg_p75:.2f})"
+                            if metric_config.get("show_p95"):
+                                text += f" (P95: {avg_p95:.2f})"
+                            lines.append(text + "\n")
             else:
                 # Comparison mode: show percentage differences
                 metric_averages = defaultdict(list)
+                metric_p75_averages = defaultdict(list)
+                metric_p95_averages = defaultdict(list)
                 for r in cat_results:
                     metric_averages[r["metric"]].append(r["pct_diff"])
+                    if "p75_diff" in r:
+                        metric_p75_averages[r["metric"]].append(r["p75_diff"])
+                    if "p95_diff" in r:
+                        metric_p95_averages[r["metric"]].append(r["p95_diff"])
 
                 # Iterate in the order specified by metric_keys
                 for metric_key in metric_keys:
@@ -895,7 +975,22 @@ def generate_github_summary(summary_data: list, config: dict, output_path: str):
                     else:
                         emoji = "⚪"
 
-                    lines.append(f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})\n")
+                    text = f"- {emoji} **{metric_name}**: {sign}{avg_diff:.1f}% ({diff_label})"
+
+                    # Check if P75/P95 should be shown for this metric
+                    metric_config = config.get("metrics", {}).get(metric_key, {})
+                    p75_diffs = metric_p75_averages.get(metric_key)
+                    p95_diffs = metric_p95_averages.get(metric_key)
+                    if metric_config.get("show_p75") and p75_diffs:
+                        avg_p75_diff = sum(p75_diffs) / len(p75_diffs)
+                        p75_sign = "+" if avg_p75_diff >= 0 else ""
+                        text += f" | P75: {p75_sign}{avg_p75_diff:.1f}%"
+                    if metric_config.get("show_p95") and p95_diffs:
+                        avg_p95_diff = sum(p95_diffs) / len(p95_diffs)
+                        p95_sign = "+" if avg_p95_diff >= 0 else ""
+                        text += f" | P95: {p95_sign}{avg_p95_diff:.1f}%"
+
+                    lines.append(text + "\n")
 
             lines.append("\n")
 
