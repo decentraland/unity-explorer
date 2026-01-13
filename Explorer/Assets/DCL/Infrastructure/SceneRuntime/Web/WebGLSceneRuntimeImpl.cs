@@ -44,7 +44,8 @@ namespace SceneRuntime.Web
             resetableSource = new JSTaskResolverResetable();
 
             engine = engineFactory.Create(sceneShortInfo);
-            jsApiBunch = new JsApiBunch(engine);
+            var typedArrayConverter = new WebGLTypedArrayConverter();
+            jsApiBunch = new JsApiBunch(engine, typedArrayConverter);
 
             var moduleHub = new SceneModuleHub(engine);
 

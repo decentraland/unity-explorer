@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 
 namespace SceneRuntime
@@ -7,6 +7,7 @@ namespace SceneRuntime
     {
         internal readonly CancellationTokenSource disposeCts;
         internal IJavaScriptEngine? engine;
+        internal ITypedArrayConverter TypedArrayConverter { get; set; } = null!;
 
         protected JsApiWrapper(CancellationTokenSource disposeCts, IJavaScriptEngine? engine = null)
         {

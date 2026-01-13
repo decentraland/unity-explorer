@@ -6,11 +6,13 @@ namespace SceneRuntime
     public class JsApiBunch : IDisposable
     {
         private readonly IJavaScriptEngine engine;
+        private readonly ITypedArrayConverter typedArrayConverter;
         private readonly List<JsApiWrapper> wraps = new ();
 
-        public JsApiBunch(IJavaScriptEngine engine)
+        public JsApiBunch(IJavaScriptEngine engine, ITypedArrayConverter typedArrayConverter)
         {
             this.engine = engine;
+            this.typedArrayConverter = typedArrayConverter;
         }
 
         public void Dispose()
@@ -22,6 +24,7 @@ namespace SceneRuntime
         public void AddHostObject<T>(string itemName, T target) where T: JsApiWrapper
         {
             target.engine = engine;
+            target.TypedArrayConverter = typedArrayConverter;
             engine.AddHostObject(itemName, target);
             wraps.Add(target);
         }

@@ -2,7 +2,6 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Utility;
 
 namespace SceneRuntime.V8

@@ -7,7 +7,6 @@ using System.Threading;
 using Utility;
 
 #if !UNITY_WEBGL
-using SceneRuntime.V8;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 #endif
@@ -46,17 +45,8 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 for (var i = 0; i < dataList.Count; i++)
                 {
-                    IDCLTypedArray<byte> dclTypedArray;
                     object dataItem = dataList[i];
-
-                    if (dataItem is IDCLTypedArray<byte> alreadyDcl) dclTypedArray = alreadyDcl;
-#if UNITY_WEBGL
-                    else throw new InvalidCastException($"WebGL needs IDCLTypedArray<byte> but got {dataItem?.GetType()}");
-#else
-                    else if (dataItem is ITypedArray<byte> typedArray)
-                        dclTypedArray = new V8TypedArrayAdapter(typedArray);
-                    else throw new InvalidCastException($"Expected ITypedArray<byte> or IDCLTypedArray<byte>, but got {dataItem?.GetType()}");
-#endif
+                    IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(dataItem);
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)

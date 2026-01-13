@@ -48,7 +48,8 @@ namespace SceneRuntime.V8
             resetableSource = new JSTaskResolverResetable();
 
             engineAdapter = (V8JavaScriptEngineAdapter)engineFactory.Create(sceneShortInfo);
-            jsApiBunch = new JsApiBunch(engineAdapter);
+            var typedArrayConverter = new V8TypedArrayConverter();
+            jsApiBunch = new JsApiBunch(engineAdapter, typedArrayConverter);
 
             var moduleHub = new SceneModuleHub(engineAdapter);
 

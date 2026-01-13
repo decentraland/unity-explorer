@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -9,7 +9,7 @@ using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
 #if !UNITY_WEBGL
-using SceneRuntime.V8;
+using Microsoft.ClearScript;
 #endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
@@ -45,12 +45,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                IDCLTypedArray<byte> dclTypedArray = data as IDCLTypedArray<byte> ?? 
-#if !UNITY_WEBGL
-                    new V8TypedArrayAdapter(data);
-#else
-                    throw new InvalidOperationException("ITypedArray<byte> must be converted to IDCLTypedArray<byte> for WebGL");
-#endif
+                IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(data);
 
                 instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
 
