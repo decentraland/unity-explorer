@@ -6,6 +6,7 @@ using DCL.Profiles.Self;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -67,6 +68,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
 
+            Debug.Log("ChatMessagesBusAnalyticsDecorator.SendError");
             ReportHub.LogException(new Exception("TEST chat error"), ReportCategory.CHAT_MESSAGES, ReportHandler.Sentry);
         }
 

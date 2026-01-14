@@ -116,6 +116,8 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void HandleSuppressedException(Exception exception, ReportData reportData)
         {
+            Debug.Log($"SentryReportHandler.SuppressedException");
+
             //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
             if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
                 return;
