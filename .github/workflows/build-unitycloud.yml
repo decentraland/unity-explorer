@@ -203,16 +203,20 @@ jobs:
         id: get_sentry
         run: |
           #!/bin/bash
+          
+          echo "environment=development" >> "$GITHUB_OUTPUT"
+          echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
+          echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
 
-          if [[ "${{ github.event.inputs.sentry_enabled || inputs.sentry_enabled }}" == "true" ]]; then
-            echo "environment=production" >> "$GITHUB_OUTPUT"
-            echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
-            echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment=" >> "$GITHUB_OUTPUT"
-            echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
-            echo "sentry_enabled=false" >> "$GITHUB_OUTPUT"
-          fi
+#          if [[ "${{ github.event.inputs.sentry_enabled || inputs.sentry_enabled }}" == "true" ]]; then
+#            echo "environment=production" >> "$GITHUB_OUTPUT"
+#            echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
+#            echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
+#          else
+#            echo "environment=" >> "$GITHUB_OUTPUT"
+#            echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
+#            echo "sentry_enabled=false" >> "$GITHUB_OUTPUT"
+#          fi
 
       - name: Set default values
         id: set_defaults
