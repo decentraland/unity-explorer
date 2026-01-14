@@ -90,22 +90,26 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
+            Debug.Log($"SentryReportHandler.Log");
             CaptureMessage(message.ToString(), category, logType);
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
+            Debug.Log($"SentryReportHandler.LogFormat");
             var format = string.Format(message.ToString(), args);
             CaptureMessage(format, category, logType);
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
+            Debug.Log($"SentryReportHandler.LogException<T>");
             SentrySdk.CaptureException(ecsSystemException);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
+            Debug.Log($"SentryReportHandler.LogException");
             using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
