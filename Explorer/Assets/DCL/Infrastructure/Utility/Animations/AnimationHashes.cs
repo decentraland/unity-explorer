@@ -17,10 +17,11 @@ namespace Utility.Animations
         public static readonly int FALLING = Animator.StringToHash("IsFalling");
         public static readonly int LONG_JUMP = Animator.StringToHash("IsLongJump");
         public static readonly int JUMP = Animator.StringToHash("Jump");
+        public static readonly int JUMP_COUNT = Animator.StringToHash("JumpCount");
+        public static readonly int JUMPING_TAG = Animator.StringToHash("Jumping");
         public static readonly int LONG_FALL = Animator.StringToHash("IsLongFall");
         public static readonly int STUNNED = Animator.StringToHash("IsStunned");
         public static readonly int SLIDE_BLEND = Animator.StringToHash("SlideBlend");
-        public static readonly int JUMPING_TAG = Animator.StringToHash("Jumping");
 
     }
 }

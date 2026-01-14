@@ -18,6 +18,7 @@ namespace DCL.CharacterMotion.Components
         public float SlideBlendValue;
         public bool IsGrounded;
         public bool IsJumping;
+        public int JumpCount;
         public bool IsLongJump;
         public bool IsLongFall;
         public bool IsFalling;
