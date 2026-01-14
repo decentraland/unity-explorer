@@ -17,18 +17,6 @@ namespace DCL.Profiles
     [Preserve]
     public class ProfileConverter : JsonConverter<Profile>
     {
-        public readonly struct SerializationContext
-        {
-            public readonly string FaceHash;
-            public readonly string BodyHash;
-
-            public SerializationContext(string faceHash, string bodyHash)
-            {
-                FaceHash = faceHash;
-                BodyHash = bodyHash;
-            }
-        }
-
         public override void WriteJson(JsonWriter writer, Profile? value, JsonSerializer serializer)
         {
             if (value == null)
@@ -40,7 +28,7 @@ namespace DCL.Profiles
             writer.WriteStartObject();
             writer.WritePropertyName("avatars");
             writer.WriteStartArray();
-            SerializeProfile(writer, serializer.Context.Context as SerializationContext?, value);
+            SerializeProfile(writer, value);
             writer.WriteEndArray();
             writer.WriteEndObject();
         }
@@ -225,7 +213,7 @@ namespace DCL.Profiles
             }
         }
 
-        private void SerializeProfile(JsonWriter writer, SerializationContext? context, Profile profile)
+        private void SerializeProfile(JsonWriter writer, Profile profile)
         {
             writer.WriteStartObject();
 
@@ -260,7 +248,7 @@ namespace DCL.Profiles
             writer.WriteValue(profile.HasConnectedWeb3);
 
             writer.WritePropertyName("avatar");
-            SerializeAvatar(writer, context, profile);
+            SerializeAvatar(writer, profile);
 
             writer.WritePropertyName("country");
             writer.WriteValue(profile.Country);
@@ -307,7 +295,8 @@ namespace DCL.Profiles
             writer.WriteEndObject();
         }
 
-        private void SerializeAvatar(JsonWriter writer, SerializationContext? context, Profile profile)
+        // ADR-290: snapshots property removed - no longer sent during profile deployment
+        private void SerializeAvatar(JsonWriter writer, Profile profile)
         {
             Avatar avatar = profile.Avatar;
 
@@ -324,15 +313,6 @@ namespace DCL.Profiles
 
             writer.WritePropertyName("emotes");
             SerializeEmoteList(writer, avatar.emotes);
-
-            writer.WritePropertyName("snapshots");
-            writer.WriteStartObject();
-
-            writer.WritePropertyName("face256");
-            writer.WriteValue(context?.FaceHash ?? profile.GetCompact().FaceSnapshotUrl.Value);
-            writer.WritePropertyName("body");
-            writer.WriteValue(context?.BodyHash ?? profile.Avatar.BodySnapshotUrl.Value);
-            writer.WriteEndObject();
 
             writer.WritePropertyName("eyes");
             writer.WriteStartObject();

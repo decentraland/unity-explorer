@@ -44,9 +44,7 @@ namespace DCL.Profiles
 
         // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
-        // Catalyst servers requires a face thumbnail texture of 256x256
-        // Otherwise it will fail when the profile is published
-        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
+
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
@@ -85,10 +83,8 @@ namespace DCL.Profiles
 
             IIpfsRealm ipfs = realm.Ipfs;
 
-            // We don't send snapshots anymore. See ADR-290
-            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(string.Empty, string.Empty));
-
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, string.Empty, string.Empty);
+            // ADR-290: snapshots are no longer sent during profile deployment
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile);
 
             // Clear files just in case, though we don't add any
             files.Clear();
@@ -101,14 +97,12 @@ namespace DCL.Profiles
             finally { files.Clear(); }
         }
 
-        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, string bodyHash, string faceHash) =>
+        // ADR-290: content array is empty - no snapshot files are sent
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile) =>
             new (string.Empty, profile)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new ContentDefinition[]
-                {
-                    // Snapshots are not sent anymore
-                },
+                content = Array.Empty<ContentDefinition>(),
                 pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
