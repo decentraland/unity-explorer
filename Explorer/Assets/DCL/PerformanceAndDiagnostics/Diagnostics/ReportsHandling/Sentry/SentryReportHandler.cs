@@ -90,33 +90,33 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            Debug.Log($"SentryReportHandler.Log");
+            ReportHub.LogProductionInfo($"SentryReportHandler.Log");
             CaptureMessage(message.ToString(), category, logType);
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
-            Debug.Log($"SentryReportHandler.LogFormat");
+            ReportHub.LogProductionInfo($"SentryReportHandler.LogFormat");
             var format = string.Format(message.ToString(), args);
             CaptureMessage(format, category, logType);
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
-            Debug.Log($"SentryReportHandler.LogException<T>");
+            ReportHub.LogProductionInfo($"SentryReportHandler.LogException<T>");
             SentrySdk.CaptureException(ecsSystemException);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            Debug.Log($"SentryReportHandler.LogException");
+            ReportHub.LogProductionInfo($"SentryReportHandler.LogException");
             using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
         internal override void HandleSuppressedException(Exception exception, ReportData reportData)
         {
-            Debug.Log($"SentryReportHandler.SuppressedException");
+            ReportHub.LogProductionInfo($"SentryReportHandler.SuppressedException");
 
             //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
             if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
