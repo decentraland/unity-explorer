@@ -75,8 +75,11 @@ namespace DCL.Web3.Authenticators
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
                 originApi.SendAsync(request, ct);
 
-            public UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct) =>
-                originAuth.LoginAsync(email, ct);
+            public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
+                originAuth.LoginAsync(loginMethod, ct);
+
+            public UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
+                originAuth.LoginPayloadedAsync(method, payload, ct);
 
             public UniTask LogoutAsync(CancellationToken ct) =>
                 originAuth.LogoutAsync(ct);

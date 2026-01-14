@@ -5,9 +5,19 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
+    public enum LoginMethod
+    {
+        ANY = 0,
+        METAMASK = 1,
+        GOOGLE = 2,
+        EMAIL_OTP = 3,
+    }
+
     public interface IWeb3Authenticator : IDisposable
     {
-        UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct);
+        UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct);
+
+        UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct);
 
         UniTask LogoutAsync(CancellationToken ct);
     }

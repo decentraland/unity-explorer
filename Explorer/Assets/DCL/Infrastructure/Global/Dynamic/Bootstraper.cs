@@ -303,7 +303,7 @@ namespace Global.Dynamic
                           bootstrapContainer.Web3AccountFactory)
                      .WithIdentityCache(bootstrapContainer.IdentityCache)
                      .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
-                     .LoginAsync("", ct);
+                     .LoginAsync(LoginMethod.EMAIL_OTP, ct);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

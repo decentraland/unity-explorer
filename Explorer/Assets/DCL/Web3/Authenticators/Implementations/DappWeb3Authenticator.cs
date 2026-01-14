@@ -134,6 +134,9 @@ namespace DCL.Web3.Authenticators
             return await SendWithConfirmationAsync(request, ct);
         }
 
+        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
+            await LoginAsync(method, ct);
+
         /// <summary>
         ///     1. An authentication request is sent to the server
         ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
@@ -142,7 +145,7 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -181,7 +184,7 @@ namespace DCL.Web3.Authenticators
                 else
                     VerificationRequired?.Invoke((authenticationResponse.code, signatureExpiration, authenticationResponse.requestId));
 
-                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
+                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId, loginMethod,
                     signatureExpiration, ct);
 
                 await DisconnectFromAuthApiAsync();
@@ -369,7 +372,7 @@ namespace DCL.Web3.Authenticators
 
                 signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, signatureExpiration, ct);
+                MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, null, signatureExpiration, ct);
 
                 if (authApiPendingOperations <= 1)
                     await DisconnectFromAuthApiAsync();
@@ -434,9 +437,13 @@ namespace DCL.Web3.Authenticators
         private void ProcessCodeVerificationStatus(SocketIOResponse response) =>
             codeVerificationTask?.TrySetResult(response);
 
-        private async UniTask<T> RequestSignatureAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask<T> RequestSignatureAsync<T>(string requestId, LoginMethod? method, DateTime expiration, CancellationToken ct)
         {
-            webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
+            string url = method.HasValue
+                ? $"{signatureWebAppUrl}/auth/login?loginMethod={method.Value.ToString().ToLowerInvariant()}/{requestId}"
+                : $"{signatureWebAppUrl}/auth/requests/{requestId}";
+
+            webBrowser.OpenUrl(url);
 
             signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();

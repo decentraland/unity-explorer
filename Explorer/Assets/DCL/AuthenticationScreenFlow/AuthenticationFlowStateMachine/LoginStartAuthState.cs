@@ -53,6 +53,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
+        private void LoginWithMetamask() =>
+            Login(LoginMethod.METAMASK);
+
+        private void LoginWithGoogle() =>
+            Login(LoginMethod.GOOGLE);
+
         public void Enter()
         {
             if (machine.PreviousState is InitAuthScreenState)
@@ -65,12 +71,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.SlideIn();
 
             // Listeners
-            view.MetamaskLoginButton.onClick.AddListener(Login);
-            view.GoogleLoginButton.onClick.AddListener(Login);
+            view.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
+            view.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
+
+            // viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
 
             view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
 
@@ -83,26 +90,27 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
-            view.MetamaskLoginButton.onClick.RemoveListener(Login);
-            view.GoogleLoginButton.onClick.RemoveListener(Login);
+            view.MetamaskLoginButton.onClick.RemoveAllListeners();
+            view.GoogleLoginButton.onClick.RemoveAllListeners();
 
-            viewInstance.ErrorPopupCloseButton.onClick.RemoveListener(CloseErrorPopup);
-            viewInstance.ErrorPopupExitButton.onClick.RemoveListener(ExitUtils.Exit);
-            viewInstance.ErrorPopupRetryButton.onClick.RemoveListener(Login);
+            viewInstance.ErrorPopupCloseButton.onClick.RemoveAllListeners();
+            viewInstance.ErrorPopupExitButton.onClick.RemoveAllListeners();
 
-            view.MoreOptionsButton.onClick.RemoveListener(view.ToggleOptionsPanelExpansion);
+            // viewInstance.ErrorPopupRetryButton.onClick.RemoveAllListeners();
+
+            view.MoreOptionsButton.onClick.RemoveAllListeners();
 
             // ThirdWeb
-            view.OtpLoginButton.onClick.RemoveListener(OTPLogin);
+            view.OtpLoginButton.onClick.RemoveAllListeners();
         }
 
-        private void Login()
+        private void Login(LoginMethod method)
         {
             compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
             view.ShowLoading();
 
-            machine.Enter<IdentityAndVerificationAuthState, CancellationToken>(controller.GetRestartedLoginToken());
+            machine.Enter<IdentityAndVerificationAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
         private void OTPLogin()

@@ -52,8 +52,11 @@ namespace DCL.Web3.Authenticators
             this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
         }
 
-        public UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct) =>
-            CurrentAuthenticator.LoginAsync(email, ct);
+        public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
+            CurrentAuthenticator.LoginAsync(loginMethod, ct);
+
+        public UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
+            CurrentAuthenticator.LoginPayloadedAsync(method, payload, ct);
 
         public UniTask LogoutAsync(CancellationToken ct) =>
             CurrentAuthenticator.LogoutAsync(ct);

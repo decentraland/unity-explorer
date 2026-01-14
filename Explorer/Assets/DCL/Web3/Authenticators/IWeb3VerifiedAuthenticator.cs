@@ -6,6 +6,7 @@ namespace DCL.Web3.Authenticators
 {
     public interface IWeb3VerifiedAuthenticator : IWeb3Authenticator
     {
+
         /// <summary>
         /// Raised when verification code should be displayed to the user.
         /// Always invoked on the main thread.

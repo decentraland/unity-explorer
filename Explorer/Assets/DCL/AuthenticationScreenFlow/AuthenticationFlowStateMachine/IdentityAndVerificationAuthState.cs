@@ -17,7 +17,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<CancellationToken>
+    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -47,13 +47,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
-        public void Enter(CancellationToken ct)
+        public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
 
-            AuthenticateAsync(ct).Forget();
+            AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
@@ -71,7 +71,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
         }
 
-        private async UniTaskVoid AuthenticateAsync(CancellationToken ct)
+        private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
                 web3Authenticator.VerificationRequired += ShowVerification;
-                IWeb3Identity identity = await web3Authenticator.LoginAsync(null, ct);
+                IWeb3Identity identity = await web3Authenticator.LoginAsync(method, ct);
 
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }

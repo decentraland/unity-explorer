@@ -92,9 +92,13 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(string email, CancellationToken ct)
+        public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
+            throw new NotImplementedException();
+
+        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
+            var email = payload as string;
 
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 
@@ -149,7 +153,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<InAppWallet> LoginViaOTP(string email, CancellationToken ct)
+        private async UniTask<InAppWallet> LoginViaOTP(string? email, CancellationToken ct)
         {
             Debug.Log("Login via OTP");
 
