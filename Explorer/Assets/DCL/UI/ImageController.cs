@@ -16,7 +16,7 @@ namespace DCL.UI
 
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly Color defaultColor = Color.white;
         private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
@@ -25,10 +25,10 @@ namespace DCL.UI
         /// <summary>
         ///     PREFERRED: Uses ECS Streamable Loading (Caching, Deduplication, Budgeting).
         /// </summary>
-        public ImageController(ImageView view, UITextureProvider textureProvider)
+        public ImageController(ImageView view, ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
         }
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
             bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
@@ -71,9 +71,9 @@ namespace DCL.UI
 
                 Sprite? sprite = null;
 
-                if (textureProvider != null)
+                if (imageControllerProvider != null)
                 {
-                    var textureRef = await textureProvider.LoadTextureAsync(uri, ct);
+                    var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
 
                     if (textureRef.HasValue)
                     {
