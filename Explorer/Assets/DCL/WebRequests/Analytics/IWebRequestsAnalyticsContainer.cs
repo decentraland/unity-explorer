@@ -2,6 +2,7 @@ using CDPBridges;
 using Collections.Pooled;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using DCL.Utility.Types;
 using DCL.WebRequests.ChromeDevtool;
 using System;
 using System.Collections.Generic;
@@ -52,16 +53,16 @@ namespace DCL.WebRequests.Analytics
             }
         }
 
-        internal static async UniTask WithChromeDevtoolsAsync<TWebRequest, TWebRequestArgs>(this UniTask innerTask, RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, UnityWebRequest uwr, ChromeDevtoolProtocolClient chromeDevtoolProtocolClient) where TWebRequestArgs: struct where TWebRequest: struct, ITypedWebRequest
+        internal static async UniTask WithChromeDevtoolsAsync<TWebRequest, TWebRequestArgs>(this UniTask innerTask, RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, UnityWebRequest uwr, Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient) where TWebRequestArgs: struct where TWebRequest: struct, ITypedWebRequest
         {
             NotifyWebRequestScope? notifyScope = null;
 
             PooledObject<Dictionary<string, string>> pooledObject;
 
-            if (chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners)
+            if (chromeDevtoolProtocolClient.Has && chromeDevtoolProtocolClient.Value.Status is BridgeStatus.HasListeners)
             {
                 pooledObject = envelope.Headers(out Dictionary<string, string> headers);
-                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers);
+                notifyScope = chromeDevtoolProtocolClient.Value.NotifyWebRequestStart(uwr.url, uwr.method!, headers);
             }
             else
 

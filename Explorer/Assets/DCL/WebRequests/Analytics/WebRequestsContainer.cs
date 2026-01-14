@@ -4,6 +4,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using DCL.Web3.Identities;
+using DCL.Utility.Types;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
@@ -20,13 +21,13 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
-        public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
+        public Option<ChromeDevtoolProtocolClient> ChromeDevtoolProtocolClient { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
             IWebRequestsAnalyticsContainer analyticsContainer,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient
+            Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient
         )
         {
             WebRequestController = webRequestController;
@@ -39,7 +40,7 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient,
             int coreBudget,
             int sceneBudget
         )

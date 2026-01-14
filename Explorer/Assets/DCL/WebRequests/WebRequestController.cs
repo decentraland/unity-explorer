@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
+using DCL.Utility.Types;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
@@ -22,7 +23,7 @@ namespace DCL.WebRequests
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
-        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
+        private readonly Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient;
 
         private readonly WebRequestBudget budget;
 
@@ -32,7 +33,7 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient,
             WebRequestBudget budget)
         {
             this.analyticsContainer = analyticsContainer;

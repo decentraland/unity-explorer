@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Utility.Types;
 using DCL.DebugUtilities;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests.ChromeDevtool;
@@ -12,10 +13,10 @@ namespace DCL.WebRequests.Analytics
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
+        private readonly Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient;
         private readonly bool isLocalSceneDevelopment;
 
-        public WebRequestsPlugin(IWebRequestsAnalyticsContainer analyticsContainer, IDebugContainerBuilder debugContainerBuilder, ChromeDevtoolProtocolClient chromeDevtoolProtocolClient, bool isLocalSceneDevelopment)
+        public WebRequestsPlugin(IWebRequestsAnalyticsContainer analyticsContainer, IDebugContainerBuilder debugContainerBuilder, Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient, bool isLocalSceneDevelopment)
         {
             this.analyticsContainer = analyticsContainer;
             this.debugContainerBuilder = debugContainerBuilder;

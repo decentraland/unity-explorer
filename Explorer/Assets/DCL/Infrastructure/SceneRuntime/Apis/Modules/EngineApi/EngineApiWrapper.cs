@@ -1,6 +1,5 @@
 using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
@@ -10,6 +9,7 @@ using UnityEngine.Profiling;
 using Utility;
 #if !UNITY_WEBGL
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 #endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
@@ -36,7 +36,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
+        public PoolableByteArray CrdtSendToRenderer(
+#if UNITY_WEBGL
+                object data
+#else 
+                ITypedArray<byte> data
+#endif
+        )
         {
             if (disposeCts.IsCancellationRequested)
                 return PoolableByteArray.EMPTY;

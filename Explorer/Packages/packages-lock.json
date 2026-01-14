@@ -21,15 +21,6 @@
       "dependencies": {},
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
-    "com.atteneder.draco": {
-      "version": "4.0.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.burst": "1.4.11"
-      },
-      "url": "https://package.openupm.com"
-    },
     "com.atteneder.gltfast": {
       "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
@@ -71,14 +62,13 @@
       "hash": "d53770b979b6f53b8e74720e773707813788813e"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "file:/Users/nickkhalow/Projects/client-sdk-unity-dcl",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
-      },
-      "hash": "147ed813d52c9729a37202d3732155813919e4f3"
+      }
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
