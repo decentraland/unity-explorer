@@ -24,6 +24,8 @@ namespace DCL.ECS.Unity.AssetLoad.Cache
             {
                 switch (asset)
                 {
+                    // AudioClipData and TextureData are reference counted, so we need to acquire a reference when adding them to the cache so that they are not disposed while cached and not being used.
+                    // GltfContainerAsset and MediaPlayerComponent are handled differently as they are not ref counted
                     case AudioClipData audioClipData:
                         audioClipData.AcquireRef();
                         break;
