@@ -124,6 +124,18 @@
             ///     duration
             /// </summary>
             public const string PROFILE_FAILED = "profile_retrieval_failed";
+
+            /// <summary>
+            ///     count
+            ///     failed_count
+            ///     duration
+            /// </summary>
+            public const string SCENE_ENTITIES_RETRIEVED = "scene_entities_retrieved";
+
+            /// <summary>
+            ///     <inheritdoc cref="SCENE_ENTITIES_RETRIEVED" />
+            /// </summary>
+            public const string AVATAR_ATTACHMENT_RETRIEVED = "avatar_attachment_retrieved";
         }
 
         public static class MarketplaceCredits
