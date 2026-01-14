@@ -69,14 +69,8 @@ namespace DCL.Diagnostics
         private bool IsLogMessageAllowed(in object message, in ReportData reportData, LogType logType) =>
             matrix.IsEnabled(reportData.Category, logType) && !Debounce(in message, in reportData, logType);
 
-        private bool IsLogMessageAllowed(in Exception message, in ReportData reportData, LogType logType)
-        {
-            bool isMatrixEnabled = matrix.IsEnabled(reportData.Category, logType);
-            Debug.Log($"ReportHandlerBase.IsLogMessageAllowed.isMatrixEnabled: {isMatrixEnabled}");
-            bool isDebounce = Debounce(in message, in reportData, logType);
-            Debug.Log($"ReportHandlerBase.IsLogMessageAllowed.isDebounce: {isDebounce}");
-            return isMatrixEnabled && !isDebounce;
-        }
+        private bool IsLogMessageAllowed(in Exception message, in ReportData reportData, LogType logType) =>
+            matrix.IsEnabled(reportData.Category, logType) && !Debounce(in message, in reportData, logType);
 
         private bool Debounce(in Exception message, in ReportData reportData, LogType logType)
         {
