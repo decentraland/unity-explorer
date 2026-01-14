@@ -1,12 +1,10 @@
 ﻿using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Text.RegularExpressions;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -67,9 +65,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
-
-            Debug.Log("ChatMessagesBusAnalyticsDecorator.SendError");
-            ReportHub.LogException(new Exception("TEST chat error"), ReportCategory.CHAT_MESSAGES, ReportHandler.Sentry);
         }
 
         private bool CheckIfIsMention(string message)

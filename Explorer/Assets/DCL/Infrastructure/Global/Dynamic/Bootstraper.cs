@@ -293,6 +293,9 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
+            Debug.Log("Bootstraper.UserInitializationAsync.SendError");
+            ReportHub.LogException(new Exception("TEST error"), ReportCategory.ALWAYS, ReportHandler.Sentry);
+
             try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
             // Exceptions on auto-login should not block the application bootstrap
             catch (AutoLoginTokenNotFoundException) { }
