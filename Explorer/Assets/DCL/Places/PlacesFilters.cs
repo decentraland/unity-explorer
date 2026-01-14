@@ -7,5 +7,6 @@ namespace DCL.Places
         public PlacesSection? Section;
         public string? CategoryId;
         public IPlacesAPIService.SortBy SortBy;
+        public IPlacesAPIService.SDKVersion SDKVersion;
     }
 }

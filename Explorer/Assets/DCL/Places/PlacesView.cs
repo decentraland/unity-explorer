@@ -13,20 +13,21 @@ namespace DCL.Places
         private const string SORT_BY_FILTER_MOST_ACTIVE_OPTION = "Most Active";
         private const string SORT_BY_FILTER_BEST_RATED_OPTION = "Best Rated";
         private const int SORT_BY_FILTER_DEFAULT_OPTION_INDEX = 1;
+        private const string SORT_BY_SDK_VERSION_SDK7_OPTION = "SDK7 Only";
+        private const string SORT_BY_SDK_VERSION_ALL_OPTION = "All";
+        private const int SORT_BY_SDK_VERSION_FILTER_DEFAULT_OPTION_INDEX = 0;
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
         private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
         private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
 
-        public Action<PlacesSection>? SectionChanged;
-        public event Action<string?>? CategorySelected;
-        public event Action<IPlacesAPIService.SortBy>? SortByChanged;
+        public event Action<PlacesFilters>? AnyFilterChanged;
 
         public PlacesResultsView PlacesResultsView => placesResultsView;
-        public PlacesFilters CurrentFilters { get; } = new ();
 
         private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
         private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
+        private readonly PlacesFilters currentFilters = new ();
 
         [Header("Sections Tabs")]
         [SerializeField] private ButtonWithSelectableStateView discoverSectionTab = null!;
@@ -36,6 +37,7 @@ namespace DCL.Places
 
         [Header("Filters")]
         [SerializeField] private SelectorButtonView sortByDropdown = null!;
+        [SerializeField] private SelectorButtonView sdkVersionDropdown = null!;
 
         [Header("Categories")]
         [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
@@ -57,6 +59,7 @@ namespace DCL.Places
             myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
 
             sortByDropdown.OptionClicked += OnSortByChanged;
+            sdkVersionDropdown.OptionClicked += OnSDKVersionChanged;
 
             categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
                 InstantiateCategoryButtonPrefab,
@@ -76,6 +79,7 @@ namespace DCL.Places
             recentlyVisitedSectionTab.Button.onClick.RemoveAllListeners();
             myPlacesSectionTab.Button.onClick.RemoveAllListeners();
             sortByDropdown.OptionClicked -= OnSortByChanged;
+            sdkVersionDropdown.OptionClicked -= OnSDKVersionChanged;
         }
 
         public void SetViewActive(bool isActive) =>
@@ -97,7 +101,7 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSection section, bool force = false)
         {
-            if (CurrentFilters.Section == section && !force)
+            if (currentFilters.Section == section && !force)
                 return;
 
             discoverSectionTab.SetSelected(false);
@@ -121,8 +125,8 @@ namespace DCL.Places
                     break;
             }
 
-            CurrentFilters.Section = section;
-            SectionChanged?.Invoke(section);
+            currentFilters.Section = section;
+            AnyFilterChanged?.Invoke(currentFilters);
         }
 
         public void SetupSortByFilter()
@@ -133,6 +137,15 @@ namespace DCL.Places
 
         public void ClearSortByFilter() =>
             sortByDropdown.ClearOptions();
+
+        public void SetupSDKVersionFilter()
+        {
+            sdkVersionDropdown.SetOptions(new List<string> { SORT_BY_SDK_VERSION_SDK7_OPTION, SORT_BY_SDK_VERSION_ALL_OPTION });
+            sdkVersionDropdown.SelectedIndex = SORT_BY_SDK_VERSION_FILTER_DEFAULT_OPTION_INDEX;
+        }
+
+        public void ClearSDKVersionFilter() =>
+            sdkVersionDropdown.ClearOptions();
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
@@ -158,9 +171,10 @@ namespace DCL.Places
 
         public void ResetCurrentFilters()
         {
-            CurrentFilters.Section = null;
-            CurrentFilters.CategoryId = null;
-            CurrentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
+            currentFilters.Section = null;
+            currentFilters.CategoryId = null;
+            currentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
+            currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
         }
 
         private PlaceCategoryButton InstantiateCategoryButtonPrefab()
@@ -190,21 +204,29 @@ namespace DCL.Places
 
             string? selectedCategory = categoryId != ALL_CATEGORY_ID ? categoryId : null;
 
-            if (CurrentFilters.CategoryId == selectedCategory && invokeEvent)
+            if (currentFilters.CategoryId == selectedCategory && invokeEvent)
                 return;
 
-            CurrentFilters.CategoryId = selectedCategory;
+            currentFilters.CategoryId = selectedCategory;
 
             if (invokeEvent)
-                CategorySelected?.Invoke(selectedCategory);
+                AnyFilterChanged?.Invoke(currentFilters);
         }
 
         private void OnSortByChanged(int index)
         {
             var selectedSortBy = index == 0 ? IPlacesAPIService.SortBy.MOST_ACTIVE : IPlacesAPIService.SortBy.LIKE_SCORE;
 
-            CurrentFilters.SortBy = selectedSortBy;
-            SortByChanged?.Invoke(selectedSortBy);
+            currentFilters.SortBy = selectedSortBy;
+            AnyFilterChanged?.Invoke(currentFilters);
+        }
+
+        private void OnSDKVersionChanged(int index)
+        {
+            var selectedSDKVersion = index == 0 ? IPlacesAPIService.SDKVersion.SDK7_ONLY : IPlacesAPIService.SDKVersion.ALL;
+
+            currentFilters.SDKVersion = selectedSDKVersion;
+            AnyFilterChanged?.Invoke(currentFilters);
         }
     }
 }

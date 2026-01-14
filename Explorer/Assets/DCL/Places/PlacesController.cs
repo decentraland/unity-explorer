@@ -34,16 +34,12 @@ namespace DCL.Places
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories);
 
-            view.SectionChanged += OnSectionChanged;
-            view.CategorySelected += OnCategorySelected;
-            view.SortByChanged += OnSortByChanged;
+            view.AnyFilterChanged += OnAnyFilterChanged;
         }
 
         public void Dispose()
         {
-            view.SectionChanged -= OnSectionChanged;
-            view.CategorySelected -= OnCategorySelected;
-            view.SortByChanged -= OnSortByChanged;
+            view.AnyFilterChanged -= OnAnyFilterChanged;
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
@@ -58,6 +54,7 @@ namespace DCL.Places
             view.SetViewActive(true);
             view.ResetCurrentFilters();
             view.SetupSortByFilter();
+            view.SetupSDKVersionFilter();
             view.SetCategories(placesCategories.categories);
             view.OpenSection(PlacesSection.DISCOVER, true);
             cursor.Unlock();
@@ -68,6 +65,7 @@ namespace DCL.Places
             isSectionActivated = false;
             view.SetViewActive(false);
             view.ClearSortByFilter();
+            view.ClearSDKVersionFilter();
             view.ClearCategories();
             PlacesClosed?.Invoke();
         }
@@ -81,16 +79,10 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        private void OnSectionChanged(PlacesSection section)
+        private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
-            view.SetCategoriesVisible(section == PlacesSection.DISCOVER);
-            FiltersChanged?.Invoke(view.CurrentFilters);
+            view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER);
+            FiltersChanged?.Invoke(newFilters);
         }
-
-        private void OnCategorySelected(string? categoryId) =>
-            FiltersChanged?.Invoke(view.CurrentFilters);
-
-        private void OnSortByChanged(IPlacesAPIService.SortBy sortBy) =>
-            FiltersChanged?.Invoke(view.CurrentFilters);
     }
 }

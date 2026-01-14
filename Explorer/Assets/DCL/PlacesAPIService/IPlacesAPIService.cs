@@ -49,6 +49,12 @@ namespace DCL.PlacesAPIService
             DESC,
             ASC,
         }
+
+        enum SDKVersion
+        {
+            SDK7_ONLY,
+            ALL,
+        }
     }
 
     public static class PlacesAPIServiceExtensions
