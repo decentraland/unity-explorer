@@ -159,7 +159,7 @@ jobs:
           testMode: playmode
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64 -testCategory "Performance" -perfTestResults ./PerformanceTestResults.json -DCLBenchmarkCIPKey ${{ secrets.DCL_BENCHMARK_CIP_KEY }
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "Performance" -perfTestResults ./PerformanceTestResults.json -DCLBenchmarkCIPKey ${{ secrets.DCL_BENCHMARK_CIP_KEY }}
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       # Generate PDF report
