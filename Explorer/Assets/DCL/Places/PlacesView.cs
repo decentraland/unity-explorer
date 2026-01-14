@@ -11,7 +11,7 @@ namespace DCL.Places
     public class PlacesView : MonoBehaviour
     {
         private const string SORT_BY_FILTER_MOST_ACTIVE_OPTION = "Most Active";
-        private const string SORT_BY_FILTER_BEST_RATED_OPTION = "Best";
+        private const string SORT_BY_FILTER_BEST_RATED_OPTION = "Best Rated";
         private const int SORT_BY_FILTER_DEFAULT_OPTION_INDEX = 1;
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
