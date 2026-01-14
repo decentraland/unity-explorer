@@ -27,8 +27,8 @@ namespace DCL.Places
         private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
 
         public event Action<PlacesFilters>? AnyFilterChanged;
-        public event Action<string>? SearchBarSelected;
-        public event Action<string>? SearchBarDeselected;
+        public event Action? SearchBarSelected;
+        public event Action? SearchBarDeselected;
 
         public PlacesResultsView PlacesResultsView => placesResultsView;
 
@@ -63,34 +63,22 @@ namespace DCL.Places
 
         private void Awake()
         {
+            // Tabs subscriptions
             discoverSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.DISCOVER));
             favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.FAVORITES));
             recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RECENTLY_VISITED));
             myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
 
+            // Filters subscriptions
             sortByDropdown.OptionClicked += OnSortByChanged;
             sdkVersionDropdown.OptionClicked += OnSDKVersionChanged;
+            searchBar.inputField.onValueChanged.AddListener(OnSearchValueChanged);
+            searchBar.inputField.onSubmit.AddListener(OnSearchSubmitted);
+            searchBar.clearSearchButton.onClick.AddListener(OnSearchClearButtonClicked);
+            searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke());
+            searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke());
 
-            searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
-            searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
-            searchBar.inputField.onValueChanged.AddListener(text =>
-            {
-                searchCancellationCts = searchCancellationCts.SafeRestart();
-                AwaitAndSendSearchAsync(text, searchCancellationCts.Token).Forget();
-                SetSearchBarClearButtonActive(!string.IsNullOrEmpty(text));
-            });
-            searchBar.inputField.onSubmit.AddListener(text =>
-            {
-                searchCancellationCts = searchCancellationCts.SafeRestart();
-                AwaitAndSendSearchAsync(text, searchCancellationCts.Token, skipAwait: true).Forget();
-            });
-            searchBar.clearSearchButton.onClick.AddListener(() =>
-            {
-                CleanSearchBar(raiseOnChangeEvent: false);
-                currentFilters.SearchText = string.Empty;
-                AnyFilterChanged?.Invoke(currentFilters);
-            });
-
+            // Categories pool configuration
             categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
                 InstantiateCategoryButtonPrefab,
                 defaultCapacity: CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY,
@@ -115,6 +103,7 @@ namespace DCL.Places
             searchBar.inputField.onValueChanged.RemoveAllListeners();
             searchBar.inputField.onSubmit.RemoveAllListeners();
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
+            searchCancellationCts?.SafeCancelAndDispose();
         }
 
         public void SetViewActive(bool isActive)
@@ -139,7 +128,7 @@ namespace DCL.Places
             headerAnimator.Update(0);
         }
 
-        public void OpenSection(PlacesSection section, bool force = false)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true)
         {
             if (currentFilters.Section == section && !force)
                 return;
@@ -148,6 +137,8 @@ namespace DCL.Places
             favoritesSectionTab.SetSelected(false);
             recentlyVisitedSectionTab.SetSelected(false);
             myPlacesSectionTab.SetSelected(false);
+
+            CleanSearchBar(raiseOnChangeEvent: false);
 
             switch (section)
             {
@@ -166,7 +157,9 @@ namespace DCL.Places
             }
 
             currentFilters.Section = section;
-            AnyFilterChanged?.Invoke(currentFilters);
+
+            if (invokeEvent)
+                AnyFilterChanged?.Invoke(currentFilters);
         }
 
         public void SetupSortByFilter()
@@ -270,6 +263,19 @@ namespace DCL.Places
             AnyFilterChanged?.Invoke(currentFilters);
         }
 
+        private void OnSearchValueChanged(string text)
+        {
+            searchCancellationCts = searchCancellationCts.SafeRestart();
+            AwaitAndSendSearchAsync(text, searchCancellationCts.Token).Forget();
+            SetSearchBarClearButtonActive(!string.IsNullOrEmpty(text));
+        }
+
+        private void OnSearchSubmitted(string text)
+        {
+            searchCancellationCts = searchCancellationCts.SafeRestart();
+            AwaitAndSendSearchAsync(text, searchCancellationCts.Token, skipAwait: true).Forget();
+        }
+
         private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct, bool skipAwait = false)
         {
             if (!skipAwait)
@@ -279,8 +285,12 @@ namespace DCL.Places
             AnyFilterChanged?.Invoke(currentFilters);
         }
 
-        private void SetSearchBarClearButtonActive(bool isActive) =>
-            searchBar.clearSearchButton.gameObject.SetActive(isActive);
+        private void OnSearchClearButtonClicked()
+        {
+            CleanSearchBar(raiseOnChangeEvent: false);
+            currentFilters.SearchText = string.Empty;
+            AnyFilterChanged?.Invoke(currentFilters);
+        }
 
         private void CleanSearchBar(bool raiseOnChangeEvent = true)
         {
@@ -295,5 +305,8 @@ namespace DCL.Places
             if (!raiseOnChangeEvent)
                 searchBar.inputField.onValueChanged = originalEvent;
         }
+
+        private void SetSearchBarClearButtonActive(bool isActive) =>
+            searchBar.clearSearchButton.gameObject.SetActive(isActive);
     }
 }

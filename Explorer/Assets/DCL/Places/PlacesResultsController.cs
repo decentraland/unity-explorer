@@ -26,7 +26,7 @@ namespace DCL.Places
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
 
-        private CancellationTokenSource? getPlacesCts;
+        private CancellationTokenSource? loadPlacesCts;
 
         public PlacesResultsController(
             PlacesResultsView view,
@@ -72,10 +72,11 @@ namespace DCL.Places
 
         private void LoadPlaces(int pageNumber)
         {
-            if (currentFilters.Section == PlacesSection.DISCOVER)
+            if (!string.IsNullOrEmpty(currentFilters.SearchText) || currentFilters.Section == PlacesSection.DISCOVER)
             {
-                getPlacesCts = getPlacesCts.SafeRestart();
-                LoadPlacesAsync(pageNumber, getPlacesCts.Token).Forget();
+                placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false);
+                loadPlacesCts = loadPlacesCts.SafeRestart();
+                SearchPlacesAsync(pageNumber, loadPlacesCts.Token).Forget();
             }
             else
             {
@@ -84,7 +85,7 @@ namespace DCL.Places
             }
         }
 
-        private async UniTask LoadPlacesAsync(int pageNumber, CancellationToken ct)
+        private async UniTask SearchPlacesAsync(int pageNumber, CancellationToken ct)
         {
             isPlacesGridLoadingItems = true;
 
@@ -98,6 +99,8 @@ namespace DCL.Places
             else
                 view.SetPlacesGridLoadingMoreActive(true);
 
+            bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
+
             var placesResult = await placesAPIService.SearchPlacesAsync(
                                                           pageNumber: pageNumber,
                                                           pageSize: PLACES_PER_PAGE,
@@ -105,7 +108,7 @@ namespace DCL.Places
                                                           searchText: currentFilters.SearchText,
                                                           sortBy: currentFilters.SortBy,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                          category: currentFilters.CategoryId)
+                                                          category: isSearching ? null : currentFilters.CategoryId)
                                                      .SuppressToResultAsync(ReportCategory.PLACES);
 
             if (ct.IsCancellationRequested)
@@ -123,13 +126,24 @@ namespace DCL.Places
                 placesStateService.AddPlaces(placesResult.Value.Data);
                 view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
 
-                if (currentFilters.CategoryId != null)
+                if (!string.IsNullOrEmpty(currentFilters.SearchText))
+                    view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})");
+                else if (currentFilters.Section == PlacesSection.DISCOVER)
                 {
-                    string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    if (currentFilters.CategoryId != null)
+                    {
+                        string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
+                        view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    }
+                    else
+                        view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})");
                 }
-                else
-                    view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})");
+                else if (currentFilters.Section == PlacesSection.RECENTLY_VISITED)
+                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
+                else if (currentFilters.Section == PlacesSection.FAVORITES)
+                    view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
+                else if (currentFilters.Section == PlacesSection.MY_PLACES)
+                    view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
             }
 
             view.SetPlacesCounterActive(placesResult.Value.Data.Count > 0);
@@ -145,7 +159,7 @@ namespace DCL.Places
 
         private void UnloadPlaces()
         {
-            getPlacesCts?.SafeCancelAndDispose();
+            loadPlacesCts?.SafeCancelAndDispose();
             view.ClearPlacesResults();
             placesStateService.ClearPlaces();
         }

@@ -64,7 +64,7 @@ namespace DCL.Places
             view.SetupSortByFilter();
             view.SetupSDKVersionFilter();
             view.SetCategories(placesCategories.categories);
-            view.OpenSection(PlacesSection.DISCOVER, true);
+            view.OpenSection(PlacesSection.DISCOVER, force: true);
             cursor.Unlock();
         }
 
@@ -87,16 +87,19 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true) =>
+            view.OpenSection(section, force, invokeEvent);
+
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
-            view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER);
+            view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }
 
-        private void DisableShortcutsInput(string text) =>
+        private void DisableShortcutsInput() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
-        private void RestoreShortcutsInput(string text) =>
+        private void RestoreShortcutsInput() =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
     }
 }
