@@ -2,13 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
-using DCL.ECS.Unity.AssetLoad.Cache;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.SDKComponents.AssetLoad.Components;
 using DCL.SDKComponents.MediaStream;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.AssetLoad.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -16,7 +16,7 @@ using ECS.Unity.GLTFContainer.Systems;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace DCL.SDKComponents.AssetLoad.Systems
+namespace ECS.Unity.AssetLoad.Systems
 {
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]

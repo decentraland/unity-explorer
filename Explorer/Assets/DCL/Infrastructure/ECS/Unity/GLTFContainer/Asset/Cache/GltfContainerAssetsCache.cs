@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.AssetLoad.Cache;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiling;

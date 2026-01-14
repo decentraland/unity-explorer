@@ -1,7 +1,7 @@
 using Arch.Core;
 using System.Collections.Generic;
 
-namespace DCL.SDKComponents.AssetLoad.Components
+namespace ECS.Unity.AssetLoad.Components
 {
     /// <summary>
     ///     Tracks which entities are loading assets for this PBAssetLoad component

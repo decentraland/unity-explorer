@@ -4,21 +4,21 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.ECS.Unity.AssetLoad.Cache;
 using DCL.ECSComponents;
-using DCL.SDKComponents.AssetLoad.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.AssetLoad.Components;
 
-namespace DCL.SDKComponents.AssetLoad.Systems
+namespace ECS.Unity.AssetLoad.Systems
 {
     /// <summary>
     ///     Cleans up asset loading when PBAssetLoad component is removed
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
-    [UpdateBefore(typeof(AssetLoadSystem))]
+    [UpdateBefore(typeof(ECS.Unity.AssetLoad.Systems.AssetLoadSystem))]
     [ThrottlingEnabled]
     public partial class CleanUpAssetLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

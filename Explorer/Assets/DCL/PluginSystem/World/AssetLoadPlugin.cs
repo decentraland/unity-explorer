@@ -1,8 +1,8 @@
 using Arch.SystemGroups;
-using DCL.ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.AssetLoad;
+using ECS.Unity.AssetLoad.Cache;
+using ECS.Unity.AssetLoad.Systems;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.SDKComponents.AssetLoad;
-using DCL.SDKComponents.AssetLoad.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using System.Collections.Generic;

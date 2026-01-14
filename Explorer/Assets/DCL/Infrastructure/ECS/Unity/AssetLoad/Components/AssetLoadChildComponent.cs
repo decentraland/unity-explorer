@@ -1,7 +1,6 @@
-using Arch.Core;
 using CRDT;
 
-namespace DCL.SDKComponents.AssetLoad.Components
+namespace ECS.Unity.AssetLoad.Components
 {
     public struct AssetLoadChildComponent
     {

@@ -2,10 +2,10 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.SDKComponents.AssetLoad.Components;
+using ECS.Unity.AssetLoad.Components;
 using SceneRunner.Scene;
 
-namespace DCL.SDKComponents.AssetLoad
+namespace ECS.Unity.AssetLoad
 {
     public class AssetLoadUtils
     {

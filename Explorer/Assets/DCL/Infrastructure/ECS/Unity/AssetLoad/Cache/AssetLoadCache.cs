@@ -6,7 +6,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.ECS.Unity.AssetLoad.Cache
+namespace ECS.Unity.AssetLoad.Cache
 {
     public class AssetLoadCache : IDisposable
     {

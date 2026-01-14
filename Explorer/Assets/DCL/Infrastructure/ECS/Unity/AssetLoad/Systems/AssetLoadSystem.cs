@@ -7,7 +7,6 @@ using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.SDKComponents.AssetLoad.Components;
 using DCL.SDKComponents.AudioSources;
 using ECS.Abstract;
 using ECS.Groups;
@@ -15,13 +14,14 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.AssetLoad.Components;
 using SceneRunner.Scene;
 using System;
 using UnityEngine.Pool;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace DCL.SDKComponents.AssetLoad.Systems
+namespace ECS.Unity.AssetLoad.Systems
 {
     /// <summary>
     ///     Starts asset loading for assets listed in PBAssetLoad component
