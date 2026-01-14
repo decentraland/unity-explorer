@@ -139,6 +139,10 @@ namespace DCL.Passport.Modules
                 const string ERROR_MESSAGE = "There was an error while trying to save your profile. Please try again!";
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
+            finally
+            {
+                SetInfoSectionAsSavingStatus(false);
                 SetInfoSectionAsEditionMode(false);
             }
         }
