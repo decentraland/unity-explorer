@@ -90,13 +90,11 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            ReportHub.LogProductionInfo($"SentryReportHandler.Log");
             CaptureMessage(message.ToString(), category, logType);
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
-            ReportHub.LogProductionInfo($"SentryReportHandler.LogFormat");
             var format = string.Format(message.ToString(), args);
             CaptureMessage(format, category, logType);
         }
