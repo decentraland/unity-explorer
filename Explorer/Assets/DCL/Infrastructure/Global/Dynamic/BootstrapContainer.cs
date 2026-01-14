@@ -248,11 +248,9 @@ namespace Global.Dynamic
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)
         {
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
-            Debug.Log("Using development report handling settings");
             ReportsHandlingSettings baseSettings = settings.ReportHandlingSettingsDevelopment;
 #else
             ReportsHandlingSettings baseSettings = settings.ReportHandlingSettingsProduction;
-            Debug.Log("Using production report handling settings");
 #endif
 
             IReportsHandlingSettings finalSettings = baseSettings;
