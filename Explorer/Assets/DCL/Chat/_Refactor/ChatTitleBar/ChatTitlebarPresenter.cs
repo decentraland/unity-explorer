@@ -399,7 +399,10 @@ namespace DCL.Chat
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel("Error"));
+                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
+                {
+                    Username = "Error"
+                });
 
                 ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
             }

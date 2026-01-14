@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -8,22 +9,13 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Utility;
+using UnityEngine;
 
 namespace DCL.Profiles.Tests
 {
-    [TestFixture(ProfileTier.Kind.Compact)]
-    [TestFixture(ProfileTier.Kind.Full)]
     public class PrepareProfilesBatchSystemShould : UnitySystemTestBase<PrepareProfilesBatchSystem>
     {
         private IBatchedProfileRepository repository;
-
-        private readonly ProfileTier.Kind tier;
-
-        public PrepareProfilesBatchSystemShould(ProfileTier.Kind tier)
-        {
-            this.tier = tier;
-        }
 
         private static readonly URLDomain LAMBDAS = URLDomain.FromString("http://localhost");
 
@@ -32,7 +24,7 @@ namespace DCL.Profiles.Tests
         {
             repository = Substitute.For<IBatchedProfileRepository>();
 
-            repository.PostUrl(Arg.Any<URLDomain>(), tier).Returns(c => URLAddress.FromString(c.Arg<URLDomain>().Value));
+            repository.PostUrl(Arg.Any<URLDomain>()).Returns(c => URLAddress.FromString(c.Arg<URLDomain>().Value));
 
             system = new PrepareProfilesBatchSystem(world, TimeSpan.FromSeconds(2), repository);
         }
@@ -42,8 +34,8 @@ namespace DCL.Profiles.Tests
         [TestCase(0.5f, false)]
         public async Task RespectHeartbeat(float delay, bool created)
         {
-            var batch = ProfilesBatchRequest.Create(LAMBDAS, tier);
-            batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), PartitionComponent.TOP_PRIORITY);
+            var batch = ProfilesBatchRequest.Create(LAMBDAS);
+            batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), PartitionComponent.TOP_PRIORITY);
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 
@@ -81,37 +73,6 @@ namespace DCL.Profiles.Tests
         }
 
         [Test]
-        public void CreateSeparatePromisesForDifferentTiers()
-        {
-            ProfileTier.Kind[] tiers = EnumUtils.Values<ProfileTier.Kind>();
-            var batches = new ProfilesBatchRequest[tiers.Length];
-
-            for (int index = 0; index < tiers.Length; index++)
-            {
-                ProfileTier.Kind tier = tiers[index];
-                var batch = ProfilesBatchRequest.Create(URLDomain.FromString("https://test-lambda000"), tier);
-                batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), PartitionComponent.TOP_PRIORITY);
-                batches[index] = batch;
-            }
-
-            repository.ConsumePendingBatch().Returns(batches);
-
-            system!.Update(0);
-
-            // The first iteration is never deferred
-
-            QueryDescription query = new QueryDescription().WithAll<GetProfilesBatchIntent, IPartitionComponent>();
-
-            Assert.That(world.CountEntities(query), Is.EqualTo(tiers.Length));
-
-            var results = new List<ProfileTier.Kind>(tiers.Length);
-
-            world.Query(query, (ref GetProfilesBatchIntent intent) => results.Add(intent.Tier));
-
-            CollectionAssert.AreEquivalent(tiers, results);
-        }
-
-        [Test]
         public void CreateSeparatePromisesForDifferentLambdas()
         {
             var batches = new ProfilesBatchRequest[5];
@@ -120,8 +81,8 @@ namespace DCL.Profiles.Tests
 
             for (int i = 0; i < 5; i++)
             {
-                var batch = ProfilesBatchRequest.Create(lambdas[i] = URLDomain.FromString($"https://test-lambda{i}"), tier);
-                batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), PartitionComponent.TOP_PRIORITY);
+                var batch = ProfilesBatchRequest.Create(lambdas[i] = URLDomain.FromString($"https://test-lambda{i}"));
+                batch.PendingRequests["test_id"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), PartitionComponent.TOP_PRIORITY);
                 batches[i] = batch;
             }
 
@@ -145,9 +106,9 @@ namespace DCL.Profiles.Tests
         [Test]
         public void PickLowestPartitionFromBatch()
         {
-            var batch = ProfilesBatchRequest.Create(LAMBDAS, tier);
+            var batch = ProfilesBatchRequest.Create(LAMBDAS);
 
-            for (byte i = 0; i < 5; i++) { batch.PendingRequests[$"test_id{i}"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<ProfileTier?>(), new PartitionComponent { Bucket = i }); }
+            for (byte i = 0; i < 5; i++) { batch.PendingRequests[$"test_id{i}"] = new ProfilesBatchRequest.Input(new UniTaskCompletionSource<Profile?>(), new PartitionComponent { Bucket = i }); }
 
             repository.ConsumePendingBatch().Returns(new[] { batch });
 

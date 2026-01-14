@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -14,6 +15,7 @@ using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -46,7 +48,7 @@ namespace DCL.LOD.Systems
         {
             InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
 
-            if (initialSceneStateLOD.CurrentState == InitialSceneStateLOD.State.PROCESSING)
+            if (initialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING)
             {
                 // Skip if promise hasn't been created yet or is already consumed
                 if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -110,21 +112,12 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.UNINITIALIZED)
-                    {
-                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
-                            PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
-                                creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
-                        else
-                        {
-                            ReportHub.LogWarning(GetReportData(), $"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct");
-                            creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
-                        }
-                    }
+                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
                     else
                     {
-                        //Means that the ISS loading has been cancelled. We need to remove the reference to keep counting correctly
-                        Result.Asset!.Dereference();
+                        ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
+                        creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
                     }
                 }
                 World.Destroy(entity);
@@ -148,7 +141,7 @@ namespace DCL.LOD.Systems
         private static void MarkAssetBundleAsFailed(ref SceneLODInfo sceneLODInfo, string message)
         {
             ReportHub.Log(ReportCategory.LOD, message);
-            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.FAILED;
+            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.FAILED;
             //We need to re-evaluate the LOD to see if we can get the old method
             sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
         }

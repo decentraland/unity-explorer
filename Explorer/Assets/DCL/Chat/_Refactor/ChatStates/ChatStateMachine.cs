@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatStates
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
         private readonly IEventBus eventBus;
-        private readonly MVCStateMachine<ChatState> fsm;
+        private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
 
@@ -31,16 +31,14 @@ namespace DCL.Chat.ChatStates
 
             this.chatPanelPresenter = chatPanelPresenter;
 
-            fsm = new MVCStateMachine<ChatState>();
-            fsm.AddStates(
-                new InitChatState(),
-                new DefaultChatState(fsm, mediator),
-                new FocusedChatState(fsm, mediator, inputBlocker),
-                new MembersChatState(fsm, mediator),
-                new MinimizedChatState(fsm, mediator),
-                new HiddenChatState(mediator)
-            );
-            fsm.Enter<InitChatState>();
+            var context = new ChatStateContext(mediator, inputBlocker);
+
+            fsm = new MVCStateMachine<ChatState, ChatStateContext>(context, new InitChatState());
+            fsm.AddState(new DefaultChatState());
+            fsm.AddState(new FocusedChatState());
+            fsm.AddState(new MembersChatState());
+            fsm.AddState(new MinimizedChatState());
+            fsm.AddState(new HiddenChatState());
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
@@ -67,81 +65,81 @@ namespace DCL.Chat.ChatStates
             scope.Dispose();
         }
 
-        private void PropagateStateChange(ChatState currentState) =>
+        private void PropagateStateChange() =>
             eventBus.Publish(new ChatEvents.ChatStateChangedEvent
             {
-                CurrentState = currentState,
+                CurrentState = fsm.CurrentState
             });
 
         public void OnViewShow()
         {
             inputBlocker.Initialize();
 
-            fsm.Enter<DefaultChatState>();
+            fsm.ChangeState<DefaultChatState>();
         }
 
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
-            fsm.CurrentState!.OnFocusRequested();
+            fsm.CurrentState.OnFocusRequested();
         }
 
         private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
         {
-            fsm.CurrentState!.OnCloseRequested();
+            fsm.CurrentState.OnCloseRequested();
         }
 
         private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
-            fsm.CurrentState!.OnToggleMembers();
+            fsm.CurrentState.OnToggleMembers();
         }
 
         private void HandleClickInside()
         {
-            fsm.CurrentState!.OnClickInside();
+            fsm.CurrentState.OnClickInside();
         }
 
         private void HandleClickOutside()
         {
-            fsm.CurrentState!.OnClickOutside();
+            fsm.CurrentState.OnClickOutside();
         }
 
         private void HandlePointerExited()
         {
-            fsm.CurrentState!.OnPointerExit();
+            fsm.CurrentState.OnPointerExit();
         }
 
         private void HandlePointerEntered()
         {
-            fsm.CurrentState!.OnPointerEnter();
+            fsm.CurrentState.OnPointerEnter();
         }
 
         public void Minimize()
         {
-            fsm.CurrentState!.OnMinimizeRequested();
+            fsm.CurrentState.OnMinimizeRequested();
         }
 
         public void SetInitialState(bool focus)
         {
             if (focus)
-                fsm.Enter<FocusedChatState>();
+                fsm.ChangeState<FocusedChatState>();
             else
             {
-                // fsm.Enter<MinimizedChatState>();
-                fsm.TryPopState();
+                // fsm.ChangeState<MinimizedChatState>();
+                fsm.PopState();
             }
         }
 
         public void SetToggleState()
         {
             if (IsMinimized)
-                fsm.Enter<FocusedChatState>();
+                fsm.ChangeState<FocusedChatState>();
             else
-                fsm.Enter<MinimizedChatState>();
+                fsm.ChangeState<MinimizedChatState>();
         }
 
         public void PopState()
         {
-            fsm.TryPopState();
+            fsm.PopState();
         }
 
         /// <summary>
@@ -151,14 +149,14 @@ namespace DCL.Chat.ChatStates
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
-                fsm.Enter<DefaultChatState>();
+                fsm.ChangeState<DefaultChatState>();
             else
-                fsm.Enter<HiddenChatState>();
+                fsm.ChangeState<HiddenChatState>();
         }
 
         public void SetFocusState()
         {
-            fsm.Enter<FocusedChatState>();
+            fsm.ChangeState<FocusedChatState>();
         }
     }
 }

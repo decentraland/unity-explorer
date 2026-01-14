@@ -5,22 +5,22 @@ using UnityEngine.Pool;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TimeToFirstByteAverage : RequestMetricBase
+    public class TimeToFirstByteAverage : IRequestMetric
     {
         private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
 
         private double sum;
         private uint count;
 
-        public override DebugLongMarkerDef.Unit GetUnit() =>
+        public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.TimeNanoseconds;
 
-        public override void Update()
+        public void Update()
         {
             TrackFirstByteDownloaded();
         }
 
-        public override ulong GetMetric() =>
+        public ulong GetMetric() =>
             (ulong)(sum / count) * 1_000_000UL;
 
         private void TrackFirstByteDownloaded()
@@ -40,12 +40,12 @@ namespace DCL.WebRequests.Analytics.Metrics
                 pendingRequests.Remove(key);
         }
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public void OnRequestStarted(ITypedWebRequest request)
         {
             pendingRequests.Add(request, DateTime.Now);
         }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public void OnRequestEnded(ITypedWebRequest request)
         {
             pendingRequests.Remove(request);
         }

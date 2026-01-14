@@ -1,5 +1,4 @@
 ﻿using DCL.WebRequests.Analytics;
-using DCL.WebRequests.Analytics.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,21 +21,19 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         internal const string SEND_REQUEST_MARKER = "WebRequest.Send";
         internal const string PROCESS_DATA_MARKER = "WebRequest.ProcessData";
-        internal const string DOWNLOADED_DATA_SIZE_MARKER = "WebRequest.DownloadedDataSize";
 
         internal readonly SampleGroup sendRequest = new (SEND_REQUEST_MARKER, SampleUnit.Microsecond);
         internal readonly SampleGroup processData = new (PROCESS_DATA_MARKER, SampleUnit.Microsecond);
-        internal readonly SampleGroup downloadedDataSize = new (DOWNLOADED_DATA_SIZE_MARKER, SampleUnit.Megabyte);
 
         private readonly Dictionary<UnityWebRequest, RequestState> requests = new ();
 
         public bool WarmingUp { private get; set; }
 
-        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics() =>
-            new Dictionary<Type, Func<RequestMetricBase>>();
+        public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
+            new Dictionary<Type, Func<IRequestMetric>>();
 
-        public IReadOnlyList<RequestMetricBase> GetMetric(Type requestType) =>
-            Array.Empty<RequestMetricBase>();
+        public IReadOnlyList<IRequestMetric> GetMetric(Type requestType) =>
+            Array.Empty<IRequestMetric>();
 
         public static double ToMs(long a, long b) =>
             (b - a) * (1_000_000.0 / Stopwatch.Frequency);
@@ -53,7 +50,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             if (WarmingUp) return;
 
             Measure.Custom(sendRequest, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
-            Measure.Custom(downloadedDataSize, request.UnityWebRequest.downloadedBytes / 1_000_000D);
             requests.Remove(request.UnityWebRequest);
         }
 

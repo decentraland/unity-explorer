@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
@@ -143,14 +142,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
-            IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
-
-            // Initialize the embedded emote URN mapping for legacy emote conversion
-            EmoteComponentsUtils.InitializeLegacyToOnChainEmoteMapping(baseEmotesUrns);
-
-            // Set default emotes (used in case of empty emote wheel)
-            emoteStorage.SetBaseEmotesUrns(baseEmotesUrns);
-
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
@@ -159,7 +150,7 @@ namespace DCL.PluginSystem.Global
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
-                emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
+                emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
 
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
@@ -194,16 +185,6 @@ namespace DCL.PluginSystem.Global
             {
                 public EmoteAudioSourceReference(string guid) : base(guid) { }
             }
-
-            /// <summary>
-            /// Ordered list of base emote URNs.
-            /// The order defines the default emote order for users with no equipped emotes.
-            /// </summary>
-            [field: SerializeField]
-            public string[] BaseEmotes { get; private set; }
-
-            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
-                BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

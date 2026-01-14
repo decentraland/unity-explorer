@@ -83,7 +83,7 @@ namespace DCL.LOD.Systems
             {
                 sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null, defaultFOV, defaultLodBias,
                     realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
-                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.RESOLVED;
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED;
             }
         }
 

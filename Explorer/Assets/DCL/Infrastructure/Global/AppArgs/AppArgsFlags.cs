@@ -14,7 +14,6 @@
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
-        public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
@@ -57,8 +56,6 @@
         public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
 
         public const string HEAD_SYNC = "head-sync";
-
-        public const string DISCOVER = "discover";
 
         public static class Multiplayer
         {

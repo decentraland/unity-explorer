@@ -26,7 +26,7 @@ namespace DCL.WebRequests
 
         private readonly WebRequestBudget budget;
 
-        IRequestHub IWebRequestController.RequestHub => requestHub;
+        IRequestHub IWebRequestController.requestHub => requestHub;
 
         public WebRequestController(
             IWebRequestsAnalyticsContainer analyticsContainer,

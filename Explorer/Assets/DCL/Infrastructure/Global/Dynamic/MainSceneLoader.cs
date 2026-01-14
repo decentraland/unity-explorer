@@ -153,6 +153,8 @@ namespace Global.Dynamic
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
+            const bool KTX_ENABLED = true;
+
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
@@ -214,16 +216,8 @@ namespace Global.Dynamic
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
-                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, ct);
-
-                bootstrap.InitializeFeaturesRegistry();
-
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
-
                 bool isLoaded;
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
@@ -234,7 +228,13 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                staticContainer!.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                bootstrap.InitializeFeaturesRegistry();
+
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 

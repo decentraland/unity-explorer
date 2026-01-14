@@ -1,24 +1,22 @@
 ﻿using DCL.DebugUtilities;
-using System;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TotalFailed : RequestMetricBase
+    public class TotalFailed : IRequestMetric
     {
         private ulong counter { get; set; }
 
-        public override DebugLongMarkerDef.Unit GetUnit() =>
-            DebugLongMarkerDef.Unit.NoFormat;
+        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.NoFormat;
 
-        public override ulong GetMetric() =>
+        public ulong GetMetric() =>
             counter;
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public void OnRequestStarted(ITypedWebRequest request)
         {
        }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public void OnRequestEnded(ITypedWebRequest request)
         {
             if (request.UnityWebRequest.result != UnityWebRequest.Result.Success) counter++;
         }

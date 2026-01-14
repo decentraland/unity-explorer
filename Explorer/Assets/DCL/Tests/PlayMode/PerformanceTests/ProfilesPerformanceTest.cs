@@ -10,10 +10,10 @@ using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://asset-bundle-registry.decentraland.today/", true)]
+    [TestFixture("https://peer-ec1.decentraland.org/lambdas/")]
+    [TestFixture("https://peer-ec2.decentraland.org/lambdas/")]
+    [TestFixture("https://peer-ap1.decentraland.org/lambdas/")]
+    [TestFixture("https://asset-bundle-registry.decentraland.today/")]
     public class ProfilesPerformanceTest : PerformanceBenchmark
     {
         private static readonly object[] TEST_CASES_SOURCE =
@@ -48,15 +48,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
     ""0x82f2b3705cd21501a9cd908814bf1c32942f42e1""
     ]}";
 
-        private readonly bool supportsMetadata;
         private readonly string profilesUrls;
-        private readonly string metadataUrl;
 
-        public ProfilesPerformanceTest(string lambdas, bool supportsMetadata)
+        public ProfilesPerformanceTest(string lambdas)
         {
-            this.supportsMetadata = supportsMetadata;
             profilesUrls = lambdas + "profiles";
-            metadataUrl = lambdas + "profiles/metadata";
         }
 
         [TestCaseSource(nameof(TEST_CASES_SOURCE))]
@@ -67,20 +63,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             CreateController(concurrency);
 
             await BenchmarkAsync(concurrency, _ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
-        }
-
-        [TestCaseSource(nameof(TEST_CASES_SOURCE))]
-        [Performance]
-        [Test]
-        public async Task PostMetadataAsync(int concurrency, int iterations, double delayBetweenIterations, int totalRequests)
-        {
-            if (!supportsMetadata) return;
-
-            CreateController(concurrency);
-
-            await BenchmarkAsync(concurrency, _ => controller!.PostAsync(metadataUrl, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile.CompactInfo>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+                                                              .CreateFromJson<List<GetProfileJsonRootDto>>(WRJsonParser.Newtonsoft), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
     }
 }

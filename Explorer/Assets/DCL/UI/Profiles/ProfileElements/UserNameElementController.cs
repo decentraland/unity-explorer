@@ -7,7 +7,7 @@ namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController : IDisposable
     {
-        private Profile.CompactInfo? currentProfile;
+        private Profile? currentProfile;
 
         public readonly UserNameElement Element;
 
@@ -23,12 +23,12 @@ namespace DCL.UI.ProfileElements
                 if (currentProfile == null)
                     return;
 
-                UserInfoHelper.CopyToClipboard(currentProfile.Value.HasClaimedName ? element.UserNameText.text : $"{currentProfile.Value.Name}{currentProfile.Value.WalletId}");
+                UserInfoHelper.CopyToClipboard(currentProfile.HasClaimedName ? element.UserNameText.text : $"{currentProfile.Name}#{currentProfile.UserId[^4..]}");
                 UserInfoHelper.ShowCopyWarningAsync(element.CopyNameWarningNotification, CancellationToken.None).Forget();
             });
         }
 
-        public void Setup(Profile.CompactInfo profile)
+        public void Setup(Profile profile)
         {
             currentProfile = profile;
 

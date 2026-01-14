@@ -95,7 +95,7 @@ namespace DCL.Friends.UI.Requests
             Web3Address selfAddress = identityCache.EnsuredIdentity().Address;
 
             if (inputData.OneShotFriendAccepted != null)
-                Accept(inputData.OneShotFriendAccepted.Value);
+                Accept(inputData.OneShotFriendAccepted);
             else if (fr == null)
             {
                 if (inputData.DestinationUser == null)
@@ -164,19 +164,17 @@ namespace DCL.Friends.UI.Requests
 
             async UniTask LoadUserAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user, CancellationToken ct)
             {
-                Profile.CompactInfo? compactInfo = await profileRepository.GetCompactAsync(user, ct);
+                Profile? profile = await profileRepository.GetAsync(user, ct);
 
-                if (compactInfo == null) return;
-
-                Profile.CompactInfo profile = compactInfo.Value;
+                if (profile == null) return;
 
                 config.UserName.text = profile.Name;
                 config.UserName.color = profile.UserNameColor;
                 config.UserNameVerification.SetActive(profile.HasClaimedName);
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
-                config.UserNameHash.text = compactInfo.Value.WalletId;
+                config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
-                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FaceSnapshotUrl, user, ct);
+                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, user, ct);
             }
         }
 
@@ -223,7 +221,7 @@ namespace DCL.Friends.UI.Requests
         }
 
         private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config,
-            Profile.CompactInfo user, CancellationToken ct)
+            FriendProfile user, CancellationToken ct)
         {
             config.UserName.text = user.Name;
             config.UserName.color = user.UserNameColor;
@@ -231,7 +229,7 @@ namespace DCL.Friends.UI.Requests
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.SetupAsync(profileRepositoryWrapper, user.UserNameColor, user.FaceSnapshotUrl, user.Address, ct),
+            await UniTask.WhenAll(config.UserThumbnail.SetupAsync(profileRepositoryWrapper, user.UserNameColor, user.FacePictureUrl, user.Address, ct),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -256,9 +254,9 @@ namespace DCL.Friends.UI.Requests
                 bool friendExists = i < mutualFriendsResult.Friends.Count;
                 mutualConfig[i].Root.SetActive(friendExists);
                 if (!friendExists) continue;
-                Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
+                FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                 ProfilePictureView view = mutualConfig[i].Image;
-                view.SetupAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FaceSnapshotUrl, mutualFriend.Address, ct).Forget();
+                view.SetupAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
             }
         }
 
@@ -314,7 +312,7 @@ namespace DCL.Friends.UI.Requests
             }
         }
 
-        private void Accept(Profile.CompactInfo target)
+        private void Accept(FriendProfile target)
         {
             requestOperationCancellationToken = requestOperationCancellationToken.SafeRestart();
             AcceptThenCloseAsync(requestOperationCancellationToken.Token).Forget();
@@ -387,17 +385,17 @@ namespace DCL.Friends.UI.Requests
         private async UniTask ShowOperationConfirmationAsync(
             ViewState state,
             FriendRequestView.OperationConfirmedConfig config,
-            Profile.CompactInfo profile, string textWithUserNameParam, CancellationToken ct)
+            FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
             config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
-            config.FriendThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FaceSnapshotUrl, profile.Address, ct).Forget();
+            config.FriendThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FacePictureUrl, profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
-                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
 
                 if (myProfile != null)
-                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Compact.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
+                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
             }
 
             Toggle(state);

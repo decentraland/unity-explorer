@@ -87,14 +87,8 @@ namespace DCL.Chat.ChatCommands
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
 
-            const string SYSTEM_MESSAGE_TEXT = "Type /help for available commands.";
-
-            bool hasSystemMessage = nearbyChannel.Messages.Count > 0
-                                    && nearbyChannel.Messages[^1].IsSystemMessage
-                                    && nearbyChannel.Messages[^1].Message == SYSTEM_MESSAGE_TEXT;
-
-            if (!hasSystemMessage)
-                nearbyChannel.InsertAsOldestMessage(ChatMessage.NewFromSystem(SYSTEM_MESSAGE_TEXT));
+            if (nearbyChannel.Messages.Count == 0)
+                chatHistory.AddMessage(nearbyChannel.Id, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("Type /help for available commands."));
 
             nearbyChannel.MarkAllMessagesAsRead();
 

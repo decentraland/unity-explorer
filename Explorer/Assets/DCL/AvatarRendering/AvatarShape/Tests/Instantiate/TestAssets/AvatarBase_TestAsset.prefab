@@ -1235,8 +1235,6 @@ SkinnedMeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1258,11 +1256,9 @@ SkinnedMeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -2086,7 +2082,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RandomID: 0
-  <AvatarAnimator>k__BackingField: {fileID: 6654053651110562472}
+  <AvatarAnimator>k__BackingField: {fileID: 0}
   <RigBuilder>k__BackingField: {fileID: 0}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 0}
@@ -2133,12 +2129,6 @@ MonoBehaviour:
   <RightLegAnchorPoint>k__BackingField: {fileID: 3457471958813412090}
   <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
   <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
-  <Armature>k__BackingField: {fileID: 0}
-  nametagMaxOffset: 2
-  nametagBoundedOffset: 1
-  nametagBuffer: 0.025
-  headAramatureBone: {fileID: 0}
-  potentialHighestBones: []
 --- !u!1 &8230367895675129645
 GameObject:
   m_ObjectHideFlags: 0

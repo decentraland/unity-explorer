@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
@@ -52,7 +51,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     profile.HasConnectedWeb3,
                     profile.UserId,
                     profile.Version,
-                    new Avatar(profile.Avatar, profile.Compact.FaceSnapshotUrl, wearablesCache)
+                    new Avatar(profile.Avatar, wearablesCache)
                 ) { }
 
                 public Data(string displayName, string? publicKey, bool hasConnectedWeb3, string userId, int version,
@@ -76,13 +75,13 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     public List<string> wearables;
                     public Snapshot? snapshots;
 
-                    public Avatar(DCL.Profiles.Avatar avatar, URLAddress faceSnapshotUrl, List<string> wearablesCache) : this(
+                    public Avatar(DCL.Profiles.Avatar avatar, List<string> wearablesCache) : this(
                         avatar.BodyShape,
                         eyeColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.EyesColor)}",
                         hairColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
                         skinColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.SkinColor)}",
                         wearablesCache,
-                        new Snapshot(avatar.BodySnapshotUrl, faceSnapshotUrl)
+                        new Snapshot(avatar.BodySnapshotUrl, avatar.FaceSnapshotUrl)
                     ) { }
 
                     public Avatar(string bodyShape, string eyeColor, string hairColor, string skinColor, List<string> wearables,

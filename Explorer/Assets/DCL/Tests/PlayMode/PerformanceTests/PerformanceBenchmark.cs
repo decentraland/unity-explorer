@@ -15,18 +15,17 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
-using Unity.Profiling;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public class PerformanceBenchmark
     {
-        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
         protected SampleGroup? iterationTotalTime;
-        protected SampleGroup? iterationDownloadedData;
 
         protected IWebRequestController? controller;
         protected PerformanceTestWebRequestsAnalytics analytics;
+
+        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
 
         private MockedReportScope? reportScope;
 
@@ -34,7 +33,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void SetUpBenchmark()
         {
             iterationTotalTime = new SampleGroup("Iteration Total Time", SampleUnit.Microsecond);
-            iterationDownloadedData = new SampleGroup("Iteration Downloaded Data", SampleUnit.Megabyte);
             reportScope = new MockedReportScope();
         }
 
@@ -66,8 +64,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             {
                 long ts = Stopwatch.GetTimestamp();
 
-                double downloadedData = Sum(analytics.downloadedDataSize);
-
                 // Loop though parameters to fill up all required tasks
 
                 var tasks = new UniTask[targetRequestsCount];
@@ -78,21 +74,10 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 await UniTask.WhenAll(tasks);
 
                 Measure.Custom(iterationTotalTime, PerformanceTestWebRequestsAnalytics.ToMs(ts, Stopwatch.GetTimestamp()));
-                Measure.Custom(iterationDownloadedData, Sum(analytics.downloadedDataSize) - downloadedData);
 
                 onIterationFinished?.Invoke();
 
                 await UniTask.Delay(delayBetweenIterations);
-            }
-
-            static double Sum(SampleGroup sampleGroup)
-            {
-                double sum = 0.0;
-
-                foreach (double sample in sampleGroup.Samples)
-                    sum += sample;
-
-                return sum;
             }
         }
     }

@@ -3,7 +3,6 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -59,7 +58,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
-        private void ContextMenuClicked(Profile.CompactInfo friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
+        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             elementView.CanUnHover = false;
 
@@ -69,22 +68,22 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
 
-            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId), buttonPosition, default(Vector2),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
-        private void JumpInClicked(Profile.CompactInfo profile) =>
+        private void JumpInClicked(FriendProfile profile) =>
             FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
 
-        protected override void ElementClicked(Profile.CompactInfo profile) =>
+        protected override void ElementClicked(FriendProfile profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
 
-        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
+        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
         {
             OnOpenConversationAsync(elementViewUserProfile).Forget();
         }
 
-        private async UniTaskVoid OnOpenConversationAsync(Profile.CompactInfo profile)
+        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);

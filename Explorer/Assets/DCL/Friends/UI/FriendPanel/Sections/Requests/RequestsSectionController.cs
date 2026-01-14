@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
@@ -27,7 +26,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IPassportBridge passportBridge;
 
         private CancellationTokenSource friendshipOperationCts = new ();
-        private Profile.CompactInfo? lastClickedProfileCtx;
+        private FriendProfile? lastClickedProfileCtx;
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -45,8 +44,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!.Value)))
-                         .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!.Value)), includeUserBlocking));
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
+                         .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!)), includeUserBlocking));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
@@ -91,10 +90,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             CheckShouldInit();
         }
 
-        private void BlockUserClicked(Profile.CompactInfo profile) =>
+        private void BlockUserClicked(FriendProfile profile) =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
-        private void HandleContextMenuUserProfileButton(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
@@ -107,14 +106,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(userData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                await friendsService.CancelFriendshipAsync(userData.userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
         private void RequestClicked(FriendRequest request) =>
             mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams {Request = request})).Forget();
 
-        private void OpenProfilePassport(Profile.CompactInfo profile) =>
+        private void OpenProfilePassport(FriendProfile profile) =>
             passportBridge.ShowAsync(profile.Address).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
@@ -163,11 +162,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams { OneShotFriendAccepted = request.From}), ct: friendshipOperationCts.Token).Forget();
         }
 
-        private void ContextMenuClicked(Profile.CompactInfo friendProfile, Vector2 buttonPosition, RequestUserView elementView)
+        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, RequestUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile,
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.ToUserData(),
                 elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
@@ -184,7 +182,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override bool ShouldShowScrollView() =>
             true; // the request section should always present 2 lists (sent/received), even if it's empty
 
-        protected override void ElementClicked(Profile.CompactInfo profile)
+        protected override void ElementClicked(FriendProfile profile)
         {
         }
     }

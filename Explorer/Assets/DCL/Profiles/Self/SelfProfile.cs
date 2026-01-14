@@ -72,7 +72,7 @@ namespace DCL.Profiles.Self
             Profile? profile = await profileRepository.GetAsync(
                 web3IdentityCache.Identity.Address,
                 ct,
-                batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET
+                batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET
             );
 
             if (profile == null) return null;
@@ -82,8 +82,8 @@ namespace DCL.Profiles.Self
                     profile.Avatar.emotes[slot] = forcedEmotes[slot];
 
             if (profile.Avatar.IsEmotesWheelEmpty())
-                for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
-                    profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
+                for (var slot = 0; slot < emoteStorage.EmbededURNs.Count && slot < profile.Avatar.Emotes.Count; slot++)
+                    profile.Avatar.emotes[slot] = emoteStorage.EmbededURNs[slot];
 
             if (OwnProfile == null || profile.Version > OwnProfile.Version)
                 OwnProfile = profile;
@@ -136,6 +136,7 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
+            newProfile.UserNameColor = NameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
 
@@ -144,7 +145,7 @@ namespace DCL.Profiles.Self
                 await profileRepository.SetAsync(newProfile, ct);
                 return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                    false, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
             }
 
             // Update profile immediately to prevent UI inconsistencies
@@ -158,7 +159,7 @@ namespace DCL.Profiles.Self
                 await profileRepository.SetAsync(newProfile, ct);
                 Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                    false, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack

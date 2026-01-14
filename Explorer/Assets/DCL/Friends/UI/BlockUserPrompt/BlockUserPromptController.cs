@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
 using MVC;
 using System.Threading;
@@ -11,11 +9,6 @@ namespace DCL.Friends.UI.BlockUserPrompt
 {
     public class BlockUserPromptController : ControllerBase<BlockUserPromptView, BlockUserPromptParams>
     {
-        private const string SUCCESS_BLOCK_NOTIFICATION_TEXT = "User <b>{0}</b> has been successfully blocked.";
-        private const string ERROR_BLOCK_NOTIFICATION_TEXT = "Something went wrong while blocking user <b>{0}</b>";
-        private const string SUCCESS_UNBLOCK_NOTIFICATION_TEXT = "User <b>{0}</b> has been successfully unblocked.";
-        private const string ERROR_UNBLOCK_NOTIFICATION_TEXT = "Something went wrong while unblocking user <b>{0}</b>";
-
         private readonly IFriendsService friendsService;
 
         private UniTaskCompletionSource closePopupTask = new ();
@@ -67,13 +60,7 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid BlockUserAsync(CancellationToken ct)
             {
-                var result = await friendsService.BlockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
-
-                NotificationsBusController.Instance.AddNotification(
-                    result.Success
-                        ? new DefaultSuccessNotification(string.Format(SUCCESS_BLOCK_NOTIFICATION_TEXT, inputData.TargetUserName))
-                        : new ServerErrorNotification(string.Format(ERROR_BLOCK_NOTIFICATION_TEXT, inputData.TargetUserName)));
-
+                await friendsService.BlockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
                 ClosePopup();
             }
         }
@@ -85,13 +72,7 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid UnblockUserAsync(CancellationToken ct)
             {
-                var result = await friendsService.UnblockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
-
-                NotificationsBusController.Instance.AddNotification(
-                    result.Success
-                        ? new DefaultSuccessNotification(string.Format(SUCCESS_UNBLOCK_NOTIFICATION_TEXT, inputData.TargetUserName))
-                        : new ServerErrorNotification(string.Format(ERROR_UNBLOCK_NOTIFICATION_TEXT, inputData.TargetUserName)));
-
+                await friendsService.UnblockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
                 ClosePopup();
             }
         }

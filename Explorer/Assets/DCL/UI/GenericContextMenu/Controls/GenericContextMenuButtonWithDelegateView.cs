@@ -2,7 +2,6 @@ using DCL.UI.Controls.Configs;
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace DCL.UI.Controls
@@ -28,7 +27,7 @@ namespace DCL.UI.Controls
 
         private void RegisterListener(Delegate listener, T data) =>
             ButtonComponent.onClick.AddListener(() => listener.DynamicInvoke(data));
-        public override void RegisterCloseListener(Action listener) =>
-            ButtonComponent.onClick.AddListener(new UnityAction(listener));
+        public override void RegisterCloseListener(Action listener)
+        { }
     }
 }

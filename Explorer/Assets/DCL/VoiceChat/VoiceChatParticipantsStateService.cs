@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using LiveKit.Rooms;
@@ -339,13 +338,14 @@ namespace DCL.VoiceChat
         {
             string newIdentityId = identityCache.Identity?.Address ?? string.Empty;
             LocalParticipantId = newIdentityId;
-            LocalParticipantState.Profile = new Profile.CompactInfo(newIdentityId);
+            LocalParticipantState.WalletId = newIdentityId;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity changed, updated LocalParticipantId to: {LocalParticipantId}");
         }
 
         private void OnIdentityCleared()
         {
             LocalParticipantId = string.Empty;
+            LocalParticipantState.WalletId = string.Empty;
             ResetLocalParticipantState();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity cleared, reset LocalParticipantId and state");
         }
@@ -364,6 +364,9 @@ namespace DCL.VoiceChat
         private static void DisposeParticipantState(VoiceChatParticipantState state)
         {
             state.IsSpeaking.ClearSubscriptionsList();
+            state.Name.ClearSubscriptionsList();
+            state.HasClaimedName.ClearSubscriptionsList();
+            state.ProfilePictureUrl.ClearSubscriptionsList();
             state.IsRequestingToSpeak.ClearSubscriptionsList();
             state.IsSpeaker.ClearSubscriptionsList();
             state.Role.ClearSubscriptionsList();
@@ -442,7 +445,10 @@ namespace DCL.VoiceChat
 
         private void UpdateParticipantStateFromMetadata(string participantId, ParticipantCallMetadata metadata, VoiceChatParticipantState participantState)
         {
-            participantState.Profile = new Profile.CompactInfo(participantId, metadata.name!, metadata.hasClaimedName, metadata.profilePictureUrl!);
+            participantState.WalletId = participantId;
+            participantState.Name.Value = metadata.name;
+            participantState.HasClaimedName.Value = metadata.hasClaimedName;
+            participantState.ProfilePictureUrl.Value = metadata.profilePictureUrl;
             participantState.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
             participantState.IsSpeaker.Value = metadata.isSpeaker;
             participantState.Role.Value = metadata.Role;
@@ -456,8 +462,10 @@ namespace DCL.VoiceChat
 
         private void ResetLocalParticipantState()
         {
-            LocalParticipantState.Profile = new Profile.CompactInfo(string.Empty);
             LocalParticipantState.IsSpeaking.Value = false;
+            LocalParticipantState.Name.Value = null;
+            LocalParticipantState.HasClaimedName.Value = false;
+            LocalParticipantState.ProfilePictureUrl.Value = null;
             LocalParticipantState.IsRequestingToSpeak.Value = false;
             LocalParticipantState.IsSpeaker.Value = false;
             LocalParticipantState.IsMuted.Value = false;

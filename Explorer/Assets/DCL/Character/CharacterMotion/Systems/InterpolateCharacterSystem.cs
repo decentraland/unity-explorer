@@ -40,7 +40,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported), typeof(PlayerMoveToWithDurationIntent))]
+        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
@@ -82,8 +82,7 @@ namespace DCL.CharacterMotion.Systems
                     + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
-            bool hasGroundedFlag = deltaMovement.y <= 0 &&
-                EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;

@@ -1,10 +1,8 @@
 ﻿using DCL.Audio;
-using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.CustomInputField;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -14,12 +12,8 @@ using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatInput
 {
-    public class SuggestionPanelChatInputState : IndependentMVCState, IDisposable
+    public class SuggestionPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
     {
-        private readonly ChatInputView chatInputView;
-        private readonly EmojiMapping emojiMapping;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
         private static readonly Regex PROFILE_PATTERN_REGEX = new (@"(?:^|\s)@([A-Za-z0-9]{1,15})(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex PRE_MATCH_PATTERN_REGEX = new (@"(?<=^|\s)([@:]\S+)$", RegexOptions.Compiled);
@@ -31,28 +25,23 @@ namespace DCL.Chat.ChatInput
         private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
 
-        private readonly List<Profile.CompactInfo> participantProfiles = new (100);
+        private readonly List<Profile> participantProfiles = new (100);
 
         private int wordMatchIndex;
         private Match lastMatch = Match.Empty;
 
-        public SuggestionPanelChatInputState(ChatInputView chatInputView, EmojiMapping emojiMapping, ProfileRepositoryWrapper profileRepositoryWrapper, GetParticipantProfilesCommand getParticipantProfilesCommand)
+        public SuggestionPanelChatInputState(ChatInputStateContext context) : base(context)
         {
-            this.chatInputView = chatInputView;
-            this.emojiMapping = emojiMapping;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
-            this.getParticipantProfilesCommand = getParticipantProfilesCommand;
-
-            suggestionPanelController = new InputSuggestionPanelController(chatInputView.suggestionPanel);
-            clickDetectionHandler = new ChatClickDetectionHandler(chatInputView.suggestionPanel.transform);
+            suggestionPanelController = new InputSuggestionPanelController(context.ChatInputView.suggestionPanel);
+            clickDetectionHandler = new ChatClickDetectionHandler(context.ChatInputView.suggestionPanel.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;
             clickDetectionHandler.Pause();
 
-            inputField = chatInputView.inputField;
+            inputField = context.ChatInputView.inputField;
 
-            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
+            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiMapping.NameMapping.Count);
 
-            foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
+            foreach (KeyValuePair<string, EmojiData> pair in context.EmojiMapping.NameMapping)
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
         }
 
@@ -97,19 +86,19 @@ namespace DCL.Chat.ChatInput
             {
                 if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputView.emojiContainer.addEmojiAudio);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
                 int replaceAmount = lastMatch.Groups[1].Length;
                 int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 
                 inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
-                chatInputView.RefreshCharacterCount();
+                context.ChatInputView.RefreshCharacterCount();
             }
 
             // TODO It's here because the input field needs to be focused again after losing focus
-            chatInputView.SelectInputField();
+            context.ChatInputView.SelectInputField();
         }
 
-        protected override void Activate()
+        protected override void Activate(ControllerNoData input)
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;
@@ -126,12 +115,12 @@ namespace DCL.Chat.ChatInput
 
         private void UpdateProfileNameMap()
         {
-            getParticipantProfilesCommand.Execute(participantProfiles);
+            context.GetParticipantProfilesCommand.Execute(participantProfiles);
 
             List<KeyValuePair<string, ProfileInputSuggestionData>>? profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
             profileSuggestions.AddRange(profileSuggestionsDictionary);
 
-            for (int index = 0; index < profileSuggestions.Count; index++)
+            for (var index = 0; index < profileSuggestions.Count; index++)
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
                 bool isThereProfileForSuggestion = participantProfiles.FindIndex(profile => profile.UserId == suggestion.Value.GetId()) > -1;
@@ -144,14 +133,17 @@ namespace DCL.Chat.ChatInput
             ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Release(profileSuggestions);
 
             //We add or update the remaining participants
-            foreach (Profile.CompactInfo profile in participantProfiles)
+            foreach (Profile? profile in participantProfiles)
             {
-                if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
+                if (profile != null)
                 {
-                    if (!profileSuggestionData.ProfileData.Equals(profile))
-                        profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
+                    if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
+                    {
+                        if (profileSuggestionData.ProfileData != profile)
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper);
+                    }
+                    else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper)); }
                 }
-                else profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profileRepositoryWrapper));
             }
         }
     }

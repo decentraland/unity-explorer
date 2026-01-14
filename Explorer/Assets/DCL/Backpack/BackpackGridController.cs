@@ -139,11 +139,6 @@ namespace DCL.Backpack
 
             return new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
-                actionOnRelease: item =>
-                {
-                    item.CanHover = true;
-                    item.IsLoading = false;
-                },
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
 
@@ -231,16 +226,12 @@ namespace DCL.Backpack
             }
         }
 
-        private void EquipItem(int slot, string itemId)
-        {
-            SetLoadingSlot(slot, true);
+        private void EquipItem(int slot, string itemId) =>
             WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
-                                       wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
-                                       CancellationToken.None)
-                                  .Forget();
-        }
+                wearable => TryEquippingItemAsync(wearable, itemId, CancellationToken.None).Forget(),
+                CancellationToken.None).Forget();
 
-        private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, int slot, CancellationToken ct)
+        private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, CancellationToken ct)
         {
             string id = SmartWearableCache.GetCacheId(wearable);
             bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
@@ -257,16 +248,7 @@ namespace DCL.Backpack
 
             // NOTICE we allow equipping the wearable even if not authorized
             // Since we marked the PX as killed, the scene won't run anyway
-            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true, () => SetLoadingSlot(slot, false)));
-        }
-
-        private void SetLoadingSlot(int slot, bool isLoading)
-        {
-            loadingResults[slot]!.IsLoading = isLoading;
-
-            for (int i = 0; i < loadingResults.Length; i++)
-                if (i != slot && loadingResults[i] != null)
-                    loadingResults[i]!.CanHover = !isLoading;
+            commandBus.SendCommand(new BackpackEquipWearableCommand(itemId, true));
         }
 
         private void UnEquipItem(int slot, string itemId) =>

@@ -166,7 +166,7 @@ namespace DCL.LOD.Components
 
         public void ClearISS(float defaultFOV, float defaultLodBias, int loadingDistance, int sceneParcels)
         {
-            if (InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.State.RESOLVED)
+            if (InitialSceneStateLOD.CurrentState == InitialSceneStateLOD.InitialSceneStateLODState.RESOLVED)
             {
                 metadata.SuccessfullLODs = SceneLODInfoUtils.ClearLODResult(metadata.SuccessfullLODs, 0);
                 UnityEngine.LOD[] currentLODs = metadata.LodGroup.GetLODs();

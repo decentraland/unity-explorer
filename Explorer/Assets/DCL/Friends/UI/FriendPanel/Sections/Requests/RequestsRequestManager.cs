@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
@@ -25,7 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public event Action<FriendRequest>? DeleteRequestClicked;
         public event Action<FriendRequest>? AcceptRequestClicked;
         public event Action<FriendRequest>? CancelRequestClicked;
-        public event Action<Profile.CompactInfo, Vector2, RequestUserView>? ContextMenuClicked;
+        public event Action<FriendProfile, Vector2, RequestUserView>? ContextMenuClicked;
         public event Action<FriendRequest>? RequestClicked;
 
         public RequestsRequestManager(IFriendsService friendsService,
@@ -125,10 +124,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override int GetSecondCollectionCount() =>
             sentRequests.Count;
 
-        protected override Profile.CompactInfo GetFirstCollectionElement(int index) =>
+        protected override FriendProfile GetFirstCollectionElement(int index) =>
             receivedRequests[index].From;
 
-        protected override Profile.CompactInfo GetSecondCollectionElement(int index) =>
+        protected override FriendProfile GetSecondCollectionElement(int index) =>
             sentRequests[index].To;
 
         protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)

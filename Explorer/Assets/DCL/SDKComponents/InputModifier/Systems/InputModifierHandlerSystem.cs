@@ -1,8 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CRDT;
-using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -34,13 +32,10 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         protected override void Update(float t)
         {
-            if (!sceneStateProvider.IsCurrent) return;
-
-            ApplyModifiersQuery(World, false);
-            HandleComponentRemovalQuery(World);
+            ApplyModifiersQuery(World);
         }
 
-        private void SendBusMessage(in InputModifierComponent inputModifier)
+        private void SendBusMessage(InputModifierComponent inputModifier)
         {
             SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
 
@@ -50,7 +45,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             lastBusMessageAction = currentAction;
         }
 
-        private void ResetModifiers()
+        private void ResetModifiersOnLeave()
         {
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = false;
@@ -64,11 +59,12 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         }
 
         [Query]
-        private void ApplyModifiers([Data] bool skipDirtyCheck, Entity entity, in PBInputModifier pbInputModifier, in CRDTEntity crdtEntity)
+        private void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
-            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY
-                || pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None
-                || (!skipDirtyCheck && !pbInputModifier.IsDirty)) return;
+            if (!sceneStateProvider.IsCurrent) return;
+            if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
+
+            if (!pbInputModifier.IsDirty) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
@@ -86,35 +82,17 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             }
 
             SendBusMessage(inputModifier);
-
-            // Mark scene Entity with component as well to know later when the PB component gets removed
-            World.AddOrGet<InputModifierComponent>(entity);
-        }
-
-        [Query]
-        [None(typeof(PBInputModifier))]
-        [All(typeof(InputModifierComponent))]
-        private void HandleComponentRemoval(Entity entity, in CRDTEntity crdtEntity)
-        {
-            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY)
-                return;
-
-            ResetModifiers();
-
-            World.Remove<InputModifierComponent>(entity);
         }
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            if (value)
-                ApplyModifiersQuery(World, true);
-            else
-                ResetModifiers();
+            if (!value)
+                ResetModifiersOnLeave();
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ResetModifiers();
+            ResetModifiersOnLeave();
         }
     }
 }

@@ -71,11 +71,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             api.SendBinary(outerArray);
             api.GetResult();
 
-            var expectedCalls = outerArray
-                               .Select(o => o.Array
-                                             .Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array)
-                                             .Take(o.Length + 1))
-                               .ToList();
+            var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
 
             // Assert the 2d array is equal
             CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);

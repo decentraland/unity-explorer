@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public override string ToString() =>
-            $"Emote({DTO.GetHash()} | {this.GetUrn()})";
+            ((IAvatarAttachment<EmoteDTO>)this).ToString();
 
         public bool IsLooping() =>
             //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded

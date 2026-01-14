@@ -15,14 +15,14 @@ namespace DCL.Chat.ChatCommands
             this.profileCache = profileCache;
         }
 
-        public void Execute(List<Profile.CompactInfo> targetList)
+        public void Execute(List<Profile> targetList)
         {
             targetList.Clear();
 
             foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
-                if (profileCache.TryGetCompact(identity, out Profile.CompactInfo profile))
+                if (profileCache.TryGet(identity, out Profile profile))
                     targetList.Add(profile);
             }
         }
