@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -32,14 +32,14 @@ namespace DCL.PluginSystem.Global
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
                     profileRepository,
-                    textureProvider
+                    imageControllerProvider
                 );
 
             mvcManager.RegisterController(newNotificationController);

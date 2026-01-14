@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
         private TeleportPromptController? teleportPromptController;
@@ -27,13 +27,13 @@ namespace DCL.PluginSystem.Global
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             IPlacesAPIService placesAPIService,
             ICursor cursor, IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.placesAPIService = placesAPIService;
             this.cursor = cursor;
             this.chatMessagesBus = chatMessagesBus;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
                 TeleportPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 cursor,
-                textureProvider,
+                imageControllerProvider,
                 placesAPIService,
                 chatMessagesBus);
 

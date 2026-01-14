@@ -30,7 +30,7 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IProfileRepository profileRepository;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
         private ImageController? thumbnailImageController;
@@ -48,13 +48,13 @@ namespace DCL.Notifications.NewNotification
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
             IProfileRepository profileRepository,
-            UITextureProvider textureProvider) : base(viewFactory)
+            ImageControllerProvider imageControllerProvider) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.profileRepository = profileRepository;
-            this.textureProvider  = textureProvider;
+            this.imageControllerProvider  = imageControllerProvider;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -62,22 +62,22 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, textureProvider);
+            thumbnailImageController = imageControllerProvider.Create(viewInstance!.NotificationView.NotificationImage);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
-            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, textureProvider);
+            badgeThumbnailImageController = imageControllerProvider.Create(viewInstance.BadgeNotificationView.NotificationImage);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
-            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, textureProvider);
+            friendsThumbnailImageController = imageControllerProvider.Create(viewInstance.FriendsNotificationView.NotificationImage);
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
-            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, textureProvider);
+            marketplaceCreditsThumbnailImageController = imageControllerProvider.Create(viewInstance.MarketplaceCreditsNotificationView.NotificationImage);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, textureProvider);
+            giftToastImageController = imageControllerProvider.Create(viewInstance.GiftToastView.NotificationImage);
             viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
-                communityThumbnailImageController = new ImageController(viewInstance.CommunityVoiceChatNotificationView.NotificationImage, textureProvider);
+                communityThumbnailImageController = imageControllerProvider.Create(viewInstance.CommunityVoiceChatNotificationView.NotificationImage);
                 viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
             }
         }

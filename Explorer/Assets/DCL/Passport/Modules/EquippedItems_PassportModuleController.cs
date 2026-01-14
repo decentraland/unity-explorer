@@ -42,7 +42,7 @@ namespace DCL.Passport.Modules
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -63,7 +63,7 @@ namespace DCL.Passport.Modules
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.world = world;
@@ -74,7 +74,7 @@ namespace DCL.Passport.Modules
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,

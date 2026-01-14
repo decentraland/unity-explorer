@@ -42,7 +42,7 @@ namespace DCL.Navmap
             GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.navmapBus = navmapBus;
@@ -52,7 +52,7 @@ namespace DCL.Navmap
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
-            thumbnailController = new ImageController(view.Thumbnail, textureProvider);
+            thumbnailController = imageControllerProvider.Create(view.Thumbnail);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);

@@ -29,7 +29,7 @@ namespace DCL.Passport.Modules.Badges
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
@@ -49,12 +49,12 @@ namespace DCL.Passport.Modules.Badges
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             BadgePreviewCameraView badge3DPreviewCamera,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
-            this.textureProvider  = textureProvider;
+            this.imageControllerProvider  = imageControllerProvider;
             
             badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
             badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
@@ -65,7 +65,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(textureProvider);
+                    badgeTierButton.ConfigureImageController(imageControllerProvider);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();
@@ -289,9 +289,9 @@ namespace DCL.Passport.Modules.Badges
                 string normalUrl = assets.textures3d.normal ?? string.Empty;
                 string hrmUrl = assets.textures3d.hrm ?? string.Empty;
 
-                var baseTask = textureProvider.LoadTextureAsync(baseColorUrl, ct);
-                var normalTask = textureProvider.LoadTextureAsync(normalUrl, ct);
-                var hrmTask = textureProvider.LoadTextureAsync(hrmUrl, ct);
+                var baseTask = imageControllerProvider.LoadTextureAsync(baseColorUrl, ct);
+                var normalTask = imageControllerProvider.LoadTextureAsync(normalUrl, ct);
+                var hrmTask = imageControllerProvider.LoadTextureAsync(hrmUrl, ct);
 
                 var (baseTexRef, normalTexRef, hrmTexRef) =
                     await UniTask.WhenAll(baseTask, normalTask, hrmTask);

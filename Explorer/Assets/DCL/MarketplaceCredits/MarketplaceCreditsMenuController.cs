@@ -59,7 +59,7 @@ namespace DCL.MarketplaceCredits
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -90,7 +90,7 @@ namespace DCL.MarketplaceCredits
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
-            UITextureProvider textureProvider) : base(viewFactory)
+            ImageControllerProvider imageControllerProvider) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -106,7 +106,7 @@ namespace DCL.MarketplaceCredits
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
@@ -128,7 +128,7 @@ namespace DCL.MarketplaceCredits
                 viewInstance.TotalCreditsWidget,
                 this,
                 textFormatter,
-                textureProvider);
+                imageControllerProvider);
 
             marketplaceCreditsWeekGoalsCompletedSubController = new MarketplaceCreditsWeekGoalsCompletedSubController(
                 viewInstance.WeekGoalsCompletedSubView);

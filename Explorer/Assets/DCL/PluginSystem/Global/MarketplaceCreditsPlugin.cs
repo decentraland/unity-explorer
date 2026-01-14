@@ -38,8 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
-        private readonly UITextureProvider textureProvider;
-
+        private readonly ImageControllerProvider imageControllerProvider;
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
 
@@ -57,7 +56,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -71,7 +70,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -106,7 +105,7 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 loadingStatus,
                 textFormatter,
-                textureProvider);
+                imageControllerProvider);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);

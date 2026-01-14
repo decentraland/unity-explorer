@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftMarketAPIClient nftInfoAPIClient;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly ICursor cursor;
         private NftPromptController? nftPromptController;
 
@@ -29,14 +29,14 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftMarketAPIClient nftInfoAPIClient,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
             this.nftInfoAPIClient = nftInfoAPIClient;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.cursor = cursor;
         }
 
@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 cursor,
                 nftInfoAPIClient,
-                textureProvider
+                imageControllerProvider
             );
 
             mvcManager.RegisterController(nftPromptController);

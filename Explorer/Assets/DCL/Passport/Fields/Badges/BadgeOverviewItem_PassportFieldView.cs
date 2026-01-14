@@ -26,9 +26,9 @@ namespace DCL.Passport.Fields.Badges
         private void OnEnable() =>
             SetBadgeNameToastActive(false);
 
-        public void ConfigureImageController(UITextureProvider textureProvider)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
-            imageController ??= new ImageController(BadgeImage, textureProvider);
+            imageController ??= imageControllerProvider.Create(BadgeImage);
         }
 
         public void StopLoadingImage() =>

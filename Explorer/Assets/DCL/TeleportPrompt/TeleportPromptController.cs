@@ -19,7 +19,7 @@ namespace DCL.TeleportPrompt
     {
 
         private readonly ICursor cursor;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IChatMessagesBus chatMessagesBus;
         private ImageController? placeImageController;
@@ -30,20 +30,20 @@ namespace DCL.TeleportPrompt
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             IPlacesAPIService placesAPIService,
             IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.cursor = cursor;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.placesAPIService = placesAPIService;
             this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.placeImage, textureProvider);
+            placeImageController = imageControllerProvider.Create(viewInstance.placeImage);
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }

@@ -37,6 +37,7 @@ using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -65,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -91,7 +92,7 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
             IScreenModeController screenModeController,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -112,7 +113,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
         }
 
         public void Dispose()
@@ -166,7 +167,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 giftItemLoaderService,
                 wearableCatalog,
-                textureProvider,
+                imageControllerProvider,
                 sharedSpaceManager
             );
 

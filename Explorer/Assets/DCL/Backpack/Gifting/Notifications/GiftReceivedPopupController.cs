@@ -23,13 +23,13 @@ namespace DCL.Backpack.Gifting.Notifications
         
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IGiftItemLoaderService giftItemLoaderService;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private ImageController? imageController;
+        private ImageController imageController;
         private CancellationTokenSource? lifeCts;
 
         public GiftReceivedPopupController(
@@ -37,14 +37,14 @@ namespace DCL.Backpack.Gifting.Notifications
             IProfileRepository profileRepository,
             IGiftItemLoaderService giftItemLoaderService,
             WearableStylingCatalog wearableCatalog,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.profileRepository = profileRepository;
             this.giftItemLoaderService = giftItemLoaderService;
             this.wearableCatalog = wearableCatalog;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -54,7 +54,7 @@ namespace DCL.Backpack.Gifting.Notifications
 
             if (viewInstance?.GiftItemView?.ThumbnailImageView != null)
             {
-                imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, textureProvider);
+                imageController = imageControllerProvider.Create(viewInstance.GiftItemView.ThumbnailImageView);
                 imageController.SpriteLoaded += OnImageLoaded;
             }
         }

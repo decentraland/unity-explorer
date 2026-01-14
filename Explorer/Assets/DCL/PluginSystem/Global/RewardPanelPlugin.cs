@@ -20,15 +20,15 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly NotificationsBusController notificationsBusController;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         public RewardPanelPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
         }
@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
             NftTypeIconSO rarityBackgroundsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct);
             NftTypeIconSO categoryIconsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct);
             RewardPanelView rewardPanelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.RewardPanelView, ct: ct)).Value.GetComponent<RewardPanelView>();
-            var rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), textureProvider, nftRarityColors, rarityBackgroundsMapping, categoryIconsMapping);
+            var rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), imageControllerProvider, nftRarityColors, rarityBackgroundsMapping, categoryIconsMapping);
             mvcManager.RegisterController(rewardPanelController);
         }
 

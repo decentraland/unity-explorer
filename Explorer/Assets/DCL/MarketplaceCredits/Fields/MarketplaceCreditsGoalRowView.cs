@@ -58,9 +58,9 @@ namespace DCL.MarketplaceCredits.Fields
 
         private ImageController imageController;
 
-        public void ConfigureImageController(UITextureProvider textureProvider)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
-            imageController = new ImageController(GoalImage, textureProvider);
+            imageController = imageControllerProvider.Create(GoalImage);
         }
 
         public void StopLoadingImage() =>

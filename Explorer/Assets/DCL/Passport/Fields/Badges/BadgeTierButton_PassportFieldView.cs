@@ -40,12 +40,12 @@ namespace DCL.Passport.Fields.Badges
 
         private ImageController? imageController;
 
-        public void ConfigureImageController(UITextureProvider textureProvider)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, textureProvider);
+            imageController = imageControllerProvider.Create(TierImage);
         }
 
         public void StopLoadingImage() =>

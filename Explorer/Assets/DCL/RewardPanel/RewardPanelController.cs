@@ -8,7 +8,7 @@ namespace DCL.RewardPanel
 {
     public class RewardPanelController : ControllerBase<RewardPanelView, RewardPanelParameter>
     {
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly NFTColorsSO nftRarityColors;
         private readonly NftTypeIconSO nftRarityBackgrounds;
         private readonly NftTypeIconSO nftCategoryIcons;
@@ -17,13 +17,13 @@ namespace DCL.RewardPanel
 
         public RewardPanelController(
             ViewFactoryMethod viewFactory,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
             NftTypeIconSO nftCategoryIcons
         ) : base(viewFactory)
         {
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.nftRarityColors = nftRarityColors;
             this.nftRarityBackgrounds = nftRarityBackgrounds;
             this.nftCategoryIcons = nftCategoryIcons;
@@ -31,7 +31,7 @@ namespace DCL.RewardPanel
 
         protected override void OnViewInstantiated()
         {
-            imageController = new ImageController(viewInstance.ThumbnailImage, textureProvider);
+            imageController = imageControllerProvider.Create(viewInstance.ThumbnailImage);
         }
 
         protected override void OnBeforeViewShow()

@@ -26,7 +26,7 @@ namespace DCL.Passport.Modules.Badges
 
         public BadgeDetailsCards_PassportModuleSubController(
             BadgesDetails_PassportModuleView view,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             BadgesCategories_PassportModuleSubController badgesCategoriesController,
             BadgeInfo_PassportModuleSubController badgeInfoController)
         {
@@ -39,7 +39,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeDetailCardView =>
                 {
-                    badgeDetailCardView.ConfigureImageController(textureProvider);
+                    badgeDetailCardView.ConfigureImageController(imageControllerProvider);
                     badgeDetailCardView.gameObject.SetActive(true);
                     badgeDetailCardView.SetAsSelected(false);
                 },

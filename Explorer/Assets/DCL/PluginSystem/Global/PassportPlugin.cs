@@ -78,7 +78,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -119,7 +119,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -158,7 +158,7 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
         }
 
         public void Dispose()
@@ -224,7 +224,7 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
-                textureProvider
+                imageControllerProvider
             );
 
             mvcManager.RegisterController(passportController);

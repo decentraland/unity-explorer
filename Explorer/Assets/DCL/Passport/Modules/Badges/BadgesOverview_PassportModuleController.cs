@@ -32,7 +32,7 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -43,7 +43,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
-                    badgeOverviewItemView.ConfigureImageController(textureProvider);
+                    badgeOverviewItemView.ConfigureImageController(imageControllerProvider);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },

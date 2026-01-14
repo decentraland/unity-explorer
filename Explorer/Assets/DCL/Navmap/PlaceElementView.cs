@@ -43,9 +43,9 @@ namespace DCL.Navmap
 
         public event Action<bool, Vector2Int> OnMouseHover;
 
-        public void ConfigurePlaceImageController(UITextureProvider textureProvider)
+        public void ConfigurePlaceImageController(ImageControllerProvider imageControllerProvider)
         {
-            imageController = new ImageController(placeImage, textureProvider);
+            imageController = imageControllerProvider.Create(placeImage);
         }
 
         public void SetPlaceImage(string imageUrl) =>

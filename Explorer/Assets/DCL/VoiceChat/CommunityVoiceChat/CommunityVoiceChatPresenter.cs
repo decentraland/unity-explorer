@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             VoiceChatMicrophoneHandler microphoneHandler,
             VoiceChatRoomManager roomManager,
             CommunitiesDataProvider communityDataProvider,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -54,7 +54,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.communityDataProvider = communityDataProvider;
 
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
-            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, textureProvider);
+            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, imageControllerProvider);
 
             inCallPresenter.OpenListenersSectionRequested += OpenListenersSection;
 

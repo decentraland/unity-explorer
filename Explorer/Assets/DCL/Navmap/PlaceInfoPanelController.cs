@@ -31,7 +31,7 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController : IDisposable
     {
         private readonly PlaceInfoPanelView view;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -62,7 +62,7 @@ namespace DCL.Navmap
         private Vector2Int? originParcel;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
@@ -80,7 +80,7 @@ namespace DCL.Navmap
             GalleryEventBus galleryEventBus = null)
         {
             this.view = view;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -93,7 +93,7 @@ namespace DCL.Navmap
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
 
-            thumbnailImage = new ImageController(view.Thumbnail, textureProvider);
+            thumbnailImage = imageControllerProvider.Create(view.Thumbnail);
 
             if (view.CameraReelGalleryView != null)
             {
@@ -405,7 +405,7 @@ namespace DCL.Navmap
                 foreach (EventDTO @event in events)
                 {
                     EventElementView element = eventElementPool.Get();
-                    element.Init(textureProvider);
+                    element.Init(imageControllerProvider);
                     eventElements.Add(element);
 
                     var schedule = "";

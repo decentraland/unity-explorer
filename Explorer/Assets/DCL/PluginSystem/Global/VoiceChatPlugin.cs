@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatPanelView voiceChatPanelView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly UITextureProvider  textureProvider;
+        private readonly ImageControllerProvider  imageControllerProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
-            UITextureProvider textureProvider,
+            ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer)
@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
@@ -127,7 +127,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
 
-            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, textureProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
+            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);

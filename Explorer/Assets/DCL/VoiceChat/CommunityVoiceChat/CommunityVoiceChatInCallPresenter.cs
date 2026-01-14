@@ -36,14 +36,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatInCallView view,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             expandedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.ExpandedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             collapsedPanelButtonsPresenter = new CommunityVoiceChatInCallButtonsPresenter(view.CollapsedPanelInCallButtonsView, voiceChatOrchestrator, microphoneHandler);
             currentVoiceChatPanelSize = voiceChatOrchestrator.CurrentVoiceChatPanelSize;
-            thumbnailController = new ImageController(view.CommunityThumbnail, textureProvider);
+            thumbnailController = imageControllerProvider.Create(view.CommunityThumbnail);
 
             view.EndStreamButtonCLicked += OnEndStreamButtonClicked;
             view.RaiseHandTooltipButtonCLicked += OnRaiseHandTooltipButtonClicked;

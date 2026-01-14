@@ -48,10 +48,10 @@ namespace DCL.Navmap
 
         public MultiStateButtonController? InterestedButton { get; private set; }
 
-        public void Init(UITextureProvider textureProvider)
+        public void Init(ImageControllerProvider imageControllerProvider)
         {
             // NOTE: only initialize once
-            Thumbnail ??= new ImageController(thumbnailView, textureProvider);
+            Thumbnail ??= imageControllerProvider.Create(thumbnailView);
             InterestedButton ??= new MultiStateButtonController(interestedButtonView, true);
         }
 

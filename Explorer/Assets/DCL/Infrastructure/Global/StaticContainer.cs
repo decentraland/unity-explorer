@@ -115,6 +115,7 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public SmartWearableCache SmartWearableCache { get; private set; }
         public UITextureProvider TextureProvider { get; private set; }
+        public ImageControllerProvider ImageControllerProvider { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
         public GPUInstancingService GPUInstancingService { get; private set; }
@@ -220,6 +221,7 @@ namespace Global
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
             container.TextureProvider = new UITextureProvider(globalWorld);
+            container.ImageControllerProvider = new ImageControllerProvider(container.TextureProvider);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);

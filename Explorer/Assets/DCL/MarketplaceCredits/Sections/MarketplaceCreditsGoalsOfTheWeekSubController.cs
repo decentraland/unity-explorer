@@ -25,7 +25,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly ITextFormatter textFormatter;
-        private readonly UITextureProvider textureProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
@@ -37,14 +37,14 @@ namespace DCL.MarketplaceCredits.Sections
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             ITextFormatter textFormatter,
-            UITextureProvider textureProvider)
+            ImageControllerProvider imageControllerProvider)
         {
             this.subView = subView;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.textFormatter = textFormatter;
-            this.textureProvider = textureProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
             subView.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
@@ -57,7 +57,7 @@ namespace DCL.MarketplaceCredits.Sections
                 defaultCapacity: GOALS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: goalRowView =>
                 {
-                    goalRowView.ConfigureImageController(this.textureProvider);
+                    goalRowView.ConfigureImageController(this.imageControllerProvider);
                     goalRowView.gameObject.SetActive(true);
                     goalRowView.transform.SetAsLastSibling();
                 },
