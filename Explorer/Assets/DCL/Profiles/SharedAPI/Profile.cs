@@ -150,17 +150,35 @@ namespace DCL.Profiles
 
             return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
-                   && Description == profile.Description
+                   && AreStringsEquivalent(Description, profile.Description)
                    && TutorialStep == profile.TutorialStep
-                   && Email == profile.Email
-                   && Country == profile.Country
-                   && EmploymentStatus == profile.EmploymentStatus
-                   && Gender == profile.Gender
-                   && Pronouns == profile.Pronouns
-                   && Language == profile.Language
-                   && Profession == profile.Profession
+                   && AreStringsEquivalent(Email, profile.Email)
+                   && AreStringsEquivalent(Country, profile.Country)
+                   && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
+                   && AreStringsEquivalent(Gender, profile.Gender)
+                   && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(Language, profile.Language)
+                   && AreStringsEquivalent(Profession, profile.Profession)
                    && Birthdate == profile.Birthdate
-                   && Version == profile.Version;
+                   && Version == profile.Version
+                   && AreLinksSame(links, profile.links);
+        }
+        
+        private static bool AreStringsEquivalent(string? a, string? b) =>
+            (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || a == b;
+
+        private static bool AreLinksSame(List<LinkJsonDto>? links1, List<LinkJsonDto>? links2)
+        {
+            if (links1 == null && links2 == null) return true;
+            if (links1 == null || links2 == null) return false;
+            if (links1.Count != links2.Count) return false;
+
+            for (int i = 0; i < links1.Count; i++)
+            {
+                if (links1[i].title != links2[i].title || links1[i].url != links2[i].url)
+                    return false;
+            }
+            return true;
         }
     }
 }
