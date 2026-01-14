@@ -113,7 +113,7 @@ namespace DCL.Profiles
             profile.Hobbies = jObject["hobbies"]?.Value<string>() ?? "";
 
             long birthdate = jObject["birthDate"]?.Value<long>() ?? 0;
-            profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).DateTime : null;
+            profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).UtcDateTime : null;
 
             DeserializeLinks(jObject["links"]!, ref profile.links);
             DeserializeArrayToCollection(jObject["blocked"], ref profile.blocked, static s => s);
@@ -293,7 +293,7 @@ namespace DCL.Profiles
             writer.WriteValue(profile.Hobbies);
 
             writer.WritePropertyName("birthDate");
-            writer.WriteValue(profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value).ToUnixTimeSeconds() : 0);
+            writer.WriteValue(profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value, TimeSpan.Zero).ToUnixTimeSeconds() : 0);
 
             writer.WritePropertyName("links");
             SerializeLinks(writer, profile.links);
