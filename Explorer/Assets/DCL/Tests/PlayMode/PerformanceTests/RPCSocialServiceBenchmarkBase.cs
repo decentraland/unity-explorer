@@ -35,6 +35,23 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 ciPkey = Environment.GetEnvironmentVariable(PKEY_VAR_NAME, EnvironmentVariableTarget.User);
 
             if (string.IsNullOrEmpty(ciPkey))
+            {
+                // Parse CLI arguments as a last resort
+                string[] args = Environment.GetCommandLineArgs();
+
+                string cliKey = $"-{PKEY_VAR_NAME}";
+
+                for (int i = 0; i < args.Length - 1; i++)
+                {
+                    if (args[i] == cliKey)
+                    {
+                        ciPkey = args[i + 1];
+                        break;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(ciPkey))
                 throw new ArgumentException("DCLBenchmarkCIPKey", "Private key is null/empty or not provided");
 
             ciPkey = ciPkey.Trim();
