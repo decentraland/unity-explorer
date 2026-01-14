@@ -293,7 +293,7 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            Debug.Log("Bootstraper.UserInitializationAsync.SendError");
+            ReportHub.LogProductionInfo("Bootstraper.UserInitializationAsync.SendError");
             ReportHub.LogException(new Exception("TEST error"), ReportCategory.ALWAYS, ReportHandler.Sentry);
 
             try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
