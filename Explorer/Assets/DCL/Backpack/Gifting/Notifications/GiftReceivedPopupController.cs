@@ -23,7 +23,7 @@ namespace DCL.Backpack.Gifting.Notifications
         
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
-        private readonly IWebRequestController webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IGiftItemLoaderService giftItemLoaderService;
 
@@ -37,15 +37,14 @@ namespace DCL.Backpack.Gifting.Notifications
             IProfileRepository profileRepository,
             IGiftItemLoaderService giftItemLoaderService,
             WearableStylingCatalog wearableCatalog,
-            IWebRequestController webRequestController,
+            UITextureProvider textureProvider,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.profileRepository = profileRepository;
             this.giftItemLoaderService = giftItemLoaderService;
             this.wearableCatalog = wearableCatalog;
-            this.webRequestController = webRequestController;
-            
+            this.textureProvider = textureProvider;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
@@ -55,7 +54,7 @@ namespace DCL.Backpack.Gifting.Notifications
 
             if (viewInstance?.GiftItemView?.ThumbnailImageView != null)
             {
-                imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, webRequestController);
+                imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, textureProvider);
                 imageController.SpriteLoaded += OnImageLoaded;
             }
         }

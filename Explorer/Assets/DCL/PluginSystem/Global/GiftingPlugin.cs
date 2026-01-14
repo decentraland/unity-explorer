@@ -29,6 +29,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
@@ -64,7 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
-
+        private readonly UITextureProvider textureProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -89,7 +90,8 @@ namespace DCL.PluginSystem.Global
             IEthereumApi ethereumApi,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController)
+            IScreenModeController screenModeController,
+            UITextureProvider textureProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -110,6 +112,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
+            this.textureProvider = textureProvider;
         }
 
         public void Dispose()
@@ -163,7 +166,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 giftItemLoaderService,
                 wearableCatalog,
-                webRequestController,
+                textureProvider,
                 sharedSpaceManager
             );
 

@@ -56,22 +56,22 @@ namespace DCL.MarketplaceCredits.Fields
         [field: SerializeField]
         public float AlphaValueForClaimedCredits { get; private set; }
 
-        private ImageController? imageController;
+        private ImageController imageController;
 
         public void ConfigureImageController(UITextureProvider textureProvider)
         {
-            imageController ??= new ImageController(GoalImage, textureProvider);
+            imageController = new ImageController(GoalImage, textureProvider);
         }
 
         public void StopLoadingImage() =>
-            imageController?.StopLoading();
+            imageController.StopLoading();
 
         public void SetupGoalImage(string imageUrl)
         {
-            imageController?.SetImage(DefaultGoalSprite);
+            imageController.SetImage(DefaultGoalSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+                imageController.RequestImage(imageUrl, hideImageWhileLoading: true);
         }
 
         public void SetTitle(string goalTitle) =>
@@ -109,7 +109,7 @@ namespace DCL.MarketplaceCredits.Fields
 
         private void OnDestroy()
         {
-            imageController?.Dispose();
+            imageController.Dispose();
         }
     }
 }

@@ -16,8 +16,7 @@ namespace DCL.UI
 
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
-        private readonly UITextureProvider? textureProvider;
-        private readonly IWebRequestController? webRequestController;
+        private readonly UITextureProvider textureProvider;
         private readonly Color defaultColor = Color.white;
         private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
@@ -30,19 +29,7 @@ namespace DCL.UI
         {
             this.view = view;
             this.textureProvider = textureProvider;
-            webRequestController = null;
         }
-        
-        /// <summary>
-        /// LEGACY: Uses direct WebRequests. No caching.
-        /// </summary>
-        public ImageController(ImageView view, IWebRequestController webRequestController)
-        {
-            this.view = view;
-            this.webRequestController = webRequestController;
-            textureProvider = null;
-        }
-
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
             bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
@@ -103,25 +90,6 @@ namespace DCL.UI
                             false
                         );
                     }
-                }
-                else if (webRequestController != null)
-                {
-                    // NOTE: This path does NOT cache and does NOT release memory automatically.
-                    var ownedTexture = await webRequestController.GetTextureAsync(
-                        new CommonArguments(URLAddress.FromString(uri)),
-                        new GetTextureArguments(TextureType.Albedo, useKtx),
-                        GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                        ct,
-                        ReportCategory.UI
-                    );
-
-                    Texture2D? texture = ownedTexture;
-                    texture.filterMode = FilterMode.Bilinear;
-                    sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-                }
-                else
-                {
-                    ReportHub.LogError(ReportCategory.UI, "ImageController missing provider configuration.");
                 }
 
                 if (sprite != null)
