@@ -1,6 +1,7 @@
 ﻿using DCL.Input;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Utils;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
@@ -17,12 +18,20 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal EventCallback<FocusInEvent> currentOnFocusIn = static _ => { };
         internal EventCallback<FocusOutEvent> currentOnFocusOut = static _ => { };
 
-        public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
+        public void Initialize(
+            IInputBlock inputBlock,
+            string textFieldName,
+            string styleClass,
+            string text,
+            string placeholderValue,
+            Color placeholderColorValue)
         {
             TextField.name = textFieldName;
             TextField.AddToClassList(styleClass);
             TextField.pickingMode = PickingMode.Position;
-            Placeholder.SetupTextField(TextField);
+            TextField.SetValueWithoutNotify(text);
+
+            Placeholder.Initialize(TextField, placeholderValue, placeholderColorValue);
 
             IsOnValueChangedTriggered = false;
             IsOnSubmitTriggered = false;
