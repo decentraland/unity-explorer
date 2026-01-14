@@ -18,7 +18,6 @@ namespace ECS.Unity.AssetLoad.Systems
     ///     Cleans up asset loading when PBAssetLoad component is removed
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
-    [UpdateBefore(typeof(ECS.Unity.AssetLoad.Systems.AssetLoadSystem))]
     [ThrottlingEnabled]
     public partial class CleanUpAssetLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

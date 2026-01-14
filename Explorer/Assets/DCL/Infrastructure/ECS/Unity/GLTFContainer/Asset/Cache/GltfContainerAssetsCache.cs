@@ -91,7 +91,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true)
         {
             // If the asset is being handled by the AssetLoadCache, we don't need to add it to this cache
-            if (handleAssetLoad && assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset _)) return;
+            if (handleAssetLoad && assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset _))
+            {
+                DereferenceFinalOperation(asset, putInBridge);
+                return;
+            }
 
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
@@ -108,6 +112,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
+            DereferenceFinalOperation(asset, putInBridge);
+        }
+
+        private void DereferenceFinalOperation(GltfContainerAsset asset, bool putInBridge)
+        {
             if (putInBridge)
                 asset.Root.transform.SetParent(sceneLODBridge, true);
             else

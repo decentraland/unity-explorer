@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
@@ -39,11 +40,13 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
         private readonly World world;
+        private readonly AssetLoadCache assetLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
-            IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget)
+            IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
+            AssetLoadCache assetLoadCache)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -55,6 +58,7 @@ namespace DCL.SDKComponents.MediaStream
             this.frameBudget = frameBudget;
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
+            this.assetLoadCache = assetLoadCache;
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -160,20 +164,26 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
-            MultiMediaPlayer player = address.Match(
-                (streamingRoom, mediaPlayerPool),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
-            );
-
-            var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+            MediaPlayerComponent component;
+            if (assetLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
+                component = cachedComponent;
+            else
             {
-                MediaAddress = address,
-                LastPropagatedState = VideoState.VsPaused,
-                LastPropagatedVideoTime = 0,
-                Cts = new CancellationTokenSource(),
-                OpenMediaPromise = new OpenMediaPromise(),
-            };
+                MultiMediaPlayer player = address.Match(
+                    (streamingRoom, mediaPlayerPool),
+                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+                );
+
+                component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+                {
+                    MediaAddress = address,
+                    LastPropagatedState = VideoState.VsPaused,
+                    LastPropagatedVideoTime = 0,
+                    Cts = new CancellationTokenSource(),
+                    OpenMediaPromise = new OpenMediaPromise(),
+                };
+            }
 
             component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
 

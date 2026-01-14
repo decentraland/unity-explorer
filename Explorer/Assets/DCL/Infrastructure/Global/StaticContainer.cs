@@ -55,6 +55,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.AssetLoad.Cache;
 using Global.AppArgs;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using Global.Dynamic.LaunchModes;
@@ -124,6 +125,7 @@ namespace Global
         public LandscapeParcelController LandscapeParcelController { get; private set; }
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
+        public AssetLoadCache AssetLoadCache { get; private set; }
 
         public void Dispose()
         {
@@ -202,8 +204,11 @@ namespace Global
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
 
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            container.AssetLoadCache = new AssetLoadCache(container.GltfContainerAssetsCache);
+            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetLoadCache);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.RealmData, analyticsController, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -222,7 +227,6 @@ namespace Global
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
-            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
 
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
@@ -296,7 +300,7 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
-                new AssetLoadPlugin(sharedDependencies, container.GltfContainerAssetsCache),
+                new AssetLoadPlugin(sharedDependencies, container.AssetLoadCache),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
