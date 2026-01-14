@@ -218,7 +218,6 @@ namespace SceneRunner
             // Let the scene loop finish gracefully to prevent synchronous exceptions:
             // Microsoft.ClearScript.ScriptEngineException
             // Error: Cannot access a disposed object.
-
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
