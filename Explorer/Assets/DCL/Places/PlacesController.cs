@@ -87,8 +87,8 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true) =>
-            view.OpenSection(section, force, invokeEvent);
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true) =>
+            view.OpenSection(section, force, invokeEvent, cleanSearch);
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {

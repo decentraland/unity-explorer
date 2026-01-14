@@ -41,8 +41,9 @@ namespace DCL.Places
             this.placesStateService = placesStateService;
             this.placesCategories = placesCategories;
 
-            placesController.FiltersChanged += OnFiltersChanged;
+            view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
+            placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
             view.SetDependencies(placesStateService);
@@ -51,16 +52,14 @@ namespace DCL.Places
 
         public void Dispose()
         {
-            placesController.FiltersChanged -= OnFiltersChanged;
+            view.BackButtonClicked -= OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
+            placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
         }
 
-        private void OnFiltersChanged(PlacesFilters filters)
-        {
-            currentFilters = filters;
-            LoadPlaces(0);
-        }
+        private void OnBackButtonClicked() =>
+            placesController.OpenSection(PlacesSection.DISCOVER, force: true);
 
         private void TryLoadMorePlaces()
         {
@@ -70,11 +69,17 @@ namespace DCL.Places
             LoadPlaces(currentPlacesPageNumber + 1);
         }
 
+        private void OnFiltersChanged(PlacesFilters filters)
+        {
+            currentFilters = filters;
+            LoadPlaces(0);
+        }
+
         private void LoadPlaces(int pageNumber)
         {
             if (!string.IsNullOrEmpty(currentFilters.SearchText) || currentFilters.Section == PlacesSection.DISCOVER)
             {
-                placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false);
+                placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false, cleanSearch: false);
                 loadPlacesCts = loadPlacesCts.SafeRestart();
                 SearchPlacesAsync(pageNumber, loadPlacesCts.Token).Forget();
             }
@@ -83,6 +88,13 @@ namespace DCL.Places
                 view.ClearPlacesResults();
                 view.SetPlacesCounterActive(false);
             }
+        }
+
+        private void UnloadPlaces()
+        {
+            loadPlacesCts?.SafeCancelAndDispose();
+            view.ClearPlacesResults();
+            placesStateService.ClearPlaces();
         }
 
         private async UniTask SearchPlacesAsync(int pageNumber, CancellationToken ct)
@@ -127,23 +139,24 @@ namespace DCL.Places
                 view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
 
                 if (!string.IsNullOrEmpty(currentFilters.SearchText))
-                    view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})");
-                else if (currentFilters.Section == PlacesSection.DISCOVER)
+                    view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
+                else switch (currentFilters.Section)
                 {
-                    if (currentFilters.CategoryId != null)
+                    case PlacesSection.DISCOVER when currentFilters.CategoryId != null:
                     {
                         string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
                         view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                        break;
                     }
-                    else
-                        view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})");
+                    case PlacesSection.DISCOVER:
+                        view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})"); break;
+                    case PlacesSection.RECENTLY_VISITED:
+                        view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})"); break;
+                    case PlacesSection.FAVORITES:
+                        view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})"); break;
+                    case PlacesSection.MY_PLACES:
+                        view.SetPlacesCounter($"My Places ({placesResult.Value.Total})"); break;
                 }
-                else if (currentFilters.Section == PlacesSection.RECENTLY_VISITED)
-                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
-                else if (currentFilters.Section == PlacesSection.FAVORITES)
-                    view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
-                else if (currentFilters.Section == PlacesSection.MY_PLACES)
-                    view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
             }
 
             view.SetPlacesCounterActive(placesResult.Value.Data.Count > 0);
@@ -155,13 +168,6 @@ namespace DCL.Places
             view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
-        }
-
-        private void UnloadPlaces()
-        {
-            loadPlacesCts?.SafeCancelAndDispose();
-            view.ClearPlacesResults();
-            placesStateService.ClearPlaces();
         }
     }
 }

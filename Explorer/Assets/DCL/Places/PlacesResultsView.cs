@@ -14,10 +14,13 @@ namespace DCL.Places
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
+        public event Action? BackButtonClicked;
         public event Action? PlacesGridScrollAtTheBottom;
 
         [Header("Places Counter")]
+        [SerializeField] private GameObject placesResultsCounterContainer = null!;
         [SerializeField] private TMP_Text placesResultsCounter = null!;
+        [SerializeField] private Button placesResultsBackButton = null!;
 
         [Header("Places Grid")]
         [SerializeField] private LoopGridView placesResultsLoopGrid = null!;
@@ -30,20 +33,29 @@ namespace DCL.Places
         private readonly List<string> currentPlacesIds = new ();
         private bool isResultsScrollPositionAtBottom => placesResultsScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
-        private void Awake() =>
+        private void Awake()
+        {
+            placesResultsBackButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
             placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+        }
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
+            placesResultsBackButton.onClick.RemoveAllListeners();
             placesResultsScrollRect.onValueChanged.RemoveAllListeners();
+        }
 
         public void SetDependencies(PlacesStateService stateService) =>
             this.placesStateService = stateService;
 
-        public void SetPlacesCounter(string text) =>
+        public void SetPlacesCounter(string text, bool showBackButton = false)
+        {
             placesResultsCounter.text = text;
+            placesResultsBackButton.gameObject.SetActive(showBackButton);
+        }
 
         public void SetPlacesCounterActive(bool isActive) =>
-            placesResultsCounter.gameObject.SetActive(isActive);
+            placesResultsCounterContainer.SetActive(isActive);
 
         public void InitializePlacesGrid()
         {

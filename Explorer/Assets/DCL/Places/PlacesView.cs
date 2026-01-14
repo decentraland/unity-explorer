@@ -128,7 +128,7 @@ namespace DCL.Places
             headerAnimator.Update(0);
         }
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
         {
             if (currentFilters.Section == section && !force)
                 return;
@@ -138,7 +138,11 @@ namespace DCL.Places
             recentlyVisitedSectionTab.SetSelected(false);
             myPlacesSectionTab.SetSelected(false);
 
-            CleanSearchBar(raiseOnChangeEvent: false);
+            if (cleanSearch)
+            {
+                CleanSearchBar(raiseOnChangeEvent: false);
+                currentFilters.SearchText = string.Empty;
+            }
 
             switch (section)
             {
