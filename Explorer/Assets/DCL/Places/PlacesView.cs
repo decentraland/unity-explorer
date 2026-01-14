@@ -1,10 +1,14 @@
-﻿using DCL.PlacesAPIService;
+﻿using Cysharp.Threading.Tasks;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.SelectorButton;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.Places
 {
@@ -16,12 +20,15 @@ namespace DCL.Places
         private const string SORT_BY_SDK_VERSION_SDK7_OPTION = "SDK7 Only";
         private const string SORT_BY_SDK_VERSION_ALL_OPTION = "All";
         private const int SORT_BY_SDK_VERSION_FILTER_DEFAULT_OPTION_INDEX = 0;
+        private const int SEARCH_AWAIT_TIME = 1000;
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
         private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
         private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
 
         public event Action<PlacesFilters>? AnyFilterChanged;
+        public event Action<string>? SearchBarSelected;
+        public event Action<string>? SearchBarDeselected;
 
         public PlacesResultsView PlacesResultsView => placesResultsView;
 
@@ -38,6 +45,7 @@ namespace DCL.Places
         [Header("Filters")]
         [SerializeField] private SelectorButtonView sortByDropdown = null!;
         [SerializeField] private SelectorButtonView sdkVersionDropdown = null!;
+        [SerializeField] private SearchBarView searchBar = null!;
 
         [Header("Categories")]
         [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
@@ -51,6 +59,8 @@ namespace DCL.Places
         [SerializeField] private Animator panelAnimator = null!;
         [SerializeField] private Animator headerAnimator = null!;
 
+        private CancellationTokenSource? searchCancellationCts;
+
         private void Awake()
         {
             discoverSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.DISCOVER));
@@ -60,6 +70,26 @@ namespace DCL.Places
 
             sortByDropdown.OptionClicked += OnSortByChanged;
             sdkVersionDropdown.OptionClicked += OnSDKVersionChanged;
+
+            searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke(text));
+            searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke(text));
+            searchBar.inputField.onValueChanged.AddListener(text =>
+            {
+                searchCancellationCts = searchCancellationCts.SafeRestart();
+                AwaitAndSendSearchAsync(text, searchCancellationCts.Token).Forget();
+                SetSearchBarClearButtonActive(!string.IsNullOrEmpty(text));
+            });
+            searchBar.inputField.onSubmit.AddListener(text =>
+            {
+                searchCancellationCts = searchCancellationCts.SafeRestart();
+                AwaitAndSendSearchAsync(text, searchCancellationCts.Token, skipAwait: true).Forget();
+            });
+            searchBar.clearSearchButton.onClick.AddListener(() =>
+            {
+                CleanSearchBar(raiseOnChangeEvent: false);
+                currentFilters.SearchText = string.Empty;
+                AnyFilterChanged?.Invoke(currentFilters);
+            });
 
             categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
                 InstantiateCategoryButtonPrefab,
@@ -80,10 +110,20 @@ namespace DCL.Places
             myPlacesSectionTab.Button.onClick.RemoveAllListeners();
             sortByDropdown.OptionClicked -= OnSortByChanged;
             sdkVersionDropdown.OptionClicked -= OnSDKVersionChanged;
+            searchBar.inputField.onSelect.RemoveAllListeners();
+            searchBar.inputField.onDeselect.RemoveAllListeners();
+            searchBar.inputField.onValueChanged.RemoveAllListeners();
+            searchBar.inputField.onSubmit.RemoveAllListeners();
+            searchBar.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public void SetViewActive(bool isActive) =>
+        public void SetViewActive(bool isActive)
+        {
             gameObject.SetActive(isActive);
+
+            if (!isActive)
+                searchCancellationCts?.SafeCancelAndDispose();
+        }
 
         public void PlayAnimator(int triggerId)
         {
@@ -175,6 +215,7 @@ namespace DCL.Places
             currentFilters.CategoryId = null;
             currentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
             currentFilters.SDKVersion = IPlacesAPIService.SDKVersion.SDK7_ONLY;
+            currentFilters.SearchText = string.Empty;
         }
 
         private PlaceCategoryButton InstantiateCategoryButtonPrefab()
@@ -227,6 +268,32 @@ namespace DCL.Places
 
             currentFilters.SDKVersion = selectedSDKVersion;
             AnyFilterChanged?.Invoke(currentFilters);
+        }
+
+        private async UniTaskVoid AwaitAndSendSearchAsync(string searchText, CancellationToken ct, bool skipAwait = false)
+        {
+            if (!skipAwait)
+                await UniTask.Delay(SEARCH_AWAIT_TIME, cancellationToken: ct);
+
+            currentFilters.SearchText = searchText;
+            AnyFilterChanged?.Invoke(currentFilters);
+        }
+
+        private void SetSearchBarClearButtonActive(bool isActive) =>
+            searchBar.clearSearchButton.gameObject.SetActive(isActive);
+
+        private void CleanSearchBar(bool raiseOnChangeEvent = true)
+        {
+            TMP_InputField.OnChangeEvent originalEvent = searchBar.inputField.onValueChanged;
+
+            if (!raiseOnChangeEvent)
+                searchBar.inputField.onValueChanged = new TMP_InputField.OnChangeEvent();
+
+            searchBar.inputField.text = string.Empty;
+            SetSearchBarClearButtonActive(false);
+
+            if (!raiseOnChangeEvent)
+                searchBar.inputField.onValueChanged = originalEvent;
         }
     }
 }

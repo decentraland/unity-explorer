@@ -8,5 +8,6 @@ namespace DCL.Places
         public string? CategoryId;
         public IPlacesAPIService.SortBy SortBy;
         public IPlacesAPIService.SDKVersion SDKVersion;
+        public string SearchText;
     }
 }

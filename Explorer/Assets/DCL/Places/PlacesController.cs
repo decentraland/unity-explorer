@@ -1,4 +1,5 @@
 ﻿using DCL.Input;
+using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
@@ -19,27 +20,34 @@ namespace DCL.Places
         private readonly PlacesStateService placesStateService;
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
+        private readonly IInputBlock inputBlock;
 
         public PlacesController(
             PlacesView view,
             ICursor cursor,
             IPlacesAPIService placesAPIService,
-            PlaceCategoriesSO placesCategories)
+            PlaceCategoriesSO placesCategories,
+            IInputBlock inputBlock)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.placesCategories = placesCategories;
+            this.inputBlock = inputBlock;
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
+            view.SearchBarSelected += DisableShortcutsInput;
+            view.SearchBarDeselected += RestoreShortcutsInput;
         }
 
         public void Dispose()
         {
             view.AnyFilterChanged -= OnAnyFilterChanged;
+            view.SearchBarSelected -= DisableShortcutsInput;
+            view.SearchBarDeselected -= RestoreShortcutsInput;
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
@@ -84,5 +92,11 @@ namespace DCL.Places
             view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER);
             FiltersChanged?.Invoke(newFilters);
         }
+
+        private void DisableShortcutsInput(string text) =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreShortcutsInput(string text) =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
     }
 }

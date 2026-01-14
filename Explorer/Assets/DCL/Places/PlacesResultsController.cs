@@ -21,7 +21,7 @@ namespace DCL.Places
         private readonly PlacesStateService placesStateService;
         private readonly PlaceCategoriesSO placesCategories;
 
-        private PlacesFilters currentFilters;
+        private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
@@ -102,7 +102,7 @@ namespace DCL.Places
                                                           pageNumber: pageNumber,
                                                           pageSize: PLACES_PER_PAGE,
                                                           ct: ct,
-                                                          searchText: null,
+                                                          searchText: currentFilters.SearchText,
                                                           sortBy: currentFilters.SortBy,
                                                           sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                           category: currentFilters.CategoryId)
@@ -125,7 +125,7 @@ namespace DCL.Places
 
                 if (currentFilters.CategoryId != null)
                 {
-                    string? selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
+                    string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
                     view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
                 }
                 else
