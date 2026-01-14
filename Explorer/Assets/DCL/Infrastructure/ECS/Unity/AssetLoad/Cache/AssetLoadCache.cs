@@ -56,7 +56,7 @@ namespace DCL.ECS.Unity.AssetLoad.Cache
                 switch (kvp.Value)
                 {
                     case GltfContainerAsset gltfAsset:
-                        gltfCache.Dereference(kvp.Key, gltfAsset);
+                        gltfCache.Dereference(kvp.Key, gltfAsset, handleAssetLoad: false);
                         break;
                     case AudioClipData audioClipData:
                         audioClipData.Dereference();

@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using DCL.ECS.Unity.AssetLoad.Cache;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.AssetLoad;
 using DCL.SDKComponents.AssetLoad.Systems;
@@ -26,11 +27,13 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            var utilsClass = new AssetLoadUtils(sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
+            AssetLoadUtils utilsClass = new AssetLoadUtils(sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
+            AssetLoadCache assetLoadCache = new AssetLoadCache(assetsCache);
+            assetsCache.SetAssetLoadCache(assetLoadCache);
 
             AssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalDeps.FrameTimeBudget, utilsClass);
-            CleanUpAssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
-            FinalizeAssetLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetsCache, utilsClass);
+            CleanUpAssetLoadSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, assetLoadCache);
+            FinalizeAssetLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetLoadCache, utilsClass);
         }
     }
 }
