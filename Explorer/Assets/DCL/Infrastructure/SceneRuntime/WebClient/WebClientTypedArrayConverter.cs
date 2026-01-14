@@ -1,10 +1,9 @@
-using SceneRuntime;
 using System;
 using Utility;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public class WebGLTypedArrayConverter : ITypedArrayConverter
+    public class WebClientTypedArrayConverter : ITypedArrayConverter
     {
         public IDCLTypedArray<byte> Convert(object typedArray)
         {

@@ -22,7 +22,7 @@ using SceneRuntime.Factory.WebSceneSource;
 #if UNITY_WEBGL
 
 // ReSharper disable once RedundantUsingDirective
-using SceneRuntime.Web;
+using SceneRuntime.WebClient;
 
 #else
 using SceneRuntime.V8;
@@ -65,7 +65,7 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
 
 #if UNITY_WEBGL
-            IJavaScriptEngineFactory engineFactory = new WebGLJavaScriptEngineFactory();
+            IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
 #endif

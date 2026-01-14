@@ -4,13 +4,12 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public class WebGLJavaScriptEngine : IJavaScriptEngine
+    public class WebClientJavaScriptEngine : IJavaScriptEngine
     {
         private delegate string JSHostObjectInvokeDelegate(string contextId, string objectId, string methodName, string argsJson);
         internal readonly string contextId;
@@ -20,15 +19,15 @@ namespace SceneRuntime.Web
         {
             get
             {
-                if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+                if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
                 return new WebGLScriptObject(this, "globalThis");
             }
         }
 
-        public WebGLJavaScriptEngine(string contextId)
+        public WebClientJavaScriptEngine(string contextId)
         {
             this.contextId = contextId;
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
 
             try
             {
@@ -44,21 +43,21 @@ namespace SceneRuntime.Web
         {
             if (!disposed)
             {
-                IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
+                IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
 
                 try { JSContext_Dispose(contextIdPtr); }
                 finally { Marshal.FreeHGlobal(contextIdPtr); }
 
-                HostObjectRegistry.UnregisterAll(contextId);
+                WebClientHostObjectRegistry.UnregisterAll(contextId);
                 disposed = true;
             }
         }
 
         public void Execute(string code)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
-            IntPtr codePtr = Marshal.StringToHGlobalAnsi(code);
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr codePtr = Utf8Marshal.StringToHGlobalUTF8(code);
 
             try
             {
@@ -76,11 +75,11 @@ namespace SceneRuntime.Web
 
         public ICompiledScript Compile(string code)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var scriptId = Guid.NewGuid().ToString();
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
-            IntPtr codePtr = Marshal.StringToHGlobalAnsi(code);
-            IntPtr scriptIdPtr = Marshal.StringToHGlobalAnsi(scriptId);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr codePtr = Utf8Marshal.StringToHGlobalUTF8(code);
+            IntPtr scriptIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptId);
 
             try
             {
@@ -101,7 +100,7 @@ namespace SceneRuntime.Web
 
         public object Evaluate(ICompiledScript script)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
 
             if (script is WebGLCompiledScript webglScript) { return EvaluateScript(webglScript.ScriptId); }
 
@@ -110,9 +109,9 @@ namespace SceneRuntime.Web
 
         public object Evaluate(string expression)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
-            IntPtr exprPtr = Marshal.StringToHGlobalAnsi(expression);
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(expression);
 
             try
             {
@@ -137,7 +136,7 @@ namespace SceneRuntime.Web
                             throw new InvalidOperationException($"Failed to evaluate expression in context {contextId}");
                     }
 
-                    string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                     return DeserializeResult(resultStr);
                 }
                 finally { Marshal.FreeHGlobal(resultPtr); }
@@ -151,8 +150,8 @@ namespace SceneRuntime.Web
 
         private object EvaluateScript(string scriptId)
         {
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
-            IntPtr scriptIdPtr = Marshal.StringToHGlobalAnsi(scriptId);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr scriptIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptId);
 
             try
             {
@@ -177,7 +176,7 @@ namespace SceneRuntime.Web
                             throw new InvalidOperationException($"Failed to evaluate script {scriptId} in context {contextId}");
                     }
 
-                    string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                     return DeserializeResult(resultStr);
                 }
                 finally { Marshal.FreeHGlobal(resultPtr); }
@@ -191,13 +190,13 @@ namespace SceneRuntime.Web
 
         public void AddHostObject(string itemName, object target)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var objectId = Guid.NewGuid().ToString();
-            HostObjectRegistry.Register(contextId, objectId, target);
+            WebClientHostObjectRegistry.Register(contextId, objectId, target);
 
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
-            IntPtr namePtr = Marshal.StringToHGlobalAnsi(itemName);
-            IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(objectId);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr namePtr = Utf8Marshal.StringToHGlobalUTF8(itemName);
+            IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(objectId);
 
             try
             {
@@ -219,7 +218,7 @@ namespace SceneRuntime.Web
 
         public object CreatePromiseFromTask<T>(Task<T> task)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var resolver = new JSPromiseResolver<T>(task);
             var resolverId = Guid.NewGuid().ToString();
             var resolverName = $"__promiseResolver_{resolverId}";
@@ -247,8 +246,8 @@ namespace SceneRuntime.Web
                 }})()
             ";
 
-            IntPtr exprPtr = Marshal.StringToHGlobalAnsi(promiseExpression);
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
+            IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(promiseExpression);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
             IntPtr objectIdPtr = Marshal.AllocHGlobal(256);
 
             try
@@ -258,7 +257,9 @@ namespace SceneRuntime.Web
                 if (result <= 0)
                     throw new InvalidOperationException($"Failed to store promise object in context {contextId}");
 
-                string objectId = Marshal.PtrToStringAnsi(objectIdPtr, result) ?? throw new InvalidOperationException("Failed to get object ID");
+                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+                if (string.IsNullOrEmpty(objectId))
+                    throw new InvalidOperationException("Failed to get object ID");
                 return new WebGLScriptObject(this, objectId);
             }
             finally
@@ -271,7 +272,7 @@ namespace SceneRuntime.Web
 
         public object CreatePromiseFromTask(Task task)
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var resolver = new JSPromiseResolver(task);
             var resolverId = Guid.NewGuid().ToString();
             var resolverName = $"__promiseResolver_{resolverId}";
@@ -298,8 +299,8 @@ namespace SceneRuntime.Web
                 }})()
             ";
 
-            IntPtr exprPtr = Marshal.StringToHGlobalAnsi(promiseExpression);
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
+            IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(promiseExpression);
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
             IntPtr objectIdPtr = Marshal.AllocHGlobal(256);
 
             try
@@ -309,7 +310,9 @@ namespace SceneRuntime.Web
                 if (result <= 0)
                     throw new InvalidOperationException($"Failed to store promise object in context {contextId}");
 
-                string objectId = Marshal.PtrToStringAnsi(objectIdPtr, result) ?? throw new InvalidOperationException("Failed to get object ID");
+                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+                if (string.IsNullOrEmpty(objectId))
+                    throw new InvalidOperationException("Failed to get object ID");
                 return new WebGLScriptObject(this, objectId);
             }
             finally
@@ -322,8 +325,8 @@ namespace SceneRuntime.Web
 
         public string GetStackTrace()
         {
-            if (disposed) throw new ObjectDisposedException(nameof(WebGLJavaScriptEngine));
-            IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(contextId);
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
             IntPtr resultPtr = Marshal.AllocHGlobal(1024 * 16);
 
             try
@@ -331,7 +334,7 @@ namespace SceneRuntime.Web
                 int result = JSContext_GetStackTrace(contextIdPtr, resultPtr, 1024 * 16);
 
                 if (result > 0)
-                    return Marshal.PtrToStringAnsi(resultPtr, result);
+                    return Utf8Marshal.PtrToStringUTF8(resultPtr, result);
 
                 return string.Empty;
             }
@@ -341,6 +344,7 @@ namespace SceneRuntime.Web
                 Marshal.FreeHGlobal(resultPtr);
             }
         }
+
 
         private static object? DeserializeResult(string json)
         {
@@ -387,7 +391,7 @@ namespace SceneRuntime.Web
         [MonoPInvokeCallback(typeof(JSHostObjectInvokeDelegate))]
         private static string JSHostObject_Invoke(string contextId, string objectId, string methodName, string argsJson)
         {
-            object? hostObject = HostObjectRegistry.Get(contextId, objectId);
+            object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
 
             if (hostObject == null)
             {
@@ -425,38 +429,6 @@ namespace SceneRuntime.Web
         public WebGLCompiledScript(string scriptId)
         {
             ScriptId = scriptId;
-        }
-    }
-
-    internal static class HostObjectRegistry
-    {
-        private static readonly Dictionary<string, Dictionary<string, object>> contextObjects = new ();
-
-        public static void Register(string contextId, string objectId, object obj)
-        {
-            if (!contextObjects.TryGetValue(contextId, out Dictionary<string, object> objects))
-            {
-                objects = new Dictionary<string, object>();
-                contextObjects[contextId] = objects;
-            }
-
-            objects[objectId] = obj;
-        }
-
-        public static object? Get(string contextId, string objectId)
-        {
-            if (contextObjects.TryGetValue(contextId, out Dictionary<string, object> objects))
-            {
-                objects.TryGetValue(objectId, out object? obj);
-                return obj;
-            }
-
-            return null;
-        }
-
-        public static void UnregisterAll(string contextId)
-        {
-            contextObjects.Remove(contextId);
         }
     }
 

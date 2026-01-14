@@ -1,5 +1,5 @@
 {
-    "name": "DCL.SceneRuntime.Web",
+    "name": "DCL.SceneRuntime.WebClient",
     "rootNamespace": "",
     "references": [
         "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
@@ -7,9 +7,11 @@
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
         "GUID:f51ebe6a0ceec4240a699833d6309b23"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "WebGL"
+    ],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

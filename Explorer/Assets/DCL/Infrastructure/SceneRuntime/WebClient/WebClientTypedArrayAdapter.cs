@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Utility;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public class WebGLTypedArrayAdapter : IDCLTypedArray<byte>, IDCLScriptObject
+    public class WebClientTypedArrayAdapter : IDCLTypedArray<byte>, IDCLScriptObject
     {
-        public WebGLScriptObject ScriptObject { get; }
+        public WebClientScriptObject ScriptObject { get; }
 
         public ulong Length
         {
@@ -32,8 +32,8 @@ namespace SceneRuntime.Web
             {
                 object buffer = ScriptObject.GetProperty("buffer");
 
-                if (buffer is WebGLScriptObject bufferObj)
-                    return new WebGLArrayBufferAdapter(bufferObj);
+                if (buffer is WebClientScriptObject bufferObj)
+                    return new WebClientArrayBufferAdapter(bufferObj);
 
                 throw new InvalidOperationException("Failed to get buffer property from typed array");
             }
@@ -47,12 +47,12 @@ namespace SceneRuntime.Web
             set => ScriptObject[name, args] = value;
         }
 
-        public WebGLTypedArrayAdapter(WebGLScriptObject scriptObject)
+        public WebClientTypedArrayAdapter(WebClientScriptObject scriptObject)
         {
             ScriptObject = scriptObject;
         }
 
-        public static implicit operator WebGLScriptObject(WebGLTypedArrayAdapter adapter) =>
+        public static implicit operator WebClientScriptObject(WebClientTypedArrayAdapter adapter) =>
             adapter.ScriptObject;
 
         ulong IDCLTypedArray<byte>.Read(ulong index, ulong length, byte[] destination, ulong destinationIndex)
@@ -119,8 +119,8 @@ namespace SceneRuntime.Web
         {
             object result = ScriptObject.Invoke(asConstructor, args);
 
-            if (result is WebGLScriptObject wso)
-                return new WebGLTypedArrayAdapter(wso);
+            if (result is WebClientScriptObject wso)
+                return new WebClientTypedArrayAdapter(wso);
 
             return result;
         }
@@ -129,8 +129,8 @@ namespace SceneRuntime.Web
         {
             object result = ScriptObject.InvokeMethod(name, args);
 
-            if (result is WebGLScriptObject wso)
-                return new WebGLTypedArrayAdapter(wso);
+            if (result is WebClientScriptObject wso)
+                return new WebClientTypedArrayAdapter(wso);
 
             return result;
         }

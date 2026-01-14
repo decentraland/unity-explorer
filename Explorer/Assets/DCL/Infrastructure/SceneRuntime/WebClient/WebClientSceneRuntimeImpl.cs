@@ -11,15 +11,15 @@ using System.Threading;
 using UnityEngine.Assertions;
 using Utility;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public sealed class WebGLSceneRuntimeImpl : ISceneRuntime
+    public sealed class WebClientSceneRuntimeImpl : ISceneRuntime
     {
         private readonly IJavaScriptEngine engine;
-        private readonly WebGLScriptObject arrayCtor;
-        private readonly WebGLScriptObject unit8ArrayCtor;
-        private WebGLScriptObject updateFunc;
-        private WebGLScriptObject startFunc;
+        private readonly WebClientScriptObject arrayCtor;
+        private readonly WebClientScriptObject unit8ArrayCtor;
+        private WebClientScriptObject updateFunc;
+        private WebClientScriptObject startFunc;
         private readonly List<IDCLTypedArray<byte>> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
 
@@ -33,7 +33,7 @@ namespace SceneRuntime.Web
 
         CancellationTokenSource ISceneRuntime.IsDisposingTokenSource => isDisposingTokenSource;
 
-        public WebGLSceneRuntimeImpl(
+        public WebClientSceneRuntimeImpl(
             string sourceCode,
             string initCode,
             IReadOnlyDictionary<string, string> jsModules,
@@ -44,7 +44,7 @@ namespace SceneRuntime.Web
             resetableSource = new JSTaskResolverResetable();
 
             engine = engineFactory.Create(sceneShortInfo);
-            var typedArrayConverter = new WebGLTypedArrayConverter();
+            var typedArrayConverter = new WebClientTypedArrayConverter();
             jsApiBunch = new JsApiBunch(engine, typedArrayConverter);
 
             var moduleHub = new SceneModuleHub(engine);
@@ -62,8 +62,8 @@ namespace SceneRuntime.Web
 
             engine.AddHostObject("__resetableSource", resetableSource);
 
-            arrayCtor = (WebGLScriptObject)engine.Global.GetProperty("Array");
-            unit8ArrayCtor = (WebGLScriptObject)engine.Global.GetProperty("Uint8Array");
+            arrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Array");
+            unit8ArrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Uint8Array");
             uint8Arrays = new List<IDCLTypedArray<byte>>();
             nextUint8Array = 0;
         }
@@ -96,8 +96,8 @@ namespace SceneRuntime.Web
             }
         ");
 
-            updateFunc = (WebGLScriptObject)engine.Evaluate("__internalOnUpdate");
-            startFunc = (WebGLScriptObject)engine.Evaluate("__internalOnStart");
+            updateFunc = (WebClientScriptObject)engine.Evaluate("__internalOnUpdate");
+            startFunc = (WebClientScriptObject)engine.Evaluate("__internalOnStart");
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -148,15 +148,15 @@ namespace SceneRuntime.Web
         IDCLScriptObject IJsOperations.NewArray()
         {
             object result = arrayCtor.Invoke(true);
-            WebGLScriptObject webglResult = (WebGLScriptObject)result;
+            WebClientScriptObject webglResult = (WebClientScriptObject)result;
             return webglResult;
         }
 
         IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length)
         {
             object result = unit8ArrayCtor.Invoke(true, length);
-            if (result is WebGLScriptObject webglScriptObject)
-                return new WebGLTypedArrayAdapter(webglScriptObject);
+            if (result is WebClientScriptObject webglScriptObject)
+                return new WebClientTypedArrayAdapter(webglScriptObject);
             throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
         }
 
@@ -165,8 +165,8 @@ namespace SceneRuntime.Web
             if (nextUint8Array >= uint8Arrays.Count)
             {
                 object result = unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
-                if (result is WebGLScriptObject webglScriptObject)
-                    uint8Arrays.Add(new WebGLTypedArrayAdapter(webglScriptObject));
+                if (result is WebClientScriptObject webglScriptObject)
+                    uint8Arrays.Add(new WebClientTypedArrayAdapter(webglScriptObject));
                 else
                     throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
             }

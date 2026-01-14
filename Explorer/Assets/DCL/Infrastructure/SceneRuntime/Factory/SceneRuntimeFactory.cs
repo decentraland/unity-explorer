@@ -17,7 +17,7 @@ using UnityEngine;
 #if UNITY_WEBGL
 
 // ReSharper disable once RedundantUsingDirective
-using SceneRuntime.Web;
+using SceneRuntime.WebClient;
 
 #else
 using SceneRuntime.V8;
@@ -100,7 +100,7 @@ namespace SceneRuntime.Factory
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL
-            return new WebGLSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
+            return new WebClientSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
 #else
             return new V8SceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
 #endif

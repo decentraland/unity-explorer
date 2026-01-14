@@ -2,13 +2,14 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using Utility;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public class WebGLScriptObject : IDCLScriptObject
+    public class WebClientScriptObject : IDCLScriptObject
     {
-        private readonly WebGLJavaScriptEngine engine;
+        private readonly WebClientJavaScriptEngine engine;
         private readonly string propertyPath;
 
         public IEnumerable<string> PropertyNames => Array.Empty<string>();
@@ -32,7 +33,7 @@ namespace SceneRuntime.Web
             }
         }
 
-        public WebGLScriptObject(WebGLJavaScriptEngine engine, string propertyPath)
+        public WebClientScriptObject(WebClientJavaScriptEngine engine, string propertyPath)
         {
             this.engine = engine;
             this.propertyPath = propertyPath;
@@ -44,30 +45,30 @@ namespace SceneRuntime.Web
                 throw new InvalidOperationException($"Cannot invoke method on non-object path: {propertyPath}");
 
             string argsJson = JsonConvert.SerializeObject(args);
-            IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(propertyPath);
-            IntPtr methodNamePtr = Marshal.StringToHGlobalAnsi(name);
-            IntPtr argsJsonPtr = Marshal.StringToHGlobalAnsi(argsJson);
+            IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(propertyPath);
+            IntPtr methodNamePtr = Utf8Marshal.StringToHGlobalUTF8(name);
+            IntPtr argsJsonPtr = Utf8Marshal.StringToHGlobalUTF8(argsJson);
 
             try
             {
                 int bufferSize = 1024 * 64;
                 IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
-                try
-                {
-                    IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                     try
                     {
-                        int result = JSContext_InvokeObjectMethod(contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr, resultPtr, bufferSize);
+                        IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                        if (result > 0)
+                        try
                         {
-                            string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                            int result = JSContext_InvokeObjectMethod(contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr, resultPtr, bufferSize);
+
+                            if (result > 0)
+                            {
+                                string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                             object deserialized = JsonConvert.DeserializeObject(resultStr);
 
                             if (deserialized is string str && IsObjectId(str))
-                                return new WebGLScriptObject(engine, str);
+                                return new WebClientScriptObject(engine, str);
 
                             return deserialized;
                         }
@@ -92,25 +93,25 @@ namespace SceneRuntime.Web
 
             if (IsObjectId(propertyPath))
             {
-                IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(propertyPath);
-                IntPtr argsJsonPtr = Marshal.StringToHGlobalAnsi(argsJson);
+                IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(propertyPath);
+                IntPtr argsJsonPtr = Utf8Marshal.StringToHGlobalUTF8(argsJson);
 
                 try
                 {
                     int bufferSize = 1024 * 64;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
-                    try
-                    {
-                        IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                         try
                         {
-                            int result = JSContext_InvokeObjectAsFunction(contextIdPtr, objectIdPtr, argsJsonPtr, resultPtr, bufferSize);
+                            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                            if (result > 0)
+                            try
                             {
-                                string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                                int result = JSContext_InvokeObjectAsFunction(contextIdPtr, objectIdPtr, argsJsonPtr, resultPtr, bufferSize);
+
+                                if (result > 0)
+                                {
+                                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                                 return JsonConvert.DeserializeObject(resultStr);
                             }
 
@@ -128,25 +129,25 @@ namespace SceneRuntime.Web
             }
             else
             {
-                IntPtr funcNamePtr = Marshal.StringToHGlobalAnsi(propertyPath);
-                IntPtr argsJsonPtr = Marshal.StringToHGlobalAnsi(argsJson);
+                IntPtr funcNamePtr = Utf8Marshal.StringToHGlobalUTF8(propertyPath);
+                IntPtr argsJsonPtr = Utf8Marshal.StringToHGlobalUTF8(argsJson);
 
                 try
                 {
                     int bufferSize = 1024 * 64;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
-                    try
-                    {
-                        IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                         try
                         {
-                            int result = JSContext_InvokeFunction(contextIdPtr, funcNamePtr, argsJsonPtr, resultPtr, bufferSize);
+                            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                            if (result > 0)
+                            try
                             {
-                                string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                                int result = JSContext_InvokeFunction(contextIdPtr, funcNamePtr, argsJsonPtr, resultPtr, bufferSize);
+
+                                if (result > 0)
+                                {
+                                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                                 return JsonConvert.DeserializeObject(resultStr);
                             }
 
@@ -168,25 +169,25 @@ namespace SceneRuntime.Web
         {
             if (IsObjectId(propertyPath))
             {
-                IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(propertyPath);
-                IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
+                IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(propertyPath);
+                IntPtr namePtr = Utf8Marshal.StringToHGlobalUTF8(name);
 
                 try
                 {
                     int bufferSize = 1024 * 64;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
-                    try
-                    {
-                        IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                         try
                         {
-                            int result = JSContext_GetObjectProperty(contextIdPtr, objectIdPtr, namePtr, resultPtr, bufferSize);
+                            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                            if (result > 0)
+                            try
                             {
-                                string resultStr = Marshal.PtrToStringAnsi(resultPtr, result);
+                                int result = JSContext_GetObjectProperty(contextIdPtr, objectIdPtr, namePtr, resultPtr, bufferSize);
+
+                                if (result > 0)
+                                {
+                                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
                                 return JsonConvert.DeserializeObject(resultStr);
                             }
 
@@ -212,13 +213,13 @@ namespace SceneRuntime.Web
             if (IsObjectId(propertyPath))
             {
                 string valueJson = JsonConvert.SerializeObject(value);
-                IntPtr objectIdPtr = Marshal.StringToHGlobalAnsi(propertyPath);
-                IntPtr namePtr = Marshal.StringToHGlobalAnsi(name);
-                IntPtr valueJsonPtr = Marshal.StringToHGlobalAnsi(valueJson);
+                IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(propertyPath);
+                IntPtr namePtr = Utf8Marshal.StringToHGlobalUTF8(name);
+                IntPtr valueJsonPtr = Utf8Marshal.StringToHGlobalUTF8(valueJson);
 
                 try
                 {
-                    IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
+                    IntPtr contextIdPtr = StringToHGlobalUTF8(engine.contextId);
 
                     try
                     {
@@ -276,37 +277,37 @@ namespace SceneRuntime.Web
                 string argsJson = JsonConvert.SerializeObject(args);
                 var newExpr = $"new {propertyPath}(...{argsJson})";
 
-                IntPtr exprPtr = Marshal.StringToHGlobalAnsi(newExpr);
+                IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(newExpr);
 
                 try
                 {
                     var bufferSize = 256;
                     IntPtr objectIdPtr = Marshal.AllocHGlobal(bufferSize);
 
-                    try
-                    {
-                        IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                         try
                         {
-                            int result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
+                            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                            if (result <= 0)
+                            try
                             {
-                                if (result < 0)
-                                {
-                                    bufferSize = -result;
-                                    Marshal.FreeHGlobal(objectIdPtr);
-                                    objectIdPtr = Marshal.AllocHGlobal(bufferSize);
-                                    result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
-                                }
+                                int result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
 
                                 if (result <= 0)
-                                    throw new InvalidOperationException($"Failed to create object instance using {propertyPath}");
-                            }
+                                {
+                                    if (result < 0)
+                                    {
+                                        bufferSize = -result;
+                                        Marshal.FreeHGlobal(objectIdPtr);
+                                        objectIdPtr = Marshal.AllocHGlobal(bufferSize);
+                                        result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
+                                    }
 
-                            string objectId = Marshal.PtrToStringAnsi(objectIdPtr, result);
-                            return new WebGLScriptObject(engine, objectId);
+                                    if (result <= 0)
+                                        throw new InvalidOperationException($"Failed to create object instance using {propertyPath}");
+                                }
+
+                                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+                            return new WebClientScriptObject(engine, objectId);
                         }
                         finally { Marshal.FreeHGlobal(contextIdPtr); }
                     }
@@ -345,39 +346,39 @@ namespace SceneRuntime.Web
         [DllImport("__Internal")]
         private static extern int JSContext_InvokeObjectAsFunction(IntPtr contextId, IntPtr objectId, IntPtr argsJson, IntPtr result, int resultSize);
 
-        public static WebGLScriptObject CreateFromExpression(WebGLJavaScriptEngine engine, string expression)
+        public static WebClientScriptObject CreateFromExpression(WebClientJavaScriptEngine engine, string expression)
         {
-            IntPtr exprPtr = Marshal.StringToHGlobalAnsi(expression);
+            IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(expression);
 
             try
             {
                 var bufferSize = 256;
                 IntPtr objectIdPtr = Marshal.AllocHGlobal(bufferSize);
 
-                try
-                {
-                    IntPtr contextIdPtr = Marshal.StringToHGlobalAnsi(engine.contextId);
-
                     try
                     {
-                        int result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
+                        IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
-                        if (result <= 0)
+                        try
                         {
-                            if (result < 0)
-                            {
-                                bufferSize = -result;
-                                Marshal.FreeHGlobal(objectIdPtr);
-                                objectIdPtr = Marshal.AllocHGlobal(bufferSize);
-                                result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
-                            }
+                            int result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
 
                             if (result <= 0)
-                                throw new InvalidOperationException($"Failed to create object from expression: {expression}");
-                        }
+                            {
+                                if (result < 0)
+                                {
+                                    bufferSize = -result;
+                                    Marshal.FreeHGlobal(objectIdPtr);
+                                    objectIdPtr = Marshal.AllocHGlobal(bufferSize);
+                                    result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
+                                }
 
-                        string objectId = Marshal.PtrToStringAnsi(objectIdPtr, result);
-                        return new WebGLScriptObject(engine, objectId);
+                                if (result <= 0)
+                                    throw new InvalidOperationException($"Failed to create object from expression: {expression}");
+                            }
+
+                            string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+                        return new WebClientScriptObject(engine, objectId);
                     }
                     finally { Marshal.FreeHGlobal(contextIdPtr); }
                 }

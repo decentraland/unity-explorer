@@ -1,20 +1,20 @@
 using System;
 using Utility;
 
-namespace SceneRuntime.Web
+namespace SceneRuntime.WebClient
 {
-    public class WebGLArrayBufferAdapter : IDCLArrayBuffer
+    public class WebClientArrayBufferAdapter : IDCLArrayBuffer
     {
-        private readonly WebGLScriptObject scriptObject;
+        private readonly WebClientScriptObject scriptObject;
 
-        public WebGLArrayBufferAdapter(WebGLScriptObject scriptObject)
+        public WebClientArrayBufferAdapter(WebClientScriptObject scriptObject)
         {
             this.scriptObject = scriptObject;
         }
 
-        public WebGLScriptObject ScriptObject => scriptObject;
+        public WebClientScriptObject ScriptObject => scriptObject;
 
-        public static implicit operator WebGLScriptObject(WebGLArrayBufferAdapter adapter) => adapter.scriptObject;
+        public static implicit operator WebClientScriptObject(WebClientArrayBufferAdapter adapter) => adapter.scriptObject;
 
         ulong IDCLArrayBuffer.Size
         {
@@ -31,7 +31,7 @@ namespace SceneRuntime.Web
                 return 0;
 
             object subarrayResult = scriptObject.InvokeMethod("slice", (long)offset, (long)(offset + count));
-            if (subarrayResult is WebGLScriptObject subarray)
+            if (subarrayResult is WebClientScriptObject subarray)
             {
                 for (ulong i = 0; i < count && i < (ulong)destination.LongLength - destinationIndex; i++)
                 {
