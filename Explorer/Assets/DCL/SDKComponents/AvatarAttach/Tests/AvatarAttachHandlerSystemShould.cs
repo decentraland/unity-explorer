@@ -1,17 +1,16 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.AvatarAttach.Systems;
-using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -26,6 +25,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.TestTools;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AvatarAttach.Tests
@@ -71,8 +71,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             system = new AvatarAttachHandlerSystem(world,
                 globalWorld,
                 mainPlayerAvatarBase,
+                Substitute.For<ExposedTransform>(),
                 sceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTableProxy,
+                Substitute.For<IECSToCRDTWriter>());
 
             setupSystem = new AvatarAttachHandlerSetupSystem(world,
                 globalWorld,
