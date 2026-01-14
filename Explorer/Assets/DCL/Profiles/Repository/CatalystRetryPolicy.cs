@@ -19,15 +19,4 @@ namespace DCL.Profiles
         /// </summary>
         public static readonly RetryPolicy VALUE = RetryPolicy.Enforce(6, 2000, 2, IWebRequestController.IGNORE_NOT_FOUND);
     }
-
-    /// <summary>
-    ///     Aligned to the polling window in the asset-bundle-registry
-    /// </summary>
-    public static class CentralizedProfileRetryPolicy
-    {
-        /// <summary>
-        ///     Never returns 404, returns an empty array as GET is not supported
-        /// </summary>
-        public static readonly RetryPolicy VALUE = RetryPolicy.Enforce(3, 1500, 2);
-    }
 }

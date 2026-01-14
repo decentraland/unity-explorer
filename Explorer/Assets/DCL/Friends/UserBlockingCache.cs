@@ -14,10 +14,6 @@ namespace DCL.Friends
 
         public ReadOnlyHashSet<string> BlockedUsers { get; }
         public ReadOnlyHashSet<string> BlockedByUsers { get; }
-        public event Action<string>? UserBlocked;
-        public event Action<string>? UserBlocksYou;
-        public event Action<string>? UserUnblocked;
-        public event Action<string>? UserUnblocksYou;
 
         // This property is fixed to true since we currently don't want to show chat messages from blocked users in any shape or form.
         // This can change in the future, so all the logic that is already in place will stay the same for such times.
@@ -63,28 +59,9 @@ namespace DCL.Friends
                 blockedByUsers.Add(user);
         }
 
-        private void UserBlockedByYou(BlockedProfile user)
-        {
-            blockedUsers.Add(user.Address);
-            UserBlocked?.Invoke(user.Address);
-        }
-
-        private void UserUnblockedByYou(BlockedProfile user)
-        {
-            blockedUsers.Remove(user.Address);
-            UserUnblocked?.Invoke(user.Address);
-        }
-
-        private void YouBlockedByUser(string userAddress)
-        {
-            blockedByUsers.Add(userAddress);
-            UserBlocksYou?.Invoke(userAddress);
-        }
-
-        private void YouUnblockedByUser(string userAddress)
-        {
-            blockedByUsers.Remove(userAddress);
-            UserUnblocksYou?.Invoke(userAddress);
-        }
+        private void UserBlockedByYou(BlockedProfile user) => blockedUsers.Add(user.Address);
+        private void UserUnblockedByYou(BlockedProfile user) => blockedUsers.Remove(user.Address);
+        private void YouBlockedByUser(string userAddress) => blockedByUsers.Add(userAddress);
+        private void YouUnblockedByUser(string userAddress) => blockedByUsers.Remove(userAddress);
     }
 }

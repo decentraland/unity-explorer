@@ -1,4 +1,3 @@
-using DCL.Profiles;
 using System;
 
 namespace DCL.Friends
@@ -21,12 +20,12 @@ namespace DCL.Friends
 
         public string FriendRequestId { get; }
         public DateTime Timestamp { get; }
-        public Profile.CompactInfo From { get; }
-        public Profile.CompactInfo To { get; }
+        public FriendProfile From { get; }
+        public FriendProfile To { get; }
         public string? MessageBody { get; }
         public bool HasBodyMessage => !string.IsNullOrEmpty(MessageBody);
 
-        public FriendRequest(string friendRequestId, DateTime timestamp, Profile.CompactInfo from, Profile.CompactInfo to, string? messageBody)
+        public FriendRequest(string friendRequestId, DateTime timestamp, FriendProfile from, FriendProfile to, string? messageBody)
         {
             FriendRequestId = friendRequestId;
             Timestamp = timestamp;

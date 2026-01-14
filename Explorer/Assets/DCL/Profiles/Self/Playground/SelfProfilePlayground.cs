@@ -7,16 +7,12 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.Dynamic.LaunchModes;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -43,12 +39,12 @@ namespace DCL.Profiles.Self.Playground
             SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
-                        IWebRequestController.TEST,
+                        IWebRequestController.DEFAULT,
                         new RealmData(
                             new LogIpfsRealm(
                                 new IpfsRealm(
                                     web3IdentityCache,
-                                    IWebRequestController.TEST,
+                                    IWebRequestController.DEFAULT,
                                     URLDomain.FromString(url),
                                     URLDomain.EMPTY,
                                     new ServerAbout(
@@ -57,10 +53,8 @@ namespace DCL.Profiles.Self.Playground
                                 )
                             )
                         ),
-                        new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY),
                         new DefaultProfileCache(),
-                        new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null),
-                        false)
+                        ProfilesDebug.Create(new NullDebugContainerBuilder()))
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

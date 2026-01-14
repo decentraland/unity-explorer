@@ -1,4 +1,4 @@
-﻿using DCL.Web3.Abstract;
+using DCL.Web3.Abstract;
 using Nethereum.Signer;
 
 namespace DCL.Web3.Accounts
@@ -19,6 +19,9 @@ namespace DCL.Web3.Accounts
         }
 
         public static NethereumAccount CreateForVerifyOnly(EthECKey key) =>
+            new (key);
+
+        public static NethereumAccount Create(EthECKey key) =>
             new (key);
 
         public string Sign(string message) =>

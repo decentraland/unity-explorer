@@ -89,7 +89,7 @@ namespace DCL.UI
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
-        private Profile.CompactInfo targetProfile;
+        private Profile targetProfile;
 
         private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
@@ -158,9 +158,9 @@ namespace DCL.UI
             }
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
-            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -195,7 +195,7 @@ namespace DCL.UI
                 }
             }
 
-            userProfileControlSettings.SetInitialData(profile, contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
@@ -236,21 +236,21 @@ namespace DCL.UI
                    };
         }
 
-        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userData.UserId);
+                    SendFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userData.UserId);
+                    RemoveFriend(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userData.UserId);
+                    CancelFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userData.UserId);
+                    AcceptFriendship(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -360,7 +360,7 @@ namespace DCL.UI
             ShowBlockUserPromptAsync(targetProfile).Forget();
         }
 
-        private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
         {
             await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }

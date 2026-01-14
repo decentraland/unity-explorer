@@ -4,7 +4,6 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -16,12 +15,6 @@ namespace DCL.Web3.Authenticators
         {
             private readonly IWeb3VerifiedAuthenticator originAuth;
             private readonly IVerifiedEthereumApi originApi;
-
-            public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-            {
-                add => originAuth.VerificationRequired += value;
-                remove => originAuth.VerificationRequired -= value;
-            }
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -83,6 +76,9 @@ namespace DCL.Web3.Authenticators
 
             public UniTask LogoutAsync(CancellationToken cancellationToken) =>
                 originAuth.LogoutAsync(cancellationToken);
+
+            public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
+                originAuth.SetVerificationListener(callback);
 
             public void CancelCurrentWeb3Operation()
             {

@@ -86,7 +86,7 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal GameObject ownPlayerBannedTooltip { get; private set; }
 
-        [SerializeField] internal Button contextMenuButton;
+        [SerializeField] internal ContextMenuConfig contextMenuConfig;
 
         private void Start()
         {
@@ -99,5 +99,12 @@ namespace DCL.Minimap
 
         private void OnUnHoverMap() =>
             minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+
+        [Serializable]
+        public struct ContextMenuConfig
+        {
+            public Sprite copyLinkIcon;
+            public Button button;
+        }
     }
 }

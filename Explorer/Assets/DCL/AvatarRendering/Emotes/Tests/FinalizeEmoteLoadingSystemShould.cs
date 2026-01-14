@@ -532,7 +532,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly List<URN> GetOrAddByDTOCalls = new ();
             public readonly List<URN> TryGetElementCalls = new ();
             public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
-            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
+            public List<URN> EmbededURNs => throw new NotImplementedException();
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)
             {
@@ -555,6 +555,9 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             public void Set(URN urn, IEmote emote) =>
                 Emotes[urn] = emote;
+
+            public void AddEmbeded(URN urn, IEmote emote) =>
+                throw new NotImplementedException();
 
             public void Unload(IPerformanceBudget budget) =>
                 Emotes.Clear();
@@ -586,9 +589,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             }
 
             public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
-
-            public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
-                throw new NotImplementedException();
         }
 
         public class MockEmote : IEmote

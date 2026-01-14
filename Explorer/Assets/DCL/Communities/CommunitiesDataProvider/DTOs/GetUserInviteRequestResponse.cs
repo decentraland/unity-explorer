@@ -1,5 +1,3 @@
-using DCL.Profiles;
-using Newtonsoft.Json;
 using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
@@ -29,8 +27,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public bool active;
             public int membersCount;
-            [JsonConverter(typeof(CommunitiesDTOConverters.FriendsInCommunityConverter))]
-            public Profile.CompactInfo[] friends;
+            public GetUserCommunitiesData.FriendInCommunity[] friends;
             public string ownerName;
         }
 

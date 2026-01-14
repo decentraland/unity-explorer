@@ -46,7 +46,7 @@ namespace DCL.Chat
 
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
-        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel>? profileSubscription;
+        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
         private ReactivePropertyExtensions.DisposableSubscription<ProfileOptionalBasicInfo>? profileDataSubscription;
 
         private ChatMessage chatMessage;
@@ -133,7 +133,7 @@ namespace DCL.Chat
                     ProfilePictureView.ConfigureThumbnailClickData(OnUsernameClicked, chatMessage.SenderWalletAddress);
             }
             else
-                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Sprite!);
+                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);

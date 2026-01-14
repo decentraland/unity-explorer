@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -22,7 +21,6 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerMoveToWithDurationIntent), typeof(DisableAnimationTransitionOnTeleport))]
         private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,

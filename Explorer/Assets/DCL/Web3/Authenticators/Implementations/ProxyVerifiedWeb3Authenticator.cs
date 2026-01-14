@@ -1,4 +1,3 @@
-using System;
 using DCL.Web3.Identities;
 
 namespace DCL.Web3.Authenticators
@@ -7,12 +6,6 @@ namespace DCL.Web3.Authenticators
     {
         private readonly IWeb3VerifiedAuthenticator authenticator;
 
-        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-        {
-            add => authenticator.VerificationRequired += value;
-            remove => authenticator.VerificationRequired -= value;
-        }
-
         public ProxyVerifiedWeb3Authenticator(
             IWeb3VerifiedAuthenticator authenticator,
             IWeb3IdentityCache identityCache)
@@ -20,6 +13,9 @@ namespace DCL.Web3.Authenticators
         {
             this.authenticator = authenticator;
         }
+
+        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
+            authenticator.SetVerificationListener(callback);
 
         public void CancelCurrentWeb3Operation()
         {

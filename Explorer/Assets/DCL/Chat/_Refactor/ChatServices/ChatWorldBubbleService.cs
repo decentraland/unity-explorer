@@ -104,7 +104,8 @@ namespace DCL.Chat.ChatServices
                             }
                             else
                             {
-                                GenerateChatBubbleComponent(playerEntity, chatMessage, profile.UserNameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                                var nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
+                                GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
                             }
                         }
 

@@ -25,11 +25,13 @@ namespace DCL.Chat.ChatCommands
 
             foreach (var member in rawMembers)
             {
-                var viewModel = new ChatMemberListViewModel(member.Profile, member.ConnectionStatus == ChatMemberConnectionStatus.Online);
+                var viewModel = new ChatMemberListViewModel(member.Id, member.WalletId, member.Name,
+                    member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.ProfileColor, member.HasClaimedName);
 
                 targetList.Add(viewModel);
 
-                GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail, viewModel.Profile, ct)
+                GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileThumbnail, chatConfig.DefaultProfileThumbnail,
+                                               viewModel.UserId, member.FaceSnapshotUrl, ct)
                                           .Forget();
             }
 

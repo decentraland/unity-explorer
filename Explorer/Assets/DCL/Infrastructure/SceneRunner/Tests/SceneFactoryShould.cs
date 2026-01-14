@@ -5,7 +5,6 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.AssetsProvision.CodeResolver;
-using DCL.Clipboard;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -25,9 +24,9 @@ using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
-using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.V8;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -68,7 +67,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.TEST,
+                IWebRequestController.DEFAULT,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
@@ -76,7 +75,7 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>());
+                Substitute.For<DCL.Clipboard.ISystemClipboard>());
         }
 
         [TearDown]

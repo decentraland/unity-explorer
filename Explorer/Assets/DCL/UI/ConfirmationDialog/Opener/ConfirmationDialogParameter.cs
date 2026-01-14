@@ -1,5 +1,4 @@
 #nullable enable
-using DCL.Profiles;
 using System;
 using UnityEngine;
 
@@ -7,6 +6,20 @@ namespace DCL.UI.ConfirmationDialog.Opener
 {
     public struct ConfirmationDialogParameter
     {
+        public struct UserData
+        {
+            public readonly string Address;
+            public readonly string ThumbnailUrl;
+            public readonly Color Color;
+
+            public UserData(string address, string thumbnailUrl, Color color)
+            {
+                Address = address;
+                ThumbnailUrl = thumbnailUrl;
+                Color = color;
+            }
+        }
+
         public readonly string Text;
         public readonly string SubText;
         public readonly string CancelButtonText;
@@ -14,9 +27,9 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly Sprite? Image;
         public readonly bool ShowImageRim;
         public readonly bool ShowQuitImage;
-        public readonly Profile.CompactInfo UserInfo;
-        public readonly Profile.CompactInfo FromUserInfo;
         public readonly bool PreserveAspect;
+        public readonly UserData UserInfo;
+        public readonly UserData FromUserInfo;
         public Action<ConfirmationResult>? ResultCallback;
         public readonly string LinkText;
         public readonly Action<string>? OnLinkClickCallback;
@@ -24,8 +37,8 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public ConfirmationDialogParameter(string text, string cancelButtonText, string confirmButtonText,
             Sprite? image, bool showImageRim, bool showQuitImage,
             Action<ConfirmationResult>? resultCallback = null,
-            string subText = "", Profile.CompactInfo userInfo = default, string linkText = "", Action<string>? onLinkClickCallback = null,
-            bool preserveAspect = false, Profile.CompactInfo fromUserInfo = default)
+            string subText = "", UserData userInfo = default, string linkText = "", Action<string>? onLinkClickCallback = null,
+            bool preserveAspect = false, UserData fromUserInfo = default)
         {
             Text = text;
             CancelButtonText = cancelButtonText;

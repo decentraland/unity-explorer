@@ -8,10 +8,10 @@ namespace DCL.AvatarRendering.Emotes
 {
     public interface IEmoteStorage : IAvatarElementStorage<IEmote, EmoteDTO>
     {
-        IReadOnlyList<URN> BaseEmotesUrns { get; }
+        List<URN> EmbededURNs { get; }
+        void AddEmbeded(URN urn, IEmote emote);
         bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt);
         bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry);
         IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
-        void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns);
     }
 }

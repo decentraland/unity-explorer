@@ -27,7 +27,6 @@ using System;
 using System.Threading;
 using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
@@ -61,7 +60,7 @@ namespace Global.Tests.PlayMode
 
             IWebJsSources webJsSources = new WebJsSources(
                 new JsCodeResolver(
-                    IWebRequestController.TEST
+                    IWebRequestController.DEFAULT
                 )
             );
 

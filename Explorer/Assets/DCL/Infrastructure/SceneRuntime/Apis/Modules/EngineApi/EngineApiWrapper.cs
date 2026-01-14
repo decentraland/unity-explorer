@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -7,6 +7,10 @@ using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility;
+#if !UNITY_WEBGL
+using Microsoft.ClearScript;
+#endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -41,7 +45,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+                IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(data);
+
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
 
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 

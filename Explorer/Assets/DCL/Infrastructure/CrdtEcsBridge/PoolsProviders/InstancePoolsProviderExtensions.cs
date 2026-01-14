@@ -1,11 +1,11 @@
-﻿using Microsoft.ClearScript.JavaScript;
+using Utility;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
     public static class InstancePoolsProviderExtensions
     {
         public static void RenewCrdtRawDataPoolFromScriptArray(
-            this IInstancePoolsProvider instancePoolsProvider, ITypedArray<byte> scriptArray,
+            this IInstancePoolsProvider instancePoolsProvider, IDCLTypedArray<byte> scriptArray,
             ref PoolableByteArray lastInput)
         {
             EnsureArrayLength(instancePoolsProvider, (int)scriptArray.Length, ref lastInput);

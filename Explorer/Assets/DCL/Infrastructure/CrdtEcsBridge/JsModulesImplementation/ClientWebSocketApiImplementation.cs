@@ -1,6 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
-using Microsoft.ClearScript.JavaScript;
 using SceneRuntime.ScenePermissions;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
@@ -10,6 +9,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation
 {
@@ -60,7 +60,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             await GetInstanceOrThrow(websocketId).WebSocket.ConnectAsync(new Uri(url), ct);
         }
 
-        public async UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct)
+        public async UniTask SendBinaryAsync(int websocketId, IDCLArrayBuffer data, ulong size, CancellationToken ct)
         {
             if (!permissionsProvider.CanInvokeWebSocketsAPI()) return;
 
@@ -195,7 +195,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         /// </summary>
         private class ChunkTransmission
         {
-            internal const int SIZE8_K = 8 * 1024;
+            private const int SIZE8_K = 8 * 1024;
 
             private readonly int receiveChunkSize;
             private readonly int sendChunkSize;

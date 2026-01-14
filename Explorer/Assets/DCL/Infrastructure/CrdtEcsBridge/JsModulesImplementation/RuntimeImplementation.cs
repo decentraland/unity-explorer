@@ -8,7 +8,6 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;
@@ -49,7 +48,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             await UniTask.SwitchToMainThread();
 
-            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<IDCLTypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
                 NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
@@ -57,15 +56,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 await UniTask.SwitchToThreadPool();
 
                 // create script byte array
-                ITypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
+                IDCLTypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
 
                 // transfer data to script byte array
                 array.Write(nativeBytes, (ulong)nativeBytes.Length, 0);
-                return new StreamableLoadingResult<ITypedArray<byte>>(array);
+                return new StreamableLoadingResult<IDCLTypedArray<byte>>(array);
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
+            IDCLTypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

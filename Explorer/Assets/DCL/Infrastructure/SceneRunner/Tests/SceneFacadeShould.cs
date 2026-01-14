@@ -14,7 +14,6 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -50,6 +49,7 @@ using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.V8;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -104,7 +104,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.TEST,
+                IWebRequestController.DEFAULT,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
@@ -112,7 +112,7 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>());
+                Substitute.For<DCL.Clipboard.ISystemClipboard>());
         }
 
         [OneTimeTearDown]

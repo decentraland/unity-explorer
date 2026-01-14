@@ -538,8 +538,8 @@ PlayerSettings:
       m_SubKind: 
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
-    m_StaticBatching: 0
-    m_DynamicBatching: 0
+    m_StaticBatching: 1
+    m_DynamicBatching: 1
   - m_BuildTarget: tvOS
     m_StaticBatching: 1
     m_DynamicBatching: 0
@@ -551,7 +551,7 @@ PlayerSettings:
     m_DynamicBatching: 0
   - m_BuildTarget: WebGL
     m_StaticBatching: 0
-    m_DynamicBatching: 0
+    m_DynamicBatching: 1
   m_BuildTargetShaderSettings: []
   m_BuildTargetGraphicsJobs:
   - m_BuildTarget: MacStandaloneSupport
@@ -650,6 +650,9 @@ PlayerSettings:
   - serializedVersion: 3
     m_BuildTarget: Android
     m_Formats: 03000000
+  - serializedVersion: 3
+    m_BuildTarget: WebGL
+    m_Formats: 05000000
   playModeTestRunnerEnabled: 0
   runPlayModeTestAsEditModeTest: 0
   actionOnDotNetUnhandledException: 1
@@ -931,7 +934,7 @@ PlayerSettings:
     ReservedCFE: CT_FB
     Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE
     VisionOS: CT_FB
-    WebGL: CT_FB
+    WebGL: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE;NO_LIVEKIT_MODE
     Windows Store Apps: CT_FB
     XboxOne: CT_FB
     iPhone: CT_FB
@@ -943,6 +946,7 @@ PlayerSettings:
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration:
     Standalone: 1
+    WebGL: 1
   il2cppStacktraceInformation:
     Standalone: 1
   managedStrippingLevel:

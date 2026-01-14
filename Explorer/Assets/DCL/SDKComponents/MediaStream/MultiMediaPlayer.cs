@@ -104,7 +104,7 @@ namespace DCL.SDKComponents.MediaStream
                 onAvProPlayer: static (address, avPro) =>
                 {
                     if (address.IsUrlMediaAddress(out var url))
-                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Url, avPro.AvProMediaPlayer);
+                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Value.Url, avPro.AvProMediaPlayer);
                 },
                 onLivekitPlayer: static (_, livekitPlayer) => livekitPlayer.Dispose()
             );
@@ -158,7 +158,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (IsAvProPlayer(out var avProPlayer))
             {
-                MediaPlayer mediaPlayer = avProPlayer!.AvProMediaPlayer;
+                var mediaPlayer = avProPlayer!.Value.AvProMediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
                 mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
             }
@@ -185,7 +185,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
-                MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
+                var avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer).Forget();
             }
@@ -195,9 +195,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public readonly void SetPlaybackProperties(CustomMediaStream customMediaStream)
         {
-            if (IsAvProPlayer(out AvProPlayer mediaPlayer))
+            if (IsAvProPlayer(out AvProPlayer? mediaPlayer))
             {
-                MediaPlayer avProPlayer = mediaPlayer.AvProMediaPlayer;
+                MediaPlayer avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, MediaPlayerComponent.DEFAULT_POSITION, customMediaStream.Loop, MediaPlayerComponent.DEFAULT_PLAYBACK_RATE, true).Forget();
             }
@@ -216,7 +216,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (ctx.player.IsAvProPlayer(out var avProPlayer) == false)
                         return false;
 
-                    MediaPlayer player = avProPlayer!.AvProMediaPlayer;
+                    var player = avProPlayer!.Value.AvProMediaPlayer;
 
                     //VideoPlayer may be reused
                     if (player.MediaOpened)
@@ -236,20 +236,15 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool TryGetAvProPlayer(out MediaPlayer? mediaPlayer)
         {
-            if (IsAvProPlayer(out AvProPlayer avProPlayer))
-            {
-                mediaPlayer = avProPlayer.AvProMediaPlayer;
-                return true;
-            }
-
-            mediaPlayer = null;
-            return false;
+            bool result = IsAvProPlayer(out var avProPlayer);
+            mediaPlayer = avProPlayer?.AvProMediaPlayer;
+            return result;
         }
 
         public void TrySeek(double seekTime)
         {
             if (IsAvProPlayer(out var avProPlayer))
-                avProPlayer!.AvProMediaPlayer.Control.Seek(seekTime);
+                avProPlayer!.Value.AvProMediaPlayer.Control.Seek(seekTime);
 
             // Livekit streaming doesn't support seeking
         }

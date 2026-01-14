@@ -19,19 +19,28 @@ using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 
+#if UNITY_WEBGL
+
+// ReSharper disable once RedundantUsingDirective
+using SceneRuntime.Web;
+
+#else
+using SceneRuntime.V8;
+#endif
+
 namespace Global
 {
     /// <summary>
-    /// This class is never stored in a field and goes out of scope at the end of
-    /// <see cref="Bootstrap.CreateGlobalWorld"/>. Consequently, it does not own any code and is not in
-    /// fact a container.
+    ///     This class is never stored in a field and goes out of scope at the end of
+    ///     <see cref="Bootstrap.CreateGlobalWorld" />. Consequently, it does not own any code and is not in
+    ///     fact a container.
     /// </summary>
     public class SceneSharedContainer
     {
         /// <summary>
-        /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
+        ///     Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem" />
         /// </summary>
-        public ISceneFactory SceneFactory { get; private set; }
+        public ISceneFactory? SceneFactory { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -55,11 +64,17 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
+#if UNITY_WEBGL
+            IJavaScriptEngineFactory engineFactory = new WebGLJavaScriptEngineFactory();
+#else
+            IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
+#endif
+
             return new SceneSharedContainer
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), new V8EngineFactory(),
+                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
                         webJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),

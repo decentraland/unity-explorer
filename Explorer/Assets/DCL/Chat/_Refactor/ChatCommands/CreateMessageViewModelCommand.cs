@@ -7,17 +7,16 @@ using DCL.Profiles;
 using DCL.Translation.Service;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
 using DCL.Translation;
-using UnityEngine;
 
 namespace DCL.Chat.ChatCommands
 {
     public class CreateMessageViewModelCommand
     {
-        private readonly Color systemMessageColor = new Color32(12, 222, 0, 255);
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ITranslationMemory translationMemory;
@@ -67,7 +66,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true, systemMessageColor));
+                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true), NameColorHelper.GetNameColor(message.SenderValidatedName)));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 
@@ -82,25 +81,26 @@ namespace DCL.Chat.ChatCommands
         {
             CancellationToken cancellationToken = viewModel.cancellationToken;
 
-            Result<Profile.CompactInfo?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            Result<Profile?> profileResult = await profileRepository.GetProfileAsync(walletId, cancellationToken).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
             if (!profileResult.Success)
                 return;
 
-            Profile.CompactInfo? profile = profileResult.Value;
+            Profile? profile = profileResult.Value;
 
             if (profile != null)
             {
-                viewModel.ProfileData.SetColor(profile.Value.UserNameColor);
+                viewModel.ProfileData.UpdateValue(viewModel.ProfileData.Value.SetColor(profile.UserNameColor));
                 var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(walletId);
-                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.Value.ValidatedName, profile.Value.WalletId, isOfficial));
+                viewModel.ProfileOptionalBasicInfo.UpdateValue(new ProfileOptionalBasicInfo(true, profile.ValidatedName, profile.WalletId, isOfficial));
 
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.ProfileData, chatConfig.DefaultProfileThumbnail,
-                    walletId, profile.Value.FaceSnapshotUrl, cancellationToken);
+                    walletId, profile.Avatar.FaceSnapshotUrl, cancellationToken);
             }
             else
             {
-                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail));
+                viewModel.ProfileData.UpdateValue(new ProfileThumbnailViewModel.WithColor(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultProfileThumbnail),
+                    ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR));
             }
         }
     }

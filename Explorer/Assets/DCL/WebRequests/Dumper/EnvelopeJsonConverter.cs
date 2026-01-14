@@ -29,15 +29,6 @@ namespace DCL.WebRequests.Dumper
             writer.WritePropertyName("args");
             serializer.Serialize(writer, value.Args);
 
-            writer.WritePropertyName("status");
-            writer.WriteValue(value.Status);
-
-            writer.WritePropertyName("startTime");
-            writer.WriteValue(value.StartTime);
-
-            writer.WritePropertyName("endTime");
-            writer.WriteValue(value.EndTime);
-
             if (value.HeadersInfo != null)
             {
                 writer.WritePropertyName("headersInfo");
@@ -57,9 +48,6 @@ namespace DCL.WebRequests.Dumper
             Type? argsType = null;
             object? args = null;
             WebRequestHeadersInfo? headersInfo = null;
-            DateTime startTime = DateTime.MinValue;
-            DateTime endTime = DateTime.MinValue;
-            WebRequestDump.Envelope.StatusKind statusKind = WebRequestDump.Envelope.StatusKind.NOT_CONCLUDED;
 
             // First pass: read argsType to know how to deserialize args
             while (reader.Read() && reader.TokenType != JsonToken.EndObject)
@@ -110,21 +98,6 @@ namespace DCL.WebRequests.Dumper
                         headersInfo = serializer.Deserialize<WebRequestHeadersInfo>(reader);
                         break;
 
-                    case "startTime":
-                        reader.Read();
-                        startTime = serializer.Deserialize<DateTime>(reader);
-                        break;
-
-                    case "endTime":
-                        reader.Read();
-                        endTime = serializer.Deserialize<DateTime>(reader);
-                        break;
-
-                    case "status":
-                        reader.Read();
-                        statusKind = serializer.Deserialize<WebRequestDump.Envelope.StatusKind>(reader);
-                        break;
-
                     default:
                         reader.Skip();
                         break;
@@ -134,10 +107,7 @@ namespace DCL.WebRequests.Dumper
             if (!commonArguments.HasValue || argsType == null)
                 throw new JsonSerializationException("Required properties 'commonArguments' or 'argsType' are missing");
 
-            var envelope = new WebRequestDump.Envelope(requestType, commonArguments.Value, argsType, args, headersInfo, startTime);
-            envelope.Conclude(statusKind, endTime);
-
-            return envelope;
+            return new WebRequestDump.Envelope(requestType, commonArguments.Value, argsType, args, headersInfo);
         }
     }
 }

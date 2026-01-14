@@ -21,12 +21,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
-        private readonly List<Profile.CompactInfo> onlineFriends = new ();
-        private readonly List<Profile.CompactInfo> offlineFriends = new ();
+        private readonly List<FriendProfile> onlineFriends = new ();
+        private readonly List<FriendProfile> offlineFriends = new ();
 
-        public event Action<Profile.CompactInfo>? JumpInClicked;
-        public event Action<Profile.CompactInfo, Vector2, FriendListUserView>? ContextMenuClicked;
-        public event Action<Profile.CompactInfo>? ChatClicked;
+        public event Action<FriendProfile>? JumpInClicked;
+        public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<FriendProfile>? ChatClicked;
         public event Action? NoFriendsInCollections;
         public event Action? AtLeastOneFriendInCollections;
 
@@ -72,7 +72,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             base.Dispose();
         }
 
-        private void AddNewFriendProfile(Profile.CompactInfo friendProfile, OnlineStatus onlineStatus)
+        private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
             int previousTotalCount = offlineFriends.Count + onlineFriends.Count;
 
@@ -91,7 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 AtLeastOneFriendInCollections?.Invoke();
         }
 
-        private void FriendBecameOnline(Profile.CompactInfo friendProfile)
+        private void FriendBecameOnline(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
 
@@ -101,7 +101,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             RefreshLoopList();
         }
 
-        private void FriendBecameAway(Profile.CompactInfo friendProfile)
+        private void FriendBecameAway(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
 
@@ -111,7 +111,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             RefreshLoopList();
         }
 
-        private void FriendBecameOffline(Profile.CompactInfo friendProfile)
+        private void FriendBecameOffline(FriendProfile friendProfile)
         {
             onlineFriends.Remove(friendProfile);
 
@@ -125,13 +125,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
-                Profile.CompactInfo? newFriendProfile = await profileRepository.GetCompactAsync(friendId, ct);
+                // TODO: we should avoid requesting the profile.. instead the service should emit a FriendProfile
+                Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
 
                 if (newFriendProfile != null)
                 {
-                    if (!offlineFriends.Contains(newFriendProfile.Value) && !onlineFriends.Contains(newFriendProfile.Value))
+                    var friendProfile = newFriendProfile.ToFriendProfile();
+
+                    if (!offlineFriends.Contains(friendProfile) && !onlineFriends.Contains(friendProfile))
                     {
-                        AddNewFriendProfile(newFriendProfile.Value, friendsConnectivityStatusTracker.GetFriendStatus(newFriendProfile.Value.UserId));
+                        AddNewFriendProfile(friendProfile, friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address.ToString()));
                         RefreshLoopList();
                     }
                 }
@@ -147,8 +150,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void RemoveFriend(string userid)
         {
-            int removed = onlineFriends.RemoveAll(friendProfile => friendProfile.UserId.ToString().Equals(userid));
-            removed += offlineFriends.RemoveAll(friendProfile => friendProfile.UserId.ToString().Equals(userid));
+            int removed = onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            removed += offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
             thumbnailContextMenuActions.Remove(userid);
 
             if (removed > 0)
@@ -160,10 +163,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 NoFriendsInCollections?.Invoke();
         }
 
-        protected override Profile.CompactInfo GetFirstCollectionElement(int index) =>
+        protected override FriendProfile GetFirstCollectionElement(int index) =>
             onlineFriends[index];
 
-        protected override Profile.CompactInfo GetSecondCollectionElement(int index) =>
+        protected override FriendProfile GetSecondCollectionElement(int index) =>
             offlineFriends[index];
 
         protected override int GetFirstCollectionCount() =>
@@ -199,7 +202,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
 
-            foreach (Profile.CompactInfo friend in result.Friends)
+            foreach (FriendProfile friend in result.Friends)
             {
                 if (offlineFriends.Contains(friend) || onlineFriends.Contains(friend)) continue;
                 offlineFriends.Add(friend);

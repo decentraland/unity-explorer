@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -20,7 +20,9 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+#if !UNITY_WEBGL
 using Plugins.RustSegment.SegmentServerWrap;
+#endif
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
@@ -149,8 +151,7 @@ namespace Global.Dynamic
         {
             container.enableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
-                new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController), world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
@@ -193,6 +194,11 @@ namespace Global.Dynamic
 
         private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
         {
+#if UNITY_WEBGL
+            // WebGL doesn't support native Rust libraries, use debug analytics
+            ReportHub.Log(ReportCategory.ANALYTICS, $"WebGL platform detected. Using {nameof(DebugAnalyticsService)} instead of RustSegment.");
+            return new DebugAnalyticsService();
+#else
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
                 return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
                    .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
@@ -200,6 +206,7 @@ namespace Global.Dynamic
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
             return new DebugAnalyticsService();
+#endif
         }
 
         private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)

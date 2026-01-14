@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
@@ -71,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? ElementUnbanButtonClicked;
         public event Action<ICommunityMemberData, InviteRequestIntention>? ElementManageRequestClicked;
 
-        public event Action<Profile.CompactInfo, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? GiftUserRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
@@ -153,7 +152,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
 
-            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
             removeModeratorContextMenuElement!.Enabled = profile.Role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
@@ -211,8 +210,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                              transferOwnershipSprite,
                              false, false,
                              subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
-                             userInfo: profile.Profile,
-                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
+                             userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor()),
+                             fromUserInfo: ownProfile != null ? new ConfirmationDialogParameter.UserData(ownProfile.UserId, ownProfile.Avatar.FaceSnapshotUrl, ownProfile.UserNameColor) : default),
+                         ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
@@ -234,7 +234,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                          KICK_MEMBER_CONFIRM_TEXT,
                                                                                          kickSprite,
                                                                                          false, false,
-                                                                                         userInfo: profile.Profile),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -257,7 +257,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          banSprite,
                                                                                          false, false,
-                                                                                         userInfo: profile.Profile),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(profile.Address, profile.ProfilePictureUrl, profile.GetUserNameColor())),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

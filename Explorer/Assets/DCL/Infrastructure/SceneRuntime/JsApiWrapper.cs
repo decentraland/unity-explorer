@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 
 namespace SceneRuntime
@@ -6,10 +6,13 @@ namespace SceneRuntime
     public abstract class JsApiWrapper : IDisposable
     {
         internal readonly CancellationTokenSource disposeCts;
+        internal IJavaScriptEngine? engine;
+        internal ITypedArrayConverter TypedArrayConverter { get; set; } = null!;
 
-        protected JsApiWrapper(CancellationTokenSource disposeCts)
+        protected JsApiWrapper(CancellationTokenSource disposeCts, IJavaScriptEngine? engine = null)
         {
             this.disposeCts = disposeCts;
+            this.engine = engine;
         }
 
         public virtual void Dispose() { }
@@ -19,9 +22,9 @@ namespace SceneRuntime
 
     public class JsApiWrapper<TApi> : JsApiWrapper where TApi: IDisposable
     {
-        internal readonly TApi api;
+        public readonly TApi api;
 
-        protected JsApiWrapper(TApi api, CancellationTokenSource disposeCts) : base(disposeCts)
+        protected JsApiWrapper(TApi api, CancellationTokenSource disposeCts, IJavaScriptEngine? engine = null) : base(disposeCts, engine)
         {
             this.api = api;
         }

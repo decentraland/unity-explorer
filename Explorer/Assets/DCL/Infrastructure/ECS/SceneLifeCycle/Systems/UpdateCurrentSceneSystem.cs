@@ -19,13 +19,10 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class UpdateCurrentSceneSystem : BaseUnityLoopSystem
     {
-        private const string NO_DATA_STRING = "<No data>";
-
         private static readonly int SRC_BLEND = Shader.PropertyToID("_SrcBlend");
         private static readonly int DST_BLEND = Shader.PropertyToID("_DstBlend");
         private static readonly int CULL = Shader.PropertyToID("_Cull");
         private static readonly int SURFACE = Shader.PropertyToID("_Surface");
-
         private readonly Entity playerEntity;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
@@ -36,8 +33,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneParcelsBinding;
         private readonly ElementBinding<string> sceneHeightBinding;
         private readonly ElementBinding<string> sdk6Binding;
-        private readonly ElementBinding<string> globalPositionBinding;
-        private readonly ElementBinding<string> sceneRelativePositionBinding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject? sceneBoundsCube;
@@ -63,8 +58,6 @@ namespace ECS.SceneLifeCycle.Systems
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
             sceneHeightBinding = new ElementBinding<string>(string.Empty);
-            globalPositionBinding = new ElementBinding<string>(string.Empty);
-            sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
                          .SetVisibilityBinding(debugInfoVisibilityBinding)
@@ -72,8 +65,6 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
-                         .AddCustomMarker("Global Pos:", globalPositionBinding)
-                         .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
                          .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
             this.debugBuilder = debugBuilder;
         }
@@ -134,16 +125,9 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sdk6Binding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
 
-            Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            globalPositionBinding.Value = FormatPositionVector(globalPosition);
-
             if (currentActiveScene != null)
             {
                 sceneBoundsCube?.SetActive(showDebugCube);
-
-                Vector3 sceneBasePosition = currentActiveScene.SceneData.Geometry.BaseParcelPosition;
-                Vector3 sceneRelativePosition = globalPosition.FromGlobalToSceneRelativePosition(sceneBasePosition);
-                sceneRelativePositionBinding.Value = FormatPositionVector(sceneRelativePosition);
 
                 if (sceneNameBinding.Value != currentActiveScene.Info.Name)
                 {
@@ -166,16 +150,12 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                sceneNameBinding.Value = NO_DATA_STRING;
-                sceneParcelsBinding.Value = NO_DATA_STRING;
-                sceneHeightBinding.Value = NO_DATA_STRING;
-                sceneRelativePositionBinding.Value = NO_DATA_STRING;
+                sceneNameBinding.Value = "<No data>";
+                sceneParcelsBinding.Value = "<No data>";
+                sceneHeightBinding.Value = "<No data>";
                 sceneBoundsCube?.SetActive(false);
             }
         }
-
-        private static string FormatPositionVector(Vector3 position) =>
-            $"{position.x:F1}, {position.y:F1}, {position.z:F1}";
 
         private static GameObject CreateDebugCube()
         {

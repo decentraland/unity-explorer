@@ -139,7 +139,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
-                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistryEntitiesActive)),
+                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistry)),
                     volatileScenePointers.ActivePartitionComponent);
         }
 

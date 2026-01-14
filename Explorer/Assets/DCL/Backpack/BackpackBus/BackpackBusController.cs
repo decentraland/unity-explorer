@@ -98,13 +98,10 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command) =>
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => SelectWearable(item, command), fetchWearableCts.Token).Forget();
+            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, SelectWearable, fetchWearableCts.Token).Forget();
 
-        private void SelectWearable(IWearable wearable, BackpackSelectWearableCommand command)
-        {
+        private void SelectWearable(IWearable wearable) =>
             backpackEventBus.SendWearableSelect(wearable);
-            command.EndAction?.Invoke();
-        }
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command) =>
             WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
@@ -137,8 +134,6 @@ namespace DCL.Backpack.BackpackBus
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);
-
-            command.EndAction?.Invoke();
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)

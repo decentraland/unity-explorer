@@ -238,7 +238,7 @@ namespace DCL.Chat.ChatServices
         private async UniTask FetchOnlineParticipantsMemberDataAsync(IReadOnlyCollection<string> participants, CancellationToken ct)
         {
             // TODO requires pooling
-            var profiles = new List<Profile.CompactInfo>();
+            var profiles = new List<Profile>();
 
             // 1. Await the new asynchronous method to get the fully populated list of profiles.
             await GetProfilesFromParticipantsAsync(participants, profiles, ct);
@@ -248,7 +248,7 @@ namespace DCL.Chat.ChatServices
 
             // 2. The rest of your logic remains the same.
             //    By the time we get here, 'profiles' contains all members that could be found.
-            foreach (Profile.CompactInfo profile in profiles)
+            foreach (Profile? profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
 
@@ -256,12 +256,12 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private async UniTask GetProfilesFromParticipantsAsync(IEnumerable<string> participantIdentities, List<Profile.CompactInfo> outProfiles, CancellationToken ct)
+        private async UniTask GetProfilesFromParticipantsAsync(IEnumerable<string> participantIdentities, List<Profile> outProfiles, CancellationToken ct)
         {
             outProfiles.Clear();
 
             // 1. Create a list to hold all the asynchronous operations (Tasks).
-            var profileTasks = new List<UniTask<Profile.CompactInfo?>>();
+            var profileTasks = new List<UniTask<Profile?>>();
 
             foreach (string? identity in participantIdentities)
             {
@@ -274,18 +274,22 @@ namespace DCL.Chat.ChatServices
 
             // 3. Now, wait for ALL the tasks in the list to complete.
             //    The requests run concurrently, making this very efficient.
-            Profile.CompactInfo?[]? profiles = await UniTask.WhenAll(profileTasks);
+            Profile?[] profiles = await UniTask.WhenAll(profileTasks);
 
             // 4. Iterate through the results and add the valid, non-null profiles.
-            foreach (Profile.CompactInfo? profile in profiles)
+            foreach (Profile? profile in profiles)
             {
                 if (ct.IsCancellationRequested) return;
 
-                if (profile != null) { outProfiles.Add(profile.Value); }
+                if (profile != null) { outProfiles.Add(profile); }
             }
         }
 
-        private ChatMemberListData CreateMemberDataFromProfile(Profile.CompactInfo profile) =>
-            new (profile, ChatMemberConnectionStatus.Online);
+        private ChatMemberListData CreateMemberDataFromProfile(Profile profile) =>
+            new ()
+            {
+                Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
+                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName,
+            };
     }
 }

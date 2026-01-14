@@ -10,7 +10,7 @@ namespace DCL.WebRequests
     ///     Custom upload handler that builds JSON directly into a byte buffer
     ///     without intermediate string allocations.
     /// </summary>
-    public struct BufferedStringUploadHandler
+    public struct BufferedStringUploadHandler : IDisposable
     {
         // Use a native array instead of pooling a managed one to reduce the memory consumption
         // Native Arrays are not GCed so they don't produce the corresponding pressure
@@ -28,11 +28,13 @@ namespace DCL.WebRequests
 
         /// <summary>
         ///     Sets the buffer as the upload data.
-        ///     Call this after building your JSON. <br/>
-        ///     UploadHandler will dispose the created underlying buffer
+        ///     Call this after building your JSON.
         /// </summary>
         public UploadHandlerRaw CreateUploadHandler() =>
-            new (buffer.AsArray(), true);
+            new (buffer.AsArray().AsReadOnly());
+
+        public void Dispose() =>
+            buffer.Dispose();
 
         /// <summary>
         ///     Writes a single byte to the buffer.
@@ -271,8 +273,5 @@ namespace DCL.WebRequests
         ///     Gets the current buffer size in bytes.
         /// </summary>
         public int Length => buffer.Length;
-
-        public override unsafe string ToString() =>
-            Encoding.UTF8.GetString(buffer.GetUnsafePtr(), Length);
     }
 }

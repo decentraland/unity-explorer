@@ -153,6 +153,8 @@ namespace Global.Dynamic
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
+            const bool KTX_ENABLED = true;
+
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
@@ -214,16 +216,8 @@ namespace Global.Dynamic
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
-                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, ct);
-
-                bootstrap.InitializeFeaturesRegistry();
-
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
-
                 bool isLoaded;
+                Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
@@ -234,7 +228,13 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                staticContainer!.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                bootstrap.InitializeFeaturesRegistry();
+
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
@@ -261,8 +261,9 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
+#if !UNITY_WEBGL //We only verify hardware on non-webGL platforms
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
-
+#endif
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
@@ -392,6 +393,8 @@ namespace Global.Dynamic
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
+#if !UNITY_WEBGL //For now, until we have Livekit Working, we ignore all these checks for WebGL.
+
             //If Livekit is down, stop bootstrapping
             if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;
@@ -399,7 +402,7 @@ namespace Global.Dynamic
             //If application requires version update, stop bootstrapping
             if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
                 return false;
-
+#endif
             //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
             await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
 
@@ -430,6 +433,9 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
+#if UNITY_WEBGL //In WebGL we don't do versionCheck
+            return false;
+#else
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
@@ -457,6 +463,7 @@ namespace Global.Dynamic
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
             return true;
+#endif
         }
 
         private void DisableInputs()

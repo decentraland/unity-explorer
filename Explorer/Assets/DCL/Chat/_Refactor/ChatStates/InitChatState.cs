@@ -1,9 +1,9 @@
-using MVC;
-
 namespace DCL.Chat.ChatStates
 {
-    public class InitChatState : ChatState, IState
+    public class InitChatState : ChatState
     {
-        public void Enter() { }
+        public override void Begin() { }
+
+        public override void End() { }
     }
 }

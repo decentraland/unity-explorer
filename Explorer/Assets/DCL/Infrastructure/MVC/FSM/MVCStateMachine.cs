@@ -6,110 +6,134 @@ using Utility;
 
 namespace MVC
 {
-    /// <summary>
-    ///     Generic state machine with typed CurrentState and support for payloaded states.
-    /// </summary>
-    /// <typeparam name="TBaseState">Base type for all states in this machine</typeparam>
-    public class MVCStateMachine<TBaseState> : IDisposable where TBaseState: class, IExitableState
+    public class MVCStateMachine<TBaseState, TContext> : IDisposable where TBaseState: MVCState<TBaseState, TContext>
     {
-        public event Action<TBaseState>? OnStateChanged;
+        public event Action? OnStateChanged;
 
         private readonly Dictionary<Type, TBaseState> states = new ();
+
         private readonly CancellationTokenSource disposalCts = new ();
 
+        public MVCStateMachine(TContext context, TBaseState initialState)
+        {
+            this.context = context;
+
+            // setup our initial state
+            AddState(initialState);
+            CurrentState = initialState;
+            CurrentState.Begin();
+        }
+
+        protected TContext context { get; }
+
+        public float ElapsedTimeInState { get; private set; }
         public TBaseState? PreviousState { get; private set; }
-        public TBaseState? CurrentState { get; private set; }
+        public TBaseState CurrentState { get; private set; }
 
-        public CancellationToken DisposalCt => disposalCts.Token;
-
-        public void AddStates(params TBaseState[] states)
+        /// <summary>
+        ///     adds the state to the machine
+        /// </summary>
+        public void AddState(TBaseState state)
         {
-            foreach (TBaseState state in states)
-            {
-                if (!this.states.TryAdd(state.GetType(), state))
-                {
-                    var error = $"Trying to add state that already exists in the machine - {state.GetType()}. Machine cannot have duplicate states.";
-                    ReportHub.LogError(ReportCategory.MVC, error);
-                    throw new Exception(error);
-                }
-            }
+            state.SetMachineAndContext(this, context, disposalCts.Token);
+            states[state.GetType()] = state;
         }
 
-        public void Dispose() =>
-            disposalCts.SafeCancelAndDispose();
-
-        public void Enter<TState>(bool allowReEnterSameState = false) where TState: TBaseState, IState
+        /// <summary>
+        ///     ticks the state machine with the provided delta time
+        /// </summary>
+        public void Update(float deltaTime)
         {
-            if (TryChangeState(out TState state, allowReEnterSameState))
-            {
-                state.Enter();
-                OnStateChanged?.Invoke(state);
-                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Enter: {CurrentState?.GetType().Name}");
-            }
+            ElapsedTimeInState += deltaTime;
+            CurrentState.Update(deltaTime);
         }
 
-        public void Enter<TState, TPayload>(TPayload payload, bool allowReEnterSameState = false) where TState: TBaseState, IPayloadedState<TPayload>
+        /// <summary>
+        ///     ticks the state machine with the provided delta time
+        /// </summary>
+        public void LateUpdate(float deltaTime)
         {
-            if (TryChangeState(out TState state, allowReEnterSameState))
-            {
-                state.Enter(payload);
-                OnStateChanged?.Invoke(state);
-                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Enter: {CurrentState?.GetType().Name} with payload: {payload.GetType().Name}");
-            }
+            ElapsedTimeInState += deltaTime;
+            CurrentState.LateUpdate(deltaTime);
         }
 
-        private bool TryChangeState<TState>(out TState state, bool allowReEnterSameState = false) where TState: TBaseState
+        public R ChangeState<R>(R state) where R: TBaseState
         {
-            Type newType = typeof(TState);
-            ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> trying to change states: {CurrentState?.GetType().Name} -> {newType.Name}");
-
-            // Avoid changing to the same state
-            if (!allowReEnterSameState && IsSameState())
+            // Make sure that this state is registered in the state machine
+            if (!states.TryGetValue(typeof(R), out TBaseState? registeredState) || registeredState != state)
             {
-                state = (TState)CurrentState;
-                ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> is already in {CurrentState?.GetType().Name}");
-                return false;
-            }
-
-            CurrentState?.Exit();
-            ReportHub.Log(ReportCategory.MVC_STATE_MACHINE, $"{nameof(MVCStateMachine<TBaseState>)}<{typeof(TBaseState).Name}> Exit: <{CurrentState?.GetType().Name}>");
-
-            if (!states.TryGetValue(newType, out TBaseState? newState))
-            {
-                var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it while constructing state machine?";
+                var error = $"{GetType()}: state \"{typeof(R)}\" {state} is not registered";
                 ReportHub.LogError(ReportCategory.MVC, error);
                 throw new Exception(error);
             }
 
-            PreviousState = CurrentState;
-            CurrentState = newState;
-
-            state = (TState)newState;
-            return true;
-
-            bool IsSameState() => CurrentState != null && CurrentState.GetType() == newType;
+            return ChangeState<R>();
         }
 
         /// <summary>
-        ///     Reverts to the previous state. Works only for IState (without payload).
+        ///     changes the current state
         /// </summary>
-        public bool TryPopState()
+        public R ChangeState<R>() where R: TBaseState
         {
-            // Ensure there is a previous state to go back to and we can Enter it without payload (IState).
-            if (PreviousState is not IState prevState)
+            // avoid changing to the same state
+            Type newType = typeof(R);
+
+            if (CurrentState.GetType() == newType)
+                return (R)CurrentState;
+
+            // only call end if we have a currentState
+            CurrentState.End();
+
+            // do a sanity check while in the editor to ensure we have the given state in our state list
+            if (!states.ContainsKey(newType))
             {
-                ReportHub.LogWarning(ReportCategory.MVC, $"Can't pop the state. Previous state is not of type {nameof(IState)}!");
-                return false;
+                var error = $"{GetType()}: state \"{newType}\" does not exist. Did you forget to add it by calling {nameof(AddState)}?";
+                ReportHub.LogError(ReportCategory.MVC, error);
+                throw new Exception(error);
             }
 
-            CurrentState?.Exit();
+            // swap states and call begin
+            PreviousState = CurrentState;
+            CurrentState = states[newType];
+            CurrentState.Begin();
+            ElapsedTimeInState = 0f;
+
+            // fire the changed event if we have a listener
+            OnStateChanged?.Invoke();
+
+            return (R)CurrentState;
+        }
+
+        /// <summary>
+        ///     Reverts to the single previous state, if one exists.
+        /// </summary>
+        public void PopState()
+        {
+            // Ensure there is a previous state to go back to.
+            if (PreviousState == null)
+            {
+                return;
+            }
+
+            // End the current, swap to the previous.
+            CurrentState.End();
+
             CurrentState = PreviousState;
+
+            // After popping, there is no longer a "previous" state to go back to.
+            // A new "previous" state will be set on the next call to ChangeState.
             PreviousState = null;
 
-            prevState.Enter();
-            OnStateChanged?.Invoke(CurrentState);
+            // Begin the new (old) state.
+            CurrentState.Begin();
+            ElapsedTimeInState = 0f;
 
-            return true;
+            OnStateChanged?.Invoke();
+        }
+
+        public void Dispose()
+        {
+            disposalCts.SafeCancelAndDispose();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation;
@@ -19,7 +19,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
-using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
@@ -169,9 +168,9 @@ namespace SceneRunner
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
 
             // Try to create scene runtime
-            SceneRuntimeImpl sceneRuntime;
+            ISceneRuntime sceneRuntime;
 
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SWITCH_TO_THREAD_POOL); }
             catch (Exception e)
             {
                 await ReportExceptionAsync(e, deps, deps.ExceptionsHandler);
@@ -198,7 +197,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, systemClipboard);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -227,7 +226,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard);
+                    skyboxSettings, engineAPIMutexOwner, systemClipboard);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -278,9 +277,9 @@ namespace SceneRunner
 
         private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
-            // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
-            if (e is ScriptEngineException scriptEngineException)
-                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
+            // JavaScriptExecutionException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+            if (e is JavaScriptExecutionException javascriptExecutionException)
+                exceptionsHandler.OnJavaScriptException(new JavaScriptExecutionException(javascriptExecutionException.ErrorDetails));
 
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
             deps.Dispose();

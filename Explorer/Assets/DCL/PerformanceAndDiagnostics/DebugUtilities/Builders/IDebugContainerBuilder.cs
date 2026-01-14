@@ -49,7 +49,6 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName WORLD_INFO = "World Info".AsWidgetName();
             public static readonly WidgetName LOCOMOTION_HANDS_IK = "locomotion: hands ik".AsWidgetName();
             public static readonly WidgetName QUALITY = "Quality".AsWidgetName();
-            public static readonly WidgetName RENDERING = "Rendering".AsWidgetName();
         }
     }
 

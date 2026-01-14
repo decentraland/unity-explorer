@@ -8,7 +8,6 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Places;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -35,7 +34,6 @@ namespace DCL.ExplorePanel
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private bool includeCommunities;
-        private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
@@ -53,7 +51,6 @@ namespace DCL.ExplorePanel
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
-        public PlacesController PlacesController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -69,10 +66,8 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            PlacesController placesController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            bool includeDiscover,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
@@ -87,10 +82,8 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
-            this.includeDiscover = includeDiscover;
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
-            PlacesController = placesController;
         }
 
         public override void Dispose()
@@ -132,12 +125,11 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
                 { ExploreSections.Communities, CommunitiesBrowserController },
-                { ExploreSections.Places, PlacesController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            lastShownSection = includeDiscover ? ExploreSections.Places : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+            lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -151,8 +143,7 @@ namespace DCL.ExplorePanel
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
-                    (section == ExploreSections.Communities && !includeCommunities) ||
-                    (section == ExploreSections.Places && !includeDiscover))
+                    (section == ExploreSections.Communities && !includeCommunities))
                 {
                     tabSelector.gameObject.SetActive(false);
                     continue;
@@ -224,7 +215,6 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
-            dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
@@ -286,19 +276,6 @@ namespace DCL.ExplorePanel
                 isControlClosing = true;
         }
 
-        private void OnPlacesHotkeyPressed(InputAction.CallbackContext obj)
-        {
-            if (!includeDiscover) return;
-
-            if (lastShownSection != ExploreSections.Places)
-            {
-                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
-                ShowSection(ExploreSections.Places);
-            }
-            else
-                isControlClosing = true;
-        }
-
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Backpack)
@@ -337,7 +314,6 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
-            dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 

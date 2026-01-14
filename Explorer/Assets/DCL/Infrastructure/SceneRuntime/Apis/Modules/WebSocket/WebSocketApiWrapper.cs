@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -40,7 +40,8 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.FromException(e).ToPromise();
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise();
             }
         }
 
@@ -53,11 +54,15 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise(this);
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise(); //We cant use ToPromise as its a ClearScript extension
+            }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object SendAsync(int webSocketId, IArrayBuffer arrayBuffer)
+        public object SendAsync(int webSocketId, IDCLArrayBuffer arrayBuffer)
         {
             try
             {
@@ -65,11 +70,15 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise(this);
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise();
+            }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
-        public object SendAsync(int webSocketId, ITypedArray<byte> typedArray)
+        public object SendAsync(int webSocketId, IDCLTypedArray<byte> typedArray)
         {
             try
             {
@@ -78,7 +87,11 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise(this);
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise();
+            }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -90,14 +103,22 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise(this);
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise();
+            }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
         public object CloseAsync(int websocketId)
         {
             try { return api.CloseAsync(websocketId, disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this); }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+            catch (Exception e)
+            {
+                return Task.CompletedTask;
+                //return Task.FromException(e).ToPromise();
+            }
         }
     }
 }

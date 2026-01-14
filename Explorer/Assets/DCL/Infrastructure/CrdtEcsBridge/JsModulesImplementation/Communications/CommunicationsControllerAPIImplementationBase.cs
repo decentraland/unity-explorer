@@ -1,7 +1,5 @@
 ﻿using CRDT;
 using CrdtEcsBridge.PoolsProviders;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -16,22 +14,22 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         // Must be aligned with SDK runtime 1st-byte values at:
         // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
-        enum CommsMessageType {
+        private enum CommsMessageType {
           CRDT = 1,
           REQ_CRDT_STATE = 2,   // Special signal to receive CRDT State from a peer
           RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
         }
 
-        protected readonly List<ITypedArray<byte>> eventsToProcess = new ();
+        protected readonly List<IDCLTypedArray<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-        private readonly ScriptObject eventArray;
+        private readonly IDCLScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
-        internal IReadOnlyList<ITypedArray<byte>> EventsToProcess => eventsToProcess;
+        internal IReadOnlyList<IDCLTypedArray<byte>> EventsToProcess => eventsToProcess;
 
         protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
@@ -94,13 +92,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public ScriptObject GetResult()
+        public IDCLScriptObject GetResult()
         {
             lock (eventsToProcess)
             {
                 eventArray.SetProperty("length", eventsToProcess.Count);
 
-                for (int i = 0; i < eventsToProcess.Count; i++)
+                for (var i = 0; i < eventsToProcess.Count; i++)
                     eventArray.SetProperty(i, eventsToProcess[i]);
 
                 eventsToProcess.Clear();

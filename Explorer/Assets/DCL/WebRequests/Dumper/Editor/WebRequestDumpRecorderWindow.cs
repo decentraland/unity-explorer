@@ -1,10 +1,6 @@
-﻿using DCL.DebugUtilities.Views;
-using DCL.Diagnostics;
-using DCL.WebRequests.Analytics.Metrics;
+﻿using DCL.Diagnostics;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,26 +10,19 @@ namespace DCL.WebRequests.Dumper.Editor
     public class WebRequestDumpRecorderWindow : EditorWindow
     {
         private const string FILTER_PREFS_KEY = "WebRequestDumper.Filter";
-        private const string DISABLE_DISK_CACHE_PREFS_KEY = "WebRequestDumper.DisableCache";
-
-        private RequestMetricRecorder[] activeMetrics => WebRequestsDumper.Instance.activeMetrics;
 
         private TextField filterField;
-        private ListView metricsView;
         private Button restartButton;
-        private Button saveButton;
         private Button stopResumeButton;
+        private Label counterLabel;
+        private Button saveButton;
 
-        private void OnEnable()
+        [MenuItem("Decentraland/Web Requests Dumper")]
+        public static void ShowWindow()
         {
-            EditorApplication.update += UpdateUI;
-            EditorApplication.playModeStateChanged += OnPlayModeChanged;
-        }
-
-        private void OnDisable()
-        {
-            EditorApplication.update -= UpdateUI;
-            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+            WebRequestDumpRecorderWindow window = GetWindow<WebRequestDumpRecorderWindow>("Web Requests Dumper");
+            window.minSize = new Vector2(400, 250);
+            window.Show();
         }
 
         public void CreateGUI()
@@ -68,68 +57,11 @@ namespace DCL.WebRequests.Dumper.Editor
 
             root.Add(filterField);
 
-            // Disable Disk Cache
-            var disableCacheToggle = new Toggle("Disable Cache");
-            disableCacheToggle.value = EditorPrefs.GetBool(DISABLE_DISK_CACHE_PREFS_KEY, false);
-
-            disableCacheToggle.RegisterValueChangedCallback(evt =>
-            {
-                WebRequestsDebugControl.DisableCache = evt.newValue;
-                EditorPrefs.SetBool(DISABLE_DISK_CACHE_PREFS_KEY, evt.newValue);
-            });
-
-            disableCacheToggle.style.marginBottom = 10;
-
-            root.Add(disableCacheToggle);
-
-            // Metrics List view
-            const int METRIC_ELEMENT_HEIGHT = 20;
-
-            metricsView = new ListView();
-            metricsView.style.paddingLeft = 20;
-            metricsView.virtualizationMethod = CollectionVirtualizationMethod.FixedHeight;
-            metricsView.fixedItemHeight = METRIC_ELEMENT_HEIGHT;
-            metricsView.itemsSource = activeMetrics;
-            metricsView.style.flexGrow = 0;
-            metricsView.style.flexShrink = 0;
-            metricsView.style.height = activeMetrics.Length * METRIC_ELEMENT_HEIGHT;
-
-            metricsView.makeItem = () =>
-            {
-                var container = new VisualElement();
-                container.style.flexDirection = FlexDirection.Row;
-
-                var metricName = new Label("Metric Name");
-                metricName.name = "MetricName";
-                container.Add(metricName);
-
-                var metricValue = new Label("Value");
-                metricValue.name = "Value";
-                container.Add(metricValue);
-
-                return container;
-            };
-
-            metricsView.bindItem = (element, i) =>
-            {
-                Label metricName = element.Q<Label>("MetricName");
-                Label metricValue = element.Q<Label>("Value");
-
-                // Do aggregation
-                metricName.text = MetricsRegistry.TYPES[i].Name;
-
-                RequestMetricRecorder metric = activeMetrics[i];
-
-                if (metric == null)
-                {
-                    metricValue.text = "N/A";
-                    return;
-                }
-
-                metricValue.text = DebugLongMarkerElement.FormatValue(metric.GetMetric(), metric.GetUnit());
-            };
-
-            root.Add(metricsView);
+            // Counter field
+            counterLabel = new Label("Recorded Requests: 0");
+            counterLabel.style.marginBottom = 15;
+            counterLabel.style.fontSize = 12;
+            root.Add(counterLabel);
 
             // Buttons container
             var buttonsContainer = new VisualElement();
@@ -174,39 +106,20 @@ namespace DCL.WebRequests.Dumper.Editor
             UpdateUI();
         }
 
-        [MenuItem("Decentraland/Web Requests Dumper")]
-        public static void ShowWindow()
-        {
-            WebRequestDumpRecorderWindow window = GetWindow<WebRequestDumpRecorderWindow>("Web Requests Dumper");
-            window.minSize = new Vector2(400, 250);
-            window.Show();
-        }
+        private void OnEnable() =>
+            EditorApplication.update += UpdateUI;
 
-        private static Func<IReadOnlyList<RequestMetricBase>, ulong> AggregateMetrics(Type metricType)
-        {
-            if (metricType == typeof(ServeTimePerMBAverage) ||
-                metricType == typeof(ServeTimeSmallFileAverage) ||
-                metricType == typeof(TimeToFirstByteAverage))
-                return metrics =>
-
-                    // average
-                    (ulong)metrics.Average(static m => (double)m.GetMetric());
-
-            // Sum
-            return metrics => (ulong)metrics.Sum(static m => (double)m.GetMetric());
-        }
-
-        private void OnPlayModeChanged(PlayModeStateChange change) =>
-            ResetMetrics();
+        private void OnDisable() =>
+            EditorApplication.update -= UpdateUI;
 
         private void UpdateUI()
         {
-            if (metricsView == null || stopResumeButton == null) return;
+            if (counterLabel == null || stopResumeButton == null) return;
 
             WebRequestsDumper dumper = WebRequestsDumper.Instance;
 
-            // Update Metrics
-            metricsView.RefreshItems();
+            // Update counter
+            counterLabel.text = $"Recorded Requests: {dumper.Count}";
 
             // Update stop/resume button icon and tooltip
             if (dumper.Enabled)
@@ -234,26 +147,8 @@ namespace DCL.WebRequests.Dumper.Editor
             WebRequestsDumper dumper = WebRequestsDumper.Instance;
             dumper.Filter = filterField.value;
             dumper.Restart();
-
-            if (dumper.AnalyticsContainer != null)
-            {
-                // Remove tracked metrics
-                foreach (RequestMetricRecorder requestMetric in activeMetrics)
-                {
-                    if (requestMetric == null) continue;
-                    dumper.AnalyticsContainer.RemoveFlatMetric(requestMetric);
-                }
-            }
-
-            ResetMetrics();
-
-            // Metrics will be re-created in WebRequestDumpRecorder
-
-            ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording restarted");
+            Debug.Log("Web Request Dumper: Recording restarted");
         }
-
-        private void ResetMetrics() =>
-            Array.Clear(activeMetrics, 0, activeMetrics.Length);
 
         private void OnStopResume()
         {
@@ -262,14 +157,12 @@ namespace DCL.WebRequests.Dumper.Editor
             if (dumper.Enabled)
             {
                 dumper.Stop();
-
-                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording stopped");
+                Debug.Log("Web Request Dumper: Recording stopped");
             }
             else
             {
                 dumper.Resume();
-
-                ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, "Web Request Dumper: Recording resumed");
+                Debug.Log("Web Request Dumper: Recording resumed");
             }
         }
 

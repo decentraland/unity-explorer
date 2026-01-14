@@ -160,15 +160,10 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (missingPointers.Count <= 0) return false;
 
-            List<URN> convertedPointers = new (missingPointers.Count);
-
-            foreach (URN pointer in missingPointers)
-                convertedPointers.Add(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(pointer));
-
             var promise = EmotesFromRealmPromise.Create(
                 World!,
-                new GetEmotesByPointersFromRealmIntention(convertedPointers,
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)
+                new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)
                 ),
                 partitionComponent
             );

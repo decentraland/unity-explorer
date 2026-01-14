@@ -33,8 +33,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly UserWalletAddressElementController walletAddressController;
         private readonly IInputBlock inputBlock;
 
-        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail =
-            new (ProfileThumbnailViewModel.Default());
+        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> profileThumbnail =
+            new(new ProfileThumbnailViewModel.WithColor());
 
         private CancellationTokenSource? searchCts;
 
@@ -77,22 +77,22 @@ namespace DCL.Backpack.Gifting.Presenters
             {
                 ct.ThrowIfCancellationRequested();
 
-                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(userId, ct: ct);
+                var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
                 if (profile == null || ct.IsCancellationRequested)
                     return;
 
-                walletAddressController.Setup(profile.Value);
-                Color userNameColor = profile.Value.UserNameColor;
+                walletAddressController.Setup(profile);
+                var userNameColor = profile.UserNameColor;
                 string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
 
                 if (ct.IsCancellationRequested)
                     return;
 
-                view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Value.Name);
+                view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Name);
 
-                profileThumbnail.SetLoading(userNameColor);
+                profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
 
-                string faceUrl = profile.Value.FaceSnapshotUrl;
+                string faceUrl = profile.Avatar.FaceSnapshotUrl;
 
                 if (!string.IsNullOrEmpty(faceUrl))
                 {
@@ -107,10 +107,10 @@ namespace DCL.Backpack.Gifting.Presenters
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (profileThumbnail.Value.Sprite != null)
-                    CurrentRecipientAvatarSprite = profileThumbnail.Value.Sprite;
+                if (profileThumbnail.Value.Thumbnail.Sprite != null)
+                    CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
 
-                walletAddressController.Setup(profile.Value);
+                walletAddressController.Setup(profile);
             }
             catch (OperationCanceledException)
             {

@@ -35,8 +35,7 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
-                Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), disposeCts.Token,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), disposeCts.Token);
                 return new PlayersGetUserDataResponse(profile, walletId);
             }
 

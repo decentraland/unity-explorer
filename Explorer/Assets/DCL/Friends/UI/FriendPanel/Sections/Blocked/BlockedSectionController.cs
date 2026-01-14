@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using MVC;
@@ -63,13 +62,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         }
 
         private void UnblockUserClicked(BlockedProfile profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.Address, profile.Profile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK))).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.Address, profile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK))).Forget();
 
         private void ContextMenuClicked(BlockedProfile friendProfile, Vector2 buttonPosition, BlockedUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile,
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.ToUserData(),
                 UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
@@ -78,8 +76,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
                       .Forget();
         }
 
-        protected override void ElementClicked(Profile.CompactInfo profile) =>
-            passportBridge.ShowAsync(profile.UserId).Forget();
+        protected override void ElementClicked(FriendProfile profile) =>
+            passportBridge.ShowAsync(profile.Address).Forget();
 
     }
 }

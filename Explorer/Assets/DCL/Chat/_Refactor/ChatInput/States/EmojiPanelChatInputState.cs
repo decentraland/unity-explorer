@@ -7,33 +7,33 @@ using System;
 
 namespace DCL.Chat.ChatInput
 {
-    public class EmojiPanelChatInputState : IndependentMVCState, IDisposable
+    public class EmojiPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
     {
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        public EmojiPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping)
+        public EmojiPanelChatInputState(ChatInputStateContext context) : base(context)
         {
-            emojiContainer = view.emojiContainer;
+            emojiContainer = context.ChatInputView.emojiContainer;
 
             emojiPanelPresenter = new EmojiPanelPresenter(
                 emojiContainer.emojiPanel,
                 emojiContainer.emojiPanelConfiguration,
-                emojiMapping,
+                context.EmojiMapping,
                 emojiContainer.emojiSectionViewPrefab,
                 emojiContainer.emojiButtonPrefab
             );
 
-            inputField = view.inputField;
+            inputField = context.ChatInputView.inputField;
 
             clickDetectionHandler = new ChatClickDetectionHandler(emojiContainer.emojiPanel.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;
             clickDetectionHandler.Pause();
         }
 
-        protected override void Activate()
+        protected override void Activate(ControllerNoData input)
         {
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiContainer.emojiPanelButton.SetState(true);

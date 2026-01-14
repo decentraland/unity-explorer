@@ -1,11 +1,10 @@
-﻿using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
-using SceneRunner.Scene;
+﻿using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
 using Unity.Collections.LowLevel.Unsafe;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -21,7 +20,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             string walletId = message.FromWalletId;
             int dataLength = message.Data.Length;
-            int dataOffset = 0;
+            var dataOffset = 0;
             var array = jsOperations.GetTempUint8Array();
 
             unsafe
@@ -35,8 +34,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                         var bufferPtr = (byte*)buffer;
 
                         fixed (char* walletIdPtr = walletId)
+                        {
                             bufferPtr[0] = (byte)Encoding.UTF8.GetBytes(walletIdPtr, walletId.Length,
                                 bufferPtr + 1, byte.MaxValue);
+                        }
 
                         dataOffset = bufferPtr[0] + 1;
 
@@ -49,13 +50,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
             }
 
-            var arrayObj = (ScriptObject)array;
-
-            var subArray = (ITypedArray<byte>)arrayObj.InvokeMethod("subarray", 0,
-                dataOffset + dataLength);
+            IDCLScriptObject arrayObj = (IDCLScriptObject)array;
+            object subArrayResult = arrayObj.InvokeMethod("subarray", 0, dataOffset + dataLength);
+            IDCLTypedArray<byte> subArray = (IDCLTypedArray<byte>)subArrayResult;
 
             lock (eventsToProcess)
+            {
                 eventsToProcess.Add(subArray);
+            }
         }
     }
 }

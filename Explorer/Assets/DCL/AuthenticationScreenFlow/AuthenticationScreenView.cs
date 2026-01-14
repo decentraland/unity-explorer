@@ -30,7 +30,7 @@ namespace DCL.AuthenticationScreenFlow
         public GameObject LoadingSpinner { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject VerificationContainer { get; private set; } = null!;
+        public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CancelAuthenticationProcess { get; private set; } = null!;

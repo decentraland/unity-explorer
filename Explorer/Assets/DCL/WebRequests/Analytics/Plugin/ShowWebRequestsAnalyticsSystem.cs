@@ -1,25 +1,41 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CDPBridges;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.Dumper;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
-using Profiler = UnityEngine.Profiling.Profiler;
-using static DCL.WebRequests.Analytics.IWebRequestsAnalyticsContainer;
 
 namespace DCL.WebRequests.Analytics
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class ShowWebRequestsAnalyticsSystem : BaseUnityLoopSystem
     {
+        public readonly struct RequestType
+        {
+            public readonly Type Type;
+            public readonly string MarkerName;
+
+            public RequestType(Type type, string markerName)
+            {
+                Type = type;
+                MarkerName = markerName;
+            }
+        }
+
         private const float THROTTLE = 0.1f;
 
         private readonly IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer;
         private readonly RequestType[] requestTypes;
 
+        private readonly Dictionary<Type, Dictionary<string, ElementBinding<ulong>>> ongoingRequests = new ();
         private readonly DebugWidgetVisibilityBinding? visibilityBinding;
 
         private float lastTimeSinceMetricsUpdate;
@@ -33,37 +49,70 @@ namespace DCL.WebRequests.Analytics
 
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
-            DebugWidgetVisibilityBinding? visibilityBinding,
+            IDebugContainerBuilder debugContainerBuilder,
+            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
             RequestType[] requestTypes) : base(world)
         {
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
             this.requestTypes = requestTypes;
-            this.visibilityBinding = visibilityBinding;
+
+            DebugWidgetBuilder? widget = debugContainerBuilder
+                                        .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
+                                       ?.AddSingleButton("Open Chrome DevTools", () =>
+                                         {
+                                             BridgeStartResult result = chromeDevtoolProtocolClient.StartAndOpen();
+                                             string? errorMessage = ErrorMessageFromBridgeResult(result);
+
+                                             if (errorMessage != null)
+                                                 NotificationsBusController
+                                                    .Instance
+                                                    .AddNotification(new ServerErrorNotification(errorMessage));
+                                         })
+                                        .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
+
+            foreach (RequestType requestType in requestTypes)
+            {
+                var bindings = new Dictionary<string, ElementBinding<ulong>>(0);
+                var metrics = webRequestsAnalyticsContainer.GetTrackedMetrics();
+
+                foreach (var metric in metrics)
+                {
+                    bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
+                    DebugLongMarkerDef.Unit requestMetricUnit = metric.Value().GetUnit();
+                    widget?.AddMarker(requestType.MarkerName + "-" + metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
+                }
+
+                ongoingRequests[requestType.Type] = bindings;
+            }
         }
 
-        private static bool profilerEnabled
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        private static string? ErrorMessageFromBridgeResult(BridgeStartResult result)
         {
-            get
-            {
-#if ENABLE_PROFILER
-                return Profiler.enabled && Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY);
-#endif
-                return false;
-            }
+            string message = result.Match(
+                onSuccess: static () => null!,
+                onBridgeStartError: static e => e.Match(
+                    onWebSocketError: static e => $"Cannot start WebSocket server: {e.Exception.Message}",
+                    onBrowserOpenError: static e => e.Match(
+                        onErrorChromeNotInstalled: static () => "Chrome not installed",
+                        onException: static e => $"Cannot open DevTools: {e.Message}")
+                )
+            );
+
+            return message;
         }
 
         protected override void Update(float t)
         {
             metricsUpdatedThisFrame = false;
-
-            sumUpload = 0;
-            sumDownload = 0;
-
-            TryUpdateAllMetrics();
-
 #if ENABLE_PROFILER
-            if (profilerEnabled)
+            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
             {
+                sumUpload = 0;
+                sumDownload = 0;
+
+                UpdateAllMetrics();
+
                 NetworkProfilerCounters.WEB_REQUESTS_UPLOADED.Value = sumUpload;
                 NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED.Value = sumDownload;
                 NetworkProfilerCounters.WEB_REQUESTS_UPLOADED_FRAME.Value = sumUpload - prevSumUpload;
@@ -76,17 +125,23 @@ namespace DCL.WebRequests.Analytics
 
             if (visibilityBinding is { IsExpanded: true })
             {
+                // Some metrics may require update without throttling
+                UpdateAllMetrics();
+
                 if (lastTimeSinceMetricsUpdate > THROTTLE)
                 {
                     lastTimeSinceMetricsUpdate = 0;
 
                     foreach (RequestType requestType in requestTypes)
                     {
-                        IReadOnlyList<RequestMetricBase>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                        IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
                         if (metrics == null) continue;
 
-                        foreach (RequestMetricBase metric in metrics)
-                            metric.UpdateDebugMenu();
+                        foreach (IRequestMetric? metric in metrics)
+                        {
+                            if (ongoingRequests.TryGetValue(requestType.Type, out Dictionary<string, ElementBinding<ulong>> bindings) &&
+                                bindings.TryGetValue(metric.GetType().Name, out ElementBinding<ulong> binding)) { binding.Value = metric.GetMetric(); }
+                        }
                     }
                 }
             }
@@ -94,33 +149,30 @@ namespace DCL.WebRequests.Analytics
             lastTimeSinceMetricsUpdate += t;
         }
 
-        private void TryUpdateAllMetrics()
+        private void UpdateAllMetrics()
         {
-            if (profilerEnabled || visibilityBinding is { IsExpanded: true } || WebRequestsDumper.Instance.Enabled)
+            if (metricsUpdatedThisFrame) return;
+
+            foreach (RequestType requestType in requestTypes)
             {
-                if (metricsUpdatedThisFrame) return;
+                IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
 
-                foreach (RequestType requestType in requestTypes)
+                if (metrics == null)
+                    continue;
+
+                foreach (IRequestMetric metric in metrics)
                 {
-                    IReadOnlyList<RequestMetricBase>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+                    metric.Update();
 
-                    if (metrics == null)
-                        continue;
-
-                    foreach (RequestMetricBase metric in metrics)
+                    switch (metric)
                     {
-                        metric.Update();
-
-                        switch (metric)
-                        {
-                            case BandwidthUp: sumUpload += metric.GetMetric(); break;
-                            case BandwidthDown: sumDownload += metric.GetMetric(); break;
-                        }
+                        case BandwidthUp: sumUpload += metric.GetMetric(); break;
+                        case BandwidthDown: sumDownload += metric.GetMetric(); break;
                     }
                 }
-
-                metricsUpdatedThisFrame = true;
             }
+
+            metricsUpdatedThisFrame = true;
         }
     }
 }
