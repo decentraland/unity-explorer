@@ -99,9 +99,9 @@ namespace DCL.AvatarRendering.Emotes
                 if (emoteIndex < 0 || emoteIndex >= emotes.Count)
                     return;
 
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteUrn}</color>");
-
                 URN emoteId = emotes[emoteIndex];
+
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteId}</color>");
 
                 string walletAddress = profile.UserId;
                 int interactionId = UnityEngine.Time.frameCount; // Whatever is unique, increasing and positive in this client (used when playing start animation of social emote)

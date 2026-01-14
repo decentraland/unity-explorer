@@ -138,14 +138,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(Profile))]
         private void CancelEmotesByDeletionWhenProfileIsNotPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, string.Empty);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(Profile))]
         private void CancelEmotesByDeletionWhenProfileIsPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
@@ -193,7 +193,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
-                StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                StopEmote(entity, ref emoteComponent, avatarView);
                 return;
             }
 
@@ -209,7 +209,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
                 if (isOnAnotherTag)
-                    StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                    StopEmote(entity, ref emoteComponent, avatarView);
             }
         }
 
@@ -245,7 +245,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"CancelEmotesByMovement() {profile.UserId} Stopping emote");
 
-            StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+            StopEmote(entity, ref emoteComponent, avatarView);
 
             if (emoteUrn != default)
             {
@@ -255,7 +255,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView, string walletAddress)
+        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null)
                 return;
@@ -267,9 +267,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (isSocialEmote)
             {
                 if(emoteComponent.SocialEmote.IsPlayingOutcome)
-                    StopOtherParticipant(entity, ref emoteComponent, walletAddress);
+                    StopOtherParticipant(entity, ref emoteComponent);
 
-                SocialEmoteInteractionsManager.Instance.StopInteraction(walletAddress);
+                SocialEmoteInteractionsManager.Instance.StopInteraction(emoteComponent.SocialEmote.InitiatorWalletAddress);
             }
 
             // Create a clean slate for the animator before setting the stop trigger
@@ -291,9 +291,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 World.Get<InterpolateToOutcomeStartPoseIntent>(entity).HasBeenCancelled = true;
         }
 
-        private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent, string walletAddress)
+        private void StopOtherParticipant(Entity entity, ref CharacterEmoteComponent emoteComponent)
         {
-            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(walletAddress);
+            SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteComponent.SocialEmote.InitiatorWalletAddress);
 
             if (interaction != null)
             {
@@ -328,7 +328,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 emoteComponent.EmoteUrn.Shorten() == stopEmoteIntent.EmoteUrn.Shorten())
             {
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() stopping");
-                StopEmote(entity, ref emoteComponent, avatarView, profile.UserId);
+                StopEmote(entity, ref emoteComponent, avatarView);
             }
 
             World.Remove<StopEmoteIntent>(entity);
@@ -434,7 +434,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     if (isPlayingDifferentEmote || (emoteComponent.SocialEmote.IsPlayingOutcome && !emoteIntent.SocialEmote.UseOutcomeAnimation))
                     {
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingStopCurrentEmote() Different emote or phase? Stopping");
-                        StopEmote(entity, ref emoteComponent, avatarView, emoteIntent.WalletAddress);
+                        StopEmote(entity, ref emoteComponent, avatarView);
                     }
 
                     // Playing a social emote for a different interaction, it could happen if the initiator plays the same start animation
@@ -442,7 +442,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         SocialEmoteInteractionsManager.Instance.InteractionExists(emoteComponent.SocialEmote.InitiatorWalletAddress))
                     {
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingStopCurrentEmote() Same emote and different interaction - Stops social emote and resets transforms of initiator");
-                        StopEmote(entity, ref emoteComponent, avatarView, emoteIntent.WalletAddress);
+                        StopEmote(entity, ref emoteComponent, avatarView);
                     }
                 }
             }
