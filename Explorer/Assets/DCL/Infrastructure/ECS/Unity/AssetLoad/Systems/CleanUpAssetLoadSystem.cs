@@ -39,14 +39,9 @@ namespace ECS.Unity.AssetLoad.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref AssetLoadComponent component, CRDTEntity sdkEntity)
+        [All(typeof(DeleteEntityIntention), typeof(AssetLoadComponent))]
+        private void HandleComponentRemoval(in CRDTEntity sdkEntity)
         {
-            // Cancel and destroy all loading entities
-            foreach (var kvp in component.LoadingEntities)
-                AssetLoadUtils.RemoveAssetLoading(World, kvp.Value, kvp.Key, ref component);
-
-            // Delete loading state message
             ecsToCRDTWriter.DeleteMessage<PBAssetLoadLoadingState>(sdkEntity);
         }
 

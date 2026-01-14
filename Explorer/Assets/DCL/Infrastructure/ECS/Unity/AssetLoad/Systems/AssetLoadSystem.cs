@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.AssetLoad.Components;
 using SceneRunner.Scene;
 using System;
-using UnityEngine.Pool;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -61,7 +60,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
             sdkComponent.IsDirty = false;
 
-            AssetLoadComponent component = new AssetLoadComponent(sdkComponent.Assets);
+            AssetLoadComponent component = AssetLoadComponent.Create();
             World.Add(entity, component);
 
             ProcessAssetList(crdtEntity, ref sdkComponent, ref component);
@@ -79,42 +78,16 @@ namespace ECS.Unity.AssetLoad.Systems
 
         private void ProcessAssetList(in CRDTEntity crdtEntity, ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent)
         {
-            // Build set of current asset hashes
-            var assetPathHash = DictionaryPool<string ,string>.Get();
-
-            foreach (string assetPath in sdkComponent.Assets)
-                if (sceneData.TryGetHash(assetPath, out string hash))
-                    assetPathHash.Add(assetPath, hash);
-                else
-                    ReportHub.LogWarning(GetReportData(), $"Asset {assetPath} not found in scene content");
-
-            var toRemove = ListPool<string>.Get();
-            foreach (var kvp in existingComponent.LoadingEntities)
+            foreach (string path in sdkComponent.Assets)
             {
-                string assetPath = kvp.Key;
-                if (!assetPathHash.ContainsKey(assetPath))
-                    toRemove.Add(assetPath);
-            }
+                if (existingComponent.LoadingAssetPaths.Contains(path)) continue;
 
-            foreach (string assetPath in toRemove)
-            {
-                if (!existingComponent.LoadingEntities.TryGetValue(assetPath, out var loadingEntity)) continue;
-
-                AssetLoadUtils.RemoveAssetLoading(World, loadingEntity, assetPath, ref existingComponent);
-            }
-            ListPool<string>.Release(toRemove);
-
-            // Create loading entities for new assets
-            foreach (var kvp in assetPathHash)
-            {
-                string path = kvp.Key;
-                string hash = kvp.Value;
-
-                // Skip if already loading
-                if (existingComponent.LoadingEntities.ContainsKey(path))
-                   continue;
-
-                Entity loadingEntity;
+                if (!sceneData.TryGetHash(path, out _))
+                {
+                    assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
+                    ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
+                    continue;
+                }
 
                 // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
                 if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
@@ -123,7 +96,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise);
 
-                    loadingEntity = World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -131,7 +104,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
@@ -144,7 +117,7 @@ namespace ECS.Unity.AssetLoad.Systems
                             ReportSource = GetReportCategory(),
                         },
                         PartitionComponent.MIN_PRIORITY);
-                    loadingEntity = World.Create(promise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(promise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
@@ -153,7 +126,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    loadingEntity = World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
                 }
                 else
                 {
@@ -163,11 +136,8 @@ namespace ECS.Unity.AssetLoad.Systems
 
                 assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.Loading, path);
 
-                existingComponent.LoadingEntities.Add(path, loadingEntity);
+                existingComponent.LoadingAssetPaths.Add(path);
             }
-            existingComponent.LoadingAssetPaths = sdkComponent.Assets;
-
-            DictionaryPool<string, string>.Release(assetPathHash);
         }
     }
 }

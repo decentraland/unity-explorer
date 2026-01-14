@@ -49,7 +49,7 @@ namespace ECS.Unity.AssetLoad.Systems
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeGltfLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref GltfContainerComponent component)
+        private void FinalizeGltfLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref GltfContainerComponent component)
         {
             if (!capBudget.TrySpendBudget())
                 return;
@@ -65,12 +65,14 @@ namespace ECS.Unity.AssetLoad.Systems
                 }
                 else
                     assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, component.Name);
+
+                World.Destroy(entity);
             }
         }
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeAudioClipLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref AudioPromise audioPromise)
+        private void FinalizeAudioClipLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref AudioPromise audioPromise)
         {
             if (audioPromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -83,11 +85,13 @@ namespace ECS.Unity.AssetLoad.Systems
                 assetLoadCache.TryAdd(audioPromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
 
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, audioPromise.LoadingIntention.CommonArguments.URL);
+
+            World.Destroy(entity);
         }
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeTextureLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref TexturePromise texturePromise)
+        private void FinalizeTextureLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref TexturePromise texturePromise)
         {
             if (texturePromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -100,12 +104,14 @@ namespace ECS.Unity.AssetLoad.Systems
                 assetLoadCache.TryAdd(texturePromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
 
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, texturePromise.LoadingIntention.CommonArguments.URL);
+
+            World.Destroy(entity);
         }
 
         [Query]
         [All(typeof(PBVideoPlayer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeVideoLoading(ref AssetLoadChildComponent assetLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
+        private void FinalizeVideoLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
         {
             //UpdateMediaPlayerSystem already tried to consume the promise, so we just need to check if it was consumed or not
             if (mediaPlayerComponent.OpenMediaPromise?.IsConsumed == false
@@ -115,6 +121,8 @@ namespace ECS.Unity.AssetLoad.Systems
             assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
             assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, mediaPlayerComponent.MediaAddress.ToString());
+
+            World.Destroy(entity);
         }
     }
 }

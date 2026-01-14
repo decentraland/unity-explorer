@@ -1,4 +1,3 @@
-using Arch.Core;
 using System.Collections.Generic;
 
 namespace ECS.Unity.AssetLoad.Components
@@ -9,13 +8,14 @@ namespace ECS.Unity.AssetLoad.Components
     /// </summary>
     public struct AssetLoadComponent
     {
-        public IReadOnlyList<string> LoadingAssetPaths;
-        public Dictionary<string, Entity> LoadingEntities;
+        public readonly List<string> LoadingAssetPaths;
 
-        public AssetLoadComponent(IReadOnlyList<string> loadingAssetPaths)
+        public static AssetLoadComponent Create() =>
+            new (true);
+
+        private AssetLoadComponent(bool _)
         {
-            LoadingAssetPaths = loadingAssetPaths;
-            LoadingEntities = new Dictionary<string, Entity>();
+            LoadingAssetPaths = new List<string>();
         }
     }
 }

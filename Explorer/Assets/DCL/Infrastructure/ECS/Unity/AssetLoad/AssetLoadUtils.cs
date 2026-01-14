@@ -1,8 +1,6 @@
-using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using ECS.Unity.AssetLoad.Components;
 using SceneRunner.Scene;
 
 namespace ECS.Unity.AssetLoad
@@ -17,13 +15,6 @@ namespace ECS.Unity.AssetLoad
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
-        }
-
-        public static void RemoveAssetLoading(World world, Entity loadingEntity, string assetPath, ref AssetLoadComponent existingComponent)
-        {
-            //TODO: stop each loading properly and then destroy
-            world.Destroy(loadingEntity);
-            existingComponent.LoadingEntities.Remove(assetPath);
         }
 
         public void AppendAssetLoadingMessage(CRDTEntity crdtEntity, LoadingState loadingState, string assetPath)
