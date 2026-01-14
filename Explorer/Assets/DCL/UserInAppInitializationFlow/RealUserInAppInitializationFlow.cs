@@ -7,6 +7,7 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Prefs;
@@ -49,7 +50,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ICharacterObject characterObject;
         private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
-        private readonly bool isLocalSceneDevelopment;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -69,8 +69,7 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
-            StartParcel startParcel,
-            bool isLocalSceneDevelopment)
+            StartParcel startParcel)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
@@ -80,7 +79,6 @@ namespace DCL.UserInAppInitializationFlow
             this.appArgs = appArgs;
             this.characterObject = characterObject;
             this.startParcel = startParcel;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
@@ -187,7 +185,7 @@ namespace DCL.UserInAppInitializationFlow
                                 // At this point it is necessary that the task did not become invalid by any modification in the process
                                 var livekitOperationResult = await livekitHandshake;
 
-                                if (isLocalSceneDevelopment)
+                                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.WEB_VERSION))
                                 {
                                     // Fix: https://github.com/decentraland/unity-explorer/issues/5250
                                     // Prevent creators to be stuck at loading screen due to livekit issues

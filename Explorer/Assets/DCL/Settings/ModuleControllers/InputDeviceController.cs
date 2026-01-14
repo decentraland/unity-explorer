@@ -1,13 +1,15 @@
+using DCL.Optimization.Pools;
+using DCL.Settings.ModuleViews;
+using System.Threading;
+#if !UNITY_WEBGL
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using DCL.Prefs;
-using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
-using System.Threading;
+#endif
 using TMPro;
 
 namespace DCL.Settings.ModuleControllers
@@ -21,6 +23,7 @@ namespace DCL.Settings.ModuleControllers
 
         public InputDeviceController(SettingsDropdownModuleView view)
         {
+#if !UNITY_WEBGL
             this.view = view;
 
             string[] devices = MicrophoneSelection.Devices();
@@ -45,8 +48,10 @@ namespace DCL.Settings.ModuleControllers
 
             DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, microphoneSelection.name);
             VoiceChatSettings.OnMicrophoneChanged(microphoneSelection);
+#endif
         }
 
+#if !UNITY_WEBGL
         private void OnShowStatusUpdated(bool isShown)
         {
             if (isShown == false)
@@ -124,7 +129,9 @@ namespace DCL.Settings.ModuleControllers
 
                 if (result.Success == false)
                 {
+
                     ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Picked invalid selection from ui: {result.ErrorMessage}");
+
                     return;
                 }
 
@@ -150,12 +157,15 @@ namespace DCL.Settings.ModuleControllers
                 view.DropdownView.Dropdown.options.Add(data);
             }
         }
+#endif
 
         public override void Dispose()
         {
+#if !UNITY_WEBGL
             view.DropdownView.Dropdown.onValueChanged.RemoveAllListeners();
             view.showStatusUpdated.RemoveListener(OnShowStatusUpdated);
             optionsPool.Dispose();
+#endif
         }
     }
 }
