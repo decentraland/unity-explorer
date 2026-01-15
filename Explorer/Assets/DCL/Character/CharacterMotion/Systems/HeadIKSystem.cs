@@ -167,14 +167,10 @@ namespace DCL.CharacterMotion.Systems
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
                                 !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
                                 !stunComponent.IsStunned &&
+                                !emoteComponent.IsPlayingEmote &&
                                 !platformComponent.PositionChanged;
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);
-
-            if(emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
-                avatarBase.HeadIKRig.weight = 0.0f;
-            else
-                avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
             if (!headIK.IsEnabled || inWorldCameraActive) return;
