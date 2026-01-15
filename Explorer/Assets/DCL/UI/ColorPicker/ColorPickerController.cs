@@ -9,6 +9,9 @@ using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
+    // TODO (Maurizio) remove after porting
+
+    [Obsolete("Use WearablesColorPickerController instead.")]
     public class ColorPickerController : IDisposable
     {
         private const float INCREMENT_AMOUNT = 0.1f;
