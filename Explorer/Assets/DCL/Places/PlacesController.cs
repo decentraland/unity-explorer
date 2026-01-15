@@ -1,6 +1,7 @@
 ﻿using DCL.Input;
 using DCL.Input.Component;
 using DCL.PlacesAPIService;
+using DCL.Profiles.Self;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -27,7 +28,8 @@ namespace DCL.Places
             ICursor cursor,
             IPlacesAPIService placesAPIService,
             PlaceCategoriesSO placesCategories,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -36,7 +38,7 @@ namespace DCL.Places
             this.inputBlock = inputBlock;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories);
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

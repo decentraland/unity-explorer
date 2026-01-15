@@ -305,7 +305,7 @@ namespace DCL.Communities.CommunityCreation
                     return;
                 }
 
-                foreach (PlacesData.PlaceInfo worldInfo in worldsResult.Value.data)
+                foreach (PlacesData.PlaceInfo worldInfo in worldsResult.Value.Data)
                 {
                     var worldText = $"{worldInfo.title} ({worldInfo.world_name})";
                     placesToAdd.Add(worldText);

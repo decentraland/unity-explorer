@@ -3,6 +3,8 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
@@ -22,6 +24,7 @@ namespace DCL.Places
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
         private readonly PlaceCategoriesSO placesCategories;
+        private readonly ISelfProfile selfProfile;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -35,13 +38,15 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            PlaceCategoriesSO placesCategories)
+            PlaceCategoriesSO placesCategories,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
             this.placesCategories = placesCategories;
+            this.selfProfile = selfProfile;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
@@ -105,6 +110,11 @@ namespace DCL.Places
             else
                 view.SetPlacesGridLoadingMoreActive(true);
 
+            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            PlacesData.PlacesAPIResponse emptyPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
             Result<PlacesData.IPlacesAPIResponse> placesResult = section switch
                                                                  {
                                                                      PlacesSection.DISCOVER => await placesAPIService.SearchPlacesAsync(
@@ -117,8 +127,11 @@ namespace DCL.Places
                                                                                                                            ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
                                                                                                                            sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
                                                                                                                       .SuppressToResultAsync(ReportCategory.PLACES),
-                                                                     _ => await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(
-                                                                                            new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 })
+                                                                     PlacesSection.MY_PLACES => await placesAPIService.GetWorldsByOwnerAsync(
+                                                                                                                           ownerAddress: ownProfile.UserId,
+                                                                                                                           ct: ct)
+                                                                                                                      .SuppressToResultAsync(ReportCategory.PLACES),
+                                                                     _ => await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(emptyPlacesResponse)
                                                                                        .SuppressToResultAsync(ReportCategory.PLACES),
                                                                  };
 
