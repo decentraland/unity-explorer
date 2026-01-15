@@ -202,10 +202,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, ref PBUiInput model)
         {
             bool isReadonly = !model.IsInteractive();
-            inputToSetup.Placeholder.SetPlaceholder(model.Placeholder);
-            inputToSetup.Placeholder.SetPlaceholderColor(model.GetPlaceholderColor());
-            inputToSetup.Placeholder.SetNormalColor(model.GetColor());
-            inputToSetup.Placeholder.SetReadOnly(isReadonly);
+            inputToSetup.Placeholder.PlaceholderText = model.Placeholder;
+            inputToSetup.Placeholder.PlaceholderColor = model.GetPlaceholderColor();
+            inputToSetup.Placeholder.NormalColor = model.GetColor();
+            inputToSetup.Placeholder.IsReadonly = isReadonly;
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
             inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
