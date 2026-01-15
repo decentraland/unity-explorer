@@ -1,4 +1,4 @@
-using TMPro;
+using DCL.UI.ValidatedInputField;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,19 +22,7 @@ namespace DCL.MarketplaceCredits.Sections
         public GameObject EmailLoginContainer { get; private set; }
 
         [field: SerializeField]
-        public TMP_InputField EmailInput { get; private set; }
-
-        [field: SerializeField]
-        public Image EmailInputOutline { get; private set; }
-
-        [field: SerializeField]
-        public Color OutlineNormalColor { get; private set; }
-
-        [field: SerializeField]
-        public Color OutlineErrorColor { get; private set; }
-
-        [field: SerializeField]
-        public GameObject EmailErrorMark { get; private set; }
+        public ValidatedInputFieldView EmailInputField { get; private set; }
 
         [field: SerializeField]
         public Button StartWithEmailButton { get; private set; }
@@ -56,14 +44,11 @@ namespace DCL.MarketplaceCredits.Sections
             LoadingContainer.SetActive(isLoading);
         }
 
-        public void ShowEmailError(bool show)
-        {
-            EmailInputOutline.color = show ? OutlineErrorColor : OutlineNormalColor;
-            EmailErrorMark.SetActive(show);
-        }
+        public void ShowEmailError(bool show) =>
+            EmailInputField.ShowError(show);
 
         public void CleanEmailInput() =>
-            EmailInput.text = string.Empty;
+            EmailInputField.Clear();
 
         public void SetStartWithEmailButtonInteractable(bool isInteractable) =>
             StartWithEmailButton.interactable = isInteractable;

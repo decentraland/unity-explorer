@@ -60,7 +60,9 @@ namespace DCL.MarketplaceCredits.Sections
             subView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
             subView.StartWithEmailButton.onClick.AddListener(RegisterInTheProgramWithNewEmail);
             subView.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
-            subView.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
+
+            subView.EmailInputField.SetValidationFunction(IsValidEmail);
+            subView.EmailInputField.OnValueChanged += OnEmailInputValueChanged;
         }
 
         public void OpenSection()
@@ -72,7 +74,6 @@ namespace DCL.MarketplaceCredits.Sections
             LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
 
             subView.CleanEmailInput();
-            OnEmailInputValueChanged(subView.EmailInput.text);
             CheckStartWithEmailButtonState();
         }
 
@@ -90,7 +91,7 @@ namespace DCL.MarketplaceCredits.Sections
             subView.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
             subView.StartWithEmailButton.onClick.RemoveListener(RegisterInTheProgramWithNewEmail);
             subView.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
-            subView.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
+            subView.EmailInputField.OnValueChanged -= OnEmailInputValueChanged;
             fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
             registerInTheProgramCts.SafeCancelAndDispose();
         }
@@ -123,7 +124,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
             RegisterInTheProgramWithNewEmailAsync(
-                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailInput.text : currentCreditsProgramProgress.user.email,
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailInputField.Text : currentCreditsProgramProgress.user.email,
                 registerInTheProgramCts.Token).Forget();
         }
 
@@ -252,14 +253,11 @@ namespace DCL.MarketplaceCredits.Sections
         private void OpenLearnMoreLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
 
-        private void OnEmailInputValueChanged(string email)
-        {
+        private void OnEmailInputValueChanged(string email) =>
             CheckStartWithEmailButtonState();
-            subView.ShowEmailError(!string.IsNullOrEmpty(email) && !IsValidEmail(email));
-        }
 
         private void CheckStartWithEmailButtonState() =>
-            subView.SetStartWithEmailButtonInteractable(IsValidEmail(subView.EmailInput.text));
+            subView.SetStartWithEmailButtonInteractable(subView.EmailInputField.IsValid && !string.IsNullOrEmpty(subView.EmailInputField.Text));
 
         private static bool IsValidEmail(string email) =>
             !string.IsNullOrEmpty(email) && EMAIL_PATTERN_REGEX.IsMatch(email);
