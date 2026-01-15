@@ -467,11 +467,16 @@ def generate_summary_page(
     pdf: PdfPages,
     grouped: dict,
     config: dict,
+    all_grouped: Optional[dict] = None,
 ):
     """
     Generate a summary page showing key metrics for configured test cases.
 
     For each summary case, shows metrics across different parallelism levels.
+
+    Args:
+        grouped: Filtered grouped data (only classes with multiple scenarios)
+        all_grouped: Unfiltered grouped data (includes single-scenario classes for list-only mode)
     """
     summary_cases = config.get("summary_cases", [])
     if not summary_cases:
@@ -498,6 +503,9 @@ def generate_summary_page(
         # Use per-case metrics or fall back to default
         metric_keys = case.get("metrics", default_metric_keys)
 
+        # Determine if this is a list-only case (no endpoint = no comparison needed)
+        list_only_mode = not endpoint and not compare_test
+
         # Parse test name into class and method
         if "." in test_name:
             class_short, method_name = test_name.rsplit(".", 1)
@@ -505,9 +513,13 @@ def generate_summary_page(
             class_short = test_name
             method_name = ""
 
+        # For list-only mode, look in all_grouped (unfiltered) first
+        # For comparison mode, use filtered grouped data
+        search_data = all_grouped if (list_only_mode and all_grouped) else grouped
+
         # Find matching class in grouped data
         matching_class = None
-        for class_name in grouped.keys():
+        for class_name in search_data.keys():
             if class_name.endswith(class_short):
                 matching_class = class_name
                 break
@@ -516,7 +528,7 @@ def generate_summary_page(
             print(f"  Warning: No matching class found for '{test_name}'")
             continue
 
-        methods = grouped[matching_class]
+        methods = search_data[matching_class]
 
         # Find methods matching the method name
         matching_methods = {k: v for k, v in methods.items() if k.startswith(method_name + "(")}
@@ -1437,16 +1449,16 @@ def generate_report(
         else:
             print(f"  Skipping class '{class_name}': only one TestFixture scenario (nothing to compare)")
 
-    if not filtered_grouped:
-        print("No comparable test results found (all tests have single TestFixture)!")
+    if not filtered_grouped and not grouped:
+        print("No test results found!")
         return
 
     print(f"Processing {len(filtered_grouped)} test classes with multiple scenarios")
 
     with PdfPages(output_path) as pdf:
-        # Generate summary page first
+        # Generate summary page first (pass both filtered and unfiltered for list-only cases)
         print("Generating summary page...")
-        summary_data = generate_summary_page(pdf, filtered_grouped, config)
+        summary_data = generate_summary_page(pdf, filtered_grouped, config, all_grouped=grouped)
 
         # Generate GitHub Actions summary if requested
         if github_summary_path and summary_data:
