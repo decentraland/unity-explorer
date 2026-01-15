@@ -4,6 +4,8 @@ using System;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using System.IO;
+using Newtonsoft.Json;
 #endif
 
 namespace DCL.Diagnostics.Sentry
@@ -20,35 +22,51 @@ namespace DCL.Diagnostics.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options)
         {
-#if UNITY_EDITOR
-            // Force options to enabled=true to be able to deploy debug symbols during build-time
-            options.Enabled = Environment.GetEnvironmentVariable("SENTRY_ENABLED") == "true";
-            if (!options.Enabled) return; // No need to configure sentry
-
-            options.Release = Application.version ?? options.Release;
-
-            try { ApplyFromEnvironmentVars(options); }
-            catch (Exception e) { Debug.LogException(e); }
-
-            try { ApplyFromJsonFile(options); }
-            catch (Exception e) { Debug.LogException(e); }
-
-            try { ApplyFromProgramArgs(options); }
-            catch (Exception e) { Debug.LogException(e); }
-
-            try
-            {
-                // SentryOptions.asset must be modified so the app is built with the expected information
-                PersistIntoAssetFile(GetAssetPath("SentryOptions"), options);
-            }
-            catch (Exception e) { Debug.LogException(e); }
-#endif
-
             options.SetBeforeSend(AddUnspecifiedCategory);
 
-            Debug.Log($"SentryBuildTimeConfiguration.options.enabled: {options.Enabled}");
-            Debug.Log($"SentryBuildTimeConfiguration.options.dsn: {options.Dsn}");
-            Debug.Log($"SentryBuildTimeConfiguration.options.EnvironmentOverride: {options.Environment}");
+#if UNITY_EDITOR
+            bool isDirty = false;
+
+            if (bool.TryParse(Environment.GetEnvironmentVariable("SENTRY_ENABLED"), out bool isEnabled))
+            {
+                if (options.Enabled != isEnabled)
+                {
+                    options.Enabled = isEnabled;
+                    isDirty = true;
+                }
+            }
+
+            string? version = Application.version ?? options.Release;
+
+            if (options.Release != version)
+            {
+                options.Release = Application.version ?? options.Release;
+                isDirty = true;
+            }
+
+            try { isDirty |= ApplyFromEnvironmentVars(options); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            try { isDirty |= ApplyFromJsonFile(options); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            try { isDirty |= ApplyFromProgramArgs(options); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            if (isDirty)
+            {
+                try
+                {
+                    // SentryOptions.asset must be modified so the app is built with the expected information
+                    PersistIntoAssetFile(GetAssetPath("SentryOptions"), options);
+                }
+                catch (Exception e) { Debug.LogException(e); }
+            }
+#endif
+
+            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.enabled: {options.Enabled}");
+            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.dsn: {options.Dsn}");
+            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.EnvironmentOverride: {options.Environment}");
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
@@ -60,15 +78,21 @@ namespace DCL.Diagnostics.Sentry
         }
 
 #if UNITY_EDITOR
-        private static void ApplyFromEnvironmentVars(SentryUnityOptions options)
+        private static bool ApplyFromEnvironmentVars(SentryUnityOptions options)
         {
-            options.Environment = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
-            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
-            options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
+            string? env = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
+            string? dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
+            string? release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
+            bool changed = env != options.Environment || dsn != options.Dsn || release != options.Release;
+            options.Environment = env;
+            options.Dsn = dsn;
+            options.Release = release;
+            return changed;
         }
 
-        private static void ApplyFromProgramArgs(SentryUnityOptions options)
+        private static bool ApplyFromProgramArgs(SentryUnityOptions options)
         {
+            var changed = false;
             string[] args = Environment.GetCommandLineArgs();
 
             for (var i = 0; i < args.Length; i++)
@@ -79,20 +103,40 @@ namespace DCL.Diagnostics.Sentry
                 {
                     case "-sentryEnvironment":
                         options.Environment = args[i + 1];
+                        changed = true;
                         break;
                     case "-sentryDsn":
                         options.Dsn = args[i + 1];
+                        changed = true;
                         break;
                     case "-sentryRelease":
                         options.Release = args[i + 1];
+                        changed = true;
                         break;
                 }
             }
+
+            return changed;
         }
 
-        private void ApplyFromJsonFile(SentryUnityOptions options)
+        private bool ApplyFromJsonFile(SentryUnityOptions options)
         {
-            SentryJsonConfigLoader.Apply(configJsonFilePath, options);
+            if (!File.Exists(configJsonFilePath)) return false;
+
+            string fileContent = File.ReadAllText(configJsonFilePath);
+            JsonConfigFileScheme scheme = JsonConvert.DeserializeObject<JsonConfigFileScheme>(fileContent);
+
+            string? env = string.IsNullOrEmpty(scheme.environment) ? options.Environment : scheme.environment;
+            string? dsn = string.IsNullOrEmpty(scheme.dsn) ? options.Dsn : scheme.dsn;
+            string? release = string.IsNullOrEmpty(scheme.release) ? options.Release : scheme.release;
+
+            bool changed = env != options.Environment || dsn != options.Dsn || release != options.Release;
+
+            options.Environment = env;
+            options.Dsn = dsn;
+            options.Release = release;
+
+            return changed;
         }
 
         private void PersistIntoAssetFile(string path, SentryUnityOptions options)
@@ -103,6 +147,14 @@ namespace DCL.Diagnostics.Sentry
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
             EditorUtility.SetDirty(asset);
+        }
+
+        [Serializable]
+        private struct JsonConfigFileScheme
+        {
+            public string environment;
+            public string dsn;
+            public string release;
         }
 #endif
     }

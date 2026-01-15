@@ -293,7 +293,11 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            ReportHub.LogException(new Exception("TEST error"), ReportCategory.ALWAYS, ReportHandler.Sentry);
+            try { throw new Exception("TEST error from sentry4"); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ALWAYS, ReportHandler.Sentry);
+            }
 
             try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
             // Exceptions on auto-login should not block the application bootstrap

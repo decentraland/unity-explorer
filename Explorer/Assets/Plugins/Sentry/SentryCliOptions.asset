@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 1079966944, guid: 43ec428a58422470fa764bdba9d9bc19, type: 3}
   m_Name: SentryCliOptions
   m_EditorClassIdentifier: 
-  <UploadSymbols>k__BackingField: 1
+  <UploadSymbols>k__BackingField: 0
   <UploadDevelopmentSymbols>k__BackingField: 0
   <UploadSources>k__BackingField: 0
   <UrlOverride>k__BackingField: 
