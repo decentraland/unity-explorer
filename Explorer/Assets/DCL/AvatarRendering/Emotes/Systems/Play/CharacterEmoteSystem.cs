@@ -335,7 +335,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
         private void BeforePlayingCheckEmoteAsset(Entity entity, ref CharacterEmoteIntent emoteIntent,
             ref AvatarShapeComponent avatarShapeComponent)
         {
@@ -401,7 +401,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
         private void BeforePlayingStopCurrentEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
             if (emoteIntent.EmoteAsset == null)
@@ -435,6 +435,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                     {
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingStopCurrentEmote() Different emote or phase? Stopping");
                         StopEmote(entity, ref emoteComponent, avatarView);
+
+                        if (isPlayingDifferentEmote && emoteComponent.SocialEmote.WasReacting)
+                            ResetAvatarAndControllerTransforms(entity);
                     }
 
                     // Playing a social emote for a different interaction, it could happen if the initiator plays the same start animation
@@ -459,7 +462,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // If the message of the receiver comes first, it's ignored (the message is discarded in a condition at RemoteEmotesSystem). It will be handled when the initiator's is already there waiting.
         // Once both have arrived, both emotes play at the same time.
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
         private void BeforePlayingSynchronizeRemoteInteraction(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
         {
             if(emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
@@ -494,7 +497,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
         private void PlayNewEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
@@ -635,7 +638,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata!.IsSocialEmote)
                     avatarStateMachineEventHandler.EmoteStateExiting = OnEmoteStateExiting; // Setting and not subscribing because it could play the emote more than once and we can't know if it is the first for this client
 
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " INTENT REMOVED");
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " INTENT REMOVED " + emoteIntent.TriggerSource);
 
                 World.Remove<CharacterEmoteIntent>(entity);
             }
@@ -856,6 +859,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void OnEmoteStateExiting(Entity entity, AvatarStateMachineEventHandler avatarStateMachineEventHandler)
         {
             avatarStateMachineEventHandler.EmoteStateExiting = null;
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"OnEmoteStateExiting() " + entity);
 
             if (World.Get<CharacterEmoteComponent>(entity).SocialEmote.WasReacting)
             {
