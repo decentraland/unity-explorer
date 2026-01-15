@@ -14,15 +14,28 @@ namespace DCL.UI
 
         [SerializeField] private TMP_InputField emailInput;
         [SerializeField] private Button startButton;
+        [SerializeField] private GameObject errorMark;
 
+        [Header("FIELD OUTLINE")]
         [SerializeField] private Image emailInputOutline;
-        [SerializeField] private Color outlineNormalColor;
-        [SerializeField] private Color outlineErrorColor;
-        [SerializeField] private GameObject emailErrorMark;
+        [SerializeField] private Color outlineNormalColor = Color.white;
+        [SerializeField] private Color outlineErrorColor = Color.red;
+
+        [Header("CARET")]
+        [SerializeField] private Color caretColor = Color.black;
+        [SerializeField] [Min(0)] private int caretWidth = 2;
+        [SerializeField] [Min(0)] private float caretBlinkRate = 0.85f;
 
         public string CurrentEmailText => emailInput.text;
 
         private Coroutine? activateInputCoroutine;
+
+        private void Awake()
+        {
+            emailInput.caretColor = caretColor;
+            emailInput.caretWidth = caretWidth;
+            emailInput.caretBlinkRate = caretBlinkRate;
+        }
 
         private void OnEnable()
         {
@@ -36,7 +49,7 @@ namespace DCL.UI
 
             startButton.interactable = false;
             emailInputOutline.color = outlineNormalColor;
-            emailErrorMark.SetActive(false);
+            errorMark.SetActive(false);
 
             activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
         }
@@ -88,7 +101,7 @@ namespace DCL.UI
         private void SetErrorState(bool hasError)
         {
             emailInputOutline.color = hasError ? outlineErrorColor : outlineNormalColor;
-            emailErrorMark.SetActive(hasError);
+            errorMark.SetActive(hasError);
         }
 
         private static bool IsValidEmail(string email) =>

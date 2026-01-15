@@ -515,10 +515,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: UI::EmailInputView
   emailInput: {fileID: 3915402350510907255}
   startButton: {fileID: 4126780924162471401}
+  errorMark: {fileID: 3988503103806457292}
   emailInputOutline: {fileID: 4418198438385915273}
   outlineNormalColor: {r: 1, g: 1, b: 1, a: 1}
   outlineErrorColor: {r: 1, g: 0, b: 0, a: 1}
-  emailErrorMark: {fileID: 3988503103806457292}
+  caretColor: {r: 0, g: 0, b: 0, a: 1}
+  caretWidth: 2
+  caretBlinkRate: 0.85
 --- !u!1001 &4122355885637972248
 PrefabInstance:
   m_ObjectHideFlags: 0
