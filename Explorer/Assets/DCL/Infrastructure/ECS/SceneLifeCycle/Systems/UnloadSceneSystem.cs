@@ -54,13 +54,30 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
-                //Dispose scene
-                sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
-                    sceneDefinitionComponent.Parcels);
+                var state = sceneFacade.SceneStateProvider.State.Value();
 
-                ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: CleanSceneFacadeWhenLOD {sceneDefinitionComponent.Definition?.GetLogSceneName()}");
+                switch (state)
+                {
+                    case SceneState.Disposed:
+                        // Fully disposed - safe to remove component
+                        World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                        break;
 
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+                    case SceneState.Disposing:
+                        // Already disposing - wait for next frame
+                        // Save the provider so LOD system can check disposal state
+                        break;
+
+                    case SceneState.NotStarted:
+                    case SceneState.Running:
+                    case SceneState.EngineError:
+                    case SceneState.EcsError:
+                    case SceneState.JavaScriptError:
+                    default:
+                        // Start disposal, will be Disposing next check
+                        sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
+                        break;
+                }
             }
         }
 

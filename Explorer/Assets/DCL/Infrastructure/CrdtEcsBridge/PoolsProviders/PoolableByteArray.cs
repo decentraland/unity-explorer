@@ -1,22 +1,34 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using Microsoft.ClearScript.V8.FastProxy;
+using System;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
-    public struct PoolableByteArray : IDisposable, IEnumerable<byte>
+    public struct PoolableByteArray : IDisposable, IV8FastHostObject
     {
         public static readonly PoolableByteArray EMPTY = new (System.Array.Empty<byte>(), 0, null);
 
         public readonly byte[] Array;
-        public readonly Action<byte[]> ReleaseFunc;
+        private Action<byte[]>? releaseFunc;
 
-        public PoolableByteArray(byte[] array, int length, Action<byte[]> releaseFunc)
+        private static readonly V8FastHostObjectOperations<PoolableByteArray>
+            OPERATIONS = new ();
+
+        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
+
+        static PoolableByteArray()
+        {
+            OPERATIONS.Configure(static configuration =>
+            {
+                configuration.SetEnumeratorFactory(
+                    static self => new Enumerator(self));
+            });
+        }
+
+        public PoolableByteArray(byte[] array, int length, Action<byte[]>? releaseFunc)
         {
             Array = array;
             Length = length;
-            ReleaseFunc = releaseFunc;
-            IsDisposed = false;
+            this.releaseFunc = releaseFunc;
         }
 
         public int Length { get; private set; }
@@ -25,82 +37,46 @@ namespace CrdtEcsBridge.PoolsProviders
 
         public Memory<byte> Memory => Array.AsMemory(0, Length);
 
-        public bool IsDisposed { get; private set; }
-
         public bool IsEmpty => Length == 0;
 
         public void SetLength(int length)
         {
             if (length > Array.Length)
-                throw new ArgumentOutOfRangeException(nameof(length), $"Rented Array Size {Array.Length} is lower than the requested {length}");
+                throw new ArgumentOutOfRangeException(nameof(length),
+                    $"Rented Array Size {Array.Length} is lower than the requested {length}");
 
             Length = length;
         }
 
         public void Dispose()
         {
-            if (IsEmpty || IsDisposed) return;
-
-            ReleaseFunc(Array);
-
-            IsDisposed = true;
+            if (releaseFunc != null)
+            {
+                releaseFunc(Array);
+                releaseFunc = null;
+            }
         }
 
-        public Enumerator GetEnumerator() =>
-            new Enumerator(this);
-
-        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() =>
-            GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() =>
-            GetEnumerator();
-
-        public struct Enumerator : IEnumerator<byte>
+        private sealed class Enumerator : IV8FastEnumerator
         {
-            private readonly byte[] _array;
-            private readonly int _end; // cache Offset + Count, since it's a little slow
-            private int _current;
+            private readonly byte[] array;
+            private readonly int end; // cache Offset + Count, since it's a little slow
+            private int current;
 
-            internal Enumerator(PoolableByteArray arraySegment)
+            public Enumerator(PoolableByteArray arraySegment)
             {
-                _array = arraySegment.Array;
-                _end = arraySegment.Length;
-                _current = -1;
-            }
-
-            public bool MoveNext()
-            {
-                if (_current < _end)
-                {
-                    _current++;
-                    return _current < _end;
-                }
-
-                return false;
-            }
-
-            public byte Current
-            {
-                get
-                {
-                    if (_current < -1)
-                        throw new InvalidOperationException("EnumNotStarted");
-
-                    if (_current >= _end)
-                        throw new InvalidOperationException("EnumEnded");
-
-                    return _array[_current];
-                }
-            }
-
-            object IEnumerator.Current => Current;
-
-            void IEnumerator.Reset()
-            {
-                _current = -1;
+                array = arraySegment.Array;
+                end = arraySegment.Length;
+                current = -1;
             }
 
             public void Dispose() { }
+
+            public void GetCurrent(in V8FastResult item) =>
+                item.Set(array[current]);
+
+            public bool MoveNext() =>
+                ++current < end;
         }
     }
 }
