@@ -52,13 +52,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <SliderHue>k__BackingField: {fileID: 4446405260838116596}
   <SliderSaturation>k__BackingField: {fileID: 4462375709561359149}
+  <EnableSaturationSlider>k__BackingField: 1
+  <DefaultSaturation>k__BackingField: 1
   <SliderValue>k__BackingField: {fileID: 1652141134889042530}
+  <EnableValueSlider>k__BackingField: 1
+  <DefaultValue>k__BackingField: 1
   <ToggleButton>k__BackingField: {fileID: 4066248081272917147}
+  <ToggleText>k__BackingField: {fileID: 1751772365164399631}
+  <ShowToggleText>k__BackingField: 1
   <Container>k__BackingField: {fileID: 4200688421014649722}
   <ContainerImage>k__BackingField: {fileID: 4369451972972127477}
+  <ColorPreviewImage>k__BackingField: {fileID: 1085402447691280675}
   <ColorPresetsParent>k__BackingField: {fileID: 6346025365088475134}
   <ColorSelectorObject>k__BackingField: {fileID: 0}
-  <ColorPreviewImage>k__BackingField: {fileID: 1085402447691280675}
   <ArrowUpMark>k__BackingField: {fileID: 2506626392086248904}
   <ArrowDownMark>k__BackingField: {fileID: 7105173855339447081}
 --- !u!1 &1751772365164399631
@@ -164,6 +170,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -300,6 +307,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -624,6 +632,10 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 4066248081272917147}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField: []
+  <text>k__BackingField: {fileID: 0}
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &5006843261224054497
 GameObject:
   m_ObjectHideFlags: 0
@@ -727,6 +739,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -863,6 +876,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -934,7 +948,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -65}
+  m_AnchoredPosition: {x: 193, y: -65}
   m_SizeDelta: {x: 266, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &5404934850340311855
@@ -1205,6 +1219,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
