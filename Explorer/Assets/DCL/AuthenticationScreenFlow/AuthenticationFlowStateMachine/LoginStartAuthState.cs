@@ -82,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
 
             // ThirdWeb
-            view.EmailInput.StartButtonPressed += OTPLogin;
+            view.EmailInputField.StartButtonPressed += OTPLogin;
         }
 
         public override void Exit()
@@ -101,7 +101,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.MoreOptionsButton.onClick.RemoveAllListeners();
 
             // ThirdWeb
-            view.EmailInput.StartButtonPressed -= OTPLogin;
+            view.EmailInputField.StartButtonPressed -= OTPLogin;
         }
 
         private void Login(LoginMethod method)
@@ -120,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.AuthLoginScreenView.SlideOut();
 
             machine.Enter<IdentityAndOTPConfirmationState, (string, CancellationToken)>(
-                payload: (viewInstance.AuthLoginScreenView.EmailInput.CurrentEmailText, controller.GetRestartedLoginToken()));
+                payload: (viewInstance.AuthLoginScreenView.EmailInputField.CurrentEmailText, controller.GetRestartedLoginToken()));
         }
 
         private void CancelLoginAndRestartFromBeginning()

@@ -19,7 +19,7 @@ namespace DCL.MarketplaceCredits.Sections
         public Button LearnMoreLinkButton { get; private set; }
 
         [field: SerializeField]
-        public EmailInputView EmailLogin { get; private set; }
+        public EmailInputFieldView EmailLogin { get; private set; }
 
         public void SetEmailLoginVisibility(bool isVisible)
         {

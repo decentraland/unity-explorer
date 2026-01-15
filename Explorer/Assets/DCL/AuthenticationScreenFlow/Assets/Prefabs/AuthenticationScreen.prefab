@@ -7405,6 +7405,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9199866600602126572}
     m_Modifications:
+    - target: {fileID: 606045231128700182, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 606045231128700182, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 606045231128700182, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 606045231128700182, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 606045231128700182, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2545835288679838424, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7488,6 +7508,26 @@ PrefabInstance:
     - target: {fileID: 6072945466760093846, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_Name
       value: LoginContainer
+      objectReference: {fileID: 0}
+    - target: {fileID: 8042025819200704124, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8042025819200704124, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8042025819200704124, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8042025819200704124, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8042025819200704124, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

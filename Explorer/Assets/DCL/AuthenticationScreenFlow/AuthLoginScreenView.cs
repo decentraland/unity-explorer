@@ -19,7 +19,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("OTP")]
         [field: SerializeField]
-        public EmailInputView EmailInput { get; private set; } = null!;
+        public EmailInputFieldView EmailInputField { get; private set; } = null!;
 
         [field: Header("SECONDARY")]
         [field: SerializeField]

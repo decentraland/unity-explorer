@@ -1218,7 +1218,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.AuthLoginScreenView
   loadingSpinner: {fileID: 2031916229084039964}
   mainElementsPanel: {fileID: 5716495022110929185}
-  <EmailInput>k__BackingField: {fileID: 2001940849056367380}
+  <EmailInputField>k__BackingField: {fileID: 2001940849056367380}
   <MetamaskLoginButton>k__BackingField: {fileID: 4481630630708771614}
   <GoogleLoginButton>k__BackingField: {fileID: 9078712830092277137}
   <CancelLoginButton>k__BackingField: {fileID: 9108319191272288200}
@@ -2199,6 +2199,10 @@ PrefabInstance:
       value: 0.79999924
       objectReference: {fileID: 0}
     - target: {fileID: 5362415719707232040, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
+      propertyPath: m_Name
+      value: EmailInputField
+      objectReference: {fileID: 0}
+    - target: {fileID: 5362415719707232040, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -2320,7 +2324,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7499318866385134526, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
       propertyPath: m_Name
-      value: EmailInput
+      value: EmailInputField
       objectReference: {fileID: 0}
     - target: {fileID: 7499318866385134526, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
       propertyPath: m_IsActive

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class EmailInputView : MonoBehaviour
+    public class EmailInputFieldView : MonoBehaviour
     {
         private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
         public event Action? StartButtonPressed;
@@ -35,16 +35,12 @@ namespace DCL.UI
             emailInput.caretColor = caretColor;
             emailInput.caretWidth = caretWidth;
             emailInput.caretBlinkRate = caretBlinkRate;
+
+            emailInput.characterValidation = TMP_InputField.CharacterValidation.EmailAddress;
         }
 
         private void OnEnable()
         {
-            startButton.onClick.AddListener(EmitStartButtonPressedEvent);
-
-            emailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
-            emailInput.onEndEdit.AddListener(OnEmailInputEndEdit);
-            emailInput.onSelect.AddListener(OnEmailInputSelect);
-
             emailInput.text = string.Empty;
 
             startButton.interactable = false;
@@ -52,6 +48,13 @@ namespace DCL.UI
             errorMark.SetActive(false);
 
             activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
+
+            // Listeners
+            startButton.onClick.AddListener(EmitStartButtonPressedEvent);
+
+            emailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
+            emailInput.onEndEdit.AddListener(OnEmailInputEndEdit);
+            emailInput.onSelect.AddListener(OnEmailInputSelect);
         }
 
         private void OnDisable()
@@ -62,22 +65,12 @@ namespace DCL.UI
                 activateInputCoroutine = null;
             }
 
+            // Listeners
             startButton.onClick.RemoveAllListeners();
 
             emailInput.onValueChanged.RemoveAllListeners();
             emailInput.onEndEdit.RemoveAllListeners();
             emailInput.onSelect.RemoveAllListeners();
-        }
-
-        private IEnumerator ActivateInputFieldDelayed()
-        {
-            yield return null;
-
-            emailInput.caretPosition = 0;
-            emailInput.ActivateInputField();
-            emailInput.Select();
-
-            activateInputCoroutine = null;
         }
 
         private void EmitStartButtonPressedEvent() =>
@@ -102,6 +95,17 @@ namespace DCL.UI
         {
             emailInputOutline.color = hasError ? outlineErrorColor : outlineNormalColor;
             errorMark.SetActive(hasError);
+        }
+
+        private IEnumerator ActivateInputFieldDelayed()
+        {
+            yield return null;
+
+            emailInput.caretPosition = 0;
+            emailInput.ActivateInputField();
+            emailInput.Select();
+
+            activateInputCoroutine = null;
         }
 
         private static bool IsValidEmail(string email) =>
