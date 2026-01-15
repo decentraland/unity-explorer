@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.SceneBannedUsers
@@ -19,6 +20,7 @@ namespace DCL.SceneBannedUsers
         private CancellationTokenSource checkIfPlayerIsBannedCts;
         private string roomMetadata = string.Empty;
         private BannedUsersRoomMetadata bannedUsersRoomMetadata;
+        private HashSet<string> bannedAddressesSet;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
@@ -33,6 +35,11 @@ namespace DCL.SceneBannedUsers
         {
             roomMetadata = metadata;
             bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
+
+            if (bannedUsersRoomMetadata.BannedAddresses is { Length: > 0 })
+                bannedAddressesSet = new HashSet<string>(bannedUsersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
+            else
+                bannedAddressesSet = null;
         }
 
         /// <summary>
@@ -48,19 +55,7 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
-            if (string.IsNullOrEmpty(roomMetadata))
-                return false;
-
-            if (bannedUsersRoomMetadata.bannedAddresses == null)
-                return false;
-
-            foreach (string wallet in bannedUsersRoomMetadata.bannedAddresses)
-            {
-                if (string.Equals(wallet, userId, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
+            return bannedAddressesSet?.Contains(userId) ?? false;
         }
     }
 }

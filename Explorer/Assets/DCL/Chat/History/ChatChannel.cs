@@ -11,9 +11,9 @@ namespace DCL.Chat.History
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public static readonly ChannelId NEARBY_CHANNEL_ID = new (ChatChannelType.NEARBY.ToString());
+        public static readonly ChannelId NEARBY_CHANNEL_ID = new (nameof(ChatChannelType.NEARBY));
         public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
-        public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.NEARBY, ChatChannelType.NEARBY.ToString());
+        public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.NEARBY, nameof(ChatChannelType.NEARBY));
 
         private const string COMMUNITY_PREFIX = "community:";
 
@@ -199,7 +199,7 @@ namespace DCL.Chat.History
         public enum ChatChannelType
         {
             /// <summary>
-            /// The channel in which all users in an island can participate.
+            /// The channel in which all users on an island can participate.
             /// </summary>
             NEARBY,
 
