@@ -10,7 +10,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -81,14 +80,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
             viewInstance.JumpIntoWorldButton.interactable = true;
-
             viewInstance.ProfileNameLabel.gameObject.SetActive(false);
             viewInstance.Description.SetActive(false);
             viewInstance.DiffAccountButton.SetActive(false);
 
+            viewInstance.NewUserContainer.SetActive(true);
+
             viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
             viewInstance.FinalizeContainer.SetActive(true);
-            viewInstance.NewUserContainer.SetActive(true);
 
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();

@@ -39,6 +39,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
 
             viewInstance.JumpIntoWorldButton.gameObject.SetActive(true);
+            viewInstance.JumpIntoWorldButton.transform.parent.gameObject.SetActive(true);
+            viewInstance.JumpIntoWorldButton.interactable = true;
+
             viewInstance.ProfileNameLabel.gameObject.SetActive(true);
             viewInstance.Description.SetActive(true);
             viewInstance.DiffAccountButton.SetActive(true);
@@ -48,7 +51,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.FinalizeAnimator.ResetAnimator();
             viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
 
-            viewInstance.JumpIntoWorldButton.interactable = true;
 
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();

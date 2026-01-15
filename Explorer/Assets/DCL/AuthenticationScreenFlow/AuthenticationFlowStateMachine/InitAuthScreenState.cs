@@ -20,7 +20,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.AuthLoginScreenView.gameObject.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.VerificationOTPContainer.SetActive(false);
+
+            // Finilize
             viewInstance.FinalizeContainer.SetActive(false);
+            viewInstance.JumpIntoWorldButton.gameObject.SetActive(true);
+            viewInstance.DiffAccountButton.SetActive(true);
+            viewInstance.ProfileNameLabel.gameObject.SetActive(true);
+            viewInstance.Description.SetActive(true);
+            viewInstance.NewUserContainer.SetActive(false);
 
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
