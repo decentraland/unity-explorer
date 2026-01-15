@@ -59,12 +59,11 @@ namespace ECS.Unity.AssetLoad.Systems
             {
                 if (result.Succeeded)
                 {
-
-                    assetLoadCache.TryAdd(component.Name, result.Asset);
-                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, component.Name);
+                    assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, result.Asset);
+                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, assetLoadChildComponent.AssetPath);
                 }
                 else
-                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, component.Name);
+                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
                 World.Destroy(entity);
             }
@@ -82,9 +81,9 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetLoadCache.TryAdd(audioPromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
+                assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, audioPromise.LoadingIntention.CommonArguments.URL);
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
@@ -101,9 +100,9 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetLoadCache.TryAdd(texturePromise.LoadingIntention.CommonArguments.URL, promiseResult.Asset);
+                assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, texturePromise.LoadingIntention.CommonArguments.URL);
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
@@ -118,9 +117,10 @@ namespace ECS.Unity.AssetLoad.Systems
                 || !capBudget.TrySpendBudget())
                 return;
 
-            assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
+            if (!mediaPlayerComponent.HasFailed)
+                assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, mediaPlayerComponent.MediaAddress.ToString());
+            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }

@@ -82,12 +82,14 @@ namespace ECS.Unity.AssetLoad.Systems
             {
                 if (existingComponent.LoadingAssetPaths.Contains(path)) continue;
 
-                if (!sceneData.TryGetHash(path, out _))
+                if (!sceneData.TryGetHash(path, out string hash))
                 {
                     assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
                 }
+
+                AssetLoadChildComponent assetLoadChildComponent = new AssetLoadChildComponent(crdtEntity, hash, path);
 
                 // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
                 if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
@@ -96,7 +98,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise);
 
-                    World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
                 }
                 else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -104,7 +106,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
@@ -117,7 +119,7 @@ namespace ECS.Unity.AssetLoad.Systems
                             ReportSource = GetReportCategory(),
                         },
                         PartitionComponent.MIN_PRIORITY);
-                    World.Create(promise, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(promise, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
@@ -126,7 +128,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, new AssetLoadChildComponent(crdtEntity));
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
                 }
                 else
                 {

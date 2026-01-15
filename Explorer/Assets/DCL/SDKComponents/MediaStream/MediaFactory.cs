@@ -165,8 +165,12 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(url);
 
             MediaPlayerComponent component;
+
             if (assetLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
+            {
                 component = cachedComponent;
+                component.Cts = new CancellationTokenSource();
+            }
             else
             {
                 MultiMediaPlayer player = address.Match(
