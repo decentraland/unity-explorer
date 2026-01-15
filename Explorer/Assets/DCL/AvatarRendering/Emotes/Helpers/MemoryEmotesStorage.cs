@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;
+using static DCL.AvatarRendering.Emotes.EmoteComponentsUtils;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -17,18 +18,20 @@ namespace DCL.AvatarRendering.Emotes
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
             URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
-        
+        private readonly List<URN> baseEmotesUrns = new ();
 
-        public List<URN> EmbededURNs { get; } = new ();
+        public IReadOnlyList<URN> BaseEmotesUrns => baseEmotesUrns;
 
         public bool TryGetElement(URN urn, out IEmote element)
         {
             lock (lockObject)
             {
-                if (!emotes.TryGetValue(urn, out element))
+                URN convertedUrn = ConvertLegacyEmoteUrnToOnChain(urn);
+
+                if (!emotes.TryGetValue(convertedUrn, out element))
                     return false;
 
-                UpdateListedCachePriority(urn);
+                UpdateListedCachePriority(convertedUrn);
 
                 return true;
             }
@@ -36,16 +39,19 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Set(URN urn, IEmote element)
         {
-            lock (lockObject) { emotes[urn] = element; }
+            lock (lockObject)
+            {
+                URN convertedUrn = ConvertLegacyEmoteUrnToOnChain(urn);
+                emotes[convertedUrn] = element;
+            }
         }
 
-
-        public void AddEmbeded(URN urn, IEmote emote)
+        public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns)
         {
             lock (lockObject)
             {
-                EmbededURNs.Add(urn);
-                emotes[urn] = emote;
+                baseEmotesUrns.Clear();
+                baseEmotesUrns.AddRange(urns);
             }
         }
 
@@ -53,14 +59,20 @@ namespace DCL.AvatarRendering.Emotes
         {
             lock (lockObject)
             {
-                return TryGetElement(emoteDto.metadata.id, out IEmote existingEmote)
-                    ? existingEmote
-                    : AddEmote(
-                        emoteDto.metadata.id,
-                        new Emote(
-                            new StreamableLoadingResult<EmoteDTO>(emoteDto), false),
-                        qualifiedForUnloading
-                    );
+                URN convertedUrn = ConvertLegacyEmoteUrnToOnChain(emoteDto.metadata.id);
+
+                if (emotes.TryGetValue(convertedUrn, out IEmote existingEmote))
+                {
+                    UpdateListedCachePriority(convertedUrn);
+                    return existingEmote;
+                }
+
+                return AddEmote(
+                    convertedUrn,
+                    new Emote(
+                        new StreamableLoadingResult<EmoteDTO>(emoteDto), false),
+                    qualifiedForUnloading
+                );
             }
         }
 
