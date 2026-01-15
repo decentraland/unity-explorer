@@ -37,25 +37,25 @@ namespace DCL.SDKComponents.AudioSources
 
         [Query]
         [All(typeof(AudioSourceComponent))]
-        private void PropagateAudioSourceEvents(in CRDTEntity sdkEntity, ref AudioSourceComponent audioSourceComponent)
+        private void PropagateAudioSourceEvents(in CRDTEntity sdkEntity, in AudioSourceComponent audioSourceComponent)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaState state = GetAudioSourceState(ref audioSourceComponent);
+            MediaState state = GetAudioSourceState(in audioSourceComponent);
             PropagateStateInAudioEvent(in sdkEntity, state);
         }
 
         [Query]
         [All(typeof(MediaPlayerComponent))]
-        private void PropagateAudioStreamEvents(in CRDTEntity sdkEntity, ref MediaPlayerComponent mediaPlayer)
+        private void PropagateAudioStreamEvents(in CRDTEntity sdkEntity, in MediaPlayerComponent mediaPlayer)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaState state = GetAudioStreamState(ref mediaPlayer);
+            MediaState state = GetAudioStreamState(in mediaPlayer);
             PropagateStateInAudioEvent(in sdkEntity, state);
         }
 
-        private static MediaState GetAudioSourceState(ref AudioSourceComponent audioSourceComponent)
+        private static MediaState GetAudioSourceState(in AudioSourceComponent audioSourceComponent)
         {
             // Check if clip is still loading
             if (!audioSourceComponent.ClipPromise.IsConsumed)
@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.AudioSources
             return audioSource.isPlaying ? MediaState.MsPlaying : MediaState.MsReady;
         }
 
-        private MediaState GetAudioStreamState(ref MediaPlayerComponent mediaPlayer)
+        private MediaState GetAudioStreamState(in MediaPlayerComponent mediaPlayer)
         {
             VideoState videoState = mediaPlayer.State;
             return (MediaState)videoState;
