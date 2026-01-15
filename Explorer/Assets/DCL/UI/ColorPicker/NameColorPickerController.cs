@@ -1,0 +1,34 @@
+using System;
+using UnityEngine;
+
+namespace DCL.UI
+{
+    public class NameColorPickerController : IDisposable
+    {
+        private readonly ColorPickerCore core;
+        private readonly ColorPickerView view;
+        private readonly ColorPresetsSO colorPresets;
+
+        private Color currentColor;
+
+        public event Action<Color> OnColorChanged;
+
+        public NameColorPickerController(ColorPickerView view, ColorToggleView colorToggle, ColorPresetsSO colorPresets)
+        {
+            core = new ColorPickerCore(view, colorToggle);
+            core.OnColorChanged += OnCoreColorChanged;
+
+            this.view = view;
+            this.colorPresets = colorPresets;
+        }
+
+        public void Dispose()
+        {
+            core.OnColorChanged -= OnCoreColorChanged;
+            core.Dispose();
+        }
+
+        private void OnCoreColorChanged(Color color) =>
+            OnColorChanged(color);
+    }
+}
