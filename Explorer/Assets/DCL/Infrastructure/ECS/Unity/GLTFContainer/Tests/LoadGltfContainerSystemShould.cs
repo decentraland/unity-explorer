@@ -3,6 +3,7 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.RenderSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
@@ -59,7 +60,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system = new LoadGltfContainerSystem(world, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1), sceneData, Substitute.For<IEntityCollidersSceneCache>());
             var budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, new MaterialManager());
         }
 
         [TearDown]

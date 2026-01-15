@@ -22,12 +22,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
-        private MaterialManager materialManager = new MaterialManager();
+        private MaterialManager materialManager;// = new MaterialManager();
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, MaterialManager matMan) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
+            this.materialManager = matMan;
         }
 
         protected override void Update(float t)
