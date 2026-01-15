@@ -23,6 +23,8 @@ namespace ECS
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
+        public string Room { get; private set; }
+        public bool IsConnectedSceneRoom { get; private set; }
         public bool Configured { get; private set; }
 
         public IReadonlyReactiveProperty<RealmKind> RealmType => realmType;
@@ -54,15 +56,16 @@ namespace ECS
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
             Hostname = string.Empty;
+            Room = string.Empty;
         }
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false, string.Empty, false);
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment)
+            string hostname, bool isLocalSceneDevelopment, string room, bool isConnectedSceneRoom)
         {
             IsDirty = true;
             Configured = true;
@@ -74,6 +77,8 @@ namespace ECS
             NetworkId = networkId;
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
+            Room = room;
+            IsConnectedSceneRoom = isConnectedSceneRoom;
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;

@@ -59,22 +59,28 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public int networkId;
             public string commsAdapter;
             public bool isPreview;
+            public string room;
+            public bool isConnectedSceneRoom;
 
             public RealmInfo(IRealmData realmData) : this(
                 new Uri(realmData.Ipfs.CatalystBaseUrl.Value).GetLeftPart(UriPartial.Authority),
                 realmData.RealmName,
                 realmData.NetworkId,
                 realmData.CommsAdapter,
-                realmData.IsLocalSceneDevelopment
+                realmData.IsLocalSceneDevelopment,
+                realmData.Room,
+                realmData.IsConnectedSceneRoom
             ) { }
 
-            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview)
+            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview, string room, bool isConnectedSceneRoom)
             {
                 this.baseUrl = baseUrl;
                 this.realmName = realmName;
                 this.networkId = networkId;
                 this.commsAdapter = commsAdapter;
                 this.isPreview = isPreview;
+                this.room = room;
+                this.isConnectedSceneRoom = isConnectedSceneRoom;
             }
         }
 
