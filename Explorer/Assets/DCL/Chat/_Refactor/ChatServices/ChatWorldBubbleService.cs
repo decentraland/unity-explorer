@@ -66,7 +66,9 @@ namespace DCL.Chat.ChatServices
 
         public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser, string? communityName = null)
         {
-            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
+            if (!nametagsData.showNameTags
+                || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE
+                || (channel.ChannelType != ChatChannel.ChatChannelType.NEARBY && chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NEARBY_ONLY))
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out var entry))
