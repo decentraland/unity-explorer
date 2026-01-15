@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace DCL.UI
 
         public string CurrentEmailText => emailInput.text;
 
+        private Coroutine? activateInputCoroutine;
+
         private void OnEnable()
         {
             startButton.onClick.AddListener(EmitStartButtonPressedEvent);
@@ -34,15 +37,34 @@ namespace DCL.UI
             startButton.interactable = false;
             emailInputOutline.color = outlineNormalColor;
             emailErrorMark.SetActive(false);
+
+            activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
         }
 
         private void OnDisable()
         {
+            if (activateInputCoroutine != null)
+            {
+                StopCoroutine(activateInputCoroutine);
+                activateInputCoroutine = null;
+            }
+
             startButton.onClick.RemoveAllListeners();
 
             emailInput.onValueChanged.RemoveAllListeners();
             emailInput.onEndEdit.RemoveAllListeners();
             emailInput.onSelect.RemoveAllListeners();
+        }
+
+        private IEnumerator ActivateInputFieldDelayed()
+        {
+            yield return null;
+
+            emailInput.caretPosition = 0;
+            emailInput.ActivateInputField();
+            emailInput.Select();
+
+            activateInputCoroutine = null;
         }
 
         private void EmitStartButtonPressedEvent() =>
