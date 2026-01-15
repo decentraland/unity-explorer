@@ -4,7 +4,9 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -77,27 +79,19 @@ namespace DCL.Places
 
         private void LoadPlaces(int pageNumber)
         {
-            if (!string.IsNullOrEmpty(currentFilters.SearchText) || currentFilters.Section == PlacesSection.DISCOVER)
+            PlacesSection sectionToLoad = currentFilters.Section!.Value;
+
+            if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
                 placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false, cleanSearch: false);
-                loadPlacesCts = loadPlacesCts.SafeRestart();
-                SearchPlacesAsync(pageNumber, loadPlacesCts.Token).Forget();
+                sectionToLoad = PlacesSection.DISCOVER;
             }
-            else
-            {
-                view.ClearPlacesResults();
-                view.SetPlacesCounterActive(false);
-            }
+
+            loadPlacesCts = loadPlacesCts.SafeRestart();
+            LoadPlacesAsync(pageNumber, sectionToLoad, loadPlacesCts.Token).Forget();
         }
 
-        private void UnloadPlaces()
-        {
-            loadPlacesCts?.SafeCancelAndDispose();
-            view.ClearPlacesResults();
-            placesStateService.ClearPlaces();
-        }
-
-        private async UniTask SearchPlacesAsync(int pageNumber, CancellationToken ct)
+        private async UniTask LoadPlacesAsync(int pageNumber, PlacesSection section, CancellationToken ct)
         {
             isPlacesGridLoadingItems = true;
 
@@ -111,17 +105,22 @@ namespace DCL.Places
             else
                 view.SetPlacesGridLoadingMoreActive(true);
 
-            bool isSearching = !string.IsNullOrEmpty(currentFilters.SearchText);
-
-            var placesResult = await placesAPIService.SearchPlacesAsync(
-                                                          pageNumber: pageNumber,
-                                                          pageSize: PLACES_PER_PAGE,
-                                                          ct: ct,
-                                                          searchText: currentFilters.SearchText,
-                                                          sortBy: currentFilters.SortBy,
-                                                          sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                          category: isSearching ? null : currentFilters.CategoryId)
-                                                     .SuppressToResultAsync(ReportCategory.PLACES);
+            Result<PlacesData.IPlacesAPIResponse> placesResult = section switch
+                                                                 {
+                                                                     PlacesSection.DISCOVER => await placesAPIService.SearchPlacesAsync(
+                                                                                                                          pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
+                                                                                                                          searchText: currentFilters.SearchText,
+                                                                                                                          sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                                                                                          category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                                                                                                                     .SuppressToResultAsync(ReportCategory.PLACES),
+                                                                     PlacesSection.FAVORITES => await placesAPIService.GetFavoritesAsync(
+                                                                                                                           ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
+                                                                                                                           sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                                                                                                                      .SuppressToResultAsync(ReportCategory.PLACES),
+                                                                     _ => await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(
+                                                                                            new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 })
+                                                                                       .SuppressToResultAsync(ReportCategory.PLACES),
+                                                                 };
 
             if (ct.IsCancellationRequested)
                 return;
@@ -168,6 +167,13 @@ namespace DCL.Places
             view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
+        }
+
+        private void UnloadPlaces()
+        {
+            loadPlacesCts?.SafeCancelAndDispose();
+            view.ClearPlacesResults();
+            placesStateService.ClearPlaces();
         }
     }
 }
