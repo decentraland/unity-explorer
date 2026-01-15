@@ -4,15 +4,13 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Deduplication
 {
-    public class MessageDeduplication<T> : IMessageDeduplication<T> where T : IComparable<T>, IEquatable<T>
+    public class MessageDeduplication<T> : IMessageDeduplication<T> where T: IComparable<T>, IEquatable<T>
     {
         private readonly ISet<RegisteredStamp> registeredStamps = new HashSet<RegisteredStamp>();
         private readonly TimeSpan cleanPerPeriod;
         private DateTime previousClean;
 
-        public MessageDeduplication() : this(TimeSpan.FromMinutes(5))
-        {
-        }
+        public MessageDeduplication() : this(TimeSpan.FromMinutes(5)) { }
 
         public MessageDeduplication(TimeSpan cleanPerPeriod)
         {
