@@ -1122,7 +1122,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 06a893a4f92c34c41b0d0c4efe0813ae, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 90614bd3e9d404a50af4ebe6ddedd83b, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1250,7 +1250,6 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1064261176652212057}
   <raycaster>k__BackingField: {fileID: 6667136558194311972}
   <ExitButton>k__BackingField: {fileID: 5253154071969957262}
-  <RestartButton>k__BackingField: {fileID: 0}
 --- !u!1 &7473356248565233579
 GameObject:
   m_ObjectHideFlags: 0

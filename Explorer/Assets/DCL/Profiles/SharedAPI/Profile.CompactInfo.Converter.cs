@@ -29,6 +29,7 @@ namespace DCL.Profiles
                 HasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false,
                 Name = jObject["name"]?.Value<string>() ?? "",
                 UnclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "",
+                FaceSnapshotUrl = URLAddress.FromString(jObject["thumbnailUrl"]?.Value<string>() ?? "")
             };
 
             return compact;
