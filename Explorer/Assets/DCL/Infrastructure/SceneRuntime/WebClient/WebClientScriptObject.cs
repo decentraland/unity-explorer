@@ -2,7 +2,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using Utility;
 
 namespace SceneRuntime.WebClient
@@ -219,7 +218,7 @@ namespace SceneRuntime.WebClient
 
                 try
                 {
-                    IntPtr contextIdPtr = StringToHGlobalUTF8(engine.contextId);
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(engine.contextId);
 
                     try
                     {

@@ -58,14 +58,11 @@ namespace SceneRuntime.WebClient
             return count;
         }
 
-        void IDCLArrayBuffer.InvokeWithDirectAccess(Action<IntPtr> action)
-        {
+        void IDCLArrayBuffer.InvokeWithDirectAccess(Action<IntPtr> action) =>
             throw new NotSupportedException("WebGL does not support direct memory access");
-        }
 
-        TResult IDCLArrayBuffer.InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func)
-        {
+
+        TResult IDCLArrayBuffer.InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func) =>
             throw new NotSupportedException("WebGL does not support direct memory access");
-        }
     }
 }

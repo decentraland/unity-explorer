@@ -20,10 +20,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 
 #if UNITY_WEBGL
-
-// ReSharper disable once RedundantUsingDirective
 using SceneRuntime.WebClient;
-
 #else
 using SceneRuntime.V8;
 #endif

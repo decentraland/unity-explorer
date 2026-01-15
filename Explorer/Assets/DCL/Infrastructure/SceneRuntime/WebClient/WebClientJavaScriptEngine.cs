@@ -20,7 +20,7 @@ namespace SceneRuntime.WebClient
             get
             {
                 if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
-                return new WebGLScriptObject(this, "globalThis");
+                return new WebClientScriptObject(this, "globalThis");
             }
         }
 
@@ -260,7 +260,7 @@ namespace SceneRuntime.WebClient
                 string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
                 if (string.IsNullOrEmpty(objectId))
                     throw new InvalidOperationException("Failed to get object ID");
-                return new WebGLScriptObject(this, objectId);
+                return new WebClientScriptObject(this, objectId);
             }
             finally
             {
@@ -313,7 +313,7 @@ namespace SceneRuntime.WebClient
                 string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
                 if (string.IsNullOrEmpty(objectId))
                     throw new InvalidOperationException("Failed to get object ID");
-                return new WebGLScriptObject(this, objectId);
+                return new WebClientScriptObject(this, objectId);
             }
             finally
             {

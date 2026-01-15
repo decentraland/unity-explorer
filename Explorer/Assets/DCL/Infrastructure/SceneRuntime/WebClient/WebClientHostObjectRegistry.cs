@@ -4,14 +4,14 @@ namespace SceneRuntime.WebClient
 {
     internal static class WebClientHostObjectRegistry
     {
-        private static readonly Dictionary<string, Dictionary<string, object>> contextObjects = new ();
+        private static readonly Dictionary<string, Dictionary<string, object>> CONTEXT_OBJECTS = new ();
 
         public static void Register(string contextId, string objectId, object obj)
         {
-            if (!contextObjects.TryGetValue(contextId, out Dictionary<string, object> objects))
+            if (!CONTEXT_OBJECTS.TryGetValue(contextId, out Dictionary<string, object> objects))
             {
                 objects = new Dictionary<string, object>();
-                contextObjects[contextId] = objects;
+                CONTEXT_OBJECTS[contextId] = objects;
             }
 
             objects[objectId] = obj;
@@ -19,7 +19,7 @@ namespace SceneRuntime.WebClient
 
         public static object? Get(string contextId, string objectId)
         {
-            if (contextObjects.TryGetValue(contextId, out Dictionary<string, object> objects))
+            if (CONTEXT_OBJECTS.TryGetValue(contextId, out Dictionary<string, object> objects))
             {
                 objects.TryGetValue(objectId, out object? obj);
                 return obj;
@@ -30,7 +30,7 @@ namespace SceneRuntime.WebClient
 
         public static void UnregisterAll(string contextId)
         {
-            contextObjects.Remove(contextId);
+            CONTEXT_OBJECTS.Remove(contextId);
         }
     }
 }

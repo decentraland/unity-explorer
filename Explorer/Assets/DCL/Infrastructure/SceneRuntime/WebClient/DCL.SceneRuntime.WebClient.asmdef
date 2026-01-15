@@ -1,6 +1,6 @@
 {
     "name": "DCL.SceneRuntime.WebClient",
-    "rootNamespace": "",
+    "rootNamespace": "DCL.Infrastructure",
     "references": [
         "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
@@ -8,6 +8,7 @@
         "GUID:f51ebe6a0ceec4240a699833d6309b23"
     ],
     "includePlatforms": [
+        "Editor",
         "WebGL"
     ],
     "excludePlatforms": [],
