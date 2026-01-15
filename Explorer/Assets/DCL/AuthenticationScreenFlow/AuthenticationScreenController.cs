@@ -66,7 +66,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IWebRequestController webRequestController;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -100,8 +99,7 @@ namespace DCL.AuthenticationScreenFlow
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
-            IAppArgs appArgs, IWearablesProvider wearablesProvider,
-            IWebRequestController webRequestController)
+            IAppArgs appArgs, IWearablesProvider wearablesProvider)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -121,7 +119,6 @@ namespace DCL.AuthenticationScreenFlow
             this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
-            this.webRequestController = webRequestController;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
