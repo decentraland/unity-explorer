@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SkyBox;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -35,16 +34,16 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly IRealmData realmData;
         private readonly IWebRequestController webRequestController;
         private readonly SkyboxSettingsAsset skyboxSettings;
-        private readonly ObjectProxy<IRoomHub> roomHubProxy;
+        private readonly IRoomHub roomHub;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, ObjectProxy<IRoomHub> roomHubProxy)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, IRoomHub roomHub)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.realmData = realmData;
             this.webRequestController = webRequestController;
             this.skyboxSettings = skyboxSettings;
-            this.roomHubProxy = roomHubProxy;
+            this.roomHub = roomHub;
         }
 
         public void Dispose() { }
@@ -89,7 +88,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             try
             {
-                IRoomHub roomHub = roomHubProxy.StrictObject;
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
                 isConnectedSceneRoom = sceneRoom.CurrentState() == IConnectiveRoom.State.Running && sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
                 room = roomHub.IslandRoom().Info.Sid ?? string.Empty;

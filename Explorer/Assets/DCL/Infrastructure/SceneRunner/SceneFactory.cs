@@ -15,7 +15,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.SkyBox;
-using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -191,10 +190,6 @@ namespace SceneRunner
 
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
-            
-            // Create roomHubProxy to pass to RuntimeImplementation
-            var roomHubProxy = new ObjectProxy<IRoomHub>();
-            roomHubProxy.SetObject(roomHub);
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -203,7 +198,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHubProxy);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -232,7 +227,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHubProxy);
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
