@@ -1,8 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SkyBox;
+using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -12,6 +16,7 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;
+using System;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -30,14 +35,16 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly IRealmData realmData;
         private readonly IWebRequestController webRequestController;
         private readonly SkyboxSettingsAsset skyboxSettings;
+        private readonly ObjectProxy<IRoomHub> roomHubProxy;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, ObjectProxy<IRoomHub> roomHubProxy)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
             this.realmData = realmData;
             this.webRequestController = webRequestController;
             this.skyboxSettings = skyboxSettings;
+            this.roomHubProxy = roomHubProxy;
         }
 
         public void Dispose() { }
@@ -74,8 +81,36 @@ namespace CrdtEcsBridge.JsModulesImplementation
             };
         }
 
-        public UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct) =>
-            UniTask.FromResult(new IRuntime.GetRealmResponse(realmData));
+        public UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
+        {
+            // Fetch dynamic room info from IRoomHub
+            string room = string.Empty;
+            bool isConnectedSceneRoom = false;
+
+            try
+            {
+                IRoomHub roomHub = roomHubProxy.StrictObject;
+                IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
+                isConnectedSceneRoom = sceneRoom.CurrentState() == IConnectiveRoom.State.Running && sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
+                room = roomHub.IslandRoom().Info.Sid ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                // If roomHub is not available, use empty values
+            }
+
+            var realmInfo = new IRuntime.RealmInfo(
+                new Uri(realmData.Ipfs.CatalystBaseUrl.Value).GetLeftPart(UriPartial.Authority),
+                realmData.RealmName,
+                realmData.NetworkId,
+                realmData.CommsAdapter,
+                realmData.IsLocalSceneDevelopment,
+                room,
+                isConnectedSceneRoom
+            );
+
+            return UniTask.FromResult(new IRuntime.GetRealmResponse(realmInfo));
+        }
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync()
         {

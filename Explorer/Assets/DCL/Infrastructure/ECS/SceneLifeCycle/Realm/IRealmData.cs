@@ -27,8 +27,6 @@ namespace ECS
         string Protocol { get; }
         string Hostname { get; }
         bool IsLocalSceneDevelopment { get; }
-        string Room { get; }
-        bool IsConnectedSceneRoom { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -47,8 +45,6 @@ namespace ECS
             public string Protocol { get; }
             public string Hostname { get; }
             public bool IsLocalSceneDevelopment { get; }
-            public string Room { get; }
-            public bool IsConnectedSceneRoom { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 
@@ -57,10 +53,10 @@ namespace ECS
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,
-                true, networkId, commsAdapter, protocol, hostname, string.Empty, false) { }
+                true, networkId, commsAdapter, protocol, hostname) { }
 
             public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured, int networkId,
-                string commsAdapter, string protocol, string hostname, string room = "", bool isConnectedSceneRoom = false)
+                string commsAdapter, string protocol, string hostname)
             {
                 Ipfs = ipfs;
                 ScenesAreFixed = scenesAreFixed;
@@ -70,8 +66,6 @@ namespace ECS
                 CommsAdapter = commsAdapter;
                 Protocol = protocol;
                 Hostname = hostname;
-                Room = room;
-                IsConnectedSceneRoom = isConnectedSceneRoom;
             }
         }
     }

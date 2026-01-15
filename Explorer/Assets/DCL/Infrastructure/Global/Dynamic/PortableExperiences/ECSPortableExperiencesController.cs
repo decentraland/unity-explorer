@@ -115,9 +115,7 @@ namespace PortableExperiences.Controller
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
-                result.comms?.room ?? string.Empty,
-                result.comms?.isConnectedSceneRoom ?? false
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);

@@ -153,9 +153,7 @@ namespace Global.Dynamic
                     ResolveCommsAdapter(result),
                     result.comms?.protocol ?? "v3",
                     hostname,
-                    isLocalSceneDevelopment,
-                    result.comms?.room ?? string.Empty,
-                    result.comms?.isConnectedSceneRoom ?? false
+                    isLocalSceneDevelopment
                 );
 
                 // Add the realm component

@@ -41,10 +41,6 @@ namespace SceneRuntime.Apis.Modules.Runtime
         {
             public RealmInfo? realmInfo;
 
-            public GetRealmResponse(IRealmData? realmData) : this(
-                realmData == null ? null : new RealmInfo(realmData)
-            ) { }
-
             public GetRealmResponse(RealmInfo? realmInfo)
             {
                 this.realmInfo = realmInfo;
@@ -61,16 +57,6 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public bool isPreview;
             public string room;
             public bool isConnectedSceneRoom;
-
-            public RealmInfo(IRealmData realmData) : this(
-                new Uri(realmData.Ipfs.CatalystBaseUrl.Value).GetLeftPart(UriPartial.Authority),
-                realmData.RealmName,
-                realmData.NetworkId,
-                realmData.CommsAdapter,
-                realmData.IsLocalSceneDevelopment,
-                realmData.Room,
-                realmData.IsConnectedSceneRoom
-            ) { }
 
             public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview, string room, bool isConnectedSceneRoom)
             {

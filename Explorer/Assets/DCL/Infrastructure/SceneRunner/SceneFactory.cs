@@ -7,6 +7,7 @@ using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -14,6 +15,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using DCL.SkyBox;
+using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -32,7 +34,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.Clipboard;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -190,6 +191,10 @@ namespace SceneRunner
 
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
+            
+            // Create roomHubProxy to pass to RuntimeImplementation
+            var roomHubProxy = new ObjectProxy<IRoomHub>();
+            roomHubProxy.SetObject(roomHub);
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -198,7 +203,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHubProxy);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -227,7 +232,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard);
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHubProxy);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
