@@ -44,7 +44,7 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
@@ -71,7 +71,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.ForgetAllLoadings(World);
 
             if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
-                           && !sceneLODInfo.InitialSceneStateLOD.CurrentState.Equals(InitialSceneStateLOD.InitialSceneStateLODState.FAILED))
+                           && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
                 var initialSceneState = GetAssetBundleIntention.FromHash(
                     GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
@@ -81,7 +81,7 @@ namespace DCL.LOD.Systems
                     parentEntityID: sceneDefinitionComponent.Definition.id
                 );
                 sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
-                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.InitialSceneStateLODState.PROCESSING;
+                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;
             }

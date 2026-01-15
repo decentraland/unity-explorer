@@ -335,9 +335,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                         World.Add(entity, SceneLODInfo.Create());
                     break;
                 default:
-                    //The check is not needed here because the SceneFacade and promise are removed on the same frame that a SceneLODInfo was added
-                    World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
+                    //The previous ISceneFacade may not be fully discarded because of its async dispose (Check UnloadSceneSystem)
+                    //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
+                    if (!World.Has<ISceneFacade>(entity))
+                        World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                            new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
                     break;
             }
         }
