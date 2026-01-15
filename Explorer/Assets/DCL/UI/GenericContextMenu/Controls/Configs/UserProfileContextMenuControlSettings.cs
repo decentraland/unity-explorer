@@ -1,3 +1,5 @@
+using DCL.Profiles;
+using DCL.UI.ConfirmationDialog.Opener;
 using System;
 using UnityEngine;
 
@@ -17,23 +19,14 @@ namespace DCL.UI.Controls.Configs
             DISABLED,
         }
 
-        public struct UserData
-        {
-            public string userName;
-            public string userAddress;
-            public bool hasClaimedName;
-            public string userThumbnailAddress;
-            public Color userColor;
-        }
-
-        internal UserData userData;
+        internal Profile.CompactInfo userData;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
-        internal readonly Action<UserData, FriendshipStatus> friendButtonClickAction;
+        internal readonly Action<Profile.CompactInfo, FriendshipStatus> friendButtonClickAction;
         internal readonly bool showProfilePicture;
         internal readonly bool showWalletSection;
 
-        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null, bool showProfilePicture = true, bool showWalletSection = true)
+        public UserProfileContextMenuControlSettings(Action<Profile.CompactInfo, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null, bool showProfilePicture = true, bool showWalletSection = true)
         {
             this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
@@ -41,8 +34,7 @@ namespace DCL.UI.Controls.Configs
             this.showWalletSection = showWalletSection;
         }
 
-        public void SetInitialData(UserData data,
-            FriendshipStatus friendshipStatus)
+        public void SetInitialData(Profile.CompactInfo data, FriendshipStatus friendshipStatus)
         {
             this.userData = data;
             this.friendshipStatus = friendshipStatus;
