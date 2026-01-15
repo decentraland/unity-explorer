@@ -116,7 +116,7 @@ namespace DCL.LOD.Systems
                 {
                     if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.UNINITIALIZED)
                     {
-                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, ref materialManager, out GltfContainerAsset asset))
+                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, materialManager, out GltfContainerAsset asset))
                             PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
                                 creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
                         else

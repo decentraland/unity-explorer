@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Rendering.RenderSystem;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
@@ -14,6 +15,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Buffers;
@@ -43,10 +45,12 @@ namespace DCL.PluginSystem.World
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly URLDomain assetBundleURL;
         private readonly IGltfContainerAssetsCache gltfContainerAssetsCache;
+        private readonly MaterialManager materialManager;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
             URLDomain assetBundleURL, IGltfContainerAssetsCache gltfContainerAssetsCache)
         {
+            this.materialManager = materialManager;
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;

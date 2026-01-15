@@ -14,7 +14,7 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, ref MaterialManager materialManager, out GltfContainerAsset gltfContainerAsset)
+        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash,MaterialManager materialManager, out GltfContainerAsset gltfContainerAsset)
         {
             if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))
             {

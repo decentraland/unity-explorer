@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
+        private readonly MaterialManager materialManager;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,
             CacheCleaner cacheCleaner,
@@ -51,8 +52,10 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            MaterialManager materialManager)
         {
+            this.materialManager = materialManager;
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
@@ -75,8 +78,6 @@ namespace DCL.PluginSystem.World
         {
             bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
-
-            MaterialManager materialManager = new MaterialManager();
 
             LoadGLTFSystem.InjectToWorld(
                 ref builder,

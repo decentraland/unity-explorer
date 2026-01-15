@@ -118,6 +118,8 @@ namespace DCL.Rendering.RenderSystem
 
         public void EndOFFramePUSHtoGPU()
         {
+            Debug.Log($"Buffer capacity: {GPUBuffer_PerMaterial.count}");
+            Debug.Log($"Per Materials: {perMaterials.Count}");
             GPUBuffer_PerMaterial.SetData(perMaterials.ToArray(), 0, 0, perMaterials.Count);
             //perMaterials.Clear();
         }
