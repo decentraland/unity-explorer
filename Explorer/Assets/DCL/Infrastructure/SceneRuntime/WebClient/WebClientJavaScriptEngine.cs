@@ -458,20 +458,16 @@ namespace SceneRuntime.WebClient
         }
 
         [UsedImplicitly]
-        public bool IsCompleted() =>
-            isCompleted;
+        public bool IsCompleted() => isCompleted;
 
         [UsedImplicitly]
-        public bool IsFaulted() =>
-            isFaulted;
+        public bool IsFaulted() => isFaulted;
 
         [UsedImplicitly]
-        public T? GetResult() =>
-            result;
+        public T? GetResult() => result;
 
         [UsedImplicitly]
-        public string? GetError() =>
-            error;
+        public string? GetError() => error;
     }
 
     internal class JSPromiseResolver
@@ -498,15 +494,12 @@ namespace SceneRuntime.WebClient
         }
 
         [UsedImplicitly]
-        public bool IsCompleted() =>
-            isCompleted;
+        public bool IsCompleted() => isCompleted;
 
         [UsedImplicitly]
-        public bool IsFaulted() =>
-            isFaulted;
+        public bool IsFaulted() => isFaulted;
 
         [UsedImplicitly]
-        public string? GetError() =>
-            error;
+        public string? GetError() => error;
     }
 }

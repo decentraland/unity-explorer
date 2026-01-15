@@ -1,10 +1,11 @@
 mergeInto(LibraryManager.library, {
     JSContext_Create: function(contextId) {
+        const contextIdStr = UTF8ToString(contextId);
         if (!window.__dclJSContexts) {
             window.__dclJSContexts = {};
         }
-        if (!window.__dclJSContexts[contextId]) {
-            window.__dclJSContexts[contextId] = {
+        if (!window.__dclJSContexts[contextIdStr]) {
+            window.__dclJSContexts[contextIdStr] = {
                 global: {},
                 compiledScripts: {},
                 hostObjects: {},
