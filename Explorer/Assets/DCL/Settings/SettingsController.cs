@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.Settings
 {
