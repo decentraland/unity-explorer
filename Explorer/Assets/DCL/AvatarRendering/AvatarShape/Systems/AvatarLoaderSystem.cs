@@ -32,20 +32,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            CreateAvatarShapeFromSDKComponentQuery(World);
             UpdateAvatarFromSDKComponentQuery(World);
-            CreateMainPlayerAvatarShapeFromProfileQuery(World);
-            CreateAvatarShapeFromProfileQuery(World);
             UpdateMainPlayerAvatarFromProfileQuery(World);
             UpdateAvatarFromProfileQuery(World);
+
+            CreateAvatarShapeFromSDKComponentQuery(World);
+            CreateMainPlayerAvatarShapeFromProfileQuery(World);
+            CreateAvatarShapeFromProfileQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
-            pbAvatarShape.IsDirty = false;
-
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
@@ -98,7 +97,6 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
             avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
-            pbAvatarShape.IsDirty = false;
         }
 
         [Query]
