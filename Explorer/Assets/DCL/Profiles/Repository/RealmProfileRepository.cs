@@ -319,15 +319,11 @@ namespace DCL.Profiles
                 // Centralized endpoint doesn't support GET
                 if (useCentralizedProfiles)
                 {
-                    var url = PostUrl(fromCatalyst, ProfileTier.Kind.Full);
-                    ReportHub.Log(ReportCategory.PROFILE, $"Executing Single Get via Centralized: {useCentralizedProfiles}, URL: {url}");
-                    
-                    profile = await ProfilesRequest.PostSingleAsync(webRequestController, url, id, version,
+                    profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
-
                 }
                 else
                 {
