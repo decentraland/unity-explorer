@@ -436,7 +436,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingStopCurrentEmote() Different emote or phase? Stopping");
                         StopEmote(entity, ref emoteComponent, avatarView);
 
-                        if (isPlayingDifferentEmote && emoteComponent.SocialEmote.WasReacting)
+                        if (isPlayingDifferentEmote && emoteComponent.SocialEmote.WasPlayingOutcome)
                             ResetAvatarAndControllerTransforms(entity);
                     }
 
@@ -535,8 +535,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 emoteComponent.SocialEmote.IsPlayingOutcome = emoteIntent.SocialEmote.UseOutcomeAnimation;
                 emoteComponent.SocialEmote.CurrentOutcome = emoteIntent.SocialEmote.OutcomeIndex;
+                emoteComponent.SocialEmote.WasPlayingOutcome = emoteComponent.SocialEmote.IsPlayingOutcome; // This is the only way to know the type of emote when OnEmoteStateExiting is called
                 emoteComponent.SocialEmote.IsReacting = emoteIntent.SocialEmote.UseOutcomeReactionAnimation;
-                emoteComponent.SocialEmote.WasReacting = emoteComponent.SocialEmote.IsReacting; // This is the only way to know the type of emote when OnEmoteStateExiting is called
                 emoteComponent.SocialEmote.InitiatorWalletAddress = emoteIntent.SocialEmote.InitiatorWalletAddress;
                 emoteComponent.SocialEmote.InteractionId = emoteIntent.SocialEmote.InteractionId;
                 emoteComponent.SocialEmote.TargetAvatarWalletAddress = emoteIntent.SocialEmote.TargetAvatarWalletAddress;
@@ -638,7 +638,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emoteComponent.Metadata!.IsSocialEmote)
                     avatarStateMachineEventHandler.EmoteStateExiting = OnEmoteStateExiting; // Setting and not subscribing because it could play the emote more than once and we can't know if it is the first for this client
 
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() wallet: " + emoteIntent.WalletAddress + " INTENT REMOVED " + emoteIntent.TriggerSource);
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"AfterPlayingUpdateSocialEmoteInteractions() wallet: {emoteIntent.WalletAddress} INTENT REMOVED ({emoteIntent.TriggerSource})");
 
                 World.Remove<CharacterEmoteIntent>(entity);
             }
@@ -862,7 +862,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"OnEmoteStateExiting() " + entity);
 
-            if (World.Get<CharacterEmoteComponent>(entity).SocialEmote.WasReacting)
+            if (World.Get<CharacterEmoteComponent>(entity).SocialEmote.WasPlayingOutcome)
             {
                 // This must occur right at the moment the Emote or Emote Loop states transition to Movement
                 ResetAvatarAndControllerTransforms(entity);

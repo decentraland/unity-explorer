@@ -44,10 +44,10 @@ namespace DCL.AvatarRendering.Emotes
             public int InteractionId;
 
             /// <summary>
-            /// Whether the last time an emote was played it was reacting to the start animation of an initiator.
+            /// Whether the last time an emote was played it was playing an outcome animation.
             /// This is the only way to know the type of emote when an Animator event occurs.
             /// </summary>
-            public bool WasReacting;
+            public bool WasPlayingOutcome;
         }
 
         public URN EmoteUrn;
