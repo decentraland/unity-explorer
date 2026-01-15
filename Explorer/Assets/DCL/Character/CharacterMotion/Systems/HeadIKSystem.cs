@@ -172,6 +172,8 @@ namespace DCL.CharacterMotion.Systems
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);
 
+            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, headIK.IsEnabled, settings.HeadIKWeightChangeSpeed * dt);
+
             // TODO: When enabling and disabling we should reset the reference position
             if (!headIK.IsEnabled || inWorldCameraActive) return;
 
