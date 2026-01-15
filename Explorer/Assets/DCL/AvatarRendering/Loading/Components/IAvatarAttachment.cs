@@ -17,9 +17,6 @@ namespace DCL.AvatarRendering.Loading.Components
 
         int Amount { get; }
         void SetAmount(int amount);
-        
-        public string ToString() =>
-            $"AvatarAttachment({DTO.GetHash()} | {this.GetUrn()})";
 
         // IThumbnailAttachment implementation
         URLPath IThumbnailAttachment.GetThumbnail()

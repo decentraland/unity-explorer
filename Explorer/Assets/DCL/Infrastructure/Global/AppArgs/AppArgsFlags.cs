@@ -58,6 +58,8 @@
 
         public const string HEAD_SYNC = "head-sync";
 
+        public const string DISCOVER = "discover";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

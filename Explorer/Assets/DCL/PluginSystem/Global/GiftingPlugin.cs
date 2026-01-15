@@ -107,7 +107,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
-            this.eventBus =  eventBus;
+            this.eventBus = eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -190,7 +190,7 @@ namespace DCL.PluginSystem.Global
 
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController
-                    .CreateLazily(giftSelectionPopupPrefab, null),
+                   .CreateLazily(giftSelectionPopupPrefab, null),
                 componentFactory,
                 giftInventoryService,
                 equippedStatusProvider,
@@ -200,7 +200,7 @@ namespace DCL.PluginSystem.Global
 
             giftTransferStatusController = new GiftTransferController(
                 GiftTransferController
-                    .CreateLazily(giftTransferPopupPrefab, null),
+                   .CreateLazily(giftTransferPopupPrefab, null),
                 webBrowser,
                 eventBus,
                 mvcManager,
@@ -210,7 +210,7 @@ namespace DCL.PluginSystem.Global
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
-                .CreateLazily(giftTransferSuccessPopupPrefab,
+               .CreateLazily(giftTransferSuccessPopupPrefab,
                     null));
 
             mvcManager.RegisterController(giftSelectionController);
@@ -218,8 +218,9 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
 
-            #region EDITOR_TEST
+#region EDITOR_TEST
 #if UNITY_EDITOR
+
             // NOTE: For triggering notification in the editor because
             // NOTE: method in the documentation for faking notifications doesn't work
             // NOTE: look for TestGiftNotification component on TEST_GIFT_NOTIFICATIONS game object
@@ -228,7 +229,7 @@ namespace DCL.PluginSystem.Global
             var go = new GameObject().AddComponent<TestGiftNotification>();
             go.name = "TEST_GIFT_NOTIFICATIONS";
 #endif
-            #endregion
+#endregion
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -252,14 +253,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
-
-            [field: SerializeField]
-            public string[] EmbeddedEmotes { get; private set; }
-
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN()
-            {
-                return EmbeddedEmotes.Select(s => new URN(s)).ToArray();
-            }
         }
     }
 }
