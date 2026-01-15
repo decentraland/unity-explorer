@@ -439,9 +439,13 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<T> RequestSignatureAsync<T>(string requestId, LoginMethod? method, DateTime expiration, CancellationToken ct)
         {
-            string url = method.HasValue
-                ? $"{signatureWebAppUrl}/auth/login?loginMethod={method.Value.ToString().ToLowerInvariant()}/{requestId}"
-                : $"{signatureWebAppUrl}/auth/requests/{requestId}";
+            var url =
+
+                // method.HasValue
+                // ?
+                // $"{signatureWebAppUrl}/auth/login?loginMethod={method.Value.ToString().ToLowerInvariant()}/{requestId}"
+                // :
+                $"{signatureWebAppUrl}/auth/requests/{requestId}";
 
             webBrowser.OpenUrl(url);
 
