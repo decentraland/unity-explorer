@@ -1,6 +1,7 @@
 using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utility.Types;
 using DCL.Optimization.ThreadSafePool;
 using Global.AppArgs;
 using System;
@@ -33,12 +34,15 @@ namespace DCL.WebRequests.ChromeDevtool
         }
 
 #if UNITY_INCLUDE_TESTS || UNITY_EDITOR
-        public static ChromeDevtoolProtocolClient NewForTest() =>
+        public static Option<ChromeDevtoolProtocolClient> NewForTest() =>
             New(false, new ApplicationParametersParser());
 #endif
 
-        public static ChromeDevtoolProtocolClient New(bool startOnCreation, IAppArgs appArgs)
+        public static Option<ChromeDevtoolProtocolClient> New(bool startOnCreation, IAppArgs appArgs)
         {
+#if UNITY_WEBGL // ChromeDevtoolProtocolClient is not supported on WebGL. WebSocket server cannot be instantiated from a webpage
+            return Option<ChromeDevtoolProtocolClient>.None;
+#else 
             Bridge bridge = new Bridge(
                 browser: new CreatorHubBrowser(appArgs, PORT),
                 logger: new DCLLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
@@ -50,7 +54,8 @@ namespace DCL.WebRequests.ChromeDevtool
             if (startOnCreation)
                 newInstance.StartAndOpen();
 
-            return newInstance;
+            return Option<ChromeDevtoolProtocolClient>.Some(newInstance);
+#endif
         }
 
         public BridgeStartResult StartAndOpen()

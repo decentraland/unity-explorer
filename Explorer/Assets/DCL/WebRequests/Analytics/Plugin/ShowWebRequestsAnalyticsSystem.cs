@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CDPBridges;
+using DCL.Utility.Types;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.NotificationsBus;
@@ -50,7 +51,7 @@ namespace DCL.WebRequests.Analytics
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
             IDebugContainerBuilder debugContainerBuilder,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient,
             RequestType[] requestTypes) : base(world)
         {
             this.webRequestsAnalyticsContainer = webRequestsAnalyticsContainer;
@@ -60,8 +61,17 @@ namespace DCL.WebRequests.Analytics
                                         .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
                                        ?.AddSingleButton("Open Chrome DevTools", () =>
                                          {
-                                             BridgeStartResult result = chromeDevtoolProtocolClient.StartAndOpen();
-                                             string? errorMessage = ErrorMessageFromBridgeResult(result);
+                                             string? errorMessage = null;
+
+                                             if (chromeDevtoolProtocolClient.Has)
+                                             {
+                                                 BridgeStartResult result = chromeDevtoolProtocolClient.Value.StartAndOpen();
+                                                 errorMessage = ErrorMessageFromBridgeResult(result);
+                                             }
+                                             else
+                                             {
+                                                errorMessage = "ChromeDevtoolProtocolClient does not exist";
+                                             }
 
                                              if (errorMessage != null)
                                                  NotificationsBusController

@@ -6,8 +6,10 @@ using System;
 using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
-
-
+#if !UNITY_WEBGL
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
+#endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -33,7 +35,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtSendToRenderer(IDCLTypedArray<byte> data)
+        public PoolableByteArray CrdtSendToRenderer(
+#if UNITY_WEBGL
+                object data
+#else
+                ITypedArray<byte> data
+#endif
+        )
         {
             if (disposeCts.IsCancellationRequested)
                 return PoolableByteArray.EMPTY;
