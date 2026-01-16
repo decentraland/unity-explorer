@@ -97,21 +97,17 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
-            ReportHub.LogProductionInfo($"SentryReportHandler.LogException<T>");
             SentrySdk.CaptureException(ecsSystemException);
         }
 
         internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
-            ReportHub.LogProductionInfo($"SentryReportHandler.LogException");
             using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
         internal override void HandleSuppressedException(Exception exception, ReportData reportData)
         {
-            ReportHub.LogProductionInfo($"SentryReportHandler.SuppressedException");
-
             //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
             if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
                 return;
