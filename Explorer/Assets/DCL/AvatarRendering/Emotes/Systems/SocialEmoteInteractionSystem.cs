@@ -11,11 +11,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SocialEmotes;
-using DCL.Utilities;
 using ECS.Abstract;
 using System;
 using UnityEngine;
-using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
