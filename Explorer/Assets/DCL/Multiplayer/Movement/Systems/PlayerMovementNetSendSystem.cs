@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.Movement.Systems
             bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
-                || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
+                || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
                 SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
                 return;
@@ -163,7 +163,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 animState = new AnimationStates
                 {
                     IsGrounded = animation.States.IsGrounded,
-                    IsJumping = animation.States.IsJumping,
+                    JumpCount = animation.States.JumpCount,
                     IsLongJump = animation.States.IsLongJump,
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,

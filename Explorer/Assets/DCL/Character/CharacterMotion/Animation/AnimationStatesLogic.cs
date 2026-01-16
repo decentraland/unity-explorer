@@ -21,27 +21,25 @@ namespace DCL.CharacterMotion.Animation
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
             float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
 
+            bool jumpTriggered = rigidTransform.JustJumped && rigidTransform.JumpCount != animationComponent.States.JumpCount;
+
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
             animationComponent.States.JumpCount = rigidTransform.JumpCount;
 
-            bool jumpStateChanged = rigidTransform.JustJumped && !animationComponent.States.IsJumping;
-            SetAnimatorParameters(view, ref animationComponent.States, rigidTransform.JustJumped, jumpStateChanged, stunComponent.IsStunned);
+            SetAnimatorParameters(view, ref animationComponent.States, jumpTriggered, stunComponent.IsStunned);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetAnimatorParameters(IAvatarView view, ref AnimationStates states, bool isJumping, bool jumpTriggered, bool isStunned)
+        public static void SetAnimatorParameters(IAvatarView view, ref AnimationStates states, bool jumpTriggered, bool isStunned)
         {
             if (jumpTriggered)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            states.IsJumping = isJumping;
-
             view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
             view.SetAnimatorBool(AnimationHashes.GROUNDED, states.IsGrounded);
-            view.SetAnimatorBool(AnimationHashes.JUMPING, states.IsJumping);
             view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, states.JumpCount);
             view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, states.IsLongJump);

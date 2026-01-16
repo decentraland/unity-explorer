@@ -53,8 +53,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "c2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEoAhISCgp2ZWxvY2l0",
             "eV94GAUgASgCEhIKCnZlbG9jaXR5X3kYBiABKAISEgoKdmVsb2NpdHlfehgH",
             "IAEoAhIcChRtb3ZlbWVudF9ibGVuZF92YWx1ZRgIIAEoAhIZChFzbGlkZV9i",
-            "bGVuZF92YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgppc19q",
-            "dW1waW5nGAsgASgIEhQKDGlzX2xvbmdfanVtcBgMIAEoCBIUCgxpc19sb25n",
+            "bGVuZF92YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgpqdW1w",
+            "X2NvdW50GAsgASgFEhQKDGlzX2xvbmdfanVtcBgMIAEoCBIUCgxpc19sb25n",
             "X2ZhbGwYDSABKAgSEgoKaXNfZmFsbGluZxgOIAEoCBISCgppc19zdHVubmVk",
             "GA8gASgIEhIKCnJvdGF0aW9uX3kYECABKAISEgoKaXNfaW5zdGFudBgRIAEo",
             "CBISCgppc19lbW90aW5nGBIgASgIEhsKE2hlYWRfaWtfeWF3X2VuYWJsZWQY",
@@ -91,7 +91,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "JumpCount", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData", "HeadSyncData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition), global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "TargetAvatarWalletAddress" }, null, null, null, null),
@@ -1461,7 +1461,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       movementBlendValue_ = other.movementBlendValue_;
       slideBlendValue_ = other.slideBlendValue_;
       isGrounded_ = other.isGrounded_;
-      isJumping_ = other.isJumping_;
+      jumpCount_ = other.jumpCount_;
       isLongJump_ = other.isLongJump_;
       isLongFall_ = other.isLongFall_;
       isFalling_ = other.isFalling_;
@@ -1614,15 +1614,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
-    /// <summary>Field number for the "is_jumping" field.</summary>
-    public const int IsJumpingFieldNumber = 11;
-    private bool isJumping_;
+    /// <summary>Field number for the "jump_count" field.</summary>
+    public const int JumpCountFieldNumber = 11;
+    private int jumpCount_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool IsJumping {
-      get { return isJumping_; }
+    public int JumpCount {
+      get { return jumpCount_; }
       set {
-        isJumping_ = value;
+        jumpCount_ = value;
       }
     }
 
@@ -1789,7 +1789,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MovementBlendValue, other.MovementBlendValue)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SlideBlendValue, other.SlideBlendValue)) return false;
       if (IsGrounded != other.IsGrounded) return false;
-      if (IsJumping != other.IsJumping) return false;
+      if (JumpCount != other.JumpCount) return false;
       if (IsLongJump != other.IsLongJump) return false;
       if (IsLongFall != other.IsLongFall) return false;
       if (IsFalling != other.IsFalling) return false;
@@ -1818,7 +1818,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (MovementBlendValue != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MovementBlendValue);
       if (SlideBlendValue != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SlideBlendValue);
       if (IsGrounded != false) hash ^= IsGrounded.GetHashCode();
-      if (IsJumping != false) hash ^= IsJumping.GetHashCode();
+      if (JumpCount != 0) hash ^= JumpCount.GetHashCode();
       if (IsLongJump != false) hash ^= IsLongJump.GetHashCode();
       if (IsLongFall != false) hash ^= IsLongFall.GetHashCode();
       if (IsFalling != false) hash ^= IsFalling.GetHashCode();
@@ -1888,9 +1888,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(80);
         output.WriteBool(IsGrounded);
       }
-      if (IsJumping != false) {
+      if (JumpCount != 0) {
         output.WriteRawTag(88);
-        output.WriteBool(IsJumping);
+        output.WriteInt32(JumpCount);
       }
       if (IsLongJump != false) {
         output.WriteRawTag(96);
@@ -1986,9 +1986,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(80);
         output.WriteBool(IsGrounded);
       }
-      if (IsJumping != false) {
+      if (JumpCount != 0) {
         output.WriteRawTag(88);
-        output.WriteBool(IsJumping);
+        output.WriteInt32(JumpCount);
       }
       if (IsLongJump != false) {
         output.WriteRawTag(96);
@@ -2074,8 +2074,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsGrounded != false) {
         size += 1 + 1;
       }
-      if (IsJumping != false) {
-        size += 1 + 1;
+      if (JumpCount != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(JumpCount);
       }
       if (IsLongJump != false) {
         size += 1 + 1;
@@ -2152,8 +2152,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (other.IsGrounded != false) {
         IsGrounded = other.IsGrounded;
       }
-      if (other.IsJumping != false) {
-        IsJumping = other.IsJumping;
+      if (other.JumpCount != 0) {
+        JumpCount = other.JumpCount;
       }
       if (other.IsLongJump != false) {
         IsLongJump = other.IsLongJump;
@@ -2244,7 +2244,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 88: {
-            IsJumping = input.ReadBool();
+            JumpCount = input.ReadInt32();
             break;
           }
           case 96: {
@@ -2347,7 +2347,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             break;
           }
           case 88: {
-            IsJumping = input.ReadBool();
+            JumpCount = input.ReadInt32();
             break;
           }
           case 96: {

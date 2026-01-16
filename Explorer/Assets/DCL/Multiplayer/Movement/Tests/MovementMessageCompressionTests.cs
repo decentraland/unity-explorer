@@ -82,11 +82,11 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.That(decompressedMessage.animState.SlideBlendValue, Is.EqualTo(0f));
         }
 
-        [TestCase(MovementKind.JOG, false, false, false, false, false, false, false)]
-        [TestCase(MovementKind.RUN, true, true, true, true, true, true, true)]
-        [TestCase(MovementKind.WALK, true, false, true, false, true, false, false)]
-        [TestCase(MovementKind.IDLE, false, true, true, false, false, true, true)]
-        public void ShouldCorrectlyEncodeAndDecodeAnimations(MovementKind movementKind, bool isSliding, bool isStunned, bool isGrounded, bool isJumping,
+        [TestCase(MovementKind.JOG, false, false, false, 0, false, false, false)]
+        [TestCase(MovementKind.RUN, true, true, true, 1, true, true, true)]
+        [TestCase(MovementKind.WALK, true, false, true, 0, true, false, false)]
+        [TestCase(MovementKind.IDLE, false, true, true, 0, false, true, true)]
+        public void ShouldCorrectlyEncodeAndDecodeAnimations(MovementKind movementKind, bool isSliding, bool isStunned, bool isGrounded, int jumpCount,
             bool isLongJump, bool isLongFall, bool isFalling)
         {
             // ARRANGE
@@ -98,7 +98,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 animState = new AnimationStates
                 {
                     IsGrounded = isGrounded,
-                    IsJumping = isJumping,
+                    JumpCount = jumpCount,
                     IsLongJump = isLongJump,
                     IsLongFall = isLongFall,
                     IsFalling = isFalling,
@@ -115,7 +115,7 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.AreEqual(originalMessage.isSliding, decompressedMessage.isSliding);
 
             Assert.AreEqual(originalMessage.animState.IsGrounded, decompressedMessage.animState.IsGrounded);
-            Assert.AreEqual(originalMessage.animState.IsJumping, decompressedMessage.animState.IsJumping);
+            Assert.AreEqual(originalMessage.animState.JumpCount, decompressedMessage.animState.JumpCount);
             Assert.AreEqual(originalMessage.animState.IsLongJump, decompressedMessage.animState.IsLongJump);
             Assert.AreEqual(originalMessage.animState.IsLongFall, decompressedMessage.animState.IsLongFall);
             Assert.AreEqual(originalMessage.animState.IsFalling, decompressedMessage.animState.IsFalling);

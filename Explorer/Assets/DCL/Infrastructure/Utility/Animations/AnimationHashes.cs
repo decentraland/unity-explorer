@@ -13,7 +13,6 @@ namespace Utility.Animations
         public static readonly int MOVEMENT_BLEND = Animator.StringToHash("MovementBlend");
         public static readonly int MOVEMENT_TYPE = Animator.StringToHash("MovementType"); //We use this for sounds playback, to know exactly which expected movement type we are doing independently from blend value
         public static readonly int GROUNDED = Animator.StringToHash("IsGrounded");
-        public static readonly int JUMPING = Animator.StringToHash("IsJumping");
         public static readonly int FALLING = Animator.StringToHash("IsFalling");
         public static readonly int LONG_JUMP = Animator.StringToHash("IsLongJump");
         public static readonly int JUMP = Animator.StringToHash("Jump");

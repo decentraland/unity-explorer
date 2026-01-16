@@ -87,23 +87,19 @@ namespace DCL.Multiplayer.Movement.Systems
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // other states
-            bool jumpTriggered = !animationComponent.States.IsJumping && message.animState.IsJumping;
+            bool jumpTriggered = message.animState.JumpCount > animationComponent.States.JumpCount;
             animationComponent.States.IsGrounded = message.animState.IsGrounded;
-            animationComponent.States.IsJumping = message.animState.IsJumping;
+            animationComponent.States.JumpCount = message.animState.JumpCount;
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
             animationComponent.States.IsFalling = message.animState.IsFalling;
             animationComponent.States.IsLongFall = message.animState.IsLongFall;
             animationComponent.States.IsStunned = message.isStunned;
-            AnimationStatesLogic.SetAnimatorParameters(view,
-                ref animationComponent.States,
-                animationComponent.States.IsJumping,
-                jumpTriggered,
-                animationComponent.States.IsStunned);
+            AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, jumpTriggered, animationComponent.States.IsStunned);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
         {
-            if (!anim.States.IsJumping && intComp.End.animState.IsJumping && Mathf.Abs(intComp.Start.position.y - intComp.End.position.y) > RemotePlayerUtils.JUMP_EPSILON)
+            if (intComp.End.animState.JumpCount > anim.States.JumpCount && Mathf.Abs(intComp.Start.position.y - intComp.End.position.y) > RemotePlayerUtils.JUMP_EPSILON)
                 AnimateFutureJump(view, ref anim, intComp.End.animState);
 
             AnimationStates startAnimStates = intComp.Start.animState;
@@ -151,12 +147,12 @@ namespace DCL.Multiplayer.Movement.Systems
         private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
         {
             anim.States.IsGrounded = animState.IsGrounded;
-            anim.States.IsJumping = animState.IsJumping;
+            anim.States.JumpCount = animState.JumpCount;
 
             view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
             view.SetAnimatorBool(AnimationHashes.GROUNDED, anim.States.IsGrounded);
-            view.SetAnimatorBool(AnimationHashes.JUMPING, anim.States.IsJumping);
+            view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, anim.States.JumpCount);
         }
 
         private static void ExtrapolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, float time, float totalMoveDuration, float linearTime)

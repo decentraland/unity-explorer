@@ -132,7 +132,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = proto.SlideBlendValue,
                     IsGrounded = proto.IsGrounded,
-                    IsJumping = proto.IsJumping,
+                    JumpCount = proto.JumpCount,
                     IsLongJump = proto.IsLongJump,
                     IsFalling = proto.IsFalling,
                     IsLongFall = proto.IsLongFall,
@@ -191,7 +191,7 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.SlideBlendValue = message.animState.SlideBlendValue;
 
             movement.IsGrounded = message.animState.IsGrounded;
-            movement.IsJumping = message.animState.IsJumping;
+            movement.JumpCount = message.animState.JumpCount;
             movement.IsLongJump = message.animState.IsLongJump;
             movement.IsFalling = message.animState.IsFalling;
             movement.IsLongFall = message.animState.IsLongFall;

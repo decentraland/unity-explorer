@@ -17,7 +17,6 @@ namespace DCL.CharacterMotion.Components
         public float MovementBlendValue;
         public float SlideBlendValue;
         public bool IsGrounded;
-        public bool IsJumping;
         public int JumpCount;
         public bool IsLongJump;
         public bool IsLongFall;
@@ -31,7 +30,7 @@ namespace DCL.CharacterMotion.Components
             Math.Abs(MovementBlendValue - other.MovementBlendValue) < EPSILON &&
             Math.Abs(SlideBlendValue - other.SlideBlendValue) < EPSILON &&
             IsGrounded == other.IsGrounded &&
-            IsJumping == other.IsJumping &&
+            JumpCount == other.JumpCount &&
             IsLongJump == other.IsLongJump &&
             IsLongFall == other.IsLongFall &&
             IsFalling == other.IsFalling &&
@@ -45,7 +44,7 @@ namespace DCL.CharacterMotion.Components
                 hash = (hash * 23) + MovementBlendValue.GetHashCode();
                 hash = (hash * 23) + SlideBlendValue.GetHashCode();
                 hash = (hash * 23) + IsGrounded.GetHashCode();
-                hash = (hash * 23) + IsJumping.GetHashCode();
+                hash = (hash * 23) + JumpCount;
                 hash = (hash * 23) + IsLongJump.GetHashCode();
                 hash = (hash * 23) + IsLongFall.GetHashCode();
                 hash = (hash * 23) + IsFalling.GetHashCode();
@@ -56,7 +55,7 @@ namespace DCL.CharacterMotion.Components
 
         public override string ToString()
         {
-            return $"{IsGrounded}: j:{IsJumping} lf:{IsLongJump} f:{IsFalling} lf:{IsLongFall} mb:{MovementBlendValue} sb:{SlideBlendValue}";
+            return $"{IsGrounded}: j:{JumpCount} lf:{IsLongJump} f:{IsFalling} lf:{IsLongFall} mb:{MovementBlendValue} sb:{SlideBlendValue}";
         }
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>
