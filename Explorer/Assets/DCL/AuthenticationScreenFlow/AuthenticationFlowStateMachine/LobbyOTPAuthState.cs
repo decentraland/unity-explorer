@@ -27,6 +27,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
+        private readonly LobbyScreenSubView subView;
 
         private readonly IWearablesProvider wearablesProvider;
 
@@ -46,13 +47,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider) : base(viewInstance)
         {
+            subView = viewInstance.LobbyScreenSubView;
+
             this.controller = controller;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
             this.wearablesProvider = wearablesProvider;
 
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
+            profileNameLabel = (StringVariable)subView!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
         private Profile newUserProfile;
@@ -72,22 +75,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newUserProfile = payload.profile;
 
             profileNameLabel!.Value = IsNewUser() ? newUserProfile.Name : "back " + newUserProfile.Name;
+            subView.gameObject.SetActive(true);
 
-            viewInstance.FinalizeContainer.SetActive(true);
+            subView.FinalizeAnimator.ResetAnimator();
+            subView.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
 
-            viewInstance.FinalizeAnimator.ResetAnimator();
-            viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            viewInstance.JumpIntoWorldButton.gameObject.SetActive(false);
-            viewInstance.JumpIntoWorldButton.interactable = true;
-            viewInstance.ProfileNameLabel.gameObject.SetActive(false);
-            viewInstance.Description.SetActive(false);
-            viewInstance.DiffAccountButton.SetActive(false);
+            subView.JumpIntoWorldButton.gameObject.SetActive(false);
+            subView.JumpIntoWorldButton.interactable = true;
+            subView.ProfileNameLabel.gameObject.SetActive(false);
+            subView.Description.SetActive(false);
+            subView.DiffAccountButton.SetActive(false);
 
             viewInstance.NewUserContainer.SetActive(true);
-
-            viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-            viewInstance.FinalizeContainer.SetActive(true);
 
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
@@ -191,7 +190,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.NextRandomButton.interactable = false;
 
-            viewInstance!.FinalizeContainer.SetActive(false);
+            subView.gameObject.SetActive(false);
             viewInstance.NewUserContainer.SetActive(false);
 
             characterPreviewController?.OnHide();
@@ -335,7 +334,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            viewInstance!.JumpIntoWorldButton.interactable = false;
+            subView!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
             return;
 

@@ -18,7 +18,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Space]
         [field: SerializeField]
-        public AuthLoginScreenView AuthLoginScreenView { get; private set; } = null!;
+        public LoginScreenSubView LoginScreenSubView { get; private set; } = null!;
 
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
@@ -74,25 +74,7 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("FINALIZE")]
         [field: SerializeField]
-        public GameObject FinalizeContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator FinalizeAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button JumpIntoWorldButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject Description { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject DiffAccountButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
-
-        [field: SerializeField]
-        public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
+        public LobbyScreenSubView LobbyScreenSubView { get; private set; } = null!;
 
         [field: Space]
         [field: SerializeField]
@@ -191,13 +173,11 @@ namespace DCL.AuthenticationScreenFlow
         private void OnDisable()
         {
             VerificationAnimator.enabled = false;
-            FinalizeAnimator.enabled = false;
         }
 
         private void OnEnable()
         {
             VerificationAnimator.enabled = true;
-            FinalizeAnimator.enabled = true;
         }
     }
 }

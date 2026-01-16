@@ -1,5 +1,4 @@
 ﻿using DCL.UI;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -7,15 +6,13 @@ using Utility;
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
-    public class AuthLoginScreenView : MonoBehaviour
+    public class LoginScreenSubView : MonoBehaviour
     {
         private Animator loginAnimator;
         private CanvasGroup canvasGroup;
 
-        [SerializeField]
-        private GameObject loadingSpinner;
-        [SerializeField]
-        private GameObject mainElementsPanel;
+        [SerializeField] private GameObject loadingSpinner;
+        [SerializeField] private GameObject mainElementsPanel;
 
         [field: Header("OTP")]
         [field: SerializeField]

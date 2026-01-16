@@ -17,22 +17,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter()
         {
-            viewInstance.AuthLoginScreenView.gameObject.SetActive(false);
+            viewInstance.LoginScreenSubView.gameObject.SetActive(false);
+            viewInstance.LobbyScreenSubView.gameObject.SetActive(false);
+
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.VerificationOTPContainer.SetActive(false);
 
             // Finilize
-            viewInstance.FinalizeContainer.SetActive(false);
-            viewInstance.JumpIntoWorldButton.gameObject.SetActive(true);
-            viewInstance.DiffAccountButton.SetActive(true);
-            viewInstance.ProfileNameLabel.gameObject.SetActive(true);
-            viewInstance.Description.SetActive(true);
             viewInstance.NewUserContainer.SetActive(false);
 
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
 
-            viewInstance.CharacterPreviewView.gameObject.SetActive(true);
 
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildDataInstallSource}"

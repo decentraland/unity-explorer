@@ -109,6 +109,6 @@ namespace DCL.UI
         }
 
         private static bool IsValidEmail(string email) =>
-            !string.IsNullOrEmpty(email) && EMAIL_PATTERN_REGEX.IsMatch(email);
+            EMAIL_PATTERN_REGEX.IsMatch(email);
     }
 }

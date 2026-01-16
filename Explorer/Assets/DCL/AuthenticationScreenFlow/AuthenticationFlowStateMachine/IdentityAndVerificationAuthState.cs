@@ -64,7 +64,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
 
-            viewInstance.AuthLoginScreenView.gameObject.SetActive(false);
+            viewInstance.LoginScreenSubView.gameObject.SetActive(false);
 
             // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
@@ -159,7 +159,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                         .Forget();
 
             // Anim-OUT non-interactable Login Screen
-            viewInstance.AuthLoginScreenView.SlideOut();
+            viewInstance.LoginScreenSubView.SlideOut();
 
             // Anim-IN Verification Screen
             viewInstance.VerificationContainer.SetActive(true);
