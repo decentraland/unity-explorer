@@ -74,8 +74,8 @@ namespace DCL.SocialService
                 {
                     retryAttempt++;
 
-                    SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
-                                            + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
+                    Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
+                                                         + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
 
                     var webSocketErrorCode = (WebSocketError)e.ErrorCode;
 
