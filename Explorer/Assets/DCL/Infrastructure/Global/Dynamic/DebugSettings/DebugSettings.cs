@@ -36,6 +36,10 @@ namespace Global.Dynamic.DebugSettings
         [SerializeField]
         private string[] appParameters;
 
+        [Space]
+        [SerializeField] [Tooltip("Enable per-process logging of errors and exceptions to a separate file. Useful for debugging multiple instances.")]
+        private bool enableMultiLog;
+
         public static DebugSettings Release() =>
             new ()
             {
@@ -52,6 +56,7 @@ namespace Global.Dynamic.DebugSettings
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
                 appParameters = Array.Empty<string>(),
+                enableMultiLog = false,
             };
 
         // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected release flow too.
@@ -68,5 +73,6 @@ namespace Global.Dynamic.DebugSettings
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
         public string[] AppParameters => appParameters;
+        public bool EnableMultiLog => Application.isEditor ? this.enableMultiLog : RELEASE_SETTINGS.enableMultiLog;
     }
 }
