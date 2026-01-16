@@ -139,8 +139,11 @@ namespace DCL.UI
             view.SliderSaturation.Slider.colors = block;
         }
 
-        private void TogglePanel() =>
+        private void TogglePanel() {
             view.Container.SetActive(!view.Container.activeInHierarchy);
+            view.ArrowDownMark.SetActive(!view.ArrowDownMark.activeInHierarchy);
+            view.ArrowUpMark.SetActive(!view.ArrowUpMark.activeInHierarchy);
+        }
 
         private void SetColor()
         {
