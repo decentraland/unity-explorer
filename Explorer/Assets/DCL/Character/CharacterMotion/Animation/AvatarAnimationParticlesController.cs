@@ -53,7 +53,11 @@ namespace DCL.CharacterMotion.Animation
 
         private async UniTask ScheduleReturnParticlesToPoolAsync(ParticleSystem particles, IObjectPool<ParticleSystem> particlesPool, CancellationToken ct)
         {
-            await UniTask.Delay(1000, cancellationToken: ct);
+            // Wait the particle system duration so that all particles have been emitted
+            await UniTask.Delay((int)(particles.main.duration * 1000), cancellationToken: ct);
+
+            // Now wait till all particles have died off
+            while (particles.particleCount > 0) await UniTask.NextFrame(ct);
 
             if (ct.IsCancellationRequested) return;
 

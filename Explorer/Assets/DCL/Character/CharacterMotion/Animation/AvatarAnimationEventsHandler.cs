@@ -16,6 +16,7 @@ namespace DCL.CharacterMotion.Animation
         Step,
         Jump,
         Land,
+        AirJump
     }
 
     public class AvatarAnimationEventsHandler : MonoBehaviour
@@ -61,13 +62,32 @@ namespace DCL.CharacterMotion.Animation
 
         public event Action? PlayerStepped;
 
+        private void Awake()
+        {
+            AddSimpleEvent(AvatarAnimationEventType.AirJump, AvatarAudioClipType.AirJump);
+
+            void AddSimpleEvent(AvatarAnimationEventType anim, AvatarAudioClipType clip)
+            {
+                for (int i = (int)MovementKind.IDLE; i <= (int)MovementKind.RUN; i++)
+                    AUDIO_CLIP_LOOKUP.Add(((MovementKind)i, anim), clip);
+            }
+        }
+
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
         {
             if (!TryGetAudioClipType(AvatarAnimationEventType.Jump, out var audioClipType)) return;
-            if (!TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump,audioClipType)) return;
+            if (!TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump, audioClipType)) return;
 
             lastJumpTime = currentTime;
+        }
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_AirJump()
+        {
+            if (!TryGetAudioClipType(AvatarAnimationEventType.AirJump, out var audioClipType)) return;
+
+            TryPlayAnimEventFX(0, 0, centerBottomTransform, AvatarAnimationEventType.AirJump, audioClipType);
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -114,7 +134,7 @@ namespace DCL.CharacterMotion.Animation
             return true;
         }
 
-                private void PlayContinuousAudio(AvatarAudioClipType clipType)
+        private void PlayContinuousAudio(AvatarAudioClipType clipType)
         {
             AudioPlaybackController.PlayContinuousAudio(clipType);
         }

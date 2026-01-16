@@ -51,3 +51,5 @@ MonoBehaviour:
     ParticleSystem: {fileID: 1427751686657548687, guid: de8c8172444fcc740a5b4a4ade001ecd, type: 3}
   - Type: 2
     ParticleSystem: {fileID: 6607984425052632445, guid: e9adde2f5540c3f4fb12524783965137, type: 3}
+  - Type: 3
+    ParticleSystem: {fileID: 1427751686657548687, guid: e7781e618d80aad4fbe9b44d8051f944, type: 3}
