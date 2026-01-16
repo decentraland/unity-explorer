@@ -27,15 +27,6 @@ namespace DCL.Diagnostics.Sentry
 #if UNITY_EDITOR
             bool isDirty = false;
 
-            if (bool.TryParse(Environment.GetEnvironmentVariable("SENTRY_ENABLED"), out bool isEnabled))
-            {
-                if (options.Enabled != isEnabled)
-                {
-                    options.Enabled = isEnabled;
-                    isDirty = true;
-                }
-            }
-
             string? version = Application.version ?? options.Release;
 
             if (options.Release != version)
@@ -76,19 +67,31 @@ namespace DCL.Diagnostics.Sentry
 #if UNITY_EDITOR
         private static bool ApplyFromEnvironmentVars(SentryUnityOptions options)
         {
+            var enabledExists = bool.TryParse(Environment.GetEnvironmentVariable("SENTRY_ENABLED"), out bool isEnabled);
             string? env = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
             string? dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
             string? release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
-            bool changed = env != options.Environment || dsn != options.Dsn || release != options.Release;
+            bool isDirty = env != options.Environment || dsn != options.Dsn || release != options.Release;
+
             options.Environment = env;
             options.Dsn = dsn;
             options.Release = release;
-            return changed;
+
+            if (enabledExists)
+            {
+                if (options.Enabled != isEnabled)
+                {
+                    isDirty = true;
+                    options.Enabled = isEnabled;
+                }
+            }
+
+            return isDirty;
         }
 
         private static bool ApplyFromProgramArgs(SentryUnityOptions options)
         {
-            var changed = false;
+            var isDirty = false;
             string[] args = Environment.GetCommandLineArgs();
 
             for (var i = 0; i < args.Length; i++)
@@ -98,21 +101,42 @@ namespace DCL.Diagnostics.Sentry
                 switch (arg)
                 {
                     case "-sentryEnvironment":
-                        options.Environment = args[i + 1];
-                        changed = true;
+                        string env = args[i + 1];
+
+                        if (options.Environment != env)
+                        {
+                            options.Environment = env;
+                            isDirty = true;
+                        }
+
                         break;
                     case "-sentryDsn":
-                        options.Dsn = args[i + 1];
-                        changed = true;
+                        string dsn = args[i + 1];
+
+                        if (options.Dsn != dsn)
+                        {
+                            options.Dsn = dsn;
+                            isDirty = true;
+                        }
+
                         break;
                     case "-sentryRelease":
-                        options.Release = args[i + 1];
-                        changed = true;
+                        string release = args[i + 1];
+
+                        if (options.Release != release)
+                        {
+                            options.Release = release;
+                            isDirty = true;
+                        }
+
                         break;
                 }
             }
 
-            return changed;
+            if (isDirty)
+                options.Enabled = true;
+
+            return isDirty;
         }
 
         private bool ApplyFromJsonFile(SentryUnityOptions options)
@@ -126,13 +150,16 @@ namespace DCL.Diagnostics.Sentry
             string? dsn = string.IsNullOrEmpty(scheme.dsn) ? options.Dsn : scheme.dsn;
             string? release = string.IsNullOrEmpty(scheme.release) ? options.Release : scheme.release;
 
-            bool changed = env != options.Environment || dsn != options.Dsn || release != options.Release;
+            bool isDirty = env != options.Environment || dsn != options.Dsn || release != options.Release;
 
             options.Environment = env;
             options.Dsn = dsn;
             options.Release = release;
 
-            return changed;
+            if (isDirty)
+                options.Enabled = true;
+
+            return isDirty;
         }
 
         private void PersistIntoAssetFile(string path, SentryUnityOptions options)
