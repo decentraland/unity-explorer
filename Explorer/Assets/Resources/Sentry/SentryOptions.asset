@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Enabled>k__BackingField: 0
   <Dsn>k__BackingField: <REPLACE_DSN>
-  <CaptureInEditor>k__BackingField: 0
+  <CaptureInEditor>k__BackingField: 1
   <EnableLogDebouncing>k__BackingField: 1
   <DebounceTimeLog>k__BackingField: 1000
   <DebounceTimeWarning>k__BackingField: 1000
