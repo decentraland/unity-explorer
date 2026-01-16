@@ -15,14 +15,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class LobbyOTPAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {
-        private readonly StringVariable profileNameLabel;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
@@ -54,8 +52,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
             this.wearablesProvider = wearablesProvider;
-
-            profileNameLabel = (StringVariable)subView!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
         private Profile newUserProfile;
@@ -74,19 +70,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             newUserProfile = payload.profile;
 
-            profileNameLabel!.Value = IsNewUser() ? newUserProfile.Name : "back " + newUserProfile.Name;
             subView.gameObject.SetActive(true);
-
-            subView.FinalizeAnimator.ResetAnimator();
-            subView.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            subView.JumpIntoWorldButton.gameObject.SetActive(false);
-            subView.JumpIntoWorldButton.interactable = true;
-            subView.ProfileNameLabel.gameObject.SetActive(false);
-            subView.Description.SetActive(false);
-            subView.DiffAccountButton.SetActive(false);
-
-            viewInstance.NewUserContainer.SetActive(true);
+            subView.ShowNewAccountLobby();
 
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
@@ -103,11 +88,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
             viewInstance.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
             UpdateFinalizeButtonState();
-
-            return;
-
-            bool IsNewUser() =>
-                newUserProfile.Version == 1;
         }
 
         private async UniTask InitializeAvatarAsync()
@@ -191,7 +171,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.NextRandomButton.interactable = false;
 
             subView.gameObject.SetActive(false);
-            viewInstance.NewUserContainer.SetActive(false);
 
             characterPreviewController?.OnHide();
 

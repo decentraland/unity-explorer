@@ -76,15 +76,15 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public LobbyScreenSubView LobbyScreenSubView { get; private set; } = null!;
 
+        //  --- HERE
         [field: Space]
-        [field: SerializeField]
-        public GameObject NewUserContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public TMP_InputField ProfileNameInputField { get; private set; } = null!;
 
         [field: SerializeField]
         public Button BackButton { get; private set; } = null!;
+
         [field: SerializeField]
         public Button FinalizeNewUserButton { get; private set; } = null!;
 

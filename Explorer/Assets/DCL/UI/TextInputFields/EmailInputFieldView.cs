@@ -91,8 +91,11 @@ namespace DCL.UI
         private void OnEmailInputSelect(string email) =>
             SetErrorState(false);
 
-        private void SetErrorState(bool hasError)
+        private void SetErrorState(bool isValidEmail)
         {
+            // empty field is not an error
+            bool hasError = !isValidEmail && emailInput.text != string.Empty;
+
             emailInputOutline.color = hasError ? outlineErrorColor : outlineNormalColor;
             errorMark.SetActive(hasError);
         }

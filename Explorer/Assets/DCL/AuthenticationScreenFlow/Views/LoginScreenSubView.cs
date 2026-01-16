@@ -86,7 +86,7 @@ namespace DCL.AuthenticationScreenFlow
             // moreOptionsPanel.SetActive(true);
 
             areOptionsExpanded = false;
-            SetOptionsPanelVisibility(areOptionsExpanded);
+            SetOptionsPanelVisibility(isExpanded: false);
         }
 
         // Anim-OUT non-interactable Login Screen

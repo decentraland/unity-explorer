@@ -23,12 +23,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.VerificationOTPContainer.SetActive(false);
 
-            // Finilize
-            viewInstance.NewUserContainer.SetActive(false);
-
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);
-
 
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildDataInstallSource}"

@@ -29,7 +29,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
 
-            profileNameLabel = (StringVariable)subView!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
         public void Enter((Profile profile, bool isCached) payload)
@@ -38,20 +37,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             Profile? profile = payload.profile;
 
-            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-
-            subView.JumpIntoWorldButton.gameObject.SetActive(true);
-            subView.JumpIntoWorldButton.transform.parent.gameObject.SetActive(true);
-            subView.JumpIntoWorldButton.interactable = true;
-
-            subView.ProfileNameLabel.gameObject.SetActive(true);
-            subView.Description.SetActive(true);
-            subView.DiffAccountButton.SetActive(true);
-
             subView.gameObject.SetActive(true);
-
-            subView.FinalizeAnimator.ResetAnimator();
-            subView.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
+            subView.ShowExistingAccountLobby(profileName: IsNewUser() ? profile.Name : "back " + profile.Name);
 
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();
