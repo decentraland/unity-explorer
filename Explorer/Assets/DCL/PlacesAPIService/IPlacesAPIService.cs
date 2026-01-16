@@ -22,7 +22,7 @@ namespace DCL.PlacesAPIService
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
-        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
 
@@ -35,6 +35,9 @@ namespace DCL.PlacesAPIService
         UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
+
+        void AddRecentlyVisitedPlace(string placeId);
+        List<string> GetRecentlyVisitedPlaces();
 
         enum SortBy
         {

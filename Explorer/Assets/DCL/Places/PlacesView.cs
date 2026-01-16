@@ -43,7 +43,9 @@ namespace DCL.Places
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
 
         [Header("Filters")]
+        [SerializeField] private TMP_Text sortByTitleText = null!;
         [SerializeField] private SelectorButtonView sortByDropdown = null!;
+        [SerializeField] private TMP_Text sdkVersionTitleText = null!;
         [SerializeField] private SelectorButtonView sdkVersionDropdown = null!;
         [SerializeField] private SearchBarView searchBar = null!;
 
@@ -175,6 +177,12 @@ namespace DCL.Places
         public void ClearSortByFilter() =>
             sortByDropdown.ClearOptions();
 
+        public void SetSortByFilterVisible(bool isVisible)
+        {
+            sortByTitleText.gameObject.SetActive(isVisible);
+            sortByDropdown.gameObject.SetActive(isVisible);
+        }
+
         public void SetupSDKVersionFilter()
         {
             sdkVersionDropdown.SetOptions(new List<string> { SORT_BY_SDK_VERSION_SDK7_OPTION, SORT_BY_SDK_VERSION_ALL_OPTION });
@@ -183,6 +191,12 @@ namespace DCL.Places
 
         public void ClearSDKVersionFilter() =>
             sdkVersionDropdown.ClearOptions();
+
+        public void SetSDKVersionFilterVisible(bool isVisible)
+        {
+            sdkVersionTitleText.gameObject.SetActive(isVisible);
+            sdkVersionDropdown.gameObject.SetActive(isVisible);
+        }
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {

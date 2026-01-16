@@ -114,26 +114,56 @@ namespace DCL.Places
             if (ownProfile == null)
                 return;
 
-            PlacesData.PlacesAPIResponse emptyPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
-            Result<PlacesData.IPlacesAPIResponse> placesResult = section switch
-                                                                 {
-                                                                     PlacesSection.DISCOVER => await placesAPIService.SearchPlacesAsync(
-                                                                                                                          pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
-                                                                                                                          searchText: currentFilters.SearchText,
-                                                                                                                          sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                                                                                          category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
-                                                                                                                     .SuppressToResultAsync(ReportCategory.PLACES),
-                                                                     PlacesSection.FAVORITES => await placesAPIService.GetFavoritesAsync(
-                                                                                                                           ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
-                                                                                                                           sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
-                                                                                                                      .SuppressToResultAsync(ReportCategory.PLACES),
-                                                                     PlacesSection.MY_PLACES => await placesAPIService.GetWorldsByOwnerAsync(
-                                                                                                                           ownerAddress: ownProfile.UserId,
-                                                                                                                           ct: ct)
-                                                                                                                      .SuppressToResultAsync(ReportCategory.PLACES),
-                                                                     _ => await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(emptyPlacesResponse)
-                                                                                       .SuppressToResultAsync(ReportCategory.PLACES),
-                                                                 };
+            Result<PlacesData.IPlacesAPIResponse> placesResult;
+
+            switch (section)
+            {
+                case PlacesSection.DISCOVER:
+                    placesResult = await placesAPIService.SearchPlacesAsync(pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct, searchText: currentFilters.SearchText, sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC, category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
+                    break;
+                case PlacesSection.FAVORITES:
+                    placesResult = await placesAPIService.GetFavoritesAsync(ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
+                    break;
+                case PlacesSection.MY_PLACES:
+                    placesResult = await placesAPIService.GetWorldsByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
+                                                         .SuppressToResultAsync(ReportCategory.PLACES);
+                    break;
+                case PlacesSection.RECENTLY_VISITED:
+                    var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
+                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct)
+                                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+                    // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
+                    PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
+                    if (placesByIdResult.Success)
+                    {
+                        foreach (string placeId in recentlyVisitedPlacesIds)
+                        {
+                            foreach (PlacesData.PlaceInfo placeInfo in placesByIdResult.Value.Data)
+                            {
+                                if (placeInfo.id == placeId)
+                                {
+                                    sortedPlacesResponse.data.Add(placeInfo);
+                                    break;
+                                }
+                            }
+                        }
+
+                        sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
+                    }
+
+                    placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(sortedPlacesResponse)
+                                                .SuppressToResultAsync(ReportCategory.PLACES);
+
+                    break;
+                default:
+                    PlacesData.PlacesAPIResponse emptyPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
+                    placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(emptyPlacesResponse)
+                                                .SuppressToResultAsync(ReportCategory.PLACES);
+                    break;
+            }
 
             if (ct.IsCancellationRequested)
                 return;

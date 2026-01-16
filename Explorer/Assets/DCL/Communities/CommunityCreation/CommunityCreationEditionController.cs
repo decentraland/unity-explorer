@@ -440,11 +440,11 @@ namespace DCL.Communities.CommunityCreation
                     return;
                 }
 
-                if (getPlacesDetailsResult.Value is { data: { Count: > 0 } })
+                if (getPlacesDetailsResult.Value is { Data: { Count: > 0 } })
                 {
                     // Owners' names
                     using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-                    foreach (var communityPlace in getPlacesDetailsResult.Value.data)
+                    foreach (var communityPlace in getPlacesDetailsResult.Value.Data)
                     {
                         if (userIds.Value.Contains(communityPlace.owner))
                             continue;
@@ -459,7 +459,7 @@ namespace DCL.Communities.CommunityCreation
                         NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_OWNERS_NAMES_ERROR_MESSAGE));
                     }
 
-                    foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
+                    foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.Data)
                     {
                         bool isOwner = getCommunityResult.Value.data.role == CommunityMemberRole.owner;
                         bool isRemovalAllowed = isOwner;

@@ -89,11 +89,17 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true) =>
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
+        {
+            view.SetSortByFilterVisible(section != PlacesSection.RECENTLY_VISITED);
+            view.SetSDKVersionFilterVisible(section != PlacesSection.RECENTLY_VISITED);
             view.OpenSection(section, force, invokeEvent, cleanSearch);
+        }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
+            view.SetSortByFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
+            view.SetSDKVersionFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
             view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }
