@@ -224,7 +224,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <IntroEmoteURN>k__BackingField: raiseHand
+          <IntroEmoteURN>k__BackingField: urn:decentraland:off-chain:base-emotes:raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
     - rid: 1154744868092248158
       type: {class: DuplicateIdentityPlugin/DuplicateIdentitySettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -1014,6 +1014,28 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <BaseEmotes>k__BackingField:
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
