@@ -29,6 +29,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private const string METADATA_FILENAME = "metadata.json";
         private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
+        private const string EMOTE_DATA_FILENAME = "EmoteData.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -131,6 +132,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundle)
                     assetBundle.Unload(true);
 
+                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, "An error occurred when loading an asset bundle: " + assetBundle?.name + ". " + e.Message);
+
                 throw;
             }
         }
@@ -179,8 +182,13 @@ namespace ECS.StreamableLoading.AssetBundles
             //If no asset type or name was specified, we need to load all
                 asyncOp = assetBundle.LoadAllAssetsAsync();
 
+
             await asyncOp.WithCancellation(ct);
             Object[]? assets = asyncOp.allAssets;
+
+            // This forces the runtimeAnimatorController to be loaded
+            if (objectType == typeof(GameObject) && assets.Length > 0 && ((GameObject)assets[0]).TryGetComponent(out Animator animator))
+                animator.runtimeAnimatorController = animator.runtimeAnimatorController;
 
             return assets;
         }

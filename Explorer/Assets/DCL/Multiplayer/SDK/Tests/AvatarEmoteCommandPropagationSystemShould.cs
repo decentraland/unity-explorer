@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Add emote intent
             var emoteIntent = new CharacterEmoteIntent
-                { EmoteId = emoteUrn1 };
+                ( emoteUrn1 );
 
             world.Add(entity, emoteIntent);
 
@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             // Add emote intent
             var emoteIntent = new CharacterEmoteIntent
-                { EmoteId = emoteUrn1 };
+                ( emoteUrn1 );
 
             world.Add(entity, emoteIntent);
 

@@ -4,7 +4,7 @@
         <ui:VisualElement name="KeyRoot" class="tooltipInputKey">
             <ui:Label tabindex="-1" text="ENTER" display-tooltip-when-elided="true" name="KeyName" class="tooltipKeyLabel" />
         </ui:VisualElement>
-        <ui:Image name="Icon" class="tooltipIcon" />
+        <ui:VisualElement name="Icon" class="tooltipIcon" />
         <ui:Label tabindex="-1" text="It&apos;s a very very very long tooltip that should be truncated" display-tooltip-when-elided="true" name="Hint" enable-rich-text="true" class="tooltipHintText" />
     </DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement>
 </ui:UXML>

@@ -118,7 +118,7 @@ namespace DCL.CharacterMotion.Systems
             ref JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, cameraComponent.Camera.transform);
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, movementInput.IgnoreCamera ? characterController.transform : cameraComponent.Camera.transform);
         }
 
         [Query]
@@ -164,10 +164,13 @@ namespace DCL.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
-            if (cameraComponent.Mode == CameraMode.FirstPerson)
-                ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
-            else
-                ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
+            if (!movementInput.IgnoreCamera)
+            {
+                if (cameraComponent.Mode == CameraMode.FirstPerson)
+                    ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
+                else
+                    ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
+            }
 
             ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
         }

@@ -1,6 +1,8 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.HoverCanvas;
@@ -9,14 +11,18 @@ using DCL.Interaction.HoverCanvas.UI;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
+using DCL.Interaction.Settings;
+using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
+using DCL.SocialEmotes.UI;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 
@@ -29,8 +35,10 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IEventSystem eventSystem;
-        private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly Entity playerEntity;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -42,15 +50,19 @@ namespace DCL.PluginSystem.Global
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
             IEventSystem eventSystem,
-            IMVCManager mvcManager,
-            IMVCManagerMenusAccessFacade menusAccessFacade)
+            IMVCManagerMenusAccessFacade menusAccessFacade,
+            IWeb3IdentityCache identityCache,
+            ObjectProxy<Entity> cameraEntityProxy,
+            Entity playerEntity)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
             this.eventSystem = eventSystem;
-            this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
+            this.identityCache = identityCache;
+            this.cameraEntityProxy = cameraEntityProxy;
+            this.playerEntity = playerEntity;
         }
 
         public void Dispose() { }
@@ -95,9 +107,10 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, identityCache, cameraEntityProxy, playerEntity, settings.socialEmoteOutcomesContextMenuSettings, settings.socialEmoteSettings);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
+            AvatarHighlightSystem.InjectToWorld(ref builder, settings.interactionSettings);
         }
 
         [Serializable]
@@ -106,6 +119,9 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(GlobalInteractionPlugin))]
             [field: Space]
             [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
+            [field: SerializeField] internal SocialEmoteOutcomesContextMenuSettings socialEmoteOutcomesContextMenuSettings { get; private set; }
+            [field: SerializeField] internal SocialEmotesSettings socialEmoteSettings { get; private set; }
+            [field: SerializeField] internal InteractionSettingsData interactionSettings { get; private set; }
         }
     }
 }

@@ -20,6 +20,9 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public Image BackgroundRarity { get; private set; }
 
+        [field: SerializeField]
+        public Image TypeIcon { get; private set; }
+
         [SerializeField]
         private GameObject hoverBackground;
 
