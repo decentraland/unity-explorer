@@ -35,7 +35,7 @@ namespace DCL.Diagnostics
         {
             if (disposed) return;
 
-            writer.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}] [{type}] {condition}");
+            writer.WriteLine($"[{type}] {condition}");
 
             if (type is LogType.Exception or LogType.Error)
             {
