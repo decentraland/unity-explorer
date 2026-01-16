@@ -436,7 +436,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "BeforePlayingStopCurrentEmote() Different emote or phase? Stopping");
                         StopEmote(entity, ref emoteComponent, avatarView);
 
-                        if (isPlayingDifferentEmote && emoteComponent.SocialEmote.WasPlayingOutcome)
+                        if (emoteComponent.SocialEmote.WasPlayingOutcome)
                             ResetAvatarAndControllerTransforms(entity);
                     }
 
@@ -797,11 +797,26 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (isLocal)
                 {
-                    World.Add(entity, new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward));
+                    PlayerLookAtIntent lookAtIntent = new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward);
+
+                    if (World.Has<PlayerLookAtIntent>(entity))
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() PlayerLookAtIntent already existed");
+                        World.Set(entity, lookAtIntent);
+                    }
+                    else
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() new PlayerLookAtIntent");
+                        World.Add(entity, lookAtIntent);
+                    }
+
                     // With this intent the next network movement message is marked as instant which will be used in the other clients to avoid
                     // a problem that made the remote avatar move to a previous position (the old position of the CharacterController) before moving
                     // to the current position, due to interpolation
-                    World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
+                    if (!World.Has<PlayerTeleportIntent.JustTeleportedLocally>(entity))
+                    {
+                        World.Add<PlayerTeleportIntent.JustTeleportedLocally>(entity);
+                    }
 
                     // Interpolates the position of the object the camera is looking at, from current position to original position in the controller
                     InterpolateCameraTargetTowardsNewParentIntent interpolateCameraIntent = new InterpolateCameraTargetTowardsNewParentIntent(cameraFocusCurrentPosition, characterController.transform, cameraFocusHeight);
