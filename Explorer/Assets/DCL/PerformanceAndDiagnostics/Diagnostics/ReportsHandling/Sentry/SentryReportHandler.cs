@@ -42,8 +42,6 @@ namespace DCL.Diagnostics.Sentry
 
             options.Enabled = true;
 
-            Debug.Log($"SentryReportHandler.options.enabled: {options.Enabled}");
-
             if (!IsValidConfiguration(options))
             {
 #if !UNITY_EDITOR
@@ -53,8 +51,6 @@ namespace DCL.Diagnostics.Sentry
             }
 
             SentrySdk.Init(options);
-
-            Debug.Log($"SentryReportHandler.SentrySdk.Init");
         }
 
         public void AddMeetMinimumRequirements(Scope scope, bool meets)
