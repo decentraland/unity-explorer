@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
@@ -42,10 +43,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [Query]
         [All(typeof(PBUiInput), typeof(UITransformComponent))]
         [None(typeof(UIInputComponent))]
-        private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
+        private void InstantiateUIInput(in Entity entity, ref PBUiInput sdkModel, ref UITransformComponent uiTransformComponent)
         {
             var newUIInputComponent = inputTextsPool.Get()!;
-            newUIInputComponent.Initialize(inputBlock, UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-input");
+            newUIInputComponent.Initialize(inputBlock,
+                UiElementUtils.BuildElementName(COMPONENT_NAME, entity),
+                "dcl-input",
+                sdkModel.Value,
+                sdkModel.Placeholder,
+                sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
             World!.Add(entity, newUIInputComponent);
         }
