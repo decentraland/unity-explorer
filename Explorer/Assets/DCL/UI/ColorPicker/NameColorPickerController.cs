@@ -20,12 +20,20 @@ namespace DCL.UI
 
             this.view = view;
             this.colorPresets = colorPresets;
+
+            core.SetPresets(this.colorPresets.colors, (presetColor, _) => OnPresetClicked(presetColor));
         }
 
         public void Dispose()
         {
             core.OnColorChanged -= OnCoreColorChanged;
             core.Dispose();
+        }
+
+        private void OnPresetClicked(Color presetColor)
+        {
+            core.UpdateSliderValues(presetColor);
+            OnColorChanged(presetColor);
         }
 
         private void OnCoreColorChanged(Color color) =>

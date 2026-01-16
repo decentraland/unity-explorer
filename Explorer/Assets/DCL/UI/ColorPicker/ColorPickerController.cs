@@ -9,8 +9,6 @@ using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
-    // TODO (Maurizio) remove after porting
-
     [Obsolete("Use WearablesColorPickerController instead.")]
     public class ColorPickerController : IDisposable
     {

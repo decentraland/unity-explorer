@@ -77,5 +77,22 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject ArrowDownMark { get; private set; }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (SliderHue != null)
+                SliderHue.gameObject.SetActive(EnableHueSlider);
+
+            if (SliderSaturation != null)
+                SliderSaturation.gameObject.SetActive(EnableSaturationSlider);
+
+            if (SliderValue != null)
+                SliderValue.gameObject.SetActive(EnableValueSlider);
+
+            if (ToggleText != null)
+                ToggleText.SetActive(ShowToggleText);
+        }
+#endif
     }
 }

@@ -14,7 +14,7 @@ namespace DCL.Backpack.Breadcrumb
         private readonly IBackpackEventBus eventBus;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly ColorPickerController colorPickerController;
+        private readonly WearablesColorPickerController colorPickerController;
 
         public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle,
             ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
@@ -23,7 +23,7 @@ namespace DCL.Backpack.Breadcrumb
             this.eventBus = eventBus;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
-            colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            colorPickerController = new WearablesColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
             colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterEvent += OnFilterEvent;
             eventBus.ChangeColorEvent += UpdateColorPickerColors;
