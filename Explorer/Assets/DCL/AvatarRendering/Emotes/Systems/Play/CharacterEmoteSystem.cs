@@ -882,6 +882,19 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // This must occur right at the moment the Emote or Emote Loop states transition to Movement
                 ResetAvatarAndControllerTransforms(entity);
             }
+            else
+            {
+                // Makes sure the position and the rotation of the avatar with respect to its parent is reset (without this, it may occur that due to a LookAtPosition intent, the avatar could remain rotated after canceling a start animation)
+                ResetRelativeAvatarPositionAndRotation(entity);
+            }
+        }
+
+        private void ResetRelativeAvatarPositionAndRotation(Entity entity)
+        {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ResetRelativeAvatarPositionAndRotation() " + entity);
+            IAvatarView avatarView = World.Get<IAvatarView>(entity);
+            avatarView.GetTransform().localPosition = Vector3.zero;
+            avatarView.GetTransform().localRotation = Quaternion.identity;
         }
     }
 }
