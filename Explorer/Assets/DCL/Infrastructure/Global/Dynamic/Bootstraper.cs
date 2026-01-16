@@ -207,10 +207,13 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
+Debug.Log("Bootstraper.cs:210");
             try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+Debug.Log("Bootstraper.cs:214");
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+Debug.Log("Bootstraper.cs:216");
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
         }

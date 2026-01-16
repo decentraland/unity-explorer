@@ -60,6 +60,8 @@ using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
+using UnityEngine.Rendering.Universal;
+
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
@@ -91,6 +93,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            UniversalRenderPipelineAsset urpAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            Debug.Log($"Current URP Asset: {urpAsset?.name ?? "null"}");
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -142,6 +146,7 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            Debug.Log("applicationParametersParser");
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
@@ -150,48 +155,66 @@ namespace Global.Dynamic
 #endif
             );
 
+            Debug.Log("dclVersion");
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
             const bool KTX_ENABLED = true;
 
+            Debug.Log("hasSimulatedMemory");
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
 
+            Debug.Log("memoryCap");
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
 
+            Debug.Log("ApplyConfig");
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            Debug.Log("applicationParametersParser");
             if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
                 WindowModeUtils.ApplyWindowedMode();
 
+            Debug.Log("Create");
             World world = World.Create();
 
+            Debug.Log("decentralandUrlsSource");
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
+
+            Debug.Log("LogEnvironment");
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
+            Debug.Log("AddressablesProvisioner");
             var assetsProvisioner = new AddressablesProvisioner();
 
+            Debug.Log("splashScreen");
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
+
+            Debug.Log("DebugUtilitiesContainer");
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
 
+Debug.Log("MainSceneLoader.cs:205");
             Option<ChromeDevtoolProtocolClient> cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
 
+Debug.Log("MainSceneLoader.cs:208");
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
+Debug.Log("MainSceneLoader.cs:212");
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
+
+            Debug.Log("BootstrapContainer.CreateAsync");
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 assetsProvisioner,
                 debugSettings,
@@ -212,34 +235,45 @@ namespace Global.Dynamic
                 destroyCancellationToken
             );
 
+Debug.Log("MainSceneLoader.cs:238");
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
+Debug.Log("MainSceneLoader.cs:241");
             try
             {
+Debug.Log("MainSceneLoader.cs:244");
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
+Debug.Log("MainSceneLoader.cs:247");
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
+Debug.Log("MainSceneLoader.cs:252");
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
+                Debug.Log("InitializePlayerEntity");
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
+                Debug.Log("InitializeFeatureFlagsAsync");
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+Debug.Log("MainSceneLoader.cs:266");
                 bootstrap.InitializeFeaturesRegistry();
 
+Debug.Log("MainSceneLoader.cs:269");
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
+Debug.Log("MainSceneLoader.cs:273");
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
+Debug.Log("MainSceneLoader.cs:276");
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -254,61 +288,78 @@ namespace Global.Dynamic
                     dclVersion,
                     destroyCancellationToken);
 
+Debug.Log("MainSceneLoader.cs:291");
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
+Debug.Log("MainSceneLoader.cs:297");
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
+Debug.Log("MainSceneLoader.cs:302");
 #if !UNITY_WEBGL //We only verify hardware on non-webGL platforms
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 #endif
+Debug.Log("MainSceneLoader.cs:306");
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
+Debug.Log("MainSceneLoader.cs:309");
                     splashScreen.Value.Hide();
 
+Debug.Log("MainSceneLoader.cs:312");
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
                         ExitUtils.Exit();
                         return;
                     }
 
+Debug.Log("MainSceneLoader.cs:319");
                     splashScreen.Value.Show();
                 }
 
+Debug.Log("MainSceneLoader.cs:323");
                 DisableInputs();
 
+Debug.Log("MainSceneLoader.cs:326");
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
+Debug.Log("MainSceneLoader.cs:333");
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
+Debug.Log("MainSceneLoader.cs:336");
                 await LoadStartingRealmAsync(ct);
+Debug.Log("MainSceneLoader.cs:338");
                 await LoadUserFlowAsync(playerEntity, ct);
 
+Debug.Log("MainSceneLoader.cs:341");
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
                 splashScreen.Dispose();
 
+Debug.Log("MainSceneLoader.cs:346");
                 RestoreInputs();
             }
             catch (OperationCanceledException)
             {
+Debug.Log("MainSceneLoader.cs:351");
                 // ignore
             }
             catch (Exception)
             {
+Debug.Log("MainSceneLoader.cs:356");
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
             }
 
+Debug.Log("MainSceneLoader.cs:362");
             return;
 
             async UniTask LoadStartingRealmAsync(CancellationToken ct)
@@ -495,6 +546,11 @@ namespace Global.Dynamic
 
         private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+#if UNITY_WEBGL
+            ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
+            return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+#endif
+
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");

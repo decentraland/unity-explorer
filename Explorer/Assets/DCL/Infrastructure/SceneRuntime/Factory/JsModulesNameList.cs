@@ -10,8 +10,12 @@ namespace SceneRuntime.Factory
     {
         private const string REQUIRED_EXTENSION = ".js";
 
+        // TODO must be rewritten to load all modules by the HTTP path
         public IEnumerator<string> GetEnumerator()
         {
+#if UNITY_WEBGL
+            yield break; 
+#else
             return Directory
                   .GetFiles(
                        Path.Join(Application.streamingAssetsPath, "/Js/Modules/")!
@@ -19,6 +23,7 @@ namespace SceneRuntime.Factory
                   .Select(Path.GetFileName)
                   .Where(e => Path.GetExtension(e) == REQUIRED_EXTENSION)
                   .GetEnumerator();
+#endif
         }
 
         IEnumerator IEnumerable.GetEnumerator() =>
