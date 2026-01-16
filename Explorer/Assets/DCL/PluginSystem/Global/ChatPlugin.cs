@@ -275,14 +275,15 @@ namespace DCL.PluginSystem.Global
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
 
-            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus, userBlockingCacheProxy);
 
             var communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
                 eventBus,
                 chatHistory,
-                web3IdentityCache);
+                web3IdentityCache,
+                userBlockingCacheProxy);
 
             pluginScope.Add(communityUserStateService);
 
@@ -364,8 +365,8 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 hyperlinkTextFormatter,
                 chatConfig,
-                settings.ChatSettingsAsset,
-                translationService);
+                translationService,
+                currentChannelService);
 
             pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);

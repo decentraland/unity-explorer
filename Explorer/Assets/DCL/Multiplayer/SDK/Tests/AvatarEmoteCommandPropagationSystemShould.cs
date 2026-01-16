@@ -119,7 +119,8 @@ namespace DCL.Multiplayer.SDK.Tests
         private class FakeEmoteStorage : IEmoteStorage
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
-            public List<URN> EmbededURNs { get; }
+
+            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public bool TryGetElement(URN urn, out IEmote element)
             {
@@ -148,12 +149,12 @@ namespace DCL.Multiplayer.SDK.Tests
             public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 
-            public void ClearOwnedNftRegistry()
+            public int GetOwnedNftCount(URN nftUrn)
             {
-                throw new NotImplementedException();
+                return 1;
             }
 
-            public void AddEmbeded(URN urn, IEmote emote)
+            public void ClearOwnedNftRegistry()
             {
                 throw new NotImplementedException();
             }
@@ -162,6 +163,16 @@ namespace DCL.Multiplayer.SDK.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
+
+            public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
+                throw new NotImplementedException();
         }
     }
 }

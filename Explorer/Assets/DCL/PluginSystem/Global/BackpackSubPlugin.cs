@@ -31,6 +31,8 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
+using DCL.FeatureFlags;
 using UnityEngine.Pool;
 using Utility;
 
@@ -46,7 +48,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -89,7 +90,6 @@ namespace DCL.PluginSystem.Global
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
-            IReadOnlyCollection<URN> embeddedEmotes,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
@@ -123,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteStorage = emoteStorage;
-            this.embeddedEmotes = embeddedEmotes;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
@@ -158,7 +157,13 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableStorage, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteStorage);
+            busController = new BackpackBusController(wearableStorage,
+                backpackEventBus,
+                backpackCommandBus,
+                equippedWearables,
+                equippedEmotes,
+                emoteStorage,
+                wearablesProvider);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -186,7 +191,8 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 equippedWearables,
                 BackpackInfoPanelController.AttachmentType.Wearable,
-                thirdPartyNftProviderSource
+                thirdPartyNftProviderSource,
+                thumbnailProvider
             );
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>().EnsureNotNull();
@@ -199,7 +205,8 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 equippedWearables,
                 BackpackInfoPanelController.AttachmentType.Emote,
-                thirdPartyNftProviderSource
+                thirdPartyNftProviderSource,
+                thumbnailProvider
             );
 
             //not injected anywhere
@@ -236,7 +243,7 @@ namespace DCL.PluginSystem.Global
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, embeddedEmotes, this.thumbnailProvider, webBrowser, appArgs, emoteStorage);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, appArgs, emoteStorage);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);

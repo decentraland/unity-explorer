@@ -22,9 +22,7 @@ namespace DCL.SDKComponents.Tween
     /// Handles the update logic of PBTween and PBTweenSequence components
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(UpdateTransformSystem))]
-    [UpdateAfter(typeof(TweenSequenceLoaderSystem))]
-    [UpdateAfter(typeof(InstantiateTransformSystem))]
+    [UpdateAfter(typeof(UpdateTransformSystem))] // The transform has to be correctly updated at least once before the Tween can use it
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenSequenceUpdaterSystem : BaseUnityLoopSystem
     {
@@ -79,58 +77,111 @@ namespace DCL.SDKComponents.Tween
         }
 
         [Query]
-        private void UpdateTweenSequenceState(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private void UpdateTweenSequenceState(Entity entity, ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in PBTweenSequence pbTweenSequence,
+            CRDTEntity sdkEntity, ref TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             if (sdkTweenSequenceComponent.IsDirty)
             {
-                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform);
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
+                Material material = null;
+
+                if (SequenceRequiresMaterial(pbTween, pbTweenSequence))
+                {
+                    if (!World.TryGet(entity, out MaterialComponent materialComponent) || materialComponent.Result == null)
+                        return; // The Material Component may be configured in a future frame
+
+                    material = materialComponent.Result;
+                }
+
+                SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform, material);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
             }
             else
             {
-                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, transformComponent);
+                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, ref transformComponent);
             }
         }
 
+        private bool SequenceRequiresMaterial(in PBTween firstTween, in PBTweenSequence pbTweenSequence)
+        {
+            if (IsTextureTween(firstTween.ModeCase)) return true;
+
+            foreach (var tween in pbTweenSequence.Sequence)
+            {
+                if (IsTextureTween(tween.ModeCase)) return true;
+            }
+
+            return false;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private bool IsTextureTween(PBTween.ModeOneofCase mode)
+        {
+            return mode == PBTween.ModeOneofCase.TextureMove || mode == PBTween.ModeOneofCase.TextureMoveContinuous;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, ref TransformComponent transformComponent)
         {
             TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenSequenceComponent.SequenceTweener);
             if (newState != sdkTweenSequenceComponent.TweenStateStatus)
             {
                 sdkTweenSequenceComponent.TweenStateStatus = newState;
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, transformComponent);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 // Update transform while sequence is playing
-                UpdateSequenceTransform(sdkEntity, ref sdkTransform, transformComponent);
+                if (sdkTweenSequenceComponent.HasTransformTweens)
+                    UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
             }
         }
 
-        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform)
+        private void SetupTweenSequence(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, in PBTween firstTween, in PBTweenSequence pbTweenSequence, Transform transform, Material? material)
         {
             tweenerPool.ReleaseSequenceTweenerFrom(sdkTweenSequenceComponent);
 
             TweenLoop? loopType = pbTweenSequence.HasLoop ? pbTweenSequence.Loop : null;
-            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform);
+            sdkTweenSequenceComponent.SequenceTweener = tweenerPool.GetSequenceTweener(firstTween, pbTweenSequence.Sequence, loopType, transform, material);
+
+            sdkTweenSequenceComponent.HasTransformTweens = SequenceHasTransformTweens(firstTween, pbTweenSequence);
 
             sdkTweenSequenceComponent.SequenceTweener.Play();
             sdkTweenSequenceComponent.TweenStateStatus = TweenStateStatus.TsActive;
             sdkTweenSequenceComponent.IsDirty = false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent)
+        private bool SequenceHasTransformTweens(in PBTween firstTween, in PBTweenSequence pbTweenSequence)
         {
-            UpdateSequenceTransform(sdkEntity, ref sdkTransform, transformComponent);
+            if (IsTransformTween(firstTween.ModeCase)) return true;
+
+            foreach (var tween in pbTweenSequence.Sequence)
+            {
+                if (IsTransformTween(tween.ModeCase)) return true;
+            }
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsTransformTween(PBTween.ModeOneofCase mode)
+        {
+            return mode == PBTween.ModeOneofCase.Move || mode == PBTween.ModeOneofCase.Rotate || mode == PBTween.ModeOneofCase.Scale ||
+                   mode == PBTween.ModeOneofCase.MoveContinuous || mode == PBTween.ModeOneofCase.RotateContinuous;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        {
+            if (sdkTweenSequenceComponent.HasTransformTweens)
+                UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
+
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenSequenceComponent.TweenStateStatus);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, TransformComponent transformComponent)
+        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             // Read back from Unity Transform (DOTween Sequence updates it directly)
             TweenSDKComponentHelper.SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, sceneStateProvider.IsCurrent);

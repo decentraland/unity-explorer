@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -44,14 +45,15 @@ namespace DCL.AvatarRendering.Emotes
                 urlBuilder.Clear();
 
                 urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                          .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
-                          .AppendParameter(new URLParameter("includeEntities", "true"));
+                    .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
+                    .AppendParameter(new URLParameter("includeEntities", "true"));
 
                 int? pageNum = requestOptions.pageNum;
                 int? pageSize = requestOptions.pageSize;
                 URN? collectionId = requestOptions.collectionId;
                 IEmoteProvider.OrderOperation? orderOperation = requestOptions.orderOperation;
                 string? name = requestOptions.name;
+                bool? includeAmount = requestOptions.includeAmount;
 
                 if (pageNum != null)
                     urlBuilder.AppendParameter(new URLParameter("pageNum", pageNum.ToString()));
@@ -70,6 +72,9 @@ namespace DCL.AvatarRendering.Emotes
 
                 if (name != null)
                     urlBuilder.AppendParameter(new URLParameter("name", name));
+
+                if (includeAmount == true)
+                    urlBuilder.AppendParameter(new URLParameter("includeAmount", "true"));
 
                 URLAddress url = urlBuilder.Build();
                 loadingArguments = new CommonLoadingArguments(url);

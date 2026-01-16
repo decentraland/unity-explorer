@@ -54,10 +54,10 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget)
+        public async UniTask<bool> TryMovePlayerToAsync(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget, float duration, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
-                return;
+                return false;
 
             Vector3 newAbsolutePosition = sceneData.Geometry.BaseParcelPosition + newRelativePosition;
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
@@ -66,10 +66,22 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!IsPositionValid(newAbsolutePosition) && !sceneData.IsPortableExperience())
             {
                 ReportHub.LogError(ReportCategory.RESTRICTED_ACTIONS, "MovePlayerTo: Position is out of scene");
-                return;
+                return false;
             }
 
-            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget).Forget();
+            try
+            {
+                await UniTask.SwitchToMainThread();
+
+                globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
+                return await globalWorldActions.MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget, duration, ct);
+            }
+            catch (OperationCanceledException) { return false; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.RESTRICTED_ACTIONS, sceneShortInfo: sceneData.SceneShortInfo));
+                return false;
+            }
         }
 
         public void TryTeleportTo(Vector2Int coords)
@@ -144,14 +156,6 @@ namespace CrdtEcsBridge.RestrictedActions
             CopyToClipboardAsync(text).Forget();
         }
 
-        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget)
-        {
-            await UniTask.SwitchToMainThread();
-
-            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget);
-            globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
-        }
-
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();
@@ -160,9 +164,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
-            //Avoid teleports below ground level
-            if(floorPosition.y < 0)
-                return false;
+            // Avoid teleporting below ground level
+            floorPosition.y = Mathf.Max(floorPosition.y, 0);
 
             var parcelToCheck = floorPosition.ToParcel();
 

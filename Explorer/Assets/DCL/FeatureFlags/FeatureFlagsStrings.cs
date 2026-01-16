@@ -47,7 +47,19 @@ namespace DCL.FeatureFlags
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string GIFTING_ENABLED = "alfa-gifting";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
+        public const string CHAT_MESSAGE_BUFFER_CONFIG = "alfa-chat-message-buffer-config";
+        public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
+        public const string CONFIG_VARIANT = "config";
+        public const string HEAD_SYNC = "alfa-head-sync";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
+        public const string DISCOVER = "alfa-discover";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
     }
 
     public enum FeatureFlag
@@ -86,7 +98,8 @@ namespace DCL.FeatureFlags
         AuthCodeValidation,
         GpuiEnabled,
         ChatTranslation,
-        OutfitsEnabled
+        OutfitsEnabled,
+        GiftingEnabled
     }
 
     public static class FeatureFlagExtensions
@@ -129,6 +142,7 @@ namespace DCL.FeatureFlags
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
+                FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
                 _ => string.Empty
             };
         }

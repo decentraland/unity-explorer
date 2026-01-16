@@ -532,7 +532,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly List<URN> GetOrAddByDTOCalls = new ();
             public readonly List<URN> TryGetElementCalls = new ();
             public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
-            public List<URN> EmbededURNs => throw new NotImplementedException();
+            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)
             {
@@ -556,9 +556,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public void Set(URN urn, IEmote emote) =>
                 Emotes[urn] = emote;
 
-            public void AddEmbeded(URN urn, IEmote emote) =>
-                throw new NotImplementedException();
-
             public void Unload(IPerformanceBudget budget) =>
                 Emotes.Clear();
 
@@ -567,6 +564,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             public bool TryGetOwnedNftRegistry(URN urn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
+
+            public int GetOwnedNftCount(URN nftUrn)
+            {
+                return 1;
+            }
 
             public void ClearOwnedNftRegistry()
             {
@@ -577,6 +579,16 @@ namespace DCL.AvatarRendering.Emotes.Tests
             {
                 throw new NotImplementedException();
             }
+
+            public bool TryGetLatestOwnedNft(URN nftUrn, out NftBlockchainOperationEntry entry)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
+
+            public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
+                throw new NotImplementedException();
         }
 
         public class MockEmote : IEmote
@@ -585,6 +597,15 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public URN Urn { get; }
             public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
             public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; }
+            public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
+            public bool IsSocial { get; }
+            public int Amount { get; set; }
+
+            public void SetAmount(int amount)
+            {
+                Amount = amount;
+            }
+
             public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; }
             public EmoteDTO DTO { get; private set; }
             public bool IsLoading { get; set; }

@@ -66,7 +66,9 @@ namespace DCL.Chat.ChatServices
 
         public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser, string? communityName = null)
         {
-            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
+            if (!nametagsData.showNameTags
+                || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE
+                || (channel.ChannelType != ChatChannel.ChatChannelType.NEARBY && chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NEARBY_ONLY))
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out var entry))
@@ -104,8 +106,7 @@ namespace DCL.Chat.ChatServices
                             }
                             else
                             {
-                                var nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
-                                GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                                GenerateChatBubbleComponent(playerEntity, chatMessage, profile.UserNameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
                             }
                         }
 

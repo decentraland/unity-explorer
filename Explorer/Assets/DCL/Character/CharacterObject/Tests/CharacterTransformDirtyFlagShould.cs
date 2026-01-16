@@ -21,6 +21,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Character.Tests
 {
@@ -309,7 +310,8 @@ namespace DCL.Character.Tests
             
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
-                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
+                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
+                new HeadIKComponent()
             );
             
             // Setup movement system dependencies
@@ -386,14 +388,15 @@ namespace DCL.Character.Tests
 
             Entity entity = globalWorld.Create(
                 characterTransform,
-                Profile.Create("Ia4Ia5Cth0ulhu2Ftaghn2", "fake user", new DCL.Profiles.Avatar(
+                Profile.Create("Ia4Ia5Cth0ulhu2Ftaghn2", "fake user", new Avatar(
                     BodyShape.MALE,
                     WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor())), 
                 new AvatarShapeComponent(),
-                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false }
+                new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
+                new HeadIKComponent()
             );
 
             // Setup movement system

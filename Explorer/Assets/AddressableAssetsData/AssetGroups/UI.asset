@@ -55,6 +55,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 09f9d810bdd59ba4996aa290a346561e
+    m_Address: Assets/DCL/Backpack/Gifting/Views/Prefabs/TransferGitPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ae66608be2735a4f96e0f1aa9b3a75b
     m_Address: PlayerMarkerObject
     m_ReadOnly: 0
@@ -172,6 +177,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 295cf8ad8d171d849863eccaf581c9e7
     m_Address: ScenesUIStyleSheet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2b7c17e39a8541341a73119ee9cb0093
+    m_Address: Assets/DCL/Backpack/Gifting/Views/Prefabs/TransferSuccessGiftPopup.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -395,11 +405,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 67c43eeeaf9c34744807086742498bf8
-    m_Address: Assets/Textures/BackpackPanel/BackpackAtlas.spriteatlasv2
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 688aa1f59829ea64fb0887ed7bb87d26
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ButtonWithTextAndIcon_StringDelegateVariant.prefab
     m_ReadOnly: 0
@@ -530,6 +535,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 91f584d6c05272842b8630c9c1bd041b
+    m_Address: Assets/DCL/Passport/Prefabs/Gift.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 91f97481855a7954d91bd70839dc70cd
     m_Address: Assets/Textures/ExplorePanel/Skybox/SkyboxUnhoverAtlas.spriteatlasv2
     m_ReadOnly: 0
@@ -582,6 +592,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a731ee28947d7d54d8f4ff349525c868
     m_Address: Assets/Textures/ExplorePanel/EmotesHoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9b1068498c63904cb1ff1958d25fb63
+    m_Address: Assets/DCL/UI/DuplicateIdentityPopup/DuplicateIdentityWindow.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -767,6 +782,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f9b91c66bb8dc8547849cb992d9cffea
     m_Address: Assets/Textures/ExplorePanel/SettingsTabHoverUnhoverSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa48af71118ac4146b9ba336aa48c151
+    m_Address: Assets/DCL/Backpack/Assets/GiftingItem.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

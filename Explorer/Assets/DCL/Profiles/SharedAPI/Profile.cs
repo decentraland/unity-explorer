@@ -11,10 +11,8 @@ using UnityEngine;
 
 namespace DCL.Profiles
 {
-    public class Profile : IDirtyMarker, IDisposable
+    public partial class Profile : IDirtyMarker, IDisposable
     {
-        public static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
-
         private static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());
@@ -23,74 +21,10 @@ namespace DCL.Profiles
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
 
-        private string userId;
-        private string name;
-        private string mentionName;
-        private bool hasClaimedName;
-
-        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
-
-        /// <summary>
-        /// Is the complete wallet address of the user
-        /// </summary>
-        public string UserId
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture
         {
-            get => userId;
-
-            set
-            {
-                userId = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        public string Name
-        {
-            get => name;
-            set
-            {
-                name = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        /// <summary>
-        ///     The color calculated for this username
-        /// </summary>
-        public Color UserNameColor { get; set; } = Color.white;
-
-        /// <summary>
-        ///     The name of the user after passing character validation, without the # part
-        ///     For users with claimed names would be the same as DisplayName
-        /// </summary>
-        public string ValidatedName { get; private set; }
-
-        /// <summary>
-        ///     The # part of the name for users without claimed name, will be null for users with a claimed name, includes the # character at the beginning
-        /// </summary>
-        public string? WalletId { get; private set; }
-
-        /// <summary>
-        ///     The name of the user after passing character validation, including the
-        ///     Wallet Id (if the user doesnt have a claimed name)
-        /// </summary>
-        public string DisplayName { get; private set; }
-        public string UnclaimedName { get; internal set; }
-
-        /// <summary>
-        /// The Display Name with @ before it. Cached here to avoid re-allocations.
-        /// </summary>
-        public string MentionName => mentionName;
-
-        public bool HasClaimedName
-        {
-            get => hasClaimedName;
-
-            set
-            {
-                hasClaimedName = value;
-                GenerateAndValidateName();
-            }
+            get => compact.ProfilePicture;
+            set => GetCompact().ProfilePicture = value;
         }
 
         public bool HasConnectedWeb3 { get; set; }
@@ -125,18 +59,24 @@ namespace DCL.Profiles
             set => links = value;
         }
 
-        public Profile() { }
+        private CompactInfo compact;
+
+        public CompactInfo Compact => compact;
+
+        public Profile()
+        {
+            compact = new CompactInfo();
+        }
 
         public Profile(string userId, string name, Avatar avatar)
         {
-            UserId = userId;
-            Name = name;
+            compact = new CompactInfo(userId, name);
             Avatar = avatar;
         }
 
         public void Dispose()
         {
-            ProfilePicture.TryDereference();
+            GetCompact().Dispose();
             POOL.Release(this);
         }
 
@@ -146,32 +86,30 @@ namespace DCL.Profiles
         public static Profile Create(string userId, string name, Avatar avatar)
         {
             Profile profile = Create();
-            profile.UserId = userId;
-            profile.Name = name;
+            profile.GetCompact().UserId = userId;
+            profile.GetCompact().Name = name;
             profile.Avatar = avatar;
             return profile;
         }
 
         public void Clear()
         {
+            Compact.Clear();
             blocked?.Clear();
             interests?.Clear();
             links?.Clear();
             Birthdate = null;
             Avatar.Clear();
-            Country = default(string?);
-            Email = default(string?);
-            Gender = default(string?);
-            Description = default(string?);
-            Hobbies = default(string?);
+            Country = null;
+            Email = null;
+            Gender = null;
+            Description = null;
+            Hobbies = null;
             Language = default(string?);
             Profession = default(string?);
             Pronouns = default(string?);
             Version = default(int);
-            HasClaimedName = default(bool);
             EmploymentStatus = default(string?);
-            UserId = "";
-            Name = "";
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
             ProfilePicture = null;
@@ -198,32 +136,6 @@ namespace DCL.Profiles
                 avatar
             );
 
-        private void GenerateAndValidateName()
-        {
-            ValidatedName = string.Empty;
-            DisplayName = string.Empty;
-            WalletId = null;
-
-            if (string.IsNullOrEmpty(Name)) return;
-
-            string result = string.Empty;
-            MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
-
-            foreach (Match match in matches)
-                result += match.Value;
-
-            ValidatedName = result;
-            DisplayName = result;
-
-            if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
-            {
-                WalletId = $"#{UserId[^4..]}";
-                DisplayName = $"{result}{WalletId}";
-            }
-
-            mentionName = "@" + DisplayName;
-        }
-
         public void ClearLinks()
         {
             if (Links == null)
@@ -236,21 +148,37 @@ namespace DCL.Profiles
         {
             if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
 
-            return UserId == profile.UserId
-                   && Name == profile.Name
-                   && HasClaimedName == profile.HasClaimedName
+            return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
-                   && Description == profile.Description
+                   && AreStringsEquivalent(Description, profile.Description)
                    && TutorialStep == profile.TutorialStep
-                   && Email == profile.Email
-                   && Country == profile.Country
-                   && EmploymentStatus == profile.EmploymentStatus
-                   && Gender == profile.Gender
-                   && Pronouns == profile.Pronouns
-                   && Language == profile.Language
-                   && Profession == profile.Profession
+                   && AreStringsEquivalent(Email, profile.Email)
+                   && AreStringsEquivalent(Country, profile.Country)
+                   && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
+                   && AreStringsEquivalent(Gender, profile.Gender)
+                   && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(Language, profile.Language)
+                   && AreStringsEquivalent(Profession, profile.Profession)
                    && Birthdate == profile.Birthdate
-                   && Version == profile.Version;
+                   && Version == profile.Version
+                   && AreLinksSame(links, profile.links);
+        }
+        
+        private static bool AreStringsEquivalent(string? a, string? b) =>
+            (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || a == b;
+
+        private static bool AreLinksSame(List<LinkJsonDto>? links1, List<LinkJsonDto>? links2)
+        {
+            if (links1 == null && links2 == null) return true;
+            if (links1 == null || links2 == null) return false;
+            if (links1.Count != links2.Count) return false;
+
+            for (int i = 0; i < links1.Count; i++)
+            {
+                if (links1[i].title != links2[i].title || links1[i].url != links2[i].url)
+                    return false;
+            }
+            return true;
         }
     }
 }

@@ -53,7 +53,7 @@ namespace DCL.Notifications
                 new URLBuilder()
                    .AppendDomain(
                         URLDomain.FromString(
-                            decentralandUrlsSource.Url(DecentralandUrl.NotificationRead)
+                            $"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications/read"
                         )
                     )
                    .Build()
@@ -67,7 +67,7 @@ namespace DCL.Notifications
 
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Notification)))
+            urlBuilder.AppendDomain(URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
                       .AppendParameter(limitParameter);
 
             commonArguments = new CommonArguments(urlBuilder.Build());
@@ -96,7 +96,7 @@ namespace DCL.Notifications
 
                 urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Notification)))
+                urlBuilder.AppendDomain(URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
                           .AppendParameter(onlyUnreadParameter)
                           .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
 

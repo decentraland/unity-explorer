@@ -95,6 +95,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 {
                     temporalData = receivedMessage.Payload.TemporalData,
                     movementData = receivedMessage.Payload.MovementData,
+                    headSyncData = receivedMessage.Payload.HeadSyncData,
                 };
 
                 Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
@@ -111,6 +112,10 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             var vel = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ);
 
+            const float WALK_EPSILON = 0.05f;
+            float movementBlend = Mathf.Clamp(proto.MovementBlendValue, 0, 3);
+            var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
+
             return new NetworkMovementMessage
             {
                 timestamp = proto.Timestamp,
@@ -120,11 +125,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocity = vel,
                 velocitySqrMagnitude = vel.sqrMagnitude,
 
-                movementKind = (MovementKind) Math.Clamp((int)Math.Round(proto.MovementBlendValue), 0, 3),
+                movementKind = movementKind,
 
                 animState = new AnimationStates
                 {
-                    MovementBlendValue = proto.MovementBlendValue,
+                    MovementBlendValue = movementBlend,
                     SlideBlendValue = proto.SlideBlendValue,
                     IsGrounded = proto.IsGrounded,
                     IsJumping = proto.IsJumping,
@@ -135,6 +140,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
                 isEmoting = proto.IsEmoting,
+
+                headIKYawEnabled = proto.HeadIkYawEnabled,
+                headIKPitchEnabled = proto.HeadIkPitchEnabled,
+                headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
             };
         }
 
@@ -189,12 +198,18 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;
+
+            movement.HeadIkYawEnabled = message.headIKYawEnabled;
+            movement.HeadIkPitchEnabled = message.headIKPitchEnabled;
+            movement.HeadYaw = message.headYawAndPitch.x;
+            movement.HeadPitch = message.headYawAndPitch.y;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
         {
             proto.TemporalData = message.temporalData;
             proto.MovementData = message.movementData;
+            proto.HeadSyncData = message.headSyncData;
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

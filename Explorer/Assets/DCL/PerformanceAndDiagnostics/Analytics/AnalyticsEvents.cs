@@ -88,6 +88,7 @@
             public const string LOGGED_IN = "logged_in";
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
+            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
         }
 
         public static class Friends
@@ -105,6 +106,24 @@
 
             public const string BLOCK_USER = "block_user";
             public const string UNBLOCK_USER = "unblock_user";
+        }
+
+        /// <summary>
+        ///     Events related to endpoint performance
+        /// </summary>
+        public static class Endpoints
+        {
+            /// <summary>
+            ///     Complemented with:
+            ///     duration
+            /// </summary>
+            public const string PROFILE_RETRIEVED = "profile_retrieved";
+
+            /// <summary>
+            ///     user_id
+            ///     duration
+            /// </summary>
+            public const string PROFILE_FAILED = "profile_retrieval_failed";
         }
 
         public static class MarketplaceCredits
@@ -135,6 +154,20 @@
             public const string SAVE_OUTFIT = "save_outfit";
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
+
+        public static class Gifts
+        {
+            public const string SENT_GIFT = "sent_gift";
+            public const string SUCCESSFULL_GIFT = "successful_gift";
+            public const string FAILED_GIFT = "failed_gift";
+            public const string CANCELED_GIFT = "canceled_gift";
+        }
+
+        public static class Communities
+        {
+            public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
+            public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
         }
     }
 }

@@ -14,10 +14,16 @@
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
+        public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+
+        /// <summary>
+        /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
+        /// </summary>
+        public const string COMMUNITY = "community";
 
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
@@ -49,6 +55,10 @@
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
         public const string COMMUNITIES_ANNOUNCEMENTS = "include-communities-announcements";
+
+        public const string HEAD_SYNC = "head-sync";
+
+        public const string DISCOVER = "discover";
 
         public static class Multiplayer
         {

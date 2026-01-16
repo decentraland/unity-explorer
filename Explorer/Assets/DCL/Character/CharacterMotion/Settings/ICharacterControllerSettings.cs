@@ -34,7 +34,10 @@ namespace DCL.CharacterMotion.Settings
         float EdgeSlipSpeed { get; }
         float EdgeSlipSafeDistance { get; }
         float RotationSpeed { get; }
-        float MovAnimBlendSpeed { get; }
+        float MoveAnimBlendMaxWalkSpeed { get; }
+        float MoveAnimBlendMaxJogSpeed { get; }
+        float MoveAnimBlendMaxRunSpeed { get; }
+        float MoveAnimBlendSpeed { get; }
         float JumpPadForce { get; }
         float AnimationSpeed { get; }
         public AnimationCurve AccelerationCurve { get; }
@@ -67,6 +70,8 @@ namespace DCL.CharacterMotion.Settings
         float HeadIKHorizontalAngleLimit { get; set; }
         float HeadIKHorizontalAngleReset { get; set; }
         float HeadIKRotationSpeed { get; set; }
+        float HeadIKWeightChangeSpeed { get; set; }
+        float HeadIKRemotePlayersDistance { get; set; }
         AnimationCurve SlopeVelocityModifier { get; }
         float SlideAnimationBlendSpeed { get; }
         float MinSlopeAngle { get; }
@@ -76,6 +81,5 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
-        float HeadIKWeightChangeSpeed { get; }
     }
 }

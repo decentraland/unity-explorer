@@ -9,7 +9,6 @@ using DCL.ApplicationVersionGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -53,16 +52,11 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.WebRequests.ChromeDevtool;
-using DCL.Settings.ModuleControllers;
 using DCL.UI.ErrorPopup;
-using DCL.Utility;
-using DCL.Utility.Types;
-using System.Collections.Generic;
-using TMPro;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
@@ -102,6 +96,8 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            DisableAllSelectableTransitions();
+
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
@@ -127,6 +123,11 @@ namespace Global.Dynamic
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
+        private void OnApplicationQuit()
+        {
+            DisableAllSelectableTransitions();
+        }
+
         public void ApplyConfig(IAppArgs applicationParametersParser)
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
@@ -138,7 +139,6 @@ namespace Global.Dynamic
             if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
                 decentralandEnvironment = env;
         }
-
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
@@ -152,8 +152,6 @@ namespace Global.Dynamic
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
-
-            const bool KTX_ENABLED = true;
 
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
@@ -179,7 +177,7 @@ namespace Global.Dynamic
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
 
             var web3AccountFactory = new Web3AccountFactory();
-            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
@@ -216,8 +214,16 @@ namespace Global.Dynamic
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
-                bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, ct);
+
+                bootstrap.InitializeFeaturesRegistry();
+
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
@@ -228,13 +234,7 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
-
-                bootstrap.InitializeFeaturesRegistry();
-
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
-                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                staticContainer!.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
@@ -619,6 +619,27 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             return input.SelectedOption;
+        }
+
+        /// <summary>
+        /// Required to fix crash on exit, ticket - https://github.com/decentraland/unity-explorer/issues/6180
+        /// </summary>
+        private static void DisableAllSelectableTransitions()
+        {
+            DOTween.KillAll();
+            Selectable[] all = FindObjectsByType<UnityEngine.UI.Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+
+            foreach (var s in all)
+            {
+                // Prevent Unity from executing DestroyTween / StartTween during shutdown
+                s.transition = Selectable.Transition.None;
+
+                // Disable any graphic tween still in progress
+                Graphic? g = s.targetGraphic;
+
+                if (g != null)
+                    g.CrossFadeColor(g.color, 0f, false, false); // instantly settle
+            }
         }
 
         [Serializable]

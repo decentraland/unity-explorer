@@ -1,4 +1,5 @@
-﻿using DCL.Web3.Authenticators;
+﻿using System;
+using DCL.Web3.Authenticators;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -6,13 +7,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly IWeb3VerifiedAuthenticator core;
 
+        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
+        {
+            add => core.VerificationRequired += value;
+            remove => core.VerificationRequired -= value;
+        }
+
         public AnalyticsDecoratorVerifiedAuthenticator(IWeb3VerifiedAuthenticator core, IAnalyticsController analytics)
             : base(core, analytics)
         {
             this.core = core;
         }
 
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            core.SetVerificationListener(callback);
+        public void CancelCurrentWeb3Operation()
+        {
+            core.CancelCurrentWeb3Operation();
+        }
     }
 }
