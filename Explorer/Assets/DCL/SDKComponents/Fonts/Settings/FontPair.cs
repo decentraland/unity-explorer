@@ -2,7 +2,7 @@ using DCL.ECSComponents;
 using System;
 using TMPro;
 
-namespace DCL.SDKComponents.TextShape.Fonts.Settings
+namespace DCL.SDKComponents.Fonts.Settings
 {
     [Serializable]
     public class FontPair

@@ -179,6 +179,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
+            // labelToSetup.style.unityFont
+            // tmpText.font = fontsStorage.Font(textShape.Font) ?? tmpText.font;
 
             if (model.HasTextWrap)
             {

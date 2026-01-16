@@ -1,4 +1,4 @@
-namespace DCL.SDKComponents.TextShape.Fonts
+namespace DCL.SDKComponents.Fonts
 {
     public static class FontsStorageExtensions
     {
