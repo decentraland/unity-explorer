@@ -19,15 +19,16 @@ namespace ECS.Unity.AssetLoad
 
         public void AppendAssetLoadingMessage(CRDTEntity crdtEntity, LoadingState loadingState, string assetPath)
         {
-            ecsToCRDTWriter.AppendMessage<PBAssetLoadLoadingState, (LoadingState loadingState, string assetPath)>(
+            ecsToCRDTWriter.AppendMessage<PBAssetLoadLoadingState, (LoadingState loadingState, string assetPath, uint timestamp)>(
                 static (component, data) =>
                 {
                     component.CurrentState = data.loadingState;
                     component.Asset = data.assetPath;
+                    component.Timestamp = data.timestamp;
                 },
                 crdtEntity,
                 (int)sceneStateProvider.TickNumber,
-                (loadingState, assetPath)
+                (loadingState, assetPath, sceneStateProvider.TickNumber)
             );
         }
     }

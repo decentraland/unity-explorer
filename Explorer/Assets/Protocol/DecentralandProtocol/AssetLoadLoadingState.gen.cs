@@ -27,14 +27,14 @@ namespace DCL.ECSComponents {
             "CjpkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXNzZXRfbG9hZF9sb2Fk",
             "aW5nX3N0YXRlLnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMa",
             "NmRlY2VudHJhbGFuZC9zZGsvY29tcG9uZW50cy9jb21tb24vbG9hZGluZ19z",
-            "dGF0ZS5wcm90byJxChdQQkFzc2V0TG9hZExvYWRpbmdTdGF0ZRJHCg1jdXJy",
-            "ZW50X3N0YXRlGAEgASgOMjAuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRz",
-            "LmNvbW1vbi5Mb2FkaW5nU3RhdGUSDQoFYXNzZXQYAiABKAlCFKoCEURDTC5F",
-            "Q1NDb21wb25lbnRzYgZwcm90bzM="));
+            "dGF0ZS5wcm90byKEAQoXUEJBc3NldExvYWRMb2FkaW5nU3RhdGUSRwoNY3Vy",
+            "cmVudF9zdGF0ZRgBIAEoDjIwLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5jb21tb24uTG9hZGluZ1N0YXRlEg0KBWFzc2V0GAIgASgJEhEKCXRpbWVz",
+            "dGFtcBgDIAEoDUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.LoadingStateReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAssetLoadLoadingState), global::DCL.ECSComponents.PBAssetLoadLoadingState.Parser, new[]{ "CurrentState", "Asset" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAssetLoadLoadingState), global::DCL.ECSComponents.PBAssetLoadLoadingState.Parser, new[]{ "CurrentState", "Asset", "Timestamp" }, null, null, null, null)
           }));
     }
     #endregion
@@ -81,6 +81,7 @@ namespace DCL.ECSComponents {
     public PBAssetLoadLoadingState(PBAssetLoadLoadingState other) : this() {
       currentState_ = other.currentState_;
       asset_ = other.asset_;
+      timestamp_ = other.timestamp_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -114,6 +115,21 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "timestamp" field.</summary>
+    public const int TimestampFieldNumber = 3;
+    private uint timestamp_;
+    /// <summary>
+    /// monotonic counter
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Timestamp {
+      get { return timestamp_; }
+      set {
+        timestamp_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -131,6 +147,7 @@ namespace DCL.ECSComponents {
       }
       if (CurrentState != other.CurrentState) return false;
       if (Asset != other.Asset) return false;
+      if (Timestamp != other.Timestamp) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -140,6 +157,7 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (CurrentState != global::DCL.ECSComponents.LoadingState.Unknown) hash ^= CurrentState.GetHashCode();
       if (Asset.Length != 0) hash ^= Asset.GetHashCode();
+      if (Timestamp != 0) hash ^= Timestamp.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -166,6 +184,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteString(Asset);
       }
+      if (Timestamp != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Timestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -184,6 +206,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(18);
         output.WriteString(Asset);
       }
+      if (Timestamp != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Timestamp);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -199,6 +225,9 @@ namespace DCL.ECSComponents {
       }
       if (Asset.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Asset);
+      }
+      if (Timestamp != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Timestamp);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -217,6 +246,9 @@ namespace DCL.ECSComponents {
       }
       if (other.Asset.Length != 0) {
         Asset = other.Asset;
+      }
+      if (other.Timestamp != 0) {
+        Timestamp = other.Timestamp;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -241,6 +273,10 @@ namespace DCL.ECSComponents {
             Asset = input.ReadString();
             break;
           }
+          case 24: {
+            Timestamp = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -262,6 +298,10 @@ namespace DCL.ECSComponents {
           }
           case 18: {
             Asset = input.ReadString();
+            break;
+          }
+          case 24: {
+            Timestamp = input.ReadUInt32();
             break;
           }
         }
