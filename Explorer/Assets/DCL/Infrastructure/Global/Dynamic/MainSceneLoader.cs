@@ -88,6 +88,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private MultiLogger? multiLogger;
 
         private void Awake()
         {
@@ -119,6 +120,8 @@ namespace Global.Dynamic
             }
 
             bootstrapContainer?.Dispose();
+
+            multiLogger?.Dispose();
 
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
@@ -152,6 +155,10 @@ namespace Global.Dynamic
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
+
+            // Initialize multi-process logging if enabled via command line or debug settings
+            if (applicationParametersParser.HasFlag(AppArgsFlags.DO_MULTI_LOG) || debugSettings.EnableMultiLog)
+                multiLogger = new MultiLogger();
 
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
