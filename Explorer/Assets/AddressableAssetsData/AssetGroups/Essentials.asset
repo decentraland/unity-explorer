@@ -175,11 +175,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9130b796434f94abd9384732d460360d
-    m_Address: Assets/DCL/SDKComponents/Fonts/Settings/Font List.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 933532a4fcc9baf4fa0491de14d08ed7
     m_Address: Lit.shader
     m_ReadOnly: 0

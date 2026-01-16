@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
-using DCL.SDKComponents.Fonts;
+using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;

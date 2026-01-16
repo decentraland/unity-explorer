@@ -205,6 +205,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 353f2294734a94b57b061c9b83eb275d
+    m_Address: Assets/DCL/SDKComponents/TextShape/Settings/Font List.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 36bcbe134ec574902b49db6464414b03
     m_Address: BlockedScreen
     m_ReadOnly: 0

@@ -2,7 +2,7 @@ using DCL.ECSComponents;
 using System.Collections.Generic;
 using TMPro;
 
-namespace DCL.SDKComponents.Fonts
+namespace DCL.SDKComponents.TextShape.Fonts
 {
     public class CachedFontsStorage : IFontsStorage
     {

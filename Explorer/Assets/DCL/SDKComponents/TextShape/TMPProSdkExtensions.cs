@@ -1,5 +1,5 @@
 ﻿using DCL.ECSComponents;
-using DCL.SDKComponents.Fonts;
+using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Unity.ColorComponent;
 using System;
 using TMPro;

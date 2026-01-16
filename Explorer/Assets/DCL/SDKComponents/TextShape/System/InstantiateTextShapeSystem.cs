@@ -6,7 +6,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Component;
-using DCL.SDKComponents.Fonts;
+using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
