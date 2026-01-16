@@ -63,10 +63,6 @@ namespace DCL.Diagnostics.Sentry
                 catch (Exception e) { Debug.LogException(e); }
             }
 #endif
-
-            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.enabled: {options.Enabled}");
-            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.dsn: {options.Dsn}");
-            ReportHub.LogProductionInfo($"SentryBuildTimeConfiguration.options.EnvironmentOverride: {options.Environment}");
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
