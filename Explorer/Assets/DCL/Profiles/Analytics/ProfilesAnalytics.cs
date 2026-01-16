@@ -19,7 +19,7 @@ namespace DCL.Profiles
         }
 
         internal void OnProfileRetrievalStarted(string id) =>
-            startedRequests[id] = DateTime.Now;
+            startedRequests.TryAdd(id, DateTime.Now);
 
         internal void OnProfileResolved(string id, bool asAggregated)
         {
@@ -31,7 +31,11 @@ namespace DCL.Profiles
             if (startedRequests.TryRemove(id, out DateTime startTime))
             {
                 analyticsController.Track(AnalyticsEvents.Endpoints.PROFILE_RETRIEVED,
-                    new JObject { { "duration", (ulong)(DateTime.Now - startTime).TotalMilliseconds } });
+                    new JObject
+                    {
+                        { "user_id", id },
+                        { "duration", (ulong)(DateTime.Now - startTime).TotalMilliseconds },
+                    });
             }
         }
 

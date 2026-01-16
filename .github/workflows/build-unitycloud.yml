@@ -140,23 +140,26 @@ jobs:
     name: Prebuild
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
-      (github.ref == 'refs/heads/dev') ||
-      (github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch') ||
-      (
-        github.event_name == 'pull_request' &&
+      !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
+        (github.ref == 'refs/heads/dev') ||
+        (github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch') ||
         (
+          github.event_name == 'pull_request' &&
           (
-            (github.event.action == 'opened' ||
-             github.event.action == 'reopened' ||
-             github.event.action == 'synchronize') &&
-            !github.event.pull_request.draft
-          ) ||
-          github.event.action == 'ready_for_review' ||
-          (
-            github.event.action == 'labeled' &&
-            (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+            (
+              (github.event.action == 'opened' ||
+               github.event.action == 'reopened' ||
+               github.event.action == 'synchronize') &&
+              !github.event.pull_request.draft
+            ) ||
+            github.event.action == 'ready_for_review' ||
+            (
+              github.event.action == 'labeled' &&
+              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+            )
           )
         )
       )

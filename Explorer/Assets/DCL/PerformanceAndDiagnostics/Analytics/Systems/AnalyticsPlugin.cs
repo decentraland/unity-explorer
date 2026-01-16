@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
@@ -89,6 +90,9 @@ namespace DCL.PluginSystem.Global
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            AvatarLoaderAnalyticsSystem.InjectToWorld(ref builder);
+            AvatarWearablesResolutionAnalyticsSystem.InjectToWorld(ref builder);
+            AvatarInstantiatorAnalyticsSystem.InjectToWorld(ref builder, analytics);
             ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
             DebugAnalyticsSystem.InjectToWorld(ref builder, analytics, debugContainerBuilder);
         }

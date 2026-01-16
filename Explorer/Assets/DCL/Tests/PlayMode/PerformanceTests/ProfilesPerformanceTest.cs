@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -10,19 +11,20 @@ using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false)]
-    [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false)]
-    [TestFixture("https://asset-bundle-registry.decentraland.today/", true)]
+    [TestFixture("https://peer-ec1.decentraland.org/lambdas/", true, false)]
+    [TestFixture("https://peer-ec2.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://peer-ap1.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://peer-eu1.decentraland.org/lambdas/", false, false)]
+    [TestFixture("https://asset-bundle-registry.decentraland.org/", false, true)]
     public class ProfilesPerformanceTest : PerformanceBenchmark
     {
         private static readonly object[] TEST_CASES_SOURCE =
         {
             new object[] { 1, 5, 0.25d, 100 },
-            new object[] { 10, 10, 0.25d, 100 },
-            new object[] { 50, 10, 0.25d, 100 },
-            new object[] { 100, 10, 0.25d, 100 },
-            new object[] { 20, 10, 6, 25 },
+            new object[] { 10, 5, 0.25d, 100 },
+            new object[] { 50, 5, 0.25d, 100 },
+            new object[] { 100, 5, 0.25d, 100 },
+            new object[] { 20, 5, 6, 25 },
             new object[] { 20, 5, 20, 25 },
         };
 
@@ -52,9 +54,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         private readonly string profilesUrls;
         private readonly string metadataUrl;
 
-        public ProfilesPerformanceTest(string lambdas, bool supportsMetadata)
+        [UsedImplicitly]
+        private readonly bool baseline;
+
+        public ProfilesPerformanceTest(string lambdas, bool baseline, bool supportsMetadata)
         {
             this.supportsMetadata = supportsMetadata;
+            this.baseline = baseline;
             profilesUrls = lambdas + "profiles";
             metadataUrl = lambdas + "profiles/metadata";
         }
@@ -66,8 +72,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+            await BenchmarkAsync(_ => controller!.PostAsync(profilesUrls, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
+                                                 .CreateFromNewtonsoftJsonAsync<List<Profile>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
 
         [TestCaseSource(nameof(TEST_CASES_SOURCE))]
@@ -79,8 +85,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.PostAsync(metadataUrl, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
-                                                              .CreateFromNewtonsoftJsonAsync<List<Profile.CompactInfo>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
+            await BenchmarkAsync(_ => controller!.PostAsync(metadataUrl, GenericPostArguments.CreateJson(BODY), CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST)
+                                                 .CreateFromNewtonsoftJsonAsync<List<Profile.CompactInfo>>(serializerSettings: RealmProfileRepository.SERIALIZER_SETTINGS), new[] { "" }, 1, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations));
         }
     }
 }

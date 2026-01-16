@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -47,9 +48,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            EntitiesAnalytics entitiesAnalytics
         )
-            : base(world, cache, webRequestController)
+            : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;

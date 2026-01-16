@@ -68,7 +68,7 @@ namespace DCL.WebRequests.Analytics
             if (chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners)
             {
                 pooledObject = envelope.Headers(out Dictionary<string, string> headers);
-                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers);
+                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers, envelope.GetPostData());
             }
             else
 
@@ -81,16 +81,16 @@ namespace DCL.WebRequests.Analytics
             {
                 await innerTask;
 
-                if (notifyScope.HasValue)
+                if (notifyScope != null)
                 {
                     int statusCode = (int)uwr.responseCode;
 
-                    // TODO avoid allocation?
                     Dictionary<string, string>? responseHeaders = uwr.GetResponseHeaders();
 
                     string mimeType = uwr.GetRequestHeader("Content-Type") ?? "application/octet-stream";
                     int encodedDataLength = (int)uwr.downloadedBytes;
-                    notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
+
+                    notifyScope.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength, uwr.downloadHandler).Forget();
                 }
             }
             catch (OperationCanceledException)
