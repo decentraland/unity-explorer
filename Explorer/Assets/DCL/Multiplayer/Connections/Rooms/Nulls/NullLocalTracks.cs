@@ -1,15 +1,16 @@
 using LiveKit;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Tracks;
+using LiveKit.RtcSources.Video;
 using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Nulls
 {
-    public class NullAudioTracks : IAudioTracks
+    public class NullLocalTracks : ILocalTracks
     {
-        public static readonly NullAudioTracks INSTANCE = new ();
+        public static readonly NullLocalTracks INSTANCE = new ();
 
-        protected NullAudioTracks() { }
+        protected NullLocalTracks() { }
 
         public bool Release()
         {
@@ -24,5 +25,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         // Do nothing
         public ITrack CreateAudioTrack(string name, IRtcAudioSource source) => null!;
+
+        public ITrack CreateVideoTrack(string name, RtcVideoSource source) => null!;
     }
 }

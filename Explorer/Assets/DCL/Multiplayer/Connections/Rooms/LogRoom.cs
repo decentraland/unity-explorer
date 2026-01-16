@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info { get; }
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
-        public IAudioTracks AudioTracks { get; }
+        public ILocalTracks LocalTracks { get; }
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             Info = new LogRoomInfo(origin.Info);
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
-            AudioTracks = new LogAudioTracks(origin.AudioTracks);
+            LocalTracks = new LogLocalTracks(origin.LocalTracks);
 
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
