@@ -637,7 +637,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteStop
     m_EventTreshold: 0
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -718,7 +718,7 @@ AnimatorStateTransition:
     m_ConditionEvent: Emote
     m_EventTreshold: 0
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1921928789245954362}
@@ -876,7 +876,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteForceRestart
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1921928789245954362}
@@ -973,7 +973,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteForceRestart
     m_EventTreshold: 0
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1921928789245954362}
@@ -1029,7 +1029,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteStop
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -1124,7 +1124,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteStop
     m_EventTreshold: 0.1
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -1269,7 +1269,7 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: IsSocialEmoteOutcome
+  - m_Name: IsSocialEmote
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -1587,7 +1587,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteStop
     m_EventTreshold: 0.1
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -1815,7 +1815,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteLoop
     m_EventTreshold: 0.1
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -1846,7 +1846,7 @@ AnimatorStateTransition:
     m_ConditionEvent: MovementBlend
     m_EventTreshold: 0.2
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1921928789245954362}
@@ -1899,7 +1899,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteLoop
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -2066,7 +2066,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteLoop
     m_EventTreshold: 0
   - m_ConditionMode: 2
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}
@@ -2396,7 +2396,7 @@ AnimatorStateTransition:
     m_ConditionEvent: EmoteLoop
     m_EventTreshold: 0.1
   - m_ConditionMode: 1
-    m_ConditionEvent: IsSocialEmoteOutcome
+    m_ConditionEvent: IsSocialEmote
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4050450968213979288}

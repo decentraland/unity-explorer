@@ -167,6 +167,7 @@ namespace DCL.CharacterMotion.Systems
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
                                 !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
                                 !stunComponent.IsStunned &&
+                                !emoteComponent.IsPlayingEmote &&
                                 !platformComponent.PositionChanged;
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);
@@ -187,11 +188,11 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [All(typeof(RemotePlayerMovementComponent))]
-        private void UpdateRemoteIK([Data] float dt, [Data] Vector3 playerPosition, ref HeadIKComponent headIK, ref AvatarBase avatarBase, in CharacterTransform transform)
+        private void UpdateRemoteIK([Data] float dt, [Data] Vector3 playerPosition, ref HeadIKComponent headIK, ref AvatarBase avatarBase, in CharacterTransform transform, in CharacterEmoteComponent emoteComponent)
         {
             // Head IK enabled flag and look-at vector are received from the remote client
 
-            bool isEnabled = debugHeadIKIsEnabled && headIK.IsEnabled;
+            bool isEnabled = debugHeadIKIsEnabled && headIK.IsEnabled && !emoteComponent.IsPlayingEmote;
 
             if (isEnabled)
             {
@@ -200,7 +201,10 @@ namespace DCL.CharacterMotion.Systems
                 isEnabled &= distanceSq < remotePlayersDistanceSq;
             }
 
-            avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, isEnabled, settings.HeadIKWeightChangeSpeed * dt);
+            if(emoteComponent.IsPlayingEmote) // IK disabled (no interpolation at all) when playing an emote
+                avatarBase.HeadIKRig.weight = 0.0f;
+            else
+                avatarBase.HeadIKRig.weight = UpdateIKWeight(avatarBase.HeadIKRig.weight, isEnabled, settings.HeadIKWeightChangeSpeed * dt);
 
             if (!isEnabled) return;
 
