@@ -96,9 +96,14 @@ namespace ECS.Unity.AssetLoad.Systems
                     || path.EndsWith(".wav", StringComparison.InvariantCultureIgnoreCase)
                     || path.EndsWith(".ogg", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise);
+                    if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
+                    {
+                        assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.FinishedWithError, path);
+                        existingComponent.LoadingAssetPaths.Add(path);
+                        continue;
+                    }
 
-                    World.Create(assetPromise, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
+                    World.Create(assetPromise!.Value, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
                 }
                 else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
                 {
