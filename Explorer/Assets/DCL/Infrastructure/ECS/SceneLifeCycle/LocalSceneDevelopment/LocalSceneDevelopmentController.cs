@@ -70,8 +70,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                 {
                     receiveResult = await webSocket.ReceiveAsync(receiveBuffer, ct);
                 }
-                catch (WebSocketException)
+                catch (WebSocketException e)
                 {
+                    if (e.ErrorCode == (int)WebSocketError.ConnectionClosedPrematurely)
+                        ReportHub.LogWarning(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket ConnectionClosedPrematurely: {e.Message}");
+
                     if (ct.IsCancellationRequested || webSocket.State != WebSocketState.Open)
                         break;
 
