@@ -119,11 +119,16 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.DISCOVER:
-                    placesResult = await placesAPIService.SearchPlacesAsync(pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct, searchText: currentFilters.SearchText, sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC, category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                    placesResult = await placesAPIService.SearchPlacesAsync(
+                                                              pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
+                                                              searchText: currentFilters.SearchText, sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
-                    placesResult = await placesAPIService.GetFavoritesAsync(ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                    placesResult = await placesAPIService.GetFavoritesAsync(
+                                                              ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
+                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
@@ -136,24 +141,7 @@ namespace DCL.Places
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
-                    PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
-                    if (placesByIdResult.Success)
-                    {
-                        foreach (string placeId in recentlyVisitedPlacesIds)
-                        {
-                            foreach (PlacesData.PlaceInfo placeInfo in placesByIdResult.Value.Data)
-                            {
-                                if (placeInfo.id == placeId)
-                                {
-                                    sortedPlacesResponse.data.Add(placeInfo);
-                                    break;
-                                }
-                            }
-                        }
-
-                        sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
-                    }
-
+                    PlacesData.PlacesAPIResponse sortedPlacesResponse = GetRecentlyVisitedPlacesSorted(placesByIdResult, recentlyVisitedPlacesIds);
                     placesResult = await UniTask.FromResult<PlacesData.IPlacesAPIResponse>(sortedPlacesResponse)
                                                 .SuppressToResultAsync(ReportCategory.PLACES);
 
@@ -210,6 +198,30 @@ namespace DCL.Places
             view.SetPlacesGridLoadingMoreActive(false);
 
             isPlacesGridLoadingItems = false;
+        }
+
+        private static PlacesData.PlacesAPIResponse GetRecentlyVisitedPlacesSorted(Result<PlacesData.IPlacesAPIResponse> placesResult, List<string> sortedPlacesIds)
+        {
+            PlacesData.PlacesAPIResponse sortedPlacesResponse = new PlacesData.PlacesAPIResponse { data = new List<PlacesData.PlaceInfo>(), total = 0 };
+
+            if (!placesResult.Success)
+                return sortedPlacesResponse;
+
+            foreach (string placeId in sortedPlacesIds)
+            {
+                foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.Data)
+                {
+                    if (placeInfo.id != placeId)
+                        continue;
+
+                    sortedPlacesResponse.data.Add(placeInfo);
+                    break;
+                }
+            }
+
+            sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
+
+            return sortedPlacesResponse;
         }
 
         private void UnloadPlaces()
