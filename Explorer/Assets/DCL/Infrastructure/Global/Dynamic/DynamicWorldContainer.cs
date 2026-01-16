@@ -368,7 +368,16 @@ namespace Global.Dynamic
                 teleportController,
                 bootstrapContainer.Environment);
 
-            var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
+            var terrainContainer = TerrainContainer.Create(
+                staticContainer, 
+                realmContainer, 
+#if UNITY_WEBGL
+                false,
+#else
+                dynamicWorldParams.EnableLandscape, 
+#endif
+                localSceneDevelopment
+            );
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
@@ -1012,8 +1021,10 @@ namespace Global.Dynamic
                         debugBuilder)
                 );
 
+#if !UNITY_WEBGL
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
+#endif
 
             if (localSceneDevelopment)
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));

@@ -211,48 +211,63 @@ namespace DCL.WebRequests
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:214"); // SPECIAL_DEBUG_LINE_STATEMENT
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:216"); // SPECIAL_DEBUG_LINE_STATEMENT
                 string text = null;
 
                 try
                 {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:221"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (jsonParser == WRJsonParser.Unity
 #if !UNITY_EDITOR
                         || jsonParser == WRJsonParser.NewtonsoftInEditor
 #endif
                         )
                     {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:228"); // SPECIAL_DEBUG_LINE_STATEMENT
                         text = downloadHandler.text;
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:231"); // SPECIAL_DEBUG_LINE_STATEMENT
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await UniTask.SwitchToThreadPool();
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:235"); // SPECIAL_DEBUG_LINE_STATEMENT
                         return JsonUtility.FromJson<T>(text);
                     }
                     else
                     {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:240"); // SPECIAL_DEBUG_LINE_STATEMENT
                         var nativeData = downloadHandler.nativeData;
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:243"); // SPECIAL_DEBUG_LINE_STATEMENT
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await UniTask.SwitchToThreadPool();
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:247"); // SPECIAL_DEBUG_LINE_STATEMENT
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
                         unsafe
                         {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:252"); // SPECIAL_DEBUG_LINE_STATEMENT
                             var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:255"); // SPECIAL_DEBUG_LINE_STATEMENT
                             using var stream = new UnmanagedMemoryStream(dataPtr, nativeData.Length,
                                 nativeData.Length, FileAccess.Read);
 
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:259"); // SPECIAL_DEBUG_LINE_STATEMENT
                             using var textReader = new StreamReader(stream, Encoding.UTF8);
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:261"); // SPECIAL_DEBUG_LINE_STATEMENT
                             using var jsonReader = new JsonTextReader(textReader);
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:263"); // SPECIAL_DEBUG_LINE_STATEMENT
                             return serializer.Deserialize<T>(jsonReader);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (createCustomExceptionOnFailure != null && text != null)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
@@ -260,6 +275,7 @@ namespace DCL.WebRequests
                 }
                 finally
                 {
+UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:278"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
                         await UniTask.SwitchToMainThread();
                 }
