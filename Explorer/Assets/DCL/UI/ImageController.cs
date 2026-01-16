@@ -21,10 +21,7 @@ namespace DCL.UI
         private Texture2DRef? currentTextureRef;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
-
-        /// <summary>
-        ///     PREFERRED: Uses ECS Streamable Loading (Caching, Deduplication, Budgeting).
-        /// </summary>
+        
         public ImageController(ImageView view, ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
@@ -62,7 +59,7 @@ namespace DCL.UI
         private async UniTask RequestImageAsync(string uri, bool useKtx, Color targetColor, CancellationToken ct, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
             DisposeCurrentTexture();
-            
+
             try
             {
                 view.Image.color = LOADING_COLOR;
@@ -70,28 +67,25 @@ namespace DCL.UI
                 view.IsLoading = true;
 
                 Sprite? sprite = null;
+                
+                var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
 
-                if (imageControllerProvider != null)
+                if (textureRef.HasValue)
                 {
-                    var textureRef = await imageControllerProvider.LoadTextureAsync(uri, ct);
+                    currentTextureRef = textureRef;
 
-                    if (textureRef.HasValue)
-                    {
-                        currentTextureRef = textureRef;
-
-                        sprite = Sprite.Create(
-                            textureRef.Value.Texture,
-                            new Rect(0, 0, textureRef.Value.Texture.width, textureRef.Value.Texture.height),
-                            VectorUtilities.OneHalf,
-                            PIXELS_PER_UNIT,
-                            0,
-                            SpriteMeshType.FullRect,
-                            Vector4.one,
-                            false
-                        );
-                    }
+                    sprite = Sprite.Create(
+                        textureRef.Value.Texture,
+                        new Rect(0, 0, textureRef.Value.Texture.width, textureRef.Value.Texture.height),
+                        VectorUtilities.OneHalf,
+                        PIXELS_PER_UNIT,
+                        0,
+                        SpriteMeshType.FullRect,
+                        Vector4.one,
+                        false
+                    );
                 }
-
+                
                 if (sprite != null)
                 {
                     view.SetImage(sprite, fitAndCenterImage);

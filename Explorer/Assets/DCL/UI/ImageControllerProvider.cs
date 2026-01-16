@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using System.Threading;
@@ -14,18 +13,18 @@ namespace DCL.UI
 {
     public readonly struct Texture2DRef : IDisposable
     {
-        private readonly StreamableRefCountData<AnyTexture>.RefAcquisition refAcquisition;
+        public readonly TextureData TextureData;
         public readonly Texture2D Texture;
 
         public Texture2DRef(TextureData textureData, Texture2D texture)
         {
-            refAcquisition = textureData.AcquireRef();
+            TextureData = textureData;
             Texture = texture;
         }
 
         public void Dispose()
         {
-            refAcquisition.Dispose();
+            TextureData.Dereference();
         }
     }
 
@@ -70,7 +69,6 @@ namespace DCL.UI
                 var texture = textureData.EnsureTexture2D();
 
                 var textureRef = new Texture2DRef(textureData, texture);
-                textureData.Dereference();
 
                 return textureRef;
             }
