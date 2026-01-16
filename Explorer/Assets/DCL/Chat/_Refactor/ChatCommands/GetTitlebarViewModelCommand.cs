@@ -9,6 +9,7 @@ using System;
 using System.Threading;
 using DCL.Chat.ChatServices;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
@@ -54,65 +55,56 @@ namespace DCL.Chat.ChatCommands
         private async UniTask<ChatTitlebarViewModel?> CreateCommunityViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             if (!communityDataService.TryGetCommunity(channel.Id, out var communityData))
-            {
-                return new ChatTitlebarViewModel
-                {
-                    Username = "Community not found"
-                };
-            }
+                return new ChatTitlebarViewModel("Community not found");
 
             Sprite thumbnail = await getCommunityThumbnailCommand
                 .ExecuteAsync(communityData.thumbnailUrl, ct);
 
-            var viewModel = new ChatTitlebarViewModel
+            var viewModel = new ChatTitlebarViewModel(communityData.id, communityData.name, string.Empty)
             {
-                ViewMode = TitlebarViewMode.Community, Id = communityData.id, Username = communityData.name,
-                ProfileColor = Color.gray
+                ViewMode = TitlebarViewMode.Community,
             };
 
-            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false, true));
+            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false, Color.gray, true));
 
             return viewModel;
         }
 
         private async UniTask<ChatTitlebarViewModel?> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
-            var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
+            Profile.CompactInfo? compactInfo = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null; // TODO can't be null
 
-            if (profile == null)
+            if (compactInfo == null)
             {
-                var item = new ChatTitlebarViewModel
-                {
-                    ViewMode = TitlebarViewMode.DirectMessage, Username = $"{channel.Id.Id.Substring(0, 6)}...{channel.Id.Id.Substring(channel.Id.Id.Length - 4)}", HasClaimedName = false, Id = channel.Id.Id,
-                    WalletId = channel.Id.Id, ProfileColor = ProfileThumbnailViewModel.WithColor.DEFAULT_PROFILE_COLOR
-                };
-
+                var item = new ChatTitlebarViewModel(channel.Id.Id, $"{channel.Id.Id.Substring(0, 6)}...{channel.Id.Id.Substring(channel.Id.Id.Length - 4)}", channel.Id.Id);
                 item.SetThumbnail(ProfileThumbnailViewModel.FromFallback(chatConfig.DefaultCommunityThumbnail));
                 return item;
 
             }
 
+            Profile.CompactInfo profile = compactInfo.Value;
+
             var userStatus = await getUserChatStatusCommand.ExecuteAsync(profile.UserId, ct);
             if (ct.IsCancellationRequested) return null;
 
             var isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(profile.UserId);
-            var viewModel = new ChatTitlebarViewModel
+
+            var viewModel = new ChatTitlebarViewModel(profile)
             {
-                ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
-                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor, IsOnline = userStatus.IsConsideredOnline, IsOfficial = isOfficial,
+                ViewMode = TitlebarViewMode.DirectMessage, IsOnline = userStatus.IsConsideredOnline, IsOfficial = isOfficial,
             };
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile, ct);
 
             return viewModel;
         }
 
         private ChatTitlebarViewModel CreateNearbyViewModel(ChatChannel channel)
         {
-            var viewModel = new ChatTitlebarViewModel
+            var viewModel = new ChatTitlebarViewModel(chatConfig.NearbyConversationName)
             {
-                ViewMode = TitlebarViewMode.Nearby, Username = chatConfig.NearbyConversationName,
+                ViewMode = TitlebarViewMode.Nearby,
             };
 
             viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true));

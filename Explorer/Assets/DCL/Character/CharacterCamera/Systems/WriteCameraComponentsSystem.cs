@@ -74,10 +74,12 @@ namespace DCL.CharacterCamera.Systems
             // the same, otherwise horrible duplicated component on same entity problems arise on builds
             PBMainCamera pbMainCameraForWorld = mainCameraPool.Get();
             pbMainCameraForWorld.VirtualCameraEntity = 0;
+            pbMainCameraForWorld.IsDirty = false;
             World.Add(cameraEntity, pbMainCameraForWorld);
 
             PBPointerLock pbPointerLockForWorld = pointerLockPool.Get();
             pbPointerLockForWorld.IsPointerLocked = false;
+            pbPointerLockForWorld.IsDirty = false;
             World.Add(cameraEntity, pbPointerLockForWorld);
 
             PropagateCameraData(false);
