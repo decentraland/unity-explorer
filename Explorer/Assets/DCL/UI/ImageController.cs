@@ -30,11 +30,6 @@ namespace DCL.UI
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false,
             bool useKtx = false, bool fitAndCenterImage = false, Sprite? defaultSprite = null)
         {
-            ReportHub.Log(
-                ReportCategory.UNSPECIFIED,
-                $"[ImageController] Instance {GetHashCode()} requesting {uri}"
-            );
-
             RequestImage(uri, defaultColor, removePrevious, hideImageWhileLoading, useKtx, fitAndCenterImage, defaultSprite);
         }
 
@@ -116,21 +111,8 @@ namespace DCL.UI
         private void DisposeCurrentTexture()
         {
             if (currentTextureRef != null)
-            {
-                ReportHub.Log(
-                    ReportCategory.UNSPECIFIED,
-                    "[ImageController] Disposing previous ref. Current RefCount should drop."
-                );
-                currentTextureRef.Value.Dispose(); // Note: .Value is required for Nullable structs
-            }
-            else
-            {
-                ReportHub.Log(
-                    ReportCategory.UNSPECIFIED,
-                    "[ImageController] Nothing to dispose (currentTextureRef is null)."
-                );
-            }
-
+                currentTextureRef.Value.Dispose();
+            
             currentTextureRef = null;
         }
 
