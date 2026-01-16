@@ -78,7 +78,7 @@ MonoBehaviour:
     - line: '|   mipStripping: 0'
     - line: '|   numberOfMipsStripped: 0'
     - line: '|   numberOfMipsStrippedPerMipmapLimitGroup: {}'
-    - line: '|   m_StackTraceTypes: 020000000200000002000000020000000200000001000000'
+    - line: '|   m_StackTraceTypes: 020000000100000002000000020000000200000001000000'
     - line: '|   iosShowActivityIndicatorOnLoading: -1'
     - line: '|   androidShowActivityIndicatorOnLoading: -1'
     - line: '|   iosUseCustomAppBackgroundBehavior: 0'
@@ -576,8 +576,8 @@ MonoBehaviour:
     - line: '|     m_StaticBatching: 1'
     - line: '|     m_DynamicBatching: 0'
     - line: '|   - m_BuildTarget: WebGL'
-    - line: '|     m_StaticBatching: 0'
-    - line: '|     m_DynamicBatching: 0'
+    - line: '|     m_StaticBatching: 1'
+    - line: '|     m_DynamicBatching: 1'
     - line: '|   m_BuildTargetShaderSettings: []'
     - line: '|   m_BuildTargetGraphicsJobs:'
     - line: '|   - m_BuildTarget: MacStandaloneSupport'
@@ -605,7 +605,7 @@ MonoBehaviour:
     - line: '|   - m_BuildTarget: AndroidPlayer'
     - line: '|     m_GraphicsJobs: 0'
     - line: '|   - m_BuildTarget: WebGLSupport'
-    - line: '|     m_GraphicsJobs: 0'
+    - line: '|     m_GraphicsJobs: 1'
     - line: '|   m_BuildTargetGraphicsJobMode:'
     - line: '|   - m_BuildTarget: PS4Player'
     - line: '|     m_GraphicsJobMode: 0'
@@ -622,8 +622,8 @@ MonoBehaviour:
     - line: '|     m_APIs: 10000000'
     - line: '|     m_Automatic: 1'
     - line: '|   - m_BuildTarget: WebGLSupport'
-    - line: '|     m_APIs: 0b000000'
-    - line: '|     m_Automatic: 1'
+    - line: '|     m_APIs: 1c000000'
+    - line: '|     m_Automatic: 0'
     - line: '|   - m_BuildTarget: WindowsStandaloneSupport'
     - line: '|     m_APIs: 02000000'
     - line: '|     m_Automatic: 0'
@@ -652,6 +652,9 @@ MonoBehaviour:
     - line: '|     m_EncodingQuality: 1'
     - line: '|   - serializedVersion: 2'
     - line: '|     m_BuildTarget: tvOS'
+    - line: '|     m_EncodingQuality: 1'
+    - line: '|   - serializedVersion: 2'
+    - line: '|     m_BuildTarget: WebGL'
     - line: '|     m_EncodingQuality: 1'
     - line: '|   m_BuildTargetGroupHDRCubemapEncodingQuality:'
     - line: '|   - serializedVersion: 2'
@@ -922,20 +925,20 @@ MonoBehaviour:
     - line: '|   webGLExceptionSupport: 1'
     - line: '|   webGLNameFilesAsHashes: 0'
     - line: '|   webGLShowDiagnostics: 0'
-    - line: '|   webGLDataCaching: 0'
+    - line: '|   webGLDataCaching: 1'
     - line: '|   webGLDebugSymbols: 0'
     - line: '|   webGLEmscriptenArgs: '
     - line: '|   webGLModulesDirectory: '
-    - line: '|   webGLTemplate: APPLICATION:Default'
+    - line: '|   webGLTemplate: APPLICATION:CSPEnabled'
     - line: '|   webGLAnalyzeBuildSize: 0'
     - line: '|   webGLUseEmbeddedResources: 0'
-    - line: '|   webGLCompressionFormat: 2'
+    - line: '|   webGLCompressionFormat: 0'
     - line: '|   webGLWasmArithmeticExceptions: 0'
     - line: '|   webGLLinkerTarget: 1'
-    - line: '|   webGLThreadsSupport: 0'
-    - line: '|   webGLDecompressionFallback: 0'
+    - line: '|   webGLThreadsSupport: 1'
+    - line: '|   webGLDecompressionFallback: 1'
     - line: '|   webGLInitialMemorySize: 32'
-    - line: '|   webGLMaximumMemorySize: 2048'
+    - line: '|   webGLMaximumMemorySize: 4096'
     - line: '|   webGLMemoryGrowthMode: 2'
     - line: '|   webGLMemoryLinearGrowthStep: 16'
     - line: '|   webGLMemoryGeometricGrowthStep: 0.2'
@@ -961,7 +964,7 @@ MonoBehaviour:
     - line: '|     ReservedCFE: CT_FB'
     - line: '|     Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE'
     - line: '|     VisionOS: CT_FB'
-    - line: '|     WebGL: CT_FB;UNITASK_DOTWEEN_SUPPORT;URP_COMPATIBILITY_MODE;DOTWEEN_ENABLED'
+    - line: '|     WebGL: CT_FB;UNITASK_DOTWEEN_SUPPORT;URP_COMPATIBILITY_MODE;DOTWEEN_ENABLED;CDP_EXCLUDE_PROCESS_BROWSER;NO_LIVEKIT_MODE;UNITY_PIPELINE_URP;VERBOSE_LOGS'
     - line: '|     Windows Store Apps: CT_FB'
     - line: '|     XboxOne: CT_FB'
     - line: '|     iPhone: CT_FB'
@@ -1108,7 +1111,7 @@ MonoBehaviour:
     - rid: 3479811636494336001
       type: {class: WebGLPlatformSettings, ns: UnityEditor.WebGL, asm: UnityEditor.WebGL.Extensions}
       data:
-        m_Development: 1
+        m_Development: 0
         m_ConnectProfiler: 0
         m_BuildWithDeepProfilingSupport: 0
         m_AllowDebugging: 0
@@ -1122,7 +1125,7 @@ MonoBehaviour:
         m_InsightsSettingsContainer:
           m_BuildProfileEngineDiagnosticsState: 2
         m_AdaptivePerformanceEnabled: 0
-        m_CodeOptimization: 0
-        m_WebGLClientBrowserPath: C:/Program Files/Google/Chrome/Application/new_chrome.exe
+        m_CodeOptimization: 4
+        m_WebGLClientBrowserPath: C:/Program Files/Google/Chrome/Application/chrome.exe
         m_WebGLClientBrowserType: 4
         m_WebGLTextureSubtarget: 0

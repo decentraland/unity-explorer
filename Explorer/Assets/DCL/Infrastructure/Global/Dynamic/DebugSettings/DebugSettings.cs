@@ -42,16 +42,16 @@ namespace Global.Dynamic.DebugSettings
                 showSplash = true,
                 showAuthentication = true,
                 showLoading = true,
-                enableLandscape = true,
-                enableLOD = true,
-                enableVersionUpdateGuard = true,
+                enableLandscape = false,
+                enableLOD = false,
+                enableVersionUpdateGuard = false,
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
                 connectionQuality = ConnectionQuality.QualityExcellent,
-                enableRemotePortableExperiences = true,
+                enableRemotePortableExperiences = false,
                 emotesToAddToUserProfile = null,
-                appParameters = Array.Empty<string>(),
+                appParameters = new []{"--realm olavra.dlc.eth", "--debug"},
             };
 
         // To avoid configuration issues, force full flow on build (Application.isEditor is always true in Editor, but in profile builds (i.e. when set to Development) we will have the expected release flow too.
