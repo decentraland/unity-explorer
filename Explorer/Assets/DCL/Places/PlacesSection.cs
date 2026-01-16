@@ -1,10 +1,10 @@
 ﻿namespace DCL.Places
 {
-    public enum PlacesSections
+    public enum PlacesSection
     {
         DISCOVER,
-        FAVORITES,
         RECENTLY_VISITED,
+        FAVORITES,
         MY_PLACES,
     }
 }

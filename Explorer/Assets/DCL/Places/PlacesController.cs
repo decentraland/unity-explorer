@@ -1,4 +1,7 @@
 ﻿using DCL.Input;
+using DCL.Input.Component;
+using DCL.PlacesAPIService;
+using DCL.Profiles.Self;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -7,26 +10,49 @@ namespace DCL.Places
 {
     public class PlacesController : ISection, IDisposable
     {
+        public event Action<PlacesFilters>? FiltersChanged;
+        public event Action? PlacesClosed;
+
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
+        private readonly PlacesStateService placesStateService;
+        private readonly PlacesResultsController placesResultsController;
+        private readonly PlaceCategoriesSO placesCategories;
+        private readonly IInputBlock inputBlock;
 
         public PlacesController(
             PlacesView view,
-            ICursor cursor)
+            ICursor cursor,
+            IPlacesAPIService placesAPIService,
+            PlaceCategoriesSO placesCategories,
+            IInputBlock inputBlock,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+            this.placesCategories = placesCategories;
+            this.inputBlock = inputBlock;
 
-            view.OnSectionChanged += OnSectionChanged;
+            placesStateService = new PlacesStateService();
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile);
+
+            view.AnyFilterChanged += OnAnyFilterChanged;
+            view.SearchBarSelected += DisableShortcutsInput;
+            view.SearchBarDeselected += RestoreShortcutsInput;
         }
 
         public void Dispose()
         {
-            view.OnSectionChanged -= OnSectionChanged;
+            view.AnyFilterChanged -= OnAnyFilterChanged;
+            view.SearchBarSelected -= DisableShortcutsInput;
+            view.SearchBarDeselected -= RestoreShortcutsInput;
+
+            placesStateService.Dispose();
+            placesResultsController.Dispose();
         }
 
         public void Activate()
@@ -36,7 +62,11 @@ namespace DCL.Places
 
             isSectionActivated = true;
             view.SetViewActive(true);
-            view.OpenSection(PlacesSections.DISCOVER, true);
+            view.ResetCurrentFilters();
+            view.SetupSortByFilter();
+            view.SetupSDKVersionFilter();
+            view.SetCategories(placesCategories.categories);
+            view.OpenSection(PlacesSection.DISCOVER, force: true);
             cursor.Unlock();
         }
 
@@ -44,6 +74,10 @@ namespace DCL.Places
         {
             isSectionActivated = false;
             view.SetViewActive(false);
+            view.ClearSortByFilter();
+            view.ClearSDKVersionFilter();
+            view.ClearCategories();
+            PlacesClosed?.Invoke();
         }
 
         public void Animate(int triggerId) =>
@@ -55,10 +89,25 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        private void OnSectionChanged(PlacesSections section)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
         {
-            // TODO (Santi): Implement this!
-            // ...
+            view.SetSortByFilterVisible(section != PlacesSection.RECENTLY_VISITED);
+            view.SetSDKVersionFilterVisible(section != PlacesSection.RECENTLY_VISITED);
+            view.OpenSection(section, force, invokeEvent, cleanSearch);
         }
+
+        private void OnAnyFilterChanged(PlacesFilters newFilters)
+        {
+            view.SetSortByFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
+            view.SetSDKVersionFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
+            view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER && string.IsNullOrEmpty(newFilters.SearchText));
+            FiltersChanged?.Invoke(newFilters);
+        }
+
+        private void DisableShortcutsInput() =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreShortcutsInput() =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
     }
 }

@@ -197,8 +197,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var item in eventResponse.Value.data.events)
                 eventPlaceIds.Add(item.place_id);
 
-            Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
-                                                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
+                                                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return 0;
@@ -213,7 +213,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             placeInfoCache.Clear();
 
-            foreach (var place in placesResponse.Value.data)
+            foreach (var place in placesResponse.Value.Data)
                 placeInfoCache.Add(place.id, place);
 
             foreach (var item in eventResponse.Value.data.events)
