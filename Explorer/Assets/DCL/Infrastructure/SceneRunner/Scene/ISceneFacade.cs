@@ -32,9 +32,9 @@ namespace SceneRunner.Scene
 
         void SetIsCurrent(bool isCurrent);
 
-        internal UniTask StartScene();
+        public UniTask StartScene();
 
-        internal UniTask Tick(float dt);
+        public UniTask Tick(float dt);
 
         bool Contains(Vector2Int parcel);
 
