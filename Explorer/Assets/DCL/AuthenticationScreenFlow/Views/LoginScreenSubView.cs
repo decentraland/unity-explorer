@@ -1,7 +1,6 @@
 ﻿using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -51,11 +50,6 @@ namespace DCL.AuthenticationScreenFlow
             SlideIn();
         }
 
-        private void OnDisable()
-        {
-            loginAnimator.enabled = false;
-        }
-
         public void ToggleOptionsPanelExpansion()
         {
             areOptionsExpanded = !areOptionsExpanded;
@@ -70,8 +64,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void SlideIn()
         {
-            loginAnimator.enabled = true;
-            loginAnimator.ResetAnimator();
+            // loginAnimator.enabled = true;
+            // loginAnimator.ResetAnimator();
             loginAnimator.SetTrigger(UIAnimationHashes.IN);
 
             canvasGroup.interactable = true;
