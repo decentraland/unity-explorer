@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.MediaStream
             TryUnloadAsync().Forget();
         }
 
-        public MediaPlayer GetOrCreateReusableMediaPlayer(string url)
+        public MediaPlayer GetOrCreateReusableMediaPlayer(string url, bool useLowLatency)
         {
             MediaPlayer mediaPlayer;
 
@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
             }
 
+            mediaPlayer.PlatformOptionsWindows.useLowLatency = useLowLatency;
             mediaPlayer.AutoOpen = false;
             mediaPlayer.enabled = true;
 
