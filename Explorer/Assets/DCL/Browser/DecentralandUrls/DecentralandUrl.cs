@@ -48,6 +48,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DAO,
 
         Help,
+        Account,
         MinimumSpecs,
 
         FeatureFlags,
@@ -97,6 +98,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ActiveCommunityVoiceChats,
 
-        Support
+        Support,
+
+        ManaUsdRateApiUrl,
     }
 }

@@ -8,9 +8,6 @@ namespace DCL.Minimap.Settings
     [CreateAssetMenu(fileName = "MinimapContextMenuSettings", menuName = "DCL/Minimap/MinimapContextMenuSettings")]
     public class MinimapContextMenuSettings : ScriptableObject
     {
-        [field: Header("Title")]
-        [field: SerializeField] public string ContextMenuTitle { get; private set; } = "Scene's Options";
-
         [field: Header("Set as Home")]
         [field: SerializeField] public string SetAsHomeText { get; private set; } = "Set as Home";
 

@@ -25,6 +25,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -118,6 +119,7 @@ using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -554,6 +556,18 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
+            IDonationsService donationsService;
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)))
+            {
+                IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+                    staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                    placesAPIService, bootstrapContainer.Environment,
+                    bootstrapContainer.DecentralandUrlsSource);
+                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+            }
+            else
+                donationsService = new DonationsServiceDisabled();
+
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
@@ -770,7 +784,8 @@ namespace Global.Dynamic
                     roomHub,
                     staticContainer.LoadingStatus,
                     includeBannedUsersFromScene,
-                    homePlaceEventBus),
+                    homePlaceEventBus,
+                    donationsService),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
@@ -873,7 +888,8 @@ namespace Global.Dynamic
                     staticContainer.SmartWearableCache,
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
-                    staticContainer.LoadingStatus
+                    staticContainer.LoadingStatus,
+                    donationsService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -996,6 +1012,19 @@ namespace Global.Dynamic
                 new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
+
+            if (donationsService.DonationFeatureEnabled)
+                globalPlugins.Add(new DonationsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    donationsService,
+                    staticContainer.ProfilesContainer.Repository,
+                    profileRepositoryWrapper,
+                    playerEntity,
+                    globalWorld,
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.InputBlock));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
