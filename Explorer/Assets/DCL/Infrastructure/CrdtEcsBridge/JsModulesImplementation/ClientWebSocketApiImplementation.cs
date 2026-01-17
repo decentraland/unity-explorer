@@ -68,6 +68,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             if (size == 0) return;
 
+            // Usecase is justified.
+            // InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg) doesn't support async.
+            // it's unsafe to keep the pointer after its scope.
             using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool((int)size);
 
             data.ReadBytes(0, size, poolableArray.Array, 0);

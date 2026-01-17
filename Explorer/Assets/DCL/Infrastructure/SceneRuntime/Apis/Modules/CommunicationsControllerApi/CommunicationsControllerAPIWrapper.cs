@@ -1,4 +1,3 @@
-using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
@@ -11,27 +10,17 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>
     {
-        private readonly IInstancePoolsProvider instancePoolsProvider;
-
-        private readonly List<PoolableByteArray> lastInput = new (10);
-
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        private readonly List<ITypedArray<byte>> lastInput = new ();
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
-            this.instancePoolsProvider = instancePoolsProvider;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
         protected override void DisposeInternal()
         {
-            // Release the last input buffer
-            for (var i = 0; i < lastInput.Count; i++)
-            {
-                PoolableByteArray message = lastInput[i];
-                message.ReleaseAndDispose();
-            }
-
+            // clear GC references to remain objects in the list
             lastInput.Clear();
         }
 
@@ -39,32 +28,17 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         {
             try
             {
-                for (var i = 0; i < dataList.Count; i++)
+                for (int i = 0; i < dataList.Count; i++)
                 {
-                    var message = (ITypedArray<byte>)dataList[i];
-                    PoolableByteArray element = PoolableByteArray.EMPTY;
-
-                    if (lastInput.Count <= i)
-                    {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput.Add(element);
-                    }
-                    else
-                    {
-                        element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput[i] = element;
-                    }
+                    ITypedArray<byte> item = (ITypedArray<byte>) dataList[i];
+                    if (lastInput.Count <= i) lastInput.Add(item);
+                    else lastInput[i] = item;
                 }
 
                 // Remove excess elements
-                while (lastInput.Count > dataList.Count)
-                {
-                    int lastIndex = lastInput.Count - 1;
-                    PoolableByteArray message = lastInput[lastIndex];
-                    message.ReleaseAndDispose();
-                    lastInput.RemoveAt(lastIndex);
-                }
+                int excess = lastInput.Count - dataList.Count;
+                // lastInput doesn't own the ITypedArray objects, disposal is not required
+                if (excess > 0) lastInput.RemoveRange(dataList.Count, excess);
 
                 api.SendBinary(lastInput, recipient);
             }
