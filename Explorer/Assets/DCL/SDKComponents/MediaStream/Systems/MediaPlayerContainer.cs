@@ -10,6 +10,7 @@ using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
 using DCL.Utilities;
 using DCL.WebRequests;
+using ECS.Unity.AssetLoad.Cache;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Threading;
@@ -25,17 +26,19 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget frameBudget;
         private readonly ObjectProxy<IRoomHub> roomHubProxy;
         private readonly CacheCleaner cacheCleaner;
+        private readonly AssetLoadCache assetLoadCache;
 
         private readonly MediaVolume mediaVolume;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner)
+            CacheCleaner cacheCleaner, AssetLoadCache assetLoadCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
             this.roomHubProxy = roomHubProxy;
             this.cacheCleaner = cacheCleaner;
+            this.assetLoadCache = assetLoadCache;
 
             mediaVolume = new MediaVolume(volumeBus);
         }
@@ -64,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool);
+            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetLoadCache);
         }
 
         public override void Dispose() =>
