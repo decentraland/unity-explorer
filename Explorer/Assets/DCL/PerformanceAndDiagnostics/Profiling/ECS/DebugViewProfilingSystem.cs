@@ -117,7 +117,11 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU MainThread:", cpuMainThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
+                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty))
+                            .AddFloatFieldWithConfirmation(QualitySettings.meshLodThreshold, "Mesh LOD Threshold", newValue =>
+                            {
+                                QualitySettings.meshLodThreshold = newValue;
+                            });
 
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)

@@ -68,6 +68,16 @@ namespace DCL.DebugUtilities
             return builder;
         }
 
+        public static DebugWidgetBuilder AddFloatFieldWithConfirmation(this DebugWidgetBuilder builder, float defaultValue, string buttonName, Action<float> onClick)
+        {
+            var binding = new ElementBinding<float>(defaultValue);
+            var floatFieldDef = new DebugFloatFieldDef(binding);
+
+            var buttonDef = new DebugButtonDef(buttonName, () => onClick?.Invoke(binding.Value));
+            builder.AddControl(floatFieldDef, buttonDef);
+            return builder;
+        }
+
         public static DebugWidgetBuilder AddIntSliderField(this DebugWidgetBuilder builder, string labelName, ElementBinding<int> elementBinding, int min, int max)
         {
             var field = new DebugIntSliderDef(labelName, elementBinding, min, max);
