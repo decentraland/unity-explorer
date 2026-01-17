@@ -52,7 +52,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             subView.gameObject.SetActive(false);
-
             characterPreviewController?.OnHide();
 
             subView.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);

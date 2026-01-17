@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newAccountSubView.ProfileNameInputField.NameValidityChanged += OnProfileNameChanged;
 
             newAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
-            newAccountSubView.RandomizeButton.onClick.AddListener(RandomizeAvatar);
+            newAccountSubView.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
             newAccountSubView.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
             newAccountSubView.NextRandomButton.onClick.AddListener(NextRandomAvatar);
 
@@ -99,7 +99,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newAccountSubView.ProfileNameInputField.NameValidityChanged -= OnProfileNameChanged;
 
             newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
-            newAccountSubView.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
+            newAccountSubView.RandomizeButton.onClick.RemoveListener(OnRandomizeButtonPressed);
             newAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
             newAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
 
@@ -114,12 +114,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private async UniTask InitializeAvatarAsync()
         {
             await LoadBaseWearablesAsync(ct);
-            RandomizeAvatar();
-
-            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
-
+            UpdateCharacterPreview(RandomizeAvatar());
+            UpdateAvatarNavigationButtons();
             InitializeAvatarHistory(newUserProfile.Avatar);
         }
 
@@ -200,22 +196,31 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void RandomizeAvatar()
+        private Avatar RandomizeAvatar()
         {
             // If we're not at the end of history, remove all avatars after current position
             if (currentAvatarIndex < avatarHistory.Count - 1)
                 avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
 
             // Create and add new avatar to history
-            Avatar newAvatar = CreateDefaultAvatar();
+            Avatar newAvatar = CreateRandomAvatar();
             avatarHistory.Add(newAvatar);
             currentAvatarIndex = avatarHistory.Count - 1;
 
-            // Apply to profile and preview
-            newUserProfile.Avatar = newAvatar;
-            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnShow();
+            return newAvatar;
+        }
 
+        private void UpdateCharacterPreview(Avatar newAvatar)
+        {
+            newUserProfile.Avatar = newAvatar;
+            characterPreviewController?.Initialize(newAvatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController?.OnBeforeShow();
+            characterPreviewController?.OnShow();
+        }
+
+        private void OnRandomizeButtonPressed()
+        {
+            UpdateCharacterPreview(RandomizeAvatar());
             UpdateAvatarNavigationButtons();
         }
 
@@ -223,9 +228,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             if (currentAvatarIndex <= 0)
                 return;
-
             currentAvatarIndex--;
-            ApplyAvatarFromHistory();
+
+            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
             UpdateAvatarNavigationButtons();
         }
 
@@ -233,18 +238,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             if (currentAvatarIndex >= avatarHistory.Count - 1)
                 return;
-
             currentAvatarIndex++;
-            ApplyAvatarFromHistory();
-            UpdateAvatarNavigationButtons();
-        }
 
-        private void ApplyAvatarFromHistory()
-        {
-            Avatar avatar = avatarHistory[currentAvatarIndex];
-            newUserProfile.Avatar = avatar;
-            characterPreviewController?.Initialize(newUserProfile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnShow();
+            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
+            UpdateAvatarNavigationButtons();
         }
 
         private void UpdateAvatarNavigationButtons()
@@ -268,7 +265,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 newAccountSubView.SubscribeToggle.isOn &&
                 newAccountSubView.TermsOfUse.isOn;
 
-        private Avatar CreateDefaultAvatar()
+        private Avatar CreateRandomAvatar()
         {
             BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
