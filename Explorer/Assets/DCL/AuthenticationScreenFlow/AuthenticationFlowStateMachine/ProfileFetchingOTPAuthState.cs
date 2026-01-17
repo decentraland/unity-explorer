@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics;
@@ -75,9 +74,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     if (isNewUser)
-                        machine.Enter<LobbyOTPAuthState, (Profile, bool, CancellationToken)>((profile, false, ct));
+                        machine.Enter<NewAccountLobbyAuthState, (Profile, bool, CancellationToken)>((profile, false, ct));
                     else
-                        machine.Enter<LobbyAuthState, (Profile, bool)>((profile, isCached));
+                        machine.Enter<ExistingAccountLobbyAuthState, (Profile, bool)>((profile, isCached));
                 }
                 catch (OperationCanceledException)
                 {

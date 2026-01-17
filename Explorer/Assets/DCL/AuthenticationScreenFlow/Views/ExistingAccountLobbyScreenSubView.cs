@@ -9,7 +9,7 @@ using Utility;
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator))]
-    public class LobbyScreenSubView : MonoBehaviour
+    public class ExistingAccountLobbyScreenSubView : MonoBehaviour
     {
         [field: SerializeField]
         public Animator FinalizeAnimator { get; private set; } = null!;
@@ -23,9 +23,6 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private LocalizeStringEvent title;
         [SerializeField] private GameObject description;
         [SerializeField] private GameObject diffAccountButton;
-
-        [Header("NEW USER")]
-        [SerializeField] private GameObject newUserContainer;
 
         private StringVariable? profileNameLabel;
 
@@ -52,37 +49,13 @@ namespace DCL.AuthenticationScreenFlow
         private void OnDisable()
         {
             FinalizeAnimator.enabled = false;
-            newUserContainer.SetActive(false);
         }
 
-        public void ShowExistingAccountLobby(string profileName)
+        public void ShowFor(string profileName)
         {
             profileNameLabel!.Value = profileName;
 
-            JumpIntoWorldButton.gameObject.SetActive(true);
-            JumpIntoWorldButton.transform.parent.gameObject.SetActive(true);
             JumpIntoWorldButton.interactable = true;
-
-            title.gameObject.SetActive(true);
-            description.SetActive(true);
-            diffAccountButton.SetActive(true);
-
-            newUserContainer.SetActive(false);
-
-            FinalizeAnimator.enabled = true;
-            FinalizeAnimator.ResetAnimator();
-            FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-        }
-
-        public void ShowNewAccountLobby()
-        {
-            JumpIntoWorldButton.gameObject.SetActive(false);
-            JumpIntoWorldButton.interactable = true;
-            title.gameObject.SetActive(false);
-            description.SetActive(false);
-            diffAccountButton.SetActive(false);
-
-            newUserContainer.SetActive(true);
 
             FinalizeAnimator.enabled = true;
             FinalizeAnimator.ResetAnimator();

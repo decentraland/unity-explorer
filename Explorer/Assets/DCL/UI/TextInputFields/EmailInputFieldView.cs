@@ -10,6 +10,7 @@ namespace DCL.UI
     public class EmailInputFieldView : MonoBehaviour
     {
         private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
+
         public event Action? StartButtonPressed;
 
         [SerializeField] private TMP_InputField emailInput;
@@ -26,9 +27,9 @@ namespace DCL.UI
         [SerializeField] [Min(0)] private int caretWidth = 2;
         [SerializeField] [Min(0)] private float caretBlinkRate = 0.85f;
 
-        public string CurrentEmailText => emailInput.text;
-
         private Coroutine? activateInputCoroutine;
+
+        public string CurrentEmailText => emailInput.text;
 
         private void Awake()
         {
@@ -44,6 +45,7 @@ namespace DCL.UI
             emailInput.text = string.Empty;
 
             startButton.interactable = false;
+            emailInputOutline.enabled = false;
             emailInputOutline.color = outlineNormalColor;
             errorMark.SetActive(false);
 
@@ -85,17 +87,22 @@ namespace DCL.UI
                 SetErrorState(false);
         }
 
-        private void OnEmailInputEndEdit(string email) =>
-            SetErrorState(!IsValidEmail(email));
-
-        private void OnEmailInputSelect(string email) =>
-            SetErrorState(false);
-
-        private void SetErrorState(bool isValidEmail)
+        private void OnEmailInputEndEdit(string email)
         {
-            // empty field is not an error
-            bool hasError = !isValidEmail && emailInput.text != string.Empty;
+            if (email == string.Empty)
+                emailInputOutline.enabled = false;
+            else
+                SetErrorState(!IsValidEmail(email));
+        }
 
+        private void OnEmailInputSelect(string email)
+        {
+            emailInputOutline.enabled = true;
+            SetErrorState(false);
+        }
+
+        private void SetErrorState(bool hasError)
+        {
             emailInputOutline.color = hasError ? outlineErrorColor : outlineNormalColor;
             errorMark.SetActive(hasError);
         }

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.CharacterPreview;
 using MVC;
 using System;
 using System.Threading;
@@ -19,6 +18,10 @@ namespace DCL.AuthenticationScreenFlow
         [field: Space]
         [field: SerializeField]
         public LoginScreenSubView LoginScreenSubView { get; private set; } = null!;
+        [field: SerializeField]
+        public ExistingAccountLobbyScreenSubView ExistingAccountLobbyScreenSubView { get; private set; } = null!;
+        [field: SerializeField]
+        public NewAccountLobbyScreenSubView NewAccountLobbyScreenSubView { get; private set; } = null!;
 
         [field: Header("CODE VERIFICATION")]
         [field: SerializeField]
@@ -71,34 +74,6 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject OTPSubmitResultErrorIcon { get; private set; } = null!;
-
-        [field: Header("FINALIZE")]
-        [field: SerializeField]
-        public LobbyScreenSubView LobbyScreenSubView { get; private set; } = null!;
-
-        //  --- HERE
-        [field: Space]
-
-        [field: SerializeField]
-        public TMP_InputField ProfileNameInputField { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button BackButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button FinalizeNewUserButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button PrevRandomButton { get; private set; } = null!;
-        [field: SerializeField]
-        public Button NextRandomButton { get; private set; } = null!;
-        [field: SerializeField]
-        public Button RandomizeButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Toggle SubscribeToggle { get; private set; } = null!;
-        [field: SerializeField]
-        public Toggle AgreeLicenseToggle { get; private set; } = null!;
 
         [field: Header("ERROR POPUP")]
         [field: SerializeField]

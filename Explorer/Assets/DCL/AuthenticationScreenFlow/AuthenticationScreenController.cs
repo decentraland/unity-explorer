@@ -14,16 +14,16 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
-using Global.AppArgs;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
-using DCL.Utility;
-using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -138,7 +138,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewInstantiated();
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.LobbyScreenSubView.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.ExistingAccountLobbyScreenSubView.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             // Subscriptions
             foreach (Button button in viewInstance.UseAnotherAccountButton)
@@ -155,10 +155,10 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
                 new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, splashScreen, selfProfile),
-                new LobbyAuthState(viewInstance, this, CurrentState, characterPreviewController),
+                new ExistingAccountLobbyAuthState(viewInstance, this, CurrentState, characterPreviewController),
                 new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
                 new ProfileFetchingOTPAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
-                new LobbyOTPAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
+                new NewAccountLobbyAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
                 );
             fsm.Enter<InitAuthScreenState>();
         }
@@ -244,7 +244,7 @@ namespace DCL.AuthenticationScreenFlow
 
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance!.LobbyScreenSubView.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
+                viewInstance!.ExistingAccountLobbyScreenSubView.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 
@@ -315,7 +315,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private static string BuildTransactionInfoText(TransactionConfirmationRequest request)
         {
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             sb.Append($"Method: {request.Method}");
 
             if (!string.IsNullOrEmpty(request.To))

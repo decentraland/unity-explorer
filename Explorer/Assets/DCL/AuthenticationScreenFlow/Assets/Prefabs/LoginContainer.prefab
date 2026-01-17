@@ -1169,9 +1169,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2545835288679838424}
-  - component: {fileID: 3388917708132501126}
   - component: {fileID: 1894263104519943120}
   - component: {fileID: 8341156212924183970}
+  - component: {fileID: 3388917708132501126}
   m_Layer: 0
   m_Name: LoginContainer
   m_TagString: Untagged
@@ -1204,27 +1204,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &3388917708132501126
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6072945466760093846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a96f2d36343479aa530f45bace609a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.AuthLoginScreenView
-  loadingSpinner: {fileID: 2031916229084039964}
-  mainElementsPanel: {fileID: 5716495022110929185}
-  <EmailInputField>k__BackingField: {fileID: 2001940849056367380}
-  <MetamaskLoginButton>k__BackingField: {fileID: 4481630630708771614}
-  <GoogleLoginButton>k__BackingField: {fileID: 9078712830092277137}
-  <CancelLoginButton>k__BackingField: {fileID: 9108319191272288200}
-  <MoreOptionsButton>k__BackingField: {fileID: 8530844300445857207}
-  <MoreOptionsButtonDirIcon>k__BackingField: {fileID: 9106669052353943300}
-  moreOptionsPanel: {fileID: 7793966543379160465}
 --- !u!95 &1894263104519943120
 Animator:
   serializedVersion: 7
@@ -1259,6 +1238,27 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &3388917708132501126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6072945466760093846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a96f2d36343479aa530f45bace609a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.AuthLoginScreenView
+  loadingSpinner: {fileID: 2031916229084039964}
+  mainElementsPanel: {fileID: 5716495022110929185}
+  <EmailInputField>k__BackingField: {fileID: 2001940849056367380}
+  <MetamaskLoginButton>k__BackingField: {fileID: 4481630630708771614}
+  <GoogleLoginButton>k__BackingField: {fileID: 9078712830092277137}
+  <CancelLoginButton>k__BackingField: {fileID: 9108319191272288200}
+  <MoreOptionsButton>k__BackingField: {fileID: 8530844300445857207}
+  <MoreOptionsButtonDirIcon>k__BackingField: {fileID: 9106669052353943300}
+  moreOptionsPanel: {fileID: 7793966543379160465}
 --- !u!1 &7102141216571741306
 GameObject:
   m_ObjectHideFlags: 0

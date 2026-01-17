@@ -8,24 +8,24 @@ using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyOTPAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
+    public class NewAccountLobbyAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
-        private readonly LobbyScreenSubView subView;
+        private readonly ExistingAccountLobbyScreenSubView subView;
+        private readonly NewAccountLobbyScreenSubView newAccountSubView;
 
         private readonly IWearablesProvider wearablesProvider;
 
@@ -37,7 +37,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private int currentAvatarIndex = -1;
         private bool baseWearablesLoaded;
 
-        public LobbyOTPAuthState(
+        public NewAccountLobbyAuthState(
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
@@ -45,7 +45,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider) : base(viewInstance)
         {
-            subView = viewInstance.LobbyScreenSubView;
+            subView = viewInstance.ExistingAccountLobbyScreenSubView;
 
             this.controller = controller;
             this.currentState = currentState;
@@ -63,30 +63,29 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             InitializeAvatarAsync().Forget();
 
-            viewInstance.PrevRandomButton.interactable = false;
-            viewInstance.NextRandomButton.interactable = false;
+            newAccountSubView.PrevRandomButton.interactable = false;
+            newAccountSubView.NextRandomButton.interactable = false;
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
 
             newUserProfile = payload.profile;
 
-            subView.gameObject.SetActive(true);
-            subView.ShowNewAccountLobby();
+            newAccountSubView.gameObject.SetActive(true);
 
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
-            viewInstance.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
-            viewInstance.RandomizeButton.onClick.AddListener(RandomizeAvatar);
-            viewInstance.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
-            viewInstance.NextRandomButton.onClick.AddListener(NextRandomAvatar);
+            newAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
+            newAccountSubView.RandomizeButton.onClick.AddListener(RandomizeAvatar);
+            newAccountSubView.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
+            newAccountSubView.NextRandomButton.onClick.AddListener(NextRandomAvatar);
 
             // Toggle listeners for terms agreement
-            viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
-            viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
-            viewInstance.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
-            viewInstance.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
-            viewInstance.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
+            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
+            newAccountSubView.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
+            newAccountSubView.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
             UpdateFinalizeButtonState();
         }
 
@@ -168,21 +167,21 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            viewInstance.NextRandomButton.interactable = false;
+            newAccountSubView.NextRandomButton.interactable = false;
 
             subView.gameObject.SetActive(false);
 
             characterPreviewController?.OnHide();
 
-            viewInstance.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
-            viewInstance.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
-            viewInstance.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
-            viewInstance.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
-            viewInstance.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            viewInstance.AgreeLicenseToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            viewInstance.ProfileNameInputField.onValueChanged.RemoveListener(OnProfileNameChanged);
-            viewInstance.SubscribeToggle.SetIsOnWithoutNotify(false);
-            viewInstance.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
+            newAccountSubView.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
+            newAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
+            newAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
+            newAccountSubView.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            newAccountSubView.AgreeLicenseToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            newAccountSubView.ProfileNameInputField.onValueChanged.RemoveListener(OnProfileNameChanged);
+            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
         }
 
         private void FinalizeNewUser()
@@ -191,7 +190,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
-                newUserProfile.Name = viewInstance.ProfileNameInputField.text;
+                newUserProfile.Name = newAccountSubView.ProfileNameInputField.text;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
                 JumpIntoWorld();
@@ -250,8 +249,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (viewInstance == null)
                 return;
 
-            viewInstance.PrevRandomButton.interactable = currentAvatarIndex > 0;
-            viewInstance.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
+            newAccountSubView.PrevRandomButton.interactable = currentAvatarIndex > 0;
+            newAccountSubView.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
 
         private void OnToggleChanged(bool _) =>
@@ -260,17 +259,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnProfileNameChanged(string _) =>
             UpdateFinalizeButtonState();
 
-        private void UpdateFinalizeButtonState()
-        {
-            viewInstance.FinalizeNewUserButton.interactable =
-                viewInstance.SubscribeToggle.isOn &&
-                viewInstance.AgreeLicenseToggle.isOn &&
-                !string.IsNullOrWhiteSpace(viewInstance.ProfileNameInputField.text);
-        }
+        private void UpdateFinalizeButtonState() =>
+            newAccountSubView.FinalizeNewUserButton.interactable =
+                newAccountSubView.SubscribeToggle.isOn &&
+                newAccountSubView.AgreeLicenseToggle.isOn &&
+                !string.IsNullOrWhiteSpace(newAccountSubView.ProfileNameInputField.text);
 
         private Avatar CreateDefaultAvatar()
         {
-            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             // If base wearables loaded from backend - use randomizer
             if (baseWearablesLoaded)
@@ -305,7 +302,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             foreach (List<URN>? categoryWearables in wearablesByCategory.Values)
             {
                 if (categoryWearables.Count > 0)
-                    result.Add(categoryWearables[UnityEngine.Random.Range(0, categoryWearables.Count)]);
+                    result.Add(categoryWearables[Random.Range(0, categoryWearables.Count)]);
             }
 
             return result;
