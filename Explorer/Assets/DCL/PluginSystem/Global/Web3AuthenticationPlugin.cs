@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
@@ -14,6 +15,7 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
 using Global.AppArgs;
 using MVC;
@@ -27,6 +29,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
@@ -41,6 +44,8 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IAppArgs appArgs;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebRequestController webRequestController;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -48,6 +53,7 @@ namespace DCL.PluginSystem.Global
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             IDebugContainerBuilder debugContainerBuilder,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -61,11 +67,14 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
-            IAppArgs appArgs
+            IAppArgs appArgs,
+            IWearablesProvider wearablesProvider,
+            IWebRequestController webRequestController
         )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.debugContainerBuilder = debugContainerBuilder;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
@@ -80,6 +89,8 @@ namespace DCL.PluginSystem.Global
             this.backgroundMusic = backgroundMusic;
             this.world = world;
             this.appArgs = appArgs;
+            this.wearablesProvider = wearablesProvider;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose() { }
@@ -89,7 +100,7 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, compositeWeb3Provider, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, wearablesProvider);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

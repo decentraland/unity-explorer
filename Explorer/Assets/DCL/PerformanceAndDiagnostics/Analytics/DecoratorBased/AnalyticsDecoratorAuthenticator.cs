@@ -1,7 +1,7 @@
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using System;
 using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -22,9 +22,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core?.Dispose();
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct)
         {
-            IWeb3Identity identity = await core.LoginAsync(ct);
+            IWeb3Identity identity = await core.LoginAsync(loginMethod, ct);
+            analytics.Identify(identity);
+            return identity;
+        }
+
+        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct)
+        {
+            IWeb3Identity identity = await core.LoginPayloadedAsync(method, payload, ct);
             analytics.Identify(identity);
             return identity;
         }

@@ -19,18 +19,12 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
         private const double IDENTITY_EXPIRATION_PERIOD = 30;
 
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
-        private const string NETWORK_MAINNET = "mainnet";
-        private const string NETWORK_SEPOLIA = "sepolia";
-        private const string MAINNET_CHAIN_ID = "0x1";
-        private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
-        private const string MAINNET_NET_VERSION = "1";
-        private const string SEPOLIA_NET_VERSION = "11155111";
 
         private readonly IWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
@@ -55,7 +49,9 @@ namespace DCL.Web3.Authenticators
         private ClientWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
-        private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
+
+        public delegate void VerificationDelegate(int code, DateTime expiration);
+        private VerificationDelegate? signatureVerificationCallback;
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
@@ -67,8 +63,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
-            DecentralandEnvironment environment,
-            ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
+            DecentralandEnvironment environment, ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -113,7 +108,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "eth_chainId"))
             {
-                string chainId = GetChainId();
+                string chainId = EnvChainsUtils.GetChainId(environment);
 
                 return new EthApiResponse
                 {
@@ -125,7 +120,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "net_version"))
             {
-                string netVersion = GetNetVersion();
+                string netVersion = EnvChainsUtils.GetNetVersion(environment);
 
                 return new EthApiResponse
                 {
@@ -141,6 +136,9 @@ namespace DCL.Web3.Authenticators
             return await SendWithConfirmationAsync(request, ct);
         }
 
+        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
+            await LoginAsync(method, ct);
+
         /// <summary>
         ///     1. An authentication request is sent to the server
         ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
@@ -149,7 +147,7 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -188,7 +186,7 @@ namespace DCL.Web3.Authenticators
                 else
                     VerificationRequired?.Invoke((authenticationResponse.code, signatureExpiration, authenticationResponse.requestId));
 
-                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
+                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId, loginMethod,
                     signatureExpiration, ct);
 
                 await DisconnectFromAuthApiAsync();
@@ -221,7 +219,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public async UniTask LogoutAsync(CancellationToken ct) =>
             await DisconnectFromAuthApiAsync();
 
         public void CancelCurrentWeb3Operation()
@@ -233,8 +231,17 @@ namespace DCL.Web3.Authenticators
             codeVerificationTask?.TrySetCanceled();
         }
 
-        public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
-            signatureVerificationCallback = callback;
+        public UniTask SubmitOtp(string otp) =>
+
+            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
+            UniTask.CompletedTask;
+
+        public UniTask ResendOtp() =>
+            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
+            UniTask.CompletedTask;
+
+        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
+            UniTask.FromResult(false);
 
         private async UniTask DisconnectFromAuthApiAsync()
         {
@@ -257,7 +264,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(GetNetworkId(), ct);
+                await ConnectToRpcAsync(EnvChainsUtils.GetNetworkId(environment), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -367,7 +374,7 @@ namespace DCL.Web3.Authenticators
 
                 signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, signatureExpiration, ct);
+                MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, null, signatureExpiration, ct);
 
                 if (authApiPendingOperations <= 1)
                     await DisconnectFromAuthApiAsync();
@@ -432,9 +439,17 @@ namespace DCL.Web3.Authenticators
         private void ProcessCodeVerificationStatus(SocketIOResponse response) =>
             codeVerificationTask?.TrySetResult(response);
 
-        private async UniTask<T> RequestSignatureAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask<T> RequestSignatureAsync<T>(string requestId, LoginMethod? method, DateTime expiration, CancellationToken ct)
         {
-            webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
+            var url =
+
+                // method.HasValue
+                // ?
+                // $"{signatureWebAppUrl}/auth/login?loginMethod={method.Value.ToString().ToLowerInvariant()}/{requestId}"
+                // :
+                $"{signatureWebAppUrl}/auth/requests/{requestId}";
+
+            webBrowser.OpenUrl(url);
 
             signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();
@@ -521,17 +536,6 @@ namespace DCL.Web3.Authenticators
             return false;
         }
 
-        private string GetNetVersion() =>
-            // TODO: this is a temporary thing until we solve the network in a better way
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
-
-        private string GetChainId() =>
-            // TODO: this is a temporary thing until we solve the network in a better way
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
-
-        private string GetNetworkId() =>
-            // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-            environment is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
 
         /// <summary>
         /// Waits until we receive the verification status from the server
@@ -548,7 +552,7 @@ namespace DCL.Web3.Authenticators
             {
                 SocketIOResponse response = await codeVerificationTask.Task.Timeout(duration).AttachExternalCancellation(ct);
 
-                var validation = response.GetValue<CodeVerificationStatus>();
+                CodeVerificationStatus validation = response.GetValue<CodeVerificationStatus>();
 
                 if (validation.requestId == requestId)
                 {

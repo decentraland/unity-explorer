@@ -17,7 +17,11 @@ namespace DCL.Profiles
         internal ref CompactInfo GetCompact() =>
             ref compact;
 
-        public Color UserNameColor => compact.UserNameColor;
+        public Color UserNameColor
+        {
+            get => compact.UserNameColor;
+            set => compact.UserNameColor = value;
+        }
 
         public string UserId
         {

@@ -17,7 +17,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<CancellationToken>
+    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -47,32 +47,31 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
-        public void Enter(CancellationToken ct)
+        public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
 
-            AuthenticateAsync(ct).Forget();
+            AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
         {
             RestoreResolutionAndScreenMode();
-
             CancelVerificationCountdown();
 
             viewInstance.VerificationCodeHintContainer.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
 
-            viewInstance.LoginContainer.SetActive(false);
+            viewInstance.LoginScreenSubView.gameObject.SetActive(false);
 
             // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
             viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
         }
 
-        private async UniTaskVoid AuthenticateAsync(CancellationToken ct)
+        private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)
         {
             try
             {
@@ -89,7 +88,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
                 web3Authenticator.VerificationRequired += ShowVerification;
-                IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
+                IWeb3Identity identity = await web3Authenticator.LoginAsync(method, ct);
 
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }
@@ -160,12 +159,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                         .Forget();
 
             // Anim-OUT non-interactable Login Screen
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-
-            viewInstance.LoginButton.gameObject.SetActive(true);
-            viewInstance.LoginButton.interactable = false;
-
-            viewInstance.LoadingSpinner.SetActive(false);
+            viewInstance.LoginScreenSubView.SlideOut();
 
             // Anim-IN Verification Screen
             viewInstance.VerificationContainer.SetActive(true);

@@ -1,7 +1,5 @@
 ﻿using DCL.Audio;
-using DCL.Character;
 using DCL.Character.Plugin;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -10,7 +8,6 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities.Extensions;
 using Global;
 using Global.AppArgs;

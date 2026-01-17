@@ -264,14 +264,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233166825}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -346,6 +346,8 @@ GameObject:
   m_Component:
   - component: {fileID: 234607242}
   - component: {fileID: 234607245}
+  - component: {fileID: 234607247}
+  - component: {fileID: 234607248}
   m_Layer: 0
   m_Name: EntryPoint
   m_TagString: Untagged
@@ -382,12 +384,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 0, y: 0}
+    targetScene: {x: 100, y: 100}
     EditorSceneStartPosition: 1
     predefinedScenes:
-      enabled: 0
+      enabled: 1
       parcels:
       - {x: 145, y: 60}
+      - {x: 100, y: 100}
     targetWorld: yemel.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
@@ -522,6 +525,36 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+--- !u!114 &234607247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234607240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1141db6910ed4fbc9b1b1ac9faab3d49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Plugins::DCL.Web3.Authenticators.TestOnChainWeb3
+  selectedNetwork: 1
+  cryptoReceiver: 0xb1a7fc4bbd9856bfa1f70f6b111444cd9d351592
+  nativeTransferAmount: 0.01
+  manaTransferAmount: 1
+--- !u!114 &234607248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234607240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd5e183e72feffa4c996a5acfb3e961a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ThirdWebUnity::ThirdWebUnity.ThirdWebManager
+  <ClientId>k__BackingField: e1adce863fe287bb6cf0e3fd90bdb77f
+  <BundleId>k__BackingField: com.Decentraland.Explorer
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0

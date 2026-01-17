@@ -12,10 +12,10 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3Authenticator
     {
-        public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+        public class Default : IWeb3VerifiedAuthenticator, IEthereumApi
         {
             private readonly IWeb3VerifiedAuthenticator originAuth;
-            private readonly IVerifiedEthereumApi originApi;
+            private readonly IEthereumApi originApi;
 
             public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
             {
@@ -75,19 +75,28 @@ namespace DCL.Web3.Authenticators
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
                 originApi.SendAsync(request, ct);
 
-            public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
-                originApi.AddVerificationListener(callback);
+            public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
+                originAuth.LoginAsync(loginMethod, ct);
 
-            public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
-                originAuth.LoginAsync(ct);
+            public UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
+                originAuth.LoginPayloadedAsync(method, payload, ct);
 
-            public UniTask LogoutAsync(CancellationToken cancellationToken) =>
-                originAuth.LogoutAsync(cancellationToken);
+            public UniTask LogoutAsync(CancellationToken ct) =>
+                originAuth.LogoutAsync(ct);
 
             public void CancelCurrentWeb3Operation()
             {
                 originAuth.CancelCurrentWeb3Operation();
             }
+
+            public UniTask SubmitOtp(string otp) =>
+                originAuth.SubmitOtp(otp);
+
+            public UniTask ResendOtp() =>
+                originAuth.ResendOtp();
+
+            public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
+                originAuth.TryAutoConnectAsync(ct);
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {

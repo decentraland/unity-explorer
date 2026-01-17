@@ -103,8 +103,7 @@ namespace DCL.UI.ProfileNames
                 config.cancelButton.onClick.AddListener(Close);
                 config.saveButton.onClick.AddListener(() => Save(config));
                 config.claimNameButton.onClick.AddListener(ClaimNewName);
-                config.input.onValueChanged.AddListener(s => OnInputValueChanged(s, config));
-                config.errorContainer.SetActive(false);
+                config.nameInputField.NameValidityChanged += isValidName => { config.saveButtonInteractable = isValidName; };
             }
         }
 
@@ -124,13 +123,11 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.dropdownVerifiedIcon.SetActive(false);
                 claimedConfig.saveButtonInteractable = false;
                 claimedConfig.saveLoading.SetActive(false);
-                claimedConfig.NonClaimedNameTabConfig.input.text = string.Empty;
                 claimedConfig.NonClaimedNameTabConfig.saveButtonInteractable = false;
                 claimedConfig.dropdownLoadingSpinner.SetActive(true);
                 claimedConfig.claimedNameDropdown.gameObject.SetActive(false);
 
                 ProfileNameEditorView.NonClaimedNameConfig nonClaimedConfig = viewInstance!.NonClaimedNameContainer;
-                nonClaimedConfig.input.text = string.Empty;
                 nonClaimedConfig.saveButtonInteractable = false;
                 nonClaimedConfig.saveLoading.SetActive(false);
 
@@ -182,39 +179,8 @@ namespace DCL.UI.ProfileNames
             void SetUpNonClaimed(ProfileNameEditorView.NonClaimedNameConfig config, Profile profile)
             {
                 config.userHashLabel.text = $"#{profile.UserId[^4..]}";
-                config.input.text = string.Empty;
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(false);
-            }
-        }
-
-        private void OnInputValueChanged(string value, ProfileNameEditorView.NonClaimedNameConfig config)
-        {
-            bool isValidLength = value.Length <= MAX_NAME_LENGTH;
-            bool isValidName = validNameRegex.IsMatch(value);
-            bool isEmpty = string.IsNullOrEmpty(value);
-
-            config.characterCountLabel.text = $"{value.Length}/{MAX_NAME_LENGTH}";
-            config.saveButtonInteractable = !isEmpty && isValidName && isValidLength;
-
-            if ((!isValidLength || !isValidName) && !isEmpty)
-            {
-                config.characterCountLabel.color = Color.red;
-                config.inputOutline.color = Color.red;
-                config.errorContainer.SetActive(true);
-
-                if (!isValidLength)
-                    config.inputErrorMessage.text = CHARACTER_LIMIT_REACHED_MESSAGE;
-                else if (!isValidName)
-                    config.inputErrorMessage.text = VALID_CHARACTERS_ARE_ALLOWED_MESSAGE;
-            }
-            else
-            {
-                Color color = Color.white;
-                color.a = 0.5f;
-                config.inputOutline.color = color;
-                config.characterCountLabel.color = color;
-                config.errorContainer.SetActive(false);
             }
         }
 
@@ -239,7 +205,7 @@ namespace DCL.UI.ProfileNames
 
                 if (profile != null)
                 {
-                    profile.Name = config.input.text;
+                    profile.Name = config.nameInputField.CurrentNameText;
                     profile.HasClaimedName = false;
 
                     try

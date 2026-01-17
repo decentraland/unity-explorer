@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -15,8 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Localization.SmartFormat.PersistentVariables;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -24,34 +20,24 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
-        private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly SplashScreen splashScreen;
-        private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
-
-        private readonly StringVariable? profileNameLabel;
 
         public ProfileFetchingAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
-            AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
             SentryTransactionManager sentryTransactionManager,
             SplashScreen splashScreen,
-            AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile) : base(viewInstance)
         {
             this.machine = machine;
-            this.controller = controller;
             this.currentState = currentState;
             this.sentryTransactionManager = sentryTransactionManager;
             this.splashScreen = splashScreen;
-            this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
-
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
         }
 
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
@@ -93,11 +79,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    await FetchProfileAsync(ct);
+                    Profile? profile = await FetchProfileAsync(ct);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
-                    currentState.Value = isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
-                    machine.Enter<LobbyAuthState>();
+                    machine.Enter<ExistingAccountLobbyAuthState, (Profile, bool)>((profile, isCached));
                 }
                 catch (OperationCanceledException)
                 {
@@ -113,7 +98,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    machine.Enter<LoginStartAuthState>();
+                    machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
                 }
             }
             else
@@ -123,20 +108,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void ShowLoadingSpinner()
-        {
-            viewInstance.LoginContainer.SetActive(true);
-
-            viewInstance.LoginAnimator.ResetAnimator();
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            viewInstance.LoginButton.gameObject.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-
-            viewInstance.LoadingSpinner.SetActive(true);
-        }
-
-        private async UniTask FetchProfileAsync(CancellationToken ct)
+        private async UniTask<Profile> FetchProfileAsync(CancellationToken ct)
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
@@ -148,14 +120,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
-
-            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
-            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-
-            return;
-
-            bool IsNewUser() =>
-                profile.Version == 1;
+            return profile;
         }
 
         private static bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
@@ -35,6 +35,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -117,7 +118,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
-                bootstrapContainer.VerifiedEthereumApi,
+                bootstrapContainer.EthereumApi,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
@@ -156,6 +157,7 @@ namespace Global.Dynamic
                 scenePluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.IdentityCache,
                 splashScreen,
                 worldInfoTool
@@ -293,9 +295,17 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
-            // Exceptions on auto-login should not block the application bootstrap
-            catch (AutoLoginTokenNotFoundException) { }
+            try
+            {
+                await new TokenFileAuthenticator(
+                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                          webRequestsContainer.WebRequestController,
+                          bootstrapContainer.Web3AccountFactory)
+                     .WithIdentityCache(bootstrapContainer.IdentityCache)
+                     .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
+                     .LoginAsync(LoginMethod.EMAIL_OTP, ct);
+            }
+            catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(

@@ -62,7 +62,10 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose() { }
 
-        public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
+        public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken __) =>
+            UniTask.FromResult(Login(privateKey));
+
+        public UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod _, TPayload __, CancellationToken ___) =>
             UniTask.FromResult(Login(privateKey));
 
         public static IWeb3Identity Login(string privateKey)
@@ -108,7 +111,7 @@ namespace DCL.Web3.Authenticators
             return authChain;
         }
 
-        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public UniTask LogoutAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
     }
 }

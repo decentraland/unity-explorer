@@ -43,7 +43,7 @@ namespace DCL.Profiles
         public string? Hobbies { get; set; }
         public DateTime? Birthdate { get; set; }
         public int Version { get; set; }
-        public Avatar Avatar { get; internal set; }
+        public Avatar Avatar { get; set; }
 
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
@@ -116,18 +116,22 @@ namespace DCL.Profiles
             IsDirty = false;
         }
 
-        public static Profile NewRandomProfile(string? userId) =>
-            new (
+        public static Profile NewRandomProfile(string? userId)
+        {
+            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+
+            return new Profile(
                 userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
-                IProfileRepository.PLAYER_RANDOM_ID,
-                new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                name: IProfileRepository.PLAYER_RANDOM_ID,
+                avatar: new Avatar(
+                    bodyShape,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()
                 )
             );
+        }
 
         public static Profile NewProfileWithAvatar(string? userId, Avatar avatar) =>
             new (
