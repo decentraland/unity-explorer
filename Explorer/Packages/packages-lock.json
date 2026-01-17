@@ -470,6 +470,29 @@
         "com.unity.render-pipelines.core": "17.3.0"
       }
     },
+    "com.vrmc.gltf": {
+      "version": "https://github.com/decentraland/UniVRM.git?path=/Packages/UniGLTF",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.test-framework": "1.4.6",
+        "com.unity.mathematics": "1.2.6"
+      },
+      "hash": "9f47ef991b0e1cb697aa6be50f438eccf81720f7"
+    },
+    "com.vrmc.univrm": {
+      "version": "https://github.com/decentraland/UniVRM.git?path=/Packages/VRM",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.vrmc.gltf": "0.131.0",
+        "com.unity.ugui": "1.0.0"
+      },
+      "hash": "9f47ef991b0e1cb697aa6be50f438eccf81720f7"
+    },
     "decentraland.grassshader": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
       "depth": 0,

@@ -1,5 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables;
@@ -16,6 +17,7 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -24,7 +26,6 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using ECS;
-using ECS.StreamableLoading.Common;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -198,6 +199,7 @@ namespace DCL.Backpack
             this.cursor = cursor;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
+            view.vrmExportButton.onClick.AddListener(OnExportAvatarClickedAsync);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
@@ -234,6 +236,33 @@ namespace DCL.Backpack
                 view.TipsPanelDeselectable.SelectElement();
 
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
+        }
+
+        private async void OnExportAvatarClickedAsync()
+        {
+            try
+            {
+                if (!world.TryGet(playerEntity, out Profile? profile)
+                    || profile == null)
+                    throw new InvalidOperationException("Player has no profile");
+
+                string? fileName = null;
+
+                FileBrowser.Instance.SaveFileAsync(cb => fileName = cb,
+                    "Export Avatar",
+                    Environment.GetFolderPath(Environment.SpecialFolder.Personal),
+                    profile.Name, new ExtensionFilter("vrm", "vrm"));
+
+                while (fileName == null)
+                    await UniTask.Yield();
+
+                if (string.IsNullOrEmpty(fileName))
+                    return;
+
+                await backpackCharacterPreviewController.ExportAvatarAsync(
+                    fileName, profile.Name);
+            }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.AVATAR_EXPORT); }
         }
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)

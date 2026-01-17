@@ -39,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private OutfitsAnalytics outfitsAnalytics;
         private HomeMarkerAnalytics homeMarkerAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
+        private readonly AvatarExportAnalytics avatarExportAnalytics;
 
         public AnalyticsPlugin(
             IAnalyticsController analytics,
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
             playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, scenesCache);
+            avatarExportAnalytics = new AvatarExportAnalytics(analytics, eventBus);
         }
 
         public void Dispose()
