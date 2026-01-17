@@ -43,8 +43,10 @@ namespace DCL.Navmap
 
         public event Action<bool, Vector2Int> OnMouseHover;
 
-        public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
-            imageController = new ImageController(placeImage, webRequestController);
+        public void ConfigurePlaceImageController(ImageControllerProvider imageControllerProvider)
+        {
+            imageController = imageControllerProvider.Create(placeImage);
+        }
 
         public void SetPlaceImage(string imageUrl) =>
             imageController.RequestImage(imageUrl, true);
@@ -69,6 +71,11 @@ namespace DCL.Navmap
         private void OnDisable()
         {
             resultAnimator.enabled = false;
+        }
+
+        private void OnDestroy()
+        {
+            imageController.Dispose();
         }
     }
 }

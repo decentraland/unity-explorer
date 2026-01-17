@@ -58,23 +58,20 @@ namespace DCL.MarketplaceCredits.Fields
 
         private ImageController imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(GoalImage, webRequestController);
+            imageController = imageControllerProvider.Create(GoalImage);
         }
 
         public void StopLoadingImage() =>
-            imageController?.StopLoading();
+            imageController.StopLoading();
 
         public void SetupGoalImage(string imageUrl)
         {
-            imageController?.SetImage(DefaultGoalSprite);
+            imageController.SetImage(DefaultGoalSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+                imageController.RequestImage(imageUrl, hideImageWhileLoading: true);
         }
 
         public void SetTitle(string goalTitle) =>
@@ -108,6 +105,11 @@ namespace DCL.MarketplaceCredits.Fields
         {
             ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             ProgressValueText.text = $"{stepsDone}/{totalSteps}";
+        }
+
+        private void OnDestroy()
+        {
+            imageController.Dispose();
         }
     }
 }

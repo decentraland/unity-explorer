@@ -29,6 +29,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
@@ -36,6 +37,7 @@ using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -64,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
-
+        private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -89,7 +91,8 @@ namespace DCL.PluginSystem.Global
             IEthereumApi ethereumApi,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController)
+            IScreenModeController screenModeController,
+            ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -110,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
+            this.imageControllerProvider = imageControllerProvider;
         }
 
         public void Dispose()
@@ -163,7 +167,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 giftItemLoaderService,
                 wearableCatalog,
-                webRequestController,
+                imageControllerProvider,
                 sharedSpaceManager
             );
 

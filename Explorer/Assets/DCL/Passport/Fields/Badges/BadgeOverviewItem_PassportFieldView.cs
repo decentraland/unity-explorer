@@ -26,12 +26,9 @@ namespace DCL.Passport.Fields.Badges
         private void OnEnable() =>
             SetBadgeNameToastActive(false);
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(BadgeImage, webRequestController);
+            imageController ??= imageControllerProvider.Create(BadgeImage);
         }
 
         public void StopLoadingImage() =>
@@ -61,5 +58,10 @@ namespace DCL.Passport.Fields.Badges
 
         private void SetBadgeNameToastActive(bool isActive) =>
             badgeNameTooltip.SetActive(isActive);
+
+        private void OnDestroy()
+        {
+            imageController?.Dispose();
+        }
     }
 }
