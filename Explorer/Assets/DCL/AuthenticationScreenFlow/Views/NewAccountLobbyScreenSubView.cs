@@ -1,4 +1,4 @@
-﻿using TMPro;
+﻿using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +7,7 @@ namespace DCL.AuthenticationScreenFlow
     public class NewAccountLobbyScreenSubView : MonoBehaviour
     {
         [field: SerializeField]
-        public TMP_InputField ProfileNameInputField { get; private set; } = null!;
+        public NameInputFieldView ProfileNameInputField { get; private set; } = null!;
 
         [field: SerializeField]
         public Button BackButton { get; private set; } = null!;
@@ -27,6 +27,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Toggle SubscribeToggle { get; private set; } = null!;
         [field: SerializeField]
-        public Toggle AgreeLicenseToggle { get; private set; } = null!;
+        public Toggle TermsOfUse { get; private set; } = null!;
     }
 }

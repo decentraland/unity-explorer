@@ -32,6 +32,7 @@ namespace DCL.UI
         [SerializeField] [Min(0)] private float caretBlinkRate = 0.85f;
 
         public string CurrentNameText => NameInput.text;
+        public bool IsValidName => NameInput.text.Length > 0 && NameInput.text.Length <= maxNameLength;
 
         private Coroutine? activateInputCoroutine;
 
@@ -72,7 +73,7 @@ namespace DCL.UI
         private void OnNameInputValueChanged(string text)
         {
             characterCountLabel.text = $"{text.Length}/{maxNameLength}";
-            SetErrorState(text.Length > maxNameLength);
+            SetErrorState(!IsValidName);
         }
 
         private void SetErrorState(bool hasError)

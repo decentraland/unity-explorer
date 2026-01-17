@@ -6,7 +6,6 @@ using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
 using DCL.Profiles.Self;
 using System;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Utility;
 
@@ -57,7 +56,7 @@ namespace DCL.MarketplaceCredits.Sections
             this.inputBlock = inputBlock;
 
             subView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
-            subView.EmailLogin.StartButtonPressed += RegisterInTheProgramWithNewEmail;
+            subView.EmailLogin.Submitted += RegisterInTheProgramWithNewEmail;
             subView.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
         }
 
@@ -83,7 +82,7 @@ namespace DCL.MarketplaceCredits.Sections
         public void Dispose()
         {
             subView.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
-            subView.EmailLogin.StartButtonPressed -= RegisterInTheProgramWithNewEmail;
+            subView.EmailLogin.Submitted -= RegisterInTheProgramWithNewEmail;
             subView.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
             fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
             registerInTheProgramCts.SafeCancelAndDispose();

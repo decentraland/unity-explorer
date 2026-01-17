@@ -11,7 +11,7 @@ namespace DCL.UI
     {
         private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
 
-        public event Action? StartButtonPressed;
+        public event Action? Submitted;
 
         [SerializeField] private TMP_InputField emailInput;
         [SerializeField] private Button startButton;
@@ -76,7 +76,7 @@ namespace DCL.UI
         }
 
         private void EmitStartButtonPressedEvent() =>
-            StartButtonPressed?.Invoke();
+            Submitted?.Invoke();
 
         private void OnEmailInputValueChanged(string email)
         {
@@ -91,8 +91,10 @@ namespace DCL.UI
         {
             if (email == string.Empty)
                 emailInputOutline.enabled = false;
+            else if (!IsValidEmail(email))
+                SetErrorState(false);
             else
-                SetErrorState(!IsValidEmail(email));
+                Submitted?.Invoke();
         }
 
         private void OnEmailInputSelect(string email)

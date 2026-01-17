@@ -24,7 +24,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
-        private readonly ExistingAccountLobbyScreenSubView subView;
         private readonly NewAccountLobbyScreenSubView newAccountSubView;
 
         private readonly IWearablesProvider wearablesProvider;
@@ -45,7 +44,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider) : base(viewInstance)
         {
-            subView = viewInstance.ExistingAccountLobbyScreenSubView;
+            newAccountSubView = viewInstance.NewAccountLobbyScreenSubView;
 
             this.controller = controller;
             this.currentState = currentState;
@@ -55,6 +54,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         }
 
         private Profile newUserProfile;
+
         private CancellationToken ct;
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
@@ -72,8 +72,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             newAccountSubView.gameObject.SetActive(true);
 
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
+            newAccountSubView.ProfileNameInputField.NameValidityChanged += OnProfileNameChanged;
 
             newAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             newAccountSubView.RandomizeButton.onClick.AddListener(RandomizeAvatar);
@@ -82,11 +81,34 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Toggle listeners for terms agreement
             newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
-            newAccountSubView.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
+
             newAccountSubView.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
-            newAccountSubView.AgreeLicenseToggle.onValueChanged.AddListener(OnToggleChanged);
-            newAccountSubView.ProfileNameInputField.onValueChanged.AddListener(OnProfileNameChanged);
+            newAccountSubView.TermsOfUse.onValueChanged.AddListener(OnToggleChanged);
+
             UpdateFinalizeButtonState();
+        }
+
+        public override void Exit()
+        {
+            newAccountSubView.gameObject.SetActive(false);
+            newAccountSubView.NextRandomButton.interactable = false;
+
+            characterPreviewController?.OnHide();
+
+            newAccountSubView.ProfileNameInputField.NameValidityChanged -= OnProfileNameChanged;
+
+            newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
+            newAccountSubView.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
+            newAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
+            newAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
+
+            // Toggle listeners for terms agreement
+            newAccountSubView.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            newAccountSubView.TermsOfUse.onValueChanged.RemoveListener(OnToggleChanged);
+
+            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
+            newAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
         }
 
         private async UniTask InitializeAvatarAsync()
@@ -165,32 +187,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             UpdateAvatarNavigationButtons();
         }
 
-        public override void Exit()
-        {
-            newAccountSubView.NextRandomButton.interactable = false;
-
-            subView.gameObject.SetActive(false);
-
-            characterPreviewController?.OnHide();
-
-            newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
-            newAccountSubView.RandomizeButton.onClick.RemoveListener(RandomizeAvatar);
-            newAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
-            newAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
-            newAccountSubView.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            newAccountSubView.AgreeLicenseToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            newAccountSubView.ProfileNameInputField.onValueChanged.RemoveListener(OnProfileNameChanged);
-            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
-            newAccountSubView.AgreeLicenseToggle.SetIsOnWithoutNotify(false);
-        }
-
         private void FinalizeNewUser()
         {
             PublishNewProfile(ct).Forget();
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
-                newUserProfile.Name = newAccountSubView.ProfileNameInputField.text;
+                newUserProfile.Name = newAccountSubView.ProfileNameInputField.CurrentNameText;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
                 JumpIntoWorld();
@@ -256,14 +259,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnToggleChanged(bool _) =>
             UpdateFinalizeButtonState();
 
-        private void OnProfileNameChanged(string _) =>
+        private void OnProfileNameChanged(bool _) =>
             UpdateFinalizeButtonState();
 
         private void UpdateFinalizeButtonState() =>
             newAccountSubView.FinalizeNewUserButton.interactable =
+                newAccountSubView.ProfileNameInputField.IsValidName &&
                 newAccountSubView.SubscribeToggle.isOn &&
-                newAccountSubView.AgreeLicenseToggle.isOn &&
-                !string.IsNullOrWhiteSpace(newAccountSubView.ProfileNameInputField.text);
+                newAccountSubView.TermsOfUse.isOn;
 
         private Avatar CreateDefaultAvatar()
         {
@@ -310,7 +313,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            subView!.JumpIntoWorldButton.interactable = false;
+            // subView!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
             return;
 

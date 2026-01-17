@@ -82,7 +82,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             subView.MoreOptionsButton.onClick.AddListener(subView.ToggleOptionsPanelExpansion);
 
             // ThirdWeb
-            subView.EmailInputField.StartButtonPressed += OTPLogin;
+            subView.EmailInputField.Submitted += OTPLogin;
         }
 
         public override void Exit()
@@ -101,7 +101,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             subView.MoreOptionsButton.onClick.RemoveAllListeners();
 
             // ThirdWeb
-            subView.EmailInputField.StartButtonPressed -= OTPLogin;
+            subView.EmailInputField.Submitted -= OTPLogin;
         }
 
         private void Login(LoginMethod method)
