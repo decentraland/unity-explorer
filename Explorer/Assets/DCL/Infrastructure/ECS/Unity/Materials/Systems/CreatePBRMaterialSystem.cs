@@ -82,7 +82,8 @@ namespace ECS.Unity.Materials.Systems
         {
             material.SetColor(ShaderUtils.BaseColor, albedo);
 
-            if (emissive != Color.clear && emissive != Color.black) material.EnableKeyword("_EMISSION");
+            if (emissive != Color.clear && emissive != Color.black)
+                material.EnableKeyword("_EMISSION");
 
             material.SetColor(ShaderUtils.EmissionColor, emissive * emissiveIntensity);
             material.SetColor(ShaderUtils.SpecColor, reflectivity);

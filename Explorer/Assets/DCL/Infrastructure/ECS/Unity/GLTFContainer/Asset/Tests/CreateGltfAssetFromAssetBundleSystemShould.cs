@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.RenderSystem;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -23,7 +24,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, new MaterialManager());
         }
 
         [TearDown]
