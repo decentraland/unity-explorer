@@ -4,7 +4,7 @@ using DCL.Billboard.Demo.World;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
-using DCL.SDKComponents.TextShape.Fonts;
+using DCL.SDKComponents.Fonts;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;

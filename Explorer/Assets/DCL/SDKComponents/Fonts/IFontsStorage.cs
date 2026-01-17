@@ -2,7 +2,7 @@ using DCL.Diagnostics;
 using TMPro;
 using Font = DCL.ECSComponents.Font;
 
-namespace DCL.SDKComponents.TextShape.Fonts
+namespace DCL.SDKComponents.Fonts
 {
     public interface IFontsStorage
     {

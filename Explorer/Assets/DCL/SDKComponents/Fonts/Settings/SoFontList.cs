@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using Font = DCL.ECSComponents.Font;
 
-namespace DCL.SDKComponents.TextShape.Fonts.Settings
+namespace DCL.SDKComponents.Fonts.Settings
 {
     [CreateAssetMenu(fileName = "Font List", menuName = "DCL/SDKComponents/Font List")]
     public class SoFontList : ScriptableObject, IFontsStorage
