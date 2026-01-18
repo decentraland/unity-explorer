@@ -1,12 +1,15 @@
 ﻿using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class LoginScreenSubView : MonoBehaviour
     {
+        public static readonly int IS_SHOWN_ANIM_HASH = Animator.StringToHash("IsShown");
+
         private Animator loginAnimator;
         private CanvasGroup canvasGroup;
 
@@ -45,11 +48,6 @@ namespace DCL.AuthenticationScreenFlow
             canvasGroup = GetComponent<CanvasGroup>();
         }
 
-        private void OnEnable()
-        {
-            SlideIn();
-        }
-
         public void ToggleOptionsPanelExpansion()
         {
             areOptionsExpanded = !areOptionsExpanded;
@@ -65,9 +63,10 @@ namespace DCL.AuthenticationScreenFlow
         public void SlideIn()
         {
             // loginAnimator.enabled = true;
-            // loginAnimator.ResetAnimator();
-            loginAnimator.SetTrigger(UIAnimationHashes.IN);
+            loginAnimator.ResetAnimator();
+            loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, true);
 
+            canvasGroup.alpha = 1;
             canvasGroup.interactable = true;
             loadingSpinner.SetActive(false);
             mainElementsPanel.SetActive(true);
@@ -86,7 +85,8 @@ namespace DCL.AuthenticationScreenFlow
         // Anim-OUT non-interactable Login Screen
         public void SlideOut()
         {
-            loginAnimator.SetTrigger(UIAnimationHashes.OUT);
+            loginAnimator.ResetAnimator();
+            loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, false);
             canvasGroup.interactable = false;
 
             mainElementsPanel.SetActive(true);

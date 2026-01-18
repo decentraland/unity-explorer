@@ -40,6 +40,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
+            // Anim-OUT non-interactable Login Screen
+            viewInstance.LoginScreenSubView.SlideOut();
+
             // Anim-IN Verification Screen
             viewInstance.VerificationOTPContainer.SetActive(true);
             viewInstance.VerificationOTPAnimator.ResetAnimator();
@@ -52,7 +55,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
 
             // Listeners
-            viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(CancelLoginProcess);
+            viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(controller.CancelLoginProcess);
             viewInstance.ResendOTPButton.onClick.AddListener(ResendOtp);
             viewInstance.OTPInputField.OtpCodeEntered += OnOtpEntered;
 
@@ -62,15 +65,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             viewInstance.VerificationOTPContainer.SetActive(false);
-            viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(CancelLoginProcess);
+            viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(controller.CancelLoginProcess);
             viewInstance.ResendOTPButton.onClick.RemoveListener(ResendOtp);
             viewInstance.OTPInputField.OtpCodeEntered -= OnOtpEntered;
-        }
-
-        private void CancelLoginProcess()
-        {
-            controller.CancelLoginProcess();
-            machine.Enter<LoginStartAuthState>();
         }
 
         private void ResendOtp()

@@ -109,15 +109,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
             subView.ShowLoading();
-
             machine.Enter<IdentityAndVerificationAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
         private void OTPLogin()
         {
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
-
-            viewInstance.LoginScreenSubView.SlideOut();
 
             machine.Enter<IdentityAndOTPConfirmationState, (string, CancellationToken)>(
                 payload: (viewInstance.LoginScreenSubView.EmailInputField.CurrentEmailText, controller.GetRestartedLoginToken()));

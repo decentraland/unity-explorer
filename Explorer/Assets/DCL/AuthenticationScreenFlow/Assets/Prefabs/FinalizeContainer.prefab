@@ -595,7 +595,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8909398026496194027
 RectTransform:
   m_ObjectHideFlags: 0
@@ -666,13 +666,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b6be391c7d54e499fd3bd207df52cc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.AuthLobbyScreenSubView
-  <FinalizeAnimator>k__BackingField: {fileID: 0}
+  <FinalizeAnimator>k__BackingField: {fileID: 5492435077365089425}
   <JumpIntoWorldButton>k__BackingField: {fileID: 507792000685911311}
   <CharacterPreviewView>k__BackingField: {fileID: 0}
   title: {fileID: 4293246040486119300}
   description: {fileID: 9012452384836578987}
   diffAccountButton: {fileID: 5543690121828655755}
-  newUserContainer: {fileID: 0}
 --- !u!1 &4153884615134422676
 GameObject:
   m_ObjectHideFlags: 0
