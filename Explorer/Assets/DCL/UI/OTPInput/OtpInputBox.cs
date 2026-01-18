@@ -37,8 +37,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     [Header("Colors")]
     [SerializeField] private Color normalColor = new (0.15f, 0.15f, 0.18f, 1f);
-    [SerializeField] private Color activeColor = new (0.25f, 0.45f, 0.85f, 1f);
-    [SerializeField] private Color filledColor = new (0.2f, 0.2f, 0.24f, 1f);
+    [SerializeField] private Color successColor = new (0.2f, 0.7f, 0.4f, 1f);
+    [SerializeField] private Color failureColor = new (0.8f, 0.3f, 0.3f, 1f);
+
+    public enum State { Normal, Success, Failure }
 
     /// <summary>Вызывается при любом изменении кода</summary>
     public event Action<string> OnCodeChanged;
@@ -54,6 +56,9 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     /// <summary>В фокусе ли поле ввода</summary>
     public bool IsFocused => hiddenInput != null && hiddenInput.isFocused;
+
+    /// <summary>Текущее состояние компонента</summary>
+    public State CurrentState { get; private set; } = State.Normal;
 
     private int lastCaretPos = -1;
     private bool suppressEvents;
@@ -246,25 +251,24 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         // Активный слот — где каретка, но не дальше последнего
         int activeSlot = Mathf.Clamp(caret, 0, slotBackgrounds.Length - 1);
 
-        for (var i = 0; i < slotBackgrounds.Length; i++)
+        // Цвет группы зависит от состояния
+        Color groupColor = CurrentState switch
+                           {
+                               State.Success => successColor,
+                               State.Failure => failureColor,
+                               _ => normalColor,
+                           };
+
+        for (int i = 0; i < slotBackgrounds.Length; i++)
         {
-            if (slotBackgrounds[i] == null) continue;
+            // Все ячейки одного цвета
+            if (slotBackgrounds[i] != null)
+                slotBackgrounds[i].color = groupColor;
 
-            Color color;
-
-            if (focused && i == activeSlot)
-                color = activeColor;
-            else if (i < Code.Length)
-                color = filledColor;
-            else
-                color = normalColor;
-
-            slotBackgrounds[i].color = color;
-
-            // Outline: активен только на активной ячейке при фокусе
+            // Outline: только на активной ячейке при фокусе и в Normal состоянии
             if (slotOutlines != null && i < slotOutlines.Length && slotOutlines[i] != null)
             {
-                bool showOutline = focused && i == activeSlot;
+                bool showOutline = focused && i == activeSlot && CurrentState == State.Normal;
                 slotOutlines[i].enabled = showOutline;
             }
         }
@@ -313,9 +317,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         RefreshVisuals();
     }
 
-    /// <summary>Очищает и фокусирует</summary>
+    /// <summary>Очищает, сбрасывает состояние и фокусирует</summary>
     public void ClearAndFocus()
     {
+        CurrentState = State.Normal;
         Clear();
         Focus();
     }
@@ -352,6 +357,36 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
         if (Code.Length == codeLength)
             OtpCodeEntered?.Invoke(Code);
+    }
+
+    [ContextMenu(nameof(SetSuccess))]
+    public void SetSuccess()
+    {
+        CurrentState = State.Success;
+        Unfocus();
+        RefreshVisuals();
+    }
+
+    [ContextMenu(nameof(SetFailure))]
+    public void SetFailure()
+    {
+        CurrentState = State.Failure;
+        Unfocus();
+        RefreshVisuals();
+    }
+
+    [ContextMenu(nameof(ResetState))]
+    public void ResetState()
+    {
+        CurrentState = State.Normal;
+        RefreshVisuals();
+    }
+
+    /// <summary>Полный сброс: очищает код и возвращает в Normal состояние</summary>
+    public void Reset()
+    {
+        CurrentState = State.Normal;
+        Clear();
     }
 
     private void OnDestroy()
