@@ -23,6 +23,9 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     [Tooltip("Префабы слотов — из них автоматически извлекаются компоненты")]
     [SerializeField] private GameObject[] slots;
 
+    [Tooltip("Image для имитации каретки (вертикальная линия)")]
+    [SerializeField] private Image caretImage;
+
     // Заполняются автоматически в Awake из slots
     private TMP_Text[] slotTexts;
     private Image[] slotBackgrounds;
@@ -39,6 +42,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Color normalColor = new (0.15f, 0.15f, 0.18f, 1f);
     [SerializeField] private Color successColor = new (0.2f, 0.7f, 0.4f, 1f);
     [SerializeField] private Color failureColor = new (0.8f, 0.3f, 0.3f, 1f);
+
+    [Header("Caret")]
+    [Tooltip("Скорость мигания каретки (раз в секунду)")]
+    [SerializeField] private float caretBlinkRate = 1.5f;
 
     public enum State { Normal, Success, Failure }
 
@@ -62,13 +69,22 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private int lastCaretPos = -1;
     private bool suppressEvents;
+    private float caretBlinkTimer;
+    private RectTransform caretRectTransform;
 
     private void Awake()
     {
         InitializeSlotArrays();
+        InitializeCaret();
         ValidateReferences();
         SetupHiddenInput();
         RefreshVisuals();
+    }
+
+    private void InitializeCaret()
+    {
+        if (caretImage != null)
+            caretRectTransform = caretImage.GetComponent<RectTransform>();
     }
 
     private void InitializeSlotArrays()
@@ -212,16 +228,34 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void Update()
     {
-        if (hiddenInput == null || !hiddenInput.isFocused) return;
+        bool focused = hiddenInput != null && hiddenInput.isFocused;
 
-        // Обновляем подсветку если каретка переместилась
-        int caret = hiddenInput.caretPosition;
-
-        if (caret != lastCaretPos)
+        if (focused)
         {
-            lastCaretPos = caret;
-            RefreshSlotHighlight();
+            // Обновляем подсветку если каретка переместилась
+            int caret = hiddenInput.caretPosition;
+
+            if (caret != lastCaretPos)
+            {
+                lastCaretPos = caret;
+                caretBlinkTimer = 0f; // Сброс мигания при перемещении
+                RefreshSlotHighlight();
+            }
+
+            // Мигание каретки
+            UpdateCaretBlink();
         }
+    }
+
+    private void UpdateCaretBlink()
+    {
+        if (caretImage == null || CurrentState != State.Normal) return;
+
+        caretBlinkTimer += Time.deltaTime * caretBlinkRate;
+
+        // Мигание: видима первую половину цикла
+        bool visible = (caretBlinkTimer % 1f) < 0.5f;
+        caretImage.enabled = visible;
     }
 
     private void RefreshVisuals()
@@ -272,6 +306,31 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
                 slotOutlines[i].enabled = showOutline;
             }
         }
+
+        // Позиционирование каретки
+        UpdateCaretPosition(focused, activeSlot);
+    }
+
+    private void UpdateCaretPosition(bool focused, int activeSlot)
+    {
+        if (caretImage == null) return;
+
+        bool showCaret = focused && CurrentState == State.Normal;
+
+        if (!showCaret)
+        {
+            caretImage.enabled = false;
+            return;
+        }
+
+        // Позиционируем каретку в центр активного слота
+        if (slots != null && activeSlot < slots.Length && slots[activeSlot] != null)
+        {
+            RectTransform slotRect = slots[activeSlot].GetComponent<RectTransform>();
+
+            if (slotRect != null && caretRectTransform != null)
+                caretRectTransform.position = slotRect.position;
+        }
     }
 
     /// <summary>Клик на компонент — активирует ввод</summary>
@@ -291,12 +350,19 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         // Каретка в конец текущего ввода
         int pos = Mathf.Min(Code.Length, codeLength);
         hiddenInput.caretPosition = pos;
+
+        // Сброс мигания — каретка сразу видима
+        caretBlinkTimer = 0f;
     }
 
     /// <summary>Деактивирует поле ввода</summary>
     public void Unfocus()
     {
         hiddenInput?.DeactivateInputField();
+
+        // Скрываем каретку
+        if (caretImage != null)
+            caretImage.enabled = false;
     }
 
     /// <summary>Очищает введённый код</summary>
