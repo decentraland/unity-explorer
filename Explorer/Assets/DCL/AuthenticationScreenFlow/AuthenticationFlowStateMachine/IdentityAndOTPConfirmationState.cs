@@ -160,13 +160,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 catch (CodeVerificationException)
                 {
                     ShowOtpError();
-                    viewInstance.OTPInputField.ClearAndFocus();
                 }
             }
         }
 
         private void ShowOtpSuccess()
         {
+            viewInstance.OTPInputField.SetSuccess();
             viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
             viewInstance.OTPSubmitResultText.text = "Success";
             viewInstance.OTPSubmitResultSucessIcon.SetActive(true);
@@ -175,6 +175,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void ShowOtpError()
         {
+            viewInstance.OTPInputField.SetFailure();
             viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
             viewInstance.OTPSubmitResultText.text = "Incorrect code";
             viewInstance.OTPSubmitResultSucessIcon.SetActive(false);

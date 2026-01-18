@@ -1,5 +1,5 @@
+using DCL.UI.OTPInput;
 using System;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,35 +16,12 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 {
-    [Header("References")]
-    [Tooltip("Скрытый TMP_InputField для захвата ввода")]
     [SerializeField] private TMP_InputField hiddenInput;
-
-    [Tooltip("Префабы слотов — из них автоматически извлекаются компоненты")]
-    [SerializeField] private GameObject[] slots;
-
-    [Tooltip("Image для имитации каретки (вертикальная линия)")]
+    [SerializeField] private OTPSlotView[] slots;
     [SerializeField] private Image caretImage;
 
-    // Заполняются автоматически в Awake из slots
-    private TMP_Text[] slotTexts;
-    private Image[] slotBackgrounds;
-    private Image[] slotOutlines;
-
-    [Header("Settings")]
-    [Tooltip("Количество цифр в коде")]
+    [Header("SETTINGS")]
     [SerializeField] private int codeLength = 6;
-
-    [Tooltip("Разрешить только цифры 0-9")]
-    [SerializeField] private bool digitsOnly = true;
-
-    [Header("Colors")]
-    [SerializeField] private Color normalColor = new (0.15f, 0.15f, 0.18f, 1f);
-    [SerializeField] private Color successColor = new (0.2f, 0.7f, 0.4f, 1f);
-    [SerializeField] private Color failureColor = new (0.8f, 0.3f, 0.3f, 1f);
-
-    [Header("Caret")]
-    [Tooltip("Скорость мигания каретки (раз в секунду)")]
     [SerializeField] private float caretBlinkRate = 1.5f;
 
     public enum State { Normal, Success, Failure }
@@ -63,8 +40,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     {
         caretRectTransform = caretImage.GetComponent<RectTransform>();
 
-        InitializeSlotArrays();
-
         // Hidden Input
         hiddenInput.characterLimit = codeLength;
         hiddenInput.characterValidation = TMP_InputField.CharacterValidation.Digit;
@@ -74,7 +49,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         hiddenInput.onDeselect.AddListener(_ => Unfocus());
 
         MakeInputInvisible();
-
         RefreshVisuals();
     }
 
@@ -89,48 +63,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     {
         CurrentState = State.Normal;
         Clear();
-    }
-
-    private void InitializeSlotArrays()
-    {
-        int count = slots.Length;
-        slotTexts = new TMP_Text[count];
-        slotBackgrounds = new Image[count];
-        slotOutlines = new Image[count];
-
-        for (int i = 0; i < count; i++)
-        {
-            GameObject slot = slots[i];
-
-            if (slot == null)
-            {
-                Debug.LogWarning($"[{nameof(OtpInputBox)}] slots[{i}] is null!");
-                continue;
-            }
-
-            // Background — Image на руте слота
-            slotBackgrounds[i] = slot.GetComponent<Image>();
-
-            // Text — TMP_Text в детях
-            slotTexts[i] = slot.GetComponentInChildren<TMP_Text>();
-
-            // Outline — Image в детях (не на руте)
-            slotOutlines[i] = FindChildImage(slot.transform);
-        }
-    }
-
-    /// <summary>Находит Image в дочерних объектах (не на руте)</summary>
-    private static Image FindChildImage(Transform parent)
-    {
-        for (int i = 0; i < parent.childCount; i++)
-        {
-            Image img = parent.GetChild(i).GetComponent<Image>();
-
-            if (img != null)
-                return img;
-        }
-
-        return null;
     }
 
     private void MakeInputInvisible()
@@ -154,14 +86,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     {
         if (suppressEvents) return;
 
-        // Фильтруем
-        string filtered = digitsOnly
-            ? new string(newValue.Where(char.IsDigit).ToArray())
-            : newValue;
+        string filtered = newValue;
 
-        // Обрезаем до лимита
         if (filtered.Length > codeLength)
-            filtered = filtered.Substring(0, codeLength);
+            filtered = filtered[..codeLength];
 
         // Если изменили — обновляем без повторного события
         if (filtered != newValue)
@@ -214,98 +142,40 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void RefreshVisuals(bool? forceFocused = null)
     {
-        RenderDigits();
-        RefreshSlotHighlight(forceFocused);
-    }
+        for (var i = 0; i < slots.Length; i++)
+            slots[i].SetSlotText(i < Code.Length ? Code[i].ToString() : "");
 
-    private void RenderDigits()
-    {
-        if (slotTexts == null) return;
-
-        for (var i = 0; i < slotTexts.Length; i++)
+        foreach (OTPSlotView slot in slots)
         {
-            if (slotTexts[i] == null) continue;
-            slotTexts[i].text = i < Code.Length ? Code[i].ToString() : "";
-        }
-    }
-
-    private void RefreshSlotHighlight(bool? forceFocused = null)
-    {
-        if (slotBackgrounds == null) return;
-
-        bool focused = forceFocused ?? (hiddenInput != null && hiddenInput.isFocused);
-
-        // Активный слот — всегда после последней введённой цифры
-        int activeSlot = Mathf.Clamp(Code.Length, 0, slotBackgrounds.Length - 1);
-
-        // Цвет группы зависит от состояния
-        Color groupColor = CurrentState switch
-                           {
-                               State.Success => successColor,
-                               State.Failure => failureColor,
-                               _ => normalColor,
-                           };
-
-        for (int i = 0; i < slotBackgrounds.Length; i++)
-        {
-            // Все ячейки одного цвета
-            if (slotBackgrounds[i] != null)
-                slotBackgrounds[i].color = groupColor;
-
-            // Outline: только на активной ячейке при фокусе и в Normal состоянии
-            if (slotOutlines != null && i < slotOutlines.Length && slotOutlines[i] != null)
+            switch (CurrentState)
             {
-                bool showOutline = focused && i == activeSlot && CurrentState == State.Normal;
-                slotOutlines[i].enabled = showOutline;
+                case State.Normal: slot.SetSlotState(OTPSlotView.SlotState.UNSELECTED); break;
+                case State.Failure: slot.SetSlotState(OTPSlotView.SlotState.ERROR); break;
+                case State.Success: slot.SetSlotState(OTPSlotView.SlotState.SUCCESS); break;
             }
         }
 
-        // Позиционирование каретки
-        UpdateCaretPosition(focused, activeSlot);
-    }
+        bool focused = forceFocused ?? hiddenInput.isFocused;
+        int activeSlot = Mathf.Clamp(Code.Length, 0, slots.Length - 1);
 
-    private void UpdateCaretPosition(bool focused, int activeSlot)
-    {
-        bool showCaret = focused && CurrentState == State.Normal;
-
-        if (!showCaret)
+        if (focused)
         {
-            caretImage.enabled = false;
-            return;
-        }
-
-        // Позиционируем каретку в центр активного слота
-        if (slots != null && activeSlot < slots.Length && slots[activeSlot] != null)
-        {
+            slots[activeSlot].SetSlotState(OTPSlotView.SlotState.SELECTED);
             RectTransform slotRect = slots[activeSlot].GetComponent<RectTransform>();
-
-            if (slotRect != null && caretRectTransform != null)
-                caretRectTransform.position = slotRect.position;
+            caretRectTransform.position = slotRect.position;
         }
+        else
+            caretImage.enabled = false;
     }
 
-    /// <summary>Клик на компонент — активирует ввод только если не в фокусе</summary>
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Если уже в фокусе — ничего не делаем
         if (hiddenInput.isFocused) return;
-
-        Focus();
-    }
-
-    /// <summary>Активирует поле ввода (очищает и ставит на первый слот)</summary>
-    public void Focus()
-    {
-        // Если уже в фокусе — ничего не делаем
-        if (hiddenInput.isFocused) return;
-
         FocusInternal();
     }
 
     private void FocusInternal()
     {
-        if (hiddenInput == null) return;
-
         // Сброс состояния и очистка при входе в фокус
         CurrentState = State.Normal;
 
@@ -333,19 +203,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     {
         hiddenInput?.DeactivateInputField();
 
-        // Скрываем каретку и outline вместе
-        HideCaretAndOutline();
-    }
-
-    /// <summary>Скрывает каретку и все outline (они всегда вместе)</summary>
-    private void HideCaretAndOutline()
-    {
         caretImage.enabled = false;
 
-        if (slotOutlines != null)
-            foreach (Image outline in slotOutlines)
-                if (outline != null)
-                    outline.enabled = false;
+        foreach (OTPSlotView slot in slots)
+            slot.SetSlotState(OTPSlotView.SlotState.UNSELECTED);
     }
 
     /// <summary>Очищает введённый код</summary>
@@ -354,11 +215,8 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         suppressEvents = true;
         Code = "";
 
-        if (hiddenInput != null)
-        {
-            hiddenInput.SetTextWithoutNotify("");
-            hiddenInput.caretPosition = 0;
-        }
+        hiddenInput.SetTextWithoutNotify("");
+        hiddenInput.caretPosition = 0;
 
         suppressEvents = false;
 
@@ -368,7 +226,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     /// <summary>Очищает, сбрасывает состояние и фокусирует (принудительно, даже если уже в фокусе)</summary>
     public void ClearAndFocus() =>
         FocusInternal();
-
 
     [ContextMenu(nameof(SetSuccess))]
     public void SetSuccess()
@@ -392,38 +249,5 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         CurrentState = State.Normal;
         RefreshVisuals();
     }
-
-    /// <summary>Устанавливает код программно (например, автозаполнение)</summary>
-    // public void SetCode(string code)
-    // {
-    //     if (string.IsNullOrEmpty(code))
-    //     {
-    //         Clear();
-    //         return;
-    //     }
-    //
-    //     string filtered = digitsOnly
-    //         ? new string(code.Where(char.IsDigit).ToArray())
-    //         : code;
-    //
-    //     if (filtered.Length > codeLength)
-    //         filtered = filtered.Substring(0, codeLength);
-    //
-    //     suppressEvents = true;
-    //     Code = filtered;
-    //
-    //     if (hiddenInput != null)
-    //     {
-    //         hiddenInput.SetTextWithoutNotify(filtered);
-    //         hiddenInput.caretPosition = filtered.Length;
-    //     }
-    //
-    //     suppressEvents = false;
-    //     RefreshVisuals();
-    //
-    //     if (Code.Length == codeLength)
-    //         OtpCodeEntered?.Invoke(Code);
-    // }
-
 }
 

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7264113133712724991}
   - component: {fileID: 2993785693785657080}
   m_Layer: 5
-  m_Name: DigitsGroup
+  m_Name: DigitSlotsGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 8906405869664520247}
   - component: {fileID: 7800822737855370817}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Carret.Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -208,7 +208,7 @@ GameObject:
   - component: {fileID: 5947844483155430197}
   - component: {fileID: 1747549172315792934}
   m_Layer: 0
-  m_Name: HiddenInput
+  m_Name: Hidden.InputField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -583,18 +583,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: UI::OtpInputBox
   hiddenInput: {fileID: 5947844483155430197}
   slots:
-  - {fileID: 4202912160746765340}
-  - {fileID: 4148570199612315904}
-  - {fileID: 4968009675761862087}
-  - {fileID: 7766345264574429028}
-  - {fileID: 4597097150699629190}
-  - {fileID: 1117870821084965418}
+  - {fileID: 4784755599772935340}
+  - {fileID: 4730975420690055600}
+  - {fileID: 4378776418281151863}
+  - {fileID: 1437486484113518548}
+  - {fileID: 5186255649781412406}
+  - {fileID: 8626110858154947226}
   caretImage: {fileID: 7800822737855370817}
   codeLength: 6
-  digitsOnly: 1
   normalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
-  successColor: {r: 0.2, g: 0.7, b: 0.4, a: 1}
-  failureColor: {r: 0.8, g: 0.3, b: 0.3, a: 1}
+  successColor: {r: 0.9137255, g: 1, b: 0.827451, a: 1}
+  failureColor: {r: 1, g: 0.827451, b: 0.8745098, a: 1}
   caretBlinkRate: 1.5
 --- !u!1001 &1450504443393890793
 PrefabInstance:
@@ -604,6 +603,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -685,11 +696,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!1 &7766345264574429028 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!114 &1437486484113518548 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 1450504443393890793}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
 --- !u!224 &8848529560332474883 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
@@ -703,6 +720,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -784,11 +813,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!1 &4968009675761862087 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!114 &4378776418281151863 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4257953059941772106}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
 --- !u!224 &6195327340565407904 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
@@ -802,6 +837,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -888,11 +935,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4623657799212712971}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &4597097150699629190 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!114 &5186255649781412406 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4623657799212712971}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
 --- !u!1001 &5022953474436518545
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -901,6 +954,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -987,11 +1052,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5022953474436518545}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &4202912160746765340 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!114 &4784755599772935340 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5022953474436518545}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
 --- !u!1001 &5076697352464070541
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1000,6 +1071,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1086,11 +1169,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5076697352464070541}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &4148570199612315904 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!114 &4730975420690055600 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5076697352464070541}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
 --- !u!1001 &8099119555716809895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1099,6 +1188,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7264113133712724991}
     m_Modifications:
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1180,13 +1281,19 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!1 &1117870821084965418 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 8099119555716809895}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &2200195923061819213 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 8099119555716809895}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8626110858154947226 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 564005813058582077, guid: 52d104039cadeea489d95e5917307768, type: 3}
+  m_PrefabInstance: {fileID: 8099119555716809895}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView

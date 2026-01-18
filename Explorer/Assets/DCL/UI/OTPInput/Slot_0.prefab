@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 7993169002802660330}
   - component: {fileID: 6637950077839570523}
   - component: {fileID: 8688046881786135438}
+  - component: {fileID: 564005813058582077}
   m_Layer: 0
   m_Name: Slot_0
   m_TagString: Untagged
@@ -289,3 +290,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &564005813058582077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9216233757795724941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e00a19ea642f4b9daba045e980b2ef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.OTPSlotView
+  text: {fileID: 5294249212210394602}
+  background: {fileID: 8688046881786135438}
+  outline: {fileID: 7169329056834485385}
+  normalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+  successColor: {r: 0.9137255, g: 1, b: 0.827451, a: 1}
+  errorColor: {r: 1, g: 0.827451, b: 0.8745098, a: 1}
