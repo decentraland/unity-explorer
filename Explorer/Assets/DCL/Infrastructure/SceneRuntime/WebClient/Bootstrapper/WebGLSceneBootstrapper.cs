@@ -32,20 +32,60 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
+using System.Web;
 using UnityEngine;
 using DCL.Clipboard;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PluginSystem.World;
 using DCL.Utility.Types;
+using ECS.SceneLifeCycle.Realm;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
     public class WebGLSceneBootstrapper : MonoBehaviour
     {
-        private const string SCENE_DIRECTORY_ARG = "sceneDirectory";
-        private const string DEFAULT_SCENE_DIRECTORY = "cube-wave-16x16";
+        private const string SCENE_URL_ARG = "sceneUrl";
+        private const string SCENE_DIRECTORY = "cube-wave-16x16";
+
+        private static string GetDefaultSceneUrl()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // In WebGL, Application.streamingAssetsPath already returns a full URL like "http://localhost:8800/StreamingAssets/"
+            try
+            {
+                string streamingPath = Application.streamingAssetsPath;
+
+                Debug.Log($"[WebGLSceneBootstrapper] StreamingAssets Path: {streamingPath}");
+
+                if (!string.IsNullOrEmpty(streamingPath))
+                {
+                    // Ensure trailing slash
+                    if (!streamingPath.EndsWith("/"))
+                        streamingPath += "/";
+
+                    // Use the scene root as base, with the full path to the JS file
+                    // This matches how scene.json expects paths: "main": "bin/game.js"
+                    string fullUrl = $"{streamingPath}Scenes/{SCENE_DIRECTORY}/bin/game.js";
+                    Debug.Log($"[WebGLSceneBootstrapper] Constructed scene URL: {fullUrl}");
+                    return fullUrl;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to construct StreamingAssets URL: {e.Message}\n{e.StackTrace}");
+            }
+
+            // Fallback: use localhost
+            Debug.LogWarning($"[WebGLSceneBootstrapper] Using fallback localhost URL");
+            return IRealmNavigator.LOCALHOST + "/index.js";
+#else
+            // Fallback for editor/other platforms
+            return IRealmNavigator.LOCALHOST + "/index.js";
+#endif
+        }
 
         private ISceneFacade? sceneFacade;
         private bool isInitialized;
@@ -69,16 +109,30 @@ namespace SceneRuntime.WebClient.Bootstrapper
         {
             try
             {
-                // Parse command line arguments
+                // Parse command line arguments (works for desktop builds)
                 var appArgs = new ApplicationParametersParser();
-                string sceneDirectory = DEFAULT_SCENE_DIRECTORY;
+                string sceneUrl = GetDefaultSceneUrl();
 
-                if (appArgs.TryGetValue(SCENE_DIRECTORY_ARG, out string? directoryArg) && !string.IsNullOrEmpty(directoryArg))
+                // Try to get from command line arguments first
+                if (appArgs.TryGetValue(SCENE_URL_ARG, out string? urlArg) && !string.IsNullOrEmpty(urlArg))
                 {
-                    sceneDirectory = directoryArg;
+                    sceneUrl = urlArg;
+                }
+                else
+                {
+                    // For WebGL, also check URL query parameters
+                    sceneUrl = GetSceneUrlFromQueryString() ?? sceneUrl;
                 }
 
-                Debug.Log($"[WebGLSceneBootstrapper] Loading scene from directory: {sceneDirectory}");
+                Debug.Log($"[WebGLSceneBootstrapper] Loading scene from URL: {sceneUrl}");
+
+                // Validate URL format
+                if (!Uri.TryCreate(sceneUrl, UriKind.Absolute, out Uri? validatedUri))
+                {
+                    throw new ArgumentException($"Invalid scene URL format: {sceneUrl}");
+                }
+
+                Debug.Log($"[WebGLSceneBootstrapper] URL validated successfully. Scheme: {validatedUri.Scheme}, Host: {validatedUri.Host}, Path: {validatedUri.AbsolutePath}");
 
                 // Initialize mocked dependencies
                 var dependencies = CreateMockedDependencies();
@@ -86,27 +140,52 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 // Create scene factory
                 var sceneFactory = CreateSceneFactory(dependencies);
 
-            // Create partition component (required but not used in this context)
-            var partitionComponent = new StubPartitionComponent();
+                // Create partition component (required but not used in this context)
+                var partitionComponent = new StubPartitionComponent();
 
-                // Load scene
-                sceneFacade = await sceneFactory.CreateSceneFromStreamableDirectoryAsync(
-                    sceneDirectory,
-                    partitionComponent,
-                    destroyCancellationToken
-                );
+                // Load scene from HTTP URL
+                // In WebGL, StreamingAssets are served via HTTP, so we need HTTP URLs
+                // But CreateSceneFromFileAsync might have issues with the URL format
+                Debug.Log($"[WebGLSceneBootstrapper] Calling CreateSceneFromFileAsync with URL: {sceneUrl}");
+                
+                // Log what CreateSceneFromFileAsync will extract
+                int lastSlash = sceneUrl.LastIndexOf("/", StringComparison.Ordinal);
+                if (lastSlash > 0)
+                {
+                    string extractedBaseUrl = sceneUrl[..(lastSlash + 1)];
+                    string extractedMainPath = sceneUrl[(lastSlash + 1)..];
+                    Debug.Log($"[WebGLSceneBootstrapper] Will extract base URL: {extractedBaseUrl}");
+                    Debug.Log($"[WebGLSceneBootstrapper] Will extract main path: {extractedMainPath}");
+                }
+                
+                try
+                {
+                    sceneFacade = await sceneFactory.CreateSceneFromFileAsync(
+                        sceneUrl,
+                        partitionComponent,
+                        destroyCancellationToken
+                    );
+                }
+                catch (Exception createException)
+                {
+                    Debug.LogError($"[WebGLSceneBootstrapper] Error in CreateSceneFromFileAsync: {createException.GetType().Name}: {createException.Message}");
+                    Debug.LogError($"[WebGLSceneBootstrapper] Stack trace: {createException.StackTrace}");
+                    throw;
+                }
 
+                Debug.Log($"[WebGLSceneBootstrapper] Initializing Scene Facade");
                 // Initialize scene
                 await UniTask.SwitchToMainThread();
                 sceneFacade.Initialize();
 
+                Debug.Log($"[WebGLSceneBootstrapper] Starting Scene");
                 // Start scene
                 await UniTask.SwitchToThreadPool();
                 await sceneFacade.StartScene();
 
                 await UniTask.SwitchToMainThread();
                 isInitialized = true;
-                Debug.Log($"[WebGLSceneBootstrapper] Scene '{sceneDirectory}' loaded and started successfully");
+                Debug.Log($"[WebGLSceneBootstrapper] Scene from '{sceneUrl}' loaded and started successfully");
             }
             catch (Exception e)
             {
@@ -201,6 +280,38 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 DCLEnvironment = DecentralandEnvironment.Org,
                 SystemClipboard = new StubSystemClipboard()
             };
+        }
+
+        private static string? GetSceneUrlFromQueryString()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            try
+            {
+                // Get the current page URL
+                string currentUrl = Application.absoluteURL;
+
+                if (string.IsNullOrEmpty(currentUrl))
+                    return null;
+
+                // Parse query parameters
+                Uri uri = new Uri(currentUrl);
+                NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
+
+                // Check for sceneUrl parameter
+                string? sceneUrl = queryParams[SCENE_URL_ARG];
+
+                if (!string.IsNullOrEmpty(sceneUrl))
+                {
+                    // URL decode the parameter
+                    return HttpUtility.UrlDecode(sceneUrl);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to parse URL query parameters: {e.Message}");
+            }
+#endif
+            return null;
         }
 
         private static IWebRequestController CreateWebRequestController()

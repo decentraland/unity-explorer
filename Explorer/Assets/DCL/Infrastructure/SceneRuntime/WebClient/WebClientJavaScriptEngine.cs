@@ -1,17 +1,14 @@
-using AOT;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using System.Reflection;
-using UnityEngine;
+using Newtonsoft.Json.Linq;
 
 namespace SceneRuntime.WebClient
 {
     public class WebClientJavaScriptEngine : IJavaScriptEngine
     {
-        private delegate string JSHostObjectInvokeDelegate(string contextId, string objectId, string methodName, string argsJson);
         internal readonly string contextId;
         private bool disposed;
 
@@ -137,7 +134,7 @@ namespace SceneRuntime.WebClient
                     }
 
                     string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
-                    return DeserializeResult(resultStr);
+                    return DeserializeResultWithObjectRef(resultStr);
                 }
                 finally { Marshal.FreeHGlobal(resultPtr); }
             }
@@ -177,7 +174,7 @@ namespace SceneRuntime.WebClient
                     }
 
                     string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
-                    return DeserializeResult(resultStr);
+                    return DeserializeResultWithObjectRef(resultStr);
                 }
                 finally { Marshal.FreeHGlobal(resultPtr); }
             }
@@ -210,6 +207,33 @@ namespace SceneRuntime.WebClient
                 Marshal.FreeHGlobal(contextIdPtr);
                 Marshal.FreeHGlobal(namePtr);
                 Marshal.FreeHGlobal(objectIdPtr);
+            }
+        }
+
+        /// <summary>
+        /// Registers a module with its compiled script ID so it can be looked up by name in JavaScript.
+        /// This must be called before executing Init.js for all modules that will be required.
+        /// </summary>
+        public void RegisterModule(string moduleName, string scriptId)
+        {
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
+            
+            IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
+            IntPtr moduleNamePtr = Utf8Marshal.StringToHGlobalUTF8(moduleName);
+            IntPtr scriptIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptId);
+
+            try
+            {
+                int result = JSContext_RegisterModule(contextIdPtr, moduleNamePtr, scriptIdPtr);
+
+                if (result == 0)
+                    throw new InvalidOperationException($"Failed to register module {moduleName} in context {contextId}");
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(contextIdPtr);
+                Marshal.FreeHGlobal(moduleNamePtr);
+                Marshal.FreeHGlobal(scriptIdPtr);
             }
         }
 
@@ -346,6 +370,35 @@ namespace SceneRuntime.WebClient
         }
 
 
+        /// <summary>
+        /// Deserializes a JSON result, handling special __objectRef format for non-serializable JS objects.
+        /// </summary>
+        private object? DeserializeResultWithObjectRef(string json)
+        {
+            if (string.IsNullOrEmpty(json) || json == "null")
+                return null;
+
+            try
+            {
+                // Check if this is an object reference (for functions, objects that can't be JSON-serialized)
+                var jObject = JObject.Parse(json);
+                if (jObject.TryGetValue("__objectRef", out JToken? objectRefToken))
+                {
+                    string objectId = objectRefToken.Value<string>()!;
+                    return new WebClientScriptObject(this, objectId);
+                }
+                
+                // Regular JSON deserialization
+                return JsonConvert.DeserializeObject(json);
+            }
+            catch
+            {
+                // If parsing fails, try simple deserialization or return the raw string
+                try { return JsonConvert.DeserializeObject(json); }
+                catch { return json; }
+            }
+        }
+
         private static object? DeserializeResult(string json)
         {
             if (string.IsNullOrEmpty(json) || json == "null")
@@ -374,6 +427,9 @@ namespace SceneRuntime.WebClient
         private static extern int JSContext_AddHostObject(IntPtr contextId, IntPtr name, IntPtr objectId);
 
         [DllImport("__Internal")]
+        private static extern int JSContext_RegisterModule(IntPtr contextId, IntPtr moduleName, IntPtr scriptId);
+
+        [DllImport("__Internal")]
         private static extern int JSContext_GetGlobalProperty(IntPtr contextId, IntPtr name, IntPtr result, int resultSize);
 
         [DllImport("__Internal")]
@@ -387,39 +443,6 @@ namespace SceneRuntime.WebClient
 
         [DllImport("__Internal")]
         private static extern int JSContext_StoreObject(IntPtr contextId, IntPtr expression, IntPtr objectId, int objectIdSize);
-
-        [MonoPInvokeCallback(typeof(JSHostObjectInvokeDelegate))]
-        private static string JSHostObject_Invoke(string contextId, string objectId, string methodName, string argsJson)
-        {
-            object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
-
-            if (hostObject == null)
-            {
-                Debug.LogError($"Host object with ID {objectId} not found in context {contextId}.");
-                return JsonConvert.SerializeObject(null);
-            }
-
-            MethodInfo method = hostObject.GetType().GetMethod(methodName);
-
-            if (method == null)
-            {
-                Debug.LogError($"Method {methodName} not found on host object {objectId}.");
-                return JsonConvert.SerializeObject(null);
-            }
-
-            object[]? args = JsonConvert.DeserializeObject<object[]>(argsJson);
-
-            try
-            {
-                object? result = method.Invoke(hostObject, args);
-                return JsonConvert.SerializeObject(result);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error invoking method {methodName} on host object {objectId}: {e}");
-                return JsonConvert.SerializeObject(null);
-            }
-        }
     }
 
     public class WebGLCompiledScript : ICompiledScript

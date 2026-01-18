@@ -7,6 +7,7 @@ using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.ModuleHub;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using UnityEngine.Assertions;
 using Utility;
@@ -42,20 +43,33 @@ namespace SceneRuntime.WebClient
         )
         {
             resetableSource = new JSTaskResolverResetable();
-
             engine = engineFactory.Create(sceneShortInfo);
+            
+            // Cast to WebClientJavaScriptEngine to access RegisterModule
+            var webClientEngine = engine as WebClientJavaScriptEngine;
+            if (webClientEngine == null)
+                throw new InvalidOperationException("WebClientSceneRuntimeImpl requires a WebClientJavaScriptEngine");
+            
             var typedArrayConverter = new WebClientTypedArrayConverter();
             jsApiBunch = new JsApiBunch(engine, typedArrayConverter);
 
             var moduleHub = new SceneModuleHub(engine);
 
-            moduleHub.LoadAndCompileJsModules(jsModules);
+            // Load, compile, and register JS modules
+            LoadCompileAndRegisterModules(webClientEngine, moduleHub, jsModules);
 
+            // Compile and register the scene script
             ICompiledScript sceneScript = engine.Compile(sourceCode).EnsureNotNull();
+            
+            // Register the scene script so JavaScript can look it up via require('~scene.js')
+            if (sceneScript is WebGLCompiledScript webglSceneScript)
+                webClientEngine.RegisterModule("~scene.js", webglSceneScript.ScriptId);
 
+            // Add UnityOpsApi as a host object (the jslib proxy handles its methods directly)
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
+            // Execute init code - this is where require() will be called
             engine.Execute(initCode);
 
             engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
@@ -68,6 +82,55 @@ namespace SceneRuntime.WebClient
             nextUint8Array = 0;
         }
 
+        /// <summary>
+        /// Loads, compiles, and registers JS modules with the JavaScript engine.
+        /// This ensures modules are available for lookup when require() is called.
+        /// </summary>
+        private void LoadCompileAndRegisterModules(
+            WebClientJavaScriptEngine webClientEngine,
+            SceneModuleHub moduleHub,
+            IReadOnlyDictionary<string, string> jsModules)
+        {
+            foreach (KeyValuePair<string, string> source in jsModules)
+            {
+                ICompiledScript script = engine.Compile(source.Value);
+                var moduleName = $"system/{source.Key}";
+                string extension = Path.GetExtension(moduleName);
+
+                // Get the script ID for registration
+                string scriptId = (script as WebGLCompiledScript)?.ScriptId ?? "";
+                if (string.IsNullOrEmpty(scriptId))
+                    continue;
+
+                // Register with the ~ prefix that Init.js uses for require()
+                // e.g., require('~system/WebSocketApi') -> module name "~system/WebSocketApi"
+                webClientEngine.RegisterModule($"~{moduleName}", scriptId);
+
+                // Also register without extension
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    string moduleNameWithoutExt = moduleName[..^extension.Length];
+                    webClientEngine.RegisterModule($"~{moduleNameWithoutExt}", scriptId);
+                }
+
+                // Special cases for buffer and long (third-party library compatibility)
+                if (source.Key == "buffer.js")
+                {
+                    webClientEngine.RegisterModule("~buffer", scriptId);
+                    webClientEngine.RegisterModule("buffer", scriptId);
+                }
+                else if (source.Key == "long.js")
+                {
+                    webClientEngine.RegisterModule("~long", scriptId);
+                    webClientEngine.RegisterModule("long", scriptId);
+                }
+            }
+
+            // Also call the moduleHub's method to maintain the internal lookup for UnityOpsApi
+            // (even though we handle LoadAndEvaluateCode in the jslib proxy now)
+            moduleHub.LoadAndCompileJsModules(jsModules);
+        }
+
         public void Dispose()
         {
             engine.Dispose();
@@ -76,19 +139,20 @@ namespace SceneRuntime.WebClient
 
         public void ExecuteSceneJson()
         {
+            // Use globalThis assignments instead of const so variables are accessible in later Evaluate calls
             engine.Execute(@"
-            const __internalScene = require('~scene.js')
-            const __internalOnStart = async function () {
+            globalThis.__internalScene = require('~scene.js')
+            globalThis.__internalOnStart = async function () {
                 try {
-                    await __internalScene.onStart()
+                    await globalThis.__internalScene.onStart()
                     __resetableSource.Completed()
                 } catch (e) {
                     __resetableSource.Reject(e.stack)
                 }
             }
-            const __internalOnUpdate = async function (dt) {
+            globalThis.__internalOnUpdate = async function (dt) {
                 try {
-                    await __internalScene.onUpdate(dt)
+                    await globalThis.__internalScene.onUpdate(dt)
                     __resetableSource.Completed()
                 } catch(e) {
                     __resetableSource.Reject(e.stack)
@@ -96,8 +160,8 @@ namespace SceneRuntime.WebClient
             }
         ");
 
-            updateFunc = (WebClientScriptObject)engine.Evaluate("__internalOnUpdate");
-            startFunc = (WebClientScriptObject)engine.Evaluate("__internalOnStart");
+            updateFunc = (WebClientScriptObject)engine.Evaluate("globalThis.__internalOnUpdate");
+            startFunc = (WebClientScriptObject)engine.Evaluate("globalThis.__internalOnStart");
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
