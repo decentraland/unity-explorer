@@ -67,7 +67,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     /// <summary>Текущее состояние компонента</summary>
     public State CurrentState { get; private set; } = State.Normal;
 
-    private int lastCaretPos = -1;
     private bool suppressEvents;
     private float caretBlinkTimer;
     private RectTransform caretRectTransform;
@@ -157,7 +156,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         // Обработка изменений
         hiddenInput.onValueChanged.AddListener(OnInputValueChanged);
         hiddenInput.onSelect.AddListener(_ => RefreshVisuals());
-        hiddenInput.onDeselect.AddListener(_ => RefreshVisuals());
+        hiddenInput.onDeselect.AddListener(_ => Unfocus());
 
         // Делаем input невидимым, но функциональным
         MakeInputInvisible();
@@ -222,7 +221,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
             OnCodeChanged?.Invoke(Code);
 
             if (Code.Length == codeLength)
+            {
                 OtpCodeEntered?.Invoke(Code);
+                Unfocus();
+            }
         }
     }
 
@@ -232,15 +234,11 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
         if (focused)
         {
-            // Обновляем подсветку если каретка переместилась
-            int caret = hiddenInput.caretPosition;
+            // Каретка всегда на позиции после последней введённой цифры
+            int expectedPos = Code.Length;
 
-            if (caret != lastCaretPos)
-            {
-                lastCaretPos = caret;
-                caretBlinkTimer = 0f; // Сброс мигания при перемещении
-                RefreshSlotHighlight();
-            }
+            if (hiddenInput.caretPosition != expectedPos)
+                hiddenInput.caretPosition = expectedPos;
 
             // Мигание каретки
             UpdateCaretBlink();
@@ -253,15 +251,15 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
         caretBlinkTimer += Time.deltaTime * caretBlinkRate;
 
-        // Мигание: видима первую половину цикла
+        // Мигание каретки: видима первую половину цикла
         bool visible = (caretBlinkTimer % 1f) < 0.5f;
         caretImage.enabled = visible;
     }
 
-    private void RefreshVisuals()
+    private void RefreshVisuals(bool? forceFocused = null)
     {
         RenderDigits();
-        RefreshSlotHighlight();
+        RefreshSlotHighlight(forceFocused);
     }
 
     private void RenderDigits()
@@ -275,15 +273,14 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    private void RefreshSlotHighlight()
+    private void RefreshSlotHighlight(bool? forceFocused = null)
     {
         if (slotBackgrounds == null) return;
 
-        bool focused = hiddenInput != null && hiddenInput.isFocused;
-        int caret = hiddenInput != null ? hiddenInput.caretPosition : 0;
+        bool focused = forceFocused ?? (hiddenInput != null && hiddenInput.isFocused);
 
-        // Активный слот — где каретка, но не дальше последнего
-        int activeSlot = Mathf.Clamp(caret, 0, slotBackgrounds.Length - 1);
+        // Активный слот — всегда после последней введённой цифры
+        int activeSlot = Mathf.Clamp(Code.Length, 0, slotBackgrounds.Length - 1);
 
         // Цвет группы зависит от состояния
         Color groupColor = CurrentState switch
@@ -333,26 +330,48 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    /// <summary>Клик на компонент — активирует ввод</summary>
+    /// <summary>Клик на компонент — активирует ввод только если не в фокусе</summary>
     public void OnPointerClick(PointerEventData eventData)
     {
+        // Если уже в фокусе — ничего не делаем
+        if (IsFocused) return;
+
         Focus();
     }
 
-    /// <summary>Активирует поле ввода</summary>
+    /// <summary>Активирует поле ввода (очищает и ставит на первый слот)</summary>
     public void Focus()
     {
+        // Если уже в фокусе — ничего не делаем
+        if (IsFocused) return;
+
+        FocusInternal();
+    }
+
+    private void FocusInternal()
+    {
         if (hiddenInput == null) return;
+
+        // Сброс состояния и очистка при входе в фокус
+        CurrentState = State.Normal;
+
+        // Очистка без RefreshVisuals (вызовем вручную с forceFocused)
+        suppressEvents = true;
+        Code = "";
+        hiddenInput.SetTextWithoutNotify("");
+        suppressEvents = false;
 
         hiddenInput.ActivateInputField();
         hiddenInput.Select();
 
-        // Каретка в конец текущего ввода
-        int pos = Mathf.Min(Code.Length, codeLength);
-        hiddenInput.caretPosition = pos;
+        // Каретка на первый слот
+        hiddenInput.caretPosition = 0;
 
         // Сброс мигания — каретка сразу видима
         caretBlinkTimer = 0f;
+
+        // Принудительно показываем каретку и outline (isFocused ещё false)
+        RefreshVisuals(true);
     }
 
     /// <summary>Деактивирует поле ввода</summary>
@@ -360,9 +379,20 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     {
         hiddenInput?.DeactivateInputField();
 
-        // Скрываем каретку
+        // Скрываем каретку и outline вместе
+        HideCaretAndOutline();
+    }
+
+    /// <summary>Скрывает каретку и все outline (они всегда вместе)</summary>
+    private void HideCaretAndOutline()
+    {
         if (caretImage != null)
             caretImage.enabled = false;
+
+        if (slotOutlines != null)
+            foreach (Image outline in slotOutlines)
+                if (outline != null)
+                    outline.enabled = false;
     }
 
     /// <summary>Очищает введённый код</summary>
@@ -378,18 +408,13 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         }
 
         suppressEvents = false;
-        lastCaretPos = -1;
 
         RefreshVisuals();
     }
 
-    /// <summary>Очищает, сбрасывает состояние и фокусирует</summary>
-    public void ClearAndFocus()
-    {
-        CurrentState = State.Normal;
-        Clear();
-        Focus();
-    }
+    /// <summary>Очищает, сбрасывает состояние и фокусирует (принудительно, даже если уже в фокусе)</summary>
+    public void ClearAndFocus() =>
+        FocusInternal();
 
     /// <summary>Устанавливает код программно (например, автозаполнение)</summary>
     public void SetCode(string code)
