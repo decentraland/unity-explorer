@@ -20,11 +20,13 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     [Tooltip("Скрытый TMP_InputField для захвата ввода")]
     [SerializeField] private TMP_InputField hiddenInput;
 
-    [Tooltip("TMP_Text компоненты для отображения цифр в каждом слоте")]
-    [SerializeField] private TMP_Text[] slotTexts;
+    [Tooltip("Префабы слотов — из них автоматически извлекаются компоненты")]
+    [SerializeField] private GameObject[] slots;
 
-    [Tooltip("Image компоненты для фона слотов (для подсветки)")]
-    [SerializeField] private Image[] slotBackgrounds;
+    // Заполняются автоматически в Awake из slots
+    private TMP_Text[] slotTexts;
+    private Image[] slotBackgrounds;
+    private Image[] slotOutlines;
 
     [Header("Settings")]
     [Tooltip("Количество цифр в коде")]
@@ -58,9 +60,58 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void Awake()
     {
+        InitializeSlotArrays();
         ValidateReferences();
         SetupHiddenInput();
         RefreshVisuals();
+    }
+
+    private void InitializeSlotArrays()
+    {
+        if (slots == null || slots.Length == 0)
+        {
+            Debug.LogError($"[{nameof(OtpInputBox)}] slots не назначены!");
+            return;
+        }
+
+        int count = slots.Length;
+        slotTexts = new TMP_Text[count];
+        slotBackgrounds = new Image[count];
+        slotOutlines = new Image[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject slot = slots[i];
+
+            if (slot == null)
+            {
+                Debug.LogWarning($"[{nameof(OtpInputBox)}] slots[{i}] is null!");
+                continue;
+            }
+
+            // Background — Image на руте слота
+            slotBackgrounds[i] = slot.GetComponent<Image>();
+
+            // Text — TMP_Text в детях
+            slotTexts[i] = slot.GetComponentInChildren<TMP_Text>();
+
+            // Outline — Image в детях (не на руте)
+            slotOutlines[i] = FindChildImage(slot.transform);
+        }
+    }
+
+    /// <summary>Находит Image в дочерних объектах (не на руте)</summary>
+    private static Image FindChildImage(Transform parent)
+    {
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Image img = parent.GetChild(i).GetComponent<Image>();
+
+            if (img != null)
+                return img;
+        }
+
+        return null;
     }
 
     private void ValidateReferences()
@@ -69,10 +120,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
             Debug.LogError($"[{nameof(OtpInputBox)}] hiddenInput не назначен!");
 
         if (slotTexts == null || slotTexts.Length == 0)
-            Debug.LogError($"[{nameof(OtpInputBox)}] slotTexts не назначен!");
-
-        if (slotBackgrounds != null && slotBackgrounds.Length != slotTexts?.Length)
-            Debug.LogWarning($"[{nameof(OtpInputBox)}] slotBackgrounds должен иметь {slotTexts?.Length} элементов");
+            Debug.LogError($"[{nameof(OtpInputBox)}] slotTexts не инициализированы!");
     }
 
     private void SetupHiddenInput()
@@ -212,6 +260,13 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
                 color = normalColor;
 
             slotBackgrounds[i].color = color;
+
+            // Outline: активен только на активной ячейке при фокусе
+            if (slotOutlines != null && i < slotOutlines.Length && slotOutlines[i] != null)
+            {
+                bool showOutline = focused && i == activeSlot;
+                slotOutlines[i].enabled = showOutline;
+            }
         }
     }
 
@@ -311,12 +366,9 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // Автоподгонка массивов в редакторе
-        if (slotTexts != null && slotTexts.Length != codeLength)
-            Array.Resize(ref slotTexts, codeLength);
-
-        if (slotBackgrounds != null && slotBackgrounds.Length != codeLength)
-            Array.Resize(ref slotBackgrounds, codeLength);
+        // Автоподгонка массива slots в редакторе
+        if (slots != null && slots.Length != codeLength)
+            Array.Resize(ref slots, codeLength);
     }
 #endif
 }

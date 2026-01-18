@@ -506,20 +506,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UI::OtpInputBox
   hiddenInput: {fileID: 5947844483155430197}
-  slotTexts:
-  - {fileID: 922655224343783291}
-  - {fileID: 1084521726109827687}
-  - {fileID: 8246014107160731296}
-  - {fileID: 6726629072525290499}
-  - {fileID: 671735491388305889}
-  - {fileID: 4115491575903727949}
-  slotBackgrounds:
-  - {fileID: 4406553475179598111}
-  - {fileID: 4532355995191800835}
-  - {fileID: 4865414974044924100}
-  - {fileID: 7832637715141352039}
-  - {fileID: 4087206735511832453}
-  - {fileID: 646265209637701417}
+  slots:
+  - {fileID: 4202912160746765340}
+  - {fileID: 4148570199612315904}
+  - {fileID: 4968009675761862087}
+  - {fileID: 7766345264574429028}
+  - {fileID: 4597097150699629190}
+  - {fileID: 1117870821084965418}
   codeLength: 6
   digitsOnly: 1
   normalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -605,22 +598,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.a
-      value: 0.49411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.b
-      value: 0.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.g
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.r
-      value: 0.15
-      objectReference: {fileID: 0}
     - target: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Name
       value: Slot_0 (3)
@@ -630,28 +607,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &6726629072525290499 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &7766345264574429028 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 1450504443393890793}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
---- !u!114 &7832637715141352039 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 1450504443393890793}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!224 &8848529560332474883 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
@@ -737,22 +697,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.a
-      value: 0.49411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.b
-      value: 0.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.g
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.r
-      value: 0.15
-      objectReference: {fileID: 0}
     - target: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Name
       value: Slot_0 (2)
@@ -762,33 +706,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &4865414974044924100 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &4968009675761862087 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4257953059941772106}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!224 &6195327340565407904 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4257953059941772106}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8246014107160731296 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 4257953059941772106}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &4623657799212712971
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -869,22 +796,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.a
-      value: 0.49411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.b
-      value: 0.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.g
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.r
-      value: 0.15
-      objectReference: {fileID: 0}
     - target: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Name
       value: Slot_0 (4)
@@ -894,33 +805,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &671735491388305889 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 4623657799212712971}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &3370936206496794593 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4623657799212712971}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4087206735511832453 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &4597097150699629190 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 4623657799212712971}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1001 &5022953474436518545
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1010,33 +904,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &922655224343783291 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 5022953474436518545}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &3123366505080492411 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5022953474436518545}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4406553475179598111 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &4202912160746765340 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5022953474436518545}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1001 &5076697352464070541
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1117,22 +994,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.a
-      value: 0.49411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.b
-      value: 0.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.g
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.r
-      value: 0.15
-      objectReference: {fileID: 0}
     - target: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Name
       value: Slot_0 (1)
@@ -1142,33 +1003,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &1084521726109827687 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 5076697352464070541}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &2925507438649947239 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5076697352464070541}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4532355995191800835 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &4148570199612315904 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 5076697352464070541}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1001 &8099119555716809895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1249,22 +1093,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.a
-      value: 0.49411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.b
-      value: 0.18
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.g
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
-      propertyPath: m_Color.r
-      value: 0.15
-      objectReference: {fileID: 0}
     - target: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
       propertyPath: m_Name
       value: Slot_0 (5)
@@ -1274,30 +1102,13 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52d104039cadeea489d95e5917307768, type: 3}
---- !u!114 &646265209637701417 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8688046881786135438, guid: 52d104039cadeea489d95e5917307768, type: 3}
+--- !u!1 &1117870821084965418 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9216233757795724941, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 8099119555716809895}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!224 &2200195923061819213 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7993169002802660330, guid: 52d104039cadeea489d95e5917307768, type: 3}
   m_PrefabInstance: {fileID: 8099119555716809895}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4115491575903727949 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5294249212210394602, guid: 52d104039cadeea489d95e5917307768, type: 3}
-  m_PrefabInstance: {fileID: 8099119555716809895}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
