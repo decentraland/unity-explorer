@@ -49,22 +49,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     public enum State { Normal, Success, Failure }
 
-    /// <summary>Вызывается при любом изменении кода</summary>
-    public event Action<string> OnCodeChanged;
-
-    /// <summary>Вызывается когда все цифры введены</summary>
     public event Action<string> OtpCodeEntered;
 
-    /// <summary>Текущий введённый код</summary>
     public string Code { get; private set; } = "";
 
-    /// <summary>Все ли цифры введены</summary>
-    public bool IsComplete => Code.Length == codeLength;
-
-    /// <summary>В фокусе ли поле ввода</summary>
-    public bool IsFocused => hiddenInput != null && hiddenInput.isFocused;
-
-    /// <summary>Текущее состояние компонента</summary>
     public State CurrentState { get; private set; } = State.Normal;
 
     private bool suppressEvents;
@@ -73,27 +61,38 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void Awake()
     {
+        caretRectTransform = caretImage.GetComponent<RectTransform>();
+
         InitializeSlotArrays();
-        InitializeCaret();
-        ValidateReferences();
-        SetupHiddenInput();
+
+        // Hidden Input
+        hiddenInput.characterLimit = codeLength;
+        hiddenInput.characterValidation = TMP_InputField.CharacterValidation.Digit;
+
+        hiddenInput.onValueChanged.AddListener(OnInputValueChanged);
+        hiddenInput.onSelect.AddListener(_ => RefreshVisuals());
+        hiddenInput.onDeselect.AddListener(_ => Unfocus());
+
+        MakeInputInvisible();
+
         RefreshVisuals();
     }
 
-    private void InitializeCaret()
+    private void OnDestroy()
     {
-        if (caretImage != null)
-            caretRectTransform = caretImage.GetComponent<RectTransform>();
+        hiddenInput.onValueChanged.RemoveAllListeners();
+        hiddenInput.onSelect.RemoveAllListeners();
+        hiddenInput.onDeselect.RemoveAllListeners();
+    }
+
+    public void Reset()
+    {
+        CurrentState = State.Normal;
+        Clear();
     }
 
     private void InitializeSlotArrays()
     {
-        if (slots == null || slots.Length == 0)
-        {
-            Debug.LogError($"[{nameof(OtpInputBox)}] slots не назначены!");
-            return;
-        }
-
         int count = slots.Length;
         slotTexts = new TMP_Text[count];
         slotBackgrounds = new Image[count];
@@ -134,58 +133,21 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         return null;
     }
 
-    private void ValidateReferences()
-    {
-        if (hiddenInput == null)
-            Debug.LogError($"[{nameof(OtpInputBox)}] hiddenInput не назначен!");
-
-        if (slotTexts == null || slotTexts.Length == 0)
-            Debug.LogError($"[{nameof(OtpInputBox)}] slotTexts не инициализированы!");
-    }
-
-    private void SetupHiddenInput()
-    {
-        if (hiddenInput == null) return;
-
-        // Лимит символов
-        hiddenInput.characterLimit = codeLength;
-
-        // Валидация: только цифры
-        hiddenInput.onValidateInput += OnValidateChar;
-
-        // Обработка изменений
-        hiddenInput.onValueChanged.AddListener(OnInputValueChanged);
-        hiddenInput.onSelect.AddListener(_ => RefreshVisuals());
-        hiddenInput.onDeselect.AddListener(_ => Unfocus());
-
-        // Делаем input невидимым, но функциональным
-        MakeInputInvisible();
-    }
-
     private void MakeInputInvisible()
     {
         // Прозрачный фон
         Image? bg = hiddenInput.GetComponent<Image>();
-
         if (bg != null)
         {
             bg.color = Color.clear;
-            bg.raycastTarget = true; // Важно для клика!
+            bg.raycastTarget = true;
         }
 
-        // Прозрачный текст
         if (hiddenInput.textComponent != null)
             hiddenInput.textComponent.color = Color.clear;
 
-        // Прозрачный курсор и выделение
         hiddenInput.caretColor = Color.clear;
         hiddenInput.selectionColor = Color.clear;
-    }
-
-    private char OnValidateChar(string text, int charIndex, char addedChar)
-    {
-        if (!digitsOnly) return addedChar;
-        return char.IsDigit(addedChar) ? addedChar : '\0';
     }
 
     private void OnInputValueChanged(string newValue)
@@ -215,16 +177,10 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
         RefreshVisuals();
 
-        // События
-        if (Code != previousCode)
+        if (Code != previousCode && Code.Length == codeLength)
         {
-            OnCodeChanged?.Invoke(Code);
-
-            if (Code.Length == codeLength)
-            {
-                OtpCodeEntered?.Invoke(Code);
-                Unfocus();
-            }
+            OtpCodeEntered?.Invoke(Code);
+            Unfocus();
         }
     }
 
@@ -247,7 +203,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void UpdateCaretBlink()
     {
-        if (caretImage == null || CurrentState != State.Normal) return;
+        if (CurrentState != State.Normal) return;
 
         caretBlinkTimer += Time.deltaTime * caretBlinkRate;
 
@@ -310,8 +266,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
 
     private void UpdateCaretPosition(bool focused, int activeSlot)
     {
-        if (caretImage == null) return;
-
         bool showCaret = focused && CurrentState == State.Normal;
 
         if (!showCaret)
@@ -334,7 +288,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         // Если уже в фокусе — ничего не делаем
-        if (IsFocused) return;
+        if (hiddenInput.isFocused) return;
 
         Focus();
     }
@@ -343,7 +297,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     public void Focus()
     {
         // Если уже в фокусе — ничего не делаем
-        if (IsFocused) return;
+        if (hiddenInput.isFocused) return;
 
         FocusInternal();
     }
@@ -386,8 +340,7 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     /// <summary>Скрывает каретку и все outline (они всегда вместе)</summary>
     private void HideCaretAndOutline()
     {
-        if (caretImage != null)
-            caretImage.enabled = false;
+        caretImage.enabled = false;
 
         if (slotOutlines != null)
             foreach (Image outline in slotOutlines)
@@ -416,39 +369,6 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
     public void ClearAndFocus() =>
         FocusInternal();
 
-    /// <summary>Устанавливает код программно (например, автозаполнение)</summary>
-    public void SetCode(string code)
-    {
-        if (string.IsNullOrEmpty(code))
-        {
-            Clear();
-            return;
-        }
-
-        string filtered = digitsOnly
-            ? new string(code.Where(char.IsDigit).ToArray())
-            : code;
-
-        if (filtered.Length > codeLength)
-            filtered = filtered.Substring(0, codeLength);
-
-        suppressEvents = true;
-        Code = filtered;
-
-        if (hiddenInput != null)
-        {
-            hiddenInput.SetTextWithoutNotify(filtered);
-            hiddenInput.caretPosition = filtered.Length;
-        }
-
-        suppressEvents = false;
-        RefreshVisuals();
-
-        OnCodeChanged?.Invoke(Code);
-
-        if (Code.Length == codeLength)
-            OtpCodeEntered?.Invoke(Code);
-    }
 
     [ContextMenu(nameof(SetSuccess))]
     public void SetSuccess()
@@ -473,29 +393,37 @@ public sealed class OtpInputBox : MonoBehaviour, IPointerClickHandler
         RefreshVisuals();
     }
 
-    /// <summary>Полный сброс: очищает код и возвращает в Normal состояние</summary>
-    public void Reset()
-    {
-        CurrentState = State.Normal;
-        Clear();
-    }
+    /// <summary>Устанавливает код программно (например, автозаполнение)</summary>
+    // public void SetCode(string code)
+    // {
+    //     if (string.IsNullOrEmpty(code))
+    //     {
+    //         Clear();
+    //         return;
+    //     }
+    //
+    //     string filtered = digitsOnly
+    //         ? new string(code.Where(char.IsDigit).ToArray())
+    //         : code;
+    //
+    //     if (filtered.Length > codeLength)
+    //         filtered = filtered.Substring(0, codeLength);
+    //
+    //     suppressEvents = true;
+    //     Code = filtered;
+    //
+    //     if (hiddenInput != null)
+    //     {
+    //         hiddenInput.SetTextWithoutNotify(filtered);
+    //         hiddenInput.caretPosition = filtered.Length;
+    //     }
+    //
+    //     suppressEvents = false;
+    //     RefreshVisuals();
+    //
+    //     if (Code.Length == codeLength)
+    //         OtpCodeEntered?.Invoke(Code);
+    // }
 
-    private void OnDestroy()
-    {
-        if (hiddenInput != null)
-        {
-            hiddenInput.onValidateInput -= OnValidateChar;
-            hiddenInput.onValueChanged.RemoveListener(OnInputValueChanged);
-        }
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // Автоподгонка массива slots в редакторе
-        if (slots != null && slots.Length != codeLength)
-            Array.Resize(ref slots, codeLength);
-    }
-#endif
 }
 
