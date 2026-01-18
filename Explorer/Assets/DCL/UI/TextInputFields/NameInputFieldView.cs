@@ -56,6 +56,7 @@ namespace DCL.UI
 
             NameInput.onValueChanged.AddListener(OnNameInputValueChanged);
             NameInput.text = string.Empty; // it will trigger UpdateState
+            inputOutline.color = characterCountLabel.color = outlineNormalColor;
             errorContainer.SetActive(false);
         }
 
@@ -84,6 +85,11 @@ namespace DCL.UI
                 NameValidityChanged?.Invoke(!hasError);
 
             errorContainer.SetActive(hasError);
+
+            if (NameInput.text.Length == 0)
+                inputErrorMessage.text = "Name can't be empty.";
+            else
+                inputErrorMessage.text = characterLimitReachedMessage;
         }
 
         private IEnumerator ActivateInputFieldDelayed()
