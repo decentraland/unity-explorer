@@ -9,7 +9,10 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public interface ICommunicationsControllerAPI : IDisposable
     {
-        void SendBinary(IEnumerable<IPoolableByteArray> broadcastData, string? recipient = null);
+        // Type constraints to avoid boxing
+        void SendBinary<TEnumerable, TArray>(TEnumerable broadcastData, string? recipient = null)
+            where TEnumerable : IEnumerable<TArray>
+            where TArray : IPoolableByteArray;
 
         ScriptObject GetResult();
     }

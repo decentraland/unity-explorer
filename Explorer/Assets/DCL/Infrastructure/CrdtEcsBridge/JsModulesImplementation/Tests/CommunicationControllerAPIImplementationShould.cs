@@ -64,7 +64,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             // Generate random array of arrays
 
-            var outerArray = new List<IPoolableByteArray>(outerArraySize);
+            var outerArray = new List<PoolableByteArray>(outerArraySize);
 
             for (var i = 0; i < outerArraySize; i++)
             {
@@ -72,7 +72,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 outerArray.Add(new PoolableByteArray(messages, messages.Length, null));
             }
 
-            api.SendBinary(outerArray);
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(outerArray);
             api.GetResult();
 
             var expectedCalls = outerArray
@@ -171,11 +171,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtBody.Write(contentLength); // content length
             crdtBody = crdtBody.Slice(contentLength);
 
-            var inputs = new List<IPoolableByteArray>();
+            var inputs = new List<PoolableByteArray>();
             var s = new PoolableByteArray(crdtMessage, crdtMessage.Length, null);
             inputs.Add(s);
 
-            api.SendBinary(inputs);
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(inputs);
             api.GetResult();
 
             // Expected: CRDT message should be filtered
@@ -262,12 +262,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             addressBytes.CopyTo(resSpan.Slice(2));
             crdtData.CopyTo(resSpan.Slice(2 + addressLength));
 
-            var inputs = new List<IPoolableByteArray>();
+            var inputs = new List<PoolableByteArray>();
             var s = new PoolableByteArray(resMessage, resMessage.Length, null);
             inputs.Add(s);
 
 
-            api.SendBinary(inputs);
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(inputs);
             api.GetResult();
 
             // Expected: RES_CRDT_STATE should be filtered

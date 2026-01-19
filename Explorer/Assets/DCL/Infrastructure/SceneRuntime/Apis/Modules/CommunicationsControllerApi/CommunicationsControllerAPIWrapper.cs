@@ -20,7 +20,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         }
 
         // avoid copying, just iterator over the dataList
-        private struct PoolableByteArrayListWrap : IEnumerable<IPoolableByteArray>
+        private struct PoolableByteArrayListWrap : IEnumerable<PoolableArrayOverTypedArray>
         {
             private IList<object> origin;
 
@@ -31,10 +31,10 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
             public Enumerator GetEnumerator() => new Enumerator(origin);
 
-            IEnumerator<IPoolableByteArray> IEnumerable<IPoolableByteArray>.GetEnumerator() => GetEnumerator();
+            IEnumerator<PoolableArrayOverTypedArray> IEnumerable<PoolableArrayOverTypedArray>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-            public struct Enumerator : IEnumerator<IPoolableByteArray>
+            public struct Enumerator : IEnumerator<PoolableArrayOverTypedArray>
             {
                 private readonly IList<object> origin;
                 private int index;
@@ -45,7 +45,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     index = -1;
                 }
 
-                public IPoolableByteArray Current => new PoolableArrayOverTypedArray(origin[index]);
+                public PoolableArrayOverTypedArray Current => new PoolableArrayOverTypedArray(origin[index]);
                 object IEnumerator.Current => Current;
 
                 public bool MoveNext()
@@ -109,7 +109,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             try
             {
                 var wrap = new PoolableByteArrayListWrap(dataList);
-                api.SendBinary(wrap, recipient);
+                api.SendBinary<PoolableByteArrayListWrap, PoolableArrayOverTypedArray>(wrap, recipient);
             }
             catch (Exception e)
             {
