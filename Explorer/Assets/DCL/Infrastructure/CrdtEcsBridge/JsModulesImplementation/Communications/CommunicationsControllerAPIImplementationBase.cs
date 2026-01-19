@@ -98,6 +98,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                             Span<byte> contentAlloc = stackalloc byte[length];
                             EncodedMessage encodedMessage = new EncodedMessage(contentAlloc);
                             encodedMessage.AssignType(ISceneCommunicationPipe.MsgType.Uint8Array);
+                            Span<byte> contentPtr = encodedMessage.Content();
+                            UnityEngine.Assertions.Assert.AreEqual(span.Length, contentPtr.Length);
+                            span.CopyTo(contentPtr);
 
                             // Filter CRDT messages before sending
                             if (firstByte == (int)CommsMessageType.CRDT)
@@ -191,3 +194,5 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         }
     }
 }
+
+
