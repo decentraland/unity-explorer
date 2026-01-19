@@ -12,9 +12,6 @@ namespace DCL.Browser.DecentralandUrls
     {
         private const string ENV = "{ENV}";
 
-        private readonly string contentURLOverride;
-        private readonly string lambdasURLOverride;
-
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly DecentralandEnvironment environment;
         private readonly IRealmData realmData;
@@ -45,15 +42,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.GatekeeperStatus);
                 Url(DecentralandUrl.GateKeeperSceneAdapter);
                 Url(DecentralandUrl.RemotePeers);
-
-                contentURLOverride = "https://peer-testing.decentraland.org/content/";
-                lambdasURLOverride = "https://peer-testing.decentraland.org/lambdas/";
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
-            }
-            else
-            {
-                contentURLOverride = "NO_CONTENT_URL_OVERRIDE";
-                lambdasURLOverride = "NO_LAMBDAS_URL_OVERRIDE";
             }
         }
 
