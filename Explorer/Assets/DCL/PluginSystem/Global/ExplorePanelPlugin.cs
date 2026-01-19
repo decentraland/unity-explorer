@@ -60,6 +60,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
 using DCL.UI;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.Utilities;
 using Utility;
