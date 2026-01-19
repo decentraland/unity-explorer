@@ -107,8 +107,13 @@ namespace DCL.UserInAppInitializationFlow
                 // Clear cached identity for non-first instances in local scene development
                 // This ensures each instance (except the first one) shows the authentication screen
                 if (!appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
-                    appArgs.HasFlagWithValueTrue(AppArgsFlags.LOCAL_SCENE) &&
-                    FileDCLPlayerPrefs.PrefsInstanceNumber > 0)
+                    appArgs.HasFlagWithValueTrue(AppArgsFlags.LOCAL_SCENE) 
+
+#if !UNITY_WEBGL
+                    && FileDCLPlayerPrefs.PrefsInstanceNumber > 0
+#endif
+
+                    )
                 {
                     identityCache.Clear();
                 }

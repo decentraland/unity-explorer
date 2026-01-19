@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using System.Text.RegularExpressions;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -17,12 +18,26 @@ namespace DCL.Tests
     public class CodeConventionsTests
     {
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
+        private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
 
         private static IEnumerable<string> AllCSharpFiles() =>
             AssetDatabase.FindAssets("t:Script")
                          .Select(AssetDatabase.GUIDToAssetPath)
                          .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
                                              !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
+
+        private static string[] THREADING_FORBIDDEN_CLASSES = null!;
+
+
+        [SetUp]
+        public void Init()
+        {
+            THREADING_FORBIDDEN_CLASSES = 
+                File.ReadLines(THREADING_CLASSES_API_LIST_PATH)
+                .Select(e => e.Trim())
+                .Where(e => !string.IsNullOrEmpty(e))
+                .ToArray();
+        }
 
         [TestCaseSource(nameof(AllCSharpFiles))]
         public void VerifyConventions(string filePath)
@@ -35,6 +50,14 @@ namespace DCL.Tests
             ShouldNotUsePlayerPrefsDirectly(fileContent, filePath);
             AllAsyncMethodsShouldEndWithAsyncSuffix(root, fileContent, filePath);
             UsingUnityEditorShouldBeSurroundedByDirectives(root, filePath);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void VerifyShouldNotUseThreadingApiDirectly(string filePath)
+        {
+            // Arrange
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseThreadingApiDirectly(fileContent, filePath);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -80,6 +103,31 @@ namespace DCL.Tests
             // Assert
             Assert.IsTrue(violations.Count == 0,
                 $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseThreadingApiDirectly(string fileContent, string filePath)
+        {
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)
+                {
+                    var pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
+
+                    if (Regex.IsMatch(line, pattern))
+                    {
+                        violations.Add($"{filePath}:{i + 1}: uses '{forbiddenClass}'");
+                    }
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}");
         }
 
         private static void AllAsyncMethodsShouldEndWithAsyncSuffix(SyntaxNode root, string fileContent, string filePath)
