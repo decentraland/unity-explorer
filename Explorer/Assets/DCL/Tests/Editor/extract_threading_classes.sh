@@ -9,9 +9,9 @@ sed 's/.*data-linktype="relative-path">//' |
 # remove characters after the search
 sed 's/<.*//' |
 
-# Allowed API
+# Allowed API, that are safe for WebGL
 grep -v 'CancellationToken' |
-grep -v 'CancellationToken' |
+grep -v 'Timeout' |
 
 # Output
 cat > excludes_threading.txt

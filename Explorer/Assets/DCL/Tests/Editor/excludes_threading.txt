@@ -41,7 +41,6 @@ ThreadPool
 ThreadPoolBoundHandle
 ThreadStartException
 ThreadStateException
-Timeout
 Timer
 Volatile
 WaitHandle
