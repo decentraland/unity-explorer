@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05befaedcb2db4303a48d552554db836
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-SemiBold.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
     m_Address: LODSettings.asset
     m_ReadOnly: 0
@@ -75,16 +80,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3c9cae51ed00f4f2a8a7e15ec646e754
-    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/LiberationSans-Regular SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3d022451a40fc4ab18bd4911a557e515
-    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-SemiBold SDF.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
     m_Address: M_EyeBrows_00
     m_ReadOnly: 0
@@ -132,6 +127,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62f68ba25f6c905428b36a081b072566
     m_Address: EmoteAudioSource
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63cc526b36c1242aab3ba3e09fb89896
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-Regular.ttf
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -215,8 +215,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b8bb4e6ee518c4e5bab9adb2a5841a43
-    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-Regular SDF.asset
+  - m_GUID: b7e9188aeab694320bb4c30078851643
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/LiberationSans-Regular.ttf
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

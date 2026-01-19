@@ -106,9 +106,9 @@ namespace DCL.PluginSystem.World
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public UIDocumentRef ScenesUIDocument { get; private set; } = null!;
-            [field: SerializeField] public FontAsset FontSansSerif { get; private set; } = null!;
-            [field: SerializeField] public FontAsset FontSerif { get; private set; } = null!;
-            [field: SerializeField] public FontAsset FontMonospace { get; private set; } = null!;
+            [field: SerializeField] public Font FontSansSerif { get; private set; } = null!;
+            [field: SerializeField] public Font FontSerif { get; private set; } = null!;
+            [field: SerializeField] public Font FontMonospace { get; private set; } = null!;
         }
     }
 }
