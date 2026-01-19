@@ -438,6 +438,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                         if (emoteComponent.SocialEmote.WasPlayingOutcome)
                             ResetAvatarAndControllerTransforms(entity);
+                        else
+                            ResetRelativeAvatarPositionAndRotation(entity);
                     }
 
                     // Playing a social emote for a different interaction, it could happen if the initiator plays the same start animation
