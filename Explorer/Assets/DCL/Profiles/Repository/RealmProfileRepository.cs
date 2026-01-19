@@ -16,6 +16,7 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Pool;
 using Utility;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
@@ -30,10 +31,9 @@ namespace DCL.Profiles
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesAnalytics profilesAnalytics;
-        private readonly IRealmData realm;
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IProfileCache profileCache;
-        private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
 
         /// <summary>
@@ -49,14 +49,14 @@ namespace DCL.Profiles
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
-            IRealmData realm,
+            PublishIpfsEntityCommand publishIpfsEntityCommand,
             IDecentralandUrlsSource urlsSource,
             IProfileCache profileCache,
             ProfilesAnalytics profilesAnalytics,
             bool useCentralizedProfiles)
         {
             this.webRequestController = webRequestController;
-            this.realm = realm;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.urlsSource = urlsSource;
             this.profileCache = profileCache;
             this.profilesAnalytics = profilesAnalytics;
@@ -82,8 +82,6 @@ namespace DCL.Profiles
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");
 
-            IIpfsRealm ipfs = realm.Ipfs;
-
             // ADR-290: snapshots are no longer sent during profile deployment
             IpfsProfileEntity entity = NewPublishProfileEntity(profile);
 
@@ -92,7 +90,7 @@ namespace DCL.Profiles
 
             try
             {
-                await ipfs.PublishAsync(entity, ct, SERIALIZER_SETTINGS, files);
+                await publishIpfsEntityCommand.ExecuteAsync(entity, ct, SERIALIZER_SETTINGS, files);
                 profileCache.Set(profile.UserId, profile);
             }
             finally { files.Clear(); }
@@ -173,7 +171,7 @@ namespace DCL.Profiles
         private UniTaskCompletionSource<ProfileTier?> AddToBatch(string userId, URLDomain? fromCatalyst,
             List<ProfilesBatchRequest> requests, ProfileTier.Kind tier, IPartitionComponent partition)
         {
-            fromCatalyst ??= realm.Ipfs.LambdasBaseUrl;
+            fromCatalyst ??= URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas));
 
             ProfilesBatchRequest? batch = null;
 
@@ -370,19 +368,16 @@ namespace DCL.Profiles
 
         private URLAddress GetUrl(string id, URLDomain? fromCatalyst)
         {
-            urlBuilder.Clear();
+            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
 
-            urlBuilder.AppendDomain(fromCatalyst ?? realm.Ipfs.LambdasBaseUrl)
-                      .AppendPath(URLPath.FromString($"profiles/{id}"));
+            urlBuilder.AppendPath(URLPath.FromString($"profiles/{id}"));
 
             return urlBuilder.Build();
         }
 
         public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier)
         {
-            urlBuilder.Clear();
-
-            urlBuilder.AppendDomain(useCentralizedProfiles ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)) : fromCatalyst ?? realm.Ipfs.LambdasBaseUrl);
+            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(useCentralizedProfiles ? urlsSource.Url(DecentralandUrl.AssetBundleRegistry) : fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
 
             urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("profiles"));
 

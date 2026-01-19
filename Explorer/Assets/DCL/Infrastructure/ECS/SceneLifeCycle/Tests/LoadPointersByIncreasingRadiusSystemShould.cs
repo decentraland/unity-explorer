@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.Landscape.Parcel;
 using DCL.Landscape.Settings;
@@ -41,7 +42,7 @@ namespace ECS.SceneLifeCycle.Tests
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
-                new HashSet<Vector2Int>(), realmData, landscapeParcelData);
+                new HashSet<Vector2Int>(), realmData, landscapeParcelData, DecentralandUrlsSource.CreateForTest());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }

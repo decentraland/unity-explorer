@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Platforms;
 using DCL.Utility;
@@ -17,6 +18,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -25,7 +27,6 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {
-        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
 
@@ -52,8 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
         {
-            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
-            urlBuilder!.Clear();
+            using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleURL, out URLBuilder urlBuilder);
 
             urlBuilder.AppendDomain(assetBundleURL)
                       .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
@@ -67,8 +67,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
         }
-
-
 
 
         private void CheckSceneAbDTO(string version, string hash)

@@ -31,7 +31,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public SocialServicePerformanceTests(DecentralandEnvironment env)
         {
             this.env = env;
-            urlsSource = new DecentralandUrlsSource(env, ILaunchMode.PLAY);
+            urlsSource = DecentralandUrlsSource.CreateForTest(env, ILaunchMode.PLAY);
         }
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);

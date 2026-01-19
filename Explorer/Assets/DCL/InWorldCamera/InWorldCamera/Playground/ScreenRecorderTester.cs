@@ -75,11 +75,7 @@ namespace DCL.InWorldCamera.Playground
 
             var realmData = new RealmData(
                 new LogIpfsRealm(
-                    new IpfsRealm(
-                        web3IdentityCache,
-                        IWebRequestController.TEST,
-                        URLDomain.FromString("TestRealm"),
-                        URLDomain.EMPTY,
+                    new IpfsRealm(URLDomain.FromString("TestRealm"),
                         new ServerAbout(
                             lambdas: new ContentEndpoint(profileUrl)
                         )
@@ -87,12 +83,17 @@ namespace DCL.InWorldCamera.Playground
                 )
             );
 
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY);
+
             var world = World.Create();
             Entity playerEntity = world.Create();
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.TEST, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null), false)
+                    new RealmProfileRepository(IWebRequestController.TEST,
+                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
+                        urlsSource,
+                        new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

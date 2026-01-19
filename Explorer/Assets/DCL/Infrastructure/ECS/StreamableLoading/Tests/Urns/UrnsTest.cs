@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Tests.URNs
         {
             Assert.AreEqual(
                 expectedUrl,
-                new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))
+                new BasedURNSource(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY))
                    .UrlOrEmpty(urn)
                    .Value
             );

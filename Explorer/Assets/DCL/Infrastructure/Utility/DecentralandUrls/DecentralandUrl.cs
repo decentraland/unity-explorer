@@ -93,9 +93,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         DecentralandWorlds,
 
-        DecentralandContentOverride,
-        DecentralandLambdasOverride,
-
         ChatTranslate,
 
         ActiveCommunityVoiceChats,
@@ -108,5 +105,16 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         JumpInGenesisCityLink,
         JumpInWorldLink,
+        Support,
+
+        /// <summary>
+        ///     Normally Entities Active are served through Asset Bundle Registry, and not via a catalyst, it's transparent for consumers
+        /// </summary>
+        EntitiesActive,
+
+        // Catalyst Related
+        Lambdas,
+        Content,
+        EntitiesDeployment,
     }
 }

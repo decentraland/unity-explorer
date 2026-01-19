@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -21,7 +22,12 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadFixedPointersSystem(World world, IRealmData realmData) : base(world, new HashSet<Vector2Int>(), realmData) { }
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        internal LoadFixedPointersSystem(World world, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
+        {
+            this.urlsSource = urlsSource;
+        }
 
         protected override void Update(float t)
         {

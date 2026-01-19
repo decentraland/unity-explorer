@@ -24,6 +24,7 @@ using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
@@ -103,6 +104,7 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             IAppArgs appArgs,
@@ -110,6 +112,7 @@ namespace Global.Dynamic
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.DecentralandUrlsSource,
+                realmData,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,

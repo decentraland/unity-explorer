@@ -47,7 +47,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             analytics = new PerformanceTestWebRequestsAnalytics();
 
             controller = new WebRequestController(analytics, identityCache,
-                new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
+                new RequestHub(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
                 ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 

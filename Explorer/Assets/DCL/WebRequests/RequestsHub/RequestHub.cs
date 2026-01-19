@@ -33,13 +33,11 @@ namespace DCL.WebRequests.RequestsHub
                 new (typeof(T), typeof(TWebRequest));
         }
 
-        private readonly bool disableABCache;
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
         public RequestHub(IDecentralandUrlsSource urlsSource, bool disableABCache = false)
         {
-            this.disableABCache = disableABCache;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 

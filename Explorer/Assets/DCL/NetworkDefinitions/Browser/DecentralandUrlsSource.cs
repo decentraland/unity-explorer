@@ -1,5 +1,7 @@
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
+using ECS;
 using System;
 using System.Collections.Generic;
 
@@ -14,12 +16,16 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string lambdasURLOverride;
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
+        private readonly DecentralandEnvironment environment;
+        private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode)
         {
             decentralandDomain = environment.ToString()!.ToLower();
+            this.environment = environment;
+            this.realmData = realmData;
             this.launchMode = launchMode;
 
             if (environment == DecentralandEnvironment.Today)
@@ -49,14 +55,28 @@ namespace DCL.Browser.DecentralandUrls
                 contentURLOverride = "NO_CONTENT_URL_OVERRIDE";
                 lambdasURLOverride = "NO_LAMBDAS_URL_OVERRIDE";
             }
-
         }
+
+        /// <summary>
+        ///     Creates a fully irrelevant stub
+        /// </summary>
+        public static DecentralandUrlsSource CreateForTest() =>
+            new (DecentralandEnvironment.Zone, new IRealmData.Fake(), ILaunchMode.PLAY);
+
+        public static DecentralandUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
+            new (environment, new IRealmData.Fake(), launchMode);
 
         public string Url(DecentralandUrl decentralandUrl)
         {
-            if (cache.TryGetValue(decentralandUrl, out string? url) == false)
+            if (!cache.TryGetValue(decentralandUrl, out string? url))
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, decentralandDomain);
+                // TODO it's a hack, it's needed because all urls are logged at start-up
+                string? rawUrl = RawUrl(decentralandUrl);
+
+                if (rawUrl == null)
+                    return string.Empty;
+
+                url = rawUrl.Replace(ENV, decentralandDomain);
                 cache[decentralandUrl] = url;
             }
 
@@ -68,10 +88,10 @@ namespace DCL.Browser.DecentralandUrls
             {
                 LaunchMode.Play => Url(DecentralandUrl.Host),
                 LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(),
             };
 
-        private string RawUrl(DecentralandUrl decentralandUrl) =>
+        private string? RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
@@ -105,7 +125,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
-                DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
+                DecentralandUrl.RemotePeersWorld => "https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
@@ -138,8 +158,6 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.CommunityProfileLink => $"https://decentraland.{ENV}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
-                DecentralandUrl.DecentralandLambdasOverride => lambdasURLOverride,
-                DecentralandUrl.DecentralandContentOverride => contentURLOverride,
                 DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
@@ -147,7 +165,16 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
-                _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
+
+                DecentralandUrl.EntitiesActive => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null,
+
+                DecentralandUrl.EntitiesDeployment => realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null,
+                DecentralandUrl.Lambdas => environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
+                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null,
+                DecentralandUrl.Content => environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/content/" :
+                    realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null,
+                _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
     }
 }

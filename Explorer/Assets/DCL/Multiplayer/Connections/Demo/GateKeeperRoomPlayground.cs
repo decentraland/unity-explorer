@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Demo
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
             var launchMode = ILaunchMode.PLAY;
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, launchMode);
+            var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, launchMode);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Zone);
             var character = new ExposedTransform();
@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null), identityCache, new RequestHub(urlsSource), chromeDev, new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
             var realmData = new IRealmData.Fake();
 
-            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false));
+            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser());
 
             new GateKeeperSceneRoom(

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
@@ -21,6 +22,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private readonly IRealmData realmData;
         private readonly IExposedTransform characterTransform;
         private readonly World world;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private readonly bool forceSceneIsolation;
 
@@ -49,12 +51,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             }
         }
 
-        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
+        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation, IDecentralandUrlsSource urlsSource)
         {
             this.realmData = realmData;
             this.characterTransform = characterTransform;
             this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
+            this.urlsSource = urlsSource;
         }
 
         public MetaData.Input GetMetadataInput() =>
@@ -79,7 +82,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);

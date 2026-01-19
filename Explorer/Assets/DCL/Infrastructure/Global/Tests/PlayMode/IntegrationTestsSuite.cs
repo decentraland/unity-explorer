@@ -55,7 +55,7 @@ namespace Global.Tests.PlayMode
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+            IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
@@ -81,6 +81,7 @@ namespace Global.Tests.PlayMode
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 dclUrls,
+                new RealmData(),
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),

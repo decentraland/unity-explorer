@@ -28,7 +28,7 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer.TEST,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
-                new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
+                DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
             ChromeDevtoolProtocolClient.NewForTest(),
             new WebRequestBudget(TOTAL_BUDGET,

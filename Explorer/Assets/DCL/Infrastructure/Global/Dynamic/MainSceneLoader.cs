@@ -53,6 +53,7 @@ using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
+using ECS;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -149,6 +150,8 @@ namespace Global.Dynamic
 #endif
             );
 
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
@@ -168,7 +171,8 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
+            var realmData = new RealmData();
+            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -223,7 +227,7 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -626,7 +630,7 @@ namespace Global.Dynamic
         private static void DisableAllSelectableTransitions()
         {
             DOTween.KillAll();
-            Selectable[] all = FindObjectsByType<UnityEngine.UI.Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
 
             foreach (var s in all)
             {

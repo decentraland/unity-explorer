@@ -45,7 +45,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         {
             get
             {
-                var urlsSource = new DecentralandUrlsSource(Env, ILaunchMode.PLAY);
+                var urlsSource = DecentralandUrlsSource.CreateForTest(Env, ILaunchMode.PLAY);
                 return new CameraReelImagesMetadataRemoteDatabase(webRequestController, urlsSource);
             }
         }

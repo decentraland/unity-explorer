@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Demo
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, launchMode);
+            var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, launchMode);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
             var totalBudget = 15;
