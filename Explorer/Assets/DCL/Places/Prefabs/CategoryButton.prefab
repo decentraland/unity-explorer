@@ -239,9 +239,9 @@ MonoBehaviour:
   <IconImage>k__BackingField: {fileID: 0}
   <Text>k__BackingField: {fileID: 5739768900430016259}
   <SelectedBackgroundColor>k__BackingField: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
-  <UnselectedBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+  <UnselectedBackgroundColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.019607844}
   <SelectedTextColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
-  <UnselectedTextColor>k__BackingField: {r: 0, g: 0, b: 0, a: 1}
+  <UnselectedTextColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <SelectedIconImage>k__BackingField: {fileID: 0}
   <UnselectedIconImage>k__BackingField: {fileID: 0}
 --- !u!114 &8027109624250073579

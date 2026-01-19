@@ -183,7 +183,7 @@ namespace DCL.Places
                         break;
                     }
                     case PlacesSection.BROWSE:
-                        view.SetPlacesCounter("Browse All Places"); break;
+                        view.SetPlacesCounter("Results for All"); break;
                     case PlacesSection.RECENTLY_VISITED:
                         view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})"); break;
                     case PlacesSection.FAVORITES:
