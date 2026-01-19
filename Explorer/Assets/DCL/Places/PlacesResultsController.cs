@@ -30,6 +30,7 @@ namespace DCL.Places
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
+        private PlacesSection sectionOpenedBeforeSearching = PlacesSection.DISCOVER;
 
         private CancellationTokenSource? loadPlacesCts;
 
@@ -66,7 +67,7 @@ namespace DCL.Places
         }
 
         private void OnBackButtonClicked() =>
-            placesController.OpenSection(PlacesSection.DISCOVER, force: true);
+            placesController.OpenSection(sectionOpenedBeforeSearching, force: true);
 
         private void TryLoadMorePlaces()
         {
@@ -88,6 +89,7 @@ namespace DCL.Places
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
+                sectionOpenedBeforeSearching = currentFilters.Section!.Value;
                 placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false, cleanSearch: false);
                 sectionToLoad = PlacesSection.DISCOVER;
             }
