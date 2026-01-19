@@ -66,9 +66,6 @@ namespace DCL.CharacterMotion.Systems
 
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
 
-            Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
-            rigidTransform.PlatformDelta = newGroundWorldPos - characterTransform.position;
-
             Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
             Vector3 rotationDelta = newCharacterForward - characterTransform.forward;
             rigidTransform.LookDirection += rotationDelta;
