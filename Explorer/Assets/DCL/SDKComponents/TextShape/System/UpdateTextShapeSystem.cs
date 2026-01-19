@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.TextShape.System
         {
             if (textShape.IsDirty)
             {
-                textShapeComponent.TextMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
+                TMPProSdkExtensions.Apply(ref textShapeComponent, textShape, fontsStorage, materialPropertyBlock);
                 textShapeComponent.NeedsBoundsRecalculation = true; // Mark for deferred bounds calculation next frame
                 changedTextMeshes.Add(entity, textShapeComponent);
             }
