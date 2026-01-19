@@ -111,8 +111,24 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (isNewUser)
                 profile = Profile.NewRandomProfile(identity.Address.ToString());
 
-            profile!.IsDirty = true;
+            profile.HasClaimedName = false;
+            profile.Description = string.Empty;
+            profile.Country = string.Empty;
+            profile.EmploymentStatus = string.Empty;
+            profile.Gender = string.Empty;
+            profile.Pronouns = string.Empty;
+            profile.RelationshipStatus = string.Empty;
+            profile.SexualOrientation = string.Empty;
+            profile.Language = string.Empty;
+            profile.Profession = string.Empty;
+            profile.RealName = string.Empty;
+            profile.Hobbies = string.Empty;
+            profile.TutorialStep = 0;
+            profile.Version = 0;
+            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
+
             profile.HasConnectedWeb3 = true;
+            profile.IsDirty = true;
 
             return (profile, isNewUser);
         }
