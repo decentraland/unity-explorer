@@ -85,6 +85,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 if (!sceneData.TryGetHash(path, out string hash))
                 {
                     assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
+                    existingComponent.LoadingAssetPaths.Add(path);
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
                 }
