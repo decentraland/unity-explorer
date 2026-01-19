@@ -123,7 +123,9 @@ namespace DCL.Places
                 case PlacesSection.DISCOVER:
                     placesResult = await placesAPIService.SearchPlacesAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
-                                                              searchText: currentFilters.SearchText, sortBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                              searchText: currentFilters.SearchText,
+                                                              sortBy: currentFilters.Section == PlacesSection.DISCOVER ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
@@ -181,7 +183,7 @@ namespace DCL.Places
                         break;
                     }
                     case PlacesSection.DISCOVER:
-                        view.SetPlacesCounter($"Browse All Places ({placesResult.Value.Total})"); break;
+                        view.SetPlacesCounter("Browse All Places"); break;
                     case PlacesSection.RECENTLY_VISITED:
                         view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})"); break;
                     case PlacesSection.FAVORITES:

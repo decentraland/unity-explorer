@@ -91,15 +91,15 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
         {
-            view.SetSortByFilterVisible(section != PlacesSection.RECENTLY_VISITED);
-            view.SetSDKVersionFilterVisible(section != PlacesSection.RECENTLY_VISITED);
+            view.SetSortByFilterVisible(section == PlacesSection.DISCOVER);
+            view.SetSDKVersionFilterVisible(section == PlacesSection.DISCOVER);
             view.OpenSection(section, force, invokeEvent, cleanSearch);
         }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
-            view.SetSortByFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
-            view.SetSDKVersionFilterVisible(newFilters.Section != PlacesSection.RECENTLY_VISITED);
+            view.SetSortByFilterVisible(newFilters.Section == PlacesSection.DISCOVER);
+            view.SetSDKVersionFilterVisible(newFilters.Section == PlacesSection.DISCOVER);
             view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }
