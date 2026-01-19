@@ -26,7 +26,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         // We can't use a mutex as it must be acquired and released by the same thread
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
-        private readonly SemaphoreSlim semaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphore = new (1, 1);
 
         private bool disposed;
 
