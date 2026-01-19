@@ -285,7 +285,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de3ac08ca7a64e6292e127fc546d1b86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Discover.DiscoverView
-  discoverSectionTab: {fileID: 4247004538758472372}
+  browseSectionTab: {fileID: 4247004538758472372}
   favoritesSectionTab: {fileID: 3398764929377972935}
   recentlyVisitedSectionTab: {fileID: 3695010204622054615}
   myPlacesSectionTab: {fileID: 1490185357193856950}
@@ -501,12 +501,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6183514438214472288, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 117
+      objectReference: {fileID: 0}
+    - target: {fileID: 6183514438214472288, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6183514438214472288, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598056685910313977, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
+      propertyPath: m_Name
+      value: Browse
       objectReference: {fileID: 0}
     - target: {fileID: 6658419813190112259, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
       propertyPath: m_AnchorMax.y
@@ -523,6 +531,10 @@ PrefabInstance:
     - target: {fileID: 6658419813190112259, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6844737375451823896, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
+      propertyPath: m_text
+      value: Browse
       objectReference: {fileID: 0}
     - target: {fileID: 7393066102106275307, guid: 8372b9d47cf1a78468f105969c3064ab, type: 3}
       propertyPath: m_AnchorMax.y

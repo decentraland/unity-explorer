@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private PlacesController? discoverController;
+        private PlacesController? placesController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -303,7 +303,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
-            discoverController?.Dispose();
+            placesController?.Dispose();
             upscalingController?.Dispose();
         }
 
@@ -495,7 +495,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            discoverController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -519,7 +519,7 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
-                    discoverController,
+                    placesController,
                     inputBlock,
                     includeCameraReel,
                     includeDiscover,

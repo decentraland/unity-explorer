@@ -2,7 +2,7 @@
 {
     public enum PlacesSection
     {
-        DISCOVER,
+        BROWSE,
         RECENTLY_VISITED,
         FAVORITES,
         MY_PLACES,

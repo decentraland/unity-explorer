@@ -66,7 +66,7 @@ namespace DCL.Places
             view.SetupSortByFilter();
             view.SetupSDKVersionFilter();
             view.SetCategories(placesCategories.categories);
-            view.OpenSection(PlacesSection.DISCOVER, force: true);
+            view.OpenSection(PlacesSection.BROWSE, force: true);
             cursor.Unlock();
         }
 
@@ -91,16 +91,16 @@ namespace DCL.Places
 
         public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
         {
-            view.SetSortByFilterVisible(section == PlacesSection.DISCOVER);
-            view.SetSDKVersionFilterVisible(section == PlacesSection.DISCOVER);
+            view.SetSortByFilterVisible(section == PlacesSection.BROWSE);
+            view.SetSDKVersionFilterVisible(section == PlacesSection.BROWSE);
             view.OpenSection(section, force, invokeEvent, cleanSearch);
         }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)
         {
-            view.SetSortByFilterVisible(newFilters.Section == PlacesSection.DISCOVER);
-            view.SetSDKVersionFilterVisible(newFilters.Section == PlacesSection.DISCOVER);
-            view.SetCategoriesVisible(newFilters.Section == PlacesSection.DISCOVER && string.IsNullOrEmpty(newFilters.SearchText));
+            view.SetSortByFilterVisible(newFilters.Section == PlacesSection.BROWSE);
+            view.SetSDKVersionFilterVisible(newFilters.Section == PlacesSection.BROWSE);
+            view.SetCategoriesVisible(newFilters.Section == PlacesSection.BROWSE && string.IsNullOrEmpty(newFilters.SearchText));
             FiltersChanged?.Invoke(newFilters);
         }
 
