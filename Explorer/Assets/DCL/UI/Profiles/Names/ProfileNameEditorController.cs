@@ -291,6 +291,8 @@ namespace DCL.UI.ProfileNames
 
                 if (profile != null)
                 {
+                    // TODO (Maurizio) save color here
+
                     profile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     profile.HasClaimedName = true;
 
