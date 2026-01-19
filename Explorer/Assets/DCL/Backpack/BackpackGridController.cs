@@ -17,6 +17,7 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -103,6 +104,7 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+            eventBus.EquipOutfitEvent += OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
@@ -113,6 +115,7 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent -= OnEquip;
             eventBus.UnEquipWearableEvent -= OnUnequip;
+            eventBus.EquipOutfitEvent -= OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
@@ -151,6 +154,61 @@ namespace DCL.Backpack
             {
                 BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
                 return backpackItemView;
+            }
+        }
+        
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            // 1. Find the body shape in the new outfit
+            IWearable? newBodyShape = null;
+            foreach (var w in wearables)
+            {
+                if (w.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
+                {
+                    newBodyShape = w;
+                    break;
+                }
+            }
+
+            // 2. Update current body shape state
+            if (newBodyShape != null)
+            {
+                currentBodyShape = newBodyShape;
+            }
+
+            // 3. Update the pool items (icons) to reflect the new equipped state
+            foreach (var kvp in usedPoolItems)
+            {
+                var itemView = kvp.Value;
+                // Check if this item is in the new outfit
+                bool isEquipped = false;
+                foreach (var w in wearables)
+                {
+                    if (string.Equals(w.GetUrn(), itemView.ItemId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        isEquipped = true;
+                        break;
+                    }
+                }
+                
+                itemView.IsEquipped = isEquipped;
+                
+                // 4. Update compatibility checking
+                if (newBodyShape != null)
+                {
+                    // If we have the IWearable for this item in the page results, use it to check compatibility
+                    // Otherwise, we might rely on the itemView state if we had access to the model, 
+                    // but here we might need to re-verify if possible.
+                    // However, updateBodyShapeCompatibility iterates 'currentPageWearables'.
+                }
+                
+                itemView.SetEquipButtonsState();
+            }
+
+            // 5. Force a refresh of compatibility flags for the current page of items
+            if (currentBodyShape != null && currentPageWearables != null)
+            {
+                UpdateBodyShapeCompatibility(currentPageWearables, currentBodyShape);
             }
         }
 
