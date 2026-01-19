@@ -1,47 +1,54 @@
 using Arch.Core;
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using DCL.CharacterCamera;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiling;
 using DCL.Profiles;
 using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using ECS.LifeCycle;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
+using Global;
 using Global.AppArgs;
 using Global.Dynamic;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner;
 using SceneRunner.ECSWorld;
+using SceneRunner.Mapping;
 using SceneRunner.Scene;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Threading;
-using System.Web;
 using UnityEngine;
 using DCL.Clipboard;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.DebugUtilities.UIBindings;
-using DCL.PluginSystem.World;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Specialized;
+using System.Web;
+using Utility;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
@@ -52,7 +59,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
         private static string GetDefaultSceneUrl()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL
             // In WebGL, Application.streamingAssetsPath already returns a full URL like "http://localhost:8800/StreamingAssets/"
             try
             {
@@ -68,7 +75,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
                     // Use the scene root as base, with the full path to the JS file
                     // This matches how scene.json expects paths: "main": "bin/game.js"
-                    string fullUrl = $"{streamingPath}Scenes/{SCENE_DIRECTORY}/bin/game.js";
+                    var fullUrl = $"{streamingPath}Scenes/{SCENE_DIRECTORY}/bin/game.js";
                     Debug.Log($"[WebGLSceneBootstrapper] Constructed scene URL: {fullUrl}");
                     return fullUrl;
                 }
@@ -230,34 +237,59 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
         private MockedDependencies CreateMockedDependencies()
         {
-            // Create minimal ECS world
-            var world = World.Create();
-            var builder = new ArchSystemsWorldBuilder<World>(world);
+            // Create ComponentsContainer to register all SDK components and their pools
+            var componentsContainer = ComponentsContainer.Create();
 
-            // Create minimal persistent entities
-            var playerEntity = world.Create();
-            var cameraEntity = world.Create();
-            var sceneRootEntity = world.Create();
-            var sceneContainerEntity = world.Create();
-            var persistentEntities = new PersistentEntities(playerEntity, cameraEntity, sceneRootEntity, sceneContainerEntity);
+            // Create stub profiler and budgets
+            var stubProfiler = new StubBudgetProfiler();
+            var stubMemoryCap = new StubSystemMemoryCap();
+            var memoryThreshold = new Dictionary<MemoryUsageStatus, float>
+            {
+                { MemoryUsageStatus.ABUNDANCE, 0.6f },
+                { MemoryUsageStatus.WARNING, 0.8f },
+                { MemoryUsageStatus.FULL, 0.9f }
+            };
 
-            var ecsWorldFacade = new ECSWorldFacade(
-                builder.Finish(),
-                world,
-                persistentEntities,
-                new List<IFinalizeWorldSystem>(),
-                new List<ISceneIsCurrentListener>()
+            var frameTimeBudget = new FrameTimeCapBudget(33f, stubProfiler, () => false);
+            var memoryBudget = new MemoryBudget(stubMemoryCap, stubProfiler, memoryThreshold);
+
+            // Create ECSWorldSingletonSharedDependencies
+            var singletonSharedDependencies = new ECSWorldSingletonSharedDependencies(
+                componentsContainer.ComponentPoolsRegistry,
+                new StubReportsHandlingSettings(),
+                new SceneEntityFactory(),
+                new PartitionedWorldsAggregate.Factory(),
+                new StubReleasablePerformanceBudget(),
+                frameTimeBudget,
+                memoryBudget,
+                new StubSceneMapping()
             );
 
-            // Create ECS world factory
-            var ecsWorldFactory = new StubECSWorldFactory(ecsWorldFacade);
+            // Create exposed transform and camera data for plugins
+            var exposedPlayerTransform = new ExposedTransform();
+            var exposedCameraData = new ExposedCameraData();
+
+            // Create minimal plugins for primitive rendering
+            var plugins = new List<IDCLWorldPlugin>
+            {
+                new TransformsPlugin(singletonSharedDependencies, exposedPlayerTransform, exposedCameraData),
+                new PrimitivesRenderingPlugin(singletonSharedDependencies)
+            };
+
+            // Create real ECSWorldFactory with plugins
+            var ecsWorldFactory = new ECSWorldFactory(
+                singletonSharedDependencies,
+                new StubPartitionSettings(),
+                new StubCameraSamplingData(),
+                plugins
+            );
 
             return new MockedDependencies
             {
                 ECSWorldFactory = ecsWorldFactory,
                 SharedPoolsProvider = new SharedPoolsProvider(),
                 CRDTSerializer = new CRDTSerializer(),
-                SDKComponentsRegistry = new SDKComponentsRegistry(),
+                SDKComponentsRegistry = componentsContainer.SDKComponentsRegistry,
                 EntityFactory = new SceneEntityFactory(),
                 EntityCollidersGlobalCache = new EntityCollidersGlobalCache(),
                 EthereumApi = new StubEthereumApi(),
@@ -279,7 +311,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
         private static string? GetSceneUrlFromQueryString()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL
             try
             {
                 // Get the current page URL
@@ -479,18 +511,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
             public float RawSqrDistance => 0f;
         }
 
-        private class StubECSWorldFactory : IECSWorldFactory
-        {
-            private readonly ECSWorldFacade worldFacade;
-
-            public StubECSWorldFactory(ECSWorldFacade worldFacade)
-            {
-                this.worldFacade = worldFacade;
-            }
-
-            public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args) => worldFacade;
-        }
-
         private class StubWebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
         {
             public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() => new Dictionary<Type, Func<IRequestMetric>>();
@@ -499,6 +519,70 @@ namespace SceneRuntime.WebClient.Bootstrapper
             void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request) { }
             void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
             void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
+        }
+
+        // Stub implementations for ECS world factory dependencies
+        private class StubBudgetProfiler : IBudgetProfiler
+        {
+            public long TotalUsedMemoryInBytes => 0;
+            public long SystemUsedMemoryInBytes => 0;
+            public ulong CurrentFrameTimeValueNs => 0;
+            public ulong LastFrameTimeValueNs => 0;
+            public ulong LastGpuFrameTimeValueNs => 0;
+            public void Dispose() { }
+        }
+
+        private class StubSystemMemoryCap : ISystemMemoryCap
+        {
+            public long MemoryCapInMB => 4 * 1024L;
+            public int MemoryCap
+            {
+                get => 4;
+                set => throw new NotImplementedException();
+            }
+        }
+
+        private class StubReportsHandlingSettings : IReportsHandlingSettings
+        {
+            public bool DebounceEnabled => false;
+            public bool IsEnabled(ReportHandler handler) => true;
+            public bool CategoryIsEnabled(string category, LogType logType) => true;
+            public ICategorySeverityMatrix GetMatrix(ReportHandler handler) => new StubCategorySeverityMatrix();
+        }
+
+        private class StubCategorySeverityMatrix : ICategorySeverityMatrix
+        {
+            public bool IsEnabled(string category, LogType severity) => true;
+        }
+
+        private class StubSceneMapping : ISceneMapping
+        {
+            public World? GetWorld(string sceneName) => null;
+            public World? GetWorld(Vector2Int coordinates) => null;
+            public void Register(string sceneName, IReadOnlyList<Vector2Int> coordinates, World world) { }
+        }
+
+        private class StubReleasablePerformanceBudget : IReleasablePerformanceBudget
+        {
+            public bool TrySpendBudget() => true; // Always allow
+            public void ReleaseBudget() { }
+        }
+
+        private class StubPartitionSettings : IPartitionSettings
+        {
+            public float AngleTolerance => 1f;
+            public float PositionSqrTolerance => 0.01f;
+            public IReadOnlyList<int> SqrDistanceBuckets { get; } = new List<int> { 128, 512, 2048 };
+            public int FastPathSqrDistance => int.MaxValue;
+            public int BehindCameraBaseBucket => 2;
+        }
+
+        private class StubCameraSamplingData : IReadOnlyCameraSamplingData
+        {
+            public Vector3 Position => Vector3.zero;
+            public Vector3 Forward => Vector3.forward;
+            public Vector2Int Parcel => Vector2Int.zero;
+            public bool IsDirty => false;
         }
     }
 }

@@ -156,13 +156,20 @@ namespace SceneRunner
             
             var baseUrl = URLDomain.FromString(baseUrlString);
 
+            // Create a fake AssetBundleManifestVersion that supports Initial Scene State (ISS)
+            // This ensures the scene is positioned at origin (BaseParcelPosition) instead of MORDOR
+            var fakeManifest = new AssetBundleManifestVersionPerPlatform();
+            fakeManifest.SetVersion("v41", "1"); // v41 is the minimum version that supports ISS
+            var assetBundleManifestVersion = new AssetBundleManifestVersion { assets = fakeManifest };
+
             var sceneDefinition = new SceneEntityDefinition(
                 id,
                 new SceneMetadata
                 {
                     main = mainScenePath,
                     runtimeVersion = "7",
-                }
+                },
+                assetBundleManifestVersion
             );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
