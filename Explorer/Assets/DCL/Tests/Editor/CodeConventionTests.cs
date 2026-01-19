@@ -115,6 +115,10 @@ namespace DCL.Tests
             {
                 string line = lines[i];
 
+                // Ignore namespace keyword
+                if (line.StartsWith("namespace")) 
+                    continue;
+
                 foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)
                 {
                     var pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
