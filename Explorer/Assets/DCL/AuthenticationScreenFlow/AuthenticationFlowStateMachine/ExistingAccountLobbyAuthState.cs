@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.Utilities;
 using MVC;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -51,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            subView.gameObject.SetActive(false);
+            subView.SlideBack();
             characterPreviewController?.OnHide();
 
             subView.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);
@@ -65,8 +66,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+                subView.FadeOut();
 
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);

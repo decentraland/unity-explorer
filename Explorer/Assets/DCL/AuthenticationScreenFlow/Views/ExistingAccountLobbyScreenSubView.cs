@@ -41,25 +41,30 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel = (StringVariable)title.StringReference["back_profileName"];
         }
 
-        private void OnEnable()
-        {
-            FinalizeAnimator.enabled = true;
-        }
-
-        private void OnDisable()
-        {
-            FinalizeAnimator.enabled = false;
-        }
+        // private void OnEnable()
+        // {
+        //     FinalizeAnimator.enabled = true;
+        // }
+        //
+        // private void OnDisable()
+        // {
+        //     FinalizeAnimator.enabled = false;
+        // }
 
         public void ShowFor(string profileName)
         {
             profileNameLabel!.Value = profileName;
-
             JumpIntoWorldButton.interactable = true;
 
-            FinalizeAnimator.enabled = true;
-            FinalizeAnimator.ResetAnimator();
+            // FinalizeAnimator.enabled = true;
+            // FinalizeAnimator.ResetAnimator();
             FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
         }
+
+        public void FadeOut() =>
+            FinalizeAnimator.SetTrigger(UIAnimationHashes.OUT);
+
+        public void SlideBack() =>
+            FinalizeAnimator.SetTrigger(UIAnimationHashes.BACK);
     }
 }
