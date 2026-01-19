@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
+using DCL.Places;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;

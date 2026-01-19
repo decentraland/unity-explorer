@@ -1,3 +1,4 @@
+using DCL.Communities;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
-namespace DCL.Communities.CommunitiesCard.Places
+namespace DCL.Places
 {
     public class PlaceCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
