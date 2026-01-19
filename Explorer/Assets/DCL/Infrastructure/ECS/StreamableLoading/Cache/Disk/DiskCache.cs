@@ -1,3 +1,6 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
 using DCL.Utility.Types;
@@ -159,3 +162,5 @@ namespace ECS.StreamableLoading.Cache.Disk
             diskCache.RemoveAsync(key, extension, token);
     }
 }
+
+#endif

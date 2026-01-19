@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
@@ -96,3 +98,5 @@ namespace SceneRuntime.Factory.Tests
         }
     }
 }
+
+#endif

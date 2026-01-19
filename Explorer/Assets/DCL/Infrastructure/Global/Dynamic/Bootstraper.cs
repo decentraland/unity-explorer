@@ -238,7 +238,16 @@ Debug.Log("Bootstraper.cs:216");
             {
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
-                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer()));
+
+
+#if UNITY_WEBGL
+            var diskCacheInstance = IDiskCache<string>.Null.INSTANCE;
+#else
+            var diskCacheInstance = new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer());
+#endif
+
+
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, diskCacheInstance);
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(

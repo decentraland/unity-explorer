@@ -35,6 +35,8 @@ namespace Plugins.NativeAudioAnalysis.Playground
         [SerializeField]
         private float rotateByBpmSpeed = 10;
 
+#if !UNITY_WEBGL
+
         private Camera mainCamera = null!;
         private int sampleRate;
 
@@ -81,5 +83,7 @@ namespace Plugins.NativeAudioAnalysis.Playground
             // Amplitude
             amplitudeCenter.localScale = Vector3.one * lastAnalysis.amplitude * amplitudePower;
         }
+
+#endif
     }
 }

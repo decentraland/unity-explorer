@@ -17,6 +17,9 @@ namespace DCL.Tests
     [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
+        public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
+        public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
 
@@ -115,6 +118,12 @@ namespace DCL.Tests
             {
                 string line = lines[i];
 
+                if (line.Contains(TRUST_WEBGL_THREAD_SAFETY_FLAG))
+                    break;
+
+                if (line.Contains(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG))
+                    continue;
+
                 // Ignore namespace keyword
                 if (line.StartsWith("namespace")) 
                     continue;
@@ -131,7 +140,7 @@ namespace DCL.Tests
             }
 
             Assert.IsTrue(violations.Count == 0,
-                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}");
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nIf it's intendent use TRUST_WEBGL_THREAD_SAFETY_FLAG or IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG");
         }
 
         private static void AllAsyncMethodsShouldEndWithAsyncSuffix(SyntaxNode root, string fileContent, string filePath)

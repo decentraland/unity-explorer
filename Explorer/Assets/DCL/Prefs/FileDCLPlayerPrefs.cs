@@ -1,3 +1,4 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
 #if !UNITY_WEBGL
 
 using Newtonsoft.Json;

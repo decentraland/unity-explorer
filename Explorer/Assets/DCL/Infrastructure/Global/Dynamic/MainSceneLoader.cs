@@ -549,7 +549,7 @@ Debug.Log("MainSceneLoader.cs:362");
 #if UNITY_WEBGL
             ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
             return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-#endif
+#else
 
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
@@ -578,10 +578,16 @@ Debug.Log("MainSceneLoader.cs:362");
 
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
+#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+#if UNITY_WEBGL
+            ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
+            return new IDiskCache.Fake();
+#else
+
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
@@ -609,6 +615,7 @@ Debug.Log("MainSceneLoader.cs:362");
 
             var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
             return diskCache;
+#endif
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
