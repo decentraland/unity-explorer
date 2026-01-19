@@ -120,6 +120,7 @@ namespace DCL.SocialEmotes.UI
                 partitionComponent.IsBehind ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, 0.0f) ||
                 !emoteComponent.IsPlayingEmote ||
+                emoteComponent.Metadata is { IsSocialEmote: false } ||
                 emoteComponent.SocialEmote.IsPlayingOutcome)
             {
                 pinsPool.Release(pin);
