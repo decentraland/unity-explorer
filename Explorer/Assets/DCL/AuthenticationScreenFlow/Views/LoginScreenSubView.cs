@@ -62,21 +62,11 @@ namespace DCL.AuthenticationScreenFlow
 
         public void SlideIn()
         {
-            // loginAnimator.enabled = true;
-            loginAnimator.ResetAnimator();
             loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, true);
 
-            canvasGroup.alpha = 1;
             canvasGroup.interactable = true;
-            loadingSpinner.SetActive(false);
             mainElementsPanel.SetActive(true);
-
-            // MetamaskLoginButton.gameObject.SetActive(true);
-            // MetamaskLoginButton.interactable = true;
-            // GoogleLoginButton.gameObject.SetActive(true);
-            // GoogleLoginButton.interactable = true;
-            // MoreOptionsButton.gameObject.SetActive(true);
-            // moreOptionsPanel.SetActive(true);
+            loadingSpinner.SetActive(false);
 
             areOptionsExpanded = false;
             SetOptionsPanelVisibility(isExpanded: false);
@@ -85,11 +75,10 @@ namespace DCL.AuthenticationScreenFlow
         // Anim-OUT non-interactable Login Screen
         public void SlideOut()
         {
-            loginAnimator.ResetAnimator();
             loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, false);
-            canvasGroup.interactable = false;
 
-            mainElementsPanel.SetActive(true);
+            canvasGroup.interactable = false;
+            mainElementsPanel.SetActive(false);
             loadingSpinner.SetActive(false);
         }
 
@@ -97,13 +86,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             mainElementsPanel.SetActive(false);
             loadingSpinner.SetActive(true);
-
-            // MetamaskLoginButton.gameObject.SetActive(false);
-            // MetamaskLoginButton.interactable = false;
-            // GoogleLoginButton.gameObject.SetActive(false);
-            // GoogleLoginButton.interactable = false;
-            // MoreOptionsButton.gameObject.SetActive(false);
-            // moreOptionsPanel.SetActive(false);
         }
     }
 }

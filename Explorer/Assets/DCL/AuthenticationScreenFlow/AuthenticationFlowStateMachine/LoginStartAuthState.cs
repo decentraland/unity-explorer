@@ -53,16 +53,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void LoginWithMetamask() =>
-            Login(LoginMethod.METAMASK);
-
-        private void LoginWithGoogle() =>
-            Login(LoginMethod.GOOGLE);
-
         public void Enter()
         {
             if (machine.PreviousState is InitAuthScreenState)
-                splashScreen.Hide();
+                splashScreen.FadeOutAndHide();
 
             currentState.Value = AuthenticationStatus.Login;
 
@@ -103,6 +97,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             // ThirdWeb
             subView.EmailInputField.Submitted -= OTPLogin;
         }
+
+        private void LoginWithMetamask() =>
+            Login(LoginMethod.METAMASK);
+
+        private void LoginWithGoogle() =>
+            Login(LoginMethod.GOOGLE);
 
         private void Login(LoginMethod method)
         {

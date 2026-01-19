@@ -236,7 +236,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 100
+  m_SortingOrder: 1000
   m_TargetDisplay: 0
 --- !u!114 &6219470281071135800
 MonoBehaviour:
@@ -442,3 +442,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 38ca2c3d47c97f344863c052f7bbcd36, type: 3}
   logoImage: {fileID: 8354813399403747781}
   splashScreenAnimation: {fileID: 0}
+  canvasGroup: {fileID: 9118856676628164743}

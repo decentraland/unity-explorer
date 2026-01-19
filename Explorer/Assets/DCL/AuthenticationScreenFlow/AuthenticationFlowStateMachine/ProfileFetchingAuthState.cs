@@ -48,7 +48,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             if (machine.PreviousState is InitAuthScreenState)
-                splashScreen.Hide();
+                splashScreen.FadeOutAndHide();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)

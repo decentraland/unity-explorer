@@ -62,9 +62,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             CancelVerificationCountdown();
 
             viewInstance.VerificationCodeHintContainer.SetActive(false);
-            viewInstance.VerificationContainer.SetActive(false);
-
-            viewInstance.LoginScreenSubView.gameObject.SetActive(false);
 
             // Listeners
             viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
@@ -90,35 +87,41 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 web3Authenticator.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(method, ct);
 
+                viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.OUT);
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }
             catch (OperationCanceledException)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                viewInstance.VerificationAnimator.SetTrigger(BACK_ANIM_HASH);
                 machine.Enter<LoginStartAuthState>();
             }
             catch (SignatureExpiredException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                viewInstance.VerificationAnimator.SetTrigger(BACK_ANIM_HASH);
                 machine.Enter<LoginStartAuthState>();
             }
             catch (Web3SignatureException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                viewInstance.VerificationAnimator.SetTrigger(BACK_ANIM_HASH);
                 machine.Enter<LoginStartAuthState>();
             }
             catch (CodeVerificationException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                viewInstance.VerificationAnimator.SetTrigger(BACK_ANIM_HASH);
                 machine.Enter<LoginStartAuthState>();
             }
             catch (Exception e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                viewInstance.VerificationAnimator.SetTrigger(BACK_ANIM_HASH);
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             finally
@@ -126,6 +129,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                web3Authenticator.VerificationRequired -= ShowVerification;
             }
         }
+
+        private static readonly int BACK_ANIM_HASH = Animator.StringToHash("Back");
 
         private void RestoreResolutionAndScreenMode()
         {
