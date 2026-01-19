@@ -238,30 +238,58 @@ namespace DCL.Backpack.BackpackBus
             currentEmoteSlot = command.Slot;
             backpackEventBus.SendEmoteSlotSelect(command.Slot);
         }
-        
+
         private async UniTaskVoid EquipOutfitAsync(BackpackEquipOutfitCommand command, CancellationToken ct)
         {
-            try 
+            try
             {
-                var urns = new List<URN>();
-                if (!string.IsNullOrEmpty(command.BodyShape))
-                    urns.Add(new URN(command.BodyShape));
-                
-                foreach (var w in command.Wearables)
-                    urns.Add(new URN(w));
-
-                await wearablesProvider.RequestPointersAsync(urns, BodyShape.MALE, ct);
-
                 var resolvedWearables = new List<IWearable>();
-                foreach (var urn in urns)
+                var missingUrns = new List<URN>();
+
+                void TryAdd(string urn)
                 {
+                    if (string.IsNullOrEmpty(urn)) return;
+
                     if (wearableStorage.TryGetElement(urn, out IWearable w))
+                    {
                         resolvedWearables.Add(w);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            missingUrns.Add(new URN(urn));
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogError(ReportCategory.BACKPACK, $"Invalid URN in outfit: {urn}. Error: {e.Message}");
+                        }
+                    }
                 }
 
-                backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
+                TryAdd(command.BodyShape);
+
+                foreach (var w in command.Wearables)
+                    TryAdd(w);
+
+                if (missingUrns.Count > 0)
+                {
+                    var fetched = 
+                        await wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.MALE, ct);
+
+                    if (fetched != null)
+                        resolvedWearables.AddRange(fetched);
+                }
+
+                if (!ct.IsCancellationRequested)
+                {
+                    backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
+                }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                // Correctly swallowed: The user switched outfits, so we abort this one.
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));

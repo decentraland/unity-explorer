@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -64,7 +63,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 // it sees the correct (original) data, avoiding race conditions.
                 RestoreDataStateSynchronously();
 
-                // 2. Trigger the visual update (Async via Event Bus).
+                //  2. Trigger the visual update (Async via Event Bus).
                 // This updates the 3D preview and UI to match the data we just restored.
                 outfitApplier.Apply(originalOutfit);
             }
