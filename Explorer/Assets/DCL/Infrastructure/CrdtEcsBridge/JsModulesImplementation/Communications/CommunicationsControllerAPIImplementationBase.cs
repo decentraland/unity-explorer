@@ -59,13 +59,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        public void SendBinary(IEnumerable<ITypedArray<byte>> broadcastData, string? recipient = null)
+        public void SendBinary(IEnumerable<IPoolableByteArray> broadcastData, string? recipient = null)
         {
             // Authoritative multiplayer enforces sending messages to the special peer
             if (sceneData.SceneEntityDefinition.metadata.authoritativeMultiplayer)
                 recipient = "authoritative-server";
 
-            foreach (ITypedArray<byte> data in broadcastData)
+            foreach (IPoolableByteArray data in broadcastData)
                 if (data.Length > 0)
                 {
                     int length = (int) data.Length;

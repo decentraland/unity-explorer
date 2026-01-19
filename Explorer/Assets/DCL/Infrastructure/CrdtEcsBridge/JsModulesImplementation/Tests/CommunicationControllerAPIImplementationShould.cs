@@ -64,19 +64,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             // Generate random array of arrays
 
-            var outerArray = new List<TestArray>(outerArraySize);
+            var outerArray = new List<IPoolableByteArray>(outerArraySize);
 
             for (var i = 0; i < outerArraySize; i++)
             {
                 byte[] messages = GetRandomMessagesSequence(innerArrayMessagesCount);
-                outerArray.Add(new TestArray(messages));
+                outerArray.Add(new PoolableByteArray(messages, messages.Length, null));
             }
 
             api.SendBinary(outerArray);
             api.GetResult();
 
             var expectedCalls = outerArray
-                               .Select(o => o.Array
+                               .Select(o => o.CloneAsArray()
                                              .Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array)
                                              .Take(o.Length + 1))
                                .ToList();
@@ -171,8 +171,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtBody.Write(contentLength); // content length
             crdtBody = crdtBody.Slice(contentLength);
 
-            var inputs = new List<TestArray>();
-            var s = new TestArray(crdtMessage);
+            var inputs = new List<IPoolableByteArray>();
+            var s = new PoolableByteArray(crdtMessage, crdtMessage.Length, null);
             inputs.Add(s);
 
             api.SendBinary(inputs);
@@ -262,8 +262,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             addressBytes.CopyTo(resSpan.Slice(2));
             crdtData.CopyTo(resSpan.Slice(2 + addressLength));
 
-            var inputs = new List<TestArray>();
-            var s = new TestArray(resMessage);
+            var inputs = new List<IPoolableByteArray>();
+            var s = new PoolableByteArray(resMessage, resMessage.Length, null);
             inputs.Add(s);
 
 

@@ -3,44 +3,113 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using CrdtEcsBridge.PoolsProviders;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>
     {
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
-        private readonly List<ITypedArray<byte>> lastInput = new ();
 
         public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
             this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
-        protected override void DisposeInternal()
+        // avoid copying, just iterator over the dataList
+        private struct PoolableByteArrayListWrap : IEnumerable<IPoolableByteArray>
         {
-            // clear GC references to remain objects in the list
-            lastInput.Clear();
+            private IList<object> origin;
+
+            public PoolableByteArrayListWrap(IList<object> origin)
+            {
+                this.origin = origin;
+            }
+
+            public Enumerator GetEnumerator() => new Enumerator(origin);
+
+            IEnumerator<IPoolableByteArray> IEnumerable<IPoolableByteArray>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            public struct Enumerator : IEnumerator<IPoolableByteArray>
+            {
+                private readonly IList<object> origin;
+                private int index;
+
+                public Enumerator(IList<object> origin)
+                {
+                    this.origin = origin;
+                    index = -1;
+                }
+
+                public IPoolableByteArray Current => new PoolableArrayOverTypedArray(origin[index]);
+                object IEnumerator.Current => Current;
+
+                public bool MoveNext()
+                {
+                    index++;
+                    return index < origin.Count;
+                }
+
+                public void Reset() => index = -1;
+                public void Dispose() { }
+            }
+        }
+
+        private struct PoolableArrayOverTypedArray : IPoolableByteArray
+        {
+            private ITypedArray<byte> origin;
+
+            public PoolableArrayOverTypedArray(object origin)
+            {
+                this.origin = (ITypedArray<byte>) origin;
+            }
+
+            public int Length => (int) origin.Length;
+
+
+            public void InvokeWithDirectAccess<TArgs>(Action<IntPtr, TArgs> action, in TArgs args)
+            {
+                origin.InvokeWithDirectAccess(action, args);
+            }
+
+            public byte[] CloneAsArray()
+            {
+                var result = new byte[Length];
+
+                origin.InvokeWithDirectAccess(
+                        static (ptr, state) =>
+                        {
+                        System.Runtime.InteropServices.Marshal.Copy(ptr, state.Buffer, 0, state.Length);
+                        },
+                        new CopyState(result, result.Length)
+                        );
+
+                return result;
+            }
+
+            private readonly struct CopyState
+            {
+                public readonly byte[] Buffer;
+                public readonly int Length;
+
+                public CopyState(byte[] buffer, int length)
+                {
+                    Buffer = buffer;
+                    Length = length;
+                }
+            }
         }
 
         private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
         {
             try
             {
-                for (int i = 0; i < dataList.Count; i++)
-                {
-                    ITypedArray<byte> item = (ITypedArray<byte>) dataList[i];
-                    if (lastInput.Count <= i) lastInput.Add(item);
-                    else lastInput[i] = item;
-                }
-
-                // Remove excess elements
-                int excess = lastInput.Count - dataList.Count;
-                // lastInput doesn't own the ITypedArray objects, disposal is not required
-                if (excess > 0) lastInput.RemoveRange(dataList.Count, excess);
-
-                api.SendBinary(lastInput, recipient);
+                var wrap = new PoolableByteArrayListWrap(dataList);
+                api.SendBinary(wrap, recipient);
             }
             catch (Exception e)
             {

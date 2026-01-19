@@ -23,6 +23,7 @@ namespace SceneRuntime.Editor
 {
     public class EngineAPIWrapperEditorPerformanceTest : MonoBehaviour
     {
+        /*
         public enum Mode
         {
             NEW,
@@ -40,7 +41,7 @@ namespace SceneRuntime.Editor
 
         private EngineApiWrapper target = null!; // setup in Start()
         private byte[] array = Array.Empty<byte>();
-        private TestArray testArray = null!;
+        private PoolableByteArray testArray = default!;
         private IInstancePoolsProvider instancePoolsProvider = null!;
 
         private void Start()
@@ -61,7 +62,7 @@ namespace SceneRuntime.Editor
             if (arraySize != array.Length)
             {
                 byte[] array = new byte[arraySize];
-                testArray = new TestArray(array);
+                testArray = new PoolableByteArray(array, array.Length, null);
             }
 
             using var _ = Marker.Auto();
@@ -76,6 +77,7 @@ namespace SceneRuntime.Editor
                         break;
                 }
         }
+        */
     }
 }
 
