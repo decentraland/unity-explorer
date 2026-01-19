@@ -9,6 +9,7 @@ using ECS.TestSuite;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
@@ -29,7 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(Label), new ComponentPool.WithDefaultCtor<Label>() },
                 }, null);
 
-            system = new UITextInstantiationSystem(world, poolsRegistry);
+            system = new UITextInstantiationSystem(world, poolsRegistry, default);
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }

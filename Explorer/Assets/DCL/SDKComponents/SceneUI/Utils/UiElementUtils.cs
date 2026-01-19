@@ -7,6 +7,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using System.Linq;
 using UnityEngine;
+using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -169,7 +170,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             visualElementToSetup.style.opacity = model.HasOpacity ? model.Opacity : 1;
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
@@ -179,15 +180,23 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
+            switch (model.GetFont())
+            {
+                case Font.FSerif:
+                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[1];
+                    break;
+                case Font.FMonospace:
+                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[2];
+                    break;
+                default: // FSansSerif
+                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[0];
+                    break;
+            }
 
             if (model.HasTextWrap)
-            {
                 labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
-            }
             else
-            {
                 labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
-            }
         }
 
         public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture? texture = null)

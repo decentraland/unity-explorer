@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 
 namespace DCL.PluginSystem.World
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.World
         private readonly IInputBlock inputBlock;
 
         private UIDocument uiDocument = null!;
+        private StyleFontDefinition[] styleFontDefinitions;
 
         public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
         {
@@ -64,6 +66,13 @@ namespace DCL.PluginSystem.World
 
             uiDocument.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             uiDocument.rootVisualElement.pickingMode = PickingMode.Ignore;
+
+            styleFontDefinitions = new[]
+            {
+                new StyleFontDefinition(settings.FontSansSerif),
+                new StyleFontDefinition(settings.FontSerif),
+                new StyleFontDefinition(settings.FontMonospace)
+            };
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -78,7 +87,7 @@ namespace DCL.PluginSystem.World
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, uiDocument, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, styleFontDefinitions);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
@@ -97,6 +106,9 @@ namespace DCL.PluginSystem.World
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public UIDocumentRef ScenesUIDocument { get; private set; } = null!;
+            [field: SerializeField] public FontAsset FontSansSerif { get; private set; } = null!;
+            [field: SerializeField] public FontAsset FontSerif { get; private set; } = null!;
+            [field: SerializeField] public FontAsset FontMonospace { get; private set; } = null!;
         }
     }
 }
