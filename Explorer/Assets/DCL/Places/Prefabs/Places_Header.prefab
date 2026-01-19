@@ -1087,6 +1087,10 @@ PrefabInstance:
       propertyPath: m_text
       value: Favorites
       objectReference: {fileID: 0}
+    - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 60defcb96542e40b2a0f4911a4a52d5c, type: 3}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1225,6 +1229,10 @@ PrefabInstance:
       propertyPath: m_text
       value: Recently Visited
       objectReference: {fileID: 0}
+    - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c48cc051b46944243bf7957e419bd404, type: 3}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1585,6 +1593,10 @@ PrefabInstance:
       propertyPath: m_text
       value: Browse
       objectReference: {fileID: 0}
+    - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 90d262106259840f8aeaf1a330ea2b15, type: 3}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1715,6 +1727,10 @@ PrefabInstance:
       propertyPath: m_text
       value: My Places
       objectReference: {fileID: 0}
+    - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68a7e1982a1bb42b697e168ac98783d1, type: 3}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
