@@ -4,6 +4,7 @@ using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.AssetLoad.Systems;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.PluginSystem.World
@@ -18,6 +19,11 @@ namespace DCL.PluginSystem.World
         {
             this.globalDeps = globalDeps;
             this.assetLoadCache = assetLoadCache;
+        }
+
+        public void Dispose()
+        {
+            assetLoadCache.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
