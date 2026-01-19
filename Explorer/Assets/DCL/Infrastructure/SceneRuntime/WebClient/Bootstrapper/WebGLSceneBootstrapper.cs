@@ -147,7 +147,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 // In WebGL, StreamingAssets are served via HTTP, so we need HTTP URLs
                 // But CreateSceneFromFileAsync might have issues with the URL format
                 Debug.Log($"[WebGLSceneBootstrapper] Calling CreateSceneFromFileAsync with URL: {sceneUrl}");
-                
+
                 // Log what CreateSceneFromFileAsync will extract
                 int lastSlash = sceneUrl.LastIndexOf("/", StringComparison.Ordinal);
                 if (lastSlash > 0)
@@ -157,7 +157,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                     Debug.Log($"[WebGLSceneBootstrapper] Will extract base URL: {extractedBaseUrl}");
                     Debug.Log($"[WebGLSceneBootstrapper] Will extract main path: {extractedMainPath}");
                 }
-                
+
                 try
                 {
                     sceneFacade = await sceneFactory.CreateSceneFromFileAsync(
@@ -174,16 +174,11 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 }
 
                 Debug.Log($"[WebGLSceneBootstrapper] Initializing Scene Facade");
-                // Initialize scene
-                await UniTask.SwitchToMainThread();
                 sceneFacade.Initialize();
 
                 Debug.Log($"[WebGLSceneBootstrapper] Starting Scene");
-                // Start scene
-                await UniTask.SwitchToThreadPool();
                 await sceneFacade.StartScene();
 
-                await UniTask.SwitchToMainThread();
                 isInitialized = true;
                 Debug.Log($"[WebGLSceneBootstrapper] Scene from '{sceneUrl}' loaded and started successfully");
             }

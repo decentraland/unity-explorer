@@ -55,5 +55,30 @@ namespace SceneRuntime.WebClient
                 return Encoding.UTF8.GetString(buffer);
             }
         }
+        
+        /// <summary>
+        /// Reads a null-terminated UTF8 string from an unmanaged pointer.
+        /// </summary>
+        public static unsafe string PtrToStringUTF8(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero)
+                return string.Empty;
+            
+            // Find the null terminator to determine length
+            byte* p = (byte*)ptr.ToPointer();
+            int length = 0;
+            while (p[length] != 0)
+            {
+                length++;
+                // Safety limit to prevent infinite loop
+                if (length > 1024 * 1024)
+                    break;
+            }
+            
+            if (length == 0)
+                return string.Empty;
+            
+            return PtrToStringUTF8(ptr, length);
+        }
     }
 }

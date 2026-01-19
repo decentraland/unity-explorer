@@ -1,9 +1,12 @@
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using AOT;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 namespace SceneRuntime.WebClient
 {
@@ -11,6 +14,9 @@ namespace SceneRuntime.WebClient
     {
         internal readonly string contextId;
         private bool disposed;
+        
+        // Static flag to track if callback is registered
+        private static bool s_callbackRegistered;
 
         public IDCLScriptObject Global
         {
@@ -24,6 +30,14 @@ namespace SceneRuntime.WebClient
         public WebClientJavaScriptEngine(string contextId)
         {
             this.contextId = contextId;
+            
+            // Register the callback once on first engine creation
+            if (!s_callbackRegistered)
+            {
+                JSContext_RegisterHostObjectCallback(InvokeHostObjectMethod);
+                s_callbackRegistered = true;
+            }
+            
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
 
             try
@@ -34,6 +48,53 @@ namespace SceneRuntime.WebClient
                     throw new InvalidOperationException($"Failed to create JavaScript context {contextId}");
             }
             finally { Marshal.FreeHGlobal(contextIdPtr); }
+        }
+        
+        // Delegate type for the callback
+        private delegate void HostObjectCallbackDelegate(IntPtr contextId, IntPtr objectId, IntPtr methodName, IntPtr argsJson);
+        
+        /// <summary>
+        /// Static callback that JavaScript can invoke when it needs to call a method on a registered host object.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(HostObjectCallbackDelegate))]
+        private static void InvokeHostObjectMethod(IntPtr contextIdPtr, IntPtr objectIdPtr, IntPtr methodNamePtr, IntPtr argsJsonPtr)
+        {
+            try
+            {
+                string contextId = Utf8Marshal.PtrToStringUTF8(contextIdPtr);
+                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr);
+                string methodName = Utf8Marshal.PtrToStringUTF8(methodNamePtr);
+                string argsJson = Utf8Marshal.PtrToStringUTF8(argsJsonPtr);
+                
+                object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
+                if (hostObject == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
+                    return;
+                }
+                
+                // Find and invoke the method
+                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+                if (method == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
+                    return;
+                }
+                
+                // Parse arguments
+                object?[]? args = null;
+                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
+                {
+                    args = JsonConvert.DeserializeObject<object?[]>(argsJson);
+                }
+                
+                // Invoke the method
+                method.Invoke(hostObject, args);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method: {ex}");
+            }
         }
 
         public void Dispose()
@@ -443,6 +504,9 @@ namespace SceneRuntime.WebClient
 
         [DllImport("__Internal")]
         private static extern int JSContext_StoreObject(IntPtr contextId, IntPtr expression, IntPtr objectId, int objectIdSize);
+        
+        [DllImport("__Internal")]
+        private static extern void JSContext_RegisterHostObjectCallback(HostObjectCallbackDelegate callback);
     }
 
     public class WebGLCompiledScript : ICompiledScript

@@ -1,4 +1,13 @@
 mergeInto(LibraryManager.library, {
+    // Global storage for the host object callback function pointer
+    $hostObjectCallback: null,
+    
+    // Register the callback function that will be used to invoke host object methods
+    JSContext_RegisterHostObjectCallback: function(callback) {
+        hostObjectCallback = callback;
+    },
+    JSContext_RegisterHostObjectCallback__deps: ['$hostObjectCallback'],
+    
     JSContext_Create: function(contextId) {
         const contextIdStr = UTF8ToString(contextId);
         if (!window.__dclJSContexts) {
@@ -114,8 +123,12 @@ mergeInto(LibraryManager.library, {
             const wrappedCode = globalAssignments + '\n' + codeStr;
             const func = new Function('globalThis', 'require', wrappedCode);
             func(context.global, function(moduleName) {
-                if (context.compiledScripts[moduleName]) {
-                    return context.compiledScripts[moduleName]();
+                const compiledData = context.compiledScripts[moduleName];
+                if (compiledData && compiledData.source) {
+                    // Evaluate with globals exposed
+                    const innerCode = globalAssignments + '\nreturn ' + compiledData.source;
+                    const innerFunc = new Function('globalThis', '__require', innerCode);
+                    return innerFunc(context.global, function() { return {}; });
                 }
                 return {};
             });
@@ -134,8 +147,14 @@ mergeInto(LibraryManager.library, {
         if (!context) return 0;
         
         try {
-            const func = new Function('globalThis', 'require', codeStr);
-            context.compiledScripts[scriptIdStr] = func;
+            // Store both the source code and a basic compiled function
+            // The source code is needed for proper evaluation with globals exposed
+            // The code is typically a function expression like: (function(exports, require, module, ...) { ... })
+            context.compiledScripts[scriptIdStr] = {
+                source: codeStr,
+                // Also create a basic compiled function for fallback
+                func: new Function('globalThis', 'require', 'return ' + codeStr)
+            };
             return 1;
         } catch (e) {
             console.error('JSContext_Compile error:', e);
@@ -198,11 +217,28 @@ mergeInto(LibraryManager.library, {
         if (!context) return 0;
         
         try {
-            if (!context.compiledScripts[scriptIdStr]) return 0;
-            const func = context.compiledScripts[scriptIdStr];
-            const result = func(context.global, function(moduleName) {
-                if (context.compiledScripts[moduleName]) {
-                    return context.compiledScripts[moduleName]();
+            const compiledData = context.compiledScripts[scriptIdStr];
+            if (!compiledData) return 0;
+            
+            // Expose globals as local variables
+            const globalObj = context.global;
+            const globalKeys = Object.keys(globalObj);
+            const globalAssignments = globalKeys.map(key => {
+                if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+                    return `var ${key} = __globalThis['${key.replace(/'/g, "\\'")}'];`;
+                }
+                return '';
+            }).filter(a => a.length > 0).join('\n');
+            
+            const evalCode = globalAssignments + '\nreturn ' + compiledData.source;
+            const evalFunc = new Function('__globalThis', '__require', evalCode);
+            
+            const result = evalFunc(globalObj, function(moduleName) {
+                const moduleData = context.compiledScripts[moduleName];
+                if (moduleData) {
+                    const innerEvalCode = globalAssignments + '\nreturn ' + moduleData.source;
+                    const innerEvalFunc = new Function('__globalThis', '__require', innerEvalCode);
+                    return innerEvalFunc(globalObj);
                 }
                 return {};
             });
@@ -233,22 +269,7 @@ mergeInto(LibraryManager.library, {
         }
     },
     
-    // Internal helper function to evaluate a compiled script and return the result directly
-    // This is used by the UnityOpsApi proxy for LoadAndEvaluateCode
-    $evaluateCompiledScriptInternal: function(context, scriptId) {
-        if (!context.compiledScripts[scriptId]) return null;
-        const func = context.compiledScripts[scriptId];
-        const result = func(context.global, function(moduleName) {
-            // Look up the module in the registered modules
-            const moduleScriptId = context.modules[moduleName];
-            if (moduleScriptId && context.compiledScripts[moduleScriptId]) {
-                return context.compiledScripts[moduleScriptId](context.global);
-            }
-            return {};
-        });
-        return result;
-    },
-    
+    JSContext_AddHostObject__deps: ['$hostObjectCallback'],
     JSContext_AddHostObject: function(contextId, name, objectId) {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
@@ -258,8 +279,44 @@ mergeInto(LibraryManager.library, {
         
         context.hostObjects[objectIdStr] = nameStr;
         
-        // Create a proxy that handles UnityOpsApi methods directly in JavaScript
-        // This avoids the need for JS->C# callbacks which don't work with Module.ccall
+        // Helper function to call the registered C# callback for host object method invocation
+        const invokeHostObjectCallback = function(methodName, args) {
+            if (!hostObjectCallback) {
+                console.warn('[JSContext] No host object callback registered');
+                return;
+            }
+            
+            // Allocate strings on the heap for the callback
+            const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
+            const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
+            const methodNameLen = lengthBytesUTF8(methodName) + 1;
+            const argsJson = JSON.stringify(args || []);
+            const argsJsonLen = lengthBytesUTF8(argsJson) + 1;
+            
+            const contextIdPtr = _malloc(contextIdLen);
+            const objectIdPtr = _malloc(objectIdLen);
+            const methodNamePtr = _malloc(methodNameLen);
+            const argsJsonPtr = _malloc(argsJsonLen);
+            
+            try {
+                stringToUTF8(contextIdStr, contextIdPtr, contextIdLen);
+                stringToUTF8(objectIdStr, objectIdPtr, objectIdLen);
+                stringToUTF8(methodName, methodNamePtr, methodNameLen);
+                stringToUTF8(argsJson, argsJsonPtr, argsJsonLen);
+                
+                // Call the registered C# callback
+                {{{ makeDynCall('viiii', 'hostObjectCallback') }}}(contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr);
+            } finally {
+                _free(contextIdPtr);
+                _free(objectIdPtr);
+                _free(methodNamePtr);
+                _free(argsJsonPtr);
+            }
+        };
+        
+        // Create a proxy that handles host object methods
+        // Different objects get different stub implementations
+        const hostObjectName = nameStr;
         const hostObjectProxy = new Proxy({}, {
             get: function(target, prop, receiver) {
                 const methodName = String(prop);
@@ -267,41 +324,160 @@ mergeInto(LibraryManager.library, {
                 // Return a function for any property access
                 return function(...args) {
                     try {
-                        // Handle LoadAndEvaluateCode by looking up pre-registered modules
-                        if (methodName === 'LoadAndEvaluateCode') {
-                            const moduleName = args[0];
-                            const scriptId = context.modules[moduleName];
-                            if (!scriptId) {
-                                console.warn('Module not found:', moduleName);
-                                return null;
+                        // === UnityOpsApi methods ===
+                        if (hostObjectName === 'UnityOpsApi') {
+                            // Handle LoadAndEvaluateCode by looking up pre-registered modules
+                            if (methodName === 'LoadAndEvaluateCode') {
+                                const moduleName = args[0];
+                                const scriptId = context.modules[moduleName];
+                                if (!scriptId) {
+                                    console.warn('Module not found:', moduleName);
+                                    return null;
+                                }
+                                const compiledData = context.compiledScripts[scriptId];
+                                if (!compiledData) {
+                                    console.warn('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
+                                    return null;
+                                }
+                                
+                                // Evaluate the module with globals exposed as local variables
+                                // This allows modules to access UnityEngineApi, etc. directly
+                                const globalObj = context.global;
+                                const globalKeys = Object.keys(globalObj);
+                                const globalAssignments = globalKeys.map(key => {
+                                    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+                                        return `var ${key} = __globalThis['${key.replace(/'/g, "\\'")}'];`;
+                                    }
+                                    return '';
+                                }).filter(a => a.length > 0).join('\n');
+                                
+                                // Create evaluation function with globals exposed
+                                const evalCode = globalAssignments + '\nreturn ' + compiledData.source;
+                                const evalFunc = new Function('__globalThis', '__require', evalCode);
+                                
+                                const internalRequire = function(innerModuleName) {
+                                    const innerScriptId = context.modules[innerModuleName];
+                                    const innerData = innerScriptId ? context.compiledScripts[innerScriptId] : null;
+                                    if (innerData) {
+                                        // Recursively evaluate with globals
+                                        const innerEvalCode = globalAssignments + '\nreturn ' + innerData.source;
+                                        const innerEvalFunc = new Function('__globalThis', '__require', innerEvalCode);
+                                        return innerEvalFunc(globalObj, internalRequire);
+                                    }
+                                    return {};
+                                };
+                                
+                                return evalFunc(globalObj, internalRequire);
                             }
-                            // Evaluate the pre-compiled script and return the function
-                            if (!context.compiledScripts[scriptId]) {
-                                console.warn('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
-                                return null;
-                            }
-                            return context.compiledScripts[scriptId];
+                            if (methodName === 'Log') { console.log('[Scene]', args[0]); return null; }
+                            if (methodName === 'Warning') { console.warn('[Scene]', args[0]); return null; }
+                            if (methodName === 'Error') { console.error('[Scene]', args[0]); return null; }
                         }
                         
-                        // Handle logging methods by routing to JavaScript console
-                        if (methodName === 'Log') {
-                            console.log(args[0]);
-                            return null;
+                        // === UnityEngineApi methods (STUB) ===
+                        if (hostObjectName === 'UnityEngineApi') {
+                            // CrdtGetState returns empty byte array (no initial state)
+                            if (methodName === 'CrdtGetState') {
+                                return { data: new Uint8Array(0), IsEmpty: true };
+                            }
+                            // CrdtSendToRenderer accepts data and returns empty response
+                            if (methodName === 'CrdtSendToRenderer') {
+                                // Log that we received CRDT data (for debugging)
+                                console.log('[STUB] CrdtSendToRenderer received data');
+                                return { data: new Uint8Array(0), IsEmpty: true };
+                            }
+                            // SendBatch returns null
+                            if (methodName === 'SendBatch') {
+                                return null;
+                            }
                         }
-                        if (methodName === 'Warning') {
-                            console.warn(args[0]);
-                            return null;
-                        }
-                        if (methodName === 'Error') {
-                            console.error(args[0]);
+                        
+                        // === UnitySceneApi methods (STUB) ===
+                        if (hostObjectName === 'UnitySceneApi') {
+                            // Most scene API methods can return empty/default values
+                            console.log('[STUB] UnitySceneApi.' + methodName + ' called');
                             return null;
                         }
                         
-                        // For any other method, log a warning
-                        console.warn('Unknown UnityOpsApi method called:', methodName, 'args:', args);
+                        // === CommsApi methods (STUB) ===
+                        if (hostObjectName === 'CommsApi') {
+                            console.log('[STUB] CommsApi.' + methodName + ' called');
+                            return null;
+                        }
+                        
+                        // === UnityRestrictedActionsApi methods (STUB) ===
+                        if (hostObjectName === 'UnityRestrictedActionsApi') {
+                            console.log('[STUB] UnityRestrictedActionsApi.' + methodName + ' called');
+                            return Promise.resolve(null);
+                        }
+                        
+                        // === UnityEthereumApi methods (STUB) ===
+                        if (hostObjectName === 'UnityEthereumApi') {
+                            console.log('[STUB] UnityEthereumApi.' + methodName + ' called');
+                            return Promise.resolve(null);
+                        }
+                        
+                        // === UnityUserIdentityApi methods (STUB) ===
+                        if (hostObjectName === 'UnityUserIdentityApi') {
+                            console.log('[STUB] UnityUserIdentityApi.' + methodName + ' called');
+                            return Promise.resolve({ userId: 'stub-user-id', isGuest: true });
+                        }
+                        
+                        // === UnityWebSocketApi methods (STUB) ===
+                        if (hostObjectName === 'UnityWebSocketApi') {
+                            console.log('[STUB] UnityWebSocketApi.' + methodName + ' called');
+                            return null;
+                        }
+                        
+                        // === UnityCommunicationsControllerApi methods (STUB) ===
+                        if (hostObjectName === 'UnityCommunicationsControllerApi') {
+                            console.log('[STUB] UnityCommunicationsControllerApi.' + methodName + ' called');
+                            return null;
+                        }
+                        
+                        // === UnitySimpleFetchApi methods (STUB) ===
+                        if (hostObjectName === 'UnitySimpleFetchApi') {
+                            console.log('[STUB] UnitySimpleFetchApi.' + methodName + ' called');
+                            return Promise.resolve({ ok: true, status: 200, body: '{}' });
+                        }
+                        
+                        // === UnitySDKMessageBusCommsControllerApi methods (STUB) ===
+                        if (hostObjectName === 'UnitySDKMessageBusCommsControllerApi') {
+                            console.log('[STUB] UnitySDKMessageBusCommsControllerApi.' + methodName + ' called');
+                            return null;
+                        }
+                        
+                        // === UnityPortableExperiencesApi methods (STUB) ===
+                        if (hostObjectName === 'UnityPortableExperiencesApi') {
+                            console.log('[STUB] UnityPortableExperiencesApi.' + methodName + ' called');
+                            return Promise.resolve(null);
+                        }
+                        
+                        // === __resetableSource (internal) ===
+                        // This must call back to C# to signal completion/rejection
+                        if (hostObjectName === '__resetableSource') {
+                            if (methodName === 'Completed') {
+                                // Call the C# Completed() method via callback
+                                invokeHostObjectCallback('Completed', []);
+                                return;
+                            }
+                            if (methodName === 'Reject') {
+                                console.error('[Scene Error]', args[0]);
+                                // Call the C# Reject() method via callback
+                                invokeHostObjectCallback('Reject', [args[0]]);
+                                return;
+                            }
+                            if (methodName === 'Reset') {
+                                // Reset is called from C# side, no need to call back
+                                return;
+                            }
+                        }
+                        
+                        // === Default: log and return null ===
+                        console.warn('[STUB] Unknown method called:', hostObjectName + '.' + methodName, 'args:', args);
                         return null;
                     } catch (e) {
-                        console.error('Error in host object method call:', methodName, e);
+                        console.error('Error in host object method call:', hostObjectName + '.' + methodName, e);
                         throw e;
                     }
                 };
