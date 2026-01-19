@@ -102,7 +102,17 @@ namespace DCL.AvatarRendering.Emotes
                         if (remoteEmoteIntention.IsStopping)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=cyan>STOP SIGNAL emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
-                            World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+
+                            if (World.Get<CharacterEmoteComponent>(entry.Entity).IsPlayingEmote) // It may occur that a stop message arrives while the asset bundle of the emote have not been downloaded yet
+                            {
+                                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() IsPlayingEmote");
+
+                                if(World.Has<StopEmoteIntent>(entry.Entity))
+                                    World.Set(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+                                else
+                                    World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+                            }
+
                             return;
                         }
 
