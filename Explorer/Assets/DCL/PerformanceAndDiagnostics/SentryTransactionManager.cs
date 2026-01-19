@@ -33,7 +33,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
 
-            ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
+            ITransactionTracer transactionTracer = Sentry.Unity.SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
 
             if (transactionData.Tags != null)
                 transactionTracer.SetTags(transactionData.Tags);

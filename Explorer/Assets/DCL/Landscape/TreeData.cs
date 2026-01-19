@@ -133,7 +133,6 @@ namespace DCL.Landscape
             {
                 List<Matrix4x4> matrices = transforms[prototypeIndex];
                 instanceCounts[prototypeIndex] = matrices.Count;
-
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
                     matrices, 0, 0, matrices.Count);
             }
