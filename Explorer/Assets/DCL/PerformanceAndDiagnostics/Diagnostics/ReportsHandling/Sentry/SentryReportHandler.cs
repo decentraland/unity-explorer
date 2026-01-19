@@ -29,9 +29,18 @@ namespace DCL.Diagnostics.Sentry
             // After this initialization, Debug.unityLogger.logHandler is replaced which reports all the unhandled exceptions.
             // For this to work correctly, the "enabled" option in Assets/Resources/Sentry/SentryOptions.asset should be set to off
             // preventing `SentryInitialization` from running the app's startup process.
-            var sentryUnityInfo = new SentryUnityInfo();
-            SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
-            options!.Enabled = true;
+            SentryUnityOptions? options = ScriptableSentryUnityOptions.LoadSentryUnityOptions();
+
+            if (options == null)
+            {
+#if !UNITY_EDITOR
+                Debug.LogWarning($"Cannot initialize Sentry due non-existent configuration");
+#endif
+
+                return;
+            }
+
+            options.Enabled = true;
 
             if (!IsValidConfiguration(options))
             {
