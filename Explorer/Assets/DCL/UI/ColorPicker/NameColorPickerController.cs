@@ -9,8 +9,6 @@ namespace DCL.UI
         private readonly ColorPickerView view;
         private readonly ColorPresetsSO colorPresets;
 
-        private Color currentColor;
-
         public event Action<Color> OnColorChanged;
 
         public NameColorPickerController(ColorPickerView view, ColorToggleView colorToggle, ColorPresetsSO colorPresets)
@@ -32,6 +30,9 @@ namespace DCL.UI
 
         public void Reset() =>
             core.Reset();
+
+        public void SetColorPickerStatus(Color newColor) =>
+            core.UpdateSliderValues(newColor);
 
         private void OnPresetClicked(Color presetColor)
         {
