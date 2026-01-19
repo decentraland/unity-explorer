@@ -37,7 +37,7 @@ namespace DCL.Places
         private readonly PlacesFilters currentFilters = new ();
 
         [Header("Sections Tabs")]
-        [SerializeField] private ButtonWithSelectableStateView discoverSectionTab = null!;
+        [SerializeField] private ButtonWithSelectableStateView browseSectionTab = null!;
         [SerializeField] private ButtonWithSelectableStateView favoritesSectionTab = null!;
         [SerializeField] private ButtonWithSelectableStateView recentlyVisitedSectionTab = null!;
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
@@ -66,7 +66,7 @@ namespace DCL.Places
         private void Awake()
         {
             // Tabs subscriptions
-            discoverSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.DISCOVER));
+            browseSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.BROWSE));
             favoritesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.FAVORITES));
             recentlyVisitedSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.RECENTLY_VISITED));
             myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
@@ -94,7 +94,7 @@ namespace DCL.Places
 
         private void OnDestroy()
         {
-            discoverSectionTab.Button.onClick.RemoveAllListeners();
+            browseSectionTab.Button.onClick.RemoveAllListeners();
             favoritesSectionTab.Button.onClick.RemoveAllListeners();
             recentlyVisitedSectionTab.Button.onClick.RemoveAllListeners();
             myPlacesSectionTab.Button.onClick.RemoveAllListeners();
@@ -135,7 +135,7 @@ namespace DCL.Places
             if (currentFilters.Section == section && !force)
                 return;
 
-            discoverSectionTab.SetSelected(false);
+            browseSectionTab.SetSelected(false);
             favoritesSectionTab.SetSelected(false);
             recentlyVisitedSectionTab.SetSelected(false);
             myPlacesSectionTab.SetSelected(false);
@@ -148,8 +148,8 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.DISCOVER:
-                    discoverSectionTab.SetSelected(true);
+                case PlacesSection.BROWSE:
+                    browseSectionTab.SetSelected(true);
                     break;
                 case PlacesSection.FAVORITES:
                     favoritesSectionTab.SetSelected(true);

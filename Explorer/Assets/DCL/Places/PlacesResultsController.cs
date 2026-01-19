@@ -30,7 +30,7 @@ namespace DCL.Places
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
-        private PlacesSection sectionOpenedBeforeSearching = PlacesSection.DISCOVER;
+        private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
 
         private CancellationTokenSource? loadPlacesCts;
 
@@ -90,8 +90,8 @@ namespace DCL.Places
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
                 sectionOpenedBeforeSearching = currentFilters.Section!.Value;
-                placesController.OpenSection(PlacesSection.DISCOVER, invokeEvent: false, cleanSearch: false);
-                sectionToLoad = PlacesSection.DISCOVER;
+                placesController.OpenSection(PlacesSection.BROWSE, invokeEvent: false, cleanSearch: false);
+                sectionToLoad = PlacesSection.BROWSE;
             }
 
             loadPlacesCts = loadPlacesCts.SafeRestart();
@@ -120,11 +120,11 @@ namespace DCL.Places
 
             switch (section)
             {
-                case PlacesSection.DISCOVER:
+                case PlacesSection.BROWSE:
                     placesResult = await placesAPIService.SearchPlacesAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
-                                                              sortBy: currentFilters.Section == PlacesSection.DISCOVER ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
+                                                              sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
@@ -176,13 +176,13 @@ namespace DCL.Places
                     view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
                 else switch (currentFilters.Section)
                 {
-                    case PlacesSection.DISCOVER when currentFilters.CategoryId != null:
+                    case PlacesSection.BROWSE when currentFilters.CategoryId != null:
                     {
                         string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
                         view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
                         break;
                     }
-                    case PlacesSection.DISCOVER:
+                    case PlacesSection.BROWSE:
                         view.SetPlacesCounter("Browse All Places"); break;
                     case PlacesSection.RECENTLY_VISITED:
                         view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})"); break;
