@@ -126,6 +126,13 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
+                // Skip emotes with unresolved DTO - treat as failed
+                if (emote.DTO?.Metadata == null)
+                {
+                    emotesWithResponse++;
+                    continue;
+                }
+
                 if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;
