@@ -18,11 +18,13 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -227,9 +229,13 @@ namespace DCL.PluginSystem.Global
 
             ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
 
+            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
+            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
+
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus,
+                colorToggle, nameColors));
         }
 
         public class PassportSettings : IDCLPluginSettings
@@ -265,6 +271,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject NameEditorPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ColorToggle { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; }
 
             [field: SerializeField]
             public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }

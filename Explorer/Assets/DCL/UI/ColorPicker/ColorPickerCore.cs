@@ -121,6 +121,13 @@ namespace DCL.UI
             usedColorToggles.Clear();
         }
 
+        public void Reset()
+        {
+            view.Container.SetActive(false);
+            view.ArrowDownMark.SetActive(true);
+            view.ArrowUpMark.SetActive(false);
+        }
+
         private void SetSaturationColor()
         {
             if (!view.EnableSaturationSlider || view.SliderSaturation == null)

@@ -30,6 +30,9 @@ namespace DCL.UI
             core.Dispose();
         }
 
+        public void Reset() =>
+            core.Reset();
+
         private void OnPresetClicked(Color presetColor)
         {
             core.UpdateSliderValues(presetColor);

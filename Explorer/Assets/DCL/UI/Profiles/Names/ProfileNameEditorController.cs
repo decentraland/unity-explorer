@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Web3;
 using MVC;
 using System;
@@ -29,6 +30,11 @@ namespace DCL.UI.ProfileNames
         private readonly ProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
+        private readonly ColorToggleView colorToggle;
+        private readonly ColorPresetsSO colorPresets;
+
+        private NameColorPickerController? colorPickerController;
+
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;
@@ -43,13 +49,17 @@ namespace DCL.UI.ProfileNames
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus) : base(viewFactory)
+            ProfileChangesBus profileChangesBus,
+            ColorToggleView colorToggle,
+            ColorPresetsSO colorPresets) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.colorToggle = colorToggle;
+            this.colorPresets = colorPresets;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -61,6 +71,8 @@ namespace DCL.UI.ProfileNames
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+
+            colorPickerController = new NameColorPickerController(viewInstance!.ColorPickerView, colorToggle, colorPresets);
 
             ProfileNameEditorView.NonClaimedNameConfig nonClaimedConfig = viewInstance!.NonClaimedNameContainer;
             Initialize(nonClaimedConfig);
@@ -111,6 +123,8 @@ namespace DCL.UI.ProfileNames
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
+
+            colorPickerController!.Reset();
 
             setupCancellationToken = setupCancellationToken.SafeRestart();
             SetUpAsync(setupCancellationToken.Token).Forget();
@@ -174,6 +188,7 @@ namespace DCL.UI.ProfileNames
 
                 int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
                 config.claimedNameDropdown.SetValueWithoutNotify(selectedIndex);
+
                 // Always start as disabled as it makes no sense save your own current name again..
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(false);
@@ -300,5 +315,11 @@ namespace DCL.UI.ProfileNames
 
         private void Close() =>
             lifeCycleTask?.TrySetResult();
+
+        public override void Dispose()
+        {
+            colorPickerController?.Dispose();
+            base.Dispose();
+        }
     }
 }

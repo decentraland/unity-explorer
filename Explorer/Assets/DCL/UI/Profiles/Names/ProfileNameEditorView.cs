@@ -17,6 +17,9 @@ namespace DCL.UI.ProfileNames
         [field: SerializeField]
         public Button OverlayCloseButton { get; set; }
 
+        [field: SerializeField]
+        public ColorPickerView ColorPickerView { get; private set; }
+
         [Serializable]
         public struct NonClaimedNameConfig
         {
