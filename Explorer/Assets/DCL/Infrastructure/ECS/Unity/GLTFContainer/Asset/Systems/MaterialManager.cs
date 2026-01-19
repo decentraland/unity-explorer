@@ -8,21 +8,36 @@ namespace DCL.Rendering.RenderSystem
 {
     public class MaterialManager
     {
+        internal static readonly int BASEMAP_ST_ID = Shader.PropertyToID("_BaseMap_ST");
+        internal static readonly int BASE_COLOR_ID = Shader.PropertyToID("_BaseColor");
+        internal static readonly int SPEC_COLOR_ID = Shader.PropertyToID("_SpecColor");
+        internal static readonly int EMISSION_COLOR_ID = Shader.PropertyToID("_EmissionColor");
+        internal static readonly int PLANE_CLIPPING_ID = Shader.PropertyToID("_PlaneClipping");
+        internal static readonly int VERTICAL_CLIPPING_ID = Shader.PropertyToID("_VerticalClipping");
+        internal static readonly int CUTOFF_ID = Shader.PropertyToID("_Cutoff");
+        internal static readonly int SMOOTHNESS_ID = Shader.PropertyToID("_Smoothness");
+        internal static readonly int METALLIC_ID = Shader.PropertyToID("_Metallic");
+        internal static readonly int BUMP_SCALE_ID = Shader.PropertyToID("_BumpScale");
+        internal static readonly int PARALLAX_ID = Shader.PropertyToID("_Parallax");
+        internal static readonly int OCCLUSION_STRENGTH_ID = Shader.PropertyToID("_OcclusionStrength");
+        internal static readonly int SURFACE_ID = Shader.PropertyToID("_Surface");
+        internal static readonly int RSUV_BUFFER_ID = Shader.PropertyToID("_GPUBuffer_PerRSUVMaterial");
+
         public struct PerRSUVMaterial
         {
             public Vector4 _BaseMap_ST;
             public Vector4 _BaseColor;
-            //public Vector4 _SpecColor;
+            public Vector4 _SpecColor;
             public Vector4 _EmissionColor;
             public Vector4 _PlaneClipping;
             public Vector4 _VerticalClipping;
             public float _Cutoff;
             public float _Smoothness;
             public float _Metallic;
-            //public float _BumpScale;
-            //public float _Parallax;
-            //public float _OcclusionStrength;
-            //public float _Surface;
+            public float _BumpScale;
+            public float _Parallax;
+            public float _OcclusionStrength;
+            public float _Surface;
             public float _padding;
         }
 
@@ -31,13 +46,12 @@ namespace DCL.Rendering.RenderSystem
         private List<PerRSUVMaterial> perMaterials;
         PerRSUVMaterial perMat = new PerRSUVMaterial();
         private SortedDictionary<uint, Material> materialSortedDictionary = new SortedDictionary<uint, Material>();
-
-        public static readonly int RSUV_PerMaterialBuffer = Shader.PropertyToID("_GPUBuffer_PerRSUVMaterial");
+        private UInt32 nMaterialCount = 0;
 
         public MaterialManager()
         {
             GPUBuffer_PerMaterial = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, UInt16.MaxValue, Marshal.SizeOf(typeof(PerRSUVMaterial)));
-            Shader.SetGlobalBuffer(RSUV_PerMaterialBuffer, GPUBuffer_PerMaterial);
+            Shader.SetGlobalBuffer(RSUV_BUFFER_ID, GPUBuffer_PerMaterial);
             perMaterials = new List<PerRSUVMaterial>();
         }
 
@@ -52,10 +66,7 @@ namespace DCL.Rendering.RenderSystem
             }
             else
             {
-                // var keywords = newMaterial.shaderKeywords;
-                // System.Array.Sort(keywords); // Ensure consistent ordering
-                // String debugOutput = "New Material Keywords: " + string.Join(", ", keywords);
-                // Debug.Log($"{debugOutput}");
+                newMaterial.name = "Material_" + ++nMaterialCount + "_" + matCRC;
                 renderer.sharedMaterials = new Material[] { newMaterial };
                 materialSortedDictionary.Add(matCRC, newMaterial);
             }
@@ -63,65 +74,50 @@ namespace DCL.Rendering.RenderSystem
 
         private Material SRUV_Adjustment(Renderer renderer)
         {
-            //PerMaterial perMat = new PerMaterial();
-            perMat._BaseMap_ST = renderer.sharedMaterial.GetVector("_BaseMap_ST");
-            perMat._BaseColor = renderer.sharedMaterial.GetVector("_BaseColor");
-            //perMat._SpecColor = renderer.sharedMaterial.GetVector("_SpecColor");
-            perMat._EmissionColor = Vector4.zero;//renderer.sharedMaterial.GetVector("_EmissionColor");
-            perMat._PlaneClipping = renderer.sharedMaterial.GetVector("_PlaneClipping");
-            perMat._VerticalClipping = renderer.sharedMaterial.GetVector("_VerticalClipping");
-            perMat._Cutoff = renderer.sharedMaterial.GetFloat("_Cutoff");
-            perMat._Smoothness = renderer.sharedMaterial.GetFloat("_Smoothness");
-            perMat._Metallic = renderer.sharedMaterial.GetFloat("_Metallic");
-            // perMat._BumpScale = renderer.sharedMaterial.GetFloat("_BumpScale");
-            // perMat._Parallax = renderer.sharedMaterial.GetFloat("_Parallax");
-            // perMat._OcclusionStrength = renderer.sharedMaterial.GetFloat("_OcclusionStrength");
-            // perMat._Surface = renderer.sharedMaterial.GetFloat("_Surface");
+            perMat._BaseMap_ST = renderer.sharedMaterial.GetVector(BASEMAP_ST_ID);
+            perMat._BaseColor = renderer.sharedMaterial.GetVector(BASE_COLOR_ID);
+            perMat._SpecColor = renderer.sharedMaterial.GetVector(SPEC_COLOR_ID);
+            perMat._EmissionColor = renderer.sharedMaterial.GetVector(EMISSION_COLOR_ID);
+            perMat._PlaneClipping = renderer.sharedMaterial.GetVector(PLANE_CLIPPING_ID);
+            perMat._VerticalClipping = renderer.sharedMaterial.GetVector(VERTICAL_CLIPPING_ID);
+            perMat._Cutoff = renderer.sharedMaterial.GetFloat(CUTOFF_ID);
+            perMat._Smoothness = renderer.sharedMaterial.GetFloat(SMOOTHNESS_ID);
+            perMat._Metallic = renderer.sharedMaterial.GetFloat(METALLIC_ID);
+            perMat._BumpScale = renderer.sharedMaterial.GetFloat(BUMP_SCALE_ID);
+            perMat._Parallax = renderer.sharedMaterial.GetFloat(PARALLAX_ID);
+            perMat._OcclusionStrength = renderer.sharedMaterial.GetFloat(OCCLUSION_STRENGTH_ID);
+            perMat._Surface = renderer.sharedMaterial.GetFloat(SURFACE_ID);
             perMat._padding = 0.0f;
 
-            //perMaterials.Clear();
             perMaterials.Add(perMat);
 
-            // try
-            // {
-            //     GPUBuffer_PerMaterial.SetData(perMaterials, 0, currentPosition, count: 1);
-            // }
-            // catch (System.Exception e)
-            // {
-            //     Debug.LogError($"SetData failed at position {currentPosition}: {e.Message}");
-            // }
-
-            Debug.Log($"Buffer capacity: {GPUBuffer_PerMaterial.count}");
-            Debug.Log($"{currentPosition}");
             ((MeshRenderer)renderer).SetShaderUserValue(currentPosition++);
 
             Material newMaterial = new Material(renderer.sharedMaterial);
             newMaterial.enableInstancing = true;
-            newMaterial.SetVector("_BaseMap_ST", Vector4.zero);
-            newMaterial.SetVector("_BaseColor", Vector4.one);
-            newMaterial.SetVector("_SpecColor", Vector4.zero);
-            newMaterial.SetVector("_EmissionColor", Vector4.zero);
-            newMaterial.SetVector("_PlaneClipping", Vector4.zero);
-            newMaterial.SetVector("_VerticalClipping", Vector4.zero);
-            newMaterial.SetFloat("_Cutoff", 0.0f);
-            newMaterial.SetFloat("_Smoothness", 0.0f);
-            newMaterial.SetFloat("_Metallic", 0.0f);
-            newMaterial.SetFloat("_BumpScale", 0.0f);
-            newMaterial.SetFloat("_Parallax", 0.0f);
-            newMaterial.SetFloat("_OcclusionStrength", 0.0f);
-            newMaterial.SetFloat("_Surface", 0.0f);
-            newMaterial.SetInt("_Cull", 2);
-            newMaterial.renderQueue = (int)(RenderQueue.Geometry + 50);
+            newMaterial.SetVector(BASEMAP_ST_ID, Vector4.zero);
+            newMaterial.SetVector(BASE_COLOR_ID, Vector4.one);
+            newMaterial.SetVector(SPEC_COLOR_ID, Vector4.zero);
+            newMaterial.SetVector(EMISSION_COLOR_ID, Vector4.zero);
+            // newMaterial.SetVector(PLANE_CLIPPING_ID, Vector4.zero);
+            // newMaterial.SetVector(VERTICAL_CLIPPING_ID, Vector4.zero);
+            newMaterial.SetFloat(CUTOFF_ID, 0.0f);
+            newMaterial.SetFloat(SMOOTHNESS_ID, 0.0f);
+            newMaterial.SetFloat(METALLIC_ID, 0.0f);
+            newMaterial.SetFloat(BUMP_SCALE_ID, 0.0f);
+            newMaterial.SetFloat(PARALLAX_ID, 0.0f);
+            newMaterial.SetFloat(OCCLUSION_STRENGTH_ID, 0.0f);
+            newMaterial.EnableKeyword("_RSUV");
+            // newMaterial.SetFloat("_Surface", 0.0f);
+            // newMaterial.SetInt("_Cull", 2);
+            // newMaterial.renderQueue = (int)(RenderQueue.Geometry + 50);
 
             return newMaterial;
         }
 
         public void EndOFFramePUSHtoGPU()
         {
-            Debug.Log($"Buffer capacity: {GPUBuffer_PerMaterial.count}");
-            Debug.Log($"Per Materials: {perMaterials.Count}");
             GPUBuffer_PerMaterial.SetData(perMaterials.ToArray(), 0, 0, perMaterials.Count);
-            //perMaterials.Clear();
         }
 
         private void DefaultNonRequiredMaterialValues()

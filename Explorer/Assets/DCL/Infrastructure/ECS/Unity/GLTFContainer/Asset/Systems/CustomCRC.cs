@@ -1,4 +1,6 @@
-﻿namespace DCL.Rendering.RenderSystem
+﻿using UnityEngine;
+
+namespace DCL.Rendering.RenderSystem
 {
     public class CustomCRC
     {
@@ -49,6 +51,16 @@
             byte[] bytes = System.BitConverter.GetBytes(value);
             uint uintValue = System.BitConverter.ToUInt32(bytes, 0);
             return CRCFeed(crc, uintValue);
+        }
+
+        // CRC feed for Vector4
+        public static uint CRCFeed(uint crc, Vector4 value)
+        {
+            crc = CRCFeed(crc, value.x);
+            crc = CRCFeed(crc, value.y);
+            crc = CRCFeed(crc, value.z);
+            crc = CRCFeed(crc, value.w);
+            return crc;
         }
 
         // CRC feed for bool
