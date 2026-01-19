@@ -47,6 +47,7 @@ namespace DCL.Rendering.RenderSystem
         PerRSUVMaterial perMat = new PerRSUVMaterial();
         private SortedDictionary<uint, Material> materialSortedDictionary = new SortedDictionary<uint, Material>();
         private UInt32 nMaterialCount = 0;
+        private int nFrameGPUStartingPosition = 0;
 
         public MaterialManager()
         {
@@ -115,9 +116,14 @@ namespace DCL.Rendering.RenderSystem
             return newMaterial;
         }
 
-        public void EndOFFramePUSHtoGPU()
+        public void EndOfFramePushtoGPU()
         {
-            GPUBuffer_PerMaterial.SetData(perMaterials.ToArray(), 0, 0, perMaterials.Count);
+            if (perMaterials.Count > 0)
+            {
+                GPUBuffer_PerMaterial.SetData(perMaterials.ToArray(), 0, nFrameGPUStartingPosition, perMaterials.Count);
+                nFrameGPUStartingPosition += perMaterials.Count;
+                perMaterials.Clear();
+            }
         }
 
         private void DefaultNonRequiredMaterialValues()

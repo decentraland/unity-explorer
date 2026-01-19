@@ -18,7 +18,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         protected override void Update(float t)
         {
-            materialManager.EndOFFramePUSHtoGPU();
+            materialManager.EndOfFramePushtoGPU();
         }
     }
 }
