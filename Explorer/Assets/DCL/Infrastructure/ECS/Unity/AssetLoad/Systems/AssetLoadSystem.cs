@@ -117,10 +117,17 @@ namespace ECS.Unity.AssetLoad.Systems
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
                 {
+                    if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
+                    {
+                        assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
+                        existingComponent.LoadingAssetPaths.Add(path);
+                        continue;
+                    }
+
                     var promise = TexturePromise.Create(World,
                         new GetTextureIntention
                         {
-                            CommonArguments = new CommonLoadingArguments(URLAddress.FromString(path)),
+                            CommonArguments = new CommonLoadingArguments(contentUrl),
                             ReportSource = GetReportCategory(),
                         },
                         PartitionComponent.MIN_PRIORITY);
