@@ -5,15 +5,12 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Prefs;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.Dumper;
 using DCL.WebRequests.RequestsHub;
 using System;
-using Utility.Multithreading;
-using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
 {

@@ -10,7 +10,7 @@ using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Prefs;
 using DCL.UserInAppInitializationFlow.StartupOperations;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -157,13 +157,13 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        
+
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
                 return;
-    
+
             // Priority 2: Editor position override (for development convenience)
             if (HasEditorPositionOverride())
                 return;

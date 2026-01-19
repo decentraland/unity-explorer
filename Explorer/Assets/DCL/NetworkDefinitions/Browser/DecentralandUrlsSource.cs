@@ -1,5 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 using System;
 using System.Collections.Generic;
 

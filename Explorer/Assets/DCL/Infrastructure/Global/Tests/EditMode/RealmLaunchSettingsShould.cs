@@ -1,9 +1,9 @@
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using DCL.WebRequests;
 using Global.AppArgs;
 using Global.Dynamic;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using NUnit.Framework;

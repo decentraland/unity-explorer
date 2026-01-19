@@ -19,7 +19,7 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 
 namespace PortableExperiences.Controller
 {

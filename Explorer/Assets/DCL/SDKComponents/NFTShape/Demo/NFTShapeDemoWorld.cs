@@ -14,6 +14,7 @@ using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -21,9 +22,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
-using ECS.StreamableLoading.Textures;
 using ECS.Unity.Transforms.Components;
-using Global.Dynamic.LaunchModes;
 using System.Collections.Generic;
 using UnityEngine;
 

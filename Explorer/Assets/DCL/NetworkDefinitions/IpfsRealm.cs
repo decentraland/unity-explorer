@@ -13,6 +13,9 @@ using UnityEngine;
 
 namespace DCL.Ipfs
 {
+    /// <summary>
+    ///     Contains Raw urls received from "realm/about"
+    /// </summary>
     public class IpfsRealm : IIpfsRealm, IEquatable<IpfsRealm>
     {
         private static readonly URLSubdirectory ENTITIES_ACTIVE_DIR = URLSubdirectory.FromString("entities/active");

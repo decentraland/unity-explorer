@@ -2,8 +2,8 @@
 
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using ECS.StreamableLoading.NFTShapes.URNs;
-using Global.Dynamic.LaunchModes;
 using NUnit.Framework;
 
 namespace ECS.StreamableLoading.Tests.URNs

@@ -11,6 +11,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -21,7 +22,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using Sentry;
@@ -163,7 +163,7 @@ namespace Global.Dynamic
                     bootstrapSettings.AnalyticsConfig,
                     launcherTraits,
                     container.ApplicationParametersParser,
-                    realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment,
+                    realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment,
                     ct);
 
                 var analyticsController = new AnalyticsController(service, appArgs, bootstrapSettings.AnalyticsConfig, launcherTraits, buildData, dclVersion);
