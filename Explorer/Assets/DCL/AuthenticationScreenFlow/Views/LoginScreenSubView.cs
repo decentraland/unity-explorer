@@ -1,7 +1,6 @@
 ﻿using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -10,8 +9,8 @@ namespace DCL.AuthenticationScreenFlow
     {
         public static readonly int IS_SHOWN_ANIM_HASH = Animator.StringToHash("IsShown");
 
-        private Animator loginAnimator;
-        private CanvasGroup canvasGroup;
+        [SerializeField] private Animator loginAnimator;
+        [SerializeField] private CanvasGroup canvasGroup;
 
         [SerializeField] private GameObject loadingSpinner;
         [SerializeField] private GameObject mainElementsPanel;
@@ -41,12 +40,6 @@ namespace DCL.AuthenticationScreenFlow
         private GameObject moreOptionsPanel;
 
         private bool areOptionsExpanded;
-
-        private void Awake()
-        {
-            loginAnimator = GetComponent<Animator>();
-            canvasGroup = GetComponent<CanvasGroup>();
-        }
 
         public void ToggleOptionsPanelExpansion()
         {

@@ -28,8 +28,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private void Awake()
         {
-            FinalizeAnimator = GetComponent<Animator>();
-
             title.gameObject.SetActive(true); // title
             description.SetActive(true);
 
