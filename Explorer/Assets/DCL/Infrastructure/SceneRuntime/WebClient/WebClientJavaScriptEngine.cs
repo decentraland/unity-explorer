@@ -3,20 +3,28 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using AOT;
+using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace SceneRuntime.WebClient
 {
     public class WebClientJavaScriptEngine : IJavaScriptEngine
     {
-        internal readonly string contextId;
-        private bool disposed;
-        
+        // Delegate type for the void callback (used for methods like Completed/Reject)
+        private delegate void HostObjectCallbackDelegate(IntPtr contextId, IntPtr objectId, IntPtr methodName, IntPtr argsJson);
+
+        // Delegate type for the callback that returns values
+        private delegate int HostObjectCallbackWithReturnDelegate(IntPtr contextId, IntPtr objectId, IntPtr methodName, IntPtr argsJson, IntPtr resultBuffer,
+            int resultBufferSize);
+
         // Static flag to track if callback is registered
         private static bool s_callbackRegistered;
+        internal readonly string contextId;
+        private bool disposed;
 
         public IDCLScriptObject Global
         {
@@ -30,14 +38,15 @@ namespace SceneRuntime.WebClient
         public WebClientJavaScriptEngine(string contextId)
         {
             this.contextId = contextId;
-            
-            // Register the callback once on first engine creation
+
+            // Register the callbacks once on first engine creation
             if (!s_callbackRegistered)
             {
                 JSContext_RegisterHostObjectCallback(InvokeHostObjectMethod);
+                JSContext_RegisterHostObjectCallbackWithReturn(InvokeHostObjectMethodWithReturn);
                 s_callbackRegistered = true;
             }
-            
+
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
 
             try
@@ -48,53 +57,6 @@ namespace SceneRuntime.WebClient
                     throw new InvalidOperationException($"Failed to create JavaScript context {contextId}");
             }
             finally { Marshal.FreeHGlobal(contextIdPtr); }
-        }
-        
-        // Delegate type for the callback
-        private delegate void HostObjectCallbackDelegate(IntPtr contextId, IntPtr objectId, IntPtr methodName, IntPtr argsJson);
-        
-        /// <summary>
-        /// Static callback that JavaScript can invoke when it needs to call a method on a registered host object.
-        /// </summary>
-        [MonoPInvokeCallback(typeof(HostObjectCallbackDelegate))]
-        private static void InvokeHostObjectMethod(IntPtr contextIdPtr, IntPtr objectIdPtr, IntPtr methodNamePtr, IntPtr argsJsonPtr)
-        {
-            try
-            {
-                string contextId = Utf8Marshal.PtrToStringUTF8(contextIdPtr);
-                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr);
-                string methodName = Utf8Marshal.PtrToStringUTF8(methodNamePtr);
-                string argsJson = Utf8Marshal.PtrToStringUTF8(argsJsonPtr);
-                
-                object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
-                if (hostObject == null)
-                {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
-                    return;
-                }
-                
-                // Find and invoke the method
-                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
-                if (method == null)
-                {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
-                    return;
-                }
-                
-                // Parse arguments
-                object?[]? args = null;
-                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
-                {
-                    args = JsonConvert.DeserializeObject<object?[]>(argsJson);
-                }
-                
-                // Invoke the method
-                method.Invoke(hostObject, args);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method: {ex}");
-            }
         }
 
         public void Dispose()
@@ -109,6 +71,198 @@ namespace SceneRuntime.WebClient
                 WebClientHostObjectRegistry.UnregisterAll(contextId);
                 disposed = true;
             }
+        }
+
+        /// <summary>
+        ///     Static callback that JavaScript can invoke when it needs to call a method on a registered host object (void return).
+        /// </summary>
+        [MonoPInvokeCallback(typeof(HostObjectCallbackDelegate))]
+        private static void InvokeHostObjectMethod(IntPtr contextIdPtr, IntPtr objectIdPtr, IntPtr methodNamePtr, IntPtr argsJsonPtr)
+        {
+            try
+            {
+                string contextId = Utf8Marshal.PtrToStringUTF8(contextIdPtr);
+                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr);
+                string methodName = Utf8Marshal.PtrToStringUTF8(methodNamePtr);
+                string argsJson = Utf8Marshal.PtrToStringUTF8(argsJsonPtr);
+
+                object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
+
+                if (hostObject == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
+                    return;
+                }
+
+                // Find and invoke the method
+                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+
+                if (method == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
+                    return;
+                }
+
+                // Parse arguments
+                object?[]? args = null;
+
+                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]") { args = JsonConvert.DeserializeObject<object?[]>(argsJson); }
+
+                // Invoke the method
+                method.Invoke(hostObject, args);
+            }
+            catch (Exception ex) { Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method: {ex}"); }
+        }
+
+        /// <summary>
+        ///     Static callback that JavaScript can invoke when it needs to call a method and get a return value.
+        ///     Returns the length of the result written to the buffer, or negative if buffer too small.
+        /// </summary>
+        [MonoPInvokeCallback(typeof(HostObjectCallbackWithReturnDelegate))]
+        private static int InvokeHostObjectMethodWithReturn(IntPtr contextIdPtr, IntPtr objectIdPtr, IntPtr methodNamePtr, IntPtr argsJsonPtr, IntPtr resultBuffer,
+            int resultBufferSize)
+        {
+            try
+            {
+                string contextId = Utf8Marshal.PtrToStringUTF8(contextIdPtr);
+                string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr);
+                string methodName = Utf8Marshal.PtrToStringUTF8(methodNamePtr);
+                string argsJson = Utf8Marshal.PtrToStringUTF8(argsJsonPtr);
+
+                object? hostObject = WebClientHostObjectRegistry.Get(contextId, objectId);
+
+                if (hostObject == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
+                    return WriteResultToBuffer("{\"error\":\"Host object not found\"}", resultBuffer, resultBufferSize);
+                }
+
+                // Find the method - try public instance methods first
+                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+
+                if (method == null)
+                {
+                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
+                    return WriteResultToBuffer("{\"error\":\"Method not found\"}", resultBuffer, resultBufferSize);
+                }
+
+                // Parse arguments and convert to method parameter types
+                object?[]? args = ParseAndConvertArguments(argsJson, method.GetParameters());
+
+                // Invoke the method
+                object? result = method.Invoke(hostObject, args);
+
+                // Serialize the result
+                string serializedResult = SerializeResult(result);
+
+                return WriteResultToBuffer(serializedResult, resultBuffer, resultBufferSize);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method with return: {ex}");
+                string errorJson = JsonConvert.SerializeObject(new { error = ex.Message });
+                return WriteResultToBuffer(errorJson, resultBuffer, resultBufferSize);
+            }
+        }
+
+        /// <summary>
+        ///     Parses JSON arguments and converts them to the expected parameter types.
+        /// </summary>
+        private static object?[]? ParseAndConvertArguments(string argsJson, ParameterInfo[] parameters)
+        {
+            if (string.IsNullOrEmpty(argsJson) || argsJson == "[]" || parameters.Length == 0)
+                return parameters.Length == 0 ? null : new object?[parameters.Length];
+
+            try
+            {
+                var jsonArray = JArray.Parse(argsJson);
+                var args = new object?[parameters.Length];
+
+                for (var i = 0; i < parameters.Length && i < jsonArray.Count; i++)
+                {
+                    ParameterInfo param = parameters[i];
+                    JToken? jsonValue = jsonArray[i];
+
+                    if (jsonValue == null || jsonValue.Type == JTokenType.Null) { args[i] = null; }
+                    else if (jsonValue is JObject jObj && jObj.TryGetValue("__type", out JToken? typeToken) && typeToken.Value<string>() == "ByteArray")
+                    {
+                        // Handle ByteArray type marker - convert Base64 to byte array wrapper
+                        string base64Data = jObj.Value<string>("data") ?? "";
+                        byte[] bytes = string.IsNullOrEmpty(base64Data) ? Array.Empty<byte>() : Convert.FromBase64String(base64Data);
+                        args[i] = new WebClientByteArrayWrapper(bytes);
+                    }
+                    else
+                    {
+                        // Convert the JSON value to the expected parameter type
+                        args[i] = jsonValue.ToObject(param.ParameterType);
+                    }
+                }
+
+                return args;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[WebClientJavaScriptEngine] Error parsing arguments: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///     Serializes a method return value to JSON, with special handling for certain types.
+        /// </summary>
+        private static string SerializeResult(object? result)
+        {
+            if (result == null)
+                return "null";
+
+            // Handle PoolableByteArray - serialize as Base64 with type marker
+            if (result is PoolableByteArray poolableByteArray)
+            {
+                if (poolableByteArray.IsEmpty) { return JsonConvert.SerializeObject(new { __type = "ByteArray", data = "", isEmpty = true }); }
+
+                byte[] bytes = poolableByteArray.Memory.ToArray();
+                string base64 = Convert.ToBase64String(bytes);
+                return JsonConvert.SerializeObject(new { __type = "ByteArray", data = base64, isEmpty = false });
+            }
+
+            // Handle primitive types directly
+            if (result is bool boolResult)
+                return boolResult ? "true" : "false";
+
+            if (result is int or long or float or double or decimal)
+                return result.ToString()!;
+
+            if (result is string stringResult)
+                return JsonConvert.SerializeObject(stringResult);
+
+            // Handle WebClientScriptObject - return the object ID reference
+            if (result is WebClientScriptObject scriptObject) { return JsonConvert.SerializeObject(new { __objectRef = scriptObject.ObjectId }); }
+
+            // Default: JSON serialize the object
+            try { return JsonConvert.SerializeObject(result); }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[WebClientJavaScriptEngine] Error serializing result: {ex.Message}");
+                return JsonConvert.SerializeObject(new { __type = "Object", toString = result.ToString() });
+            }
+        }
+
+        /// <summary>
+        ///     Writes a UTF8 string to the result buffer.
+        ///     Returns the number of bytes written, or negative of required size if buffer too small.
+        /// </summary>
+        private static unsafe int WriteResultToBuffer(string result, IntPtr buffer, int bufferSize)
+        {
+            byte[] utf8Bytes = Encoding.UTF8.GetBytes(result);
+            int requiredSize = utf8Bytes.Length + 1; // +1 for null terminator
+
+            if (bufferSize < requiredSize)
+                return -requiredSize;
+
+            Marshal.Copy(utf8Bytes, 0, buffer, utf8Bytes.Length);
+            ((byte*)buffer.ToPointer())[utf8Bytes.Length] = 0; // Null terminator
+
+            return utf8Bytes.Length;
         }
 
         public void Execute(string code)
@@ -272,13 +426,13 @@ namespace SceneRuntime.WebClient
         }
 
         /// <summary>
-        /// Registers a module with its compiled script ID so it can be looked up by name in JavaScript.
-        /// This must be called before executing Init.js for all modules that will be required.
+        ///     Registers a module with its compiled script ID so it can be looked up by name in JavaScript.
+        ///     This must be called before executing Init.js for all modules that will be required.
         /// </summary>
         public void RegisterModule(string moduleName, string scriptId)
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
-            
+
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
             IntPtr moduleNamePtr = Utf8Marshal.StringToHGlobalUTF8(moduleName);
             IntPtr scriptIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptId);
@@ -343,8 +497,10 @@ namespace SceneRuntime.WebClient
                     throw new InvalidOperationException($"Failed to store promise object in context {contextId}");
 
                 string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+
                 if (string.IsNullOrEmpty(objectId))
                     throw new InvalidOperationException("Failed to get object ID");
+
                 return new WebClientScriptObject(this, objectId);
             }
             finally
@@ -396,8 +552,10 @@ namespace SceneRuntime.WebClient
                     throw new InvalidOperationException($"Failed to store promise object in context {contextId}");
 
                 string objectId = Utf8Marshal.PtrToStringUTF8(objectIdPtr, result);
+
                 if (string.IsNullOrEmpty(objectId))
                     throw new InvalidOperationException("Failed to get object ID");
+
                 return new WebClientScriptObject(this, objectId);
             }
             finally
@@ -430,9 +588,8 @@ namespace SceneRuntime.WebClient
             }
         }
 
-
         /// <summary>
-        /// Deserializes a JSON result, handling special __objectRef format for non-serializable JS objects.
+        ///     Deserializes a JSON result, handling special __objectRef format for non-serializable JS objects.
         /// </summary>
         private object? DeserializeResultWithObjectRef(string json)
         {
@@ -443,12 +600,13 @@ namespace SceneRuntime.WebClient
             {
                 // Check if this is an object reference (for functions, objects that can't be JSON-serialized)
                 var jObject = JObject.Parse(json);
+
                 if (jObject.TryGetValue("__objectRef", out JToken? objectRefToken))
                 {
                     string objectId = objectRefToken.Value<string>()!;
                     return new WebClientScriptObject(this, objectId);
                 }
-                
+
                 // Regular JSON deserialization
                 return JsonConvert.DeserializeObject(json);
             }
@@ -504,9 +662,12 @@ namespace SceneRuntime.WebClient
 
         [DllImport("__Internal")]
         private static extern int JSContext_StoreObject(IntPtr contextId, IntPtr expression, IntPtr objectId, int objectIdSize);
-        
+
         [DllImport("__Internal")]
         private static extern void JSContext_RegisterHostObjectCallback(HostObjectCallbackDelegate callback);
+
+        [DllImport("__Internal")]
+        private static extern void JSContext_RegisterHostObjectCallbackWithReturn(HostObjectCallbackWithReturnDelegate callback);
     }
 
     public class WebGLCompiledScript : ICompiledScript
@@ -545,16 +706,20 @@ namespace SceneRuntime.WebClient
         }
 
         [UsedImplicitly]
-        public bool IsCompleted() => isCompleted;
+        public bool IsCompleted() =>
+            isCompleted;
 
         [UsedImplicitly]
-        public bool IsFaulted() => isFaulted;
+        public bool IsFaulted() =>
+            isFaulted;
 
         [UsedImplicitly]
-        public T? GetResult() => result;
+        public T? GetResult() =>
+            result;
 
         [UsedImplicitly]
-        public string? GetError() => error;
+        public string? GetError() =>
+            error;
     }
 
     internal class JSPromiseResolver
@@ -581,12 +746,15 @@ namespace SceneRuntime.WebClient
         }
 
         [UsedImplicitly]
-        public bool IsCompleted() => isCompleted;
+        public bool IsCompleted() =>
+            isCompleted;
 
         [UsedImplicitly]
-        public bool IsFaulted() => isFaulted;
+        public bool IsFaulted() =>
+            isFaulted;
 
         [UsedImplicitly]
-        public string? GetError() => error;
+        public string? GetError() =>
+            error;
     }
 }

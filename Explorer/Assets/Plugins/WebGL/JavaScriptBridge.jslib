@@ -1,12 +1,19 @@
 mergeInto(LibraryManager.library, {
-    // Global storage for the host object callback function pointer
+    // Global storage for the host object callback function pointers
     $hostObjectCallback: null,
+    $hostObjectCallbackWithReturn: null,
     
-    // Register the callback function that will be used to invoke host object methods
+    // Register the callback function that will be used to invoke host object methods (void return)
     JSContext_RegisterHostObjectCallback: function(callback) {
         hostObjectCallback = callback;
     },
     JSContext_RegisterHostObjectCallback__deps: ['$hostObjectCallback'],
+    
+    // Register the callback function that will be used to invoke host object methods with return values
+    JSContext_RegisterHostObjectCallbackWithReturn: function(callback) {
+        hostObjectCallbackWithReturn = callback;
+    },
+    JSContext_RegisterHostObjectCallbackWithReturn__deps: ['$hostObjectCallbackWithReturn'],
     
     JSContext_Create: function(contextId) {
         const contextIdStr = UTF8ToString(contextId);
@@ -269,7 +276,7 @@ mergeInto(LibraryManager.library, {
         }
     },
     
-    JSContext_AddHostObject__deps: ['$hostObjectCallback'],
+    JSContext_AddHostObject__deps: ['$hostObjectCallback', '$hostObjectCallbackWithReturn'],
     JSContext_AddHostObject: function(contextId, name, objectId) {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
@@ -279,7 +286,7 @@ mergeInto(LibraryManager.library, {
         
         context.hostObjects[objectIdStr] = nameStr;
         
-        // Helper function to call the registered C# callback for host object method invocation
+        // Helper function to call the registered C# callback for host object method invocation (void return)
         const invokeHostObjectCallback = function(methodName, args) {
             if (!hostObjectCallback) {
                 console.warn('[JSContext] No host object callback registered');
@@ -311,6 +318,134 @@ mergeInto(LibraryManager.library, {
                 _free(objectIdPtr);
                 _free(methodNamePtr);
                 _free(argsJsonPtr);
+            }
+        };
+        
+        // Helper function to serialize arguments with special handling for typed arrays
+        const serializeArgs = function(args) {
+            if (!args || args.length === 0) return '[]';
+            
+            const serializedArgs = args.map(arg => {
+                // Handle Uint8Array - convert to base64 with type marker
+                if (arg instanceof Uint8Array) {
+                    let binary = '';
+                    for (let i = 0; i < arg.length; i++) {
+                        binary += String.fromCharCode(arg[i]);
+                    }
+                    return { __type: 'ByteArray', data: btoa(binary), length: arg.length };
+                }
+                // Handle other typed arrays
+                if (ArrayBuffer.isView(arg)) {
+                    const bytes = new Uint8Array(arg.buffer, arg.byteOffset, arg.byteLength);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return { __type: 'ByteArray', data: btoa(binary), length: bytes.length };
+                }
+                return arg;
+            });
+            
+            return JSON.stringify(serializedArgs);
+        };
+        
+        // Helper function to call C# and get a return value
+        const invokeHostObjectCallbackWithReturn = function(methodName, args) {
+            if (!hostObjectCallbackWithReturn) {
+                console.warn('[JSContext] No host object callback with return registered');
+                return null;
+            }
+            
+            // Allocate strings on the heap for the callback
+            const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
+            const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
+            const methodNameLen = lengthBytesUTF8(methodName) + 1;
+            const argsJson = serializeArgs(args);
+            const argsJsonLen = lengthBytesUTF8(argsJson) + 1;
+            
+            // Allocate result buffer (start with 64KB, can grow if needed)
+            const resultBufferSize = 65536;
+            
+            const contextIdPtr = _malloc(contextIdLen);
+            const objectIdPtr = _malloc(objectIdLen);
+            const methodNamePtr = _malloc(methodNameLen);
+            const argsJsonPtr = _malloc(argsJsonLen);
+            const resultBufferPtr = _malloc(resultBufferSize);
+            
+            try {
+                stringToUTF8(contextIdStr, contextIdPtr, contextIdLen);
+                stringToUTF8(objectIdStr, objectIdPtr, objectIdLen);
+                stringToUTF8(methodName, methodNamePtr, methodNameLen);
+                stringToUTF8(argsJson, argsJsonPtr, argsJsonLen);
+                
+                // Call the registered C# callback with return
+                const resultLen = {{{ makeDynCall('iiiiii', 'hostObjectCallbackWithReturn') }}}(
+                    contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr, resultBufferPtr, resultBufferSize);
+                
+                if (resultLen < 0) {
+                    console.warn('[JSContext] Result buffer too small, needed:', -resultLen);
+                    return null;
+                }
+                
+                if (resultLen === 0) {
+                    return null;
+                }
+                
+                // Read the result string from the buffer
+                const resultStr = UTF8ToString(resultBufferPtr, resultLen);
+                
+                // Parse and deserialize the result
+                return deserializeResult(resultStr, context);
+            } finally {
+                _free(contextIdPtr);
+                _free(objectIdPtr);
+                _free(methodNamePtr);
+                _free(argsJsonPtr);
+                _free(resultBufferPtr);
+            }
+        };
+        
+        // Helper function to deserialize C# result with special type handling
+        const deserializeResult = function(resultStr, context) {
+            if (!resultStr || resultStr === 'null') {
+                return null;
+            }
+            
+            try {
+                const parsed = JSON.parse(resultStr);
+                
+                // Handle special types
+                if (parsed && typeof parsed === 'object') {
+                    // ByteArray type - convert Base64 to Uint8Array
+                    if (parsed.__type === 'ByteArray') {
+                        if (parsed.isEmpty) {
+                            return new Uint8Array(0);
+                        }
+                        // Decode Base64 to Uint8Array
+                        const binaryStr = atob(parsed.data);
+                        const bytes = new Uint8Array(binaryStr.length);
+                        for (let i = 0; i < binaryStr.length; i++) {
+                            bytes[i] = binaryStr.charCodeAt(i);
+                        }
+                        return bytes;
+                    }
+                    
+                    // Object reference - look up in context
+                    if (parsed.__objectRef) {
+                        return context.objectInstances[parsed.__objectRef] || parsed;
+                    }
+                    
+                    // Error response
+                    if (parsed.error) {
+                        console.warn('[JSContext] C# method returned error:', parsed.error);
+                        return null;
+                    }
+                }
+                
+                return parsed;
+            } catch (e) {
+                // If JSON parse fails, return the raw string
+                return resultStr;
             }
         };
         
@@ -374,83 +509,13 @@ mergeInto(LibraryManager.library, {
                             if (methodName === 'Error') { console.error('[Scene]', args[0]); return null; }
                         }
                         
-                        // === UnityEngineApi methods (STUB) ===
-                        if (hostObjectName === 'UnityEngineApi') {
-                            // CrdtGetState returns empty byte array (no initial state)
-                            if (methodName === 'CrdtGetState') {
-                                return { data: new Uint8Array(0), IsEmpty: true };
-                            }
-                            // CrdtSendToRenderer accepts data and returns empty response
-                            if (methodName === 'CrdtSendToRenderer') {
-                                // Log that we received CRDT data (for debugging)
-                                console.log('[STUB] CrdtSendToRenderer received data');
-                                return { data: new Uint8Array(0), IsEmpty: true };
-                            }
-                            // SendBatch returns null
-                            if (methodName === 'SendBatch') {
-                                return null;
-                            }
-                        }
-                        
-                        // === UnitySceneApi methods (STUB) ===
-                        if (hostObjectName === 'UnitySceneApi') {
-                            // Most scene API methods can return empty/default values
-                            console.log('[STUB] UnitySceneApi.' + methodName + ' called');
-                            return null;
-                        }
-                        
-                        // === CommsApi methods (STUB) ===
-                        if (hostObjectName === 'CommsApi') {
-                            console.log('[STUB] CommsApi.' + methodName + ' called');
-                            return null;
-                        }
-                        
-                        // === UnityRestrictedActionsApi methods (STUB) ===
-                        if (hostObjectName === 'UnityRestrictedActionsApi') {
-                            console.log('[STUB] UnityRestrictedActionsApi.' + methodName + ' called');
-                            return Promise.resolve(null);
-                        }
-                        
-                        // === UnityEthereumApi methods (STUB) ===
-                        if (hostObjectName === 'UnityEthereumApi') {
-                            console.log('[STUB] UnityEthereumApi.' + methodName + ' called');
-                            return Promise.resolve(null);
-                        }
-                        
-                        // === UnityUserIdentityApi methods (STUB) ===
-                        if (hostObjectName === 'UnityUserIdentityApi') {
-                            console.log('[STUB] UnityUserIdentityApi.' + methodName + ' called');
-                            return Promise.resolve({ userId: 'stub-user-id', isGuest: true });
-                        }
-                        
-                        // === UnityWebSocketApi methods (STUB) ===
-                        if (hostObjectName === 'UnityWebSocketApi') {
-                            console.log('[STUB] UnityWebSocketApi.' + methodName + ' called');
-                            return null;
-                        }
-                        
-                        // === UnityCommunicationsControllerApi methods (STUB) ===
-                        if (hostObjectName === 'UnityCommunicationsControllerApi') {
-                            console.log('[STUB] UnityCommunicationsControllerApi.' + methodName + ' called');
-                            return null;
-                        }
-                        
-                        // === UnitySimpleFetchApi methods (STUB) ===
-                        if (hostObjectName === 'UnitySimpleFetchApi') {
-                            console.log('[STUB] UnitySimpleFetchApi.' + methodName + ' called');
-                            return Promise.resolve({ ok: true, status: 200, body: '{}' });
-                        }
-                        
-                        // === UnitySDKMessageBusCommsControllerApi methods (STUB) ===
-                        if (hostObjectName === 'UnitySDKMessageBusCommsControllerApi') {
-                            console.log('[STUB] UnitySDKMessageBusCommsControllerApi.' + methodName + ' called');
-                            return null;
-                        }
-                        
-                        // === UnityPortableExperiencesApi methods (STUB) ===
-                        if (hostObjectName === 'UnityPortableExperiencesApi') {
-                            console.log('[STUB] UnityPortableExperiencesApi.' + methodName + ' called');
-                            return Promise.resolve(null);
+                        // === Generic handler for all other registered host objects ===
+                        // This calls the actual C# method via the callback mechanism
+                        // Skip for __resetableSource which has special void-return handling below
+                        if (hostObjectName !== '__resetableSource') {
+                            // Call the C# method and get the return value
+                            const result = invokeHostObjectCallbackWithReturn(methodName, args);
+                            return result;
                         }
                         
                         // === __resetableSource (internal) ===
