@@ -44,9 +44,7 @@ namespace DCL.Profiles
 
         // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
-        // Catalyst servers requires a face thumbnail texture of 256x256
-        // Otherwise it will fail when the profile is published
-        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
+
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
@@ -85,20 +83,11 @@ namespace DCL.Profiles
 
             IIpfsRealm ipfs = realm.Ipfs;
 
-            // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
-            byte[] faceSnapshotTextureFile = whiteTexturePng;
-            byte[] bodySnapshotTextureFile = whiteTexturePng;
+            // ADR-290: snapshots are no longer sent during profile deployment
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile);
 
-            string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
-            string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
-
-            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(faceHash, bodyHash));
-
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, bodyHash, faceHash);
-
+            // Clear files just in case, though we don't add any
             files.Clear();
-            files[bodyHash] = bodySnapshotTextureFile;
-            files[faceHash] = faceSnapshotTextureFile;
 
             try
             {
@@ -108,15 +97,12 @@ namespace DCL.Profiles
             finally { files.Clear(); }
         }
 
-        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, string bodyHash, string faceHash) =>
+        // ADR-290: content array is empty - no snapshot files are sent
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile) =>
             new (string.Empty, profile)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new ContentDefinition[]
-                {
-                    new () { file = "body.png", hash = bodyHash },
-                    new () { file = "face256.png", hash = faceHash },
-                },
+                content = Array.Empty<ContentDefinition>(),
                 pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
@@ -338,7 +324,6 @@ namespace DCL.Profiles
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
-
                 }
                 else
                 {
