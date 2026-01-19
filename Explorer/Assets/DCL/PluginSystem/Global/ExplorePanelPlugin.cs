@@ -25,7 +25,6 @@ using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
-using DCL.UI.ProfileElements;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -34,8 +33,6 @@ using ECS;
 using ECS.Prioritization;
 using Global.Dynamic;
 using MVC;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
@@ -314,6 +311,7 @@ namespace DCL.PluginSystem.Global
 
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
+
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
@@ -328,7 +326,6 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
-                settings.EmbeddedEmotesAsURN(),
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -453,6 +450,7 @@ namespace DCL.PluginSystem.Global
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
+
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(
                     cameraReelView.CameraReelGalleryView,
@@ -472,6 +470,7 @@ namespace DCL.PluginSystem.Global
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+
             communitiesBrowserController = new CommunitiesBrowserController(
                 communitiesBrowserView,
                 cursor,
@@ -638,7 +637,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
             [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() => EmbeddedEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

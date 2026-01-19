@@ -45,7 +45,9 @@ namespace DCL.FeatureFlags
                 [FeatureId.FRIENDS_CONNECTIVITY_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
                 [FeatureId.COMMUNITIES_ANNOUNCEMENTS]  = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
                 [FeatureId.COMMUNITIES_MEMBERS_COUNTER]= FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
-
+                [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT),
+                [FeatureId.CHAT_MESSAGE_BUFFER] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG),
+                [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -148,6 +150,10 @@ namespace DCL.FeatureFlags
         AUTH_CODE_VALIDATION = 33,
         GPUI_ENABLED = 34,
         DISCOVER_PLACES = 35,
-        FRIENDS_CONNECTIVITY_STATUS = 36, COMMUNITIES_ANNOUNCEMENTS
+        FRIENDS_CONNECTIVITY_STATUS = 36,
+        COMMUNITIES_ANNOUNCEMENTS = 37,
+        CHAT_MESSAGE_RATE_LIMIT = 38,
+        CHAT_MESSAGE_BUFFER = 39,
+        PRIVATE_CHAT_REQUIRES_TOPIC = 40,
     }
 }
