@@ -146,7 +146,7 @@ namespace DCL.SocialService
                         if (connectionRetries > 0)
                         {
                             // Add a breadcrumb to better investigate the issue
-                            SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
+                            Sentry.Unity.SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
 
                             double appliedDelay = retryCurrentDelay;
 
@@ -182,7 +182,7 @@ namespace DCL.SocialService
                 if (!isConnectionReady)
                 {
                     await InitializeConnectionAsync(ct);
-                    SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
+                    Sentry.Unity.SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
                 }
             }
             catch (Exception)
