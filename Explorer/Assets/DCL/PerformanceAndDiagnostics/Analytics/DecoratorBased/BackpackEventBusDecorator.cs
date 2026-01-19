@@ -7,6 +7,7 @@ using DCL.UI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -25,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IEmote> SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?> FilterEvent;
+        public event Action<BackpackEquipOutfitCommand, IWearable[]>? EquipOutfitEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
         public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string> ChangeColorEvent;
@@ -54,6 +56,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.PublishProfileEvent += OnPublishProfile;
             core.DeactivateEvent += OnDeactivate;
             core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
+            core.EquipOutfitEvent += OnEquipOutfit;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
@@ -75,7 +78,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.PublishProfileEvent -= OnPublishProfile;
             core.DeactivateEvent -= OnDeactivate;
             core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
+            core.EquipOutfitEvent -= OnEquipOutfit;
         }
+
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
+            EquipOutfitEvent?.Invoke(command, wearables);
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
         {
@@ -140,6 +147,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SendBackpackDeactivateEvent() =>
             core.SendBackpackDeactivateEvent();
+
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            core.SendEquipOutfit(command, wearables);
+        }
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
             core.SendChangedBackpackSectionEvent(backpackSections);
