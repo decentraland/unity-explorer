@@ -92,7 +92,7 @@ namespace DCL.UI
             if (email == string.Empty)
                 emailInputOutline.enabled = false;
             else if (!IsValidEmail(email))
-                SetErrorState(false);
+                SetErrorState(true);
             else
                 Submitted?.Invoke();
         }

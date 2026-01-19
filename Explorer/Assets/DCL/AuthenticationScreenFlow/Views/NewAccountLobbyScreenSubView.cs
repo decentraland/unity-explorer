@@ -15,6 +15,9 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button FinalizeNewUserButton { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Animator Animator { get; private set; } = null!;
+
         [field: Space]
         [field: SerializeField]
         public Button PrevRandomButton { get; private set; } = null!;

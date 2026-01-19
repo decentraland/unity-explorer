@@ -61,12 +61,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void JumpIntoWorld()
         {
             subView!.JumpIntoWorldButton.interactable = false;
+            subView.FadeOut();
+
             AnimateAndAwaitAsync().Forget();
             return;
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                subView.FadeOut();
 
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors

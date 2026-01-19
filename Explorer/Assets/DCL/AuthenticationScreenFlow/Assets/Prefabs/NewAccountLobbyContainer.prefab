@@ -357,7 +357,7 @@ Animator:
   m_GameObject: {fileID: 3269863560478414764}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 527b40dc136f8cc4b91f8aa9f03311c0, type: 2}
+  m_Controller: {fileID: 9100000, guid: bbaf7bb80b3ee92439034cad5bc59de5, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -396,6 +396,7 @@ MonoBehaviour:
   <ProfileNameInputField>k__BackingField: {fileID: 2960017395348409964}
   <BackButton>k__BackingField: {fileID: 3836947382991193770}
   <FinalizeNewUserButton>k__BackingField: {fileID: 3173969130928085357}
+  <Animator>k__BackingField: {fileID: 5769960688767498216}
   <PrevRandomButton>k__BackingField: {fileID: 8135587924092868581}
   <NextRandomButton>k__BackingField: {fileID: 8721418452034323148}
   <RandomizeButton>k__BackingField: {fileID: 1371837872725661228}

@@ -8,6 +8,7 @@ using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Utilities;
 using MVC;
 using System;
@@ -71,6 +72,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newUserProfile = payload.profile;
 
             newAccountSubView.gameObject.SetActive(true);
+            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.IN);
 
             newAccountSubView.ProfileNameInputField.NameValidityChanged += OnProfileNameChanged;
 
@@ -91,7 +93,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            newAccountSubView.gameObject.SetActive(false);
+            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.BACK);
             newAccountSubView.NextRandomButton.interactable = false;
 
             characterPreviewController?.OnHide();
@@ -310,7 +312,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            // subView!.JumpIntoWorldButton.interactable = false;
+            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.OUT);
             AnimateAndAwaitAsync().Forget();
             return;
 
