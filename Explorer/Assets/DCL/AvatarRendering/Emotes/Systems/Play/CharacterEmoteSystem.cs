@@ -283,7 +283,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             // Some emotes changes the armature rotation, we need to restore it
             avatarView.ResetArmatureInclination();
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "StopEmote() RESET EmoteComponent User: " + ((AvatarBase)avatarView).name);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "StopEmote() RESET EmoteComponent User: " + ((AvatarBase)avatarView).name + " STACK: " + StackTraceUtility.ExtractStackTrace());
             emoteComponent.Reset();
 
             // Cancels interpolating to start position in a social emote outcome animation
@@ -755,7 +755,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             AvatarBase avatarBase = (AvatarBase)World.Get<IAvatarView>(entity);
 
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ResetAvatarAndControllerTransforms() <color=cyan>EXITING EMOTE STATE {avatarBase.name}</color>");
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ResetAvatarAndControllerTransforms() <color=cyan>EXITING EMOTE STATE {avatarBase.name}</color> STACK: {StackTraceUtility.ExtractStackTrace()}");
 
             avatarBase.RestoreArmatureName(); // This is necessary to avoid jittering during the transition
 
