@@ -13,10 +13,9 @@ namespace DCL.CharacterMotion
             Vector3 viewerForward,
             Vector3 viewerRight,
             in MovementInputComponent input,
+            float speedLimit,
             float dt)
         {
-            float speedLimit = MovementSpeedLimitHelper.GetMovementSpeedLimit(settings, input.Kind);
-
             // Apply movement speed increase/decrease based on the current slope angle
             var slopeForward = Vector3.Cross(rigidTransform.CurrentSlopeNormal, Vector3.Cross(rigidTransform.LookDirection, rigidTransform.CurrentSlopeNormal));
             float slopeAngle = Vector3.SignedAngle(rigidTransform.LookDirection, slopeForward, Vector3.Cross(rigidTransform.LookDirection, Vector3.up));

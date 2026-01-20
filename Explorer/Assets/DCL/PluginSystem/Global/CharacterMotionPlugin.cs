@@ -72,12 +72,15 @@ namespace DCL.PluginSystem.Global
                 new StunComponent(),
                 new FeetIKComponent(),
                 new HandsIKComponent(),
-                new HeadIKComponent());
+                new HeadIKComponent(),
+                new MovementSpeedLimit(),
+                new GlideState());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
+            CalculateSpeedLimitSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);

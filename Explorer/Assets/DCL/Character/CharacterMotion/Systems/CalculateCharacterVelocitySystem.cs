@@ -134,16 +134,27 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
-            in MovementInputComponent movementInput)
+            in MovementInputComponent movementInput,
+            ref GlideState glideState,
+            in MovementSpeedLimit speedLimit)
         {
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, cameraComponent.Camera.transform);
+            ResolveAvatarVelocity(dt,
+                physicsTick,
+                in cameraComponent,
+                ref settings,
+                ref rigidTransform,
+                ref characterController,
+                ref jump,
+                ref glideState,
+                in movementInput,
+                in speedLimit,
+                cameraComponent.Camera.transform);
         }
 
         [Query]
         [All(typeof(RandomAvatar))]
         [None(typeof(DeleteEntityIntention))]
         private void ResolveRandomAvatarVelocity(
-            Entity entity,
             [Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent cameraComponent,
@@ -151,10 +162,22 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
-            in MovementInputComponent movementInput)
+            in MovementInputComponent movementInput,
+            ref GlideState glideState,
+            in MovementSpeedLimit speedLimit)
         {
             // Random avatars are not affected by the player's camera
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, characterController.transform);
+            ResolveAvatarVelocity(dt,
+                physicsTick,
+                in cameraComponent,
+                ref settings,
+                ref rigidTransform,
+                ref characterController,
+                ref jump,
+                ref glideState,
+                in movementInput,
+                in speedLimit,
+                characterController.transform);
         }
 
         private void ResolveAvatarVelocity(
@@ -165,14 +188,16 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
+            ref GlideState glideState,
             in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit,
             Transform viewerTransform)
         {
             var viewerForward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
             var viewerRight = Vector3.Cross(-viewerForward, Vector3.up);
 
             // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerForward, viewerRight, in movementInput, dt);
+            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerForward, viewerRight, in movementInput, speedLimit.Value, dt);
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
@@ -183,6 +208,8 @@ namespace DCL.CharacterMotion.Systems
             // Apply vertical velocity
             ApplyJump.Execute(settings, ref rigidTransform, ref jump, viewerForward, viewerRight, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
+            ApplyGliding.Execute(settings, in rigidTransform, in jump, ref glideState, physicsTick);
+
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
