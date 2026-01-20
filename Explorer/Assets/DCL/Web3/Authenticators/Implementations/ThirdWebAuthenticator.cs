@@ -201,7 +201,6 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
         {
-
             var targetChainId = new BigInteger(chainId);
 
             this.chainId = targetChainId;

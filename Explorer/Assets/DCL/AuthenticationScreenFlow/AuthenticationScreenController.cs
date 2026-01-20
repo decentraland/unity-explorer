@@ -280,7 +280,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private UniTask<bool> ShowTransactionConfirmationAsync(TransactionConfirmationRequest request)
         {
-            viewInstance!.ConfPopupRootText.text = BuildTransactionInfoText(request);
+            // viewInstance!.ConfPopupRootText.text = BuildTransactionInfoText(request);
 
             // Show popup
             viewInstance.ConfPopupRoot.transform.parent = null;
