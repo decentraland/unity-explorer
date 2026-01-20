@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.UI.SelectorButton;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,12 +13,6 @@ namespace DCL.Places
 {
     public class PlacesView : MonoBehaviour
     {
-        private const string SORT_BY_FILTER_MOST_ACTIVE_OPTION = "Most Active";
-        private const string SORT_BY_FILTER_BEST_RATED_OPTION = "Best Rated";
-        private const int SORT_BY_FILTER_DEFAULT_OPTION_INDEX = 1;
-        private const string SORT_BY_SDK_VERSION_SDK7_OPTION = "SDK7 Only";
-        private const string SORT_BY_SDK_VERSION_ALL_OPTION = "All";
-        private const int SORT_BY_SDK_VERSION_FILTER_DEFAULT_OPTION_INDEX = 0;
         private const int SEARCH_AWAIT_TIME = 1000;
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
@@ -43,10 +36,7 @@ namespace DCL.Places
         [SerializeField] private ButtonWithSelectableStateView myPlacesSectionTab = null!;
 
         [Header("Filters")]
-        [SerializeField] private TMP_Text sortByTitleText = null!;
-        [SerializeField] private SelectorButtonView sortByDropdown = null!;
-        [SerializeField] private TMP_Text sdkVersionTitleText = null!;
-        [SerializeField] private SelectorButtonView sdkVersionDropdown = null!;
+        [SerializeField] private PlacesFilterSelectorView filtersDropdown = null!;
         [SerializeField] private SearchBarView searchBar = null!;
 
         [Header("Categories")]
@@ -72,13 +62,14 @@ namespace DCL.Places
             myPlacesSectionTab.Button.onClick.AddListener(() => OpenSection(PlacesSection.MY_PLACES));
 
             // Filters subscriptions
-            sortByDropdown.OptionClicked += OnSortByChanged;
-            sdkVersionDropdown.OptionClicked += OnSDKVersionChanged;
+            filtersDropdown.SortByBestRatedSelected += OnSortByBestRatedSelected;
+            filtersDropdown.SortByMostActiveSelected += OnSortByMostActiveSelected;
+            filtersDropdown.SDK7OnlySelected += OnSDK7OnlySelected;
             searchBar.inputField.onValueChanged.AddListener(OnSearchValueChanged);
             searchBar.inputField.onSubmit.AddListener(OnSearchSubmitted);
             searchBar.clearSearchButton.onClick.AddListener(OnSearchClearButtonClicked);
-            searchBar.inputField.onSelect.AddListener(text => SearchBarSelected?.Invoke());
-            searchBar.inputField.onDeselect.AddListener(text => SearchBarDeselected?.Invoke());
+            searchBar.inputField.onSelect.AddListener(_ => SearchBarSelected?.Invoke());
+            searchBar.inputField.onDeselect.AddListener(_ => SearchBarDeselected?.Invoke());
 
             // Categories pool configuration
             categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
@@ -98,8 +89,9 @@ namespace DCL.Places
             favoritesSectionTab.Button.onClick.RemoveAllListeners();
             recentlyVisitedSectionTab.Button.onClick.RemoveAllListeners();
             myPlacesSectionTab.Button.onClick.RemoveAllListeners();
-            sortByDropdown.OptionClicked -= OnSortByChanged;
-            sdkVersionDropdown.OptionClicked -= OnSDKVersionChanged;
+            filtersDropdown.SortByBestRatedSelected -= OnSortByBestRatedSelected;
+            filtersDropdown.SortByMostActiveSelected -= OnSortByMostActiveSelected;
+            filtersDropdown.SDK7OnlySelected -= OnSDK7OnlySelected;
             searchBar.inputField.onSelect.RemoveAllListeners();
             searchBar.inputField.onDeselect.RemoveAllListeners();
             searchBar.inputField.onValueChanged.RemoveAllListeners();
@@ -168,35 +160,11 @@ namespace DCL.Places
                 AnyFilterChanged?.Invoke(currentFilters);
         }
 
-        public void SetupSortByFilter()
-        {
-            sortByDropdown.SetOptions(new List<string> { SORT_BY_FILTER_MOST_ACTIVE_OPTION, SORT_BY_FILTER_BEST_RATED_OPTION });
-            sortByDropdown.SelectedIndex = SORT_BY_FILTER_DEFAULT_OPTION_INDEX;
-        }
+        public void ResetFiltersDropdown() =>
+            filtersDropdown.ResetFilters(invokeEvents: false);
 
-        public void ClearSortByFilter() =>
-            sortByDropdown.ClearOptions();
-
-        public void SetSortByFilterVisible(bool isVisible)
-        {
-            sortByTitleText.gameObject.SetActive(isVisible);
-            sortByDropdown.gameObject.SetActive(isVisible);
-        }
-
-        public void SetupSDKVersionFilter()
-        {
-            sdkVersionDropdown.SetOptions(new List<string> { SORT_BY_SDK_VERSION_SDK7_OPTION, SORT_BY_SDK_VERSION_ALL_OPTION });
-            sdkVersionDropdown.SelectedIndex = SORT_BY_SDK_VERSION_FILTER_DEFAULT_OPTION_INDEX;
-        }
-
-        public void ClearSDKVersionFilter() =>
-            sdkVersionDropdown.ClearOptions();
-
-        public void SetSDKVersionFilterVisible(bool isVisible)
-        {
-            sdkVersionTitleText.gameObject.SetActive(isVisible);
-            sdkVersionDropdown.gameObject.SetActive(isVisible);
-        }
+        public void SetFiltersVisible(bool isVisible) =>
+            filtersDropdown.gameObject.SetActive(isVisible);
 
         public void SetCategories(PlaceCategoriesSO.PlaceCategoryData[] categories)
         {
@@ -265,19 +233,27 @@ namespace DCL.Places
                 AnyFilterChanged?.Invoke(currentFilters);
         }
 
-        private void OnSortByChanged(int index)
+        private void OnSortByBestRatedSelected(bool isOn)
         {
-            var selectedSortBy = index == 0 ? IPlacesAPIService.SortBy.MOST_ACTIVE : IPlacesAPIService.SortBy.LIKE_SCORE;
+            if (!isOn)
+                return;
 
-            currentFilters.SortBy = selectedSortBy;
+            currentFilters.SortBy = IPlacesAPIService.SortBy.LIKE_SCORE;
             AnyFilterChanged?.Invoke(currentFilters);
         }
 
-        private void OnSDKVersionChanged(int index)
+        private void OnSortByMostActiveSelected(bool isOn)
         {
-            var selectedSDKVersion = index == 0 ? IPlacesAPIService.SDKVersion.SDK7_ONLY : IPlacesAPIService.SDKVersion.ALL;
+            if (!isOn)
+                return;
 
-            currentFilters.SDKVersion = selectedSDKVersion;
+            currentFilters.SortBy = IPlacesAPIService.SortBy.MOST_ACTIVE;
+            AnyFilterChanged?.Invoke(currentFilters);
+        }
+
+        private void OnSDK7OnlySelected(bool isOn)
+        {
+            currentFilters.SDKVersion = isOn ? IPlacesAPIService.SDKVersion.SDK7_ONLY : IPlacesAPIService.SDKVersion.ALL;
             AnyFilterChanged?.Invoke(currentFilters);
         }
 
