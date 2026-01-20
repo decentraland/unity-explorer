@@ -2,8 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CRDT;
-using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
@@ -21,15 +19,12 @@ namespace ECS.Unity.AssetLoad.Systems
     [ThrottlingEnabled]
     public partial class CleanUpAssetPreLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly AssetLoadCache assetLoadCache;
 
         internal CleanUpAssetPreLoadSystem(World world,
-            IECSToCRDTWriter ecsToCRDTWriter,
             AssetLoadCache assetLoadCache)
             : base(world)
         {
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.assetLoadCache = assetLoadCache;
         }
 
@@ -39,15 +34,15 @@ namespace ECS.Unity.AssetLoad.Systems
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(AssetLoadComponent))]
-        private void HandleComponentRemoval(in CRDTEntity sdkEntity)
+        [None(typeof(DeleteEntityIntention), typeof(PBAssetLoad))]
+        [All(typeof(AssetLoadComponent))]
+        private void HandleComponentRemoval(in Entity entity)
         {
-            ecsToCRDTWriter.DeleteMessage<PBAssetLoadLoadingState>(sdkEntity);
+            World.Remove<AssetLoadComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            HandleComponentRemovalQuery(World);
             assetLoadCache.Dispose();
         }
     }
