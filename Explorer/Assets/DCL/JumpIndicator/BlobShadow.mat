@@ -119,7 +119,7 @@ Material:
     - _GlossyReflections: 0
     - _HEIGHT_SCALING_TYPE: 0
     - _Inner_Radius: 0.35
-    - _MaxGroundDistance: 5
+    - _MaxGroundDistance: 0
     - _Max_Distance: 10
     - _Max_Ground_Distance: 10
     - _Max_Opacity: 0.8
@@ -129,7 +129,7 @@ Material:
     - _Opacity: 0.9
     - _Outer_Radius: 1
     - _Parallax: 0.005
-    - _PlayerGroundDistance: 0.26517263
+    - _PlayerGroundDistance: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Scale: 1

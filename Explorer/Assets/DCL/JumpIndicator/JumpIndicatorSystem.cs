@@ -41,7 +41,10 @@ namespace DCL.JumpIndicator
         private void InitializeJumpIndicator(in IAvatarView avatarView)
         {
             var jumpIndicator = Object.Instantiate(jumpIndicatorPrefab, avatarView.GetTransform());
+
             var decalProjector = jumpIndicator.GetComponent<DecalProjector>();
+            // Copy the material to avoid modifying the original asset
+            decalProjector.material = new Material(decalProjector.material);
 
             World.Add(playerEntity, new JumpIndicator { DecalProjector = decalProjector });
         }
