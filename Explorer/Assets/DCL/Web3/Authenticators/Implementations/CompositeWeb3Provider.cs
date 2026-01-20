@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
@@ -75,8 +76,11 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<bool> TryAutoConnectAsync(CancellationToken ct)
         {
-            currentMethod = AuthMethod.ThirdWebOTP;
-            return thirdWebAuth.TryAutoConnectAsync(ct);
+            // Temporary heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
+            string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
+            CurrentMethod = string.IsNullOrEmpty(email) ? AuthMethod.DappWallet : AuthMethod.ThirdWebOTP;
+
+            return CurrentAuthenticator.TryAutoConnectAsync(ct);
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
