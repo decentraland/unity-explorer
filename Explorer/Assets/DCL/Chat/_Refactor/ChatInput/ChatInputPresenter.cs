@@ -58,6 +58,12 @@ namespace DCL.Chat.ChatInput
             scope.Add(chatEventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
             scope.Add(chatEventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
             scope.Add(chatEventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.DeselectInputEvent>(OnDeselectInput));
+        }
+
+        private void OnDeselectInput(ChatEvents.DeselectInputEvent _)
+        {
+            OnBlur();
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)

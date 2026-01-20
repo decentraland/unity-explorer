@@ -208,6 +208,8 @@ namespace DCL.Chat
         ///     Subscribers:    ChatFsmController: Transitions the UI to the corresponding state.
         /// </summary>
         public struct ToggleChatEvent {}
+
+        public struct DeselectInputEvent { }
 #endregion
 
 #region Miscellaneous Events

@@ -51,17 +51,11 @@ namespace DCL.Chat
 #endregion
 
 #region General Chat Events
-        public void RaiseFocusRequestedEvent() =>
-            Publish(new ChatEvents.FocusRequestedEvent());
-
-        public void RaiseCloseChatEvent() =>
-            Publish(new ChatEvents.CloseChatEvent());
-
-        public void RaiseChatStateChangedEvent(ChatState currentState) =>
-            Publish(new ChatEvents.ChatStateChangedEvent { CurrentState = currentState });
-
-        public void RaiseToggleChatEvent() =>
-            Publish(new ChatEvents.ToggleChatEvent());
+        public void RaiseFocusRequestedEvent() => Publish(new ChatEvents.FocusRequestedEvent());
+        public void RaiseCloseChatEvent() => Publish(new ChatEvents.CloseChatEvent());
+        public void RaiseChatStateChangedEvent(ChatState currentState) => Publish(new ChatEvents.ChatStateChangedEvent { CurrentState = currentState });
+        public void RaiseToggleChatEvent() => Publish(new ChatEvents.ToggleChatEvent());
+        public void RaiseDeselectInputEvent() => Publish(new ChatEvents.DeselectInputEvent());
 #endregion
 
 #region Miscellaneous Events

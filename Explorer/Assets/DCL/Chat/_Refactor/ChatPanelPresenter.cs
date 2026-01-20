@@ -31,7 +31,7 @@ namespace DCL.Chat
         private readonly ChatPanelView view;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope chatAreaEventBusScope = new ();
-
+        private readonly ChatEventBus chatEventBus;
         private readonly ChatCommandRegistry chatCommandRegistry;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ChatStateMachine chatStateMachine;
@@ -62,6 +62,7 @@ namespace DCL.Chat
             ITranslationCache translationCache)
         {
             this.view = view;
+            this.chatEventBus = chatEventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.chatCommandRegistry = chatCommandRegistry;
@@ -232,7 +233,7 @@ namespace DCL.Chat
                     break;
                 case CanvasOrdering.SortingLayer.POPUP:
                     if (chatStateMachine.IsFocused)
-                        chatStateMachine.SetVisibility(true);
+                        chatEventBus.RaiseDeselectInputEvent();
                     break;
             }
         }
