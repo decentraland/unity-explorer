@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
@@ -8,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -44,6 +46,8 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IEmoteStorage emoteStorage;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
@@ -79,7 +83,9 @@ namespace DCL.Backpack
             ColorPresetsSO bodyshapeColors,
             IWearableStorage wearableStorage,
             SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IPendingTransferService pendingTransferService,
+            IEmoteStorage emoteStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -96,6 +102,8 @@ namespace DCL.Backpack
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
+            this.pendingTransferService = pendingTransferService;
+            this.emoteStorage = emoteStorage;
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
@@ -223,6 +231,20 @@ namespace DCL.Backpack
                     && gridWearables[i].GetCategory() != WearableCategories.Categories.EYES
                     && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
                     && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
+                
+                // Calculate pending transfer status and display amount for on-chain wearables
+                URN urn = wearable.GetUrn();
+                bool isBaseWearable = urn.IsBaseWearable();
+                int totalOwned = wearable.Amount;
+                int pendingCount = isBaseWearable ? 0 : pendingTransferService.GetPendingCount(urn);
+                int displayAmount = totalOwned - pendingCount;
+                
+                // Mark as pending transfer if ALL instances are being transferred
+                backpackItemView.IsPendingTransfer = !isBaseWearable && displayAmount <= 0;
+                
+                // Show NFT count (only for on-chain wearables with amount > 1)
+                backpackItemView.NftCount = isBaseWearable ? 0 : Math.Max(displayAmount, 0);
+                
                 backpackItemView.SetEquipButtonsState();
 
                 backpackItemView.SmartWearableBadgeContainer.SetActive(false);
@@ -337,6 +359,9 @@ namespace DCL.Backpack
                     currentSearch,
                     results);
 
+                // Prune stale pending transfers that have been confirmed by the indexer
+                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
+
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
@@ -382,6 +407,8 @@ namespace DCL.Backpack
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
                 backpackItemView.Value.IsCompatibleWithBodyShape = true;
+                backpackItemView.Value.IsPendingTransfer = false;
+                backpackItemView.Value.NftCount = 0;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }

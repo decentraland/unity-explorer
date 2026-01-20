@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat.EventBus;
@@ -136,6 +137,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IPendingTransferService pendingTransferService;
 
         private readonly bool includeCameraReel;
         private readonly bool includeDiscover;
@@ -227,7 +229,8 @@ namespace DCL.PluginSystem.Global
             SmartWearableCache smartWearableCache,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IPendingTransferService pendingTransferService)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -293,6 +296,7 @@ namespace DCL.PluginSystem.Global
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.pendingTransferService = pendingTransferService;
         }
 
         public void Dispose()
@@ -350,7 +354,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 smartWearableCache,
                 mvcManager,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                pendingTransferService
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

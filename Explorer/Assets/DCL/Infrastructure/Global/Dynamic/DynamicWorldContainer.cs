@@ -873,7 +873,8 @@ namespace Global.Dynamic
                     staticContainer.SmartWearableCache,
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
-                    staticContainer.LoadingStatus
+                    staticContainer.LoadingStatus,
+                    pendingTransferService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
