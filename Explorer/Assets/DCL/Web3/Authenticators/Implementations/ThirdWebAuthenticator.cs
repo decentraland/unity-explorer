@@ -24,7 +24,6 @@ namespace DCL.Web3.Authenticators
 
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
 
@@ -38,13 +37,12 @@ namespace DCL.Web3.Authenticators
         // This allows us to support ANY contract call by overriding the data field
         private const string MINIMAL_ABI = @"[{""name"":""execute"",""type"":""function"",""inputs"":[],""outputs"":[]}]";
 
-        public ThirdWebAuthenticator(DecentralandEnvironment environment, IWeb3IdentityCache identityCache, HashSet<string> whitelistMethods,
+        public ThirdWebAuthenticator(DecentralandEnvironment environment, HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
             Instance?.Dispose();
             Instance = this;
 
-            this.identityCache = identityCache;
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.web3AccountFactory = web3AccountFactory;
