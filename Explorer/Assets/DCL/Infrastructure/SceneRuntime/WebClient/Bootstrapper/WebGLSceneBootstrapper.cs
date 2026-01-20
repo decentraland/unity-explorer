@@ -183,11 +183,18 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 Debug.Log($"[WebGLSceneBootstrapper] Initializing Scene Facade");
                 sceneFacade.Initialize();
 
+                // CRITICAL: Set the scene state to Running so ECS systems will update
+                Debug.Log($"[WebGLSceneBootstrapper] Setting scene state to Running");
+                sceneFacade.SceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, 0));
+
                 Debug.Log($"[WebGLSceneBootstrapper] Starting Scene");
                 await sceneFacade.StartScene();
 
                 isInitialized = true;
                 Debug.Log($"[WebGLSceneBootstrapper] Scene from '{sceneUrl}' loaded and started successfully");
+                
+                // Position the camera at the scene origin so we can see the created entities
+                PositionCameraAtSceneOrigin();
             }
             catch (Exception e)
             {
@@ -213,6 +220,25 @@ namespace SceneRuntime.WebClient.Bootstrapper
             }
         }
 
+        private void PositionCameraAtSceneOrigin()
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                Debug.LogWarning("[WebGLSceneBootstrapper] No main camera found to reposition");
+                return;
+            }
+            
+            // Position camera at a good viewing distance from the origin, looking at (8, 0, 8) which is roughly center of a 16x16 parcel
+            Vector3 sceneCenter = new Vector3(8f, 1f, 8f);
+            Vector3 cameraPosition = new Vector3(8f, 5f, -5f); // Slightly elevated and back from origin
+            
+            mainCamera.transform.position = cameraPosition;
+            mainCamera.transform.LookAt(sceneCenter);
+            
+            Debug.Log($"[WebGLSceneBootstrapper] Repositioned camera to {cameraPosition}, looking at {sceneCenter}");
+        }
+        
         private void OnDestroy()
         {
             if (sceneFacade != null)

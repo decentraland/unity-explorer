@@ -51,9 +51,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
                 IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(data);
-
                 instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
-
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
                 Profiler.EndThreadProfiling();
@@ -63,8 +61,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             catch (Exception e)
             {
                 if (!disposeCts.IsCancellationRequested)
-
-                    // Report an uncategorized MANAGED exception (don't propagate it further)
                     exceptionsHandler.OnEngineException(e);
 
                 return PoolableByteArray.EMPTY;

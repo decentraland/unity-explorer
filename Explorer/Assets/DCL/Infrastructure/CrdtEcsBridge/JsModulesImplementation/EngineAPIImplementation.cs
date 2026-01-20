@@ -1,4 +1,4 @@
-﻿using CRDT.Deserializer;
+using CRDT.Deserializer;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
