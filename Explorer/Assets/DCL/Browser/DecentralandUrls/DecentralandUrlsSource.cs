@@ -140,7 +140,6 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
-                DecentralandUrl.PlacesCategories => $"https://places.decentraland.{ENV}/api/categories",
                 DecentralandUrl.CreatorHub => $"https://decentraland.{ENV}/create/",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
