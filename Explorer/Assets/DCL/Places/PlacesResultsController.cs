@@ -105,7 +105,7 @@ namespace DCL.Places
             if (pageNumber == 0)
             {
                 placesStateService.ClearPlaces();
-                view.ClearPlacesResults();
+                view.ClearPlacesResults(currentFilters.Section);
                 view.SetPlacesGridAsLoading(true);
                 view.SetPlacesCounterActive(false);
             }
@@ -136,7 +136,7 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
-                    placesResult = await placesAPIService.GetWorldsByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
+                    placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
@@ -170,7 +170,7 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
+                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
             }
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
@@ -184,7 +184,7 @@ namespace DCL.Places
                     break;
                 }
                 case PlacesSection.BROWSE:
-                    view.SetPlacesCounter("Results for All"); 
+                    view.SetPlacesCounter("Results for All");
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
@@ -235,7 +235,7 @@ namespace DCL.Places
         private void UnloadPlaces()
         {
             loadPlacesCts?.SafeCancelAndDispose();
-            view.ClearPlacesResults();
+            view.ClearPlacesResults(null);
             placesStateService.ClearPlaces();
         }
     }
