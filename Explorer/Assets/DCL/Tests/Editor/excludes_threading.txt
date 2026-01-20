@@ -40,7 +40,6 @@ ThreadLocal&lt;T&gt;
 ThreadPool
 ThreadPoolBoundHandle
 ThreadStartException
-ThreadStateException
 Timer
 Volatile
 WaitHandle

@@ -12,6 +12,7 @@ sed 's/<.*//' |
 # Allowed API, that are safe for WebGL
 grep -v 'CancellationToken' |
 grep -v 'Timeout' |
+grep -v 'ThreadStateException' |
 
 # Output
 cat > excludes_threading.txt
