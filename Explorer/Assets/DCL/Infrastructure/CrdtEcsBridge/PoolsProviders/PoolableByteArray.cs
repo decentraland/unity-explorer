@@ -3,7 +3,36 @@ using System;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
-    public struct PoolableByteArray : IDisposable, IV8FastHostObject
+    public interface IPoolableByteArray
+    {
+        public int Length { get; }
+
+        public void InvokeWithDirectAccess<TArgs>(Action<IntPtr, TArgs> action, in TArgs args);
+
+        public byte[] CloneAsArray();
+    }
+
+    /// <summary>
+    /// MUST be used only when direct access to ITypedArray (a.k. IArrayBuffer) is not feasiable due async/await
+    /// Example
+    ///
+    /// <example>
+    /// Example of usage: InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg)
+    ///
+    /// <code>
+    ///    PoolableByteArray result = data.InvokeWithDirectAccess(
+    ///        static (ptr, args) => {
+    ///            args.singleMemoryManager.Assign(ptr, (int) args.length);
+    ///            return args.api.CrdtSendToRenderer(args.singleMemoryManager.Memory);
+    ///        },
+    ///        (api, length, singleMemoryManager)
+    ///    );
+    /// </code>
+    ///
+    /// </example>
+    ///
+    /// </summary>
+    public struct PoolableByteArray : IDisposable, IV8FastHostObject, IPoolableByteArray
     {
         public static readonly PoolableByteArray EMPTY = new (System.Array.Empty<byte>(), 0, null);
 
@@ -38,6 +67,25 @@ namespace CrdtEcsBridge.PoolsProviders
         public Memory<byte> Memory => Array.AsMemory(0, Length);
 
         public bool IsEmpty => Length == 0;
+
+        public byte[] CloneAsArray()
+        {
+            var copy = new byte[Array.Length];
+            Buffer.BlockCopy(Array, 0, copy, 0, Array.Length);
+            return copy;
+        }
+
+        public void InvokeWithDirectAccess<TArgs>(Action<IntPtr, TArgs> action, in TArgs args)
+        {
+            unsafe
+            {
+                fixed (byte* ptr = Array)
+                {
+                    IntPtr intPtr = new IntPtr(ptr);
+                    action(intPtr, args);
+                }
+            }
+        }
 
         public void SetLength(int length)
         {
