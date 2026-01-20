@@ -55,8 +55,7 @@ namespace DCL.Diagnostics.Sentry
             }
 #endif
 
-            Debug.Log($"Sentry enabled: {options.Enabled}");
-            Debug.Log($"Sentry dsn: {options.Dsn}");
+            Debug.Log($"Sentry environment: {options.Environment}");
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
