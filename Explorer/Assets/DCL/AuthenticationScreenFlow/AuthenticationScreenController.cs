@@ -280,6 +280,22 @@ namespace DCL.AuthenticationScreenFlow
 
         private UniTask<bool> ShowTransactionConfirmationAsync(TransactionConfirmationRequest request)
         {
+            // Dedicated flow for eth_sendTransaction (fee/balance confirmation)
+            if (string.Equals(request.Method, "eth_sendTransaction", StringComparison.OrdinalIgnoreCase))
+            {
+                string networkName = string.IsNullOrEmpty(request.NetworkName) ? "Ethereum Mainnet" : request.NetworkName;
+                string feeEth = string.IsNullOrEmpty(request.EstimatedGasFeeEth) ? "0.0" : request.EstimatedGasFeeEth;
+                string balanceEth = string.IsNullOrEmpty(request.BalanceEth) ? "0.0" : request.BalanceEth;
+
+                viewInstance.TransactionFeeConfirmationView.transform.parent = null;
+
+                return viewInstance.TransactionFeeConfirmationView.ShowAsync(
+                    networkName: networkName,
+                    estimatedGasFeeEth: feeEth,
+                    balanceEth: balanceEth
+                );
+            }
+
             // viewInstance!.ConfPopupRootText.text = BuildTransactionInfoText(request);
 
             // Show popup

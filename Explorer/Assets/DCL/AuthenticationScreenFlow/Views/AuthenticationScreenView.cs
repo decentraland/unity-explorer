@@ -104,6 +104,10 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button ConfPopupRootCancelButton { get; private set; } = null!;
 
+        [field: Header("TRANSACTION FEE CONFIRMATION")]
+        [field: SerializeField]
+        public TransactionFeeConfirmationView? TransactionFeeConfirmationView { get; private set; }
+
         [field: Header("OTHER")]
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;

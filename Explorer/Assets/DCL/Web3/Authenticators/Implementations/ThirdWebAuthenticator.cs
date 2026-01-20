@@ -282,7 +282,7 @@ namespace DCL.Web3.Authenticators
             // Request user confirmation before proceeding
             if (transactionConfirmationCallback != null)
             {
-                TransactionConfirmationRequest confirmationRequest = CreateConfirmationRequest(request);
+                TransactionConfirmationRequest confirmationRequest = await CreateConfirmationRequestAsync(request);
                 bool confirmed = await transactionConfirmationCallback(confirmationRequest);
 
                 if (!confirmed)
@@ -328,12 +328,14 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Creates a confirmation request object with transaction details for the UI
         /// </summary>
-        private TransactionConfirmationRequest CreateConfirmationRequest(EthApiRequest request)
+        private async UniTask<TransactionConfirmationRequest> CreateConfirmationRequestAsync(EthApiRequest request)
         {
             var confirmationRequest = new TransactionConfirmationRequest
             {
                 Method = request.method,
                 Params = request.@params,
+                ChainId = (int)chainId,
+                NetworkName = GetNetworkName((int)chainId),
             };
 
             // Extract additional details for eth_sendTransaction
@@ -349,10 +351,81 @@ namespace DCL.Web3.Authenticators
                 catch
                 { /* Ignore parsing errors, UI will show what it can */
                 }
+
+                // Best-effort: balance + estimated gas fee (should never block the tx flow if it fails)
+                try
+                {
+                    BigInteger balanceWei = await ThirdWebManager.Instance.ActiveWallet.GetBalance(chainId);
+                    confirmationRequest.BalanceEth = balanceWei.ToString().ToEth(decimalsToDisplay: 6, addCommas: false);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[ThirdWeb] Failed to fetch balance for confirmation popup: {e.Message}");
+                    confirmationRequest.BalanceEth = "0.0";
+                }
+
+                try
+                {
+                    // Re-parse to build txObject for estimateGas
+                    Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
+                    string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
+                    string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
+                    string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
+
+                    string from = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+
+                    var txObject = new
+                    {
+                        from,
+                        to,
+                        value,
+                        data,
+                    };
+
+                    // eth_estimateGas
+                    var estimateGasRequest = new EthApiRequest
+                    {
+                        id = request.id,
+                        method = "eth_estimateGas",
+                        @params = new object[] { txObject },
+                    };
+
+                    EthApiResponse estimateGasResponse = await SendRpcRequestAsync(estimateGasRequest);
+                    string gasLimitHex = estimateGasResponse.result?.ToString() ?? "0x0";
+                    BigInteger gasLimit = gasLimitHex.HexToNumber();
+
+                    // eth_gasPrice
+                    var gasPriceRequest = new EthApiRequest
+                    {
+                        id = request.id,
+                        method = "eth_gasPrice",
+                        @params = Array.Empty<object>(),
+                    };
+
+                    EthApiResponse gasPriceResponse = await SendRpcRequestAsync(gasPriceRequest);
+                    string gasPriceHex = gasPriceResponse.result?.ToString() ?? "0x0";
+                    BigInteger gasPriceWei = gasPriceHex.HexToNumber();
+
+                    BigInteger feeWei = gasLimit * gasPriceWei;
+                    confirmationRequest.EstimatedGasFeeEth = feeWei.ToString().ToEth(decimalsToDisplay: 6, addCommas: false);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[ThirdWeb] Failed to estimate gas fee for confirmation popup: {e.Message}");
+                    confirmationRequest.EstimatedGasFeeEth = "0.0";
+                }
             }
 
             return confirmationRequest;
         }
+
+        private static string GetNetworkName(int chainId) =>
+            chainId switch
+            {
+                1 => "Ethereum Mainnet",
+                11155111 => "Sepolia",
+                _ => $"Chain {chainId}",
+            };
 
         private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request)
         {

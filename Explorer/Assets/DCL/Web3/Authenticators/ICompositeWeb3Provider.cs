@@ -10,10 +10,16 @@ namespace DCL.Web3.Authenticators
     public class TransactionConfirmationRequest
     {
         public string Method { get; set; }
+        public int ChainId { get; set; }
+        public string? NetworkName { get; set; }
         public string? To { get; set; }
         public string? Value { get; set; }
         public string? Data { get; set; }
         public object[]? Params { get; set; }
+
+        // Optional extra info (best-effort) for eth_sendTransaction UI
+        public string? EstimatedGasFeeEth { get; set; }
+        public string? BalanceEth { get; set; }
     }
 
     /// <summary>
