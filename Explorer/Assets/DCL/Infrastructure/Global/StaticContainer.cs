@@ -300,7 +300,7 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
-                new AssetLoadPlugin(sharedDependencies, container.AssetLoadCache),
+                new AssetPreLoadPlugin(sharedDependencies, container.AssetLoadCache),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);

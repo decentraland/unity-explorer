@@ -19,12 +19,12 @@ namespace ECS.Unity.AssetLoad.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [ThrottlingEnabled]
-    public partial class CleanUpAssetLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class CleanUpAssetPreLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly AssetLoadCache assetLoadCache;
 
-        internal CleanUpAssetLoadSystem(World world,
+        internal CleanUpAssetPreLoadSystem(World world,
             IECSToCRDTWriter ecsToCRDTWriter,
             AssetLoadCache assetLoadCache)
             : base(world)

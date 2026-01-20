@@ -5,12 +5,12 @@ using SceneRunner.Scene;
 
 namespace ECS.Unity.AssetLoad
 {
-    public class AssetLoadUtils
+    public class AssetPreLoadUtils
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        public AssetLoadUtils(IECSToCRDTWriter ecsToCRDTWriter,
+        public AssetPreLoadUtils(IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;

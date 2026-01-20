@@ -29,21 +29,21 @@ namespace ECS.Unity.AssetLoad.Systems
     [UpdateBefore(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.ASSET_PRE_LOAD)]
     [ThrottlingEnabled]
-    public partial class AssetLoadSystem : BaseUnityLoopSystem
+    public partial class AssetPreLoadSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
-        private readonly AssetLoadUtils assetLoadUtils;
+        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
-        internal AssetLoadSystem(World world,
+        internal AssetPreLoadSystem(World world,
             ISceneData sceneData,
             IPerformanceBudget frameTimeBudgetProvider,
-            AssetLoadUtils assetLoadUtils)
+            AssetPreLoadUtils assetPreLoadUtils)
             : base(world)
         {
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
-            this.assetLoadUtils = assetLoadUtils;
+            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
         protected override void Update(float t)
@@ -84,7 +84,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
                 if (!sceneData.TryGetHash(path, out string hash))
                 {
-                    assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
+                    assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
                     existingComponent.LoadingAssetPaths.Add(path);
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
@@ -99,7 +99,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
                     {
-                        assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.FinishedWithError, path);
+                        assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.FinishedWithError, path);
                         existingComponent.LoadingAssetPaths.Add(path);
                         continue;
                     }
@@ -120,7 +120,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
                     {
-                        assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
+                        assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
                         existingComponent.LoadingAssetPaths.Add(path);
                         continue;
                     }
@@ -149,7 +149,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     continue;
                 }
 
-                assetLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.Loading, path);
+                assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.Loading, path);
 
                 existingComponent.LoadingAssetPaths.Add(path);
             }

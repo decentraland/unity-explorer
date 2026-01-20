@@ -20,21 +20,21 @@ namespace ECS.Unity.AssetLoad.Systems
 {
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
-    public partial class FinalizeAssetLoadSystem : BaseUnityLoopSystem
+    public partial class FinalizeAssetPreLoadSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget capBudget;
         private readonly AssetLoadCache assetLoadCache;
-        private readonly AssetLoadUtils assetLoadUtils;
+        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
-        internal FinalizeAssetLoadSystem(World world,
+        internal FinalizeAssetPreLoadSystem(World world,
             IPerformanceBudget capBudget,
             AssetLoadCache assetLoadCache,
-            AssetLoadUtils assetLoadUtils)
+            AssetPreLoadUtils assetPreLoadUtils)
             : base(world)
         {
             this.capBudget = capBudget;
             this.assetLoadCache = assetLoadCache;
-            this.assetLoadUtils = assetLoadUtils;
+            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
 
@@ -60,10 +60,10 @@ namespace ECS.Unity.AssetLoad.Systems
                 if (result.Succeeded)
                 {
                     assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, result.Asset);
-                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, assetLoadChildComponent.AssetPath);
+                    assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, assetLoadChildComponent.AssetPath);
                 }
                 else
-                    assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+                    assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
                 World.Destroy(entity);
             }
@@ -83,7 +83,7 @@ namespace ECS.Unity.AssetLoad.Systems
             if (promiseResult.Succeeded)
                 assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
@@ -102,7 +102,7 @@ namespace ECS.Unity.AssetLoad.Systems
             if (promiseResult.Succeeded)
                 assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
@@ -120,7 +120,7 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!mediaPlayerComponent.HasFailed)
                 assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
-            assetLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
