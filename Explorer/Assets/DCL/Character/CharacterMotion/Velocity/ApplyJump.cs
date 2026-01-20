@@ -10,24 +10,28 @@ namespace DCL.CharacterMotion
     public static class ApplyJump
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(
-            ICharacterControllerSettings settings,
-            ref CharacterRigidTransform characterPhysics,
-            ref JumpInputComponent jump,
+        public static void Execute(ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
+            ref JumpState jumpState,
+            ref JumpInputComponent jumpInput,
+            in MovementInputComponent movementInput,
             in Vector3 viewerForward,
             in Vector3 viewerRight,
-            in MovementInputComponent inputComponent,
             int physicsTick)
         {
-            characterPhysics.JustJumped = false;
+            jumpState.JustJumped = false;
 
             // Cannot jump on steep slopes unless stuck
-            bool isGrounded = characterPhysics.IsGrounded && (!characterPhysics.IsOnASteepSlope || characterPhysics.IsStuck);
+            bool isGrounded = rigidTransform.IsGrounded && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck);
             if (isGrounded)
             {
-                characterPhysics.LastGroundedFrame = physicsTick;
-                characterPhysics.JumpCount = 0;
+                jumpState.LastGroundedTick = physicsTick;
+                jumpState.JumpCount = 0;
+                jumpState.AirJumpDelay = float.MinValue;
             }
+
+            // Handle the air jumps delay first, in that state we can't do other jumps, we need to wait it out
+            if (AwaitAirJumpDelay(settings, rigidTransform, ref jumpState, movementInput, viewerForward, viewerRight)) return;
 
             // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
             // The bonus frames are used for BOTH input buffering and coyote time
@@ -36,90 +40,138 @@ namespace DCL.CharacterMotion
             // Reset the input buffering / coyote time windows if
             // - Positive Y velocity, so we already jumped, no more coyote time
             // - The simulation just started, and we are within the input buffering window, otherwise the character will jump on its own
-            if (characterPhysics.GravityVelocity.y > 0 || physicsTick < bonusFrames) bonusFrames = 0;
+            if (rigidTransform.GravityVelocity.y > 0 || physicsTick < bonusFrames) bonusFrames = 0;
 
-            bool canJump = CanJump(settings, characterPhysics, physicsTick, bonusFrames);
-            bool wantsToJump = jump.Trigger.IsAvailable(physicsTick, bonusFrames);
-
-            if (canJump && wantsToJump)
-            {
-                TryApplyDirectionChangeImpulse(settings, characterPhysics, viewerForward, viewerRight, inputComponent);
-
-                float jumpHeight = GetJumpHeight(characterPhysics.JumpCount, characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
-                float gravity = settings.Gravity * settings.JumpGravityFactor;
-
-                // Override velocity in a jump direction
-                characterPhysics.GravityVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
-
-                characterPhysics.IsGrounded = false;
-                characterPhysics.LastJumpFrame = physicsTick;
-
-                // We "consume" the jump input
-                jump.Trigger.TickWhenJumpOccurred = int.MinValue;
-                jump.Trigger.TickWhenJumpWasConsumed = physicsTick;
-                characterPhysics.JustJumped = true;
-                characterPhysics.JumpCount++;
-            }
+            bool canJump = CanJump(settings, rigidTransform, jumpState, jumpInput, physicsTick, bonusFrames);
+            bool wantsToJump = jumpInput.Trigger.IsAvailable(physicsTick, bonusFrames);
+            if (canJump && wantsToJump) StartJump(settings, rigidTransform, ref jumpState, ref jumpInput, movementInput, physicsTick);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool CanJump(ICharacterControllerSettings settings, in CharacterRigidTransform characterPhysics, int tick, int coyoteTimeTickCount)
+        private static bool CanJump(ICharacterControllerSettings settings,
+            CharacterRigidTransform rigidTransform,
+            in JumpState jumpState,
+            in JumpInputComponent jumpInput,
+            int tick,
+            int coyoteTimeTickCount)
         {
-            bool isFirstJump = characterPhysics.JumpCount == 0;
-            bool isGroundedOrCoyote = characterPhysics.IsGrounded || tick - characterPhysics.LastGroundedFrame < coyoteTimeTickCount;
+            bool isFirstJump = jumpState.JumpCount == 0;
+            bool isGroundedOrCoyote = rigidTransform.IsGrounded || tick - jumpState.LastGroundedTick < coyoteTimeTickCount;
 
             // Ensure the player is grounded if it's the 1st jump, otherwise just don't exceed max number of jumps
             int maxJumpCount = 1 + Mathf.Max(settings.AirJumpCount, 0);
-            bool canJump = (isFirstJump && isGroundedOrCoyote) || characterPhysics.JumpCount < maxJumpCount;
+            // NOTE the following condition prevents air jumping if falling down without having 1st jumped
+            // Can be changed by removing ** !isFirstJump **, but then we need to fix unit tests
+            bool canJump = (isFirstJump && isGroundedOrCoyote) || (!isFirstJump && jumpState.JumpCount < maxJumpCount);
 
             // Enforce the cooldown period between jumps
             if (!isFirstJump)
             {
-                float timeSinceJumpStarted = (tick - characterPhysics.LastJumpFrame) * UnityEngine.Time.fixedDeltaTime;
+                float timeSinceJumpStarted = (tick - jumpInput.Trigger.TickWhenJumpWasConsumed) * UnityEngine.Time.fixedDeltaTime;
                 canJump &= timeSinceJumpStarted >= settings.CooldownBetweenJumps;
             }
 
             return canJump;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void TryApplyDirectionChangeImpulse(ICharacterControllerSettings settings, CharacterRigidTransform characterPhysics, in Vector3 viewerForward, in Vector3 viewerRight, in MovementInputComponent inputComponent)
+        private static void StartJump(ICharacterControllerSettings settings,
+            CharacterRigidTransform rigidTransform,
+            ref JumpState jumpState,
+            ref JumpInputComponent jumpInput,
+            in MovementInputComponent movementInput,
+            int physicsTick)
         {
-            // For the 1st jump we just keep the current velocity
-            if (characterPhysics.JumpCount <= 0) return;
+            if (jumpState.JumpCount <= 0)
+                ApplyJumpGravity(settings, rigidTransform, jumpState, movementInput);
+            else
+                // Air jump, do not jump yet, just set the delay
+                jumpState.AirJumpDelay = settings.AirJumpDelay;
 
-            // For later jumps we do apply an immediate change in direction
-            float impulse = Mathf.Max(settings.AirJumpDirectionChangeImpulse, characterPhysics.MoveVelocity.Velocity.magnitude);
-            var localVelocity = impulse * inputComponent.Axes;
+            rigidTransform.IsGrounded = false;
 
-            characterPhysics.MoveVelocity.XVelocity = localVelocity.x;
-            characterPhysics.MoveVelocity.ZVelocity = localVelocity.y;
-            characterPhysics.MoveVelocity.Velocity = (viewerForward * localVelocity.y) + (viewerRight * localVelocity.x);
+            jumpState.JustJumped = true;
+            jumpState.JumpCount++;
+
+            jumpInput.Trigger.TickWhenJumpOccurred = int.MinValue;
+            jumpInput.Trigger.TickWhenJumpWasConsumed = physicsTick;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float GetJumpHeight(int jumpCount, Vector3 flatHorizontalVelocity, ICharacterControllerSettings settings, in MovementInputComponent input)
+        private static void ApplyJumpGravity(ICharacterControllerSettings settings,
+            CharacterRigidTransform rigidTransform,
+            in JumpState jumpState,
+            in MovementInputComponent movementInput)
         {
-            float jumpHeight;
+            float jumpHeight = GetJumpHeight(settings, jumpState, movementInput, rigidTransform.MoveVelocity.Velocity);
+            float gravity = settings.Gravity * settings.JumpGravityFactor;
 
-            if (jumpCount == 0)
+            // Override velocity in a jump direction
+            rigidTransform.GravityVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
+        }
+
+        private static float GetJumpHeight(ICharacterControllerSettings settings,
+            in JumpState jumpState,
+            in MovementInputComponent movementInput,
+            in Vector3 flatHorizontalVelocity)
+        {
+            if (jumpState.JumpCount > 0) return settings.AirJumpHeight;
+
+            float minJumpHeight = settings.JogJumpHeight;
+            float maxJumpHeight = movementInput.Kind switch
+                                  {
+                                      MovementKind.WALK => settings.JogJumpHeight,
+                                      MovementKind.JOG => settings.JogJumpHeight,
+                                      MovementKind.IDLE => settings.JogJumpHeight,
+                                      MovementKind.RUN => settings.RunJumpHeight,
+                                      _ => throw new ArgumentOutOfRangeException(),
+                                  };
+
+            float currentSpeed = flatHorizontalVelocity.magnitude;
+            return Mathf.Lerp(minJumpHeight, maxJumpHeight, currentSpeed / settings.RunSpeed);
+        }
+
+        /// <summary>
+        ///     Awaits the air jump delay period, at the end of which the direction change impulse is applied.
+        ///     During the await period gravity is overridden.
+        ///     Returns true while still awaiting the delay period, false otherwise.
+        /// </summary>
+        private static bool AwaitAirJumpDelay(ICharacterControllerSettings settings,
+            CharacterRigidTransform rigidTransform,
+            ref JumpState jumpState,
+            in MovementInputComponent movementInput,
+            in Vector3 viewerForward,
+            in Vector3 viewerRight)
+        {
+            if (jumpState.AirJumpDelay <= 0) return false;
+
+            jumpState.AirJumpDelay -= UnityEngine.Time.fixedDeltaTime;
+            if (jumpState.AirJumpDelay > 0)
             {
-                float maxJumpHeight = input.Kind switch
-                                      {
-                                          MovementKind.WALK => settings.JogJumpHeight,
-                                          MovementKind.JOG => settings.JogJumpHeight,
-                                          MovementKind.IDLE => settings.JogJumpHeight,
-                                          MovementKind.RUN => settings.RunJumpHeight,
-                                          _ => throw new ArgumentOutOfRangeException(),
-                                      };
-
-                float currentSpeed = flatHorizontalVelocity.magnitude;
-                jumpHeight = Mathf.Lerp(settings.JogJumpHeight, maxJumpHeight, currentSpeed / settings.RunSpeed);
+                // Still awaiting the delay period, just apply the gravity override
+                // Setting the multiplier to 0 prevents standard gravity calculations to affect the value
+                rigidTransform.GravityVelocity.y = settings.AirJumpGravityDuringDelay;
+                rigidTransform.GravityMultiplier = 0;
+                return true;
             }
-            else
-                jumpHeight = settings.AirJumpHeight;
 
-            return jumpHeight;
+            jumpState.AirJumpDelay = float.MinValue;
+
+            ApplyJumpGravity(settings, rigidTransform, jumpState, movementInput);
+            ApplyDirectionChangeImpulse(settings, rigidTransform, movementInput, viewerForward, viewerRight);
+
+            return false;
+        }
+
+        private static void ApplyDirectionChangeImpulse(ICharacterControllerSettings settings,
+            CharacterRigidTransform rigidTransform,
+            in MovementInputComponent movementInput,
+            in Vector3 viewerForward,
+            in Vector3 viewerRight)
+        {
+            float impulse = Mathf.Max(settings.AirJumpDirectionChangeImpulse, rigidTransform.MoveVelocity.Velocity.magnitude);
+            var localVelocity = impulse * movementInput.Axes;
+
+            rigidTransform.MoveVelocity.XVelocity = localVelocity.x;
+            rigidTransform.MoveVelocity.ZVelocity = localVelocity.y;
+            rigidTransform.MoveVelocity.Velocity = (viewerForward * localVelocity.y) + (viewerRight * localVelocity.x);
         }
     }
 }

@@ -9,9 +9,9 @@ namespace DCL.CharacterMotion
     public static class ApplyGliding
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(in ICharacterControllerSettings settings, in CharacterRigidTransform rigidTransform, in JumpInputComponent jump, ref GlideState glideState, int physicsTick)
+        public static void Execute(in ICharacterControllerSettings settings, in CharacterRigidTransform rigidTransform, in JumpState jumpState, in JumpInputComponent jump, ref GlideState glideState, int physicsTick)
         {
-            bool canGlide = rigidTransform.JumpCount > settings.AirJumpCount;
+            bool canGlide = jumpState.JumpCount > settings.AirJumpCount;
             bool wantsToGlide = jump.IsPressed && jump.Trigger.IsAvailable(physicsTick, 0);
 
             // Start gliding if can and want

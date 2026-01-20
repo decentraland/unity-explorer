@@ -28,7 +28,8 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput,
-            in StunComponent stunComponent
+            in StunComponent stunComponent,
+            in JumpState jumpState
         )
         {
             // Update the movement blend value, ranges from 0 to 3 (Idle = 0, Walk = 1, Jog = 2, Run = 3)
@@ -41,7 +42,7 @@ namespace DCL.CharacterMotion.Systems
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // Apply other states
-            AnimationStatesLogic.Execute(ref animationComponent, view, rigidTransform, in stunComponent, settings);
+            AnimationStatesLogic.Execute(settings, ref animationComponent, view, rigidTransform, in stunComponent, jumpState);
         }
     }
 }

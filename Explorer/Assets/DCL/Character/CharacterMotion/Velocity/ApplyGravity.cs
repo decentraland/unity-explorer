@@ -12,7 +12,8 @@ namespace DCL.CharacterMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
-            in JumpInputComponent jumpInputComponent,
+            in JumpState jumpState,
+            in JumpInputComponent jumpInput,
             int physicsTick,
             float deltaTime)
         {
@@ -26,13 +27,16 @@ namespace DCL.CharacterMotion
             }
 
             // If we are falling
-            if (!characterPhysics.IsGrounded || characterPhysics.JustJumped || (characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck))
+            if (!characterPhysics.IsGrounded || jumpState.JustJumped || (characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck))
             {
                 // gravity in settings is negative, since we now use directions, we need it to be absolute
                 float gravity = Math.Abs(settings.Gravity);
 
+                // Apply general multiplier
+                gravity *= characterPhysics.GravityMultiplier;
+
                 // In order to jump higher when pressing the jump button, we reduce the gravity
-                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
+                if (jumpInput.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
                 // In order to feel less floaty when jumping, we increase the gravity when going up ( the jump velocity is also scaled up )
@@ -48,6 +52,10 @@ namespace DCL.CharacterMotion
                 characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * deltaTime);
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
+
+            // Reset the multiplier to 1 (neutral)
+            // The value needs to be applied every frame if needed
+            characterPhysics.GravityMultiplier = 1;
         }
 
         private static float PhysicsToDeltaTime(int ticks) =>

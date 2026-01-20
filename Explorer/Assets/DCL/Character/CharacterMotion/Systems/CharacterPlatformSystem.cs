@@ -32,11 +32,12 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController)
+            ref CharacterController characterController,
+            in JumpState jumpState)
         {
             rigidTransform.PlatformDelta = Vector3.zero;
 
-            if (rigidTransform.JustJumped)
+            if (jumpState.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
                 platformComponent.PlatformCollider = null;

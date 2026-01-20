@@ -45,6 +45,8 @@ namespace DCL.CharacterMotion.Systems
 
         private readonly ElementBinding<int> airJumpCount = new (0);
         private readonly ElementBinding<float> airJumpHeight = new (0);
+        private readonly ElementBinding<float> airJumpDelay = new (0);
+        private readonly ElementBinding<float> airJumpGravityDuringDelay = new (0);
         private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
         private readonly ElementBinding<float> airJumpImpulse = new (0);
 
@@ -68,6 +70,8 @@ namespace DCL.CharacterMotion.Systems
             debugBuilder.TryAddWidget("Locomotion: Air Jumping")?
                         .AddControl( new DebugConstLabelDef("Air Jump Count"), new DebugIntFieldDef(airJumpCount) )
                         .AddFloatField("Height", airJumpHeight)
+                        .AddFloatField("Delay", airJumpDelay)
+                        .AddFloatField("Gravity during Delay", airJumpGravityDuringDelay)
                         .AddFloatField("Cooldown", cooldownBetweenJumps)
                         .AddFloatField("Direction Change Impulse", airJumpImpulse);
         }
@@ -94,6 +98,8 @@ namespace DCL.CharacterMotion.Systems
             stopTime.Value = settings.StopTimeSec;
             airJumpCount.Value = settings.AirJumpCount;
             airJumpHeight.Value = settings.AirJumpHeight;
+            airJumpDelay.Value = settings.AirJumpDelay;
+            airJumpGravityDuringDelay.Value = settings.AirJumpGravityDuringDelay;
             cooldownBetweenJumps.Value = settings.CooldownBetweenJumps;
             airJumpImpulse.Value = settings.AirJumpDirectionChangeImpulse;
         }
@@ -117,6 +123,8 @@ namespace DCL.CharacterMotion.Systems
             settings.StopTimeSec = stopTime.Value;
             settings.AirJumpCount = airJumpCount.Value;
             settings.AirJumpHeight = airJumpHeight.Value;
+            settings.AirJumpDelay = airJumpDelay.Value;
+            settings.AirJumpGravityDuringDelay = airJumpGravityDuringDelay.Value;
             settings.CooldownBetweenJumps = cooldownBetweenJumps.Value;
             settings.AirJumpDirectionChangeImpulse = airJumpImpulse.Value;
 
@@ -133,23 +141,23 @@ namespace DCL.CharacterMotion.Systems
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            in MovementInputComponent movementInput,
+            ref JumpInputComponent jumpInput,
+            ref JumpState jumpState,
             ref GlideState glideState,
-            in MovementSpeedLimit speedLimit)
-        {
+            in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit) =>
             ResolveAvatarVelocity(dt,
                 physicsTick,
                 in cameraComponent,
                 ref settings,
                 ref rigidTransform,
                 ref characterController,
-                ref jump,
-                ref glideState,
                 in movementInput,
+                ref jumpState,
+                ref jumpInput,
+                ref glideState,
                 in speedLimit,
                 cameraComponent.Camera.transform);
-        }
 
         [Query]
         [All(typeof(RandomAvatar))]
@@ -161,35 +169,35 @@ namespace DCL.CharacterMotion.Systems
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            in MovementInputComponent movementInput,
+            ref JumpInputComponent jumpInput,
+            ref JumpState jumpState,
             ref GlideState glideState,
-            in MovementSpeedLimit speedLimit)
-        {
-            // Random avatars are not affected by the player's camera
+            in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit) =>
             ResolveAvatarVelocity(dt,
                 physicsTick,
                 in cameraComponent,
                 ref settings,
                 ref rigidTransform,
                 ref characterController,
-                ref jump,
-                ref glideState,
                 in movementInput,
+                ref jumpState,
+                ref jumpInput,
+                ref glideState,
                 in speedLimit,
+                // For random avatars we use the character's transform as viewer pov
                 characterController.transform);
-        }
 
-        private void ResolveAvatarVelocity(
-            [Data] float dt,
+        private void ResolveAvatarVelocity([Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent cameraComponent,
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            ref GlideState glideState,
             in MovementInputComponent movementInput,
+            ref JumpState jumpState,
+            ref JumpInputComponent jumpInput,
+            ref GlideState glideState,
             in MovementSpeedLimit speedLimit,
             Transform viewerTransform)
         {
@@ -206,9 +214,9 @@ namespace DCL.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // Apply vertical velocity
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, viewerForward, viewerRight, in movementInput, physicsTick);
-            ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
-            ApplyGliding.Execute(settings, in rigidTransform, in jump, ref glideState, physicsTick);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick);
+            ApplyGravity.Execute(settings, ref rigidTransform, jumpState, in jumpInput, physicsTick, dt);
+            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick);
 
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 

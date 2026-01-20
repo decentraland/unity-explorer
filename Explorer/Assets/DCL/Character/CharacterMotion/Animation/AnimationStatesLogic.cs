@@ -11,23 +11,22 @@ namespace DCL.CharacterMotion.Animation
     {
         // General Animation Controller flags update
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(
-            ref CharacterAnimationComponent animationComponent,
+        public static void Execute(ICharacterControllerSettings settings, ref CharacterAnimationComponent animationComponent,
             IAvatarView view,
             CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
-            ICharacterControllerSettings settings)
+            in JumpState jumpState)
         {
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
             float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
 
-            bool jumpTriggered = rigidTransform.JustJumped && rigidTransform.JumpCount != animationComponent.States.JumpCount;
+            bool jumpTriggered = jumpState.JustJumped && jumpState.JumpCount != animationComponent.States.JumpCount;
 
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
-            animationComponent.States.JumpCount = rigidTransform.JumpCount;
+            animationComponent.States.JumpCount = jumpState.JumpCount;
 
             SetAnimatorParameters(view, ref animationComponent.States, jumpTriggered, stunComponent.IsStunned);
         }

@@ -74,7 +74,8 @@ namespace DCL.PluginSystem.Global
                 new HandsIKComponent(),
                 new HeadIKComponent(),
                 new MovementSpeedLimit(),
-                new GlideState());
+                new GlideState(),
+                new JumpState());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
