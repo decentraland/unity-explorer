@@ -81,8 +81,8 @@ namespace DCL.Diagnostics
             // InnerException is wrapped by the RPC tool (InvalidOperationException)
             if (exception.InnerException is WebSocketException webSocketException)
             {
-                SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
-                                        + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
+                global::Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
+                                            + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
             }
 
             ReportHub.LogException(exception, new ReportData(category));

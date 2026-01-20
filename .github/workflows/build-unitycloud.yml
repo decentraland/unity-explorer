@@ -346,9 +346,7 @@ jobs:
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
           PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
-          PARAM_SENTRY_CLI_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
-          PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
@@ -558,6 +556,19 @@ jobs:
             build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          
+      - name: Upload debug symbols to Sentry
+        if: ${{ needs.prebuild.outputs.sentry_enabled == 'true' }}
+        shell: bash
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: |
+          npx --yes @sentry/cli debug-files upload \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            "build"
 
       # Will run always (even if failing)
       - name: Upload cloud logs
