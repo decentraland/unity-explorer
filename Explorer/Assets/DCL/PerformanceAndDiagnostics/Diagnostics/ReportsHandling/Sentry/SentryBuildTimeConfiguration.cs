@@ -55,6 +55,7 @@ namespace DCL.Diagnostics.Sentry
             }
 #endif
 
+            Debug.Log($"Sentry enabled: {options.Enabled}");
             Debug.Log($"Sentry dsn: {options.Dsn}");
         }
 
