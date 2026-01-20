@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
 
             TipReceivedNotification notification = (TipReceivedNotification)parameters[0];
 
-            mvcManager.ShowAndForget(PassportController.IssueCommand(new PassportParams(notification.Metadata.Sender.Address)));
+            mvcManager.ShowAndForget(PassportController.IssueCommand(new PassportParams(notification.Metadata.SenderAddress)));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

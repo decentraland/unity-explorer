@@ -129,7 +129,6 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
                     case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
-                    case NotificationType.TIP_RECEIVED:
                         await ProcessFriendsNotificationAsync(notification);
                         break;
                     case NotificationType.CREDITS_GOAL_COMPLETED:
@@ -140,6 +139,9 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.TRANSFER_RECEIVED:
                         await ProcessGiftNotificationAsync(notification);
+                        break;
+                    case NotificationType.TIP_RECEIVED:
+                        await ProcessTipReceivedNotificationAsync(notification);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -168,7 +170,7 @@ namespace DCL.Notifications.NewNotification
 
             await AnimateGiftNotificationAsync();
         }
-        
+
         private async UniTaskVoid UpdateGiftSenderNameAsync(GiftToastView view, string address, CancellationToken ct)
         {
             try
@@ -203,7 +205,7 @@ namespace DCL.Notifications.NewNotification
                 await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
             }
         }
-        
+
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
             viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
@@ -227,6 +229,30 @@ namespace DCL.Notifications.NewNotification
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
 
             await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessTipReceivedNotificationAsync(INotification notification)
+        {
+            TipReceivedNotification tipReceivedNotification = (TipReceivedNotification)notification;
+
+            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET);
+
+            viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.FriendsNotificationView.NotificationType = notification.Type;
+            viewInstance.FriendsNotificationView.Notification = notification;
+
+            viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification, profile);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (profile.HasValue && !string.IsNullOrEmpty(profile.Value.FaceSnapshotUrl))
+                friendsThumbnailImageController.RequestImage(profile.Value.FaceSnapshotUrl, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)
@@ -318,9 +344,6 @@ namespace DCL.Notifications.NewNotification
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
-                    break;
-                case TipReceivedNotification tipReceivedNotification:
-                    viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification);
                     break;
             }
         }

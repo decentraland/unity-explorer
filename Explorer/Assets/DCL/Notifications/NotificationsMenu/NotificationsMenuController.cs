@@ -282,6 +282,25 @@ namespace DCL.Notifications.NotificationsMenu
                     giftView.Configure(giftNotification);
                     UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, notificationThumbnailCts.Token).Forget();
                     break;
+                case TipReceivedNotification tipNotification:
+                    FriendsNotificationView friendNotificationView3 = (FriendsNotificationView)notificationView;
+                    friendNotificationView3.TimeText.gameObject.SetActive(true);
+                    ConfigureTipReceivedAsync(friendNotificationView3, tipNotification, notificationThumbnailCts.Token).Forget();
+                    LoadNotificationThumbnailAsync(notificationView, notification, notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type), notificationThumbnailCts.Token).Forget();
+                    break;
+            }
+        }
+
+        private async UniTaskVoid ConfigureTipReceivedAsync(FriendsNotificationView friendNotificationView, TipReceivedNotification tipNotification, CancellationToken ct)
+        {
+            try
+            {
+                Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
+                friendNotificationView.ConfigureFromTipReceivedNotificationData(tipNotification, profile);
+            }
+            catch (Exception)
+            {
+                // ignored
             }
         }
 
