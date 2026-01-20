@@ -26,6 +26,12 @@ namespace DCL.Web3.Authenticators
 
         private int SelectedChainId => (int)selectedNetwork;
 
+        [ContextMenu(nameof(SetSepoliaChain))]
+        private void SetSepoliaChain()
+        {
+            ThirdWebAuthenticator.Instance.SetSepoliaChain();
+        }
+
         private static string GetNativeCurrencyName(int chainId) =>
             chainId switch
             {

@@ -194,6 +194,11 @@ namespace DCL.Web3.Authenticators
             await ThirdWebManager.Instance?.DisconnectWallet();
         }
 
+        public void SetSepoliaChain()
+        {
+            chainId = new BigInteger(11155111);
+        }
+
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
         {
 
