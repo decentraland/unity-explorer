@@ -281,6 +281,10 @@ namespace DCL.Backpack.BackpackBus
                         resolvedWearables.AddRange(fetched);
                 }
 
+                // NOTE: simulate outfit loading takes a bit of time to make sure that
+                // NOTE: we can cancel previous outfit loading
+                // NOTE: await UniTask.Delay(2000, cancellationToken: ct);
+                
                 if (!ct.IsCancellationRequested)
                 {
                     backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
