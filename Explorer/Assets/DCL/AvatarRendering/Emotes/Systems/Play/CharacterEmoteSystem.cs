@@ -636,7 +636,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                     PrepareToAdjustReceiverBeforeOutcomeAnimation(emoteIntent.SocialEmote.InitiatorWalletAddress);
 
                     // The rotation of the avatar has to coincide with initiator avatar's when the emote starts, which occurs at least 1 frame later
-                    World.Add(entity, new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity));
+                    RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent rotateIntent = new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity);
+
+                    if(World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                        World.Set(entity, rotateIntent);
+                    else
+                        World.Add(entity, rotateIntent);
                 }
 
                 if (emoteComponent.Metadata!.IsSocialEmote)
@@ -849,7 +854,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PrepareToAdjustReceiverBeforeOutcomeAnimation(string initiatorWalletAddress)
         {
-            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PrepareToAdjustReceiverBeforeOutcomeAnimation() " + initiatorWalletAddress);
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"PrepareToAdjustReceiverBeforeOutcomeAnimation() initiator: " + initiatorWalletAddress);
 
             SocialEmoteInteractionsManager.ISocialEmoteInteractionReadOnly? interaction = SocialEmoteInteractionsManager.Instance.GetInteractionState(initiatorWalletAddress);
 
@@ -891,6 +896,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // Makes sure the position and the rotation of the avatar with respect to its parent is reset (without this, it may occur that due to a LookAtPosition intent, the avatar could remain rotated after canceling a start animation)
                 ResetRelativeAvatarPositionAndRotation(entity);
             }
+
+            // Corner case: It may happen, for unknown reasons, that the state of the Animator Controller does not change to "Emote" before the emote is stopped, which would cause the intent not to be consumed / removed
+            if(World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                World.Remove<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity);
         }
 
         private void ResetRelativeAvatarPositionAndRotation(Entity entity)
