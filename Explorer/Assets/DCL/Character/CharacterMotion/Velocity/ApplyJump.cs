@@ -23,6 +23,7 @@ namespace DCL.CharacterMotion
 
             // Cannot jump on steep slopes unless stuck
             bool isGrounded = rigidTransform.IsGrounded && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck);
+
             if (isGrounded)
             {
                 jumpState.LastGroundedTick = physicsTick;
@@ -33,40 +34,51 @@ namespace DCL.CharacterMotion
             // Handle the air jumps delay first, in that state we can't do other jumps, we need to wait it out
             if (AwaitAirJumpDelay(settings, rigidTransform, ref jumpState, movementInput, viewerForward, viewerRight)) return;
 
-            // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
             // The bonus frames are used for BOTH input buffering and coyote time
-            int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
+            int bonusFrames = ComputeBonusFrames(settings, rigidTransform, physicsTick);
 
-            // Reset the input buffering / coyote time windows if
-            // - Positive Y velocity, so we already jumped, no more coyote time
-            // - The simulation just started, and we are within the input buffering window, otherwise the character will jump on its own
-            if (rigidTransform.GravityVelocity.y > 0 || physicsTick < bonusFrames) bonusFrames = 0;
+            if (!isGrounded && !jumpState.IsCoyoteTimeActive(physicsTick, bonusFrames))
+            {
+                // Not grounded and coyote time expired
+                // Set jump state to count as if we jumped at least once, so that we can't air jump more than allowed
+                jumpState.JumpCount = Mathf.Max(jumpState.JumpCount, 1);
+            }
 
             bool canJump = CanJump(settings, rigidTransform, jumpState, jumpInput, physicsTick, bonusFrames);
             bool wantsToJump = jumpInput.Trigger.IsAvailable(physicsTick, bonusFrames);
             if (canJump && wantsToJump) StartJump(settings, rigidTransform, ref jumpState, ref jumpInput, movementInput, physicsTick);
+        }
+        
+        private static int ComputeBonusFrames(ICharacterControllerSettings settings, CharacterRigidTransform rigidTransform, int physicsTick)
+        {
+            int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
+
+            // Reset the input buffering / coyote time windows if
+            // - Positive Y velocity, so we already jumped
+            // - The simulation just started, and we are within the input buffering window (otherwise the character will jump on its own)
+            if (rigidTransform.GravityVelocity.y > 0 || physicsTick < bonusFrames) return 0;
+
+            return bonusFrames;
         }
 
         private static bool CanJump(ICharacterControllerSettings settings,
             CharacterRigidTransform rigidTransform,
             in JumpState jumpState,
             in JumpInputComponent jumpInput,
-            int tick,
+            int physicsTick,
             int coyoteTimeTickCount)
         {
             bool isFirstJump = jumpState.JumpCount == 0;
-            bool isGroundedOrCoyote = rigidTransform.IsGrounded || tick - jumpState.LastGroundedTick < coyoteTimeTickCount;
+            bool isGroundedOrCoyote = rigidTransform.IsGrounded || jumpState.IsCoyoteTimeActive(physicsTick, coyoteTimeTickCount);
 
             // Ensure the player is grounded if it's the 1st jump, otherwise just don't exceed max number of jumps
-            int maxJumpCount = 1 + Mathf.Max(settings.AirJumpCount, 0);
-            // NOTE the following condition prevents air jumping if falling down without having 1st jumped
-            // Can be changed by removing ** !isFirstJump **, but then we need to fix unit tests
-            bool canJump = (isFirstJump && isGroundedOrCoyote) || (!isFirstJump && jumpState.JumpCount < maxJumpCount);
+            // For air jumps we use a min value of 1 for jump count, that way falling down is considered as having jumped once
+            bool canJump = (isFirstJump && isGroundedOrCoyote) || Mathf.Max(jumpState.JumpCount, 1) <= settings.AirJumpCount;
 
             // Enforce the cooldown period between jumps
             if (!isFirstJump)
             {
-                float timeSinceJumpStarted = (tick - jumpInput.Trigger.TickWhenJumpWasConsumed) * UnityEngine.Time.fixedDeltaTime;
+                float timeSinceJumpStarted = (physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) * UnityEngine.Time.fixedDeltaTime;
                 canJump &= timeSinceJumpStarted >= settings.CooldownBetweenJumps;
             }
 

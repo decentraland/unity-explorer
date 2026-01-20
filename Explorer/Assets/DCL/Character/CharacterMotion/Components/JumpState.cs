@@ -24,5 +24,8 @@
         ///     When the timer expires, the air jump is actually performed.
         /// </summary>
         public float AirJumpDelay;
+
+        public readonly bool IsCoyoteTimeActive(int currentTick, int coyoteTimeTickCount) =>
+            currentTick - LastGroundedTick < coyoteTimeTickCount;
     }
 }
