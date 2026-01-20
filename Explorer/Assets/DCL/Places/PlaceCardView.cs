@@ -15,6 +15,7 @@ namespace DCL.Places
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
+        private const string FEATURED_CATEGORY = "featured";
 
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
@@ -103,7 +104,7 @@ namespace DCL.Places
             featuredTag.SetActive(false);
             foreach (string category in placeInfo.categories)
             {
-                if (category.Equals("featured", StringComparison.OrdinalIgnoreCase))
+                if (category.Equals(FEATURED_CATEGORY, StringComparison.OrdinalIgnoreCase))
                 {
                     featuredTag.SetActive(true);
                     break;
