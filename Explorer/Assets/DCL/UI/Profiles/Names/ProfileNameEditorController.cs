@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -33,6 +34,8 @@ namespace DCL.UI.ProfileNames
         private readonly ColorToggleView colorToggle;
         private readonly ColorPresetsSO colorPresets;
 
+        private readonly bool isNameColorChangeEnabled;
+
         private NameColorPickerController? colorPickerController;
 
         private UniTaskCompletionSource? lifeCycleTask;
@@ -60,6 +63,8 @@ namespace DCL.UI.ProfileNames
             this.profileChangesBus = profileChangesBus;
             this.colorToggle = colorToggle;
             this.colorPresets = colorPresets;
+
+            isNameColorChangeEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -78,12 +83,17 @@ namespace DCL.UI.ProfileNames
             ProfileNameEditorView.ClaimedNameConfig claimedConfig = viewInstance.ClaimedNameContainer;
             Initialize(claimedConfig.NonClaimedNameTabConfig);
 
-            colorPickerController = new NameColorPickerController(viewInstance!.ColorPickerView, colorToggle, colorPresets);
-            colorPickerController.OnColorChanged += color =>
-            {
-                UpdateConfigNameColor(color);
-                claimedConfig.saveButtonInteractable = true;
-            };
+            if (isNameColorChangeEnabled) {
+
+                colorPickerController = new NameColorPickerController(viewInstance!.ColorPickerView, colorToggle, colorPresets);
+                colorPickerController.OnColorChanged += color =>
+                {
+                    UpdateConfigNameColor(color);
+                    claimedConfig.saveButtonInteractable = true;
+                };
+            }
+
+            claimedConfig.colorPicker.SetActive(isNameColorChangeEnabled);
 
             claimedConfig.ClaimedNameTabHeader.Select();
             claimedConfig.NonClaimedNameTabHeader.Deselect();
@@ -129,8 +139,6 @@ namespace DCL.UI.ProfileNames
         {
             base.OnBeforeViewShow();
 
-            colorPickerController!.Reset();
-
             setupCancellationToken = setupCancellationToken.SafeRestart();
             SetUpAsync(setupCancellationToken.Token).Forget();
             return;
@@ -157,10 +165,11 @@ namespace DCL.UI.ProfileNames
 
                 using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile!.UserId), 1, 100, ct);
 
-                // TODO (Maurizio) Read name color from profile here and update the config / color picker status,
-                //  this in theory should be coming from the BE in case the profile has a claimed name
-                UpdateConfigNameColor(profile.UserNameColor);
-                colorPickerController.SetColorPickerStatus(profile.UserNameColor);
+                if (colorPickerController != null && isNameColorChangeEnabled) {
+                    colorPickerController!.Reset();
+                    colorPickerController.SetColorPickerStatus(profile.UserNameColor);
+                    UpdateConfigNameColor(profile.UserNameColor);
+                }
 
                 nonClaimedConfig.root.SetActive(names.TotalAmount <= 0);
                 claimedConfig.NonClaimedNameTabConfig.root.SetActive(names.TotalAmount > 0);
@@ -314,15 +323,14 @@ namespace DCL.UI.ProfileNames
                     profile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     profile.HasClaimedName = true;
 
-                    // Get the color from viewInstance directly, not from the config parameter
-                    // The config parameter is a copy of the struct from when the button listener was set up,
-                    // so it has the old/default color value. The actual color is stored in viewInstance.
-                    Color actualColor = viewInstance!.ClaimedNameContainer.nameColor;
-                    
-                    // TODO (Maurizio) save color here, something like:
-                    //  profile.UserNameColor = actualColor;
-                    //  the related field right now has an internal set to CompactInfo
-                    Debug.Log($"[MAURIZIO] profile color would be {actualColor}");
+                    if (isNameColorChangeEnabled) {
+                        Color actualColor = viewInstance!.ClaimedNameContainer.nameColor;
+
+                        // TODO (Maurizio) save color here, something like:
+                        //  profile.UserNameColor = actualColor;
+                        //  the related field right now has an internal set to CompactInfo
+                        Debug.Log($"[MAURIZIO] profile color would be {actualColor}");
+                    }
 
                     try
                     {
@@ -348,7 +356,7 @@ namespace DCL.UI.ProfileNames
 
         public override void Dispose()
         {
-            if (colorPickerController != null)
+            if (colorPickerController != null && isNameColorChangeEnabled)
             {
                 colorPickerController.OnColorChanged -= UpdateConfigNameColor;
                 colorPickerController.Dispose();

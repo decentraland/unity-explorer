@@ -51,7 +51,7 @@ namespace DCL.FeatureFlags
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
         public const string HEAD_SYNC = "alfa-head-sync";
         public const string DISCOVER = "alfa-discover";
-        public const string NAME_COLOR = "alfa-name-color";
+        public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
 
         public static class Endpoints
         {

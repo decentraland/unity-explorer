@@ -64,7 +64,9 @@ namespace DCL.UI.ProfileNames
             public GameObject dropdownLoadingSpinner;
             public GameObject dropdownVerifiedIcon;
             public TMP_Text_ClickeableLink clickeableLink;
+
             public Color nameColor;
+            public GameObject colorPicker;
 
             public bool saveButtonInteractable
             {

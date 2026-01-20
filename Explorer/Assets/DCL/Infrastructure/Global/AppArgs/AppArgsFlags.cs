@@ -60,7 +60,7 @@
 
         public const string DISCOVER = "discover";
 
-        public const string NAME_COLOR = "name-color";
+        public const string NAME_COLOR_CHANGE = "name-color-change";
 
         public static class Multiplayer
         {

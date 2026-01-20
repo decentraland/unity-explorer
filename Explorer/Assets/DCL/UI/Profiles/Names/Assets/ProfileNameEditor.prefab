@@ -5655,6 +5655,7 @@ MonoBehaviour:
     dropdownVerifiedIcon: {fileID: 8710733432019435226}
     clickeableLink: {fileID: 4796653980080361137}
     nameColor: {r: 0, g: 0, b: 0, a: 0}
+    colorPicker: {fileID: 4937138387223476457}
   <OverlayCloseButton>k__BackingField: {fileID: 2832510771286879210}
   <ColorPickerView>k__BackingField: {fileID: 4080143715103407849}
 --- !u!1 &5446811496756156860
@@ -10409,12 +10410,17 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8155558797585328725, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
   m_PrefabInstance: {fileID: 5310245970702062780}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 4937138387223476457}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4da3552d84e74bfba7b8dc83ffff3933, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &4937138387223476457 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 951936997369523285, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
+  m_PrefabInstance: {fileID: 5310245970702062780}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6238520628808971648
 PrefabInstance:
   m_ObjectHideFlags: 0
