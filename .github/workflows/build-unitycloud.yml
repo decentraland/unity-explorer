@@ -344,7 +344,9 @@ jobs:
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
-          PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          # solves https://github.com/decentraland/unity-explorer/issues/6789
+          # use pre-defined sentry dsn, but in case it is not defined, use the development sentry project
+          PARAM_SENTRY_DSN: ${{ inputs.sentry_dsn || secrets.SENTRY_DSN_DEV }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
