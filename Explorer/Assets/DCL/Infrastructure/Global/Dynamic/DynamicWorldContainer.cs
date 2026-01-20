@@ -520,6 +520,10 @@ namespace Global.Dynamic
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 
+            var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
+            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+            var currentChannelService = new CurrentChannelService();
+
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -534,15 +538,13 @@ namespace Global.Dynamic
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
-                new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings)
+                new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
-            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, bootstrapContainer.Environment)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, userBlockingCacheProxy, bootstrapContainer.Environment, identityCache, roomHub)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -556,7 +558,6 @@ namespace Global.Dynamic
 
             IChatEventBus chatEventBus = new ChatEventBus();
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
-            var currentChannelService = new CurrentChannelService();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             var voiceChatContainer = new VoiceChatContainer(
@@ -992,9 +993,12 @@ namespace Global.Dynamic
                     mvcManager,
                     thumbnailProvider,
                     identityCache),
-                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
+
+            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
+                globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))

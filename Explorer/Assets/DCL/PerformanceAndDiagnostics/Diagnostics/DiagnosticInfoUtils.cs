@@ -15,15 +15,16 @@ namespace DCL.Diagnostics
             var stringBuilder = new StringBuilder();
 
             stringBuilder.Clear();
-            AppendHeader(stringBuilder, "DEVICE INFORMATION");
 
             // Device & OS
+            AppendHeader(stringBuilder, "DEVICE INFORMATION");
             stringBuilder.AppendFormat("Device Model: {0}\n", SystemInfo.deviceModel);
             stringBuilder.AppendFormat("Device Name: {0}\n", SystemInfo.deviceName);
             stringBuilder.AppendFormat("Operating System: {0}\n", SystemInfo.operatingSystem);
             stringBuilder.AppendFormat("System Language: {0}\n", Application.systemLanguage);
             stringBuilder.AppendFormat("Device Type: {0}\n", SystemInfo.deviceType);
             stringBuilder.AppendFormat("Device Unique ID: {0}\n\n", SystemInfo.deviceUniqueIdentifier);
+            AppendFooter(stringBuilder);
 
             // CPU & Memory
             AppendHeader(stringBuilder, "HARDWARE");
@@ -31,6 +32,7 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Processor Count: {0}\n", SystemInfo.processorCount);
             stringBuilder.AppendFormat("Processor Frequency: {0} MHz\n", SystemInfo.processorFrequency);
             stringBuilder.AppendFormat("System Memory Size: {0} MB\n\n", SystemInfo.systemMemorySize);
+            AppendFooter(stringBuilder);
 
             // Graphics
             AppendHeader(stringBuilder, "GRAPHICS");
@@ -40,6 +42,7 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Graphics Device Version: {0}\n", SystemInfo.graphicsDeviceVersion);
             stringBuilder.AppendFormat("Max Texture Size: {0}\n", SystemInfo.maxTextureSize);
             stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n\n", SystemInfo.supportsRayTracing);
+            AppendFooter(stringBuilder);
 
             // Unity & Application
             AppendHeader(stringBuilder, "APPLICATION");
@@ -49,9 +52,11 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Version: {0}\n", version);
             stringBuilder.AppendFormat("Target Frame Rate: {0}\n", Application.targetFrameRate);
             stringBuilder.AppendFormat("Screen Resolution: {0}x{1}@{2}Hz\n",
-            Screen.currentResolution.width,
-            Screen.currentResolution.height,
-            Screen.currentResolution.refreshRateRatio);
+                Screen.currentResolution.width,
+                Screen.currentResolution.height,
+                Screen.currentResolution.refreshRateRatio
+            );
+            AppendFooter(stringBuilder);
 
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
@@ -66,6 +71,7 @@ namespace DCL.Diagnostics
             {
                 stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Url(decentralandUrl));
             }
+            AppendFooter(stringBuilder);
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
         }
@@ -75,8 +81,8 @@ namespace DCL.Diagnostics
             // InnerException is wrapped by the RPC tool (InvalidOperationException)
             if (exception.InnerException is WebSocketException webSocketException)
             {
-                SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
-                                        + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
+                global::Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
+                                            + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
             }
 
             ReportHub.LogException(exception, new ReportData(category));
@@ -86,6 +92,11 @@ namespace DCL.Diagnostics
         {
             stringBuilder.AppendLine("==================");
             stringBuilder.AppendLine(header);
+            stringBuilder.AppendLine("==================\n");
+        }
+
+        private static void AppendFooter(StringBuilder stringBuilder)
+        {
             stringBuilder.AppendLine("==================\n");
         }
     }
