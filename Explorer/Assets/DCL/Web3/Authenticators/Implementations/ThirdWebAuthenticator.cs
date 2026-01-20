@@ -196,6 +196,7 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
         {
+
             var targetChainId = new BigInteger(chainId);
 
             this.chainId = targetChainId;
@@ -206,13 +207,30 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
-            if (!whitelistMethods.Contains(request.method))
-                throw new Web3Exception($"The method is not allowed: {request.method}");
+            await mutex.WaitAsync(ct);
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 
-            if (IsReadOnly(request))
-                return await SendWithoutConfirmationAsync(request, ct);
+            try
+            {
+                await UniTask.SwitchToMainThread(ct);
 
-            return await SendWithConfirmationAsync(request, ct);
+                if (!whitelistMethods.Contains(request.method))
+                    throw new Web3Exception($"The method is not allowed: {request.method}");
+
+                if (IsReadOnly(request))
+                    return await SendWithoutConfirmationAsync(request, ct);
+
+                return await SendWithConfirmationAsync(request, ct);
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
+                else
+                    await UniTask.SwitchToMainThread(CancellationToken.None);
+
+                mutex.Release();
+            }
         }
 
         private bool IsReadOnly(EthApiRequest request)
