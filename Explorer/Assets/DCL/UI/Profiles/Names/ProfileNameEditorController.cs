@@ -103,7 +103,7 @@ namespace DCL.UI.ProfileNames
                 config.cancelButton.onClick.AddListener(Close);
                 config.saveButton.onClick.AddListener(() => Save(config));
                 config.claimNameButton.onClick.AddListener(ClaimNewName);
-                config.nameInputField.NameValidityChanged += isValidName => { config.saveButtonInteractable = isValidName; };
+                config.nameInputField.InputValueChanged += isValidName => { config.saveButtonInteractable = isValidName; };
             }
         }
 
@@ -205,7 +205,7 @@ namespace DCL.UI.ProfileNames
 
                 if (profile != null)
                 {
-                    profile.Name = config.nameInputField.CurrentNameText;
+                    profile.Name = config.nameInputField.Text;
                     profile.HasClaimedName = false;
 
                     try

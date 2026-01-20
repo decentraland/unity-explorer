@@ -117,7 +117,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
             machine.Enter<IdentityAndOTPConfirmationState, (string, CancellationToken)>(
-                payload: (viewInstance.LoginScreenSubView.EmailInputField.CurrentEmailText, controller.GetRestartedLoginToken()));
+                payload: (viewInstance.LoginScreenSubView.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
 
         private void CancelLoginAndRestartFromBeginning()

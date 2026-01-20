@@ -74,7 +74,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newAccountSubView.gameObject.SetActive(true);
             newAccountSubView.Animator.SetTrigger(UIAnimationHashes.IN);
 
-            newAccountSubView.ProfileNameInputField.NameValidityChanged += OnProfileNameChanged;
+            newAccountSubView.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
 
             newAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
             newAccountSubView.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
@@ -98,7 +98,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             characterPreviewController?.OnHide();
 
-            newAccountSubView.ProfileNameInputField.NameValidityChanged -= OnProfileNameChanged;
+            newAccountSubView.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
             newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
             newAccountSubView.RandomizeButton.onClick.RemoveListener(OnRandomizeButtonPressed);
@@ -191,7 +191,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
-                newUserProfile.Name = newAccountSubView.ProfileNameInputField.CurrentNameText;
+                newUserProfile.Name = newAccountSubView.ProfileNameInputField.Text;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
                 JumpIntoWorld();

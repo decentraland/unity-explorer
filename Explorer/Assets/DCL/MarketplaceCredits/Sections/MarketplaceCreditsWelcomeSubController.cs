@@ -116,7 +116,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
             RegisterInTheProgramWithNewEmailAsync(
-                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailLogin.CurrentEmailText : currentCreditsProgramProgress.user.email,
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailLogin.Text : currentCreditsProgramProgress.user.email,
                 registerInTheProgramCts.Token).Forget();
         }
 

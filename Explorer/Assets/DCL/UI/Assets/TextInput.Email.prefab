@@ -513,10 +513,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e76dc3365ef109449579169b3047639, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::EmailInputView
-  emailInput: {fileID: 3915402350510907255}
+  inputField: {fileID: 3915402350510907255}
   startButton: {fileID: 4126780924162471401}
-  errorMark: {fileID: 3988503103806457292}
-  emailInputOutline: {fileID: 4418198438385915273}
+  errorContainer: {fileID: 3988503103806457292}
+  outline: {fileID: 4418198438385915273}
   outlineNormalColor: {r: 1, g: 1, b: 1, a: 1}
   outlineErrorColor: {r: 1, g: 0, b: 0, a: 1}
   caretColor: {r: 0, g: 0, b: 0, a: 1}

@@ -960,13 +960,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f76fcbf88e154ba6b902f82912eb98f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::DCL.UI.NameInputFieldView
-  NameInput: {fileID: 1608277787762362399}
+  inputField: {fileID: 1608277787762362399}
   characterCountLabel: {fileID: 8571574862034620475}
   maxNameLength: 15
   characterLimitReachedMessage: Character limit reached
   errorContainer: {fileID: 2011157474057826879}
   inputErrorMessage: {fileID: 4370450345763013987}
-  inputOutline: {fileID: 3832558693348880918}
+  outline: {fileID: 3832558693348880918}
   outlineNormalColor: {r: 1, g: 1, b: 1, a: 1}
   outlineErrorColor: {r: 1, g: 0, b: 0, a: 1}
   caretColor: {r: 0, g: 0, b: 0, a: 1}

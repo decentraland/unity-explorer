@@ -13,12 +13,14 @@ namespace DCL.UI
 
         public event Action? Submitted;
 
-        [SerializeField] private TMP_InputField emailInput;
+        [SerializeField] private TMP_InputField inputField;
+
+        [Space]
         [SerializeField] private Button startButton;
-        [SerializeField] private GameObject errorMark;
+        [SerializeField] private GameObject errorContainer;
 
         [Header("FIELD OUTLINE")]
-        [SerializeField] private Image emailInputOutline;
+        [SerializeField] private Image outline;
         [SerializeField] private Color outlineNormalColor = Color.white;
         [SerializeField] private Color outlineErrorColor = Color.red;
 
@@ -29,34 +31,35 @@ namespace DCL.UI
 
         private Coroutine? activateInputCoroutine;
 
-        public string CurrentEmailText => emailInput.text;
+        public string Text => inputField.text;
 
         private void Awake()
         {
-            emailInput.caretColor = caretColor;
-            emailInput.caretWidth = caretWidth;
-            emailInput.caretBlinkRate = caretBlinkRate;
+            inputField.caretColor = caretColor;
+            inputField.caretWidth = caretWidth;
+            inputField.caretBlinkRate = caretBlinkRate;
 
-            emailInput.characterValidation = TMP_InputField.CharacterValidation.EmailAddress;
+            inputField.characterValidation = TMP_InputField.CharacterValidation.EmailAddress;
         }
 
         private void OnEnable()
         {
-            emailInput.text = string.Empty;
+            inputField.text = string.Empty;
 
-            startButton.interactable = false;
-            emailInputOutline.enabled = false;
-            emailInputOutline.color = outlineNormalColor;
-            errorMark.SetActive(false);
+            outline.enabled = false;
+            outline.color = outlineNormalColor;
+            errorContainer.SetActive(false);
 
             activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
 
-            // Listeners
-            startButton.onClick.AddListener(EmitStartButtonPressedEvent);
+            startButton.interactable = false;
 
-            emailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
-            emailInput.onEndEdit.AddListener(OnEmailInputEndEdit);
-            emailInput.onSelect.AddListener(OnEmailInputSelect);
+            // Listeners
+            inputField.onValueChanged.AddListener(OnInputValueChanged);
+            inputField.onEndEdit.AddListener(OnInputEndEdit);
+            inputField.onSelect.AddListener(OnInputSelected);
+
+            startButton.onClick.AddListener(EmitStartButtonPressedEvent);
         }
 
         private void OnDisable()
@@ -68,17 +71,14 @@ namespace DCL.UI
             }
 
             // Listeners
-            startButton.onClick.RemoveAllListeners();
+            inputField.onValueChanged.RemoveAllListeners();
+            inputField.onEndEdit.RemoveAllListeners();
+            inputField.onSelect.RemoveAllListeners();
 
-            emailInput.onValueChanged.RemoveAllListeners();
-            emailInput.onEndEdit.RemoveAllListeners();
-            emailInput.onSelect.RemoveAllListeners();
+            startButton.onClick.RemoveAllListeners();
         }
 
-        private void EmitStartButtonPressedEvent() =>
-            Submitted?.Invoke();
-
-        private void OnEmailInputValueChanged(string email)
+        private void OnInputValueChanged(string email)
         {
             bool isValidEmail = IsValidEmail(email);
             startButton.interactable = isValidEmail;
@@ -87,35 +87,38 @@ namespace DCL.UI
                 SetErrorState(false);
         }
 
-        private void OnEmailInputEndEdit(string email)
+        private void SetErrorState(bool hasError)
         {
-            if (email == string.Empty)
-                emailInputOutline.enabled = false;
-            else if (!IsValidEmail(email))
+            outline.color = hasError ? outlineErrorColor : outlineNormalColor;
+            errorContainer.SetActive(hasError);
+        }
+
+        private void EmitStartButtonPressedEvent() =>
+            Submitted?.Invoke();
+
+        private void OnInputEndEdit(string text)
+        {
+            if (text == string.Empty)
+                outline.enabled = false;
+            else if (!IsValidEmail(text))
                 SetErrorState(true);
             else
                 Submitted?.Invoke();
         }
 
-        private void OnEmailInputSelect(string email)
+        private void OnInputSelected(string _)
         {
-            emailInputOutline.enabled = true;
+            outline.enabled = true;
             SetErrorState(false);
-        }
-
-        private void SetErrorState(bool hasError)
-        {
-            emailInputOutline.color = hasError ? outlineErrorColor : outlineNormalColor;
-            errorMark.SetActive(hasError);
         }
 
         private IEnumerator ActivateInputFieldDelayed()
         {
             yield return null;
 
-            emailInput.caretPosition = 0;
-            emailInput.ActivateInputField();
-            emailInput.Select();
+            inputField.caretPosition = 0;
+            inputField.ActivateInputField();
+            inputField.Select();
 
             activateInputCoroutine = null;
         }

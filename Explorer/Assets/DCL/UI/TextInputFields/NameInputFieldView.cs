@@ -8,21 +8,22 @@ namespace DCL.UI
 {
     public class NameInputFieldView : MonoBehaviour
     {
-        public event Action<bool>? NameValidityChanged;
+        public event Action<bool>? InputValueChanged;
 
-        [SerializeField] private TMP_InputField NameInput;
+        [SerializeField] private TMP_InputField inputField;
 
         [Header("CHARACTERS COUNT")]
         [SerializeField] private TMP_Text characterCountLabel;
         [SerializeField] [Min(3)] private int maxNameLength = 15;
         [SerializeField] private string characterLimitReachedMessage = "Character limit reached";
+        [SerializeField] private Color textErrorColor = Color.red;
 
         [Header("ERROR")]
         [SerializeField] private GameObject errorContainer;
         [SerializeField] private TMP_Text inputErrorMessage;
 
         [Header("FIELD OUTLINE")]
-        [SerializeField] private Image inputOutline;
+        [SerializeField] private Image outline;
         [SerializeField] private Color outlineNormalColor = Color.white;
         [SerializeField] private Color outlineErrorColor = Color.red;
 
@@ -31,33 +32,41 @@ namespace DCL.UI
         [SerializeField] [Min(0)] private int caretWidth = 2;
         [SerializeField] [Min(0)] private float caretBlinkRate = 0.85f;
 
-        public string CurrentNameText => NameInput.text;
-        public bool IsValidName => NameInput.text.Length > 0 && NameInput.text.Length <= maxNameLength;
-
         private Coroutine? activateInputCoroutine;
+
+        public string Text => inputField.text;
+        public bool IsValidName => inputField.text.Length > 0 && inputField.text.Length <= maxNameLength;
 
         private void Awake()
         {
             inputErrorMessage.text = characterLimitReachedMessage;
 
-            NameInput.caretColor = caretColor;
-            NameInput.caretWidth = caretWidth;
-            NameInput.caretBlinkRate = caretBlinkRate;
+            inputField.caretColor = caretColor;
+            inputField.caretWidth = caretWidth;
+            inputField.caretBlinkRate = caretBlinkRate;
 
-            NameInput.characterValidation = TMP_InputField.CharacterValidation.Alphanumeric;
+            inputField.characterValidation = TMP_InputField.CharacterValidation.Alphanumeric;
 
-            NameInput.text = string.Empty;
+            inputField.text = string.Empty;
             characterCountLabel.text = $"{0}/{maxNameLength}";
         }
 
         private void OnEnable()
         {
+            inputField.text = string.Empty;
+
+            outline.enabled = false;
+            outline.color = outlineNormalColor;
+            errorContainer.SetActive(false);
+
             activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
 
-            NameInput.onValueChanged.AddListener(OnNameInputValueChanged);
-            NameInput.text = string.Empty; // it will trigger UpdateState
-            inputOutline.color = characterCountLabel.color = outlineNormalColor;
-            errorContainer.SetActive(false);
+            characterCountLabel.color = outlineNormalColor;
+
+            // Listeners
+            inputField.onValueChanged.AddListener(OnInputValueChanged);
+            inputField.onEndEdit.AddListener(OnInputEndEdit);
+            inputField.onSelect.AddListener(OnInputSelected);
         }
 
         private void OnDisable()
@@ -68,37 +77,52 @@ namespace DCL.UI
                 activateInputCoroutine = null;
             }
 
-            NameInput.onValueChanged.RemoveListener(OnNameInputValueChanged);
+            // Listeners
+            inputField.onValueChanged.RemoveAllListeners();
+            inputField.onEndEdit.RemoveAllListeners();
+            inputField.onSelect.RemoveAllListeners();
         }
 
-        private void OnNameInputValueChanged(string text)
+        private void OnInputValueChanged(string text)
         {
             characterCountLabel.text = $"{text.Length}/{maxNameLength}";
             SetErrorState(!IsValidName);
+
+            InputValueChanged?.Invoke(IsValidName);
         }
 
         private void SetErrorState(bool hasError)
         {
-            inputOutline.color = characterCountLabel.color = hasError ? outlineErrorColor : outlineNormalColor;
-
-            if (errorContainer.activeSelf != hasError)
-                NameValidityChanged?.Invoke(!hasError);
+            outline.color = hasError ? outlineErrorColor : outlineNormalColor;
+            characterCountLabel.color = hasError ? textErrorColor : outlineNormalColor;
 
             errorContainer.SetActive(hasError);
 
-            if (NameInput.text.Length == 0)
-                inputErrorMessage.text = "Name can't be empty.";
+            inputErrorMessage.text =
+                inputField.text.Length == 0 ? "Name can't be empty." : characterLimitReachedMessage;
+        }
+
+        private void OnInputEndEdit(string text)
+        {
+            if (IsValidName)
+                outline.enabled = false;
             else
-                inputErrorMessage.text = characterLimitReachedMessage;
+                SetErrorState(true);
+        }
+
+        private void OnInputSelected(string _)
+        {
+            outline.enabled = true;
+            SetErrorState(false);
         }
 
         private IEnumerator ActivateInputFieldDelayed()
         {
             yield return null;
 
-            NameInput.caretPosition = 0;
-            NameInput.ActivateInputField();
-            NameInput.Select();
+            inputField.caretPosition = 0;
+            inputField.ActivateInputField();
+            inputField.Select();
 
             activateInputCoroutine = null;
         }
