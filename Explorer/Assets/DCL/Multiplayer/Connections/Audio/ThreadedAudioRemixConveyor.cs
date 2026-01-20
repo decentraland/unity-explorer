@@ -1,4 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+﻿// TRUST_WEBGL_THREAD_SAFETY_FLAG - TODO: do we even need this code? It doesn't seem to be used
+#if !UNITY_WEBGL
+
+using Cysharp.Threading.Tasks;
 using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
@@ -46,3 +49,5 @@ namespace DCL.Multiplayer.Connections.Audio
         }
     }
 }
+
+#endif

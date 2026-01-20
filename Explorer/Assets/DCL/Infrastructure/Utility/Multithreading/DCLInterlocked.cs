@@ -13,6 +13,20 @@ namespace Utility.Multithreading
     {
 #if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Read(ref long location)
+        {
+            return location;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Read(ref long location)
+        {
+            return Interlocked.Read(ref location);
+        }
+#endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Add(ref int location, int value)
         {
             location += value;

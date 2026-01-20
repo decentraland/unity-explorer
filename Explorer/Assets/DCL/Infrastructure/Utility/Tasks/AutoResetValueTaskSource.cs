@@ -32,7 +32,11 @@ namespace Utility.Tasks
         ///     Returns <c>true</c> is this task source has entered its final state, i.e. <see cref="TrySetResult(bool)" /> or <see cref="TrySetException(Exception, bool)" />
         ///     was called with <c>final</c> set to <c>true</c> and the result was propagated.
         /// </summary>
-        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed;
+#if UNITY_WEBGL
+        public bool IsCompleted => state == State.Completed;
+#else
+        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
         public AutoResetValueTaskSource()
         {

@@ -110,11 +110,15 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 try
                 {
+#if !UNITY_WEBGL
                     await UniTask.SwitchToThreadPool();
+#endif
                     if (destroyCancellationToken.IsCancellationRequested) return;
 
-                    // Provide basic Thread Pool synchronization context
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+#if !UNITY_WEBGL
+                    // Provide basic thread-pool synchronization context
+                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
                     // FPS is set by another system
                     await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);

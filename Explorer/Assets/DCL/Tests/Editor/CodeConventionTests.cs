@@ -20,6 +20,10 @@ namespace DCL.Tests
         public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
         public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
 
+        private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
+            "Assets/DCL/Input/UnityInputSystem/DCLInput.cs"
+        }; // cause it's autogen
+
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
 
@@ -58,6 +62,9 @@ namespace DCL.Tests
         [TestCaseSource(nameof(AllCSharpFiles))]
         public void VerifyShouldNotUseThreadingApiDirectly(string filePath)
         {
+            if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
             // Arrange
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseThreadingApiDirectly(fileContent, filePath);

@@ -1,3 +1,6 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG - TODO: do we even need this code? It doesn't seem to be used
+#if !UNITY_WEBGL
+
 using DCL.Diagnostics;
 using LiveKit.Audio;
 using LiveKit.Internal;
@@ -129,3 +132,5 @@ namespace DCL.Multiplayer.Connections.Audio
         }
     }
 }
+
+#endif
