@@ -34,8 +34,6 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
         {
-            rigidTransform.PlatformDelta = Vector3.zero;
-
             if (rigidTransform.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
