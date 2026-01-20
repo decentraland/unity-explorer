@@ -56,12 +56,17 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             // Timeout in Editor will fire up if the pause is enabled
             // So just wait while on pause
+#if UNITY_EDITOR
             MultithreadingUtility.WaitWhileOnPause();
+#endif
 
             const int RENT_WAIT_TIMEOUT = 5000;
 
+#if !UNITY_WEBGL
+// TODO it must be fixed for the WebGL build
             if (!semaphore.Wait(RENT_WAIT_TIMEOUT))
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
+#endif
 
             return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool);
         }

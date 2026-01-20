@@ -7,6 +7,7 @@ using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.WebRequests.ChromeDevtool
 {
@@ -76,7 +77,7 @@ namespace DCL.WebRequests.ChromeDevtool
         /// </summary>
         public NotifyWebRequestScope NotifyWebRequestStart(string url, string method, Dictionary<string, string> headers)
         {
-            int id = Interlocked.Add(ref atomicRequestIdIncrement, 1);
+            int id = DCLInterlocked.Add(ref atomicRequestIdIncrement, 1);
             HttpMethod httpMethod = FromString(method);
             Request request = new Request(url, httpMethod, headers, ReferrerPolicy.Origin());
 

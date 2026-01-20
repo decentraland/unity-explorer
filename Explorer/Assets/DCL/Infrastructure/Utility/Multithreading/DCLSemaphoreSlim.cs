@@ -2,6 +2,7 @@
 // DCLSemaphoreSlim is designed as WebGL / Desktop friendly
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
@@ -69,6 +70,59 @@ namespace Utility.Multithreading
             return ucs.Task;
 #endif        
         }
+
+
+        public UniTask WaitAsync(CancellationToken ct)
+        {
+#if !UNITY_WEBGL
+            return semaphore.WaitAsync(ct).AsUniTask();
+#else
+            if (ct.IsCancellationRequested)
+                return UniTask.FromCanceled(ct);
+
+            // fast path
+            if (count > 0)
+            {
+                count--;
+                return UniTask.CompletedTask;
+            }
+
+            var ucs = new UniTaskCompletionSource();
+            queue.Enqueue(ucs);
+
+            CancellationTokenRegistration ctr = default;
+
+            ctr = ct.Register(() =>
+                    {
+                    // remove from queue if still waiting
+                    bool removed = false;
+                    var newQueue = new Queue<UniTaskCompletionSource>(queue.Count);
+
+                    while (queue.Count > 0)
+                    {
+                    var q = queue.Dequeue();
+                    if (q == ucs && !removed)
+                    {
+                    removed = true;
+                    continue;
+                    }
+                    newQueue.Enqueue(q);
+                    }
+
+                    while (newQueue.Count > 0)
+                    queue.Enqueue(newQueue.Dequeue());
+
+                    if (removed)
+                        ucs.TrySetCanceled(ct);
+                    });
+
+            return ucs.Task.ContinueWith(() => ctr.Dispose());
+#endif
+        }
+
+
+
+
 
         public void Release()
         {

@@ -36,6 +36,7 @@ namespace Utility.Multithreading
         /// <summary>
         ///     Freezes the background thread while the Editor App is paused
         /// </summary>
+        [Conditional("UNITY_EDITOR")]
         public static void WaitWhileOnPause()
         {
             // If it is called from the tests then we can't spin
@@ -45,6 +46,7 @@ namespace Utility.Multithreading
             while (Volatile.Read(ref isPaused) && Volatile.Read(ref isInPlayMode))
                 Thread.Sleep(10);
         }
+
 
         /// <summary>
         ///     Must ensure that the execution does not jump between different threads

@@ -9,6 +9,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility.Multithreading;
 using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation
@@ -47,7 +48,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             if (!permissionsProvider.CanInvokeWebSocketsAPI()) return 0;
 
-            Interlocked.Increment(ref nextId);
+            DCLInterlocked.Increment(ref nextId);
 
             webSockets[nextId] = new WebSocketRental(); // ClientWebSocket does not support reviving
             return nextId;
@@ -210,7 +211,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             {
                 try
                 {
-                    await rental.SendLock.WaitAsync(ct).ConfigureAwait(false);
+                    await rental.SendLock.WaitAsync(ct);
 
                     var pages = (int)Math.Ceiling(data.Length * 1.0 / sendChunkSize);
 
@@ -272,7 +273,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private class WebSocketRental : IDisposable
         {
-            public readonly SemaphoreSlim SendLock = new (1, 1);
+            public readonly DCLSemaphoreSlim SendLock = new (1, 1);
             public readonly ClientWebSocket WebSocket = new ();
 
             public void Dispose()
