@@ -16,6 +16,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using GPUInstancerPro;
 using System.Threading;
+using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
@@ -107,8 +108,12 @@ namespace DCL.PluginSystem.Global
             int[] treeRendererKeys = new int[treePrototypes.Length];
 
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
+            {
                 GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
                     treesProfile, out treeRendererKeys[prototypeIndex]);
+
+                ReportHub.Log(ReportCategory.LANDSCAPE, $"LandscapePlugin: Registered Renderer Key {treeRendererKeys[prototypeIndex]} for prototype {prototypeIndex} ({treePrototypes[prototypeIndex].asset.name})");
+            }
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
                 ref emptyParcelsRef, ref ownedParcelsRef, landscapeData.Value);

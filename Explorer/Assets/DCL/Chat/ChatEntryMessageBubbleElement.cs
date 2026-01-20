@@ -11,28 +11,28 @@ using UnityEngine.UI;
 namespace DCL.Chat
 {
     /// <summary>
-    ///     This class represents the part of the chat entry that contains the chat bubble, so its where we display the text of the message
+    ///     This class represents the part of the chat entry that contains the chat bubble, so it's where we display the text of the message
     ///     and also now we display a button that when clicked opens an option panel
     /// </summary>
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
         [field: SerializeField] internal Color backgroundMentionedColor { get; private set; }
-        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
-        [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
-        [field: SerializeField] internal Image backgroundImage { get; private set; }
-        [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
-        [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
-        [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
-        [field: SerializeField] internal RectTransform popupPosition { get; private set; }
-        [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
-        [field: SerializeField] internal TMP_Text timestamp { get; private set; }
-        [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; }
+        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; } = null!;
+        [field: SerializeField] internal Image backgroundImage { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; } = null!;
+        [field: SerializeField] internal RectTransform popupPosition { get; private set; } = null!;
+        [field: SerializeField] internal GameObject mentionedOutline { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text timestamp { get; private set; } = null!;
+        [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; } = null!;
+        [field: SerializeField] internal Button messageOptionsButton { get; private set; } = null!;
 
-        public event Action OnTranslateRequest;
-        public event Action OnRevertRequest;
-        public event Action OnPointerEnterEvent;
-        public event Action OnPointerExitEvent;
+        public event Action? OnTranslateRequest;
+        public event Action? OnRevertRequest;
+        public event Action? OnPointerEnterEvent;
+        public event Action? OnPointerExitEvent;
 
         private Vector2 backgroundSize;
         private bool popupOpen;
@@ -45,29 +45,23 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            messageOptionsButton?.gameObject.SetActive(true);
+            messageOptionsButton.gameObject.SetActive(true);
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             if (!popupOpen)
-                messageOptionsButton?.gameObject.SetActive(false);
+                messageOptionsButton.gameObject.SetActive(false);
 
             OnPointerExitEvent?.Invoke();
         }
 
         public Vector3 PopupPosition => popupPosition.position;
 
-        public void HideOptionsButton()
-        {
-            popupOpen = false;
-            messageOptionsButton?.gameObject.SetActive(false);
-        }
-
         public void Reset()
         {
-            messageOptionsButton?.gameObject.SetActive(false);
+            messageOptionsButton.gameObject.SetActive(false);
         }
 
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
@@ -108,11 +102,6 @@ namespace DCL.Chat
         public void SetTranslationViewVisibility(bool isVisible)
         {
             translationView.gameObject.SetActive(isVisible);
-        }
-
-        private void OnMessageOptionsClicked()
-        {
-            popupOpen = true;
         }
 
         private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage)
@@ -156,7 +145,7 @@ namespace DCL.Chat
                 return 0;
 
             ReadOnlySpan<char> messageSpan = message.AsSpan();
-            int count = 0;
+            var count = 0;
 
             // Find all occurrences of "\U0"
             for (var i = 0; i < messageSpan.Length - 2; i++)
