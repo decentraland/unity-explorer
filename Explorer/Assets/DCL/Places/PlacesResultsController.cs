@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
@@ -7,8 +8,10 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -46,7 +49,8 @@ namespace DCL.Places
             PlacesStateService placesStateService,
             PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.placesController = placesController;
@@ -62,7 +66,7 @@ namespace DCL.Places
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
-            view.SetDependencies(placesStateService);
+            view.SetDependencies(placesStateService, new ThumbnailLoader(new SpriteCache(webRequestController)));
             view.InitializePlacesGrid();
         }
 
@@ -194,7 +198,7 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
+                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section, ct);
             }
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))

@@ -119,7 +119,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceData placeInfo = membersData.Items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
+            elementView.Configure(placeInfo.PlaceInfo, placeInfo.OwnerName, placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

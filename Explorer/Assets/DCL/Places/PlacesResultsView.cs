@@ -1,10 +1,12 @@
 ﻿using DCL.Audio;
+using DCL.Communities;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +20,9 @@ namespace DCL.Places
         public event Action? BackButtonClicked;
         public event Action? PlacesGridScrollAtTheBottom;
         public Action<string>? MyPlacesResultsEmptySubTextClicked;
+
+        private ThumbnailLoader? placesCardsThumbnailLoader;
+        private CancellationToken placesCardsConfigurationCt;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -52,8 +57,13 @@ namespace DCL.Places
             placesResultsScrollRect.onValueChanged.RemoveAllListeners();
         }
 
-        public void SetDependencies(PlacesStateService stateService) =>
+        public void SetDependencies(
+            PlacesStateService stateService,
+            ThumbnailLoader thumbnailLoader)
+        {
             this.placesStateService = stateService;
+            this.placesCardsThumbnailLoader = thumbnailLoader;
+        }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
         {
@@ -70,8 +80,10 @@ namespace DCL.Places
             placesResultsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section)
+        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section, CancellationToken ct)
         {
+            placesCardsConfigurationCt = ct;
+
             foreach (PlacesData.PlaceInfo placeInfo in places)
                 currentPlacesIds.Add(placeInfo.id);
 
@@ -108,10 +120,11 @@ namespace DCL.Places
         {
             PlacesData.PlaceInfo placeInfo = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
-            //CommunityResultCardView cardView = gridItem.GetComponent<CommunityResultCardView>();
+            PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
             gridItem.GetComponentInChildren<TMP_Text>().text = placeInfo.title;
+            cardView.Configure(placeInfo, placeInfo.contact_name, false, placesCardsThumbnailLoader!, placesCardsConfigurationCt);
 
             // Setup card events
             // ...

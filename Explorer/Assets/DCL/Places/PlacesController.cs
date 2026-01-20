@@ -4,6 +4,7 @@ using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.WebRequests;
 using System;
 using UnityEngine;
 
@@ -31,7 +32,8 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -40,7 +42,7 @@ namespace DCL.Places
             this.inputBlock = inputBlock;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser);
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser, webRequestController);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
