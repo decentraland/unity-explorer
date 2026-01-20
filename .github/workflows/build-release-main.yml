@@ -41,6 +41,4 @@ jobs:
       is_release_build: true
       install_source: ${{ matrix.install_source }}
       tag_version: ${{ needs.get-info.outputs.tag_version }}
-      sentry_dsn: ${{ secrets.SENTRY_DSN }}
-      sentry_project_slug: ${{ vars.SENTRY_PROJECT }}
     secrets: inherit
