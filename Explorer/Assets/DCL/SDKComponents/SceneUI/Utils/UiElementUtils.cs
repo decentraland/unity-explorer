@@ -180,18 +180,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
-            switch (model.GetFont())
-            {
-                case Font.FSerif:
-                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[1];
-                    break;
-                case Font.FMonospace:
-                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[2];
-                    break;
-                default: // FSansSerif
-                    labelToSetup.style.unityFontDefinition = styleFontDefinitions[0];
-                    break;
-            }
+
+            int font = (int)model.GetFont();
+            if (font < styleFontDefinitions.Length)
+                labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
 
             if (model.HasTextWrap)
                 labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;

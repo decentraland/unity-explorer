@@ -16,15 +16,12 @@ using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
-using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 
 namespace DCL.PluginSystem.World
@@ -67,6 +64,8 @@ namespace DCL.PluginSystem.World
             uiDocument.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             uiDocument.rootVisualElement.pickingMode = PickingMode.Ignore;
 
+            // Order according to Protocol's TEXT PB message:
+            // https://github.com/decentraland/protocol/blob/d6cccca48449239e4b17a4f32bc6d65c44446b43/proto/decentraland/sdk/components/common/texts.proto#L17
             styleFontDefinitions = new[]
             {
                 new StyleFontDefinition(settings.FontSansSerif),

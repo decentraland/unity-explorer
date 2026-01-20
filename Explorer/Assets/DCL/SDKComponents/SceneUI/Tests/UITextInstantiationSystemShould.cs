@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                     { typeof(Label), new ComponentPool.WithDefaultCtor<Label>() },
                 }, null);
 
-            system = new UITextInstantiationSystem(world, poolsRegistry, default);
+            system = new UITextInstantiationSystem(world, poolsRegistry, new []{new StyleFontDefinition()});
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
