@@ -60,6 +60,8 @@
 
         public const string DISCOVER = "discover";
 
+        public const string NAME_COLOR = "name-color";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
