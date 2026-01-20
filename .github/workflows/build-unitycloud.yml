@@ -565,7 +565,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_PROJECT: ${{ inputs.sentry_project_slug || vars.SENTRY_PROJECT_DEV }}
         run: |
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
