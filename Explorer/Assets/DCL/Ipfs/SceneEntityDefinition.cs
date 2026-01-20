@@ -20,8 +20,6 @@ namespace DCL.Ipfs
 
         public bool SupportInitialSceneState()
         {
-            return true;
-            
             if (assetBundleManifestVersion != null)
                 return assetBundleManifestVersion.SupportsInitialSceneState();
 
