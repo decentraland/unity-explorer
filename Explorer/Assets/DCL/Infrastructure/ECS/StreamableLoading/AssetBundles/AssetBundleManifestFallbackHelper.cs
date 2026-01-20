@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
 
                 // Log breadcrumb and report exception disabled while we have separate flows for backpack and emotes. They need to be re-enabled once we unify the flows with the trimmed version.
-                //SentrySdk.AddBreadcrumb($"AB manifest version missing for entity: {entityDefinition.id}");
+                //Sentry.Unity.SentrySdk.AddBreadcrumb($"AB manifest version missing for entity: {entityDefinition.id}");
                 //ReportHub.LogException(new Exception("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested"), ReportCategory.ASSET_BUNDLES);
 
                 var promise = AssetBundleManifestPromise.Create(world,

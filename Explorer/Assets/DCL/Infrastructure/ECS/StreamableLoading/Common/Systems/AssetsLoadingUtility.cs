@@ -21,6 +21,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Repeat the internal flow until attempts do not exceed or an irrecoverable error occurs
         /// </summary>
+        /// <exception cref="OperationCanceledException">(And if it's an inner exception) is propagated to the upper flow, all other exceptions are translated into StreamableLoadingResult</exception>
         /// <returns>
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>

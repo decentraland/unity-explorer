@@ -55,6 +55,7 @@ namespace DCL.FeatureFlags
         public const string HEAD_SYNC = "alfa-head-sync";
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
         public const string DISCOVER = "alfa-discover";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "alfa-stop-on-duplicate-identity";
         public const string DONATIONS = "alfa-donations";
         public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
 

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Enabled>k__BackingField: 0
   <Dsn>k__BackingField: <REPLACE_DSN>
-  <CaptureInEditor>k__BackingField: 0
+  <CaptureInEditor>k__BackingField: 1
   <EnableLogDebouncing>k__BackingField: 1
   <DebounceTimeLog>k__BackingField: 1000
   <DebounceTimeWarning>k__BackingField: 1000
@@ -35,11 +35,18 @@ MonoBehaviour:
   <MaxViewHierarchyRootObjects>k__BackingField: 100
   <MaxViewHierarchyObjectChildCount>k__BackingField: 20
   <MaxViewHierarchyDepth>k__BackingField: 10
+  <EnableStructuredLogging>k__BackingField: 0
+  <StructuredLogOnDebugLog>k__BackingField: 0
+  <StructuredLogOnDebugLogWarning>k__BackingField: 1
+  <StructuredLogOnDebugLogAssertion>k__BackingField: 1
+  <StructuredLogOnDebugLogError>k__BackingField: 1
+  <StructuredLogOnDebugLogException>k__BackingField: 1
+  <AddBreadcrumbsWithStructuredLogs>k__BackingField: 0
   <BreadcrumbsForLogs>k__BackingField: 1
   <BreadcrumbsForWarnings>k__BackingField: 1
   <BreadcrumbsForAsserts>k__BackingField: 1
   <BreadcrumbsForErrors>k__BackingField: 1
-  <BreadcrumbsForExceptions>k__BackingField: 1
+  <CaptureLogErrorEvents>k__BackingField: 1
   <MaxBreadcrumbs>k__BackingField: 100
   <ReportAssembliesMode>k__BackingField: 1
   <SendDefaultPii>k__BackingField: 0
@@ -65,9 +72,10 @@ MonoBehaviour:
   <WindowsNativeSupportEnabled>k__BackingField: 1
   <MacosNativeSupportEnabled>k__BackingField: 1
   <LinuxNativeSupportEnabled>k__BackingField: 1
+  <XboxNativeSupportEnabled>k__BackingField: 1
+  <PlayStationNativeSupportEnabled>k__BackingField: 1
   <Il2CppLineNumberSupportEnabled>k__BackingField: 1
-  <RuntimeOptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 9be8e0e1385ca4d10ba92f41fe3e32eb, type: 2}
-  <BuildTimeOptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 7d0023a09c237461b8d7ad6fe2058aca, type: 2}
+  <OptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 7d0023a09c237461b8d7ad6fe2058aca, type: 2}
   <Debug>k__BackingField: 1
   <DebugOnlyInEditor>k__BackingField: 1
   <DiagnosticLevel>k__BackingField: 2
