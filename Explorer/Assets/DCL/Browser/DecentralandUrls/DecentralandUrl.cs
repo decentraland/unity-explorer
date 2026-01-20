@@ -98,6 +98,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ActiveCommunityVoiceChats,
 
-        Support
+        Support,
+
+        CreatorHub,
     }
 }

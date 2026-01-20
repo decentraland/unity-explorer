@@ -149,8 +149,8 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
             await client.GetPlacesByIdsAsync(placeIds, ct);
 
-        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
-            client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);

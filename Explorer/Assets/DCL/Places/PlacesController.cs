@@ -1,4 +1,5 @@
-﻿using DCL.Input;
+﻿using DCL.Browser;
+using DCL.Input;
 using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
@@ -29,7 +30,8 @@ namespace DCL.Places
             IPlacesAPIService placesAPIService,
             PlaceCategoriesSO placesCategories,
             IInputBlock inputBlock,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -38,7 +40,7 @@ namespace DCL.Places
             this.inputBlock = inputBlock;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile);
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

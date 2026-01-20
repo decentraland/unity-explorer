@@ -1,4 +1,5 @@
-﻿using DCL.PlacesAPIService;
+﻿using DCL.Audio;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -16,6 +17,7 @@ namespace DCL.Places
 
         public event Action? BackButtonClicked;
         public event Action? PlacesGridScrollAtTheBottom;
+        public Action<string>? MyPlacesResultsEmptySubTextClicked;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -26,6 +28,10 @@ namespace DCL.Places
         [SerializeField] private LoopGridView placesResultsLoopGrid = null!;
         [SerializeField] private ScrollRect placesResultsScrollRect = null!;
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
+        [SerializeField] private GameObject favoritesResultsEmptyContainer = null!;
+        [SerializeField] private GameObject myPlacesResultsEmptyContainer = null!;
+        [SerializeField] private TMP_Text myPlacesResultsEmptySubText = null!;
+        [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
@@ -37,6 +43,7 @@ namespace DCL.Places
         {
             placesResultsBackButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
             placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            myPlacesResultsEmptySubText.ConvertUrlsToClickeableLinks(OnMyPlacesResultsEmptySubTextClicked);
         }
 
         private void OnDestroy()
@@ -63,24 +70,24 @@ namespace DCL.Places
             placesResultsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos)
+        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section)
         {
             foreach (PlacesData.PlaceInfo placeInfo in places)
                 currentPlacesIds.Add(placeInfo.id);
 
             placesResultsLoopGrid.SetListItemCount(currentPlacesIds.Count, resetPos);
 
-            SetPlacesGridAsEmpty(currentPlacesIds.Count == 0);
+            SetPlacesGridAsEmpty(currentPlacesIds.Count == 0, section);
 
             if (resetPos)
                 placesResultsLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void ClearPlacesResults()
+        public void ClearPlacesResults(PlacesSection? section)
         {
             currentPlacesIds.Clear();
             placesResultsLoopGrid.SetListItemCount(0, false);
-            SetPlacesGridAsEmpty(true);
+            SetPlacesGridAsEmpty(true, section);
         }
 
         public void SetPlacesGridAsLoading(bool isLoading)
@@ -93,6 +100,9 @@ namespace DCL.Places
 
         public void SetPlacesGridLoadingMoreActive(bool isActive) =>
             placesResultsLoadingMoreSpinner.SetActive(isActive);
+
+        public void PlayOnLinkClickAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(clickOnLinksAudio);
 
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
@@ -109,9 +119,25 @@ namespace DCL.Places
             return gridItem;
         }
 
-        private void SetPlacesGridAsEmpty(bool isEmpty)
+        private void SetPlacesGridAsEmpty(bool isEmpty, PlacesSection? section)
         {
-            placesResultsEmptyContainer.SetActive(isEmpty);
+            placesResultsEmptyContainer.SetActive(false);
+            favoritesResultsEmptyContainer.SetActive(false);
+            myPlacesResultsEmptyContainer.SetActive(false);
+
+            switch (section)
+            {
+                case PlacesSection.FAVORITES:
+                    favoritesResultsEmptyContainer.SetActive(isEmpty);
+                    break;
+                case PlacesSection.MY_PLACES:
+                    myPlacesResultsEmptyContainer.SetActive(isEmpty);
+                    break;
+                default:
+                    placesResultsEmptyContainer.SetActive(isEmpty);
+                    break;
+            }
+
             placesResultsLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
@@ -122,5 +148,8 @@ namespace DCL.Places
 
             PlacesGridScrollAtTheBottom?.Invoke();
         }
+
+        private void OnMyPlacesResultsEmptySubTextClicked(string id) =>
+            MyPlacesResultsEmptySubTextClicked?.Invoke(id);
     }
 }

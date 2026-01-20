@@ -281,7 +281,7 @@ namespace DCL.Communities.CommunityCreation
                     return;
                 }
 
-                foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.data)
+                foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.Data)
                 {
                     var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
                     placesToAdd.Add(placeText);
