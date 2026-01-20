@@ -5830,8 +5830,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Get a NAME to unlock your own World and start building your scenes in the
-    Creator Hub.
+  m_text: <color=#FF2D55><b><u><link=GET_A_NAME_LINK_ID>Get a NAME</link></u></b></color>
+    to unlock your own World and start building your scenes in the <color=#FF2D55><b><u><link=CREATOR_HUB_LINK_ID>Creator
+    Hub</link></u></b></color>.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -5962,6 +5963,8 @@ MonoBehaviour:
   placesResultsEmptyContainer: {fileID: 596083794850909302}
   favoritesResultsEmptyContainer: {fileID: 4308349134667398565}
   myPlacesResultsEmptyContainer: {fileID: 4949545935724939161}
+  myPlacesResultsEmptySubText: {fileID: 4735063651443082023}
+  clickOnLinksAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   placesResultsLoadingSpinner: {fileID: 2809767823012180613}
   placesResultsLoadingMoreSpinner: {fileID: 7821965102610289186}
 --- !u!114 &2809767823012180613

@@ -1,4 +1,5 @@
-﻿using DCL.PlacesAPIService;
+﻿using DCL.Audio;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -16,6 +17,7 @@ namespace DCL.Places
 
         public event Action? BackButtonClicked;
         public event Action? PlacesGridScrollAtTheBottom;
+        public Action<string>? MyPlacesResultsEmptySubTextClicked;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -28,6 +30,8 @@ namespace DCL.Places
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private GameObject favoritesResultsEmptyContainer = null!;
         [SerializeField] private GameObject myPlacesResultsEmptyContainer = null!;
+        [SerializeField] private TMP_Text myPlacesResultsEmptySubText = null!;
+        [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
@@ -39,6 +43,7 @@ namespace DCL.Places
         {
             placesResultsBackButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
             placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            myPlacesResultsEmptySubText.ConvertUrlsToClickeableLinks(OnMyPlacesResultsEmptySubTextClicked);
         }
 
         private void OnDestroy()
@@ -96,6 +101,9 @@ namespace DCL.Places
         public void SetPlacesGridLoadingMoreActive(bool isActive) =>
             placesResultsLoadingMoreSpinner.SetActive(isActive);
 
+        public void PlayOnLinkClickAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(clickOnLinksAudio);
+
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             PlacesData.PlaceInfo placeInfo = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
@@ -140,5 +148,8 @@ namespace DCL.Places
 
             PlacesGridScrollAtTheBottom?.Invoke();
         }
+
+        private void OnMyPlacesResultsEmptySubTextClicked(string id) =>
+            MyPlacesResultsEmptySubTextClicked?.Invoke(id);
     }
 }

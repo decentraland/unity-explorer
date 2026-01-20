@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
@@ -16,6 +18,8 @@ namespace DCL.Places
 {
     public class PlacesResultsController : IDisposable
     {
+        private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
+        private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
@@ -25,6 +29,7 @@ namespace DCL.Places
         private readonly PlacesStateService placesStateService;
         private readonly PlaceCategoriesSO placesCategories;
         private readonly ISelfProfile selfProfile;
+        private readonly IWebBrowser webBrowser;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -40,7 +45,8 @@ namespace DCL.Places
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
             PlaceCategoriesSO placesCategories,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.placesController = placesController;
@@ -48,9 +54,11 @@ namespace DCL.Places
             this.placesStateService = placesStateService;
             this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
+            view.MyPlacesResultsEmptySubTextClicked += MyPlacesResultsEmptySubTextClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
@@ -62,6 +70,7 @@ namespace DCL.Places
         {
             view.BackButtonClicked -= OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
+            view.MyPlacesResultsEmptySubTextClicked -= MyPlacesResultsEmptySubTextClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
         }
@@ -75,6 +84,21 @@ namespace DCL.Places
                 return;
 
             LoadPlaces(currentPlacesPageNumber + 1);
+        }
+
+        private void MyPlacesResultsEmptySubTextClicked(string id)
+        {
+            switch (id)
+            {
+                case GET_A_NAME_LINK_ID:
+                    webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+                    break;
+                case CREATOR_HUB_LINK_ID:
+                    webBrowser.OpenUrl(DecentralandUrl.CreatorHub);
+                    break;
+            }
+
+            view.PlayOnLinkClickAudio();
         }
 
         private void OnFiltersChanged(PlacesFilters filters)
