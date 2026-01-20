@@ -47,6 +47,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.COMMUNITIES_MEMBERS_COUNTER]= FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT),
                 [FeatureId.CHAT_MESSAGE_BUFFER] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG),
+                [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
@@ -155,5 +156,6 @@ namespace DCL.FeatureFlags
         CHAT_MESSAGE_RATE_LIMIT = 38,
         CHAT_MESSAGE_BUFFER = 39,
         PRIVATE_CHAT_REQUIRES_TOPIC = 40,
+        STOP_ON_DUPLICATE_IDENTITY = 41,
     }
 }
