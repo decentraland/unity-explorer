@@ -14,6 +14,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.ISceneFacade, ECS.SceneLifeCycle.Components.GetSceneFacadeIntention>;
+using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -110,9 +111,8 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 try
                 {
-#if !UNITY_WEBGL
-                    await UniTask.SwitchToThreadPool();
-#endif
+                    await DCLTask.SwitchToThreadPool();
+
                     if (destroyCancellationToken.IsCancellationRequested) return;
 
 #if !UNITY_WEBGL

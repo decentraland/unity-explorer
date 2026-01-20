@@ -53,7 +53,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
                 NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
 
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
                 // create script byte array
                 IDCLTypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);

@@ -19,6 +19,13 @@ namespace DCL.Tests
     {
         public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
         public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+        
+        public static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
+        {
+            "UniTask.SwitchToThreadPool",
+            "UniTask.RunOnThreadPool"
+        };
+        // TODO better regex matching?
 
         private static readonly string[] WEBGL_THREAD_SAFETY_EXCLUDED_PATHS = {
             "Assets/DCL/Input/UnityInputSystem/DCLInput.cs"
@@ -65,9 +72,15 @@ namespace DCL.Tests
             if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
                 return;
 
-            // Arrange
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseThreadingApiDirectly(fileContent, filePath);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void VerifyShouldNotUseDangerousUniTask(string filePath)
+        {
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseDangerousUniTask(fileContent, filePath);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -113,6 +126,29 @@ namespace DCL.Tests
             // Assert
             Assert.IsTrue(violations.Count == 0,
                 $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseDangerousUniTask(string fileContent, string filePath)
+        {
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                foreach (string pattern in UNITASK_FORBIDDEN_CALLS)
+                {
+                    if (line.Contains(pattern))
+                    {
+                        violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                    }
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLTask instead");
         }
 
         // To support WebGL compatability

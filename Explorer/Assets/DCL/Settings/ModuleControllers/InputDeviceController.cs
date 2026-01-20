@@ -9,6 +9,7 @@ using RichTypes;
 using System;
 using System.Threading;
 using TMPro;
+using Utility.Multithreading; 
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -118,7 +119,7 @@ namespace DCL.Settings.ModuleControllers
 
             async UniTaskVoid BackgroundTaskAsync()
             {
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
                 Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
 

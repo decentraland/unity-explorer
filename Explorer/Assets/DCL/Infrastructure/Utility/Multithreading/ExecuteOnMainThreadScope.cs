@@ -32,7 +32,7 @@ namespace Utility.Multithreading
         public async ValueTask DisposeAsync()
         {
             if (returnOnThreadPoolOnDispose)
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
         }
     }
 }

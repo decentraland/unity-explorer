@@ -26,6 +26,7 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using Utility;
 using UnityEngine.Scripting;
+using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -83,7 +84,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
             var nativeData = downloadHandler.nativeData;
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             using (deserializationSampler.Auto())
             {

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using Utility.Multithreading;
 
 namespace SceneRuntime.Apis
 {
@@ -16,14 +17,14 @@ namespace SceneRuntime.Apis
 
             var completionSource = new UniTaskCompletionSource<T>();
 
-            UniTask.RunOnThreadPool(async () =>
+            DCLTask.RunOnThreadPool(async () =>
                     {
                         try
                         {
                             T result = await uniTask;
 
                             if (PlayerLoopHelper.IsMainThread)
-                                await UniTask.SwitchToThreadPool();
+                                await DCLTask.SwitchToThreadPool();
 
                             if (api.disposeCts.IsCancellationRequested)
                                 return;
@@ -33,7 +34,7 @@ namespace SceneRuntime.Apis
                         catch (Exception e)
                         {
                             if (PlayerLoopHelper.IsMainThread)
-                                await UniTask.SwitchToThreadPool();
+                                await DCLTask.SwitchToThreadPool();
 
                             if (api.disposeCts.IsCancellationRequested)
                                 return;
@@ -56,14 +57,14 @@ namespace SceneRuntime.Apis
 
             var completionSource = new UniTaskCompletionSource();
 
-            UniTask.RunOnThreadPool(async () =>
+            DCLTask.RunOnThreadPool(async () =>
                     {
                         try
                         {
                             await uniTask;
 
                             if (PlayerLoopHelper.IsMainThread)
-                                await UniTask.SwitchToThreadPool();
+                                await DCLTask.SwitchToThreadPool();
 
                             if (api.disposeCts.IsCancellationRequested)
                                 return;
@@ -73,7 +74,7 @@ namespace SceneRuntime.Apis
                         catch (Exception e)
                         {
                             if (PlayerLoopHelper.IsMainThread)
-                                await UniTask.SwitchToThreadPool();
+                                await DCLTask.SwitchToThreadPool();
 
                             if (api.disposeCts.IsCancellationRequested)
                                 return;

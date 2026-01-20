@@ -12,6 +12,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Multithreading; 
 
 namespace DCL.Multiplayer.Profiles.Poses
 {
@@ -121,14 +122,14 @@ namespace DCL.Multiplayer.Profiles.Poses
 
         private async UniTaskVoid SendAsync(IslandMetadata islandMetadata)
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
             roomHub.IslandRoom().UpdateLocalMetadata(islandMetadata.ToJson());
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"{nameof(RemoteMetadata)}: {nameof(IslandMetadata)} {islandMetadata} of self is sent");
         }
 
         private async UniTaskVoid SendAsync(SceneRoomMetadata sceneRoomMetadata)
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
             roomHub.SceneRoom().Room().UpdateLocalMetadata(sceneRoomMetadata.ToJson());
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"{nameof(RemoteMetadata)}: {nameof(SceneRoomMetadata)} {sceneRoomMetadata} of self is sent");
         }

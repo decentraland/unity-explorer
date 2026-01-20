@@ -7,6 +7,7 @@ using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Types;
 using System;
+using Utility.Multithreading; 
 
 namespace DCL.Multiplayer.Connections.Audio
 {
@@ -36,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Audio
             uint sampleRate
         )
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
             using OwnedAudioFrame uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
             Write(uFrame, outputBuffer);
         }

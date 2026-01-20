@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 #if UNITY_WEBGL
 
@@ -93,7 +94,7 @@ namespace SceneRuntime.Factory
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SWITCH_TO_THREAD_POOL)
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
 
 #if !UNITY_WEBGL
