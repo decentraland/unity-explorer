@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -159,7 +158,6 @@ namespace DCL.Backpack
         
         private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
         {
-            // 1. Find the body shape in the new outfit
             IWearable? newBodyShape = null;
             foreach (var w in wearables)
             {
@@ -170,17 +168,12 @@ namespace DCL.Backpack
                 }
             }
 
-            // 2. Update current body shape state
             if (newBodyShape != null)
-            {
                 currentBodyShape = newBodyShape;
-            }
 
-            // 3. Update the pool items (icons) to reflect the new equipped state
             foreach (var kvp in usedPoolItems)
             {
                 var itemView = kvp.Value;
-                // Check if this item is in the new outfit
                 bool isEquipped = false;
                 foreach (var w in wearables)
                 {
@@ -192,24 +185,11 @@ namespace DCL.Backpack
                 }
                 
                 itemView.IsEquipped = isEquipped;
-                
-                // 4. Update compatibility checking
-                if (newBodyShape != null)
-                {
-                    // If we have the IWearable for this item in the page results, use it to check compatibility
-                    // Otherwise, we might rely on the itemView state if we had access to the model, 
-                    // but here we might need to re-verify if possible.
-                    // However, updateBodyShapeCompatibility iterates 'currentPageWearables'.
-                }
-                
                 itemView.SetEquipButtonsState();
             }
 
-            // 5. Force a refresh of compatibility flags for the current page of items
             if (currentBodyShape != null && currentPageWearables != null)
-            {
                 UpdateBodyShapeCompatibility(currentPageWearables, currentBodyShape);
-            }
         }
 
         private void SetGridAsLoading()

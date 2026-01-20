@@ -274,8 +274,10 @@ namespace DCL.Backpack.BackpackBus
 
                 if (missingUrns.Count > 0)
                 {
+                    BodyShape bodyShape = BodyShape.FromStringSafe(command.BodyShape);
+                    
                     var fetched = 
-                        await wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.MALE, ct);
+                        await wearablesProvider.RequestPointersAsync(missingUrns, bodyShape, ct);
 
                     if (fetched != null)
                         resolvedWearables.AddRange(fetched);

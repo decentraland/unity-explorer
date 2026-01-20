@@ -113,23 +113,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void OnChangeColor(Color color, string category) => ChangeColorEvent?.Invoke(color, category);
         private void OnUnEquipAll() => UnEquipAllEvent?.Invoke();
 
-        private void OnUnEquipAllWearables()
-        {
+        private void OnUnEquipAllWearables() => 
             UnEquipAllWearablesEvent?.Invoke();
-        }
 
-        private void OnPublishProfile() => PublishProfileEvent?.Invoke();
-        private void OnDeactivate() => DeactivateEvent?.Invoke();
+        private void OnPublishProfile() => 
+            PublishProfileEvent?.Invoke();
+        
+        private void OnDeactivate() => 
+            DeactivateEvent?.Invoke();
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
 
-        public void SendUnEquipAllWearables()
-        {
+        public void SendUnEquipAllWearables() => 
             core.SendUnEquipAllWearables();
-        }
-
-
+        
         public void SendChangeColor(Color newColor, string category) =>
             core.SendChangeColor(newColor, category);
 
@@ -148,10 +146,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SendBackpackDeactivateEvent() =>
             core.SendBackpackDeactivateEvent();
 
-        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
-        {
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
             core.SendEquipOutfit(command, wearables);
-        }
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
             core.SendChangedBackpackSectionEvent(backpackSections);

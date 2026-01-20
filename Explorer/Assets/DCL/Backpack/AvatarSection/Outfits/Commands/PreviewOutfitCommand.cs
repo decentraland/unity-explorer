@@ -58,12 +58,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             if (originalOutfit != null)
             {
-                // 1. Synchronously restore the data source (EquippedWearables).
+                // Synchronously restore the data source (EquippedWearables).
                 // This ensures that if 'PublishProfile' happens immediately after this call,
                 // it sees the correct (original) data, avoiding race conditions.
                 RestoreDataStateSynchronously();
 
-                //  2. Trigger the visual update (Async via Event Bus).
+                //  Trigger the visual update (Async via Event Bus).
                 // This updates the 3D preview and UI to match the data we just restored.
                 outfitApplier.Apply(originalOutfit);
             }

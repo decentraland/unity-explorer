@@ -257,16 +257,6 @@ namespace DCL.Backpack
 
             if (ct.IsCancellationRequested) return;
 
-            // backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
-            // backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearableCategories.Categories.HAIR));
-            // backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearableCategories.Categories.EYES));
-            // backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearableCategories.Categories.BODY_SHAPE));
-            // backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
-            // backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, false));
-            //
-            // foreach (URN w in avatar.Wearables)
-            //     backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten(), false));
-            
             var wearables = new List<string>(avatar.Wearables.Count);
             foreach (var w in avatar.Wearables) wearables.Add(w.Shorten());
 
