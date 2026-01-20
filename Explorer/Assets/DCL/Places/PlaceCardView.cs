@@ -28,6 +28,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text placeDescriptionText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
+        [SerializeField] private GameObject featuredTag = null!;
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle = null!;
@@ -98,6 +99,16 @@ namespace DCL.Places
             onlineMembersText.text = $"{placeInfo.user_count}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
+
+            featuredTag.SetActive(false);
+            foreach (string category in placeInfo.categories)
+            {
+                if (category.Equals("featured", StringComparison.OrdinalIgnoreCase))
+                {
+                    featuredTag.SetActive(true);
+                    break;
+                }
+            }
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 

@@ -123,8 +123,12 @@ namespace DCL.Places
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
-            gridItem.GetComponentInChildren<TMP_Text>().text = placeInfo.title;
-            cardView.Configure(placeInfo, placeInfo.contact_name, false, placesCardsThumbnailLoader!, placesCardsConfigurationCt);
+            cardView.Configure(
+                placeInfo: placeInfo,
+                ownerName: placeInfo.contact_name,
+                userOwnsPlace: false,
+                thumbnailLoader: placesCardsThumbnailLoader!,
+                ct: placesCardsConfigurationCt);
 
             // Setup card events
             // ...
