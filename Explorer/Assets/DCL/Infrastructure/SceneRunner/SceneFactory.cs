@@ -187,7 +187,9 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
+#if !UNITY_WEBGL
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
+#endif
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
             if (ENABLE_SDK_OBSERVABLES)
@@ -195,9 +197,22 @@ namespace SceneRunner
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
-                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(
+                        deps,
+                        sceneRuntime,
+                        sharedPoolsProvider,
+                        crdtSerializer,
+                        mvcManager,
+                        globalWorldActions,
+                        realmData!,
+                        messagePipesHub,
+                        webRequestController,
+                        skyboxSettings,
+#if !UNITY_WEBGL
+                        engineAPIMutexOwner,
+#endif
+                        systemClipboard
+                        );
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -224,9 +239,22 @@ namespace SceneRunner
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
-                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
+                        deps, 
+                        sceneRuntime, 
+                        sharedPoolsProvider,
+                        crdtSerializer, 
+                        mvcManager, 
+                        globalWorldActions, 
+                        realmData!, 
+                        messagePipesHub, 
+                        webRequestController,
+                        skyboxSettings, 
+#if !UNITY_WEBGL
+                        engineAPIMutexOwner, 
+#endif
+                        systemClipboard
+                        );
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

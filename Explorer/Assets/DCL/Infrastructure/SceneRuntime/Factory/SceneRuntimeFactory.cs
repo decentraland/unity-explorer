@@ -95,8 +95,11 @@ namespace SceneRuntime.Factory
             if (instantiationBehavior == InstantiationBehavior.SWITCH_TO_THREAD_POOL)
                 await UniTask.SwitchToThreadPool();
 
-            // Provide basic Thread Pool synchronization context
-            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+#if !UNITY_WEBGL
+            // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL

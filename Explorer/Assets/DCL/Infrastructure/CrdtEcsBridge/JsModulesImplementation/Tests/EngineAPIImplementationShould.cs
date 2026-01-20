@@ -77,8 +77,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
-                new RethrowSceneExceptionsHandler(),
-                new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"));
+                new RethrowSceneExceptionsHandler()
+#if !UNITY_WEBGL
+                ,
+                new MultiThreadSync(new SceneShortInfo()),
+                new MultiThreadSync.Owner("TEST")
+#endif
+                );
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))
                             .Do(c =>

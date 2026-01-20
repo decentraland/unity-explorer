@@ -156,7 +156,7 @@ namespace SceneRunner
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
-                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     // TODO make it WebGL-friendly
                     await Task.Delay(sleepMS, ct);
