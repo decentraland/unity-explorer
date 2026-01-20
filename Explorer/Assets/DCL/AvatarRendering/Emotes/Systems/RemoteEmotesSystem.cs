@@ -175,7 +175,11 @@ namespace DCL.AvatarRendering.Emotes
                         if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (remote) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
-                            World.Add(entry.Entity, lookAtPositionIntention);
+
+                            if(World.Has<LookAtPositionIntention>(entry.Entity))
+                                World.Set(entry.Entity, lookAtPositionIntention);
+                            else
+                                World.Add(entry.Entity, lookAtPositionIntention);
                         }
                         else
                         {
@@ -212,7 +216,11 @@ namespace DCL.AvatarRendering.Emotes
                         if (profile.UserId == lookAtPositionIntention.WalletAddress)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (local) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
-                            World.Add(entity, lookAtPositionIntention);
+
+                            if(World.Has<LookAtPositionIntention>(entity))
+                                World.Set(entity, lookAtPositionIntention);
+                            else
+                                World.Add(entity, lookAtPositionIntention);
                         }
                         else
                         {
