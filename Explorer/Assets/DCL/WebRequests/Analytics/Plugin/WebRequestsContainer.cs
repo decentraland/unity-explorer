@@ -5,17 +5,21 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.Dumper;
 using DCL.WebRequests.RequestsHub;
 using System;
+using UnityEngine;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsContainer : IDisposable
+    public class WebRequestsContainer : DCLGlobalContainer<WebRequestsContainer.Settings>, IDisposable
     {
+        private readonly DebugWidgetBuilder? widget;
+
         public IWebRequestController WebRequestController { get; }
 
         public IWebRequestController SceneWebRequestController { get; }
@@ -23,8 +27,6 @@ namespace DCL.WebRequests.Analytics
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
-
-        private readonly DebugWidgetBuilder? widget;
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
@@ -39,6 +41,9 @@ namespace DCL.WebRequests.Analytics
             this.widget = widget;
             SceneWebRequestController = sceneWebRequestController;
         }
+
+        public void Dispose() =>
+            WebRequestsDumper.Instance.AnalyticsContainer = null;
 
         public WebRequestsPlugin CreatePlugin(bool isLocalSceneDevelopment)
         {
@@ -208,7 +213,10 @@ namespace DCL.WebRequests.Analytics
             SceneWebRequestController.RequestHub.SetKTXEnabled(enabled);
         }
 
-        public void Dispose() =>
-            WebRequestsDumper.Instance.AnalyticsContainer = null;
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            public SentryTransactionConfiguration[] UrlsToSample { get; private set; } = Array.Empty<SentryTransactionConfiguration>();
+        }
     }
 }
