@@ -26,6 +26,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private TMP_Text placeDescriptionText = null!;
+        [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
 
         [Header("Buttons")]
@@ -95,6 +96,7 @@ namespace DCL.Places
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;
             onlineMembersText.text = $"{placeInfo.user_count}";
+            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
