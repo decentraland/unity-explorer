@@ -171,29 +171,33 @@ namespace DCL.Places
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
                 view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0);
-
-                if (!string.IsNullOrEmpty(currentFilters.SearchText))
-                    view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
-                else switch (currentFilters.Section)
-                {
-                    case PlacesSection.BROWSE when currentFilters.CategoryId != null:
-                    {
-                        string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                        view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
-                        break;
-                    }
-                    case PlacesSection.BROWSE:
-                        view.SetPlacesCounter("Results for All"); break;
-                    case PlacesSection.RECENTLY_VISITED:
-                        view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})"); break;
-                    case PlacesSection.FAVORITES:
-                        view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})"); break;
-                    case PlacesSection.MY_PLACES:
-                        view.SetPlacesCounter($"My Places ({placesResult.Value.Total})"); break;
-                }
             }
 
-            view.SetPlacesCounterActive(placesResult.Value.Data.Count > 0);
+            if (!string.IsNullOrEmpty(currentFilters.SearchText))
+                view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
+            else switch (currentFilters.Section)
+            {
+                case PlacesSection.BROWSE when currentFilters.CategoryId != null:
+                {
+                    string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
+                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    break;
+                }
+                case PlacesSection.BROWSE:
+                    view.SetPlacesCounter("Results for All"); 
+                    break;
+                case PlacesSection.RECENTLY_VISITED:
+                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
+                    break;
+                case PlacesSection.FAVORITES:
+                    view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
+                    break;
+                case PlacesSection.MY_PLACES:
+                    view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
+                    break;
+            }
+
+            view.SetPlacesCounterActive(true);
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)
