@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// </summary>
         [Query]
         [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
-        [None(typeof(StopEmoteIntent))]
+        [None(typeof(StopEmoteIntent), typeof(TriggerEmoteReactingToSocialEmoteIntent))]
         private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, CharacterEmoteComponent emoteComponent,
             ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, ref CharacterAnimationComponent animationComponent,
             ref MoveBeforePlayingSocialEmoteIntent moveIntent)
@@ -173,10 +173,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     moveIntent.AreAvatarsLookingAtEachOther = true;
                     World.Add(moveIntent.InitiatorEntityId, new LookAtPositionIntention(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position));
                     messageBus.SendLookAtPositionMessage(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position.x, characterTransform.Position.y, characterTransform.Position.z);
-                }
 
-                // Rotates the receiver
-                World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
+                    // Rotates the receiver
+                    World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
+                }
             }
         }
 
@@ -186,7 +186,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         private void InitiatorLooksAtSocialEmoteTarget([Data] string targetWalletAddress, [Data] bool isInitiatorPlayingEmote, in CharacterTransform targetTransform, Profile targetProfile)
         {
             // A remote initiator looks at the target of a directed social emote it sent
-            if (!string.IsNullOrEmpty(targetProfile.UserId) && targetWalletAddress == targetProfile.UserId && isInitiatorPlayingEmote)
+            if (!string.IsNullOrEmpty(targetProfile.UserId) &&
+                targetWalletAddress == targetProfile.UserId &&
+                isInitiatorPlayingEmote &&
+                !World.Has<PlayerLookAtIntent>(playerEntity))
                 World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
         }
 
