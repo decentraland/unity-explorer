@@ -551,7 +551,6 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:545"); // SPECIAL_DEBUG_LINE_STA
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:548"); // SPECIAL_DEBUG_LINE_STATEMENT
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STATEMENT
         }

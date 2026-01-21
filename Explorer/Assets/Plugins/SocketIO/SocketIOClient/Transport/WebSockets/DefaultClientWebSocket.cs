@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 #if NET461_OR_GREATER
 using System.Reflection;
@@ -15,6 +15,7 @@ using System.Collections.Generic;
 
 namespace SocketIOClient.Transport.WebSockets
 {
+#if !UNITY_WEBGL
     public class DefaultClientWebSocket : IClientWebSocket
     {
         public DefaultClientWebSocket()
@@ -72,17 +73,17 @@ namespace SocketIOClient.Transport.WebSockets
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
-        public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
             await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task DisconnectAsync(CancellationToken cancellationToken)
+        public async UniTask DisconnectAsync(CancellationToken cancellationToken)
         {
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
             WebSocketMessageType msgType = WebSocketMessageType.Text;
 
@@ -91,7 +92,7 @@ namespace SocketIOClient.Transport.WebSockets
             await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
+        public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
             var memory = memoryPool.Memory(bufferSize);
             byte[] buffer = memory.DangerousBuffer();
@@ -119,4 +120,5 @@ namespace SocketIOClient.Transport.WebSockets
             _ws.Dispose();
         }
     }
+#endif
 }

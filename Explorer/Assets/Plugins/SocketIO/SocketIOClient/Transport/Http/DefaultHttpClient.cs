@@ -2,11 +2,12 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace SocketIOClient.Transport.Http
 {
+#if !UNITY_WEBGL
     public class DefaultHttpClient : IHttpClient
     {
         public DefaultHttpClient()
@@ -39,15 +40,15 @@ namespace SocketIOClient.Transport.Http
             _handler.Proxy = proxy;
         }
 
-        public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             _httpClient.SendAsync(request, cancellationToken);
 
-        public Task<HttpResponseMessage> PostAsync(string requestUri,
+        public UniTask<HttpResponseMessage> PostAsync(string requestUri,
             HttpContent content,
             CancellationToken cancellationToken) =>
             _httpClient.PostAsync(requestUri, content, cancellationToken);
 
-        public Task<string> GetStringAsync(Uri requestUri) =>
+        public UniTask<string> GetStringAsync(Uri requestUri) =>
             _httpClient.GetStringAsync(requestUri);
 
         public void Dispose()
@@ -56,4 +57,5 @@ namespace SocketIOClient.Transport.Http
             _handler.Dispose();
         }
     }
+#endif
 }
