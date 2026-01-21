@@ -48,6 +48,10 @@ MonoBehaviour:
     m_Localized: Places
     m_Metadata:
       m_Items: []
+  - m_Id: 299644359562919936
+    m_Localized: The wearable is being transferred.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
