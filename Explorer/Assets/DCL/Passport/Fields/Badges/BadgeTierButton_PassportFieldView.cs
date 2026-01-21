@@ -1,6 +1,6 @@
+using Arch.Core;
 using DCL.BadgesAPIService;
 using DCL.UI;
-using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -40,12 +40,12 @@ namespace DCL.Passport.Fields.Badges
 
         private ImageController? imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ImageControllerProvider imageControllerProvider)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, webRequestController);
+            imageController = imageControllerProvider.Create(TierImage);
         }
 
         public void StopLoadingImage() =>
