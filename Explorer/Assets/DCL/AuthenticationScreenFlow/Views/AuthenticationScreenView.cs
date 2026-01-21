@@ -1,52 +1,24 @@
-using Cysharp.Threading.Tasks;
 using DCL.UI.OTPInput;
 using MVC;
-using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Localization.Components;
-using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenView : ViewBase, IView, IPointerClickHandler
+    public class AuthenticationScreenView : ViewBase, IView
     {
-        private StringVariable? countdownLabelParameter;
-
         [field: Space]
         [field: SerializeField]
         public LoginScreenSubView LoginScreenSubView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public DappVerificationAuthView DappVerificationAuthView { get; private set; } = null!;
+
         [field: SerializeField]
         public ExistingAccountLobbyScreenSubView ExistingAccountLobbyScreenSubView { get; private set; } = null!;
         [field: SerializeField]
         public NewAccountLobbyScreenSubView NewAccountLobbyScreenSubView { get; private set; } = null!;
-
-        [field: Header("CODE VERIFICATION")]
-        [field: SerializeField]
-        public GameObject VerificationContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator VerificationAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_Text VerificationDescriptionsLabel { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_Text VerificationCodeLabel { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button VerificationCodeHintButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject VerificationCodeHintContainer { get; private set; } = null!;
-        [SerializeField]
-        private LocalizeStringEvent countdownLabel = null!;
-
-        [field: SerializeField]
-        public Button CancelAuthenticationProcess { get; private set; } = null!;
 
         [field: Header("VERIFICATION OTP")]
         [field: SerializeField]
@@ -127,37 +99,5 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public Button RequestAlphaAccessButton { get; private set; } = null!;
-
-        public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
-        {
-            do
-            {
-                countdownLabelParameter ??= (StringVariable)countdownLabel.StringReference["time"];
-                TimeSpan duration = expiration - DateTime.UtcNow;
-                countdownLabelParameter.Value = $"{duration.Minutes:D2}:{duration.Seconds:D2}";
-                await UniTask.Delay(1000, cancellationToken: ct);
-            }
-            while (expiration > DateTime.UtcNow);
-        }
-
-        public void ShakeOtpInputField()
-        {
-            // To be implemented
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            VerificationCodeHintContainer.SetActive(false);
-        }
-
-        private void OnDisable()
-        {
-            VerificationAnimator.enabled = false;
-        }
-
-        private void OnEnable()
-        {
-            VerificationAnimator.enabled = true;
-        }
     }
 }

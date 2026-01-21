@@ -186,7 +186,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void ShowOtpError()
         {
             viewInstance.OTPInputField.SetFailure();
-            viewInstance.ShakeOtpInputField();
 
             viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
             viewInstance.OTPSubmitResultText.text = "Incorrect code";

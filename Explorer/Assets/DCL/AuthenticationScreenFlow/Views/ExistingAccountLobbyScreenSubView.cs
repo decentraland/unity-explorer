@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
-using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {

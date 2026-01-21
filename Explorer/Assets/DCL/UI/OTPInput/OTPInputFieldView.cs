@@ -172,6 +172,13 @@ namespace DCL.UI.OTPInput
 
             foreach (OTPSlotView slot in slots)
                 slot.SetState(OTPSlotView.SlotState.ERROR);
+
+            ShakeOtpInputField();
+        }
+
+        private void ShakeOtpInputField()
+        {
+            // throw new NotImplementedException();
         }
     }
 }

@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Settings.Utils;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -12,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -20,13 +18,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
+        private readonly DappVerificationAuthView verificationView;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
         private readonly SentryTransactionManager sentryTransactionManager;
-        private CancellationTokenSource? verificationCountdownCancellationToken;
 
         public IdentityAndVerificationAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -39,6 +37,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
             this.machine = machine;
+            verificationView = viewInstance.DappVerificationAuthView;
             this.controller = controller;
             this.currentState = currentState;
             this.web3Authenticator = web3Authenticator;
@@ -59,13 +58,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             RestoreResolutionAndScreenMode();
-            CancelVerificationCountdown();
-
-            viewInstance.VerificationCodeHintContainer.SetActive(false);
-
-            // Listeners
-            viewInstance.CancelAuthenticationProcess.onClick.RemoveListener(controller.CancelLoginProcess);
-            viewInstance.VerificationCodeHintButton.onClick.RemoveListener(ToggleVerificationCodeVisibility);
+            verificationView.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
         }
 
         private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)
@@ -87,7 +80,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 web3Authenticator.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(method, ct);
 
-                viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.OUT);
+                verificationView.Hide();
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }
             catch (OperationCanceledException)
@@ -95,7 +88,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.BACK);
+                    verificationView.Hide(isBack: true);
 
                 machine.Enter<LoginStartAuthState>();
             }
@@ -105,7 +98,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.BACK);
+                    verificationView.Hide(isBack: true);
 
                 machine.Enter<LoginStartAuthState>();
             }
@@ -115,7 +108,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.BACK);
+                    verificationView.Hide(isBack: true);
 
                 machine.Enter<LoginStartAuthState>();
             }
@@ -125,7 +118,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.BACK);
+                    verificationView.Hide(isBack: true);
 
                 machine.Enter<LoginStartAuthState>();
             }
@@ -135,7 +128,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.BACK);
+                    verificationView.Hide(isBack: true);
 
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
@@ -145,19 +138,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void RestoreResolutionAndScreenMode()
-        {
-            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
-        }
-
         private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
             web3Authenticator.VerificationRequired -= ShowVerification;
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
-            viewInstance!.VerificationCodeLabel.text = data.code.ToString();
             controller.CurrentRequestID = data.requestId;
 
             var verificationSpan = new SpanData
@@ -170,31 +155,19 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             sentryTransactionManager.StartSpan(verificationSpan);
 
-            CancelVerificationCountdown();
-            verificationCountdownCancellationToken = new CancellationTokenSource();
-
-            viewInstance.StartVerificationCountdownAsync(data.expiration, verificationCountdownCancellationToken.Token)
-                        .Forget();
-
-            // Anim-OUT non-interactable Login Screen
+            // Hide non-interactable Login Screen
             viewInstance.LoginScreenSubView.SlideOut();
 
-            // Anim-IN Verification Screen
-            viewInstance.VerificationContainer.SetActive(true);
-            viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            // Listeners
-            viewInstance.CancelAuthenticationProcess.onClick.AddListener(controller.CancelLoginProcess);
-            viewInstance.VerificationCodeHintButton.onClick.AddListener(ToggleVerificationCodeVisibility);
+            // Show Verification Screen
+            verificationView.Show(data.code, data.expiration);
+            verificationView.BackButton.onClick.AddListener(controller.CancelLoginProcess);
         }
 
-        private void CancelVerificationCountdown()
+        private void RestoreResolutionAndScreenMode()
         {
-            verificationCountdownCancellationToken?.SafeCancelAndDispose();
-            verificationCountdownCancellationToken = null;
+            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
+            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
         }
-
-        private void ToggleVerificationCodeVisibility() =>
-            viewInstance!.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
     }
 }

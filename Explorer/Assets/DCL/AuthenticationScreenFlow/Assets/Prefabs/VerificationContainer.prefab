@@ -1482,6 +1482,7 @@ GameObject:
   - component: {fileID: 1433546265425435823}
   - component: {fileID: 7413623805926007320}
   - component: {fileID: 8472372639622335573}
+  - component: {fileID: 6660264860804750025}
   m_Layer: 0
   m_Name: VerificationContainer
   m_TagString: Untagged
@@ -1551,6 +1552,27 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &6660264860804750025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8188599465147508810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 084b41210c3c4701b314d6fb74343a64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.DappVerificationAuthView
+  <canvas>k__BackingField: {fileID: 0}
+  <raycaster>k__BackingField: {fileID: 0}
+  <BackButton>k__BackingField: {fileID: 4010740527853821136}
+  animator: {fileID: 7413623805926007320}
+  canvasGroup: {fileID: 8472372639622335573}
+  codeHintButton: {fileID: 7173621266771301102}
+  codeHintContainer: {fileID: 1141007587892658079}
+  code: {fileID: 7540230675413247272}
+  countdown: {fileID: 7990535997785988136}
 --- !u!1001 &7611210767826362026
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1653,3 +1675,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8483031988694602580, guid: ac1aadd2dfa2b60408cebc120486b407, type: 3}
   m_PrefabInstance: {fileID: 7611210767826362026}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4010740527853821136 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6776070932593525370, guid: ac1aadd2dfa2b60408cebc120486b407, type: 3}
+  m_PrefabInstance: {fileID: 7611210767826362026}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
