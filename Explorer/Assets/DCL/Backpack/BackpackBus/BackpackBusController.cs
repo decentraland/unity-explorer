@@ -1,17 +1,17 @@
-using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine.Pool;
 using Utility;
 
@@ -26,8 +26,10 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
+        
         private readonly CancellationTokenSource fetchWearableCts = new ();
-
+        private CancellationTokenSource equipOutfitCts = new ();
+        
         private int currentEmoteSlot = -1;
 
         public BackpackBusController(
@@ -60,6 +62,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
             this.backpackCommandBus.UnEquipAllWearablesMessageReceived += HandleUnEquipAllWearables;
             this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
+            this.backpackCommandBus.EquipOutfitMessageReceived += HandleEquipOutfitCommand;
         }
 
         public void Dispose()
@@ -73,11 +76,20 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.SelectEmoteMessageReceived -= HandleSelectEmoteCommand;
             backpackCommandBus.FilterMessageReceived -= HandleFilterCommand;
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
-            this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
-            this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
+            backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
+            backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
+            backpackCommandBus.EquipOutfitMessageReceived -= HandleEquipOutfitCommand;
+            
+            equipOutfitCts.SafeCancelAndDispose();
             fetchWearableCts.SafeCancelAndDispose();
+        }
+
+        private void HandleEquipOutfitCommand(BackpackEquipOutfitCommand command)
+        {
+            equipOutfitCts = equipOutfitCts.SafeRestart();
+            EquipOutfitAsync(command, equipOutfitCts.Token).Forget();
         }
 
         private void HandlePublishProfile(BackpackPublishProfileCommand command) =>
@@ -225,6 +237,69 @@ namespace DCL.Backpack.BackpackBus
         {
             currentEmoteSlot = command.Slot;
             backpackEventBus.SendEmoteSlotSelect(command.Slot);
+        }
+
+        private async UniTaskVoid EquipOutfitAsync(BackpackEquipOutfitCommand command, CancellationToken ct)
+        {
+            try
+            {
+                var resolvedWearables = new List<IWearable>();
+                var missingUrns = new List<URN>();
+
+                void TryAdd(string urn)
+                {
+                    if (string.IsNullOrEmpty(urn)) return;
+
+                    if (wearableStorage.TryGetElement(urn, out IWearable w))
+                    {
+                        resolvedWearables.Add(w);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            missingUrns.Add(new URN(urn));
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogError(ReportCategory.BACKPACK, $"Invalid URN in outfit: {urn}. Error: {e.Message}");
+                        }
+                    }
+                }
+
+                TryAdd(command.BodyShape);
+
+                foreach (var w in command.Wearables)
+                    TryAdd(w);
+
+                if (missingUrns.Count > 0)
+                {
+                    BodyShape bodyShape = BodyShape.FromStringSafe(command.BodyShape);
+                    
+                    var fetched = 
+                        await wearablesProvider.RequestPointersAsync(missingUrns, bodyShape, ct);
+
+                    if (fetched != null)
+                        resolvedWearables.AddRange(fetched);
+                }
+
+                // NOTE: simulate outfit loading takes a bit of time to make sure that
+                // NOTE: we can cancel previous outfit loading
+                // NOTE: await UniTask.Delay(2000, cancellationToken: ct);
+                
+                if (!ct.IsCancellationRequested)
+                {
+                    backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Correctly swallowed: The user switched outfits, so we abort this one.
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
+            }
         }
     }
 }

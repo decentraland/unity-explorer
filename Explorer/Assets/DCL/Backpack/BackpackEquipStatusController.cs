@@ -15,10 +15,8 @@ using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -79,6 +77,7 @@ namespace DCL.Backpack
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
             backpackEventBus.UnEquipAllWearablesEvent += UnEquipAllWearables;
+            backpackEventBus.EquipOutfitEvent += EquipOutfit;
             // Avoid publishing an invalid profile
             // For example: logout while the update operation is being processed
             // See: https://github.com/decentraland/unity-explorer/issues/4413
@@ -105,9 +104,23 @@ namespace DCL.Backpack
             backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAllWearables;
             web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
+            backpackEventBus.EquipOutfitEvent -= EquipOutfit;
             publishProfileCts?.SafeCancelAndDispose();
         }
 
+        private void EquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            equippedWearables.UnEquipAll();
+
+            foreach (var w in wearables)
+                equippedWearables.Equip(w);
+
+            equippedWearables.SetEyesColor(command.EyesColor);
+            equippedWearables.SetHairColor(command.HairColor);
+            equippedWearables.SetBodyshapeColor(command.SkinColor);
+            equippedWearables.SetForceRender(command.ForceRender);
+        }
+        
         private void UnEquipAll()
         {
             equippedEmotes.UnEquipAll();
