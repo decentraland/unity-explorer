@@ -35,6 +35,8 @@ namespace ECS.Unity.SceneBoundsChecker
 
                 for (var j = 0; j < TEMP_MATERIALS.Count; j++)
                 {
+                    if (TEMP_MATERIALS[j] == null)
+                        continue;
                     TEMP_MATERIALS[j].SetVector(PLANE_CLIPPING_ID, vector);
                     TEMP_MATERIALS[j].SetVector(VERTICAL_CLIPPING_ID, verticalClipping);
                 }
