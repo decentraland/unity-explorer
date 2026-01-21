@@ -1,8 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics;
 using Sentry;
+using Sentry.Unity;
 using System;
 using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 using static DCL.PerformanceAndDiagnostics.SentryTransactionMapping<UnityEngine.Networking.UnityWebRequest>;
@@ -13,16 +15,31 @@ namespace DCL.WebRequests.Analytics
     {
         private readonly SentryWebRequestSampler sampler;
 
+        private readonly ProfilerMarker onRequestStarted;
+        private readonly ProfilerMarker onRequestFinished;
+        private readonly ProfilerMarker onProcessDataStarted;
+        private readonly ProfilerMarker onProcessDataFinished;
+        private readonly ProfilerMarker onException;
+
         public SentryWebRequestHandler(SentryWebRequestSampler sampler)
         {
             this.sampler = sampler;
+
+            onRequestStarted = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnRequestStarted)}");
+            onRequestFinished = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnRequestFinished)}");
+            onProcessDataStarted = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnProcessDataStarted)}");
+            onProcessDataFinished = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnProcessDataFinished)}");
+            onException = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnException)}");
         }
 
         internal void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct
         {
+            using ProfilerMarker.AutoScope __ = onRequestStarted.Auto();
+
             // Before the decision of sampling has been made, minimize allocations
             // unlike UWR.url, envelope.CommonArguments.URL is already allocated
-            var transactionContext = new TransactionContext(envelope.CommonArguments.URL, OpenTelemetrySemantics.OperationHttpClient);
+            // Unfortunately we can't avoid building a transaction context object
+            var transactionContext = new TransactionContext(envelope.CommonArguments.URL, OpenTelemetrySemantics.OperationHttpClient, nameSource: TransactionNameSource.Url);
 
             // We will receive the name of the transaction from the sampler
             (PooledObject<Dictionary<string, object>> pooled, SentryWebRequestSampler.SamplingContext context) = sampler.PoolContext(out Dictionary<string, object> raw);
@@ -32,7 +49,8 @@ namespace DCL.WebRequests.Analytics
 
             ITransactionTracer? transaction = Instance.StartSentryTransaction(uwr, transactionContext, raw!);
 
-            if (transaction is { IsSampled: true } && context.UrlParts is { } urlParts)
+            if (transaction is { IsSampled: true } && context.TransactionName is { } transactionName
+                                                   && SentryWebRequestSampler.TryParseUrlParts(envelope.CommonArguments.URL, transactionName, request.UnityWebRequest.method, out SentryWebRequestSampler.OpenTelemetryUrlParts urlParts))
             {
                 transaction.Name = urlParts.TransactionName;
 
@@ -56,6 +74,8 @@ namespace DCL.WebRequests.Analytics
 
         internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest
         {
+            using ProfilerMarker.AutoScope _ = onRequestFinished.Auto();
+
             UnityWebRequest uwr = request.UnityWebRequest;
 
             if (Instance.TryGet(uwr, out ITransactionTracer transaction))
@@ -69,6 +89,8 @@ namespace DCL.WebRequests.Analytics
         {
             const string OP_NAME = "process_data";
 
+            using ProfilerMarker.AutoScope __ = onProcessDataStarted.Auto();
+
             // Add a child span to instrument data processing
             string spanName = typeof(T).Name;
             Instance.StartSpan(request.UnityWebRequest, new SpanData { Depth = 1, SpanName = spanName, SpanOperation = OP_NAME });
@@ -79,11 +101,16 @@ namespace DCL.WebRequests.Analytics
         /// </summary>
         internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest
         {
+            using ProfilerMarker.AutoScope _ = onProcessDataFinished.Auto();
+
             Instance.EndCurrentSpan(request.UnityWebRequest);
+            Instance.EndTransaction(request.UnityWebRequest);
         }
 
         internal void OnException(UnityWebRequestException unityWebRequestException)
         {
+            using ProfilerMarker.AutoScope _ = onException.Auto();
+
             // The exception will be attached to the corresponding transaction automatically
 
             if (Instance.TryGet(unityWebRequestException.UnityWebRequest, out ITransactionTracer transaction))
@@ -95,6 +122,8 @@ namespace DCL.WebRequests.Analytics
 
         internal void OnException<T>(T request, Exception exception) where T: ITypedWebRequest
         {
+            using ProfilerMarker.AutoScope _ = onException.Auto();
+
             // The exception will be attached to the corresponding transaction automatically
             Instance.EndTransactionWithError(request.UnityWebRequest, $"{exception.GetType().Name}", exception: exception);
         }

@@ -6,6 +6,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using Sentry;
+using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -72,7 +73,7 @@ namespace DCL.WebRequests
                     {
                         attemptNumber++;
 
-                        await request.WithAnalyticsAsync(envelope, analyticsContainer, request.SendRequest(envelope.Ct))
+                        await request.WithAnalyticsAsync(envelope, analyticsContainer, envelope.Ct)
                                      .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
@@ -110,7 +111,7 @@ namespace DCL.WebRequests
                     {
                         // Ignore the file error as we always try to read from the file first
                         if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-                            Sentry.Unity.SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
 
                         throw;
                     }

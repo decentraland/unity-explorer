@@ -29,6 +29,7 @@ namespace DCL.WebRequests.Analytics
         {
             samplingContextPool = new ThreadSafeObjectPool<Dictionary<string, object>>(
                 () => new Dictionary<string, object>(1) { [SAMPLE_KEY] = new SamplingContext() },
+                actionOnRelease: d => ((SamplingContext)d[SAMPLE_KEY]).TransactionName = null,
                 defaultCapacity: maxConcurrency,
                 maxSize: maxConcurrency * 2,
                 collectionCheck: PoolConstants.CHECK_COLLECTIONS
@@ -44,12 +45,6 @@ namespace DCL.WebRequests.Analytics
             return (pooled, (SamplingContext)raw[SAMPLE_KEY]);
         }
 
-        public void ReleaseContext(IReadOnlyDictionary<string, object?> context)
-        {
-            if (context.ContainsKey(SAMPLE_KEY))
-                samplingContextPool.Release((Dictionary<string, object>)context);
-        }
-
         public double? Execute(TransactionSamplingContext transactionSamplingContext)
         {
             double? result = null;
@@ -57,17 +52,16 @@ namespace DCL.WebRequests.Analytics
             if (transactionSamplingContext.TransactionContext.Operation == OpenTelemetrySemantics.OperationHttpClient &&
                 transactionSamplingContext.CustomSamplingContext.TryGetValue(SAMPLE_KEY, out object? ctx) && ctx is SamplingContext samplingContext)
             {
+                // Disallow urls that are not configured to sample
+                result = 0;
+
                 foreach (SentryTransactionConfiguration configuration in urlsToSample)
                 {
                     // Url is written to Name
                     if (UrlMatchesTemplate(transactionSamplingContext.TransactionContext.Name, configuration.url, out string transactionName))
                     {
-                        if (TryParseUrlParts(transactionSamplingContext.TransactionContext.Name, transactionName, out OpenTelemetryUrlParts urlParts))
-                        {
-                            samplingContext.UrlParts = urlParts;
-                            result = configuration.samplingRate;
-                        }
-
+                        samplingContext.TransactionName = transactionName;
+                        result = configuration.samplingRate;
                         break;
                     }
                 }
@@ -84,6 +78,9 @@ namespace DCL.WebRequests.Analytics
         private bool UrlMatchesTemplate(string url, DecentralandUrl templateType, out string transactionName)
         {
             string templateUrl = urlsSource.Url(templateType);
+
+            transactionName = string.Empty;
+            if (string.IsNullOrEmpty(templateUrl)) return false;
 
             if (!templateCache.TryGetValue(templateType, out TemplateData data))
             {
@@ -106,7 +103,7 @@ namespace DCL.WebRequests.Analytics
             else
             {
                 string escaped = Regex.Escape(templateUrl);
-                string pattern = PLACEHOLDER_PATTERN.Replace(escaped, @"[^/]*");
+                string pattern = PLACEHOLDER_PATTERN.Replace(escaped, "[^/]*");
                 var regex = new Regex("^" + pattern, RegexOptions.Compiled);
                 predicate = (_, u) => regex.IsMatch(u);
 
@@ -135,8 +132,9 @@ namespace DCL.WebRequests.Analytics
         /// </summary>
         /// <param name="url">The actual URL to parse</param>
         /// <param name="transactionName">The pre-computed parameterized transaction name from UrlMatchesTemplate</param>
+        /// <param name="method">Http Method</param>
         /// <param name="parts">The parsed URL parts</param>
-        internal static bool TryParseUrlParts(string url, string transactionName, out OpenTelemetryUrlParts parts)
+        internal static bool TryParseUrlParts(string url, string transactionName, string method, out OpenTelemetryUrlParts parts)
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -170,7 +168,7 @@ namespace DCL.WebRequests.Analytics
                 target = url[pathStart..];
             }
 
-            parts = new OpenTelemetryUrlParts(scheme, host, target, url, transactionName);
+            parts = new OpenTelemetryUrlParts(scheme, host, target, url, $"{method} {transactionName}");
             return true;
         }
 
@@ -191,7 +189,7 @@ namespace DCL.WebRequests.Analytics
         {
             public DecentralandUrl url;
 
-            [Range(0, 0.1f)]
+            [Range(0, 1f)]
             public float samplingRate;
         }
 
@@ -200,8 +198,10 @@ namespace DCL.WebRequests.Analytics
         /// </summary>
         public class SamplingContext
         {
-            // It's assigned if sampling has passed
-            public OpenTelemetryUrlParts? UrlParts;
+            /// <summary>
+            ///     It's assigned if the template has a match
+            /// </summary>
+            public string? TransactionName;
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 
@@ -48,13 +49,14 @@ namespace DCL.WebRequests.Analytics
 
     public static class WebRequestsAnalyticsExtensions
     {
-        internal static async UniTask WithAnalyticsAsync<T, TWebRequestArgs>(this T request, RequestEnvelope<T, TWebRequestArgs> envelope, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: struct, ITypedWebRequest
-                                                                                                                                                                                                                 where TWebRequestArgs: struct
+        internal static async UniTask WithAnalyticsAsync<T, TWebRequestArgs>(this T request, RequestEnvelope<T, TWebRequestArgs> envelope, IWebRequestsAnalyticsContainer analyticsContainer, CancellationToken ct) where T: struct, ITypedWebRequest
+                                                                                                                                                                                                                    where TWebRequestArgs: struct
         {
             try
             {
+                // Analytics should be allowed to modify request headers, so the request should not be launched yet
                 analyticsContainer.OnRequestStarted(envelope, request);
-                await innerTask;
+                await request.SendRequest(ct);
             }
             finally
             {

@@ -4,6 +4,7 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
 using Sentry;
+using Sentry.Unity;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
