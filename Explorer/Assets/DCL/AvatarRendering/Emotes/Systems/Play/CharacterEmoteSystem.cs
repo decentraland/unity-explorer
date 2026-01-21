@@ -306,7 +306,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 else if(emoteComponent.SocialEmote.IsPlayingOutcome) // It's the initiator
                     socialEmoteAvatarToStop = interaction.ReceiverEntity;
 
-                if (socialEmoteAvatarToStop != Entity.Null)
+                if (socialEmoteAvatarToStop != Entity.Null && !World.Has<StopEmoteIntent>(socialEmoteAvatarToStop))
                 {
                     ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"StopOtherParticipant() Stopping {entity} also stops {socialEmoteAvatarToStop}");
                     World.Add(socialEmoteAvatarToStop, new StopEmoteIntent(emoteComponent.EmoteUrn));
