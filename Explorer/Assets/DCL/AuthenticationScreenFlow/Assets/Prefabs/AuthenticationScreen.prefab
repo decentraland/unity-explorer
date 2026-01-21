@@ -7010,7 +7010,7 @@ MonoBehaviour:
   <VerificationOTPContainer>k__BackingField: {fileID: 5423474796469121246}
   <DescriptionOTP>k__BackingField: {fileID: 4764930226798731911}
   <VerificationOTPAnimator>k__BackingField: {fileID: 6630927926417701516}
-  <OTPInputField>k__BackingField: {fileID: 2512049595267325550}
+  <OTPInputField>k__BackingField: {fileID: 2537145275831023661}
   <CancelAuthenticationProcessOTP>k__BackingField: {fileID: 958898388718060612}
   <ResendOTPButton>k__BackingField: {fileID: 4770707461360421127}
   <OTPSubmitResultText>k__BackingField: {fileID: 8076510796967361470}
@@ -12825,17 +12825,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6814375121175922185, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}
   m_PrefabInstance: {fileID: 4619773657564849768}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2512049595267325550 stripped
+--- !u!114 &2537145275831023661 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7115736228142430214, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}
+  m_CorrespondingSourceObject: {fileID: 7145378097723596357, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}
   m_PrefabInstance: {fileID: 4619773657564849768}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 676ff52dfc83a75449e30e939bedc04b, type: 3}
+  m_Script: {fileID: 11500000, guid: 4b727bef0a3f4784a5119cf4cd6907c0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UI::OtpInputBox
+  m_EditorClassIdentifier: UI::DCL.UI.OTPInput.MyOTPInputFieldView
 --- !u!224 &2955286010541638715 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7575040632810906195, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}

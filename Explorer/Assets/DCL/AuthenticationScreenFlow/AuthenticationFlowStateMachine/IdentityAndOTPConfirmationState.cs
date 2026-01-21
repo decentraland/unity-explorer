@@ -8,7 +8,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -56,16 +55,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             // Listeners
             viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(controller.CancelLoginProcess);
             viewInstance.ResendOTPButton.onClick.AddListener(ResendOtp);
-            viewInstance.OTPInputField.OTPCodeEntered += OnOtpEntered;
+            viewInstance.OTPInputField.CodeEntered += OnOTPEntered;
 
             AuthenticateAsync(payload.email, payload.ct).Forget();
         }
 
         public override void Exit()
         {
+            viewInstance.OTPInputField.Clear();
+
             viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(controller.CancelLoginProcess);
             viewInstance.ResendOTPButton.onClick.RemoveListener(ResendOtp);
-            viewInstance.OTPInputField.OTPCodeEntered -= OnOtpEntered;
+            viewInstance.OTPInputField.CodeEntered -= OnOTPEntered;
         }
 
         private void ResendOtp()
@@ -80,7 +81,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 try
                 {
                     await web3Authenticator.ResendOtp();
-                    viewInstance.OTPInputField.ClearAndForceFocus();
+                    viewInstance.OTPInputField.Clear();
                 }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
                 finally { viewInstance.ResendOTPButton.interactable = true; }
@@ -150,7 +151,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private void OnOtpEntered(string otp)
+        private void OnOTPEntered(string otp)
         {
             viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
             viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
@@ -185,11 +186,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void ShowOtpError()
         {
             viewInstance.OTPInputField.SetFailure();
+            viewInstance.ShakeOtpInputField();
+
             viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
             viewInstance.OTPSubmitResultText.text = "Incorrect code";
             viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
             viewInstance.OTPSubmitResultErrorIcon.SetActive(true);
-            viewInstance.ShakeOtpInputField();
         }
     }
 }

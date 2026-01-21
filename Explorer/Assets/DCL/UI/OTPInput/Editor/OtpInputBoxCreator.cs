@@ -145,10 +145,10 @@ public static class OtpInputBoxCreator
         inputField.selectionColor = Color.clear;
 
         // Добавляем OtpInputBox компонент
-        OTPInputFieldView otpComponent = root.AddComponent<OTPInputFieldView>();
+        OldOTPInputFieldView oldOTPComponent = root.AddComponent<OldOTPInputFieldView>();
 
         // Присваиваем ссылки через SerializedObject
-        var so = new SerializedObject(otpComponent);
+        var so = new SerializedObject(oldOTPComponent);
 
         so.FindProperty("hiddenInput").objectReferenceValue = inputField;
 

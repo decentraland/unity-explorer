@@ -2495,7 +2495,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9115580256544039010, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
       propertyPath: m_Name
-      value: OtpInputBox (1)
+      value: TextInput.OTP
       objectReference: {fileID: 0}
     - target: {fileID: 9115580256544039010, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
       propertyPath: m_IsActive
