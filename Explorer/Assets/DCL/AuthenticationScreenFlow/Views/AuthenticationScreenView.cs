@@ -58,7 +58,7 @@ namespace DCL.AuthenticationScreenFlow
         public Animator VerificationOTPAnimator { get; private set; } = null!;
 
         [field: SerializeField]
-        public OtpInputBox OTPInputField { get; private set; } = null!;
+        public OTPInputFieldView OTPInputField { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CancelAuthenticationProcessOTP { get; private set; } = null!;

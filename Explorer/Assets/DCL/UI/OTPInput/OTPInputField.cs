@@ -70,12 +70,18 @@ public class OTPInputField : MonoBehaviour, IPointerClickHandler
     public string Code { get; private set; } = "";
 
     public bool IsComplete => Code.Length == codeLength;
-    public bool IsFocused => hiddenInput != null && hiddenInput.isFocused;
 
     private void Awake()
     {
         ValidateSetup();
         Initialize();
+    }
+
+    private void OnDestroy()
+    {
+        hiddenInput.onValueChanged.RemoveListener(OnHiddenInputValueChanged);
+        hiddenInput.onSelect.RemoveListener(OnHiddenInputSelected);
+        hiddenInput.onDeselect.RemoveListener(OnHiddenInputDeselected);
     }
 
     private void ValidateSetup()
@@ -451,23 +457,5 @@ public class OTPInputField : MonoBehaviour, IPointerClickHandler
         rt.anchoredPosition = originalPos;
     }
 
-    private void OnDestroy()
-    {
-        if (hiddenInput != null)
-        {
-            hiddenInput.onValueChanged.RemoveListener(OnHiddenInputValueChanged);
-            hiddenInput.onSelect.RemoveListener(OnHiddenInputSelected);
-            hiddenInput.onDeselect.RemoveListener(OnHiddenInputDeselected);
-        }
-    }
 
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // Ensure arrays match codeLength in editor
-        if (slotTexts != null && slotTexts.Length != codeLength) { Array.Resize(ref slotTexts, codeLength); }
-
-        if (slotBackgrounds != null && slotBackgrounds.Length != codeLength) { Array.Resize(ref slotBackgrounds, codeLength); }
-    }
-#endif
 }
