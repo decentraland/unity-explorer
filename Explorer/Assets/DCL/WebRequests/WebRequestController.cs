@@ -72,7 +72,7 @@ namespace DCL.WebRequests
                     {
                         attemptNumber++;
 
-                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
+                        await request.WithAnalyticsAsync(envelope, analyticsContainer, request.SendRequest(envelope.Ct))
                                      .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
@@ -102,6 +102,8 @@ namespace DCL.WebRequests
                             + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
                         );
 
+                    analyticsContainer.OnException(request, exception);
+
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
                     if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
@@ -114,6 +116,11 @@ namespace DCL.WebRequests
                     }
 
                     await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
+                }
+                catch (Exception exception)
+                {
+                    analyticsContainer.OnException(request, exception);
+                    throw;
                 }
             }
         }

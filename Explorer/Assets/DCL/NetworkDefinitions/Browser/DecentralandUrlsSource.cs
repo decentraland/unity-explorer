@@ -146,7 +146,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.CommunityProfileLink => $"https://decentraland.{ENV}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
-                DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
+                DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worldsTake -your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
@@ -154,6 +154,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
+
+                DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
+                DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
 
                 DecentralandUrl.EntitiesActive => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null,

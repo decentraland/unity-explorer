@@ -166,7 +166,6 @@ namespace Global
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
-            SentryTransactionManager.Initialize(new SentryTransactionManager());
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();

@@ -1,9 +1,11 @@
-﻿using DCL.DebugUtilities;
+﻿using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -29,15 +31,19 @@ namespace DCL.WebRequests.Analytics
         private readonly List<RequestMetricBase> flatMetrics = new ();
 
         private readonly DebugWidgetBuilder? debugWidgetBuilder;
+        private readonly SentryWebRequestHandler? sentryWebRequestHandler;
 
-        public WebRequestsAnalyticsContainer(DebugWidgetBuilder? debugWidgetBuilder)
-        {
-            this.debugWidgetBuilder = debugWidgetBuilder;
-        }
+        private readonly Dictionary<UnityWebRequest, DateTime> pendingRequests = new (10);
 
         public IWebRequestsAnalyticsContainer.RequestType[] DebugRequestTypes { get; private set; } = Array.Empty<IWebRequestsAnalyticsContainer.RequestType>();
 
         public DebugWidgetVisibilityBinding? VisibilityBinding { get; private set; }
+
+        public WebRequestsAnalyticsContainer(DebugWidgetBuilder? debugWidgetBuilder, SentryWebRequestHandler? sentryWebRequestHandler)
+        {
+            this.debugWidgetBuilder = debugWidgetBuilder;
+            this.sentryWebRequestHandler = sentryWebRequestHandler;
+        }
 
         public WebRequestsAnalyticsContainer BuildUpDebugWidget(bool isLocalSceneDevelopment)
         {
@@ -97,21 +103,18 @@ namespace DCL.WebRequests.Analytics
         public void RemoveFlatMetric(RequestMetricBase metric) =>
             flatMetrics.Remove(metric);
 
-        private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
-
-        void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
+        void IWebRequestsAnalyticsContainer.OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
+            sentryWebRequestHandler?.OnRequestStarted(in envelope, request);
+
             if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<RequestMetricBase> metrics))
                 return;
 
             DateTime now = DateTime.Now;
 
-            pendingRequests.Add(request, now);
+            pendingRequests.Add(request.UnityWebRequest, now);
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestStarted(request, now);
-            }
+            foreach (RequestMetricBase? metric in metrics) { metric.OnRequestStarted(request, now); }
 
             foreach (RequestMetricBase flat in flatMetrics)
                 flat.OnRequestStarted(request, now);
@@ -119,25 +122,40 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
+            sentryWebRequestHandler?.OnRequestFinished(request);
+
             if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<RequestMetricBase> metrics)) return;
 
-            if (!pendingRequests.Remove(request, out DateTime startTime))
+            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
                 return;
 
             DateTime now = DateTime.Now;
             TimeSpan duration = now - startTime;
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestEnded(request, duration);
-            }
+            foreach (RequestMetricBase? metric in metrics) { metric.OnRequestEnded(request, duration); }
 
             foreach (RequestMetricBase flat in flatMetrics)
                 flat.OnRequestEnded(request, duration);
         }
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
+        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request)
+        {
+            sentryWebRequestHandler?.OnProcessDataStarted(request);
+        }
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
+        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
+        {
+            sentryWebRequestHandler?.OnProcessDataFinished(request);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception)
+        {
+            sentryWebRequestHandler?.OnException(request, exception);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception)
+        {
+            sentryWebRequestHandler?.OnException(exception);
+        }
     }
 }

@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
@@ -16,6 +15,24 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
+        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer(null, null);
+
+        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics();
+
+        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType);
+
+        protected internal void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct;
+
+        protected internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest;
+
+        protected internal void OnProcessDataStarted<T>(T request) where T: ITypedWebRequest;
+
+        protected internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest;
+
+        protected internal void OnException<T>(T request, Exception exception) where T: ITypedWebRequest;
+
+        protected internal void OnException<T>(T request, UnityWebRequestException exception) where T: ITypedWebRequest;
+
         public readonly struct RequestType
         {
             public readonly Type Type;
@@ -27,29 +44,16 @@ namespace DCL.WebRequests.Analytics
                 MarkerName = markerName;
             }
         }
-
-        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics();
-
-        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType);
-
-        protected internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
-
-        protected internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest;
-
-        protected internal void OnProcessDataStarted<T>(T request) where T: ITypedWebRequest;
-
-        protected internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest;
-
-        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer(null);
     }
 
     public static class WebRequestsAnalyticsExtensions
     {
-        internal static async UniTask WithAnalyticsAsync<T>(this T request, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: ITypedWebRequest
+        internal static async UniTask WithAnalyticsAsync<T, TWebRequestArgs>(this T request, RequestEnvelope<T, TWebRequestArgs> envelope, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: struct, ITypedWebRequest
+                                                                                                                                                                                                                 where TWebRequestArgs: struct
         {
             try
             {
-                analyticsContainer.OnRequestStarted(request);
+                analyticsContainer.OnRequestStarted(envelope, request);
                 await innerTask;
             }
             finally
@@ -83,12 +87,12 @@ namespace DCL.WebRequests.Analytics
 
                 if (notifyScope != null)
                 {
-                    int statusCode = (int)uwr.responseCode;
+                    var statusCode = (int)uwr.responseCode;
 
                     Dictionary<string, string>? responseHeaders = uwr.GetResponseHeaders();
 
                     string mimeType = uwr.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                    int encodedDataLength = (int)uwr.downloadedBytes;
+                    var encodedDataLength = (int)uwr.downloadedBytes;
 
                     notifyScope.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength, uwr.downloadHandler).Forget();
                 }

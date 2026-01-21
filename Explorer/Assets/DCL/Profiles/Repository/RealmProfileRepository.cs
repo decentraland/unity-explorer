@@ -45,8 +45,6 @@ namespace DCL.Profiles
 
         // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
-
-
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
@@ -144,7 +142,7 @@ namespace DCL.Profiles
         {
             lock (ongoingBatches)
             {
-                for (int i = 0; i < ongoingBatches.Count; i++)
+                for (var i = 0; i < ongoingBatches.Count; i++)
                 {
                     ProfilesBatchRequest profilesBatch = ongoingBatches[i];
 
@@ -178,7 +176,7 @@ namespace DCL.Profiles
             lock (requests)
             {
                 // Find the batch with the same lambda URL and the same and or higher tier
-                for (int i = 0; i < requests.Count; i++)
+                for (var i = 0; i < requests.Count; i++)
                 {
                     ProfilesBatchRequest profilesBatch = requests[i];
 
@@ -377,7 +375,14 @@ namespace DCL.Profiles
 
         public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier)
         {
-            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(useCentralizedProfiles ? urlsSource.Url(DecentralandUrl.AssetBundleRegistry) : fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
+            if (useCentralizedProfiles)
+                return tier switch
+                       {
+                           ProfileTier.Kind.Compact => URLAddress.FromString(urlsSource.Url(DecentralandUrl.ProfilesMetadata)),
+                           _ => URLAddress.FromString(urlsSource.Url(DecentralandUrl.Profiles)),
+                       };
+
+            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
 
             urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("profiles"));
 

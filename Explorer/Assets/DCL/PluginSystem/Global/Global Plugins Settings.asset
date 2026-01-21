@@ -61,6 +61,7 @@ MonoBehaviour:
   - rid: 2563261270153757000
   - rid: 5190442831932031144
   - rid: 1221415613651484787
+  - rid: 732305993255354462
   references:
     version: 2
     RefIds:
@@ -82,6 +83,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 732305993255354462
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests.Analytics, asm: DCL.Plugins}
+      data:
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        <UrlsToSample>k__BackingField:
+        - url: 47
+          samplingRate: 0.01
+        - url: 48
+          samplingRate: 0.01
+        - url: 66
+          samplingRate: 0.005
     - rid: 745469515127586908
       type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -170,28 +183,6 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -366,28 +357,6 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -1052,8 +1021,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

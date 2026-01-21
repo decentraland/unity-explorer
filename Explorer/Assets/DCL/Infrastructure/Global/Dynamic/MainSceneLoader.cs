@@ -183,10 +183,6 @@ namespace Global.Dynamic
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
-            var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
-            var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
@@ -196,13 +192,12 @@ namespace Global.Dynamic
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
-                webRequestsContainer,
+                debugContainer,
                 identityCache,
                 globalPluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
                 splashScreen.Value,
-                realmUrls,
                 diskCache,
                 partialsDiskCache,
                 world,

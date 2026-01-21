@@ -1,4 +1,6 @@
-﻿using DCL.WebRequests.Analytics;
+﻿using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
 using System;
 using System.Collections.Generic;
@@ -10,16 +12,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 {
     public class PerformanceTestWebRequestsAnalytics : IWebRequestsAnalyticsContainer
     {
-        private readonly struct RequestState
-        {
-            internal readonly long started;
-
-            public RequestState(long started)
-            {
-                this.started = started;
-            }
-        }
-
         internal const string SEND_REQUEST_MARKER = "WebRequest.Send";
         internal const string SEND_REQUEST_FAILED_MARKER = "WebRequest.Failed";
         internal const string PROCESS_DATA_MARKER = "WebRequest.ProcessData";
@@ -43,7 +35,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public static double ToMs(long a, long b) =>
             (b - a) * (1_000_000.0 / Stopwatch.Frequency);
 
-        void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
+        void IWebRequestsAnalyticsContainer.OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
             if (WarmingUp) return;
 
@@ -78,6 +70,20 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             if (request.UnityWebRequest.result == UnityWebRequest.Result.Success) { Measure.Custom(processData, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp())); }
 
             requests.Remove(request.UnityWebRequest);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception) { }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception) { }
+
+        private readonly struct RequestState
+        {
+            internal readonly long started;
+
+            public RequestState(long started)
+            {
+                this.started = started;
+            }
         }
     }
 }
