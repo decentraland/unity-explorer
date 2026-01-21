@@ -22,33 +22,29 @@ namespace DCL.UI.OTPInput
         [SerializeField] private Color successColor = new (0.2f, 0.7f, 0.4f, 1f);
         [SerializeField] private Color errorColor = new (0.8f, 0.3f, 0.3f, 1f);
 
+        public Vector3 Center => transform.position;
+
+        public string Text
+        {
+            set => text.text = value;
+        }
+
         private void Awake()
         {
-            SetSlotState(SlotState.UNSELECTED);
+            SetState(SlotState.UNSELECTED);
         }
 
-        public void SetSlotText(string text)
-        {
-            this.text.text = text;
-        }
-
-        public void SetSlotState(SlotState state)
+        public void SetState(SlotState state)
         {
             outline.gameObject.SetActive(state == SlotState.SELECTED);
 
-            switch (state)
-            {
-                case SlotState.UNSELECTED:
-                case SlotState.SELECTED:
-                    background.color = normalColor;
-                    break;
-                case SlotState.ERROR:
-                    background.color = errorColor;
-                    break;
-                case SlotState.SUCCESS:
-                    background.color = successColor;
-                    break;
-            }
+            background.color = state switch
+                               {
+                                   SlotState.UNSELECTED or SlotState.SELECTED => normalColor,
+                                   SlotState.ERROR => errorColor,
+                                   SlotState.SUCCESS => successColor,
+                                   _ => background.color,
+                               };
         }
     }
 }

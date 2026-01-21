@@ -101,13 +101,13 @@ public sealed class OTPInputFieldView : MonoBehaviour, IPointerClickHandler
         for (var i = 0; i < slots.Length; i++)
         {
             OTPSlotView slot = slots[i];
-            slot.SetSlotText(i < code.Length ? code[i].ToString() : "");
+            slot.Text = i < code.Length ? code[i].ToString() : "";
 
             switch (currentState)
             {
-                case State.NORMAL: slot.SetSlotState(OTPSlotView.SlotState.UNSELECTED); break;
-                case State.FAILURE: slot.SetSlotState(OTPSlotView.SlotState.ERROR); break;
-                case State.SUCCESS: slot.SetSlotState(OTPSlotView.SlotState.SUCCESS); break;
+                case State.NORMAL: slot.SetState(OTPSlotView.SlotState.UNSELECTED); break;
+                case State.FAILURE: slot.SetState(OTPSlotView.SlotState.ERROR); break;
+                case State.SUCCESS: slot.SetState(OTPSlotView.SlotState.SUCCESS); break;
             }
         }
 
@@ -116,7 +116,7 @@ public sealed class OTPInputFieldView : MonoBehaviour, IPointerClickHandler
 
         if (focused)
         {
-            slots[activeSlot].SetSlotState(OTPSlotView.SlotState.SELECTED);
+            slots[activeSlot].SetState(OTPSlotView.SlotState.SELECTED);
             RectTransform slotRect = slots[activeSlot].GetComponent<RectTransform>();
             caretRectTransform.position = slotRect.position;
         }
@@ -207,7 +207,7 @@ public sealed class OTPInputFieldView : MonoBehaviour, IPointerClickHandler
         caretImage.enabled = false;
 
         foreach (OTPSlotView slot in slots)
-            slot.SetSlotState(OTPSlotView.SlotState.UNSELECTED);
+            slot.SetState(OTPSlotView.SlotState.UNSELECTED);
     }
 
     [ContextMenu(nameof(SetSuccess))]
