@@ -6,17 +6,20 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
+using SceneRuntime.Apis.Modules.EngineApi;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -55,24 +58,25 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 jsOperations);
         }
 
+
         [Test]
         public void SendBinary([Range(0, 5)] int outerArraySize, [Range(1, 50)] int innerArrayMessagesCount)
         {
             // Generate random array of arrays
 
-            var outerArray = new PoolableByteArray[outerArraySize];
+            var outerArray = new List<PoolableByteArray>(outerArraySize);
 
             for (var i = 0; i < outerArraySize; i++)
             {
                 byte[] messages = GetRandomMessagesSequence(innerArrayMessagesCount);
-                outerArray[i] = new PoolableByteArray(messages, messages.Length, null);
+                outerArray.Add(new PoolableByteArray(messages, messages.Length, null));
             }
 
-            api.SendBinary(outerArray);
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(outerArray);
             api.GetResult();
 
             var expectedCalls = outerArray
-                               .Select(o => o.Array
+                               .Select(o => o.CloneAsArray()
                                              .Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array)
                                              .Take(o.Length + 1))
                                .ToList();
@@ -167,12 +171,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             crdtBody.Write(contentLength); // content length
             crdtBody = crdtBody.Slice(contentLength);
 
-            var inputs = new PoolableByteArray[]
-            {
-                new PoolableByteArray(crdtMessage, crdtMessage.Length, null),
-            };
+            var inputs = new List<PoolableByteArray>();
+            var s = new PoolableByteArray(crdtMessage, crdtMessage.Length, null);
+            inputs.Add(s);
 
-            api.SendBinary(inputs);
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(inputs);
             api.GetResult();
 
             // Expected: CRDT message should be filtered
@@ -259,12 +262,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             addressBytes.CopyTo(resSpan.Slice(2));
             crdtData.CopyTo(resSpan.Slice(2 + addressLength));
 
-            var inputs = new PoolableByteArray[]
-            {
-                new PoolableByteArray(resMessage, resMessage.Length, null),
-            };
+            var inputs = new List<PoolableByteArray>();
+            var s = new PoolableByteArray(resMessage, resMessage.Length, null);
+            inputs.Add(s);
 
-            api.SendBinary(inputs);
+
+            api.SendBinary<List<PoolableByteArray>, PoolableByteArray>(inputs);
             api.GetResult();
 
             // Expected: RES_CRDT_STATE should be filtered

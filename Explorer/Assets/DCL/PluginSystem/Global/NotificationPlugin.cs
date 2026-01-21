@@ -11,6 +11,7 @@ using MVC;
 using System;
 using System.Threading;
 using DCL.Profiles;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -21,7 +22,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IWebRequestController webRequestController;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -31,14 +32,14 @@ namespace DCL.PluginSystem.Global
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IWebRequestController webRequestController,
+            ImageControllerProvider imageControllerProvider,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.webRequestController = webRequestController;
+            this.imageControllerProvider = imageControllerProvider;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
@@ -62,8 +63,8 @@ namespace DCL.PluginSystem.Global
                     notificationIconTypes,
                     notificationDefaultThumbnails,
                     rarityBackgroundMapping,
-                    webRequestController,
-                    profileRepository
+                    profileRepository,
+                    imageControllerProvider
                 );
 
             mvcManager.RegisterController(newNotificationController);

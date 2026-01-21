@@ -29,7 +29,11 @@ namespace ECS.StreamableLoading.Cache.Generic
             memoryCache.Put(key, value);
 
             if (!qualifiedForDiskCache)
+            {
+                ReportHub.Log(ReportCategory.STREAMABLE_LOADING,
+                    $"[GenericCache<{typeof(T).Name}>] DISK PUT SKIP (not qualified) key='{key}'");
                 return EnumResult<TaskError>.SuccessResult();
+            }
 
             using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             return await diskCache.PutAsync(hashKey, extension, value, token);
@@ -38,10 +42,24 @@ namespace ECS.StreamableLoading.Cache.Generic
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, bool qualifiedForDiskCache, CancellationToken token)
         {
             if (memoryCache.TryGet(key, out T result))
+            {
+                ReportHub.Log(
+                    ReportCategory.STREAMABLE_LOADING,
+                    $"[GenericCache<{typeof(T).Name}>] MEMORY HIT key='{key}'"
+                );
+                
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
+            }
 
             if (!qualifiedForDiskCache)
+            {
+                ReportHub.Log(
+                    ReportCategory.STREAMABLE_LOADING,
+                    $"[GenericCache<{typeof(T).Name}>] MEMORY MISS + DISK SKIP (not qualified) key='{key}'"
+                );
+                
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
+            }
 
             using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             var diskResult = await diskCache.ContentAsync(hashKey, extension, token);
@@ -52,13 +70,29 @@ namespace ECS.StreamableLoading.Cache.Generic
 
                 if (option.Has)
                 {
+                    ReportHub.Log(
+                        ReportCategory.STREAMABLE_LOADING,
+                        $"[GenericCache<{typeof(T).Name}>] DISK HIT key='{key}' hash='{hashKey}' ext='{extension}'"
+                    );
+                    
                     memoryCache.Put(key, option.Value);
+
+                    ReportHub.Log(
+                        ReportCategory.STREAMABLE_LOADING,
+                        $"[GenericCache<{typeof(T).Name}>] MEMORY FILL (from disk) key='{key}'"
+                    );
+                    
                     return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(option.Value));
                 }
+
+                ReportHub.Log(
+                    ReportCategory.STREAMABLE_LOADING,
+                    $"[GenericCache<{typeof(T).Name}>] DISK MISS key='{key}' hash='{hashKey}' ext='{extension}'"
+                );
             }
             else
                 ReportHub.LogError(
-                    ReportCategory.SCENE_LOADING,
+                    ReportCategory.STREAMABLE_LOADING,
                     $"{diskResult.Error!.Value.Message} - Error getting disk cache content for '{key}'"
                 );
 
