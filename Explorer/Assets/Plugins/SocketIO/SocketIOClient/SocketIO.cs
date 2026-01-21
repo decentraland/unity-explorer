@@ -146,10 +146,8 @@ namespace SocketIOClient
 
             JsonSerializer = new SystemTextJsonSerializer();
 
-#if !UNITY_WEBGL
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
-#endif
 
             throw new NotImplementedException("Prepare HTTP listener and WS for WebGL");
 
