@@ -123,8 +123,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo: placeInfo.PlaceInfo,
                 ownerName: placeInfo.OwnerName,
                 userOwnsPlace: placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify,
-                thumbnailLoader: thumbnailLoader!,
-                ct: cancellationToken);
+                thumbnailLoader: thumbnailLoader!);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

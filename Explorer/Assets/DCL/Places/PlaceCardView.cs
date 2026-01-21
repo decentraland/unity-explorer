@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Places
@@ -45,8 +46,8 @@ namespace DCL.Places
         private Tweener? descriptionTween;
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
-
         private PlaceInfo? currentPlaceInfo;
+        private CancellationTokenSource loadingThumbnailCts;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -89,11 +90,15 @@ namespace DCL.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct)
+        private void OnDisable() =>
+            loadingThumbnailCts.SafeCancelAndDispose();
+
+        public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader)
         {
             currentPlaceInfo = placeInfo;
 
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct, true).Forget();
+            loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, loadingThumbnailCts.Token, true).Forget();
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;

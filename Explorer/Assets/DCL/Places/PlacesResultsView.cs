@@ -22,7 +22,6 @@ namespace DCL.Places
         public Action<string>? MyPlacesResultsEmptySubTextClicked;
 
         private ThumbnailLoader? placesCardsThumbnailLoader;
-        private CancellationToken placesCardsConfigurationCt;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -80,10 +79,8 @@ namespace DCL.Places
             placesResultsLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section, CancellationToken ct)
+        public void AddPlacesResultsItems(IReadOnlyList<PlacesData.PlaceInfo> places, bool resetPos, PlacesSection? section)
         {
-            placesCardsConfigurationCt = ct;
-
             foreach (PlacesData.PlaceInfo placeInfo in places)
                 currentPlacesIds.Add(placeInfo.id);
 
@@ -127,8 +124,7 @@ namespace DCL.Places
                 placeInfo: placeInfo,
                 ownerName: placeInfo.contact_name,
                 userOwnsPlace: false,
-                thumbnailLoader: placesCardsThumbnailLoader!,
-                ct: placesCardsConfigurationCt);
+                thumbnailLoader: placesCardsThumbnailLoader!);
 
             // Setup card events
             // ...
