@@ -192,6 +192,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.OTPSubmitResultText.text = "Incorrect code";
             viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
             viewInstance.OTPSubmitResultErrorIcon.SetActive(true);
+
+            // After showing error feedback, clear the field and refocus it so user can retry
+            viewInstance.OTPInputField.ClearAndFocusDelayed(1.5f);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +20,7 @@ namespace DCL.UI.OTPInput
         private float caretBlinkTimer;
         private int codeLength;
         private bool prevIsFocused;
+        private Coroutine? clearAndFocusCoroutine;
 
         private void Awake()
         {
@@ -64,6 +66,7 @@ namespace DCL.UI.OTPInput
 
         private void OnDisable()
         {
+            StopClearAndFocusCoroutine();
             hiddenInput.onSelect.RemoveAllListeners();
             hiddenInput.onValueChanged.RemoveAllListeners();
             hiddenInput.onEndEdit.RemoveAllListeners();
@@ -78,12 +81,8 @@ namespace DCL.UI.OTPInput
         private void UnselectAll(string _)
         {
             caretImage.gameObject.SetActive(false);
-
             foreach (OTPSlotView slot in slots)
-            {
                 slot.SetState(OTPSlotView.SlotState.UNSELECTED);
-                slot.Text = string.Empty;
-            }
         }
 
         private void UpdateSlotsWithText(string text)
@@ -118,9 +117,45 @@ namespace DCL.UI.OTPInput
         [ContextMenu(nameof(Clear))]
         public void Clear()
         {
+            StopClearAndFocusCoroutine();
             hiddenInput.DeactivateInputField(clearSelection: true);
             hiddenInput.SetTextWithoutNotify(string.Empty);
             UnselectAll(string.Empty);
+        }
+
+        public void ClearAndFocus()
+        {
+            StopClearAndFocusCoroutine();
+
+            hiddenInput.interactable = true;
+            hiddenInput.SetTextWithoutNotify(string.Empty);
+            UpdateSlotsWithText(string.Empty);
+
+            caretBlinkTimer = 0f;
+            prevIsFocused = false;
+
+            hiddenInput.ActivateInputField();
+            hiddenInput.Select();
+        }
+
+        public void ClearAndFocusDelayed(float seconds)
+        {
+            StopClearAndFocusCoroutine();
+            clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(seconds));
+        }
+
+        private IEnumerator ClearAndFocusAfterDelay(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            ClearAndFocus();
+            clearAndFocusCoroutine = null;
+        }
+
+        private void StopClearAndFocusCoroutine()
+        {
+            if (clearAndFocusCoroutine == null) return;
+            StopCoroutine(clearAndFocusCoroutine);
+            clearAndFocusCoroutine = null;
         }
 
         [ContextMenu(nameof(SetSuccess))]
@@ -133,6 +168,8 @@ namespace DCL.UI.OTPInput
         [ContextMenu(nameof(SetFailure))]
         public void SetFailure()
         {
+            hiddenInput.interactable = false;
+
             foreach (OTPSlotView slot in slots)
                 slot.SetState(OTPSlotView.SlotState.ERROR);
         }
