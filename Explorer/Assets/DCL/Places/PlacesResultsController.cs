@@ -45,7 +45,7 @@ namespace DCL.Places
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
 
         private CancellationTokenSource? loadPlacesCts;
-        private CancellationTokenSource placeCardOperationsCts;
+        private CancellationTokenSource? placeCardOperationsCts;
 
         public PlacesResultsController(
             PlacesResultsView view,
@@ -100,6 +100,7 @@ namespace DCL.Places
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
 
+            loadPlacesCts?.SafeCancelAndDispose();
             placeCardOperationsCts.SafeCancelAndDispose();
         }
 
