@@ -1,34 +1,35 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript.V8;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility.Memory;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
     public class EngineApiWrapper : JsApiWrapper<IEngineApi>
     {
-        private readonly IInstancePoolsProvider instancePoolsProvider;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
-        private readonly string threadName;
-        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
-        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, CancellationTokenSource disposeCts)
-            : base(api, disposeCts)
+        private readonly string threadName;
+        private readonly SingleUnmanagedMemoryManager<byte> singleMemoryManager = new ();
+
+        public EngineApiWrapper(
+            IEngineApi api,
+            ISceneData sceneData,
+            ISceneExceptionsHandler exceptionsHandler,
+            CancellationTokenSource disposeCts
+        ) : base(api, disposeCts)
         {
-            this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
             threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
-        }
-
-        protected override void DisposeInternal()
-        {
-            // Dispose the last input buffer
-            lastInput.ReleaseAndDispose();
         }
 
         [UsedImplicitly]
@@ -37,14 +38,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             if (disposeCts.IsCancellationRequested)
                 return PoolableByteArray.EMPTY;
 
+            // V8ScriptItem does not support zero length
+            ulong length = data.Length;
+
+            if (length == 0)
+                return PoolableByteArray.EMPTY;
+
             try
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
-
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
-
-                PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
-
+                PoolableByteArray result = SendToRenderer(data, length);
                 Profiler.EndThreadProfiling();
 
                 return result.IsEmpty ? PoolableByteArray.EMPTY : result;
@@ -59,6 +62,63 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                 return PoolableByteArray.EMPTY;
             }
         }
+
+        private PoolableByteArray SendToRenderer(ITypedArray<byte> data, ulong length)
+        {
+            // Avoid copying of the buffer
+            // InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult>, TArg)
+            return data.InvokeWithDirectAccess(
+                static (ptr, args) =>
+                {
+                    args.singleMemoryManager.Assign(ptr, (int)args.length);
+                    return args.api.CrdtSendToRenderer(args.singleMemoryManager.Memory);
+                },
+                (api, length, singleMemoryManager)
+            );
+        }
+
+#if UNITY_INCLUDE_TESTS || UNITY_EDITOR
+        public PoolableByteArray SendToRendererTest(ITypedArray<byte> data)
+        {
+            return SendToRenderer(data, data.Length);
+        }
+
+        private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
+
+        public PoolableByteArray SendToRendererTestLegacy(ITypedArray<byte> data, IInstancePoolsProvider instancePoolsProvider)
+        {
+            RenewCrdtRawDataPoolFromScriptArray(instancePoolsProvider, data, ref lastInput);
+            return api.CrdtSendToRenderer(lastInput.Memory);
+        }
+
+        private static void RenewCrdtRawDataPoolFromScriptArray(
+            IInstancePoolsProvider instancePoolsProvider, ITypedArray<byte> scriptArray,
+            ref PoolableByteArray lastInput)
+        {
+            EnsureArrayLength(instancePoolsProvider, (int)scriptArray.Length, ref lastInput);
+
+            // V8ScriptItem does not support zero length
+            if (scriptArray.Length > 0)
+                scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
+        }
+
+        private static void EnsureArrayLength(IInstancePoolsProvider instancePoolsProvider,
+            int scriptArrayLength, ref PoolableByteArray lastInput)
+        {
+            // if the rented array can't keep the desired data, replace it
+            if (lastInput.Array.Length < scriptArrayLength)
+            {
+                // Release the old one
+                lastInput.Dispose();
+
+                // Rent a new one
+                lastInput = instancePoolsProvider.GetAPIRawDataPool(scriptArrayLength);
+            }
+            // Otherwise set the desired length to the existing array so it provides a correct span
+            else
+                lastInput.SetLength(scriptArrayLength);
+        }
+#endif
 
         [UsedImplicitly]
         public PoolableByteArray CrdtGetState()
@@ -80,6 +140,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public virtual PoolableSDKObservableEventArray? SendBatch() => null;
+        public virtual PoolableSDKObservableEventArray? SendBatch() =>
+            null;
     }
 }

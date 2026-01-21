@@ -2,10 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.UI.InputFieldFormatting;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.UI;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -25,6 +25,7 @@ namespace DCL.MarketplaceCredits.Sections
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
         private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly ITextFormatter textFormatter;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         private CancellationTokenSource fetchCaptchaCts;
         private CancellationTokenSource claimCreditsCts;
@@ -33,16 +34,17 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsGoalsOfTheWeekSubController(
             MarketplaceCreditsGoalsOfTheWeekSubView subView,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            IWebRequestController webRequestController,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController,
-            ITextFormatter textFormatter)
+            ITextFormatter textFormatter,
+            ImageControllerProvider imageControllerProvider)
         {
             this.subView = subView;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.totalCreditsWidgetView = totalCreditsWidgetView;
             this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.textFormatter = textFormatter;
+            this.imageControllerProvider = imageControllerProvider;
 
             marketplaceCreditsMenuController.OnAnyPlaceClick += CloseTimeLeftTooltip;
             subView.TimeLeftInfoButton.onClick.AddListener(ToggleTimeLeftTooltip);
@@ -55,7 +57,7 @@ namespace DCL.MarketplaceCredits.Sections
                 defaultCapacity: GOALS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: goalRowView =>
                 {
-                    goalRowView.ConfigureImageController(webRequestController);
+                    goalRowView.ConfigureImageController(this.imageControllerProvider);
                     goalRowView.gameObject.SetActive(true);
                     goalRowView.transform.SetAsLastSibling();
                 },
