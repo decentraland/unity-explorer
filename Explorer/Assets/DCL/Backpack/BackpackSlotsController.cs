@@ -214,9 +214,8 @@ namespace DCL.Backpack
                 avatarSlotView.Item1.SlotWearableUrn = w.GetUrn();
                 avatarSlotView.Item1.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(w.GetRarity());
                 avatarSlotView.Item1.EmptyOverlay.SetActive(false);
-
-                avatarSlotView.Item2.SafeCancelAndDispose();
-                avatarSlotView.Item2 = new CancellationTokenSource();
+                
+                avatarSlotView.Item2 = avatarSlotView.Item2.SafeRestart();
 
                 WaitForThumbnailAsync(w, avatarSlotView.Item1, avatarSlotView.Item2.Token).Forget();
             }
