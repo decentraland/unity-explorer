@@ -74,31 +74,31 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     if (isNewUser)
-                        machine.Enter<NewAccountLobbyAuthState, (Profile, bool, CancellationToken)>((profile, false, ct));
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, bool, CancellationToken)>((profile, false, ct));
                     else
-                        machine.Enter<ExistingAccountLobbyAuthState, (Profile, bool)>((profile, isCached));
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool)>((profile, isCached));
                 }
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    machine.Enter<LoginStartAuthState>();
+                    machine.Enter<LoginSelectionAuthState>();
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    machine.Enter<LoginStartAuthState>();
+                    machine.Enter<LoginSelectionAuthState>();
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                machine.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER);
+                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
         }
 

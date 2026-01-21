@@ -15,7 +15,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityAndVerificationAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
+    public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly DappVerificationAuthView verificationView;
@@ -26,7 +26,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly List<Resolution> possibleResolutions;
         private readonly SentryTransactionManager sentryTransactionManager;
 
-        public IdentityAndVerificationAuthState(
+        public IdentityVerificationDappAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -90,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     verificationView.Hide(isBack: true);
 
-                machine.Enter<LoginStartAuthState>();
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (SignatureExpiredException e)
             {
@@ -100,7 +100,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     verificationView.Hide(isBack: true);
 
-                machine.Enter<LoginStartAuthState>();
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (Web3SignatureException e)
             {
@@ -110,7 +110,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     verificationView.Hide(isBack: true);
 
-                machine.Enter<LoginStartAuthState>();
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (CodeVerificationException e)
             {
@@ -120,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     verificationView.Hide(isBack: true);
 
-                machine.Enter<LoginStartAuthState>();
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (Exception e)
             {
@@ -130,7 +130,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     verificationView.Hide(isBack: true);
 
-                machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             finally
             {
@@ -156,7 +156,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             sentryTransactionManager.StartSpan(verificationSpan);
 
             // Hide non-interactable Login Screen
-            viewInstance.LoginScreenSubView.SlideOut();
+            viewInstance.LoginSelectionAuthView.SlideOut();
 
             // Show Verification Screen
             verificationView.Show(data.code, data.expiration);

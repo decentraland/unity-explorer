@@ -8,45 +8,20 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView
     {
-        [field: Space]
+        [field: Header("SCREENS")]
         [field: SerializeField]
-        public LoginScreenSubView LoginScreenSubView { get; private set; } = null!;
+        public LoginScreenSubView LoginSelectionAuthView { get; private set; } = null!;
 
         [field: SerializeField]
         public DappVerificationAuthView DappVerificationAuthView { get; private set; } = null!;
 
         [field: SerializeField]
+        public OTPVerificationAuthView OtpVerificationAuthView { get; private set; } = null!;
+
+        [field: SerializeField]
         public ExistingAccountLobbyScreenSubView ExistingAccountLobbyScreenSubView { get; private set; } = null!;
         [field: SerializeField]
         public NewAccountLobbyScreenSubView NewAccountLobbyScreenSubView { get; private set; } = null!;
-
-        [field: Header("VERIFICATION OTP")]
-        [field: SerializeField]
-        public GameObject VerificationOTPContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_Text DescriptionOTP { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Animator VerificationOTPAnimator { get; private set; } = null!;
-
-        [field: SerializeField]
-        public OTPInputFieldView OTPInputField { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button CancelAuthenticationProcessOTP { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button ResendOTPButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public TMP_Text OTPSubmitResultText { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject OTPSubmitResultSucessIcon { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject OTPSubmitResultErrorIcon { get; private set; } = null!;
 
         [field: Header("ERROR POPUP")]
         [field: SerializeField]

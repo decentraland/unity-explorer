@@ -9,21 +9,21 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LoginStartAuthState : AuthStateBase, IState, IPayloadedState<PopupType>
+    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
-        private readonly LoginScreenSubView subView;
+        private readonly LoginScreenSubView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
-        public LoginStartAuthState(MVCStateMachine<AuthStateBase> machine,
+        public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen,
             ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
-            subView = viewInstance.LoginScreenSubView;
+            view = viewInstance.LoginSelectionAuthView;
 
             this.machine = machine;
             this.controller = controller;
@@ -33,7 +33,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
 
             // Cancel button persists in the Verification state (until code is shown)
-            subView.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
+            view.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
         public void Enter(PopupType payload)
@@ -55,28 +55,28 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter()
         {
-            if (machine.PreviousState is InitAuthScreenState)
+            if (machine.PreviousState is InitAuthState)
                 splashScreen.FadeOutAndHide();
 
             currentState.Value = AuthenticationStatus.Login;
 
             //-- GameObjects state setup
-            subView.gameObject.SetActive(true);
-            subView.SlideIn();
+            view.gameObject.SetActive(true);
+            view.SlideIn();
 
             // Listeners
-            subView.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
-            subView.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
+            view.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
+            view.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
 
             // viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
 
-            subView.MoreOptionsButton.onClick.AddListener(subView.ToggleOptionsPanelExpansion);
+            view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
 
             // ThirdWeb
-            subView.EmailInputField.Submitted += OTPLogin;
+            view.EmailInputField.Submitted += OTPLogin;
         }
 
         public override void Exit()
@@ -84,18 +84,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
-            subView.MetamaskLoginButton.onClick.RemoveAllListeners();
-            subView.GoogleLoginButton.onClick.RemoveAllListeners();
+            view.MetamaskLoginButton.onClick.RemoveAllListeners();
+            view.GoogleLoginButton.onClick.RemoveAllListeners();
 
             viewInstance.ErrorPopupCloseButton.onClick.RemoveAllListeners();
             viewInstance.ErrorPopupExitButton.onClick.RemoveAllListeners();
 
             // viewInstance.ErrorPopupRetryButton.onClick.RemoveAllListeners();
 
-            subView.MoreOptionsButton.onClick.RemoveAllListeners();
+            view.MoreOptionsButton.onClick.RemoveAllListeners();
 
             // ThirdWeb
-            subView.EmailInputField.Submitted -= OTPLogin;
+            view.EmailInputField.Submitted -= OTPLogin;
         }
 
         private void LoginWithMetamask() =>
@@ -108,22 +108,24 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
-            subView.ShowLoading();
-            machine.Enter<IdentityAndVerificationAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
+            view.ShowLoading();
+            machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
         private void OTPLogin()
         {
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
-            machine.Enter<IdentityAndOTPConfirmationState, (string, CancellationToken)>(
-                payload: (viewInstance.LoginScreenSubView.EmailInputField.Text, controller.GetRestartedLoginToken()));
+            view.SlideOut();
+
+            machine.Enter<IdentityVerificationOtpAuthState, (string, CancellationToken)>(
+                payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
 
         private void CancelLoginAndRestartFromBeginning()
         {
             controller.CancelLoginProcess();
-            machine.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+            machine.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
         }
 
         private void CloseErrorPopup() =>

@@ -19,7 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class NewAccountLobbyAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
@@ -37,7 +37,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private int currentAvatarIndex = -1;
         private bool baseWearablesLoaded;
 
-        public NewAccountLobbyAuthState(
+        public LobbyForNewAccountAuthState(
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,

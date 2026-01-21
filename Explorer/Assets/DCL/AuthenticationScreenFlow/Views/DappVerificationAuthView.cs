@@ -39,17 +39,12 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnEnable()
         {
-            animator.enabled = true;
-
             codeHintContainer.SetActive(false);
             codeHintButton.onClick.AddListener(ToggleVerificationCodeVisibility);
         }
 
         private void OnDisable()
         {
-            animator.enabled = false;
-            canvasGroup.interactable = false;
-
             CancelVerificationCountdown();
             codeHintButton.onClick.RemoveAllListeners();
         }

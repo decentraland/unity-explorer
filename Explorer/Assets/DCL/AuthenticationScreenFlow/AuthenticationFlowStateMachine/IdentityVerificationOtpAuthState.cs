@@ -12,15 +12,16 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityAndOTPConfirmationState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
+    public class IdentityVerificationOtpAuthState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly SentryTransactionManager sentryTransactionManager;
+        private readonly OTPVerificationAuthView view;
 
-        public IdentityAndOTPConfirmationState(
+        public IdentityVerificationOtpAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -28,6 +29,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             IWeb3VerifiedAuthenticator web3Authenticator,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
+            view = viewInstance.OtpVerificationAuthView;
+
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
@@ -39,34 +42,21 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
-            // Anim-OUT non-interactable Login Screen
-            viewInstance.LoginScreenSubView.SlideOut();
-
-            // Anim-IN Verification Screen
-            viewInstance.VerificationOTPContainer.SetActive(true);
-            viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            // Update description with user email
-            viewInstance.DescriptionOTP.text = viewInstance.DescriptionOTP.text.Replace("your@email.com", payload.email);
-
-            // Reset OTP result UI
-            viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
+            view.Show(payload.email);
+            AuthenticateAsync(payload.email, payload.ct).Forget();
 
             // Listeners
-            viewInstance.CancelAuthenticationProcessOTP.onClick.AddListener(controller.CancelLoginProcess);
-            viewInstance.ResendOTPButton.onClick.AddListener(ResendOtp);
-            viewInstance.OTPInputField.CodeEntered += OnOTPEntered;
-
-            AuthenticateAsync(payload.email, payload.ct).Forget();
+            view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
+            view.ResendCodeButton.onClick.AddListener(ResendOtp);
+            view.InputField.CodeEntered += OnEntered;
         }
 
         public override void Exit()
         {
-            viewInstance.OTPInputField.Clear();
-
-            viewInstance.CancelAuthenticationProcessOTP.onClick.RemoveListener(controller.CancelLoginProcess);
-            viewInstance.ResendOTPButton.onClick.RemoveListener(ResendOtp);
-            viewInstance.OTPInputField.CodeEntered -= OnOTPEntered;
+            // Listeners
+            view.BackButton.onClick.RemoveAllListeners();
+            view.ResendCodeButton.onClick.RemoveAllListeners();
+            view.InputField.CodeEntered -= OnEntered;
         }
 
         private void ResendOtp()
@@ -76,15 +66,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid ResendOtpAsync()
             {
-                viewInstance.ResendOTPButton.interactable = false;
+                view.ResendCodeButton.interactable = false;
 
                 try
                 {
                     await web3Authenticator.ResendOtp();
-                    viewInstance.OTPInputField.Clear();
+                    view.InputField.Clear();
                 }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
-                finally { viewInstance.ResendOTPButton.interactable = true; }
+                finally { view.ResendCodeButton.interactable = true; }
             }
         }
 
@@ -107,55 +97,55 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 // awaits OTP code being entered
                 IWeb3Identity identity = await web3Authenticator.LoginPayloadedAsync(LoginMethod.EMAIL_OTP, email, ct);
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.OUT);
+                view.Hide();
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
             catch (OperationCanceledException)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.BACK);
-                machine.Enter<LoginStartAuthState>();
+                view.Hide(isBack: true);
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (SignatureExpiredException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.BACK);
-                machine.Enter<LoginStartAuthState>();
+                view.Hide(isBack: true);
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (Web3SignatureException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.BACK);
-                machine.Enter<LoginStartAuthState>();
+                view.Hide(isBack: true);
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (CodeVerificationException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.BACK);
-                machine.Enter<LoginStartAuthState>();
+                view.Hide(isBack: true);
+                machine.Enter<LoginSelectionAuthState>();
             }
             catch (Exception e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                viewInstance.VerificationOTPAnimator.SetTrigger(UIAnimationHashes.BACK);
-                machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                view.Hide(isBack: true);
+                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
         }
 
-        private void OnOTPEntered(string otp)
+        private void OnEntered(string otp)
         {
-            viewInstance.OTPSubmitResultText.gameObject.SetActive(false);
-            viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
-            viewInstance.OTPSubmitResultErrorIcon.SetActive(false);
+            view.VerificationResultText.gameObject.SetActive(false);
+            view.VerificationSuccessIcon.SetActive(false);
+            view.VerificationErrorIcon.SetActive(false);
 
             OnOtpEnteredAsync().Forget();
             return;
@@ -176,24 +166,25 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void ShowOtpSuccess()
         {
-            viewInstance.OTPInputField.SetSuccess();
-            viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
-            viewInstance.OTPSubmitResultText.text = "Success";
-            viewInstance.OTPSubmitResultSucessIcon.SetActive(true);
-            viewInstance.OTPSubmitResultErrorIcon.SetActive(false);
+            view.InputField.SetSuccess();
+
+            view.VerificationResultText.gameObject.SetActive(true);
+            view.VerificationResultText.text = "Success";
+            view.VerificationSuccessIcon.SetActive(true);
+            view.VerificationErrorIcon.SetActive(false);
         }
 
         private void ShowOtpError()
         {
-            viewInstance.OTPInputField.SetFailure();
+            view.InputField.SetFailure();
 
-            viewInstance.OTPSubmitResultText.gameObject.SetActive(true);
-            viewInstance.OTPSubmitResultText.text = "Incorrect code";
-            viewInstance.OTPSubmitResultSucessIcon.SetActive(false);
-            viewInstance.OTPSubmitResultErrorIcon.SetActive(true);
+            view.VerificationResultText.gameObject.SetActive(true);
+            view.VerificationResultText.text = "Incorrect code";
+            view.VerificationSuccessIcon.SetActive(false);
+            view.VerificationErrorIcon.SetActive(true);
 
             // After showing error feedback, clear the field and refocus it so user can retry
-            viewInstance.OTPInputField.ClearAndFocusDelayed(1.5f);
+            view.InputField.ClearAndFocusDelayed(1.5f);
         }
     }
 }

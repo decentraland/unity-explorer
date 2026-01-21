@@ -3,26 +3,27 @@ using UnityEngine;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class InitAuthScreenState : AuthStateBase, IState
+    public class InitAuthState : AuthStateBase, IState
     {
         private readonly string buildDataInstallSource;
 
         /// <summary>
-        /// Set main View  prefab to the default visual state in case it was forgotten to disable some container during prefab editing
+        /// Set main View  prefab to the default visual state in case it was forgotten to disable some gameObjects during prefab editing
         /// </summary>
-        public InitAuthScreenState(AuthenticationScreenView viewInstance, string buildDataInstallSource) : base(viewInstance)
+        public InitAuthState(AuthenticationScreenView viewInstance, string buildDataInstallSource) : base(viewInstance)
         {
             this.buildDataInstallSource = buildDataInstallSource;
         }
 
         public void Enter()
         {
-            viewInstance.LoginScreenSubView.gameObject.SetActive(false);
+            viewInstance.LoginSelectionAuthView.gameObject.SetActive(false);
+
             viewInstance.DappVerificationAuthView.gameObject.SetActive(false);
+            viewInstance.OtpVerificationAuthView.gameObject.SetActive(false);
+
             viewInstance.ExistingAccountLobbyScreenSubView.gameObject.SetActive(false);
             viewInstance.NewAccountLobbyScreenSubView.gameObject.SetActive(false);
-
-            viewInstance.VerificationOTPContainer.SetActive(false);
 
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);

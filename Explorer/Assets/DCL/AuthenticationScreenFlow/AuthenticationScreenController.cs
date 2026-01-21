@@ -151,16 +151,17 @@ namespace DCL.AuthenticationScreenFlow
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
             fsm.AddStates(
-                new InitAuthScreenState(viewInstance, buildData.InstallSource),
-                new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
-                new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                new InitAuthState(viewInstance, buildData.InstallSource),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, splashScreen, selfProfile),
-                new ExistingAccountLobbyAuthState(viewInstance, this, CurrentState, characterPreviewController),
-                new IdentityAndOTPConfirmationState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
+                new LobbyForExistingAccountAuthState(viewInstance, this, CurrentState, characterPreviewController),
+                new IdentityVerificationOtpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
                 new ProfileFetchingOTPAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
-                new NewAccountLobbyAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
+                new LobbyForNewAccountAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
                 );
-            fsm.Enter<InitAuthScreenState>();
+
+            fsm.Enter<InitAuthState>();
         }
 
         /// <summary>
@@ -184,7 +185,7 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
             }
         }
 
@@ -248,7 +249,7 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
             }
         }
 

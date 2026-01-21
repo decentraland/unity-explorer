@@ -20,7 +20,7 @@ AnimatorStateMachine:
     m_Position: {x: 20, y: 420, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 900153439724680733}
-    m_Position: {x: -50, y: 200, z: 0}
+    m_Position: {x: -50, y: 210, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions:
   - {fileID: -5990037701527248167}
@@ -64,7 +64,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: VerificationOut
+  m_Name: Out
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -91,7 +91,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: VerficationIn
+  m_Name: In
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -260,7 +260,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: VerificationBack
+  m_Name: Back
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.Utilities;
 using MVC;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -9,7 +8,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class ExistingAccountLobbyAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
+    public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
     {
         private readonly AuthenticationScreenController controller;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
@@ -17,7 +16,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly ExistingAccountLobbyScreenSubView subView;
 
-        public ExistingAccountLobbyAuthState(
+        public LobbyForExistingAccountAuthState(
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
