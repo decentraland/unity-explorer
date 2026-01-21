@@ -120,5 +120,48 @@ namespace SocketIOClient.Transport.WebSockets
             _ws.Dispose();
         }
     }
+#else
+    public class DefaultClientWebSocket : IClientWebSocket
+    {
+        public DefaultClientWebSocket()
+        {
+        }
+
+        public WebSocketState State => throw new Exception("State is not supported");
+
+        public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        {
+            throw new Exception("ConnectAsync is not supported");
+        }
+
+        public async UniTask DisconnectAsync(CancellationToken cancellationToken)
+        {
+            throw new Exception("DisconnectAsync is not supported");
+        }
+
+        public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        {
+            throw new Exception("SendAsync is not supported");
+        }
+
+        public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
+        {
+            throw new Exception("ReceiveAsync is not supported");
+        }
+
+        public void AddHeader(string key, string val)
+        {
+            throw new Exception("AddHeader is not supported");
+        }
+
+        public void SetProxy(IWebProxy proxy)
+        {
+            throw new Exception("SetProxy is not supported");
+        }
+
+        public void Dispose()
+        {
+        }
+    }
 #endif
 }

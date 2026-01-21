@@ -10,14 +10,14 @@ namespace SocketIOClient.Transport.Http
 #if !UNITY_WEBGL
     public class DefaultHttpClient : IHttpClient
     {
+        private readonly HttpClientHandler _handler;
+        private readonly HttpClient _httpClient;
+
         public DefaultHttpClient()
         {
             _handler = new HttpClientHandler();
             _httpClient = new HttpClient(_handler);
         }
-
-        private readonly HttpClientHandler _handler;
-        private readonly HttpClient _httpClient;
 
         private static readonly HashSet<string> allowedHeaders = new()
         {
@@ -55,6 +55,46 @@ namespace SocketIOClient.Transport.Http
         {
             _httpClient.Dispose();
             _handler.Dispose();
+        }
+    }
+#else
+    // TODO Implement if requierd to support HTTP Transport
+    public class DefaultHttpClient : IHttpClient
+    {
+        public void AddHeader(string name, string value)
+        {
+            throw new Exception("AddHeader is not supported");
+        }
+
+        public IEnumerable<string> GetHeaderValues(string name)
+        {
+            throw new Exception("GetHeaderValues is not supported");
+        }
+
+        public void SetProxy(IWebProxy proxy)
+        {
+            throw new Exception("SetProxy is not supported");
+        }
+
+        public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            throw new Exception("SetProxy is not supported");
+        }
+
+        public UniTask<HttpResponseMessage> PostAsync(string requestUri,
+            HttpContent content,
+            CancellationToken cancellationToken)
+        {
+            throw new Exception("SetProxy is not supported");
+        }
+
+        public UniTask<string> GetStringAsync(Uri requestUri)
+        {
+            throw new Exception("SetProxy is not supported");
+        }
+
+        public void Dispose()
+        {
         }
     }
 #endif
