@@ -190,6 +190,7 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
                 case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                case NotificationType.TIP_RECEIVED:
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<FriendsNotificationView>();
                     break;
@@ -286,7 +287,6 @@ namespace DCL.Notifications.NotificationsMenu
                     FriendsNotificationView friendNotificationView3 = (FriendsNotificationView)notificationView;
                     friendNotificationView3.TimeText.gameObject.SetActive(true);
                     ConfigureTipReceivedAsync(friendNotificationView3, tipNotification, notificationThumbnailCts.Token).Forget();
-                    LoadNotificationThumbnailAsync(notificationView, notification, notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type), notificationThumbnailCts.Token).Forget();
                     break;
             }
         }
@@ -295,12 +295,21 @@ namespace DCL.Notifications.NotificationsMenu
         {
             try
             {
-                Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
-                friendNotificationView.ConfigureFromTipReceivedNotificationData(tipNotification, profile);
+                if (!tipNotification.SenderProfile.HasValue)
+                {
+                    Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
+                    tipNotification.SenderProfile = profile;
+                }
+
+                friendNotificationView.ConfigureFromTipReceivedNotificationData(tipNotification);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // ignored
+                ReportHub.LogException(e, ReportCategory.DONATIONS);
+            }
+            finally
+            {
+                LoadNotificationThumbnailAsync(friendNotificationView, tipNotification, notificationDefaultThumbnails.GetNotificationDefaultThumbnail(tipNotification.Type), ct).Forget();
             }
         }
 

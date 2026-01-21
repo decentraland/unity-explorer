@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using Newtonsoft.Json;
 using System;
 
@@ -7,7 +8,9 @@ namespace DCL.NotificationsBus.NotificationTypes
     public class TipReceivedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "New Tip received!";
-        private const string NOTIFICATION_TITLE_FORMAT = "sent you a <b>{1:#.##} MANA</b> tip for one of your scenes!";
+        private const string NOTIFICATION_TITLE_FORMAT = "sent you a <b>{0:#.##} MANA</b> tip for one of your scenes!";
+
+        public Profile.CompactInfo? SenderProfile { get; set; }
 
         [JsonProperty("metadata")]
         public TipReceivedNotificationMetadata Metadata { get; set; }
@@ -19,7 +22,7 @@ namespace DCL.NotificationsBus.NotificationTypes
             NOTIFICATION_TITLE_FORMAT;
 
         public override string GetThumbnail() =>
-            string.Empty;
+            SenderProfile?.FaceSnapshotUrl.Value ?? string.Empty;
     }
 
     [Serializable]

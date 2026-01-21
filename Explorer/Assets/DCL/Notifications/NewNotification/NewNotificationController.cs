@@ -235,18 +235,22 @@ namespace DCL.Notifications.NewNotification
         {
             TipReceivedNotification tipReceivedNotification = (TipReceivedNotification)notification;
 
-            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET);
+            if (!tipReceivedNotification.SenderProfile.HasValue)
+            {
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET);
+                tipReceivedNotification.SenderProfile = profile;
+            }
 
             viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.FriendsNotificationView.NotificationType = notification.Type;
             viewInstance.FriendsNotificationView.Notification = notification;
 
-            viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification, profile);
+            viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification);
 
             DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
 
-            if (profile.HasValue && !string.IsNullOrEmpty(profile.Value.FaceSnapshotUrl))
-                friendsThumbnailImageController.RequestImage(profile.Value.FaceSnapshotUrl, true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            if (!string.IsNullOrEmpty(tipReceivedNotification.GetThumbnail()))
+                friendsThumbnailImageController.RequestImage(tipReceivedNotification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
             else
                 friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
 

@@ -79,19 +79,19 @@ namespace DCL.Notifications.NotificationEntry
             NotificationType = notification.Type;
         }
 
-        public void ConfigureFromTipReceivedNotificationData(TipReceivedNotification notification, Profile.CompactInfo? profile)
+        public void ConfigureFromTipReceivedNotificationData(TipReceivedNotification notification)
         {
             string userName;
             string userAddress;
             Color userColor;
             bool hasClaimedName;
 
-            if (profile.HasValue)
+            if (notification.SenderProfile.HasValue)
             {
-                userName = profile.Value.Name;
-                userAddress = profile.Value.Address;
-                userColor = profile.Value.UserNameColor;
-                hasClaimedName = profile.Value.HasClaimedName;
+                userName = notification.SenderProfile.Value.Name;
+                userAddress = notification.SenderProfile.Value.Address;
+                userColor = notification.SenderProfile.Value.UserNameColor;
+                hasClaimedName = notification.SenderProfile.Value.HasClaimedName;
             }
             else
             {
