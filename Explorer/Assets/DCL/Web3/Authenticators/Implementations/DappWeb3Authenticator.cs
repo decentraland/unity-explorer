@@ -24,7 +24,9 @@ using Utility.Multithreading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+    internal delegate void VerificationWeb3Delegate(int code, DateTime expiration);
+
+    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
@@ -59,9 +61,10 @@ namespace DCL.Web3.Authenticators
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
         private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
-        private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
+        private VerificationWeb3Delegate? signatureVerificationCallback;
 
-        public DappWeb3Authenticator(IWebBrowser webBrowser,
+        //private 
+        public    DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             URLDomain rpcServerUrl,
@@ -268,7 +271,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STA
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             codeVerificationCallback = callback;
 
-        public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
+        private void AddVerificationListener(VerificationWeb3Delegate callback) =>
             signatureVerificationCallback = callback;
 
         private async UniTask DisconnectFromAuthApiAsync()
