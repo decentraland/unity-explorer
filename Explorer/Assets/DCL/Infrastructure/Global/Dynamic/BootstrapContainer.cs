@@ -245,7 +245,7 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                coreWeb3Authenticator = new AnalyticsDecoratorVerifiedAuthenticator(coreWeb3Authenticator, container.Analytics!);
+                coreWeb3Authenticator = new AnalyticsDecoratorAuthenticator(coreWeb3Authenticator, container.Analytics!);
                 autoLoginAuthenticator = new AnalyticsDecoratorAuthenticator(autoLoginAuthenticator, container.Analytics!);
             }
 
