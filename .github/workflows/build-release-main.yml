@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  get-info:
+
     name: Get Info
     runs-on: ubuntu-latest
     timeout-minutes: 5
