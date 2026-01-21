@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System.Threading.Tasks;
 
 namespace Utility.Multithreading
 {
@@ -29,7 +28,7 @@ namespace Utility.Multithreading
                 ? new ExecuteOnMainThreadScope(false)
                 : await NewScopeWithReturnOnThreadPoolAsync();
 
-        public async ValueTask DisposeAsync()
+        public async UniTask DisposeAsync()
         {
             if (returnOnThreadPoolOnDispose)
                 await DCLTask.SwitchToThreadPool();
