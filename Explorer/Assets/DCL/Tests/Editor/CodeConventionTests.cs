@@ -19,6 +19,8 @@ namespace DCL.Tests
     {
         public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
         public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+
+        public const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
         
         public static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
         {
@@ -83,6 +85,13 @@ namespace DCL.Tests
             ShouldNotUseDangerousUniTask(fileContent, filePath);
         }
 
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void VerifyShouldNotUseSystemTask(string filePath)
+        {
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseSystemTask(fileContent, filePath);
+        }
+
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
         {
             // Act
@@ -126,6 +135,30 @@ namespace DCL.Tests
             // Assert
             Assert.IsTrue(violations.Count == 0,
                 $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseSystemTask(string fileContent, string filePath)
+        {
+            if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
+                return;
+
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                string pattern = "System.Threading.Tasks";
+                if (line.Contains(pattern))
+                {
+                    violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                }
+            }
+
+            Assert.IsTrue(violations.Count == 0,
+                    $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLTask instead");
         }
 
         // To support WebGL compatability

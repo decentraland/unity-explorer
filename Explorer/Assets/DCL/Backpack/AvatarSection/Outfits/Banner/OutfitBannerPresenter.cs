@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Banner
 {

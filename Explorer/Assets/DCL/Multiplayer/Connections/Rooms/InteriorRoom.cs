@@ -1,3 +1,7 @@
+// TODO remove tasks to support WebGL
+// Currently Livekit is not supposed to be called on WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;

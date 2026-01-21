@@ -8,7 +8,6 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Utility.Multithreading;
 using Utility;
 
@@ -207,7 +206,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 this.sendChunkSize = sendChunkSize;
             }
 
-            public async ValueTask SendAsync(WebSocketRental rental, ReadOnlyMemory<byte> data, WebSocketMessageType messageType, CancellationToken ct)
+            public async UniTask SendAsync(WebSocketRental rental, ReadOnlyMemory<byte> data, WebSocketMessageType messageType, CancellationToken ct)
             {
                 try
                 {
@@ -230,7 +229,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 finally { rental.SendLock.Release(); }
             }
 
-            public async Task<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(ClientWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
+            public async UniTask<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(ClientWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
             {
                 PoolableByteArray finalBuffer = PoolableByteArray.EMPTY;
 

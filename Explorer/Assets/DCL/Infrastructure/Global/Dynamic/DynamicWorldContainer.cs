@@ -1034,8 +1034,10 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
+#if !UNITY_WEBGL
             if (localSceneDevelopment || builderCollectionsPreview)
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment));
+#endif
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
