@@ -30,25 +30,22 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     var data = (IntPtr)dataPtr;
 
-                    dataOffset = array.InvokeWithDirectAccess(static (buffer, args) =>
-                        {
-                            byte* bufferPtr = (byte*)buffer;
+                    array.InvokeWithDirectAccess(buffer =>
+                    {
+                        var bufferPtr = (byte*)buffer;
 
-                            fixed (char* walletIdPtr = args.walletId)
-                                bufferPtr[0] = (byte)Encoding.UTF8.GetBytes(walletIdPtr, args.walletId.Length,
-                                    bufferPtr + 1, byte.MaxValue);
+                        fixed (char* walletIdPtr = walletId)
+                            bufferPtr[0] = (byte)Encoding.UTF8.GetBytes(walletIdPtr, walletId.Length,
+                                bufferPtr + 1, byte.MaxValue);
 
-                            var dataOffsetScoped = bufferPtr[0] + 1;
+                        dataOffset = bufferPtr[0] + 1;
 
-                            if (dataOffsetScoped + args.dataLength > IJsOperations.LIVEKIT_MAX_SIZE)
-                                throw new InternalBufferOverflowException(
-                                    "Received a message larger than LIVEKIT_MAX_SIZE");
+                        if (dataOffset + dataLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                            throw new InternalBufferOverflowException(
+                                "Received a message larger than LIVEKIT_MAX_SIZE");
 
-                            UnsafeUtility.MemCpy(bufferPtr + dataOffsetScoped, (byte*)args.data, args.dataLength);
-                            return dataOffsetScoped;
-                        },
-                        (data, dataLength, walletId)
-                    );
+                        UnsafeUtility.MemCpy(bufferPtr + dataOffset, (byte*)data, dataLength);
+                    });
                 }
             }
 
