@@ -67,9 +67,10 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            if ((platformComponent.RotationChanged || platformComponent.PositionChanged) && platformComponent.CurrentPlatform)
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6580
+            // We used to check for platform changes, but that might get out of sync on low-framerate devices
+            if (platformComponent.CurrentPlatform)
             {
-                // Fixes https://github.com/decentraland/unity-explorer/issues/6580
                 characterController.transform.position = platformComponent.CurrentPlatform.TransformPoint(platformComponent.LastAvatarRelativePosition);
                 Physics.SyncTransforms();
             }
