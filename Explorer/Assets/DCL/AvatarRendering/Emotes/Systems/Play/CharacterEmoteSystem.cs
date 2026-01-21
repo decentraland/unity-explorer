@@ -466,7 +466,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // If the message of the receiver comes first, it's ignored (the message is discarded in a condition at RemoteEmotesSystem). It will be handled when the initiator's is already there waiting.
         // Once both have arrived, both emotes play at the same time.
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent), typeof(StopEmoteIntent))]
         private void BeforePlayingSynchronizeRemoteInteraction(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent, ref CharacterTransform characterTransform)
         {
             if(emoteIntent.EmoteAsset == null || !emoteIntent.EmoteAsset.IsSocial)
@@ -501,7 +501,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent))]
+        [None(typeof(DeleteEntityIntention), typeof(InterpolateCameraTargetTowardsNewParentIntent), typeof(StopEmoteIntent))]
         private void PlayNewEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, ref CharacterEmoteIntent emoteIntent,
             in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
@@ -638,10 +638,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // The rotation of the avatar has to coincide with initiator avatar's when the emote starts, which occurs at least 1 frame later
                     RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent rotateIntent = new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity);
 
-                    if(World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                    if (World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent already existed");
                         World.Set(entity, rotateIntent);
+                    }
                     else
+                    {
+                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent");
                         World.Add(entity, rotateIntent);
+                    }
                 }
 
                 if (emoteComponent.Metadata!.IsSocialEmote)
@@ -808,12 +814,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 {
                     PlayerLookAtIntent lookAtIntent = new PlayerLookAtIntent(characterController.transform.position + characterController.center + newCharacterForward);
 
-                    if (World.Has<PlayerLookAtIntent>(entity))
-                    {
-                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() PlayerLookAtIntent already existed");
-                        World.Set(entity, lookAtIntent);
-                    }
-                    else
+                    if (!World.Has<PlayerLookAtIntent>(entity)) // Note: It does not overwrite the intent. If it did, when canceling a social emote by reacting to other, this would replace the rotation and the avatar would walk towards an undesired direction
                     {
                         ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ResetAvatarAndControllerTransforms() new PlayerLookAtIntent");
                         World.Add(entity, lookAtIntent);
@@ -843,12 +844,12 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 }
             }
-            catch // The try/catch is necessary to avoid that playerComponent.CameraFocus ends up without parent due to an exception
+            catch (Exception e) // The try/catch is necessary to avoid that playerComponent.CameraFocus ends up without parent due to an exception
             {
                 if(characterController != null)
                     playerComponent.CameraFocus.parent = characterController.transform;
 
-                throw;
+                ReportHub.LogException(e, GetReportData());
             }
         }
 
