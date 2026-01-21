@@ -8,7 +8,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
+using DCL.UI.ProfileElements;
 using MVC;
 using System;
 using System.Threading;
@@ -31,7 +31,6 @@ namespace DCL.Donations.UI
 
         private readonly IDonationsService donationsService;
         private readonly IProfileRepository profileRepository;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly decimal[] recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
@@ -41,14 +40,12 @@ namespace DCL.Donations.UI
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
-        private Profile.CompactInfo? currentCreatorProfile;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public DonationsPanelController(ViewFactoryMethod viewFactory,
             IDonationsService donationsService,
             IProfileRepository profileRepository,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -59,7 +56,6 @@ namespace DCL.Donations.UI
         {
             this.donationsService = donationsService;
             this.profileRepository = profileRepository;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.world = world;
             this.playerEntity = playerEntity;
             this.webBrowser = webBrowser;
@@ -75,8 +71,8 @@ namespace DCL.Donations.UI
             if (viewInstance == null) return;
 
             viewInstance.SendDonationRequested -= OnSendDonationRequestedAsync;
-            viewInstance!.BuyMoreRequested -= OnBuyMoreRequested;
-            viewInstance!.ContactSupportRequested -= OnContactSupportRequested;
+            viewInstance.BuyMoreRequested -= OnBuyMoreRequested;
+            viewInstance.ContactSupportRequested -= OnContactSupportRequested;
         }
 
         private void CloseController() =>
@@ -103,17 +99,17 @@ namespace DCL.Donations.UI
             LoadDataAsync(panelLifecycleCts.Token).Forget();
         }
 
-        private async void OnSendDonationRequestedAsync(string creatorAddress, decimal amount)
+        private async void OnSendDonationRequestedAsync(DonationPanelViewModel viewModel, decimal amount)
         {
             try
             {
-                viewInstance!.ShowLoading(currentCreatorProfile, creatorAddress, amount, profileRepositoryWrapper);
+                viewInstance!.ShowLoading(viewModel, amount);
 
-                bool success = await donationsService.SendDonationAsync(creatorAddress, amount, panelLifecycleCts.Token);
+                bool success = await donationsService.SendDonationAsync(viewModel.SceneCreatorAddress, amount, panelLifecycleCts.Token);
 
                 if (success)
                 {
-                    await viewInstance.ShowTxConfirmedAsync(currentCreatorProfile, creatorAddress, panelLifecycleCts.Token, profileRepositoryWrapper);
+                    await viewInstance.ShowTxConfirmedAsync(viewModel, panelLifecycleCts.Token);
                     PlayEmoteByUrn(EMOTE_MONEY_URN);
                     CloseController();
                 }
@@ -170,16 +166,28 @@ namespace DCL.Donations.UI
                         donationsService.GetCurrentManaConversionAsync(ct),
                         donationsService.GetSceneNameAsync(baseParcel, ct));
 
-                currentCreatorProfile = creatorProfile;
-
                 // Scene creators can set a wallet that has nothing to do with DCL, so we can safely log this information to ignore 404s
                 if (creatorProfile == null)
                     ReportHub.LogException(new Exception($"Previous 404 on profile {creatorAddress} can be ignored as the wallet might not be stored in catalysts"), ReportCategory.DONATIONS);
 
-                viewInstance!.ConfigureDefaultPanel(creatorProfile, creatorAddress,
-                    sceneName, currentBalance,
-                    recommendedDonationAmount, manaPriceUsd,
-                    profileRepositoryWrapper);
+                DonationPanelViewModel donationPanelViewModel = new (creatorProfile,
+                    creatorAddress,
+                    sceneName,
+                    currentBalance,
+                    recommendedDonationAmount,
+                    manaPriceUsd);
+
+                if (creatorProfile != null)
+                {
+                    donationPanelViewModel.ProfileThumbnail.SetLoading(creatorProfile.Value.UserNameColor);
+
+                    GetProfileThumbnailCommand.Instance.ExecuteAsync(donationPanelViewModel.ProfileThumbnail, viewInstance.defaultProfileThumbnail,
+                        creatorProfile.Value, ct).Forget();
+                }
+                else
+                    donationPanelViewModel.ProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.FromFallback(viewInstance.defaultProfileThumbnail));
+
+                viewInstance!.ConfigureDefaultPanel(donationPanelViewModel);
             }
             catch (OperationCanceledException)
             {

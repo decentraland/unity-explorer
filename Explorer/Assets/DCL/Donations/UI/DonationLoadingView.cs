@@ -1,6 +1,4 @@
-using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using TMPro;
 using UnityEngine;
 
@@ -15,7 +13,6 @@ namespace DCL.Donations.UI
         [field: SerializeField] private SimpleUserNameElement userNameElement { get; set; } = null!;
         [field: Space(5)]
         [field: SerializeField] private UserWalletAddressElement creatorAddressElement { get; set; } = null!;
-        [field: SerializeField] private Color NoProfileColor { get; set; }
 
         private UserWalletAddressElementController? creatorAddressController;
 
@@ -24,28 +21,22 @@ namespace DCL.Donations.UI
             creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
         }
 
-        public void ConfigurePanel(Profile.CompactInfo? profile,
-            string sceneCreatorAddress,
-            decimal donationAmount,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+        public void ConfigurePanel(DonationPanelViewModel viewModel,
+            decimal donationAmount)
         {
             titleText.text = string.Format(TITLE_FORMAT, donationAmount);
 
-            userNameElement.gameObject.SetActive(profile != null);
+            userNameElement.gameObject.SetActive(viewModel.Profile != null);
 
-            if (profile.HasValue)
+            profilePictureView.Bind(viewModel.ProfileThumbnail);
+
+            if (viewModel.Profile.HasValue)
             {
-                profilePictureView.Setup(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl);
-                userNameElement.Setup(profile.Value);
-                profilePictureView.ConfigureThumbnailClickData(userAddress: sceneCreatorAddress);
-            }
-            else
-            {
-                profilePictureView.SetBackgroundColor(NoProfileColor);
-                profilePictureView.SetDefaultThumbnail();
+                userNameElement.Setup(viewModel.Profile.Value);
+                profilePictureView.ConfigureThumbnailClickData(userAddress: viewModel.SceneCreatorAddress);
             }
 
-            creatorAddressController!.Setup(sceneCreatorAddress);
+            creatorAddressController!.Setup(viewModel.SceneCreatorAddress);
         }
     }
 }

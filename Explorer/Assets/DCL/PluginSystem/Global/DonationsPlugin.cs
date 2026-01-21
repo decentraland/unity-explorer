@@ -12,7 +12,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -29,7 +28,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDonationsService donationsService;
         private readonly IProfileRepository profileRepository;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
         private readonly IWebBrowser webBrowser;
@@ -42,7 +40,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IDonationsService donationsService,
             IProfileRepository profileRepository,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
             Entity playerEntity,
             Arch.Core.World world,
             IWebBrowser webBrowser,
@@ -53,7 +50,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.donationsService = donationsService;
             this.profileRepository = profileRepository;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.playerEntity = playerEntity;
             this.world = world;
             this.webBrowser = webBrowser;
@@ -94,7 +90,6 @@ namespace DCL.PluginSystem.Global
                 viewFactoryMethod,
                 donationsService,
                 profileRepository,
-                profileRepositoryWrapper,
                 world,
                 playerEntity,
                 webBrowser,

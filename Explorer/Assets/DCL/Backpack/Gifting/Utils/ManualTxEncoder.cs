@@ -13,6 +13,8 @@ namespace DCL.Backpack.Gifting.Utils
         private const string MANA_BALANCE_FUNCTION_SELECTOR = "70a08231";
         private const string TRANSFER_FUNCTION_SELECTOR = "a9059cbb";
 
+        private const string HEX_PREFIX = "0x";
+
         private const decimal WEI_FACTOR = 1_000_000_000_000_000_000;
 
         public static string EncodeTransferFrom(string fromAddress, string toAddress, string tokenIdDecimal)
@@ -33,14 +35,14 @@ namespace DCL.Backpack.Gifting.Utils
 
             // 4. Construct Payload
             // 0x + [Selector] + [From] + [To] + [TokenID]
-            return "0x" + TRANSFER_FROM_SELECTOR + paddedFrom + paddedTo + paddedId;
+            return string.Concat(HEX_PREFIX, TRANSFER_FROM_SELECTOR, paddedFrom, paddedTo, paddedId);
         }
 
         public static string EncodeGetBalance(string walletAddress)
         {
             string address = LeftPad64(NormalizeAddress(walletAddress));
 
-            return "0x" + MANA_BALANCE_FUNCTION_SELECTOR + address;
+            return string.Concat(HEX_PREFIX, MANA_BALANCE_FUNCTION_SELECTOR, address);
         }
 
         public static string EncodeSendDonation(string toAddress, decimal amountInMana)
@@ -49,7 +51,7 @@ namespace DCL.Backpack.Gifting.Utils
             string to = LeftPad64(NormalizeAddress(toAddress));
             string weiAmountString = LeftPad64(value.ToString("x"));
 
-            return "0x" + TRANSFER_FUNCTION_SELECTOR + to + weiAmountString;
+            return string.Concat(HEX_PREFIX, TRANSFER_FUNCTION_SELECTOR, to, weiAmountString);
         }
 
         private static string NormalizeAddress(string addr)

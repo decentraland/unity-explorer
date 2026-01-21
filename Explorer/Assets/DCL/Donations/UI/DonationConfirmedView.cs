@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.RewardPanel;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -16,28 +14,26 @@ namespace DCL.Donations.UI
         private const string PROFILE_TEXT = "Tip Sent to";
 
         [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
-        [field: SerializeField] private Color NoProfileColor { get; set; }
         [field: SerializeField] private SimpleUserNameElement userNameElement { get; set; } = null!;
         [field: SerializeField] private RewardBackgroundRaysAnimation rewardBackgroundRaysAnimation { get; set; } = null!;
         [field: SerializeField] private TMP_Text tipSentText { get; set; } = null!;
         [field: SerializeField] internal Button okButton { get; set; } = null!;
         [field: SerializeField] internal Button backgroundButton { get; set; } = null!;
 
-        public async UniTask ShowAsync(Profile.CompactInfo? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public async UniTask ShowAsync(DonationPanelViewModel viewModel, CancellationToken ct)
         {
-            userNameElement.gameObject.SetActive(profile != null);
+            userNameElement.gameObject.SetActive(viewModel.Profile != null);
 
-            if (!profile.HasValue)
+            profilePictureView.Bind(viewModel.ProfileThumbnail);
+
+            if (!viewModel.Profile.HasValue)
             {
-                profilePictureView.SetBackgroundColor(NoProfileColor);
-                profilePictureView.SetDefaultThumbnail();
-                tipSentText.text = string.Format(NO_PROFILE_TEXT_FORMAT, $"{creatorAddress[..5]}...{creatorAddress[^5..]}");
-                profilePictureView.ConfigureThumbnailClickData(userAddress: creatorAddress);
+                tipSentText.text = string.Format(NO_PROFILE_TEXT_FORMAT, $"{viewModel.SceneCreatorAddress[..5]}...{viewModel.SceneCreatorAddress[^5..]}");
+                profilePictureView.ConfigureThumbnailClickData(userAddress: viewModel.SceneCreatorAddress);
             }
             else
             {
-                profilePictureView.Setup(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl);
-                userNameElement.Setup(profile.Value);
+                userNameElement.Setup(viewModel.Profile.Value);
                 tipSentText.text = PROFILE_TEXT;
             }
 

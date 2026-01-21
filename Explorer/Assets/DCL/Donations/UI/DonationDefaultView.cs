@@ -3,6 +3,7 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +20,7 @@ namespace DCL.Donations.UI
         private const int THIRD_RECOMMENDATION_INDEX = 2;
         private const int OTHER_RECOMMENDATION_INDEX = 3;
 
-        public event Action<string, decimal>? SendDonationRequested;
+        public event Action<DonationPanelViewModel, decimal>? SendDonationRequested;
 
         [field: Header("References")]
         [field: SerializeField] internal Button cancelButton { get; set; } = null!;
@@ -54,11 +55,9 @@ namespace DCL.Donations.UI
         [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; }
 
         private UserWalletAddressElementController? creatorAddressController;
-        private decimal manaUsdConversion;
-        private decimal currentBalance;
         private Color donationBorderOriginalColor;
         private Color manaAvailableOriginalColor;
-        private decimal[] suggestedDonationAmount;
+        private DonationPanelViewModel currentViewModel;
 
         private void Awake()
         {
@@ -75,46 +74,37 @@ namespace DCL.Donations.UI
             recommendationButtons[OTHER_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(OTHER_RECOMMENDATION_INDEX));
         }
 
-        public void ConfigurePanel(Profile.CompactInfo? profile,
-            string sceneCreatorAddress,
-            string sceneName,
-            decimal currentBalance,
-            decimal[] suggestedDonationAmount,
-            decimal manaUsdPrice,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+        public void ConfigurePanel(DonationPanelViewModel viewModel)
         {
-            manaUsdConversion = manaUsdPrice;
-            this.currentBalance = currentBalance;
-            this.suggestedDonationAmount = suggestedDonationAmount;
-            sceneNameText.text = sceneName;
+            currentViewModel = viewModel;
+            sceneNameText.text = viewModel.SceneName;
 
-            userNameElement.gameObject.SetActive(profile != null);
+            userNameElement.gameObject.SetActive(viewModel.Profile != null);
 
-            if (profile.HasValue)
+            profilePictureView.Bind(viewModel.ProfileThumbnail);
+
+            if (viewModel.Profile.HasValue)
             {
-                profilePictureView.Setup(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl);
-                userNameElement.Setup(profile.Value);
-                profilePictureView.ConfigureThumbnailClickData(userAddress: sceneCreatorAddress);
-            }
-            else
-            {
-                profilePictureView.SetBackgroundColor(noProfileColor);
-                profilePictureView.SetDefaultThumbnail();
+                userNameElement.Setup(viewModel.Profile.Value);
+                profilePictureView.ConfigureThumbnailClickData(userAddress: viewModel.SceneCreatorAddress);
             }
 
-            creatorAddressController!.Setup(sceneCreatorAddress);
+            creatorAddressController!.Setup(viewModel.SceneCreatorAddress);
 
-            currentBalanceText.text = currentBalance.ToString(DECIMAL_FORMAT);
+            currentBalanceText.text = viewModel.CurrentBalance.ToString(DECIMAL_FORMAT);
 
             ManageRecommendationClick(FIRST_RECOMMENDATION_INDEX);
 
-            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[FIRST_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
-            recommendationButtons[SECOND_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[SECOND_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
-            recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = suggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
+            recommendationButtons[FIRST_RECOMMENDATION_INDEX].Text.text = viewModel.SuggestedDonationAmount[FIRST_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
+            recommendationButtons[SECOND_RECOMMENDATION_INDEX].Text.text = viewModel.SuggestedDonationAmount[SECOND_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
+            recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = viewModel.SuggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
 
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( () => SendDonationRequested?.Invoke(sceneCreatorAddress, decimal.Parse(donationInputFieldMana.text)));
+            sendButton.onClick.AddListener( TriggerSendDonationRequested);
         }
+
+        private void TriggerSendDonationRequested() =>
+            SendDonationRequested?.Invoke(currentViewModel, decimal.Parse(donationInputFieldMana.text));
 
         public void ManaOverlayInputClicked()
         {
@@ -146,17 +136,17 @@ namespace DCL.Donations.UI
                 recommendationButtons[i].SetSelected(i == index);
 
                 if (i == index && i != OTHER_RECOMMENDATION_INDEX)
-                    donationInputFieldMana.text = suggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
+                    donationInputFieldMana.text = currentViewModel.SuggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
             }
         }
 
         private void OnManaValueChanged(string value)
         {
             string newValue = value.Replace("-", "");
-            bool parsedValueSuccess = decimal.TryParse(newValue, out decimal parsedValue);
+            bool parsedValueSuccess = decimal.TryParse(newValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsedValue);
 
             donationInputFieldMana.SetTextWithoutNotify(newValue);
-            donationInputFieldUsd.SetTextWithoutNotify((parsedValueSuccess ? parsedValue * manaUsdConversion : 0).ToString(DECIMAL_FORMAT));
+            donationInputFieldUsd.SetTextWithoutNotify((parsedValueSuccess ? parsedValue * currentViewModel.ManaUsdPrice : 0).ToString(DECIMAL_FORMAT));
 
             ValidateManaValue(donationInputFieldMana.text);
         }
@@ -164,22 +154,22 @@ namespace DCL.Donations.UI
         private void OnUsdValueChanged(string value)
         {
             string newValue = value.Replace("-", "");
-            bool parsedValueSuccess = decimal.TryParse(newValue, out decimal parsedValue);
+            bool parsedValueSuccess = decimal.TryParse(newValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsedValue);
 
             donationInputFieldUsd.SetTextWithoutNotify(newValue);
-            donationInputFieldMana.SetTextWithoutNotify((parsedValueSuccess ? parsedValue / manaUsdConversion : 0).ToString(DECIMAL_FORMAT));
+            donationInputFieldMana.SetTextWithoutNotify((parsedValueSuccess ? parsedValue / currentViewModel.ManaUsdPrice : 0).ToString(DECIMAL_FORMAT));
 
             ValidateManaValue(donationInputFieldMana.text);
         }
 
         private void ValidateManaValue(string value)
         {
-            bool isValid = decimal.TryParse(value, out decimal number) && number >= 1 && number <= currentBalance;
+            bool isValid = decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal number) && number >= 1 && number <= currentViewModel.CurrentBalance;
             sendButton.interactable = isValid;
 
             donationErrorTip.gameObject.SetActive(number < 1);
 
-            if (number >= currentBalance)
+            if (number >= currentViewModel.CurrentBalance)
             {
                 balanceWarningIcon.SetActive(true);
                 balanceManaIcon.SetActive(false);

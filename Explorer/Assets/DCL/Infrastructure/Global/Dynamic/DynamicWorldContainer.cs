@@ -557,7 +557,7 @@ namespace Global.Dynamic
                 : coreChatMessageBus;
 
             IDonationsService donationsService;
-            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
             {
                 IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                     staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
@@ -1021,7 +1021,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     donationsService,
                     staticContainer.ProfilesContainer.Repository,
-                    profileRepositoryWrapper,
                     playerEntity,
                     globalWorld,
                     webBrowser,

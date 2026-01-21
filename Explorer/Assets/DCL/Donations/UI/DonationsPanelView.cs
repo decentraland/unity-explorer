@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -18,7 +16,7 @@ namespace DCL.Donations.UI
             ERROR
         }
 
-        public event Action<string, decimal>? SendDonationRequested;
+        public event Action<DonationPanelViewModel, decimal>? SendDonationRequested;
         public event Action? BuyMoreRequested;
         public event Action? ContactSupportRequested;
 
@@ -27,6 +25,9 @@ namespace DCL.Donations.UI
         [field: SerializeField] private DonationConfirmedView donationConfirmedView { get; set; } = null!;
         [field: SerializeField] private DonationErrorView donationErrorView { get; set; } = null!;
         [field: SerializeField] private DonationLoadingView donationLoadingView { get; set; } = null!;
+
+        [field: Header("Assets")]
+        [field: SerializeField] internal Sprite defaultProfileThumbnail;
 
         private readonly UniTask[] closingTasks = new UniTask[4];
 
@@ -37,7 +38,7 @@ namespace DCL.Donations.UI
             donationErrorView.contactSupportButton.onClick.AddListener(() => ContactSupportRequested?.Invoke());
             donationErrorView.tryAgainButton.onClick.AddListener(() => ShowSubView(SubViews.DEFAULT));
 
-            donationDefaultView.SendDonationRequested += (address, amount) => SendDonationRequested?.Invoke(address, amount);
+            donationDefaultView.SendDonationRequested += (vm, amount) => SendDonationRequested?.Invoke(vm, amount);
         }
 
         public void SetDefaultLoadingState(bool active)
@@ -50,10 +51,10 @@ namespace DCL.Donations.UI
                 donationDefaultView.loadingView.HideLoading();
         }
 
-        public void ShowLoading(Profile.CompactInfo? profile, string creatorAddress, decimal donationAmount, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public void ShowLoading(DonationPanelViewModel viewModel, decimal donationAmount)
         {
             ShowSubView(SubViews.LOADING);
-            donationLoadingView.ConfigurePanel(profile, creatorAddress, donationAmount, profileRepositoryWrapper);
+            donationLoadingView.ConfigurePanel(viewModel, donationAmount);
         }
 
         public void ShowErrorModal()
@@ -69,22 +70,16 @@ namespace DCL.Donations.UI
             donationLoadingView.gameObject.SetActive(newSubView == SubViews.LOADING);
         }
 
-        public async UniTask ShowTxConfirmedAsync(Profile.CompactInfo? profile, string creatorAddress, CancellationToken ct, ProfileRepositoryWrapper profileRepositoryWrapper)
+        public async UniTask ShowTxConfirmedAsync(DonationPanelViewModel viewModel, CancellationToken ct)
         {
             ShowSubView(SubViews.TX_CONFIRMED);
 
-            await donationConfirmedView.ShowAsync(profile, creatorAddress, ct, profileRepositoryWrapper);
+            await donationConfirmedView.ShowAsync(viewModel, ct);
         }
 
-        public void ConfigureDefaultPanel(Profile.CompactInfo? profile,
-            string sceneCreatorAddress,
-            string sceneName,
-            decimal currentBalance,
-            decimal[] suggestedDonationAmount,
-            decimal manaUsdPrice,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+        public void ConfigureDefaultPanel(DonationPanelViewModel viewModel)
         {
-            donationDefaultView.ConfigurePanel(profile, sceneCreatorAddress, sceneName, currentBalance, suggestedDonationAmount, manaUsdPrice, profileRepositoryWrapper);
+            donationDefaultView.ConfigurePanel(viewModel);
         }
 
         public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)
