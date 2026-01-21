@@ -1,10 +1,13 @@
+using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.CharacterCamera;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
@@ -31,12 +34,16 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
 using DCL.Clipboard;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
+using DCL.CommunicationData.URLHelpers;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Utility.Types;
 using ECS.SceneLifeCycle.Realm;
+using SceneRuntime.ScenePermissions;
 using System.Collections.Specialized;
 using System.Web;
 using Utility;
@@ -46,7 +53,10 @@ namespace SceneRuntime.WebClient.Bootstrapper
     public class WebGLSceneBootstrapper : MonoBehaviour
     {
         private const string SCENE_URL_ARG = "sceneUrl";
+        private const string WORLD_ARG = "world";
         private const string SCENE_DIRECTORY = "cube-wave-16x16";
+        private const string WORLDS_CONTENT_SERVER = "https://worlds-content-server.decentraland.org/world/";
+        private const string WORLDS_CONTENT_URL = "https://worlds-content-server.decentraland.org/contents/";
 
         private static string GetDefaultSceneUrl()
         {
@@ -107,68 +117,120 @@ namespace SceneRuntime.WebClient.Bootstrapper
         {
             try
             {
-                // Parse command line arguments (works for desktop builds)
-                var appArgs = new ApplicationParametersParser();
-                string sceneUrl = GetDefaultSceneUrl();
+                // Check for world parameter first (e.g., ?world=olavra.dcl.eth)
+                string? worldName = GetWorldFromQueryString();
+                IRealmData realmData;
+                ServerAbout? serverAbout = null;
 
-                // Try to get from command line arguments first
-                if (appArgs.TryGetValue(SCENE_URL_ARG, out string? urlArg) && !string.IsNullOrEmpty(urlArg))
+                // Determine realm data based on loading mode
+                if (!string.IsNullOrEmpty(worldName))
                 {
-                    sceneUrl = urlArg;
+                    Debug.Log($"[WebGLSceneBootstrapper] World parameter found: {worldName}");
+
+                    // Normalize world name
+                    if (!worldName.IsEns() && !worldName.EndsWith(".dcl.eth", StringComparison.OrdinalIgnoreCase))
+                        worldName += ".dcl.eth";
+                    worldName = worldName.ToLower();
+
+                    // Fetch about file first to create proper RealmData
+                    var aboutUrl = URLAddress.FromString($"{WORLDS_CONTENT_SERVER}{worldName}/about");
+                    Debug.Log($"[WebGLSceneBootstrapper] Fetching about from: {aboutUrl.Value}");
+
+                    var webRequestController = CreateWebRequestController();
+                    serverAbout = await webRequestController
+                        .GetAsync(new CommonArguments(aboutUrl), destroyCancellationToken, ReportCategory.SCENE_LOADING)
+                        .CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+
+                    Debug.Log($"[WebGLSceneBootstrapper] About fetched. Realm: {serverAbout.configurations.realmName}");
+
+                    // Create proper RealmData for the world
+                    var worldIpfsRealm = new WebClientStubImplementations.WorldIpfsRealm(worldName, serverAbout);
+                    var worldRealmData = new RealmData();
+                    worldRealmData.Reconfigure(
+                        worldIpfsRealm,
+                        serverAbout.configurations.realmName ?? worldName,
+                        serverAbout.configurations.networkId,
+                        serverAbout.comms?.adapter ?? "",
+                        serverAbout.comms?.protocol ?? "v3",
+                        $"worlds-content-server.decentraland.org/world/{worldName}",
+                        false
+                    );
+                    realmData = worldRealmData;
                 }
                 else
                 {
-                    // For WebGL, also check URL query parameters
-                    sceneUrl = GetSceneUrlFromQueryString() ?? sceneUrl;
+                    // Use fake realm data for local scene development
+                    realmData = new IRealmData.Fake(
+                        new LocalIpfsRealm(URLDomain.FromString("https://localhost:8800/")),
+                        false,
+                        "local",
+                        true,
+                        1,
+                        "",
+                        "v3",
+                        "localhost"
+                    );
                 }
 
-                Debug.Log($"[WebGLSceneBootstrapper] Loading scene from URL: {sceneUrl}");
-
-                // Validate URL format
-                if (!Uri.TryCreate(sceneUrl, UriKind.Absolute, out Uri? validatedUri))
-                {
-                    throw new ArgumentException($"Invalid scene URL format: {sceneUrl}");
-                }
-
-                Debug.Log($"[WebGLSceneBootstrapper] URL validated successfully. Scheme: {validatedUri.Scheme}, Host: {validatedUri.Host}, Path: {validatedUri.AbsolutePath}");
-
-                // Initialize mocked dependencies
-                var dependencies = CreateMockedDependencies();
+                // Initialize mocked dependencies with proper realm data
+                var dependencies = CreateMockedDependencies(realmData);
 
                 // Create scene factory
                 var sceneFactory = CreateSceneFactory(dependencies);
 
-                // Create partition component (required but not used in this context)
-                var partitionComponent = new WebClientStubImplementations.StubPartitionComponent();
-
-                // Load scene from HTTP URL
-                // In WebGL, StreamingAssets are served via HTTP, so we need HTTP URLs
-                // But CreateSceneFromFileAsync might have issues with the URL format
-                Debug.Log($"[WebGLSceneBootstrapper] Calling CreateSceneFromFileAsync with URL: {sceneUrl}");
-
-                // Log what CreateSceneFromFileAsync will extract
-                int lastSlash = sceneUrl.LastIndexOf("/", StringComparison.Ordinal);
-                if (lastSlash > 0)
+                if (!string.IsNullOrEmpty(worldName) && serverAbout != null)
                 {
-                    string extractedBaseUrl = sceneUrl[..(lastSlash + 1)];
-                    string extractedMainPath = sceneUrl[(lastSlash + 1)..];
-                    Debug.Log($"[WebGLSceneBootstrapper] Will extract base URL: {extractedBaseUrl}");
-                    Debug.Log($"[WebGLSceneBootstrapper] Will extract main path: {extractedMainPath}");
+                    try
+                    {
+                        sceneFacade = await LoadSceneFromWorldAsync(worldName, serverAbout, sceneFactory, destroyCancellationToken);
+                    }
+                    catch (Exception worldException)
+                    {
+                        Debug.LogError($"[WebGLSceneBootstrapper] Error loading world '{worldName}': {worldException.GetType().Name}: {worldException.Message}");
+                        Debug.LogError($"[WebGLSceneBootstrapper] Stack trace: {worldException.StackTrace}");
+                        throw;
+                    }
                 }
+                else
+                {
+                    // Fallback to sceneUrl parameter or default
+                    var appArgs = new ApplicationParametersParser();
+                    string sceneUrl = GetDefaultSceneUrl();
 
-                try
-                {
-                    sceneFacade = await sceneFactory.CreateSceneFromFileAsync(
-                        sceneUrl,
-                        partitionComponent,
-                        destroyCancellationToken
-                    );
-                }
-                catch (Exception createException)
-                {
-                    Debug.LogError($"[WebGLSceneBootstrapper] Error in CreateSceneFromFileAsync: {createException.GetType().Name}: {createException.Message}");
-                    Debug.LogError($"[WebGLSceneBootstrapper] Stack trace: {createException.StackTrace}");
-                    throw;
+                    if (appArgs.TryGetValue(SCENE_URL_ARG, out string? urlArg) && !string.IsNullOrEmpty(urlArg))
+                    {
+                        sceneUrl = urlArg;
+                    }
+                    else
+                    {
+                        sceneUrl = GetSceneUrlFromQueryString() ?? sceneUrl;
+                    }
+
+                    Debug.Log($"[WebGLSceneBootstrapper] Loading scene from URL: {sceneUrl}");
+
+                    if (!Uri.TryCreate(sceneUrl, UriKind.Absolute, out Uri? validatedUri))
+                    {
+                        throw new ArgumentException($"Invalid scene URL format: {sceneUrl}");
+                    }
+
+                    Debug.Log($"[WebGLSceneBootstrapper] URL validated. Scheme: {validatedUri.Scheme}, Host: {validatedUri.Host}");
+
+                    var partitionComponent = new WebClientStubImplementations.StubPartitionComponent();
+
+                    try
+                    {
+                        sceneFacade = await sceneFactory.CreateSceneFromFileAsync(
+                            sceneUrl,
+                            partitionComponent,
+                            destroyCancellationToken
+                        );
+                    }
+                    catch (Exception createException)
+                    {
+                        Debug.LogError($"[WebGLSceneBootstrapper] Error in CreateSceneFromFileAsync: {createException.GetType().Name}: {createException.Message}");
+                        Debug.LogError($"[WebGLSceneBootstrapper] Stack trace: {createException.StackTrace}");
+                        throw;
+                    }
                 }
 
                 Debug.Log($"[WebGLSceneBootstrapper] Initializing Scene Facade");
@@ -182,10 +244,10 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 await sceneFacade.StartScene();
 
                 isInitialized = true;
-                Debug.Log($"[WebGLSceneBootstrapper] Scene from '{sceneUrl}' loaded and started successfully");
+                Debug.Log($"[WebGLSceneBootstrapper] Scene loaded and started successfully");
 
-                // Position the camera at the scene origin so we can see the created entities
-                PositionCameraAtSceneOrigin();
+                // Position the camera at the scene origin (use base parcel if loaded from world)
+                PositionCameraAtSceneOrigin(currentSceneBaseParcel);
             }
             catch (Exception e)
             {
@@ -211,7 +273,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
             }
         }
 
-        private void PositionCameraAtSceneOrigin()
+        private void PositionCameraAtSceneOrigin(Vector2Int? baseParcel = null)
         {
             Camera mainCamera = Camera.main;
             if (mainCamera == null)
@@ -220,15 +282,98 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 return;
             }
 
-            // Position camera at a good viewing distance from the origin, looking at (8, 0, 8) which is roughly center of a 16x16 parcel
-            Vector3 sceneCenter = new Vector3(8f, 1f, 8f);
-            Vector3 cameraPosition = new Vector3(8f, 5f, -5f); // Slightly elevated and back from origin
+            // Use base parcel coordinates if provided, otherwise default to origin
+            float centerX = baseParcel.HasValue ? baseParcel.Value.x * 16 + 8 : 8f;
+            float centerZ = baseParcel.HasValue ? baseParcel.Value.y * 16 + 8 : 8f;
+
+            Vector3 sceneCenter = new Vector3(centerX, 1f, centerZ);
+            Vector3 cameraPosition = new Vector3(centerX, 5f, centerZ - 13f); // Slightly elevated and back from center
 
             mainCamera.transform.position = cameraPosition;
             mainCamera.transform.LookAt(sceneCenter);
 
             Debug.Log($"[WebGLSceneBootstrapper] Repositioned camera to {cameraPosition}, looking at {sceneCenter}");
         }
+
+        private async UniTask<ISceneFacade> LoadSceneFromWorldAsync(
+            string worldName,
+            ServerAbout about,
+            SceneFactory sceneFactory,
+            CancellationToken ct)
+        {
+            // World name should already be normalized by InitializeAsync
+
+            // Step 1: Extract scene URN (about was already fetched in InitializeAsync)
+            if (about.configurations.scenesUrn == null || about.configurations.scenesUrn.Count == 0)
+            {
+                throw new InvalidOperationException($"World '{worldName}' has no scenes defined");
+            }
+
+            string sceneUrn = about.configurations.scenesUrn[0];
+            Debug.Log($"[WebGLSceneBootstrapper] Scene URN: {sceneUrn}");
+
+            // Step 2: Parse URN to get IpfsPath
+            IpfsPath ipfsPath = IpfsHelper.ParseUrn(sceneUrn);
+            Debug.Log($"[WebGLSceneBootstrapper] Parsed IpfsPath: {ipfsPath}");
+
+            // Step 3: Construct content base URL and scene definition URL
+            // For worlds, content is served from worlds-content-server, NOT from about.content.publicUrl
+            var contentBaseUrl = URLDomain.FromString(WORLDS_CONTENT_URL);
+            URLAddress sceneDefUrl = ipfsPath.GetUrl(contentBaseUrl);
+
+            Debug.Log($"[WebGLSceneBootstrapper] Content base URL: {contentBaseUrl.Value}");
+            Debug.Log($"[WebGLSceneBootstrapper] Fetching scene definition from: {sceneDefUrl.Value}");
+
+            // Step 4: Fetch scene definition
+            var webRequestController = CreateWebRequestController();
+            SceneEntityDefinition sceneDefinition = await webRequestController
+                .GetAsync(new CommonArguments(sceneDefUrl), ct, ReportCategory.SCENE_LOADING)
+                .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft);
+
+            sceneDefinition.id ??= ipfsPath.EntityId;
+
+            Debug.Log($"[WebGLSceneBootstrapper] Scene definition fetched. Name: {sceneDefinition.GetLogSceneName()}");
+            Debug.Log($"[WebGLSceneBootstrapper] Base parcel: {sceneDefinition.metadata?.scene?.DecodedBase}");
+            Debug.Log($"[WebGLSceneBootstrapper] Content files: {sceneDefinition.content?.Length ?? 0}");
+
+            // Step 5: Create SceneData with proper content
+            var sceneContent = new SceneHashedContent(sceneDefinition.content, contentBaseUrl);
+
+            Vector2Int baseParcel = sceneDefinition.metadata.scene.DecodedBase;
+            IReadOnlyList<Vector2Int> parcels = sceneDefinition.metadata.scene.DecodedParcels;
+            var parcelCorners = parcels.Select(ParcelMathHelper.CalculateCorners).ToList();
+            ParcelMathHelper.SceneGeometry geometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, baseParcel);
+
+            var sceneData = new SceneData(
+                sceneContent,
+                sceneDefinition,
+                baseParcel,
+                geometry,
+                parcels,
+                StaticSceneMessages.EMPTY,
+                new ISceneData.FakeInitialSceneState()
+            );
+
+            Debug.Log($"[WebGLSceneBootstrapper] SceneData created. Base: {baseParcel}, Parcels: {parcels.Count}");
+
+            // Step 6: Load scene via SceneFactory
+            var partitionComponent = new WebClientStubImplementations.StubPartitionComponent();
+            ISceneFacade facade = await sceneFactory.CreateSceneFromSceneDefinition(
+                sceneData,
+                new AllowEverythingJsApiPermissionsProvider(),
+                partitionComponent,
+                ct
+            );
+
+            // Store base parcel for camera positioning
+            currentSceneBaseParcel = baseParcel;
+
+            Debug.Log($"[WebGLSceneBootstrapper] Scene facade created successfully");
+            return facade;
+        }
+
+        // Store current scene's base parcel for camera positioning
+        private Vector2Int? currentSceneBaseParcel;
 
         private void OnDestroy()
         {
@@ -252,7 +397,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
             }
         }
 
-        private MockedDependencies CreateMockedDependencies()
+        private MockedDependencies CreateMockedDependencies(IRealmData realmData)
         {
             // Create ComponentsContainer to register all SDK components and their pools
             var componentsContainer = ComponentsContainer.Create();
@@ -319,7 +464,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 DecentralandUrlsSource = new WebClientStubImplementations.StubDecentralandUrlsSource(),
                 WebRequestController = webRequestController,
                 RoomHub = NullRoomHub.INSTANCE,
-                RealmData = new IRealmData.Fake(),
+                RealmData = realmData,
                 PortableExperiencesController = new WebClientStubImplementations.StubPortableExperiencesController(),
                 SkyboxSettings = ScriptableObject.CreateInstance<SkyboxSettingsAsset>(),
                 MessagePipesHub = new WebClientStubImplementations.StubSceneCommunicationPipe(),
@@ -356,6 +501,34 @@ namespace SceneRuntime.WebClient.Bootstrapper
             catch (Exception e)
             {
                 Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to parse URL query parameters: {e.Message}");
+            }
+#endif
+            return null;
+        }
+
+        private static string? GetWorldFromQueryString()
+        {
+#if UNITY_WEBGL
+            try
+            {
+                string currentUrl = Application.absoluteURL;
+
+                if (string.IsNullOrEmpty(currentUrl))
+                    return null;
+
+                Uri uri = new Uri(currentUrl);
+                NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
+
+                string? world = queryParams[WORLD_ARG];
+
+                if (!string.IsNullOrEmpty(world))
+                {
+                    return HttpUtility.UrlDecode(world);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to parse world query parameter: {e.Message}");
             }
 #endif
             return null;

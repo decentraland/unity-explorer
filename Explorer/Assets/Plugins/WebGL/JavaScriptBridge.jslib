@@ -449,10 +449,7 @@ mergeInto(LibraryManager.library, {
                 
                 // Execute the module code with module/exports in scope
                 var source = compiledData.source;
-                
-                console.log('[require] Source length:', source.length);
-                console.log('[require] Source starts with:', source.substring(0, 100));
-                
+                                
                 // Check if the source is wrapped in a CommonJS wrapper that needs to be called
                 // Pattern: (function (exports, require, module, __filename, __dirname) { ... })
                 // This wrapper is NOT self-invoking, so we need to call it
