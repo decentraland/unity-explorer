@@ -125,7 +125,7 @@ namespace Global
         public LandscapeParcelController LandscapeParcelController { get; private set; }
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
-        public AssetLoadCache AssetLoadCache { get; private set; }
+        public AssetPreLoadCache AssetPreLoadCache { get; private set; }
 
         public void Dispose()
         {
@@ -205,10 +205,10 @@ namespace Global
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
 
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
-            container.AssetLoadCache = new AssetLoadCache(container.GltfContainerAssetsCache);
-            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetLoadCache);
+            container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
+            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetLoadCache);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.RealmData, analyticsController, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -300,7 +300,7 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
-                new AssetPreLoadPlugin(sharedDependencies, container.AssetLoadCache),
+                new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);

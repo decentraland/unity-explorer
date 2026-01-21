@@ -19,13 +19,13 @@ namespace ECS.Unity.AssetLoad.Systems
     [ThrottlingEnabled]
     public partial class CleanUpAssetPreLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly AssetLoadCache assetLoadCache;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         internal CleanUpAssetPreLoadSystem(World world,
-            AssetLoadCache assetLoadCache)
+            AssetPreLoadCache assetPreLoadCache)
             : base(world)
         {
-            this.assetLoadCache = assetLoadCache;
+            this.assetPreLoadCache = assetPreLoadCache;
         }
 
         protected override void Update(float t)
@@ -43,7 +43,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
         public void FinalizeComponents(in Query query)
         {
-            assetLoadCache.Dispose();
+            assetPreLoadCache.Dispose();
         }
     }
 }

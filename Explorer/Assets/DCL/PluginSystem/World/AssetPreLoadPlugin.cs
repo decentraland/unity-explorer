@@ -10,19 +10,19 @@ namespace DCL.PluginSystem.World
 {
     public class AssetPreLoadPlugin : IDCLWorldPluginWithoutSettings
     {
-        private readonly AssetLoadCache assetLoadCache;
+        private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
 
         public AssetPreLoadPlugin(ECSWorldSingletonSharedDependencies globalDeps,
-            AssetLoadCache assetLoadCache)
+            AssetPreLoadCache assetPreLoadCache)
         {
             this.globalDeps = globalDeps;
-            this.assetLoadCache = assetLoadCache;
+            this.assetPreLoadCache = assetPreLoadCache;
         }
 
         public void Dispose()
         {
-            assetLoadCache.Dispose();
+            assetPreLoadCache.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -34,9 +34,9 @@ namespace DCL.PluginSystem.World
             AssetPreLoadUtils utilsClass = new AssetPreLoadUtils(sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
 
             AssetPreLoadSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalDeps.FrameTimeBudget, utilsClass);
-            FinalizeAssetPreLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetLoadCache, utilsClass);
+            FinalizeAssetPreLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetPreLoadCache, utilsClass);
 
-            finalizeWorldSystems.Add(CleanUpAssetPreLoadSystem.InjectToWorld(ref builder, assetLoadCache));
+            finalizeWorldSystems.Add(CleanUpAssetPreLoadSystem.InjectToWorld(ref builder, assetPreLoadCache));
         }
     }
 }

@@ -26,19 +26,19 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget frameBudget;
         private readonly ObjectProxy<IRoomHub> roomHubProxy;
         private readonly CacheCleaner cacheCleaner;
-        private readonly AssetLoadCache assetLoadCache;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly MediaVolume mediaVolume;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner, AssetLoadCache assetLoadCache)
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
             this.roomHubProxy = roomHubProxy;
             this.cacheCleaner = cacheCleaner;
-            this.assetLoadCache = assetLoadCache;
+            this.assetPreLoadCache = assetPreLoadCache;
 
             mediaVolume = new MediaVolume(volumeBus);
         }
@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetLoadCache);
+            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache);
         }
 
         public override void Dispose() =>

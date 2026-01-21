@@ -40,13 +40,13 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
         private readonly World world;
-        private readonly AssetLoadCache assetLoadCache;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetLoadCache assetLoadCache)
+            AssetPreLoadCache assetPreLoadCache)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -58,7 +58,7 @@ namespace DCL.SDKComponents.MediaStream
             this.frameBudget = frameBudget;
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
-            this.assetLoadCache = assetLoadCache;
+            this.assetPreLoadCache = assetPreLoadCache;
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.MediaStream
 
             MediaPlayerComponent component;
 
-            if (assetLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
+            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
             {
                 component = cachedComponent;
                 component.Cts = new CancellationTokenSource();

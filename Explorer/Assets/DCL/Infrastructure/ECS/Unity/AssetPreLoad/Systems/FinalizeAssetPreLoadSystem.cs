@@ -23,17 +23,17 @@ namespace ECS.Unity.AssetLoad.Systems
     public partial class FinalizeAssetPreLoadSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget capBudget;
-        private readonly AssetLoadCache assetLoadCache;
+        private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly AssetPreLoadUtils assetPreLoadUtils;
 
         internal FinalizeAssetPreLoadSystem(World world,
             IPerformanceBudget capBudget,
-            AssetLoadCache assetLoadCache,
+            AssetPreLoadCache assetPreLoadCache,
             AssetPreLoadUtils assetPreLoadUtils)
             : base(world)
         {
             this.capBudget = capBudget;
-            this.assetLoadCache = assetLoadCache;
+            this.assetPreLoadCache = assetPreLoadCache;
             this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
@@ -59,7 +59,7 @@ namespace ECS.Unity.AssetLoad.Systems
             {
                 if (result.Succeeded)
                 {
-                    assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, result.Asset);
+                    assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, result.Asset);
                     assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, assetLoadChildComponent.AssetPath);
                 }
                 else
@@ -81,7 +81,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
             assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
@@ -100,7 +100,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
 
             assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
 
@@ -118,7 +118,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (!mediaPlayerComponent.HasFailed)
-                assetLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
+                assetPreLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
             assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetLoadChildComponent.AssetPath);
 

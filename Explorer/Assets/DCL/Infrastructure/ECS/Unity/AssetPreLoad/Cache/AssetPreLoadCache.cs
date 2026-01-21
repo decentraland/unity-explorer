@@ -8,12 +8,12 @@ using System.Collections.Generic;
 
 namespace ECS.Unity.AssetLoad.Cache
 {
-    public class AssetLoadCache : IDisposable
+    public class AssetPreLoadCache : IDisposable
     {
         private readonly IGltfContainerAssetsCache gltfCache;
         private readonly Dictionary<string, object> cache = new ();
 
-        public AssetLoadCache(IGltfContainerAssetsCache gltfCache)
+        public AssetPreLoadCache(IGltfContainerAssetsCache gltfCache)
         {
             this.gltfCache = gltfCache;
         }

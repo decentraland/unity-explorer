@@ -31,7 +31,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
 
         private bool isDisposed { get; set; }
-        private AssetLoadCache? assetLoadCache;
+        private AssetPreLoadCache? assetLoadCache;
 
         public GltfContainerAssetsCache(IComponentPoolsRegistry poolsRegistry)
         {
@@ -47,9 +47,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
 
-        public void SetAssetLoadCache(AssetLoadCache assetLoadCache)
+        public void SetAssetLoadCache(AssetPreLoadCache assetPreLoadCache)
         {
-            this.assetLoadCache = assetLoadCache;
+            this.assetLoadCache = assetPreLoadCache;
         }
 
         public void Dispose()

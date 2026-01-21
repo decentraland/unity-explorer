@@ -16,7 +16,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true);
 
-        void SetAssetLoadCache(AssetLoadCache assetLoadCache);
+        void SetAssetLoadCache(AssetPreLoadCache assetPreLoadCache);
 
     }
 }
