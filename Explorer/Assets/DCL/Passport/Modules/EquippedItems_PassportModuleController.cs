@@ -17,7 +17,6 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -42,7 +41,7 @@ namespace DCL.Passport.Modules
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly ImageControllerProvider imageControllerProvider;
+
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -62,8 +61,7 @@ namespace DCL.Passport.Modules
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            PassportErrorsController passportErrorsController,
-            ImageControllerProvider imageControllerProvider)
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
             this.world = world;
@@ -74,7 +72,6 @@ namespace DCL.Passport.Modules
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
-            this.imageControllerProvider = imageControllerProvider;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,

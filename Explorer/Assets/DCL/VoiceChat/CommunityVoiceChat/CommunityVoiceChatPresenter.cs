@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -45,7 +44,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             VoiceChatMicrophoneHandler microphoneHandler,
             VoiceChatRoomManager roomManager,
             CommunitiesDataProvider communityDataProvider,
-            ImageControllerProvider imageControllerProvider)
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -54,7 +53,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.communityDataProvider = communityDataProvider;
 
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
-            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, imageControllerProvider);
+            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
 
             inCallPresenter.OpenListenersSectionRequested += OpenListenersSection;
 

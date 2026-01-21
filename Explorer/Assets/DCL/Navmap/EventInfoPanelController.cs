@@ -7,6 +7,7 @@ using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -35,14 +36,14 @@ namespace DCL.Navmap
         private CancellationTokenSource? updateLayoutCancellationToken;
 
         public EventInfoPanelController(EventInfoPanelView view,
+            IWebRequestController webRequestController,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
             HttpEventsApiService eventsApiService,
             ObjectPool<EventScheduleElementView> scheduleElementPool,
             GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser,
-            ImageControllerProvider imageControllerProvider)
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.navmapBus = navmapBus;
@@ -52,7 +53,7 @@ namespace DCL.Navmap
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
-            thumbnailController = imageControllerProvider.Create(view.Thumbnail);
+            thumbnailController = new ImageController(view.Thumbnail, webRequestController);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);

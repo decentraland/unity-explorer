@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.IO;
 using System.Threading;
-using DCL.Diagnostics;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Cache.Disk
@@ -31,11 +30,10 @@ namespace ECS.StreamableLoading.Cache.Disk
                 return EnumResult<TaskError>.SuccessResult();
 
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
-            string path = PathFrom(key, extension);
-            bool existed = File.Exists(path);
 
             try
             {
+                string path = PathFrom(key, extension);
                 using var _ = filesLock.TryLock(path, out bool success);
 
                 if (success == false)
@@ -57,11 +55,6 @@ namespace ECS.StreamableLoading.Cache.Disk
             catch (OperationCanceledException) { return EnumResult<TaskError>.ErrorResult(TaskError.Cancelled); }
             catch (Exception e) { return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
 
-            ReportHub.Log(
-                ReportCategory.STREAMABLE_LOADING,
-                $"[DiskCache] WRITE OK {(existed ? "OVERWRITE" : "CREATE")} path='{path}'"
-            );
-            
             return EnumResult<TaskError>.SuccessResult();
         }
 

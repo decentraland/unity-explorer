@@ -28,25 +28,11 @@ namespace DCL.WebRequests
 
         /// <summary>
         ///     Sets the buffer as the upload data.
-        ///     Call this after building your JSON. <br />
+        ///     Call this after building your JSON. <br/>
         ///     UploadHandler will dispose the created underlying buffer
         /// </summary>
-        public unsafe UploadHandlerRaw CreateUploadHandler()
-        {
-            // Create a NativeArray copy that actually owns the memory with Persistent allocator (the same allocator the NativeList was created with)
-            NativeArray<byte> array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(buffer.GetUnsafePtr(), buffer.Length, Allocator.Persistent);
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
-#endif
-
-            // NativeList contains an underlying UnsafeList which is allocated on heap and referenced by a pointer
-            // It contains several fields apart from the byte* so they won't be deallocated automatically by UploadHandler
-            UnsafeList<byte>* listData = buffer.GetUnsafeList();
-            AllocatorManager.Free(listData -> Allocator, listData);
-
-            return new UploadHandlerRaw(array, true);
-        }
+        public UploadHandlerRaw CreateUploadHandler() =>
+            new (buffer.AsArray(), true);
 
         /// <summary>
         ///     Writes a single byte to the buffer.
@@ -161,7 +147,10 @@ namespace DCL.WebRequests
             Span<byte> tempBuffer = stackalloc byte[4];
             int bytesWritten = Encoding.UTF8.GetBytes(stackalloc char[] { c }, tempBuffer);
 
-            fixed (byte* bp = tempBuffer) { buffer.AddRange(bp, bytesWritten); }
+            fixed (byte* bp = tempBuffer)
+            {
+                buffer.AddRange(bp, bytesWritten);
+            }
         }
 
         /// <summary>
@@ -196,7 +185,7 @@ namespace DCL.WebRequests
 
             // Calculate number of digits
             int temp = value;
-            var digitCount = 0;
+            int digitCount = 0;
 
             while (temp > 0)
             {
@@ -241,7 +230,7 @@ namespace DCL.WebRequests
             }
 
             long temp = value;
-            var digitCount = 0;
+            int digitCount = 0;
 
             while (temp > 0)
             {

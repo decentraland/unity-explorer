@@ -52,8 +52,8 @@ namespace DCL.SDKComponents.TextShape.System
             var textMeshPro = textMeshProPool.Get();
             textMeshPro.transform.SetParent(transform.Transform, worldPositionStays: false);
 
+            textMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
             var component = new TextShapeComponent(textMeshPro);
-            TMPProSdkExtensions.Apply(ref component, textShape, fontsStorage, materialPropertyBlock);
 
             World.Add(entity, component);
 

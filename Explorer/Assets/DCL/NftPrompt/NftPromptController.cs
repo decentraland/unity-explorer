@@ -24,7 +24,7 @@ namespace DCL.NftPrompt
         private readonly IWebBrowser webBrowser;
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
-        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
         private Action<NftPromptResultType> resultCallback;
 
         private NftInfo? lastNftInfo;
@@ -37,18 +37,18 @@ namespace DCL.NftPrompt
             IWebBrowser webBrowser,
             ICursor cursor,
             INftMarketAPIClient nftInfoAPIClient,
-            ImageControllerProvider imageControllerProvider
+            IWebRequestController webRequestController
         ) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.cursor = cursor;
             this.nftInfoAPIClient = nftInfoAPIClient;
-            this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = imageControllerProvider.Create(viewInstance.ImageNft);
+            placeImageController = new ImageController(viewInstance.ImageNft, webRequestController);
             viewInstance.ButtonClose.onClick.AddListener(Dismiss);
             viewInstance.ButtonCancel.onClick.AddListener(Dismiss);
             viewInstance.ButtonOpenMarket.onClick.AddListener(ViewOnMarket);
@@ -65,12 +65,6 @@ namespace DCL.NftPrompt
 
                 webBrowser.OpenUrl(marketUrl);
             });
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            placeImageController?.Dispose();
         }
 
         protected override void OnViewClose() =>

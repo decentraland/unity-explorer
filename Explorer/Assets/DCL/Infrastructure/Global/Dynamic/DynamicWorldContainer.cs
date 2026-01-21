@@ -871,7 +871,6 @@ namespace Global.Dynamic
                     chatEventBus,
                     homePlaceEventBus,
                     staticContainer.SmartWearableCache,
-                    staticContainer.ImageControllerProvider,
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
                     staticContainer.LoadingStatus
@@ -894,8 +893,7 @@ namespace Global.Dynamic
                     bootstrapContainer.VerifiedEthereumApi,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
-                    screenModeController,
-                    staticContainer.ImageControllerProvider),
+                    screenModeController),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
@@ -906,7 +904,7 @@ namespace Global.Dynamic
                 new TeleportPromptPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.ImageControllerProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController,
                     placesAPIService,
                     dclCursor,
                     chatMessagesBus
@@ -916,7 +914,7 @@ namespace Global.Dynamic
                     mvcManager,
                     dclCursor,
                     realmUrl => chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
-                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.ImageControllerProvider, dclCursor),
+                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 new MultiplayerMovementPlugin(
@@ -935,11 +933,11 @@ namespace Global.Dynamic
                 new NotificationPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.ImageControllerProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsRequestController,
                     identityCache,
                     profilesRepository),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.ImageControllerProvider),
+                new RewardPanelPlugin(mvcManager, assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -977,8 +975,7 @@ namespace Global.Dynamic
                     galleryEventBus,
                     clipboard,
                     communitiesDataProvider,
-                    thumbnailProvider,
-                    staticContainer.ImageControllerProvider
+                    thumbnailProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -996,12 +993,9 @@ namespace Global.Dynamic
                     mvcManager,
                     thumbnailProvider,
                     identityCache),
+                new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
-
-            // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
-                globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
@@ -1015,7 +1009,7 @@ namespace Global.Dynamic
                         globalWorld,
                         playerEntity,
                         communitiesDataProvider,
-                        staticContainer.ImageControllerProvider,
+                        staticContainer.WebRequestsContainer.WebRequestController,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder)
@@ -1117,8 +1111,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    hyperlinkTextFormatter,
-                    staticContainer.ImageControllerProvider));
+                    hyperlinkTextFormatter));
             }
 
             if (includeCommunities)
