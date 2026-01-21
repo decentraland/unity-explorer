@@ -34,12 +34,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly MultiThreadSync multiThreadSync;
-        private readonly MultiThreadSync.Owner syncOwner;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
+
+#if !UNITY_WEBGL
+        private readonly MultiThreadSync multiThreadSync;
+        private readonly MultiThreadSync.Owner syncOwner;
+#endif
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
 
@@ -52,9 +55,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
-            ISceneExceptionsHandler exceptionsHandler,
+            ISceneExceptionsHandler exceptionsHandler
+
+#if !UNITY_WEBGL
             MultiThreadSync multiThreadSync,
-            MultiThreadSync.Owner syncOwner)
+            MultiThreadSync.Owner syncOwner
+#endif
+        )
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -63,8 +70,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrdtMessagesProvider = outgoingCrdtMessagesProvider;
+
+#if !UNITY_WEBGL
             this.multiThreadSync = multiThreadSync;
             this.syncOwner = syncOwner;
+#endif
+
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -234,7 +245,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
+#if !UNITY_WEBGL
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+#endif
 
                 applyBufferSampler.Begin();
 

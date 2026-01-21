@@ -107,7 +107,11 @@ namespace DCL.Prefs
             if (dclPrefs != null)
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
+#if UNITY_WEBGL
+            dclPrefs = new InMemoryDCLPlayerPrefs(); // FileDCLPlayerPrefs is not available in WEBGL
+#else
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
+#endif
         }
 
 #if UNITY_EDITOR

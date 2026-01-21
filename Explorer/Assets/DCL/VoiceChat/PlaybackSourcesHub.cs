@@ -15,7 +15,7 @@ using Utility;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Thread-safe
+    /// Threadsafe
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {

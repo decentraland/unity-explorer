@@ -12,7 +12,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Runtime.Wearables
 {
@@ -69,7 +68,7 @@ namespace Runtime.Wearables
         /// <summary>
         ///     Whether the wearable is a smart wearable.
         /// </summary>
-        public async Task<bool> IsSmartAsync(IWearable wearable, CancellationToken ct)
+        public async UniTask<bool> IsSmartAsync(IWearable wearable, CancellationToken ct)
         {
             CacheItem item = await CacheWearableInternalAsync(wearable, ct);
             return !ct.IsCancellationRequested && item.IsSmart;

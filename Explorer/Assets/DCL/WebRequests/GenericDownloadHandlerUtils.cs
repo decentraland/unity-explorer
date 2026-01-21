@@ -10,6 +10,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading; 
 
 namespace DCL.WebRequests
 {
@@ -230,7 +231,7 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:228"); // SPECIAL_DEBUG_LI
 
 UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:231"); // SPECIAL_DEBUG_LINE_STATEMENT
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
 UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:235"); // SPECIAL_DEBUG_LINE_STATEMENT
                         return JsonUtility.FromJson<T>(text);
@@ -242,7 +243,7 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:240"); // SPECIAL_DEBUG_LI
 
 UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:243"); // SPECIAL_DEBUG_LINE_STATEMENT
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
 UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:247"); // SPECIAL_DEBUG_LINE_STATEMENT
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
@@ -316,7 +317,7 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:278"); // SPECIAL_DEBUG_LI
                         text = downloadHandler.text;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         JsonUtility.FromJsonOverwrite(text, Target);
                     }
@@ -325,7 +326,7 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:278"); // SPECIAL_DEBUG_LI
                         var nativeData = downloadHandler.nativeData;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 

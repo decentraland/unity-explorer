@@ -1,3 +1,5 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+
 using System;
 using System.Threading;
 using UnityEngine;
@@ -7,6 +9,8 @@ namespace Plugins.NativeAudioAnalysis
 {
     public class ThreadSafeLastAudioFrameReadFilter : MonoBehaviour
     {
+// TODO ThreadSafeLastAudioFrameReadFilter is not available in WebGL
+#if !UNITY_WEBGL
         // Thread-safe flags
         // 0 = nothing written OR already consumed
         // 1 = new frame available
@@ -59,6 +63,7 @@ namespace Plugins.NativeAudioAnalysis
             data.CopyTo(buffer, 0);
             channels = readChannels;
         }
+#endif
     }
 }
 

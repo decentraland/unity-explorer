@@ -9,11 +9,13 @@ using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 #if UNITY_WEBGL
 
@@ -26,6 +28,7 @@ using SceneRuntime.V8;
 
 namespace SceneRuntime.Factory
 {
+    [SuppressMessage("ReSharper", "JoinDeclarationAndInitializer")]
     public sealed class SceneRuntimeFactory
     {
         public enum InstantiationBehavior
@@ -94,13 +97,13 @@ namespace SceneRuntime.Factory
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             // Note: In WebGL, thread pool switching may not work properly, so we skip it
-#if !UNITY_WEBGL
-            if (instantiationBehavior == InstantiationBehavior.SWITCH_TO_THREAD_POOL)
-                await UniTask.SwitchToThreadPool();
-#endif
+                await DCLTask.SwitchToThreadPool();
 
-            // Provide basic Thread Pool synchronization context
-            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+#if !UNITY_WEBGL
+            // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL

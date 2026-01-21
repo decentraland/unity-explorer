@@ -38,11 +38,17 @@ namespace DCL.SDKComponents.AudioSources
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
+
         protected override void Update(float t)
         {
+#if !UNITY_WEBGL
             HandleAudioSourceComponentQuery(World);
             HandleMediaPlayerComponentQuery(World);
+#endif
         }
+
+// TODO WebGL is not supported
+#if !UNITY_WEBGL
 
         [Query]
         private void HandleMediaPlayerComponent(
@@ -110,5 +116,6 @@ namespace DCL.SDKComponents.AudioSources
                 ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
             }
         }
+#endif
     }
 }

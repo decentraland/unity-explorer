@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
+using Utility.Multithreading;
 using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
@@ -44,12 +45,12 @@ namespace DCL.SocialService
         /// <summary>
         ///     Used to ensure that only one connection establishment process is running at a time.
         /// </summary>
-        private readonly SemaphoreSlim connectionEstablishingMutex = new (1, 1);
+        private readonly DCLSemaphoreSlim connectionEstablishingMutex = new (1, 1);
 
         /// <summary>
         ///     Used to ensure that handshake and disconnection processes do not overlap.
         /// </summary>
-        private readonly SemaphoreSlim handshakeMutex = new (1, 1);
+        private readonly DCLSemaphoreSlim handshakeMutex = new (1, 1);
 
         private readonly URLAddress apiUrl;
         private readonly IWeb3IdentityCache identityCache;

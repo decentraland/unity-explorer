@@ -20,6 +20,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -90,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 // Switch to thread pool to parse JSONs
 
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
                 AssetBundleData[] dependencies;

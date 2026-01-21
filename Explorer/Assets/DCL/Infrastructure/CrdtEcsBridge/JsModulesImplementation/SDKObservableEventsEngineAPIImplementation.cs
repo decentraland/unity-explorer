@@ -25,12 +25,26 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private bool enableSDKObservableMessagesDetection;
         private bool reportedSceneReady;
 
-        public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
-            ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
-            MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
+        public SDKObservableEventsEngineAPIImplementation(
+                ISharedPoolsProvider poolsProvider, 
+                IInstancePoolsProvider instancePoolsProvider, 
+                ICRDTProtocol crdtProtocol, 
+                ICRDTDeserializer crdtDeserializer, 
+                ICRDTSerializer crdtSerializer,
+                ICRDTWorldSynchronizer crdtWorldSynchronizer,
+                IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
+                ISystemGroupsUpdateGate systemGroupsUpdateGate,
+                ISceneExceptionsHandler exceptionsHandler
+#if !UNITY_WEBGL
+            , MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner
+#endif
+            ) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
             crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrdtMessagesProvider,
-            systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner) { }
+            systemGroupsUpdateGate, exceptionsHandler
+#if !UNITY_WEBGL
+            , multiThreadSync, syncOwner
+#endif
+            ) { }
 
         public void TryAddSubscription(string eventId)
         {

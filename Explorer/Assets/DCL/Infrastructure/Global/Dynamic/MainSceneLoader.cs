@@ -39,7 +39,6 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
@@ -59,6 +58,10 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
+
+#if !UNITY_WEBGL
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
 using UnityEngine.Rendering.Universal;
 
@@ -549,7 +552,7 @@ Debug.Log("MainSceneLoader.cs:362");
 #if UNITY_WEBGL
             ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
             return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-#endif
+#else
 
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
@@ -578,10 +581,16 @@ Debug.Log("MainSceneLoader.cs:362");
 
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
+#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+#if UNITY_WEBGL
+            ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
+            return new IDiskCache.Fake();
+#else
+
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
@@ -609,6 +618,7 @@ Debug.Log("MainSceneLoader.cs:362");
 
             var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
             return diskCache;
+#endif
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

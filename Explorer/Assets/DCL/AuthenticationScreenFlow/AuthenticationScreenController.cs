@@ -65,7 +65,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly IWeb3Authenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
@@ -100,7 +100,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3Authenticator web3Authenticator,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
@@ -143,7 +143,6 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
-            web3Authenticator.SetVerificationListener(null);
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnContinuousAudioStarted;
         }
 
@@ -207,7 +206,6 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
             viewInstance!.JumpIntoWorldButton.interactable = true;
-            web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
@@ -363,15 +361,10 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:362"); // SPECIAL_DEBUG
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:365"); // SPECIAL_DEBUG_LINE_STATEMENT
-                    web3Authenticator.SetVerificationListener(ShowVerification);
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct, ShowVerification);
+                    await UniTask.SwitchToMainThread();
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:368"); // SPECIAL_DEBUG_LINE_STATEMENT
-                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
-
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:371"); // SPECIAL_DEBUG_LINE_STATEMENT
-                    web3Authenticator.SetVerificationListener(null);
-
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:374"); // SPECIAL_DEBUG_LINE_STATEMENT
                     var identityValidationSpan = new SpanData
                     {
                         TransactionName = LOADING_TRANSACTION_NAME,
@@ -379,18 +372,18 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:374"); // SPECIAL_DEBUG
                         SpanOperation = "auth.identity_validation",
                         Depth = 1
                     };
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:382"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:376"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.StartSpan(identityValidationSpan);
 
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:385"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:379"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (IsUserAllowedToAccessToBeta(identity))
                     {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:388"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:382"); // SPECIAL_DEBUG_LINE_STATEMENT
                         CurrentState.Value = AuthenticationStatus.FetchingProfile;
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:390"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:384"); // SPECIAL_DEBUG_LINE_STATEMENT
                         SwitchState(ViewState.Loading);
 
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:393"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:387"); // SPECIAL_DEBUG_LINE_STATEMENT
                         var profileFetchSpan = new SpanData
                         {
                             TransactionName = LOADING_TRANSACTION_NAME,
@@ -398,94 +391,95 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:393"); // SPECIAL_DEBUG
                             SpanOperation = "auth.profile_fetch",
                             Depth = 1
                         };
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:401"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:395"); // SPECIAL_DEBUG_LINE_STATEMENT
                         sentryTransactionManager.StartSpan(profileFetchSpan);
 
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:404"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:398"); // SPECIAL_DEBUG_LINE_STATEMENT
                         await FetchProfileAsync(ct);
+                        await UniTask.SwitchToMainThread();
 
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:407"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:401"); // SPECIAL_DEBUG_LINE_STATEMENT
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:410"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:404"); // SPECIAL_DEBUG_LINE_STATEMENT
                         CurrentState.Value = AuthenticationStatus.LoggedIn;
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:412"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:406"); // SPECIAL_DEBUG_LINE_STATEMENT
                         SwitchState(ViewState.Finalize);
                     }
                     else
                     {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:417"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:411"); // SPECIAL_DEBUG_LINE_STATEMENT
                         sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User not allowed to access beta - restricted user (main)");
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:419"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:413"); // SPECIAL_DEBUG_LINE_STATEMENT
                         SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:421"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:415"); // SPECIAL_DEBUG_LINE_STATEMENT
                         ShowRestrictedUserPopup();
                     }
                 }
                 catch (OperationCanceledException)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:427"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:421"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:429"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:423"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
                 }
                 catch (SignatureExpiredException e)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:434"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:428"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:436"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:430"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:438"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:432"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:440"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:434"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
                 catch (Web3SignatureException e)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:444"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:438"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:446"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:440"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:448"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:442"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:450"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:444"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
                 catch (CodeVerificationException e)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:454"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:448"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:456"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:450"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:458"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:452"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:460"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:454"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
                 catch (ProfileNotFoundException e)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:464"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:458"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "User profile not found", e);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:466"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:460"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:468"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:462"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:470"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:464"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
                 catch (Exception e)
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:474"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:468"); // SPECIAL_DEBUG_LINE_STATEMENT
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:476"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:470"); // SPECIAL_DEBUG_LINE_STATEMENT
                     SwitchState(ViewState.Login);
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:478"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:472"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:480"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:474"); // SPECIAL_DEBUG_LINE_STATEMENT
                     ShowConnectionErrorPopup();
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:482"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:476"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
                 finally
                 {
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:486"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:480"); // SPECIAL_DEBUG_LINE_STATEMENT
                     RestoreResolutionAndScreenMode();
-UnityEngine.Debug.Log("AuthenticationScreenController.cs:488"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("AuthenticationScreenController.cs:482"); // SPECIAL_DEBUG_LINE_STATEMENT
                 }
             }
         }

@@ -666,8 +666,10 @@ namespace Global.Dynamic
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
             {
+#if !UNITY_WEBGL
                 DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct, communitiesDataService);
                 deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
+#endif
             }
 
             var passportBridge = new MVCPassportBridge(mvcManager);
@@ -1034,8 +1036,10 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
+#if !UNITY_WEBGL
             if (localSceneDevelopment || builderCollectionsPreview)
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment));
+#endif
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
