@@ -74,6 +74,12 @@ mergeInto(LibraryManager.library, {
                     clearTimeout: clearTimeout,
                     setInterval: setInterval,
                     clearInterval: clearInterval,
+                    // setImmediate polyfill for Node.js compatibility
+                    setImmediate: typeof setImmediate !== 'undefined' ? setImmediate : function(callback) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        return setTimeout(function() { callback.apply(null, args); }, 0);
+                    },
+                    clearImmediate: typeof clearImmediate !== 'undefined' ? clearImmediate : clearTimeout,
                     // Special values
                     undefined: undefined,
                     NaN: NaN,
@@ -83,7 +89,282 @@ mergeInto(LibraryManager.library, {
                     WebAssembly: {
                         Instance: function() { throw new Error('Wasm is not allowed in scene runtimes'); },
                         Module: function() { throw new Error('Wasm is not allowed in scene runtimes'); }
-                    }
+                    },
+                    // Node.js compatibility - process object
+                    process: (function() {
+                        var listeners = {};
+                        var proc = {
+                            env: {
+                                NODE_ENV: 'production'
+                            },
+                            argv: [],
+                            version: 'v18.0.0',
+                            versions: {
+                                node: '18.0.0',
+                                v8: '10.0.0'
+                            },
+                            platform: 'browser',
+                            browser: true,
+                            title: 'browser',
+                            pid: 1,
+                            cwd: function() { return '/'; },
+                            chdir: function() {},
+                            umask: function() { return 0; },
+                            hrtime: function(previousTimestamp) {
+                                var clocktime = performance.now() * 1e-3;
+                                var seconds = Math.floor(clocktime);
+                                var nanoseconds = Math.floor((clocktime % 1) * 1e9);
+                                if (previousTimestamp) {
+                                    seconds = seconds - previousTimestamp[0];
+                                    nanoseconds = nanoseconds - previousTimestamp[1];
+                                    if (nanoseconds < 0) {
+                                        seconds--;
+                                        nanoseconds += 1e9;
+                                    }
+                                }
+                                return [seconds, nanoseconds];
+                            },
+                            nextTick: function(callback) {
+                                if (typeof queueMicrotask === 'function') {
+                                    queueMicrotask(callback);
+                                } else {
+                                    Promise.resolve().then(callback);
+                                }
+                            },
+                            on: function(event, listener) {
+                                if (!listeners[event]) listeners[event] = [];
+                                listeners[event].push(listener);
+                                return proc;
+                            },
+                            once: function(event, listener) {
+                                var wrapped = function() {
+                                    proc.removeListener(event, wrapped);
+                                    listener.apply(this, arguments);
+                                };
+                                return proc.on(event, wrapped);
+                            },
+                            off: function(event, listener) {
+                                return proc.removeListener(event, listener);
+                            },
+                            removeListener: function(event, listener) {
+                                if (listeners[event]) {
+                                    var idx = listeners[event].indexOf(listener);
+                                    if (idx !== -1) listeners[event].splice(idx, 1);
+                                }
+                                return proc;
+                            },
+                            removeAllListeners: function(event) {
+                                if (event) {
+                                    listeners[event] = [];
+                                } else {
+                                    listeners = {};
+                                }
+                                return proc;
+                            },
+                            emit: function(event) {
+                                if (listeners[event]) {
+                                    var args = Array.prototype.slice.call(arguments, 1);
+                                    listeners[event].forEach(function(listener) {
+                                        try { listener.apply(null, args); } catch(e) { console.error(e); }
+                                    });
+                                }
+                                return proc;
+                            },
+                            listeners: function(event) {
+                                return listeners[event] ? listeners[event].slice() : [];
+                            },
+                            binding: function() {
+                                throw new Error('process.binding is not supported in browser');
+                            },
+                            stdout: {
+                                write: function(str) { console.log(str); },
+                                isTTY: false
+                            },
+                            stderr: {
+                                write: function(str) { console.error(str); },
+                                isTTY: false
+                            }
+                        };
+                        // hrtime.bigint for newer Node.js APIs
+                        proc.hrtime.bigint = function() {
+                            return BigInt(Math.floor(performance.now() * 1e6));
+                        };
+                        return proc;
+                    })(),
+                    // Node.js compatibility - Buffer class (using Uint8Array base)
+                    Buffer: (function() {
+                        function Buffer(arg, encodingOrOffset, length) {
+                            if (typeof arg === 'number') {
+                                return new Uint8Array(arg);
+                            }
+                            if (typeof arg === 'string') {
+                                return Buffer.from(arg, encodingOrOffset);
+                            }
+                            if (ArrayBuffer.isView(arg) || arg instanceof ArrayBuffer) {
+                                return new Uint8Array(arg, encodingOrOffset, length);
+                            }
+                            if (Array.isArray(arg)) {
+                                return new Uint8Array(arg);
+                            }
+                            return new Uint8Array(0);
+                        }
+                        
+                        Buffer.from = function(value, encodingOrOffset, length) {
+                            if (typeof value === 'string') {
+                                var encoding = encodingOrOffset || 'utf8';
+                                if (encoding === 'utf8' || encoding === 'utf-8') {
+                                    var encoder = new TextEncoder();
+                                    return encoder.encode(value);
+                                } else if (encoding === 'base64') {
+                                    var binary = atob(value);
+                                    var bytes = new Uint8Array(binary.length);
+                                    for (var i = 0; i < binary.length; i++) {
+                                        bytes[i] = binary.charCodeAt(i);
+                                    }
+                                    return bytes;
+                                } else if (encoding === 'hex') {
+                                    var bytes = new Uint8Array(value.length / 2);
+                                    for (var i = 0; i < value.length; i += 2) {
+                                        bytes[i / 2] = parseInt(value.substr(i, 2), 16);
+                                    }
+                                    return bytes;
+                                } else if (encoding === 'binary' || encoding === 'latin1') {
+                                    var bytes = new Uint8Array(value.length);
+                                    for (var i = 0; i < value.length; i++) {
+                                        bytes[i] = value.charCodeAt(i) & 0xff;
+                                    }
+                                    return bytes;
+                                }
+                                return new TextEncoder().encode(value);
+                            }
+                            if (ArrayBuffer.isView(value)) {
+                                return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+                            }
+                            if (value instanceof ArrayBuffer) {
+                                return new Uint8Array(value, encodingOrOffset, length);
+                            }
+                            if (Array.isArray(value)) {
+                                return new Uint8Array(value);
+                            }
+                            return new Uint8Array(0);
+                        };
+                        
+                        Buffer.alloc = function(size, fill, encoding) {
+                            var buf = new Uint8Array(size);
+                            if (fill !== undefined) {
+                                if (typeof fill === 'number') {
+                                    buf.fill(fill);
+                                } else if (typeof fill === 'string') {
+                                    var fillBuf = Buffer.from(fill, encoding);
+                                    for (var i = 0; i < size; i++) {
+                                        buf[i] = fillBuf[i % fillBuf.length];
+                                    }
+                                }
+                            }
+                            return buf;
+                        };
+                        
+                        Buffer.allocUnsafe = function(size) {
+                            return new Uint8Array(size);
+                        };
+                        
+                        Buffer.allocUnsafeSlow = Buffer.allocUnsafe;
+                        
+                        Buffer.isBuffer = function(obj) {
+                            return obj instanceof Uint8Array;
+                        };
+                        
+                        Buffer.isEncoding = function(encoding) {
+                            return ['utf8', 'utf-8', 'hex', 'base64', 'binary', 'latin1', 'ascii'].indexOf(encoding.toLowerCase()) !== -1;
+                        };
+                        
+                        Buffer.byteLength = function(string, encoding) {
+                            if (typeof string !== 'string') {
+                                return string.length || string.byteLength || 0;
+                            }
+                            encoding = encoding || 'utf8';
+                            if (encoding === 'utf8' || encoding === 'utf-8') {
+                                return new TextEncoder().encode(string).length;
+                            }
+                            if (encoding === 'base64') {
+                                return Math.ceil(string.length * 3 / 4);
+                            }
+                            if (encoding === 'hex') {
+                                return string.length / 2;
+                            }
+                            return string.length;
+                        };
+                        
+                        Buffer.concat = function(list, totalLength) {
+                            if (list.length === 0) return new Uint8Array(0);
+                            if (list.length === 1) return list[0];
+                            
+                            if (totalLength === undefined) {
+                                totalLength = 0;
+                                for (var i = 0; i < list.length; i++) {
+                                    totalLength += list[i].length;
+                                }
+                            }
+                            
+                            var result = new Uint8Array(totalLength);
+                            var offset = 0;
+                            for (var i = 0; i < list.length; i++) {
+                                result.set(list[i], offset);
+                                offset += list[i].length;
+                            }
+                            return result;
+                        };
+                        
+                        Buffer.compare = function(a, b) {
+                            var len = Math.min(a.length, b.length);
+                            for (var i = 0; i < len; i++) {
+                                if (a[i] < b[i]) return -1;
+                                if (a[i] > b[i]) return 1;
+                            }
+                            if (a.length < b.length) return -1;
+                            if (a.length > b.length) return 1;
+                            return 0;
+                        };
+                        
+                        // Add prototype methods to Uint8Array for Buffer compatibility
+                        if (!Uint8Array.prototype.toString_buffer) {
+                            Uint8Array.prototype.toString_buffer = Uint8Array.prototype.toString;
+                            Uint8Array.prototype.toString = function(encoding, start, end) {
+                                if (!encoding || encoding === 'utf8' || encoding === 'utf-8') {
+                                    var slice = this;
+                                    if (start !== undefined || end !== undefined) {
+                                        slice = this.slice(start || 0, end);
+                                    }
+                                    return new TextDecoder().decode(slice);
+                                }
+                                if (encoding === 'hex') {
+                                    var hex = '';
+                                    var s = start || 0;
+                                    var e = end !== undefined ? end : this.length;
+                                    for (var i = s; i < e; i++) {
+                                        hex += this[i].toString(16).padStart(2, '0');
+                                    }
+                                    return hex;
+                                }
+                                if (encoding === 'base64') {
+                                    var slice = this;
+                                    if (start !== undefined || end !== undefined) {
+                                        slice = this.slice(start || 0, end);
+                                    }
+                                    var binary = '';
+                                    for (var i = 0; i < slice.length; i++) {
+                                        binary += String.fromCharCode(slice[i]);
+                                    }
+                                    return btoa(binary);
+                                }
+                                return this.toString_buffer();
+                            };
+                        }
+                        
+                        return Buffer;
+                    })(),
+                    // Node.js compatibility - global reference
+                    global: null  // Will be set to globalObj after creation
                 },
                 compiledScripts: {},
                 hostObjects: {},
@@ -91,6 +372,9 @@ mergeInto(LibraryManager.library, {
                 modules: {},
                 objectIdCounter: 0
             };
+            // Set global to reference itself (Node.js compatibility)
+            window.__dclJSContexts[contextIdStr].global.global = window.__dclJSContexts[contextIdStr].global;
+            window.__dclJSContexts[contextIdStr].global.globalThis = window.__dclJSContexts[contextIdStr].global;
         }
         return 1;
     },
@@ -113,32 +397,142 @@ mergeInto(LibraryManager.library, {
         if (!context) return 0;
         
         try {
-            // Create a function that exposes all properties from context.global as variables
-            // This allows code to access UnityOpsApi, console, etc. directly
             const globalObj = context.global;
-            const globalKeys = Object.keys(globalObj);
-            const globalAssignments = globalKeys.map(key => {
-                // Only create variable assignments for valid JavaScript identifiers
-                // This allows direct access like "UnityOpsApi" instead of "globalThis.UnityOpsApi"
-                if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
-                    return `var ${key} = globalThis['${key.replace(/'/g, "\\'")}'];`;
+            
+            // Helper to generate global assignments from current context.global state
+            // Skip browser built-ins that are already available globally to avoid redeclaration errors
+            var browserBuiltins = [
+                'console', 'window', 'document', 'location', 'navigator', 'history',
+                'localStorage', 'sessionStorage', 'fetch', 'XMLHttpRequest', 'WebSocket',
+                'performance', 'requestAnimationFrame', 'cancelAnimationFrame',
+                'alert', 'confirm', 'prompt', 'atob', 'btoa', 'URL', 'URLSearchParams',
+                'TextEncoder', 'TextDecoder', 'Blob', 'File', 'FileReader', 'FormData',
+                'Image', 'Audio', 'Event', 'CustomEvent', 'MessageChannel', 'MessagePort',
+                'Worker', 'SharedWorker', 'ServiceWorker', 'BroadcastChannel',
+                'crypto', 'indexedDB', 'caches', 'AbortController', 'AbortSignal',
+                'queueMicrotask', 'reportError', 'structuredClone'
+            ];
+            var getGlobalAssignments = function() {
+                var keys = Object.keys(globalObj);
+                return keys.map(function(key) {
+                    // Skip browser built-ins to avoid conflicts
+                    if (browserBuiltins.indexOf(key) !== -1) {
+                        return '';
+                    }
+                    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+                        return 'var ' + key + ' = globalThis[\'' + key.replace(/'/g, "\\'") + '\'];';
+                    }
+                    return '';
+                }).filter(function(a) { return a.length > 0; }).join('\n');
+            };
+            
+            // Create require function FIRST and add it to global
+            // so that globalAssignments will include it
+            var requireFunc = function(moduleName) {
+                console.log('[require] Loading module:', moduleName);
+                
+                var scriptId = context.modules[moduleName];
+                if (!scriptId) {
+                    console.warn('[require] Module not found:', moduleName, 'Available:', Object.keys(context.modules));
+                    return {};
                 }
-                return ''; // Skip invalid identifiers
-            }).filter(assignment => assignment.length > 0).join('\n');
+                
+                var compiledData = context.compiledScripts[scriptId];
+                if (!compiledData || !compiledData.source) {
+                    console.warn('[require] Compiled script not found for:', moduleName);
+                    return {};
+                }
+                
+                // Create module and exports objects that the script can use
+                var moduleObj = { exports: {} };
+                var exportsObj = moduleObj.exports;
+                
+                // Execute the module code with module/exports in scope
+                var source = compiledData.source;
+                
+                console.log('[require] Source length:', source.length);
+                console.log('[require] Source starts with:', source.substring(0, 100));
+                
+                // Check if the source is wrapped in a CommonJS wrapper that needs to be called
+                // Pattern: (function (exports, require, module, __filename, __dirname) { ... })
+                // This wrapper is NOT self-invoking, so we need to call it
+                var wrappedPattern = /^\s*\(function\s*\(\s*exports\s*,\s*require\s*,\s*module\s*,\s*__filename\s*,\s*__dirname\s*\)\s*\{/;
+                
+                if (wrappedPattern.test(source)) {
+                    console.log('[require] Detected CommonJS wrapper, will invoke it');
+                    
+                    // Evaluate the source to get the wrapper function, then call it
+                    var moduleGlobalAssignments = getGlobalAssignments();
+                    var evalCode = moduleGlobalAssignments + '\nreturn ' + source + ';';
+                    
+                    var getWrapperFunc;
+                    try {
+                        getWrapperFunc = new Function('globalThis', evalCode);
+                    } catch (syntaxError) {
+                        console.error('[require] Syntax error compiling wrapper getter:', moduleName, syntaxError);
+                        return {};
+                    }
+                    
+                    var wrapperFunc;
+                    try {
+                        wrapperFunc = getWrapperFunc(globalObj);
+                        console.log('[require] Got wrapper function, type:', typeof wrapperFunc);
+                    } catch (evalError) {
+                        console.error('[require] Error evaluating wrapper:', moduleName, evalError);
+                        return {};
+                    }
+                    
+                    // Now call the wrapper with the CommonJS arguments
+                    console.log('[require] Calling wrapper for', moduleName, '(this may take a while for large files)...');
+                    var startTime = performance.now();
+                    try {
+                        wrapperFunc.call(globalObj, exportsObj, requireFunc, moduleObj, '/' + moduleName, '/');
+                        var elapsed = performance.now() - startTime;
+                        console.log('[require] Wrapper executed successfully in', elapsed.toFixed(0), 'ms');
+                    } catch (moduleError) {
+                        console.error('[require] Error executing wrapper:', moduleName, moduleError);
+                        console.error('[require] Stack:', moduleError.stack);
+                        return {};
+                    }
+                } else {
+                    console.log('[require] No CommonJS wrapper detected, executing directly');
+                    var moduleGlobalAssignments = getGlobalAssignments();
+                    var moduleCode = moduleGlobalAssignments + '\n' + source;
+                    
+                    var moduleFunc;
+                    try {
+                        moduleFunc = new Function('globalThis', 'module', 'exports', moduleCode);
+                    } catch (syntaxError) {
+                        console.error('[require] Syntax error compiling module:', moduleName, syntaxError);
+                        return {};
+                    }
+                    
+                    try {
+                        moduleFunc(globalObj, moduleObj, exportsObj);
+                    } catch (moduleError) {
+                        console.error('[require] Error executing module:', moduleName, moduleError);
+                        return {};
+                    }
+                }
+                
+                // Debug: log what we got
+                console.log('[require] module.exports keys:', Object.keys(moduleObj.exports || {}));
+                var onStartType = moduleObj.exports && moduleObj.exports.onStart ? typeof moduleObj.exports.onStart : 'undefined';
+                console.log('[require] Module loaded:', moduleName, 'exports.onStart:', onStartType);
+                return moduleObj.exports;
+            };
+            
+            // Add require to global so it's available via globalAssignments
+            globalObj.require = requireFunc;
+            
+            // Now generate globalAssignments (which will include require)
+            var globalAssignments = getGlobalAssignments();
             
             // Wrap the code to assign global properties and then execute
-            const wrappedCode = globalAssignments + '\n' + codeStr;
-            const func = new Function('globalThis', 'require', wrappedCode);
-            func(context.global, function(moduleName) {
-                const compiledData = context.compiledScripts[moduleName];
-                if (compiledData && compiledData.source) {
-                    // Evaluate with globals exposed
-                    const innerCode = globalAssignments + '\nreturn ' + compiledData.source;
-                    const innerFunc = new Function('globalThis', '__require', innerCode);
-                    return innerFunc(context.global, function() { return {}; });
-                }
-                return {};
-            });
+            var wrappedCode = globalAssignments + '\n' + codeStr;
+            var func = new Function('globalThis', wrappedCode);
+            
+            func(globalObj);
             return 1;
         } catch (e) {
             console.error('JSContext_Execute error:', e);

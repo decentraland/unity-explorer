@@ -1,12 +1,9 @@
-using Arch.Core;
-using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.CharacterCamera;
-using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -14,7 +11,6 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiling;
 using DCL.Profiles;
 using DCL.SkyBox;
 using DCL.Web3;
@@ -22,24 +18,19 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
-using ECS.Prioritization.Components;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using Global;
 using Global.AppArgs;
-using Global.Dynamic;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner;
 using SceneRunner.ECSWorld;
-using SceneRunner.Mapping;
 using SceneRunner.Scene;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using DCL.Clipboard;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
@@ -148,7 +139,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 var sceneFactory = CreateSceneFactory(dependencies);
 
                 // Create partition component (required but not used in this context)
-                var partitionComponent = new StubPartitionComponent();
+                var partitionComponent = new WebClientStubImplementations.StubPartitionComponent();
 
                 // Load scene from HTTP URL
                 // In WebGL, StreamingAssets are served via HTTP, so we need HTTP URLs
@@ -192,7 +183,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
                 isInitialized = true;
                 Debug.Log($"[WebGLSceneBootstrapper] Scene from '{sceneUrl}' loaded and started successfully");
-                
+
                 // Position the camera at the scene origin so we can see the created entities
                 PositionCameraAtSceneOrigin();
             }
@@ -228,17 +219,17 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 Debug.LogWarning("[WebGLSceneBootstrapper] No main camera found to reposition");
                 return;
             }
-            
+
             // Position camera at a good viewing distance from the origin, looking at (8, 0, 8) which is roughly center of a 16x16 parcel
             Vector3 sceneCenter = new Vector3(8f, 1f, 8f);
             Vector3 cameraPosition = new Vector3(8f, 5f, -5f); // Slightly elevated and back from origin
-            
+
             mainCamera.transform.position = cameraPosition;
             mainCamera.transform.LookAt(sceneCenter);
-            
+
             Debug.Log($"[WebGLSceneBootstrapper] Repositioned camera to {cameraPosition}, looking at {sceneCenter}");
         }
-        
+
         private void OnDestroy()
         {
             if (sceneFacade != null)
@@ -267,8 +258,8 @@ namespace SceneRuntime.WebClient.Bootstrapper
             var componentsContainer = ComponentsContainer.Create();
 
             // Create stub profiler and budgets
-            var stubProfiler = new StubBudgetProfiler();
-            var stubMemoryCap = new StubSystemMemoryCap();
+            var stubProfiler = new WebClientStubImplementations.StubBudgetProfiler();
+            var stubMemoryCap = new WebClientStubImplementations.StubSystemMemoryCap();
             var memoryThreshold = new Dictionary<MemoryUsageStatus, float>
             {
                 { MemoryUsageStatus.ABUNDANCE, 0.6f },
@@ -282,18 +273,21 @@ namespace SceneRuntime.WebClient.Bootstrapper
             // Create ECSWorldSingletonSharedDependencies
             var singletonSharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
-                new StubReportsHandlingSettings(),
+                new WebClientStubImplementations.StubReportsHandlingSettings(),
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new StubReleasablePerformanceBudget(),
+                new WebClientStubImplementations.StubReleasablePerformanceBudget(),
                 frameTimeBudget,
                 memoryBudget,
-                new StubSceneMapping()
+                new WebClientStubImplementations.StubSceneMapping()
             );
 
             // Create exposed transform and camera data for plugins
             var exposedPlayerTransform = new ExposedTransform();
             var exposedCameraData = new ExposedCameraData();
+
+            // Create web request controller
+            var webRequestController = CreateWebRequestController();
 
             // Create minimal plugins for primitive rendering
             var plugins = new List<IDCLWorldPlugin>
@@ -305,8 +299,8 @@ namespace SceneRuntime.WebClient.Bootstrapper
             // Create real ECSWorldFactory with plugins
             var ecsWorldFactory = new ECSWorldFactory(
                 singletonSharedDependencies,
-                new StubPartitionSettings(),
-                new StubCameraSamplingData(),
+                new WebClientStubImplementations.StubPartitionSettings(),
+                new WebClientStubImplementations.StubCameraSamplingData(),
                 plugins
             );
 
@@ -318,20 +312,20 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 SDKComponentsRegistry = componentsContainer.SDKComponentsRegistry,
                 EntityFactory = new SceneEntityFactory(),
                 EntityCollidersGlobalCache = new EntityCollidersGlobalCache(),
-                EthereumApi = new StubEthereumApi(),
-                MVCManager = new StubMVCManager(),
+                EthereumApi = new WebClientStubImplementations.StubEthereumApi(),
+                MVCManager = new WebClientStubImplementations.StubMVCManager(),
                 ProfileRepository = new ProfileRepositoryFake(),
                 IdentityCache = new IWeb3IdentityCache.Default(),
-                DecentralandUrlsSource = new StubDecentralandUrlsSource(),
-                WebRequestController = CreateWebRequestController(),
+                DecentralandUrlsSource = new WebClientStubImplementations.StubDecentralandUrlsSource(),
+                WebRequestController = webRequestController,
                 RoomHub = NullRoomHub.INSTANCE,
                 RealmData = new IRealmData.Fake(),
-                PortableExperiencesController = new StubPortableExperiencesController(),
+                PortableExperiencesController = new WebClientStubImplementations.StubPortableExperiencesController(),
                 SkyboxSettings = ScriptableObject.CreateInstance<SkyboxSettingsAsset>(),
-                MessagePipesHub = new StubSceneCommunicationPipe(),
-                RemoteMetadata = new StubRemoteMetadata(),
+                MessagePipesHub = new WebClientStubImplementations.StubSceneCommunicationPipe(),
+                RemoteMetadata = new WebClientStubImplementations.StubRemoteMetadata(),
                 DCLEnvironment = DecentralandEnvironment.Org,
-                SystemClipboard = new StubSystemClipboard()
+                SystemClipboard = new WebClientStubImplementations.StubSystemClipboard()
             };
         }
 
@@ -372,9 +366,9 @@ namespace SceneRuntime.WebClient.Bootstrapper
             const int TOTAL_BUDGET = int.MaxValue;
 
             return new WebRequestController(
-                new StubWebRequestsAnalyticsContainer(),
+                new WebClientStubImplementations.StubWebRequestsAnalyticsContainer(),
                 new IWeb3IdentityCache.Default(),
-                new RequestHub(new StubDecentralandUrlsSource()),
+                new RequestHub(new WebClientStubImplementations.StubDecentralandUrlsSource()),
                 Option<ChromeDevtoolProtocolClient>.None,
                 new WebRequestBudget(TOTAL_BUDGET, new ElementBinding<ulong>(TOTAL_BUDGET))
             );
@@ -443,172 +437,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
             public IRemoteMetadata RemoteMetadata { get; set; } = null!;
             public DecentralandEnvironment DCLEnvironment { get; set; }
             public ISystemClipboard SystemClipboard { get; set; } = null!;
-        }
-
-        private class StubSceneCommunicationPipe : ISceneCommunicationPipe
-        {
-            public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
-
-            public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
-
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null) { }
-        }
-
-        // Simple stub implementations for interfaces that don't have fake implementations
-        private class StubEthereumApi : IEthereumApi
-        {
-            public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
-                UniTask.FromResult(new EthApiResponse {});
-
-            public void Dispose() { }
-        }
-
-        private class StubMVCManager : IMVCManager
-        {
-            public event Action<IController>? OnViewShowed;
-            public event Action<IController>? OnViewClosed;
-
-            public UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView : IView
-            {
-                return UniTask.CompletedTask;
-            }
-
-            public void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView : IView { }
-
-            public void SetAllViewsCanvasActive(bool isActive) { }
-
-            public void SetAllViewsCanvasActive(IController except, bool isActive) { }
-
-            public void Dispose() { }
-        }
-
-        private class StubDecentralandUrlsSource : IDecentralandUrlsSource
-        {
-            public string Url(DecentralandUrl decentralandUrl) => string.Empty;
-            public string GetHostnameForFeatureFlag() => string.Empty;
-        }
-
-        private class StubPortableExperiencesController : IPortableExperiencesController
-        {
-            public event Action<string>? PortableExperienceLoaded;
-            public event Action<string>? PortableExperienceUnloaded;
-            public Dictionary<string, Entity> PortableExperienceEntities { get; } = new();
-            public GlobalWorld GlobalWorld { get; set; } = null!;
-
-            public bool CanKillPortableExperience(string id) => false;
-            public UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
-            {
-                return UniTask.FromResult(new IPortableExperiencesController.SpawnResponse());
-            }
-            public IPortableExperiencesController.ExitResponse UnloadPortableExperienceById(string id) => new IPortableExperiencesController.ExitResponse { status = false };
-            public List<IPortableExperiencesController.SpawnResponse> GetAllPortableExperiences() => new List<IPortableExperiencesController.SpawnResponse>();
-            public void UnloadAllPortableExperiences() { }
-            public void AddPortableExperience(string id, Entity portableExperience) { }
-        }
-
-        private class StubRemoteMetadata : IRemoteMetadata
-        {
-            public IReadOnlyDictionary<string, IRemoteMetadata.ParticipantMetadata> Metadata { get; } = new Dictionary<string, IRemoteMetadata.ParticipantMetadata>();
-            public void BroadcastSelfParcel(Vector2Int pose) { }
-            public void BroadcastSelfMetadata() { }
-        }
-
-        private class StubSystemClipboard : ISystemClipboard
-        {
-            public void SetText(string text) { }
-            public string GetText() => string.Empty;
-
-            public void Set(string text)
-            {
-            }
-
-            public string Get() =>
-                string.Empty;
-
-            public bool HasValue() =>
-                false;
-        }
-
-        private class StubPartitionComponent : IPartitionComponent
-        {
-            public byte Bucket => 0;
-            public bool IsBehind => false;
-            public bool IsDirty => false;
-            public float RawSqrDistance => 0f;
-        }
-
-        private class StubWebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
-        {
-            public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() => new Dictionary<Type, Func<IRequestMetric>>();
-            public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) => null;
-            void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request) { }
-            void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request) { }
-            void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
-            void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
-        }
-
-        // Stub implementations for ECS world factory dependencies
-        private class StubBudgetProfiler : IBudgetProfiler
-        {
-            public long TotalUsedMemoryInBytes => 0;
-            public long SystemUsedMemoryInBytes => 0;
-            public ulong CurrentFrameTimeValueNs => 0;
-            public ulong LastFrameTimeValueNs => 0;
-            public ulong LastGpuFrameTimeValueNs => 0;
-            public void Dispose() { }
-        }
-
-        private class StubSystemMemoryCap : ISystemMemoryCap
-        {
-            public long MemoryCapInMB => 4 * 1024L;
-            public int MemoryCap
-            {
-                get => 4;
-                set => throw new NotImplementedException();
-            }
-        }
-
-        private class StubReportsHandlingSettings : IReportsHandlingSettings
-        {
-            public bool DebounceEnabled => false;
-            public bool IsEnabled(ReportHandler handler) => true;
-            public bool CategoryIsEnabled(string category, LogType logType) => true;
-            public ICategorySeverityMatrix GetMatrix(ReportHandler handler) => new StubCategorySeverityMatrix();
-        }
-
-        private class StubCategorySeverityMatrix : ICategorySeverityMatrix
-        {
-            public bool IsEnabled(string category, LogType severity) => true;
-        }
-
-        private class StubSceneMapping : ISceneMapping
-        {
-            public World? GetWorld(string sceneName) => null;
-            public World? GetWorld(Vector2Int coordinates) => null;
-            public void Register(string sceneName, IReadOnlyList<Vector2Int> coordinates, World world) { }
-        }
-
-        private class StubReleasablePerformanceBudget : IReleasablePerformanceBudget
-        {
-            public bool TrySpendBudget() => true; // Always allow
-            public void ReleaseBudget() { }
-        }
-
-        private class StubPartitionSettings : IPartitionSettings
-        {
-            public float AngleTolerance => 1f;
-            public float PositionSqrTolerance => 0.01f;
-            public IReadOnlyList<int> SqrDistanceBuckets { get; } = new List<int> { 128, 512, 2048 };
-            public int FastPathSqrDistance => int.MaxValue;
-            public int BehindCameraBaseBucket => 2;
-        }
-
-        private class StubCameraSamplingData : IReadOnlyCameraSamplingData
-        {
-            public Vector3 Position => Vector3.zero;
-            public Vector3 Forward => Vector3.forward;
-            public Vector2Int Parcel => Vector2Int.zero;
-            public bool IsDirty => false;
         }
     }
 }
