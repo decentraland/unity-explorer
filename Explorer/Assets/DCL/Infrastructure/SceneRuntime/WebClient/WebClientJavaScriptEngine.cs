@@ -1,9 +1,9 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using AOT;
 using CrdtEcsBridge.PoolsProviders;
+using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -74,6 +74,34 @@ namespace SceneRuntime.WebClient
         }
 
         /// <summary>
+        ///     Finds a method by name, handling overloads by matching argument count.
+        ///     Uses GetMethods() to avoid AmbiguousMatchException from GetMethod().
+        /// </summary>
+        private static MethodInfo? FindMethod(Type type, string methodName, int argCount)
+        {
+            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            MethodInfo? bestMatch = null;
+
+            foreach (var method in methods)
+            {
+                if (method.Name != methodName)
+                    continue;
+
+                var parameters = method.GetParameters();
+
+                // Exact match on parameter count
+                if (parameters.Length == argCount)
+                    return method;
+
+                // If no exact match yet, keep first matching method name as fallback
+                if (bestMatch == null)
+                    bestMatch = method;
+            }
+
+            return bestMatch;
+        }
+
+        /// <summary>
         ///     Static callback that JavaScript can invoke when it needs to call a method on a registered host object (void return).
         /// </summary>
         [MonoPInvokeCallback(typeof(HostObjectCallbackDelegate))]
@@ -94,19 +122,24 @@ namespace SceneRuntime.WebClient
                     return;
                 }
 
-                // Find and invoke the method
-                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+                // Parse arguments first to determine count
+                object?[]? args = null;
+                int argCount = 0;
+
+                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
+                {
+                    args = JsonConvert.DeserializeObject<object?[]>(argsJson);
+                    argCount = args?.Length ?? 0;
+                }
+
+                // Find method handling overloads
+                MethodInfo? method = FindMethod(hostObject.GetType(), methodName, argCount);
 
                 if (method == null)
                 {
                     Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
                     return;
                 }
-
-                // Parse arguments
-                object?[]? args = null;
-
-                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]") { args = JsonConvert.DeserializeObject<object?[]>(argsJson); }
 
                 // Invoke the method
                 method.Invoke(hostObject, args);
@@ -137,8 +170,18 @@ namespace SceneRuntime.WebClient
                     return WriteResultToBuffer("{\"error\":\"Host object not found\"}", resultBuffer, resultBufferSize);
                 }
 
-                // Find the method - try public instance methods first
-                MethodInfo? method = hostObject.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+                // Pre-parse arguments to determine count for method resolution
+                int argCount = 0;
+                JArray? jsonArray = null;
+
+                if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
+                {
+                    jsonArray = JArray.Parse(argsJson);
+                    argCount = jsonArray.Count;
+                }
+
+                // Find method handling overloads
+                MethodInfo? method = FindMethod(hostObject.GetType(), methodName, argCount);
 
                 if (method == null)
                 {
@@ -455,10 +498,10 @@ namespace SceneRuntime.WebClient
         public IRuntimeHeapInfo? GetRuntimeHeapInfo() =>
             null;
 
-        public object CreatePromiseFromTask<T>(Task<T> task)
+        public object CreatePromise<T>(UniTask<T> uniTask)
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
-            var resolver = new JSPromiseResolver<T>(task);
+            var resolver = new JSUniTaskPromiseResolver<T>(uniTask);
             var resolverId = Guid.NewGuid().ToString();
             var resolverName = $"__promiseResolver_{resolverId}";
 
@@ -511,10 +554,10 @@ namespace SceneRuntime.WebClient
             }
         }
 
-        public object CreatePromiseFromTask(Task task)
+        public object CreatePromise(UniTask uniTask)
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
-            var resolver = new JSPromiseResolver(task);
+            var resolver = new JSUniTaskPromiseResolver(uniTask);
             var resolverId = Guid.NewGuid().ToString();
             var resolverName = $"__promiseResolver_{resolverId}";
 
@@ -680,29 +723,33 @@ namespace SceneRuntime.WebClient
         }
     }
 
-    internal class JSPromiseResolver<T>
+    internal class JSUniTaskPromiseResolver<T>
     {
-        private readonly Task<T> task;
         private T? result;
         private string? error;
         private bool isCompleted;
         private bool isFaulted;
 
-        public JSPromiseResolver(Task<T> task)
+        public JSUniTaskPromiseResolver(UniTask<T> uniTask)
         {
-            this.task = task;
+            RunAsync(uniTask).Forget();
+        }
 
-            task.ContinueWith(t =>
+        private async UniTaskVoid RunAsync(UniTask<T> uniTask)
+        {
+            try
             {
-                if (t.IsFaulted)
-                {
-                    isFaulted = true;
-                    error = t.Exception?.GetBaseException()?.Message ?? "Unknown error";
-                }
-                else if (t.IsCompletedSuccessfully) { result = t.Result; }
-
+                result = await uniTask;
+            }
+            catch (Exception e)
+            {
+                isFaulted = true;
+                error = e.Message;
+            }
+            finally
+            {
                 isCompleted = true;
-            }, TaskContinuationOptions.ExecuteSynchronously);
+            }
         }
 
         [UsedImplicitly]
@@ -722,27 +769,32 @@ namespace SceneRuntime.WebClient
             error;
     }
 
-    internal class JSPromiseResolver
+    internal class JSUniTaskPromiseResolver
     {
-        private readonly Task task;
         private string? error;
         private bool isCompleted;
         private bool isFaulted;
 
-        public JSPromiseResolver(Task task)
+        public JSUniTaskPromiseResolver(UniTask uniTask)
         {
-            this.task = task;
+            RunAsync(uniTask).Forget();
+        }
 
-            task.ContinueWith(t =>
+        private async UniTaskVoid RunAsync(UniTask uniTask)
+        {
+            try
             {
-                if (t.IsFaulted)
-                {
-                    isFaulted = true;
-                    error = t.Exception?.GetBaseException()?.Message ?? "Unknown error";
-                }
-
+                await uniTask;
+            }
+            catch (Exception e)
+            {
+                isFaulted = true;
+                error = e.Message;
+            }
+            finally
+            {
                 isCompleted = true;
-            }, TaskContinuationOptions.ExecuteSynchronously);
+            }
         }
 
         [UsedImplicitly]

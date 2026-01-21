@@ -1,5 +1,5 @@
 using System;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace SceneRuntime
 {
@@ -21,9 +21,9 @@ namespace SceneRuntime
 
         string GetStackTrace();
 
-        object CreatePromiseFromTask<T>(Task<T> task);
+        object CreatePromise<T>(UniTask<T> uniTask);
 
-        object CreatePromiseFromTask(Task task);
+        object CreatePromise(UniTask uniTask);
     }
 
     public interface ICompiledScript { }

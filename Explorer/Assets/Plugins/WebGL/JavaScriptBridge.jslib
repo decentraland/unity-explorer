@@ -508,7 +508,7 @@ mergeInto(LibraryManager.library, {
                         moduleFunc(globalObj, moduleObj, exportsObj);
                     } catch (moduleError) {
                         console.error('[require] Error executing module:', moduleName, moduleError);
-                        return {};
+                return {};
                     }
                 }
                 
