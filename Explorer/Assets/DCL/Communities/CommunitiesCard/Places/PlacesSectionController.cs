@@ -1,8 +1,6 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
-using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
@@ -37,31 +35,19 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int PAGE_SIZE = 10;
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
-        private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
-        private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
-        private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
         private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
         private const string GET_OWNERS_NAMES_ERROR_MESSAGE = "There was an error getting owners names. Please try again.";
-
-        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
-
-        private const string JUMP_IN_GC_LINK = " https://decentraland.org/jump/?position={0},{1}";
-        private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
-        private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
-        private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceData> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly IProfileRepository profileRepository;
         private readonly Dictionary<string, string> userNames = new (StringComparer.OrdinalIgnoreCase);
+        private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
 
         private string[] communityPlaceIds;
 
@@ -84,12 +70,10 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
-            this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
-            this.clipboard = clipboard;
-            this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard);
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -160,11 +144,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-
-            if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()), placeCardOperationsCts.Token).Forget();
-            else
-                realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, placeCardOperationsCts.Token, false).Forget();
+            placesCardSocialActionsController.JumpInPlace(placeInfo, placeCardOperationsCts.Token);
         }
 
         private void OnElementInfoButtonClicked(PlaceInfo place)
@@ -173,114 +153,30 @@ namespace DCL.Communities.CommunitiesCard.Places
             throw new NotImplementedException();
         }
 
-        private void OnElementShareButtonClicked(PlaceInfo place)
-        {
-            string description = string.Format(TWITTER_PLACE_DESCRIPTION, place.title);
-            string twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", GetPlaceCopyLink(place));
-
-            webBrowser.OpenUrl(twitterLink);
-        }
+        private void OnElementShareButtonClicked(PlaceInfo place) =>
+            placesCardSocialActionsController.SharePlace(place);
 
         private void OnElementCopyLinkButtonClicked(PlaceInfo place)
         {
-            clipboard.Set(GetPlaceCopyLink(place));
-
-            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
-        }
-
-        private static string GetPlaceCopyLink(PlaceInfo place)
-        {
-            if (!string.IsNullOrEmpty(place.world_name))
-                return string.Format(JUMP_IN_WORLD_LINK, place.world_name);
-
-            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            return string.Format(JUMP_IN_GC_LINK, coordinates.x, coordinates.y);
+            placesCardSocialActionsController.CopyPlaceLink(place);
         }
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            UpdateFavoritePlaceAsync(placeCardOperationsCts.Token).Forget();
-            return;
-
-            async UniTaskVoid UpdateFavoritePlaceAsync(CancellationToken ct)
-            {
-                var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                if (!result.Success)
-                {
-                    placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
-                }
-
-                placeInfo.user_favorite = favoriteValue;
-            }
+            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnElementDislikeToggleChanged(PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            DislikePlaceAsync(placeCardOperationsCts.Token).Forget();
-            return;
-
-            async UniTaskVoid DislikePlaceAsync(CancellationToken ct)
-            {
-                var result = await placesAPIService.RatePlaceAsync(dislikeValue ? false : null, placeInfo.id, ct)
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                if (!result.Success)
-                {
-                    placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
-
-                    return;
-                }
-
-                if (dislikeValue)
-                {
-                    placeCardView.SilentlySetLikeToggle(false);
-                    placeInfo.user_dislike = true;
-                    placeInfo.user_like = false;
-                }
-            }
+            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnElementLikeToggleChanged(PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            LikePlaceAsync(placeCardOperationsCts.Token).Forget();
-            return;
-
-            async UniTaskVoid LikePlaceAsync(CancellationToken ct)
-            {
-                var result = await placesAPIService.RatePlaceAsync(likeValue ? true : null, placeInfo.id, ct)
-                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                if (!result.Success)
-                {
-                    placeCardView.SilentlySetLikeToggle(!likeValue);
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
-
-                    return;
-                }
-
-                if (likeValue)
-                {
-                    placeCardView.SilentlySetDislikeToggle(false);
-                    placeInfo.user_dislike = false;
-                    placeInfo.user_like = true;
-                }
-            }
+            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, placeCardOperationsCts.Token).Forget();
         }
 
         public override void Reset()

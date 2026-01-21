@@ -1,10 +1,12 @@
 ﻿using DCL.Browser;
+using DCL.Clipboard;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using UnityEngine;
 
@@ -33,7 +35,9 @@ namespace DCL.Places
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -42,7 +46,8 @@ namespace DCL.Places
             this.inputBlock = inputBlock;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser, webRequestController);
+            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
+                webRequestController, realmNavigator, clipboard);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

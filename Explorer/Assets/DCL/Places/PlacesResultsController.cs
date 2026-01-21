@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -12,9 +13,11 @@ using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Places
@@ -33,6 +36,7 @@ namespace DCL.Places
         private readonly PlaceCategoriesSO placesCategories;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
+        private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -41,6 +45,7 @@ namespace DCL.Places
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
 
         private CancellationTokenSource? loadPlacesCts;
+        private CancellationTokenSource placeCardOperationsCts;
 
         public PlacesResultsController(
             PlacesResultsView view,
@@ -50,7 +55,9 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard)
         {
             this.view = view;
             this.placesController = placesController;
@@ -59,10 +66,18 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard);
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
             view.MyPlacesResultsEmptySubTextClicked += MyPlacesResultsEmptySubTextClicked;
+            view.PlaceLikeToggleChanged += OnPlaceLikeToggleChanged;
+            view.PlaceDislikeToggleChanged += OnPlaceDislikeToggleChanged;
+            view.PlaceFavoriteToggleChanged += OnPlaceFavoriteToggleChanged;
+            view.PlaceJumpInButtonClicked += OnPlaceJumpInButtonClicked;
+            view.PlaceShareButtonClicked += OnPlaceShareButtonClicked;
+            view.PlaceCopyLinkButtonClicked += OnPlaceCopyLinkButtonClicked;
+            view.PlaceInfoButtonClicked += OnPlaceInfoButtonClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
@@ -75,8 +90,17 @@ namespace DCL.Places
             view.BackButtonClicked -= OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
             view.MyPlacesResultsEmptySubTextClicked -= MyPlacesResultsEmptySubTextClicked;
+            view.PlaceLikeToggleChanged -= OnPlaceLikeToggleChanged;
+            view.PlaceDislikeToggleChanged -= OnPlaceDislikeToggleChanged;
+            view.PlaceFavoriteToggleChanged -= OnPlaceFavoriteToggleChanged;
+            view.PlaceJumpInButtonClicked -= OnPlaceJumpInButtonClicked;
+            view.PlaceShareButtonClicked -= OnPlaceShareButtonClicked;
+            view.PlaceCopyLinkButtonClicked -= OnPlaceCopyLinkButtonClicked;
+            view.PlaceInfoButtonClicked -= OnPlaceInfoButtonClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
+
+            placeCardOperationsCts.SafeCancelAndDispose();
         }
 
         private void OnBackButtonClicked() =>
@@ -103,6 +127,41 @@ namespace DCL.Places
             }
 
             view.PlayOnLinkClickAudio();
+        }
+
+        private void OnPlaceLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+        }
+
+        private void OnPlaceDislikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+        }
+
+        private void OnPlaceFavoriteToggleChanged(PlacesData.PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, placeCardOperationsCts.Token).Forget();
+        }
+
+        private void OnPlaceJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            placesCardSocialActionsController.JumpInPlace(placeInfo, placeCardOperationsCts.Token);
+        }
+
+        private void OnPlaceShareButtonClicked(PlacesData.PlaceInfo placeInfo) =>
+            placesCardSocialActionsController.SharePlace(placeInfo);
+
+        private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
+            placesCardSocialActionsController.CopyPlaceLink(placeInfo);
+
+        private void OnPlaceInfoButtonClicked(PlacesData.PlaceInfo placeInfo)
+        {
+            Debug.Log($"SANTI LOG -> Place Clicked: {placeInfo.title}");
         }
 
         private void OnFiltersChanged(PlacesFilters filters)
