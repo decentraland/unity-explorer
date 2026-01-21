@@ -33,6 +33,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+#if !UNITY_WEBGL
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
@@ -64,6 +65,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 system.Update(UnityEngine.Time.deltaTime);
                 await UniTask.Yield();
             }
+#endif
         }
     }
 }

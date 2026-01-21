@@ -29,6 +29,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+#if !UNITY_WEBGL
 #if UNITY_EDITOR
             IFFIClient.Default.EnsureInitialize();
 
@@ -50,6 +51,7 @@ namespace DCL.Multiplayer.Connections.Demo
                     options
                 ).StartAsync()
                  .Forget();
+#endif
 #endif
         }
     }
