@@ -47,7 +47,7 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public IEthereumApi? VerifiedEthereumApi { get; set; }
-        public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
+        public IWeb3Authenticator? Web3Authenticator { get; private set; }
         public IWeb3Authenticator? AutoLoginAuthenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
@@ -209,7 +209,7 @@ namespace Global.Dynamic
 #endif
         }
 
-        private static (IEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
+        private static (IEthereumApi web3VerifiedAuthenticator, IWeb3Authenticator web3Authenticator, IWeb3Authenticator autoLoginAuthenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
@@ -235,7 +235,7 @@ namespace Global.Dynamic
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
+            IWeb3Authenticator coreWeb3Authenticator = new ProxyWeb3Authenticator(dappWeb3Authenticator, identityCache);
 
             IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),

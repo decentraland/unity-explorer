@@ -18,7 +18,7 @@ namespace DCL.AuthenticationScreenFlow
     [LogCategory(ReportCategory.AUTHENTICATION)]
     public partial class LoginFromDebugPanelSystem : BaseUnityLoopSystem
     {
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly IWeb3Authenticator web3Authenticator;
         private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding? widgetVisibility;
@@ -26,7 +26,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public LoginFromDebugPanelSystem(World world,
             IDebugContainerBuilder debugContainerBuilder,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3Authenticator web3Authenticator,
             IMVCManager mvcManager,
             IRealmData realmData)
             : base(world)
@@ -58,7 +58,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             cancellationTokenSource?.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
-            web3Authenticator.LoginAsync(cancellationTokenSource.Token).Forget();
+            web3Authenticator.LoginAsync(cancellationTokenSource.Token, null).Forget();
         }
 
         private void OpenAuthenticationFlow()

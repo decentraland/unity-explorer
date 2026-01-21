@@ -26,7 +26,7 @@ namespace DCL.PluginSystem.Global
     public class Web3AuthenticationPlugin : IDCLGlobalPlugin<Web3AuthPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly IWeb3Authenticator web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3Authenticator web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,

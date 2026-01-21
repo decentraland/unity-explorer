@@ -26,7 +26,7 @@ namespace DCL.Web3.Authenticators
 {
     internal delegate void VerificationWeb3Delegate(int code, DateTime expiration);
 
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IEthereumApi
+    public partial class DappWeb3Authenticator : IWeb3Authenticator, IEthereumApi
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
@@ -60,7 +60,6 @@ namespace DCL.Web3.Authenticators
         private ClientWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
         private VerificationWeb3Delegate? signatureVerificationCallback;
 
         //private 
@@ -154,7 +153,7 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:152"); // SPECIAL_DEBUG_LINE_STATEMENT
             await mutex.WaitAsync(ct);
@@ -204,7 +203,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:195"); // SPECIAL_DEBUG_LINE_STA
 
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:198"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (codeVerificationFeatureFlag.ShouldWaitForCodeVerificationFromServer)
-                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
+                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct, codeVerificationCallback).Forget();
                 else
                     codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
@@ -268,9 +267,6 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STA
             codeVerificationTask?.TrySetCanceled();
         }
         
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            codeVerificationCallback = callback;
-
         private void AddVerificationListener(VerificationWeb3Delegate callback) =>
             signatureVerificationCallback = callback;
 
@@ -597,7 +593,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STA
         /// Waits until we receive the verification status from the server
         /// So then we execute the loginVerificationCallback
         /// </summary>
-        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
+        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
             codeVerificationTask?.TrySetCanceled(ct);
             codeVerificationTask = new UniTaskCompletionSource<SocketIOResponse>();

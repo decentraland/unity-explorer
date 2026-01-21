@@ -302,7 +302,7 @@ Debug.Log("Bootstraper.cs:216");
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct, null); }
             // Exceptions on auto-login should not block the application bootstrap
             catch (AutoLoginTokenNotFoundException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

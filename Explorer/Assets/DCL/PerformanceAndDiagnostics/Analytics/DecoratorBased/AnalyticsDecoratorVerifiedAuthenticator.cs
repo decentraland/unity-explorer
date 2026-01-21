@@ -3,22 +3,14 @@ using DCL.Web3.Authenticators;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class AnalyticsDecoratorVerifiedAuthenticator : AnalyticsDecoratorAuthenticator, IWeb3VerifiedAuthenticator
+    public class AnalyticsDecoratorVerifiedAuthenticator : AnalyticsDecoratorAuthenticator
     {
-        private readonly IWeb3VerifiedAuthenticator core;
+        private readonly IWeb3Authenticator core;
 
-        public AnalyticsDecoratorVerifiedAuthenticator(IWeb3VerifiedAuthenticator core, IAnalyticsController analytics)
+        public AnalyticsDecoratorVerifiedAuthenticator(IWeb3Authenticator core, IAnalyticsController analytics)
             : base(core, analytics)
         {
             this.core = core;
-        }
-
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            core.SetVerificationListener(callback);
-
-        public void CancelCurrentWeb3Operation()
-        {
-            core.CancelCurrentWeb3Operation();
         }
     }
 }
