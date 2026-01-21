@@ -1,6 +1,5 @@
 ﻿using DCL.Audio;
 using DCL.Communities;
-using DCL.Communities.CommunitiesCard.Places;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
@@ -30,7 +29,6 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? PlaceJumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceShareButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceCopyLinkButtonClicked;
-        public event Action<PlacesData.PlaceInfo>? PlaceInfoButtonClicked;
 
         private ThumbnailLoader? placesCardsThumbnailLoader;
         private PlacesData.PlaceInfo? lastClickedPlaceCtx;
@@ -153,7 +151,7 @@ namespace DCL.Places
                 dislikeToggleChanged: (place, value, card) => PlaceDislikeToggleChanged?.Invoke(place, value, card),
                 favoriteToggleChanged: (place, value, card) => PlaceFavoriteToggleChanged?.Invoke(place, value, card),
                 shareButtonClicked: OpenCardContextMenu,
-                infoButtonClicked: place => PlaceInfoButtonClicked?.Invoke(place),
+                infoButtonClicked: _ => { },
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),
                 deleteButtonClicked: _ => { });
 

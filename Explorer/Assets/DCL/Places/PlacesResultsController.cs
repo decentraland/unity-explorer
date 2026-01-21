@@ -17,7 +17,6 @@ using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Places
@@ -77,7 +76,6 @@ namespace DCL.Places
             view.PlaceJumpInButtonClicked += OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked += OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked += OnPlaceCopyLinkButtonClicked;
-            view.PlaceInfoButtonClicked += OnPlaceInfoButtonClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
@@ -96,7 +94,6 @@ namespace DCL.Places
             view.PlaceJumpInButtonClicked -= OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked -= OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked -= OnPlaceCopyLinkButtonClicked;
-            view.PlaceInfoButtonClicked -= OnPlaceInfoButtonClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
 
@@ -159,11 +156,6 @@ namespace DCL.Places
 
         private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
-
-        private void OnPlaceInfoButtonClicked(PlacesData.PlaceInfo placeInfo)
-        {
-            Debug.Log($"SANTI LOG -> Place Clicked: {placeInfo.title}");
-        }
 
         private void OnFiltersChanged(PlacesFilters filters)
         {
