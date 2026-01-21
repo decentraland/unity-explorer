@@ -362,6 +362,7 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:362"); // SPECIAL_DEBUG
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:365"); // SPECIAL_DEBUG_LINE_STATEMENT
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct, ShowVerification);
+                    await UniTask.SwitchToMainThread();
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:368"); // SPECIAL_DEBUG_LINE_STATEMENT
                     var identityValidationSpan = new SpanData
@@ -395,6 +396,7 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:395"); // SPECIAL_DEBUG
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:398"); // SPECIAL_DEBUG_LINE_STATEMENT
                         await FetchProfileAsync(ct);
+                        await UniTask.SwitchToMainThread();
 
 UnityEngine.Debug.Log("AuthenticationScreenController.cs:401"); // SPECIAL_DEBUG_LINE_STATEMENT
                         sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
