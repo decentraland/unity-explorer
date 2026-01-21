@@ -1,13 +1,7 @@
 ﻿using DCL.Diagnostics;
 using Sentry;
-using Sentry.Unity;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 using UnityEngine;
 
 namespace Utility
@@ -23,7 +17,6 @@ namespace Utility
             {
                 IsQuitting = true;
                 ReportHub.Log(LogType.Log, ReportCategory.ALWAYS, "Application is quitting");
-                SentrySdk.AddBreadcrumb("Application is quitting");
             }
 
             Application.quitting += SetQuitting;
@@ -32,16 +25,16 @@ namespace Utility
         // This code fixes the following situation: enter play mode, exit play
         // mode, run edit mode tests.
 #if UNITY_EDITOR
-        [InitializeOnLoadMethod]
+        [UnityEditor.InitializeOnLoadMethod]
         private static void ResetIsQuittingOnEnteredEditMode()
         {
-            EditorApplication.playModeStateChanged +=
+            UnityEditor.EditorApplication.playModeStateChanged +=
                 static stateChange =>
-                {
-                    if (stateChange ==
-                        PlayModeStateChange.EnteredEditMode)
-                        IsQuitting = false;
-                };
+            {
+                if (stateChange ==
+                    UnityEditor.PlayModeStateChange.EnteredEditMode)
+                    IsQuitting = false;
+            };
         }
 #endif
 
@@ -79,7 +72,15 @@ namespace Utility
             SafeDestroy(@object);
 
         /// <summary>
-        ///     Gets shared materials instead of materials if called when Application is not playing (from tests)
+        /// Flag to enable/disable using shared materials at runtime.
+        /// When enabled, GetSharedMaterials is used instead of GetMaterials to avoid creating material instances.
+        /// Set to false to revert to the old behavior where GetMaterials creates instance copies.
+        /// </summary>
+        public static bool USE_SHARED_MATERIALS_AT_RUNTIME = true;
+
+        /// <summary>
+        ///     Gets materials from the renderer. By default uses GetSharedMaterials to avoid creating material instances.
+        ///     When USE_SHARED_MATERIALS_AT_RUNTIME is false, uses GetMaterials which creates instance copies.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SafeGetMaterials(this Renderer renderer, List<Material> targetList)
@@ -91,7 +92,10 @@ namespace Utility
                 return;
             }
 #endif
-            renderer.GetMaterials(targetList);
+            if (USE_SHARED_MATERIALS_AT_RUNTIME)
+                renderer.GetSharedMaterials(targetList);
+            else
+                renderer.GetMaterials(targetList);
         }
     }
 }
