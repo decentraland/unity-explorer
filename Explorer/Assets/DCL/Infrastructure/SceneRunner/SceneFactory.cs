@@ -30,7 +30,6 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using DCL.Clipboard;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -303,7 +302,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
             // JavaScriptExecutionException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is JavaScriptExecutionException javascriptExecutionException)

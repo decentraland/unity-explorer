@@ -26,7 +26,6 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using Runtime.Wearables;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;

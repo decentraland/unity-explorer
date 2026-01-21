@@ -53,6 +53,9 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
+#if UNITY_WEBGL
+            throw new AutoLoginTokenNotFoundException();
+#else
             if (!File.Exists(TOKEN_PATH))
                 throw new AutoLoginTokenNotFoundException();
 
@@ -88,6 +91,7 @@ namespace DCL.Web3.Authenticators
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain);
+#endif
         }
 
         public UniTask LogoutAsync(CancellationToken cancellationToken) =>
