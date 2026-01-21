@@ -205,7 +205,12 @@ jobs:
           #!/bin/bash
 
           if [[ "${{ github.event.inputs.sentry_enabled || inputs.sentry_enabled }}" == "true" ]]; then
-            echo "environment=production" >> "$GITHUB_OUTPUT"
+            if [[ "${{ inputs.is_release_build }}" == "true" ]]; then
+              echo "environment=production" >> "$GITHUB_OUTPUT"
+            else
+              echo "environment=development" >> "$GITHUB_OUTPUT"
+            fi
+          
             echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
             echo "sentry_enabled=true" >> "$GITHUB_OUTPUT"
           else
@@ -344,7 +349,9 @@ jobs:
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
-          PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          # solves https://github.com/decentraland/unity-explorer/issues/6789
+          # use pre-defined sentry dsn, but in case it is not defined, use the development sentry project
+          PARAM_SENTRY_DSN: ${{ inputs.is_release_build == 'true' && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
@@ -563,7 +570,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_PROJECT: ${{ inputs.is_release_build == 'true' && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
         run: |
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \
