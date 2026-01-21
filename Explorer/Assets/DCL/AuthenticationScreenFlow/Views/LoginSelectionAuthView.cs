@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
-    public class LoginScreenSubView : MonoBehaviour
+    public class LoginSelectionAuthView : MonoBehaviour
     {
         public static readonly int IS_SHOWN_ANIM_HASH = Animator.StringToHash("IsShown");
 

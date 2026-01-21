@@ -19,11 +19,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             viewInstance.LoginSelectionAuthView.gameObject.SetActive(false);
 
-            viewInstance.DappVerificationAuthView.gameObject.SetActive(false);
-            viewInstance.OtpVerificationAuthView.gameObject.SetActive(false);
+            viewInstance.VerificationDappAuthView.gameObject.SetActive(false);
+            viewInstance.VerificationOTPAuthView.gameObject.SetActive(false);
 
-            viewInstance.ExistingAccountLobbyScreenSubView.gameObject.SetActive(false);
-            viewInstance.NewAccountLobbyScreenSubView.gameObject.SetActive(false);
+            viewInstance.LobbyForExistingAccountAuthView.gameObject.SetActive(false);
+            viewInstance.LobbyForNewAccountAuthView.gameObject.SetActive(false);
 
             viewInstance.ErrorPopupRoot.SetActive(false);
             viewInstance.RestrictedUserContainer.SetActive(false);

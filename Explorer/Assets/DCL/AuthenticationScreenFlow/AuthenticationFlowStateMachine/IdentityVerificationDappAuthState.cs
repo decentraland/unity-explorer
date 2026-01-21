@@ -12,13 +12,14 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
-        private readonly DappVerificationAuthView verificationView;
+        private readonly VerificationDappAuthView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
@@ -37,7 +38,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
             this.machine = machine;
-            verificationView = viewInstance.DappVerificationAuthView;
+            view = viewInstance.VerificationDappAuthView;
             this.controller = controller;
             this.currentState = currentState;
             this.web3Authenticator = web3Authenticator;
@@ -58,7 +59,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public override void Exit()
         {
             RestoreResolutionAndScreenMode();
-            verificationView.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
+            view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
         }
 
         private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)
@@ -80,7 +81,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 web3Authenticator.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(method, ct);
 
-                verificationView.Hide();
+                view.Hide(OUT);
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
             }
             catch (OperationCanceledException)
@@ -88,7 +89,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    verificationView.Hide(isBack: true);
+                    view.Hide(BACK);
 
                 machine.Enter<LoginSelectionAuthState>();
             }
@@ -98,7 +99,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    verificationView.Hide(isBack: true);
+                    view.Hide(BACK);
 
                 machine.Enter<LoginSelectionAuthState>();
             }
@@ -108,7 +109,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    verificationView.Hide(isBack: true);
+                    view.Hide(BACK);
 
                 machine.Enter<LoginSelectionAuthState>();
             }
@@ -118,7 +119,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    verificationView.Hide(isBack: true);
+                    view.Hide(BACK);
 
                 machine.Enter<LoginSelectionAuthState>();
             }
@@ -128,7 +129,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    verificationView.Hide(isBack: true);
+                    view.Hide(BACK);
 
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
@@ -159,8 +160,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.LoginSelectionAuthView.SlideOut();
 
             // Show Verification Screen
-            verificationView.Show(data.code, data.expiration);
-            verificationView.BackButton.onClick.AddListener(controller.CancelLoginProcess);
+            view.Show(data.code, data.expiration);
+            view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
         }
 
         private void RestoreResolutionAndScreenMode()

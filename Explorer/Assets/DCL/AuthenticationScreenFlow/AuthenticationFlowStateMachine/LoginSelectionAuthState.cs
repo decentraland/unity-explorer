@@ -12,7 +12,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
-        private readonly LoginScreenSubView view;
+        private readonly LoginSelectionAuthView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SplashScreen splashScreen;

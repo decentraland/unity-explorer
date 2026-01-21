@@ -14,7 +14,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly StringVariable? profileNameLabel;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
-        private readonly ExistingAccountLobbyScreenSubView subView;
+        private readonly LobbyForExistingAccountAuthView subView;
 
         public LobbyForExistingAccountAuthState(
             AuthenticationScreenView viewInstance,
@@ -22,7 +22,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ReactiveProperty<AuthenticationStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
-            subView = viewInstance.ExistingAccountLobbyScreenSubView;
+            subView = viewInstance.LobbyForExistingAccountAuthView;
             this.controller = controller;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;

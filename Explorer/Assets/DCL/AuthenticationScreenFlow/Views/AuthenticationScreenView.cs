@@ -10,18 +10,18 @@ namespace DCL.AuthenticationScreenFlow
     {
         [field: Header("SCREENS")]
         [field: SerializeField]
-        public LoginScreenSubView LoginSelectionAuthView { get; private set; } = null!;
+        public LoginSelectionAuthView LoginSelectionAuthView { get; private set; } = null!;
 
         [field: SerializeField]
-        public DappVerificationAuthView DappVerificationAuthView { get; private set; } = null!;
+        public VerificationDappAuthView VerificationDappAuthView { get; private set; } = null!;
 
         [field: SerializeField]
-        public OTPVerificationAuthView OtpVerificationAuthView { get; private set; } = null!;
+        public VerificationOTPAuthView VerificationOTPAuthView { get; private set; } = null!;
 
         [field: SerializeField]
-        public ExistingAccountLobbyScreenSubView ExistingAccountLobbyScreenSubView { get; private set; } = null!;
+        public LobbyForExistingAccountAuthView LobbyForExistingAccountAuthView { get; private set; } = null!;
         [field: SerializeField]
-        public NewAccountLobbyScreenSubView NewAccountLobbyScreenSubView { get; private set; } = null!;
+        public LobbyForNewAccountAuthView LobbyForNewAccountAuthView { get; private set; } = null!;
 
         [field: Header("ERROR POPUP")]
         [field: SerializeField]

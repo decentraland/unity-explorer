@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class OTPVerificationAuthView : ViewBase
+    public class VerificationOTPAuthView : ViewBase
     {
         [field: Space]
         [field: SerializeField]
@@ -46,9 +46,9 @@ namespace DCL.AuthenticationScreenFlow
             VerificationResultText.gameObject.SetActive(false); // Reset OTP result UI
         }
 
-        public void Hide(bool isBack = false)
+        public void Hide(int hideAnimHash)
         {
-            hideAnimHash = isBack ? UIAnimationHashes.BACK : UIAnimationHashes.OUT;
+            this.hideAnimHash = hideAnimHash; //isBack ? UIAnimationHashes.BACK : UIAnimationHashes.OUT;
             HideAsync(CancellationToken.None).Forget();
         }
 

@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -9,6 +8,7 @@ using MVC;
 using System;
 using System.Threading;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
@@ -19,7 +19,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly SentryTransactionManager sentryTransactionManager;
-        private readonly OTPVerificationAuthView view;
+        private readonly VerificationOTPAuthView view;
 
         public IdentityVerificationOtpAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -29,7 +29,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             IWeb3VerifiedAuthenticator web3Authenticator,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
-            view = viewInstance.OtpVerificationAuthView;
+            view = viewInstance.VerificationOTPAuthView;
 
             this.machine = machine;
             this.controller = controller;
@@ -97,14 +97,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 // awaits OTP code being entered
                 IWeb3Identity identity = await web3Authenticator.LoginPayloadedAsync(LoginMethod.EMAIL_OTP, email, ct);
 
-                view.Hide();
+                view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
             catch (OperationCanceledException)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
-                view.Hide(isBack: true);
+                view.Hide(BACK);
                 machine.Enter<LoginSelectionAuthState>();
             }
             catch (SignatureExpiredException e)
@@ -112,7 +112,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(isBack: true);
+                view.Hide(BACK);
                 machine.Enter<LoginSelectionAuthState>();
             }
             catch (Web3SignatureException e)
@@ -120,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(isBack: true);
+                view.Hide(BACK);
                 machine.Enter<LoginSelectionAuthState>();
             }
             catch (CodeVerificationException e)
@@ -128,7 +128,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(isBack: true);
+                view.Hide(BACK);
                 machine.Enter<LoginSelectionAuthState>();
             }
             catch (Exception e)
@@ -136,7 +136,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(isBack: true);
+                view.Hide(BACK);
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
         }

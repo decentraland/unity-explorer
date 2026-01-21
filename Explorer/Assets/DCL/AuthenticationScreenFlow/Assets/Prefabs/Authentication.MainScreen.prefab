@@ -6997,10 +6997,10 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 2814871423585080172}
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
   <LoginSelectionAuthView>k__BackingField: {fileID: 3626083524348347871}
-  <DappVerificationAuthView>k__BackingField: {fileID: 5988428590248281739}
-  <OtpVerificationAuthView>k__BackingField: {fileID: 1435686278016238798}
-  <ExistingAccountLobbyScreenSubView>k__BackingField: {fileID: 1710777244495217613}
-  <NewAccountLobbyScreenSubView>k__BackingField: {fileID: 3658734714106879794}
+  <VerificationDappAuthView>k__BackingField: {fileID: 5988428590248281739}
+  <VerificationOTPAuthView>k__BackingField: {fileID: 1435686278016238798}
+  <LobbyForExistingAccountAuthView>k__BackingField: {fileID: 1710777244495217613}
+  <LobbyForNewAccountAuthView>k__BackingField: {fileID: 3658734714106879794}
   <ErrorPopupRoot>k__BackingField: {fileID: 4110952997660909746}
   <ErrorPopupRetryButton>k__BackingField: {fileID: 5282751778771004027}
   <ErrorPopupExitButton>k__BackingField: {fileID: 5023013163994910719}

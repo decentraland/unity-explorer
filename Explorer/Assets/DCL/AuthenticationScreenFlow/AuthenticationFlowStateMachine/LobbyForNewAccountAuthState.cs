@@ -25,7 +25,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
-        private readonly NewAccountLobbyScreenSubView newAccountSubView;
+        private readonly LobbyForNewAccountAuthView lobbyForNewAccountSubView;
 
         private readonly IWearablesProvider wearablesProvider;
 
@@ -45,7 +45,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider) : base(viewInstance)
         {
-            newAccountSubView = viewInstance.NewAccountLobbyScreenSubView;
+            lobbyForNewAccountSubView = viewInstance.LobbyForNewAccountAuthView;
 
             this.controller = controller;
             this.currentState = currentState;
@@ -64,53 +64,53 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             InitializeAvatarAsync().Forget();
 
-            newAccountSubView.PrevRandomButton.interactable = false;
-            newAccountSubView.NextRandomButton.interactable = false;
+            lobbyForNewAccountSubView.PrevRandomButton.interactable = false;
+            lobbyForNewAccountSubView.NextRandomButton.interactable = false;
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
 
             newUserProfile = payload.profile;
 
-            newAccountSubView.gameObject.SetActive(true);
-            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.IN);
+            lobbyForNewAccountSubView.gameObject.SetActive(true);
+            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.IN);
 
-            newAccountSubView.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
+            lobbyForNewAccountSubView.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
 
-            newAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
-            newAccountSubView.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
-            newAccountSubView.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
-            newAccountSubView.NextRandomButton.onClick.AddListener(NextRandomAvatar);
+            lobbyForNewAccountSubView.FinalizeNewUserButton.onClick.AddListener(FinalizeNewUser);
+            lobbyForNewAccountSubView.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
+            lobbyForNewAccountSubView.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
+            lobbyForNewAccountSubView.NextRandomButton.onClick.AddListener(NextRandomAvatar);
 
             // Toggle listeners for terms agreement
-            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
-            newAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
+            lobbyForNewAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
+            lobbyForNewAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
 
-            newAccountSubView.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
-            newAccountSubView.TermsOfUse.onValueChanged.AddListener(OnToggleChanged);
+            lobbyForNewAccountSubView.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
+            lobbyForNewAccountSubView.TermsOfUse.onValueChanged.AddListener(OnToggleChanged);
 
             UpdateFinalizeButtonState();
         }
 
         public override void Exit()
         {
-            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.BACK);
-            newAccountSubView.NextRandomButton.interactable = false;
+            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.BACK);
+            lobbyForNewAccountSubView.NextRandomButton.interactable = false;
 
             characterPreviewController?.OnHide();
 
-            newAccountSubView.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
+            lobbyForNewAccountSubView.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
-            newAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
-            newAccountSubView.RandomizeButton.onClick.RemoveListener(OnRandomizeButtonPressed);
-            newAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
-            newAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
+            lobbyForNewAccountSubView.FinalizeNewUserButton.onClick.RemoveListener(FinalizeNewUser);
+            lobbyForNewAccountSubView.RandomizeButton.onClick.RemoveListener(OnRandomizeButtonPressed);
+            lobbyForNewAccountSubView.PrevRandomButton.onClick.RemoveListener(PrevRandomAvatar);
+            lobbyForNewAccountSubView.NextRandomButton.onClick.RemoveListener(NextRandomAvatar);
 
             // Toggle listeners for terms agreement
-            newAccountSubView.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
-            newAccountSubView.TermsOfUse.onValueChanged.RemoveListener(OnToggleChanged);
+            lobbyForNewAccountSubView.SubscribeToggle.onValueChanged.RemoveListener(OnToggleChanged);
+            lobbyForNewAccountSubView.TermsOfUse.onValueChanged.RemoveListener(OnToggleChanged);
 
-            newAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
-            newAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
+            lobbyForNewAccountSubView.SubscribeToggle.SetIsOnWithoutNotify(false);
+            lobbyForNewAccountSubView.TermsOfUse.SetIsOnWithoutNotify(false);
         }
 
         private async UniTask InitializeAvatarAsync()
@@ -191,7 +191,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
-                newUserProfile.Name = newAccountSubView.ProfileNameInputField.Text;
+                newUserProfile.Name = lobbyForNewAccountSubView.ProfileNameInputField.Text;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
                 JumpIntoWorld();
@@ -251,8 +251,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (viewInstance == null)
                 return;
 
-            newAccountSubView.PrevRandomButton.interactable = currentAvatarIndex > 0;
-            newAccountSubView.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
+            lobbyForNewAccountSubView.PrevRandomButton.interactable = currentAvatarIndex > 0;
+            lobbyForNewAccountSubView.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
         }
 
         private void OnToggleChanged(bool _) =>
@@ -262,10 +262,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             UpdateFinalizeButtonState();
 
         private void UpdateFinalizeButtonState() =>
-            newAccountSubView.FinalizeNewUserButton.interactable =
-                newAccountSubView.ProfileNameInputField.IsValidName &&
-                newAccountSubView.SubscribeToggle.isOn &&
-                newAccountSubView.TermsOfUse.isOn;
+            lobbyForNewAccountSubView.FinalizeNewUserButton.interactable =
+                lobbyForNewAccountSubView.ProfileNameInputField.IsValidName &&
+                lobbyForNewAccountSubView.SubscribeToggle.isOn &&
+                lobbyForNewAccountSubView.TermsOfUse.isOn;
 
         private Avatar CreateRandomAvatar()
         {
@@ -312,7 +312,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            newAccountSubView.Animator.SetTrigger(UIAnimationHashes.OUT);
+            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.OUT);
             AnimateAndAwaitAsync().Forget();
             return;
 

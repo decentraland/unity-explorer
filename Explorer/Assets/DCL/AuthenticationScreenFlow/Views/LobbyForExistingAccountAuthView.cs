@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator))]
-    public class ExistingAccountLobbyScreenSubView : MonoBehaviour
+    public class LobbyForExistingAccountAuthView : MonoBehaviour
     {
         [field: SerializeField]
         public Animator FinalizeAnimator { get; private set; } = null!;

@@ -14,7 +14,7 @@ using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class DappVerificationAuthView : ViewBase, IPointerClickHandler
+    public class VerificationDappAuthView : ViewBase, IPointerClickHandler
     {
         [field: Space]
         [field: SerializeField]
@@ -62,9 +62,9 @@ namespace DCL.AuthenticationScreenFlow
             ShowAsync(CancellationToken.None).Forget();
         }
 
-        public void Hide(bool isBack = false)
+        public void Hide(int hideAnimHash)
         {
-            hideAnimHash = isBack ? UIAnimationHashes.BACK : UIAnimationHashes.OUT;
+            this.hideAnimHash = hideAnimHash; //isBack ? UIAnimationHashes.BACK : UIAnimationHashes.OUT;
             HideAsync(CancellationToken.None).Forget();
         }
 

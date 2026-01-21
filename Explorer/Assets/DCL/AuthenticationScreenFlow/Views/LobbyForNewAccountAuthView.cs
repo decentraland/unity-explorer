@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class NewAccountLobbyScreenSubView : MonoBehaviour
+    public class LobbyForNewAccountAuthView : MonoBehaviour
     {
         [field: SerializeField]
         public NameInputFieldView ProfileNameInputField { get; private set; } = null!;
