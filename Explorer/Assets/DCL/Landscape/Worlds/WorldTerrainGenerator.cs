@@ -3,6 +3,7 @@ using DCL.Landscape.Settings;
 using DCL.Utilities;
 using System;
 using System.Collections.Generic;
+using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -100,7 +101,6 @@ namespace DCL.Landscape
                 OccupancyMapSize, OccupancyFloor, MaxHeight);
 
             Trees.Instantiate();
-
             if (landscapeData.RenderTrees)
                 Trees.Show();
             else

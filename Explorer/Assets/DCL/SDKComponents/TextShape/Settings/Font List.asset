@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   list:
   - font: 0
-    asset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  - font: 1
     asset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+  - font: 1
+    asset: {fileID: 11400000, guid: 3be0e13b483ae489483da71e2704df48, type: 2}
   - font: 2
-    asset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    asset: {fileID: 11400000, guid: e23fdc515c84a4be5b81b3e6104fe1a6, type: 2}
