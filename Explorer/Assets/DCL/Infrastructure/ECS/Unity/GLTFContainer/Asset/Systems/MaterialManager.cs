@@ -59,6 +59,8 @@ namespace DCL.Rendering.RenderSystem
 
         public void AddMaterial(Renderer renderer)
         {
+            if (renderer.material == null)
+                return;
             Material newMaterial = SRUV_Adjustment(renderer);
             uint matCRC = MaterialCRC.ComputeCustomMaterialCRC(newMaterial);
             if (materialDictionary.TryGetValue(matCRC, out Material _mat))
