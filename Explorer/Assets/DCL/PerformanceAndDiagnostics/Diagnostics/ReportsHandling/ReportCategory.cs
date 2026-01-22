@@ -356,5 +356,6 @@ namespace DCL.Diagnostics
         public const string MVC_STATE_MACHINE = nameof(MVC_STATE_MACHINE);
 
         public const string PLACES = nameof(PLACES);
+        public const string ASSET_PRE_LOAD = nameof(ASSET_PRE_LOAD);
     }
 }
