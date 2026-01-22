@@ -36,6 +36,9 @@ namespace DCL.Tests
             "Assets/DCL/Input/UnityInputSystem/DCLInput.cs"
         }; // cause it's autogen
 
+        private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs"
+        }; // cause it's autogen
 
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
@@ -108,6 +111,9 @@ namespace DCL.Tests
         [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
         public void VerifyShouldNotUseNativeWebSocket(string filePath)
         {
+            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseNativeWebSocket(fileContent, filePath);
         }

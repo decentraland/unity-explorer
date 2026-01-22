@@ -121,6 +121,10 @@ namespace Utility.Networking
             : this(new System.Net.WebSockets.WebSocketException(message))
         {}
 
+        public WebSocketException(WebSocketError error, string message) 
+            : this(new System.Net.WebSockets.WebSocketException((System.Net.WebSockets.WebSocketError) error, message))
+        {}
+
         public WebSocketError WebSocketErrorCode => (WebSocketError)inner.WebSocketErrorCode;
 
         public int ErrorCode => inner.ErrorCode;

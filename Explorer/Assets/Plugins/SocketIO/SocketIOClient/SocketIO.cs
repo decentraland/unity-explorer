@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.WebSockets;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using SocketIOClient.Extensions;
@@ -12,6 +11,7 @@ using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using SocketIOClient.UriConverters;
 using Utility.Multithreading;
+using Utility.Networking;
 
 #if DEBUG
 using System.Diagnostics;
