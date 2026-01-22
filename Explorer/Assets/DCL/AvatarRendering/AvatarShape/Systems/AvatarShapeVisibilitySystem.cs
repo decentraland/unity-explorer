@@ -32,14 +32,14 @@ namespace DCL.AvatarRendering.AvatarShape
         private SingleInstanceEntity camera;
         private GameObject? playerCamera;
 
-        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDitheringm, bool includeBannedUsersFromScene) : base(world)
+        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
         {
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.outlineFeature = outlineFeature.GetRendererFeature<RendererFeature_AvatarOutline>();
             planes = new Plane[6];
 
             this.startFadeDithering = startFadeDithering;
-            this.endFadeDithering = endFadeDitheringm;
+            this.endFadeDithering = endFadeDithering;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
