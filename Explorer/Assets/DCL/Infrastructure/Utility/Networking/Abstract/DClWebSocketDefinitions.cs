@@ -104,6 +104,11 @@ namespace Utility.Networking
         private System.Net.WebSockets.WebSocketException inner;
 //#endif
 
+        public WebSocketException()
+        {
+            this.inner = new System.Net.WebSockets.WebSocketException();
+        }
+
         public WebSocketException(System.Net.WebSockets.WebSocketException inner)
         {
             this.inner = inner;

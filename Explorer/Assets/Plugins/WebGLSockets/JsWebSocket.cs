@@ -5,6 +5,7 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using Cysharp.Threading.Tasks;
 using Utility.Networking;
+using RichTypes;
 
 namespace DCL.WebSockets.JS 
 {
@@ -29,11 +30,20 @@ namespace DCL.WebSockets.JS
 
         private readonly int handleId;
 
-        public WebSocketState State => (WebSocketState) WS_State(handleId);
+        public WebSocketState State 
+        {
+            get
+            {
+                int state = WS_State(handleId);
+                if (state == -1) throw new Exception($"State does not exist on js side for handle: {handleId}");
+                return (WebSocketState) state;
+            }
+        }
 
         public WebGLWebSocket()
         {
             handleId = WS_New();
+            // TODO put debug statements under LOG_JS_WEB_SOCKETS
 UnityEngine.Debug.Log($"JsWebSocket.cs: Ctor, handleId: {handleId}");
         }
 
@@ -152,9 +162,21 @@ UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose, handleId: {handleId}");
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync, handleId: {handleId}");
+            UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync, handleId: {handleId}");
+            Result result = await ConnectAsyncInternal(uri, cancellationToken);
+            if (result.Success)
+                UnityEngine.Debug.Log($"JsWebSocket.cs: Connect Success, handleId: {handleId}");
+            else
+            {
+                UnityEngine.Debug.LogError($"JsWebSocket.cs: Connect Error, handleId: {handleId}, message: {result.ErrorMessage}, uri {uri}");
+                throw new WebSocketException();
+            }
+        }
+
+        private async UniTask<Result> ConnectAsyncInternal(Uri uri, CancellationToken cancellationToken)
+        {
             if (uri == null)
-                throw new ArgumentNullException(nameof(uri));
+                return Result.ErrorResult($"Invalid argument: uri"); //throw new ArgumentNullException(nameof(uri));
 
             // Trigger JS-side connect (WebSocket ctor)
             WS_Connect(handleId, uri.AbsoluteUri);
@@ -162,18 +184,20 @@ UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync, handleId: {handleId}");
             // Wait until OPEN / terminal state
             while (true)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                if (cancellationToken.IsCancellationRequested)
+                    return Result.ErrorResult($"WebSocket connect cancelled. State={State}");
 
                 var state = (WebSocketState)WS_State(handleId);
 
                 switch (state)
                 {
                     case WebSocketState.Open:
-                        return;
+                        return Result.SuccessResult();
 
                     case WebSocketState.Closed:
                     case WebSocketState.Aborted:
-                        throw new InvalidOperationException($"WebSocket connect failed. State={state}");
+                        return Result.ErrorResult($"WebSocket connect failed. State={state}");
+                        //throw new InvalidOperationException();
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
