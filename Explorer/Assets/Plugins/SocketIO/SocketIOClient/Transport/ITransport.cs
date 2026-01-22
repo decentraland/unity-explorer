@@ -19,7 +19,5 @@ namespace SocketIOClient.Transport
         UniTask DisconnectAsync(CancellationToken cancellationToken);
 
         void AddHeader(string key, string val);
-
-        void SetProxy(IWebProxy proxy);
     }
 }

@@ -127,40 +127,56 @@ namespace SocketIOClient.Transport.WebSockets
         {
         }
 
-        public WebSocketState State => throw new Exception("State is not supported");
+        public WebSocketState State
+        {
+            get
+            {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:134"); // SPECIAL_DEBUG_LINE_STATEMENT
+            throw new Exception("State is not supported");
+            }
+        }
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
+//THIS
+
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:141"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("ConnectAsync is not supported");
         }
 
         public async UniTask DisconnectAsync(CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:147"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("DisconnectAsync is not supported");
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:153"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SendAsync is not supported");
         }
 
         public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:159"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("ReceiveAsync is not supported");
         }
 
         public void AddHeader(string key, string val)
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:165"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("AddHeader is not supported");
         }
 
         public void SetProxy(IWebProxy proxy)
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:171"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SetProxy is not supported");
         }
 
         public void Dispose()
         {
+UnityEngine.Debug.Log("DefaultClientWebSocket.cs:177"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
     }
 #endif

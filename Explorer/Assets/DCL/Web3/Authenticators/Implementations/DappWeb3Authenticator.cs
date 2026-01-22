@@ -17,10 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
@@ -57,7 +57,7 @@ namespace DCL.Web3.Authenticators
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
-        private ClientWebSocket? rpcWebSocket;
+        private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
         private VerificationWeb3Delegate? signatureVerificationCallback;
@@ -344,7 +344,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STA
             urlBuilder.AppendDomain(rpcServerUrl);
             urlBuilder.AppendPath(new URLPath(network));
 
-            rpcWebSocket = new ClientWebSocket();
+            rpcWebSocket = new DCLWebSocket();
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
@@ -491,7 +491,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STA
                 return response.GetValue<T>();
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
-            catch (WebSocketException e) { throw new Web3SignatureException("An error occurred while requesting signature: unable to complete the operation due to a WebSocket issue", e); }
+            catch (System.Net.WebSockets.WebSocketException e) { throw new Web3SignatureException("An error occurred while requesting signature: unable to complete the operation due to a WebSocket issue", e); }
         }
 
         private async UniTask<SignatureIdResponse> RequestEthMethodWithSignatureAsync(
@@ -557,14 +557,14 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STA
 
         private void OnWebSocketError(object sender, string error)
         {
-            signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
-            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
+            signatureOutcomeTask?.TrySetException(new System.Net.WebSockets.WebSocketException(System.Net.WebSockets.WebSocketError.Faulted, error));
+            codeVerificationTask?.TrySetException(new System.Net.WebSockets.WebSocketException(System.Net.WebSockets.WebSocketError.Faulted, error));
         }
 
         private void OnWebSocketDisconnected(object sender, string reason)
         {
-            signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
-            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
+            signatureOutcomeTask?.TrySetException(new System.Net.WebSockets.WebSocketException(System.Net.WebSockets.WebSocketError.ConnectionClosedPrematurely, reason));
+            codeVerificationTask?.TrySetException(new System.Net.WebSockets.WebSocketException(System.Net.WebSockets.WebSocketError.ConnectionClosedPrematurely, reason));
         }
 
         private bool IsReadOnly(EthApiRequest request)
@@ -612,7 +612,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STA
                 }
             }
             catch (TimeoutException e) { throw new CodeVerificationException($"Code verification expired: {expiration}", e); }
-            catch (WebSocketException e) { throw new CodeVerificationException("An error occurred while verifying the code: unable to complete the operation due to a WebSocket issue", e); }
+            catch (System.Net.WebSockets.WebSocketException e) { throw new CodeVerificationException("An error occurred while verifying the code: unable to complete the operation due to a WebSocket issue", e); }
         }
     }
 }

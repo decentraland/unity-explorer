@@ -63,21 +63,25 @@ namespace SocketIOClient.Transport.Http
     {
         public void AddHeader(string name, string value)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:66"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("AddHeader is not supported");
         }
 
         public IEnumerable<string> GetHeaderValues(string name)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:72"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("GetHeaderValues is not supported");
         }
 
         public void SetProxy(IWebProxy proxy)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:78"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SetProxy is not supported");
         }
 
         public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:84"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SetProxy is not supported");
         }
 
@@ -85,16 +89,19 @@ namespace SocketIOClient.Transport.Http
             HttpContent content,
             CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:92"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SetProxy is not supported");
         }
 
         public UniTask<string> GetStringAsync(Uri requestUri)
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:98"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception("SetProxy is not supported");
         }
 
         public void Dispose()
         {
+UnityEngine.Debug.Log("DefaultHttpClient.cs:104"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
     }
 #endif

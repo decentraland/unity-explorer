@@ -105,6 +105,13 @@ namespace DCL.Tests
             ShouldNotUseSystemTask(fileContent, filePath);
         }
 
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
+        public void VerifyShouldNotUseNativeWebSocket(string filePath)
+        {
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseNativeWebSocket(fileContent, filePath);
+        }
+
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
         {
             // Act
@@ -148,6 +155,35 @@ namespace DCL.Tests
             // Assert
             Assert.IsTrue(violations.Count == 0,
                 $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+        }
+
+        // To support WebGL compatability
+        private static void ShouldNotUseNativeWebSocket(string fileContent, string filePath)
+        {
+            //if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
+             //   return;
+
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                string pattern = "System.Net.WebSockets";
+                if (line.Contains(pattern))
+                        //&& line.Contains(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG) == false)
+                {
+                    violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                }
+            }
+
+            Assert.IsTrue(
+                    violations.Count == 0,
+                    violations.Count == 0 
+                    ? string.Empty 
+                    : $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLWebSocket instead"
+                    );
         }
 
         // To support WebGL compatability

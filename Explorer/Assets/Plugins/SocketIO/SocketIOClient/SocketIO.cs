@@ -149,8 +149,6 @@ namespace SocketIOClient
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
 
-            throw new NotImplementedException("Prepare HTTP listener and WS for WebGL");
-
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),
@@ -196,8 +194,6 @@ namespace SocketIOClient
 
             _resources.Add(Transport);
             Transport.Namespace = Namespace;
-
-            if (Options.Proxy != null) { Transport.SetProxy(Options.Proxy); }
 
             Transport.OnReceived = OnMessageReceived;
             Transport.OnError = OnErrorReceived;

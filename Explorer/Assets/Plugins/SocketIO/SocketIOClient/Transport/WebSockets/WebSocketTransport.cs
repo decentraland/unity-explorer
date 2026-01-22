@@ -211,7 +211,7 @@ namespace SocketIOClient.Transport.WebSockets
         {
             if (_dirty) { throw new InvalidOperationException("Unable to set proxy after connecting"); }
 
-            _ws.SetProxy(proxy);
+            //_ws.SetProxy(proxy);
         }
 
         public override void Dispose()

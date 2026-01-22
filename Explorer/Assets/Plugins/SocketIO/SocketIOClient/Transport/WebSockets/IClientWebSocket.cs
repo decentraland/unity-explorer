@@ -19,6 +19,5 @@ namespace SocketIOClient.Transport.WebSockets
 
         void AddHeader(string key, string val);
 
-        void SetProxy(IWebProxy proxy);
     }
 }
