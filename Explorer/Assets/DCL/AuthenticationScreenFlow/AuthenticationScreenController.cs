@@ -150,16 +150,19 @@ namespace DCL.AuthenticationScreenFlow
 
             // States
             fsm = new MVCStateMachine<AuthStateBase>();
+
             fsm.AddStates(
                 new InitAuthState(viewInstance, buildData.InstallSource),
+
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+
                 new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, splashScreen, selfProfile),
-                new LobbyForExistingAccountAuthState(viewInstance, this, CurrentState, characterPreviewController),
-                new IdentityVerificationOtpAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
                 new ProfileFetchingOTPAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
-                new LobbyForNewAccountAuthState(viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
-                );
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
+                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController),
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
+            );
 
             fsm.Enter<InitAuthState>();
         }
@@ -236,16 +239,13 @@ namespace DCL.AuthenticationScreenFlow
             return loginCancellationTokenSource.Token;
         }
 
-        private void ChangeAccount()
+        public void ChangeAccount()
         {
-            characterPreviewController?.OnHide();
-
             ChangeAccountAsync(GetRestartedLoginToken()).Forget();
             return;
 
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance!.LobbyForExistingAccountAuthView.Hide(UIAnimationHashes.BACK);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 

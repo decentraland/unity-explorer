@@ -4,6 +4,8 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.Utilities;
 using MVC;
+using System;
+using System.Threading;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
@@ -12,13 +14,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
     {
         private readonly CharacterPreviewView characterPreviewView;
+        private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly StringVariable? profileNameLabel;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly LobbyForExistingAccountAuthView view;
 
-        public LobbyForExistingAccountAuthState(
+        public LobbyForExistingAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
@@ -26,10 +29,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             view = viewInstance.LobbyForExistingAccountAuthView;
             characterPreviewView = viewInstance.CharacterPreviewView;
+            this.fsm = fsm;
             this.controller = controller;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
-
         }
 
         public void Enter((Profile profile, bool isCached) payload)
@@ -45,7 +48,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
-            view.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
+            // Listeners
+            view.JumpIntoWorldButton.onClick.AddListener(OnJumpIntoWorld);
+            view.DiffAccountButton.onClick.AddListener(OnDiffAccountButtonClicked);
             return;
 
             bool IsNewUser() =>
@@ -57,13 +62,23 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewView.gameObject.SetActive(false);
             characterPreviewController?.OnHide();
 
-            view.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);
+            // Listeners
+            view.JumpIntoWorldButton.onClick.RemoveAllListeners();
+            view.DiffAccountButton.onClick.RemoveAllListeners();
+            ;
         }
 
-        private void JumpIntoWorld()
+        private void OnDiffAccountButtonClicked()
+        {
+            view.Hide(UIAnimationHashes.BACK);
+            controller.ChangeAccount();
+        }
+
+        private void OnJumpIntoWorld()
         {
             view!.JumpIntoWorldButton.interactable = false;
             view.Hide(UIAnimationHashes.OUT);
+            fsm.Enter<InitAuthState>();
 
             AnimateAndAwaitAsync().Forget();
             return;

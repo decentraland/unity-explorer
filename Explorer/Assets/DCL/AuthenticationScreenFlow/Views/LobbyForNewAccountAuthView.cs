@@ -15,7 +15,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public NameInputFieldView ProfileNameInputField { get; private set; } = null!;
 
-        [field: Space]
         [field: SerializeField]
         public Button BackButton { get; private set; } = null!;
 

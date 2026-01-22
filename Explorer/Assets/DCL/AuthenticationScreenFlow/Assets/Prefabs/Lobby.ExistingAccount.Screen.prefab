@@ -595,7 +595,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8909398026496194027
 RectTransform:
   m_ObjectHideFlags: 0
@@ -669,11 +669,11 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 0}
   <raycaster>k__BackingField: {fileID: 0}
   <JumpIntoWorldButton>k__BackingField: {fileID: 507792000685911311}
+  <DiffAccountButton>k__BackingField: {fileID: 4905143614678998315}
   animator: {fileID: 5492435077365089425}
   canvasGroup: {fileID: 4089054725605304864}
   title: {fileID: 4293246040486119300}
   description: {fileID: 9012452384836578987}
-  diffAccountButton: {fileID: 5543690121828655755}
 --- !u!1 &4153884615134422676
 GameObject:
   m_ObjectHideFlags: 0

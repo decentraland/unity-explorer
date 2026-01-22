@@ -6,6 +6,7 @@ using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -36,8 +37,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
+        private bool isFirstRun = true;
+
         public void Enter((PopupType type, int animHash) payload)
         {
+            Debug.Log($"VVV {payload.animHash}");
+
             switch (payload.type)
             {
                 case PopupType.NONE: break;
@@ -50,8 +55,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
             }
 
-            if (machine.PreviousState is InitAuthState)
+            if (isFirstRun)
+            {
+                isFirstRun = false;
                 splashScreen.FadeOutAndHide();
+            }
 
             currentState.Value = AuthenticationStatus.Login;
             view.Show(payload.animHash);
@@ -113,7 +121,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.Hide();
 
-            machine.Enter<IdentityVerificationOtpAuthState, (string, CancellationToken)>(
+            machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
                 payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
 

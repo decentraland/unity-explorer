@@ -12,7 +12,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityVerificationOtpAuthState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
+    public class IdentityVerificationOTPAuthState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -21,7 +21,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
-        public IdentityVerificationOtpAuthState(
+        public IdentityVerificationOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,

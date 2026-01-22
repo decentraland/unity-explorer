@@ -11,19 +11,20 @@ namespace DCL.AuthenticationScreenFlow
     [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class LoginSelectionAuthView : ViewBase
     {
-        [field: Header("OTP")]
+        [field: Space]
+        [field: SerializeField]
+        public Button CancelLoginButton { get; private set; } = null!;
+
+        [field: Header("PRIMARY LOGIN")]
         [field: SerializeField]
         public EmailInputFieldView EmailInputField { get; private set; } = null!;
 
-        [field: Header("SECONDARY")]
+        [field: Header("SECONDARY LOGINS")]
         [field: SerializeField]
         public Button MetamaskLoginButton { get; private set; } = null!;
 
         [field: SerializeField]
         public Button GoogleLoginButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button CancelLoginButton { get; private set; } = null!;
 
         [field: Header("OTHER OPTIONS")]
         [field: SerializeField]
@@ -58,11 +59,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Show(int animHash)
         {
-            if (animHash != -1)
-            {
-                showAnimHash = animHash;
-                ShowAsync(CancellationToken.None).Forget();
-            }
+            showAnimHash = animHash;
+            ShowAsync(CancellationToken.None).Forget();
 
             mainElementsPanel.SetActive(true);
             loadingSpinner.SetActive(false);

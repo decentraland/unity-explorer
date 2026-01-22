@@ -16,6 +16,8 @@ namespace DCL.AuthenticationScreenFlow
         [field: Space]
         [field: SerializeField]
         public Button JumpIntoWorldButton { get; private set; } = null!;
+        [field: SerializeField]
+        public Button DiffAccountButton { get; private set; } = null!;
 
         [Space]
         [SerializeField] private Animator animator;
@@ -24,7 +26,6 @@ namespace DCL.AuthenticationScreenFlow
         [Space]
         [SerializeField] private LocalizeStringEvent title;
         [SerializeField] private GameObject description;
-        [SerializeField] private GameObject diffAccountButton;
 
         private StringVariable profileNameLabel => profileNameLabelField ??= (StringVariable)title.StringReference["back_profileName"];
 
@@ -36,7 +37,7 @@ namespace DCL.AuthenticationScreenFlow
             title.gameObject.SetActive(true);
             description.SetActive(true);
             JumpIntoWorldButton.gameObject.SetActive(true);
-            diffAccountButton.SetActive(true);
+            DiffAccountButton.gameObject.SetActive(true);
         }
 
         public void Show(string profileName)
