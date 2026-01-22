@@ -672,8 +672,13 @@ mergeInto(LibraryManager.library, {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
         const objectIdStr = UTF8ToString(objectId);
+        console.log('[JSContext_AddHostObject] contextId:', contextIdStr, 'name:', nameStr);
         const context = window.__dclJSContexts[contextIdStr];
-        if (!context) return 0;
+        if (!context) {
+            console.error('[JSContext_AddHostObject] Context not found!');
+            return 0;
+        }
+        console.log('[JSContext_AddHostObject] context.global before add, has name?:', nameStr in context.global);
         
         context.hostObjects[objectIdStr] = nameStr;
         
@@ -797,18 +802,25 @@ mergeInto(LibraryManager.library, {
         };
         
         // Helper function to deserialize C# result with special type handling
+        // Note: contextIdStr is captured from outer closure in JSContext_AddHostObject
         const deserializeResult = function(resultStr, context) {
+            console.log('[deserializeResult] contextId:', contextIdStr, 'Input resultStr:', typeof resultStr, resultStr ? resultStr.substring(0, 200) : resultStr);
+            console.log('[deserializeResult] Context objectInstances keys:', Object.keys(context.objectInstances));
+            
             if (!resultStr || resultStr === 'null') {
+                console.log('[deserializeResult] Returning null (empty or null string)');
                 return null;
             }
             
             try {
                 const parsed = JSON.parse(resultStr);
+                console.log('[deserializeResult] Parsed type:', typeof parsed, Array.isArray(parsed) ? 'array' : '');
                 
-                // Handle special types
+                // Handle special types (objects with markers)
                 if (parsed && typeof parsed === 'object') {
                     // ByteArray type - convert Base64 to Uint8Array
                     if (parsed.__type === 'ByteArray') {
+                        console.log('[deserializeResult] Returning ByteArray');
                         if (parsed.isEmpty) {
                             return new Uint8Array(0);
                         }
@@ -823,7 +835,9 @@ mergeInto(LibraryManager.library, {
                     
                     // Object reference - look up in context
                     if (parsed.__objectRef) {
-                        return context.objectInstances[parsed.__objectRef] || parsed;
+                        const obj = context.objectInstances[parsed.__objectRef];
+                        console.log('[deserializeResult] Returning objectRef:', parsed.__objectRef, 'found:', !!obj);
+                        return obj || parsed;
                     }
                     
                     // Error response
@@ -831,11 +845,19 @@ mergeInto(LibraryManager.library, {
                         console.warn('[JSContext] C# method returned error:', parsed.error);
                         return null;
                     }
+                    
+                    // Plain object without special markers - return unparsed string
+                    // so the caller (SDK) can parse it if needed
+                    console.log('[deserializeResult] Plain object, returning unparsed string');
+                    return resultStr;
                 }
                 
+                // Primitives (string, number, boolean) - return parsed value
+                console.log('[deserializeResult] Returning primitive:', typeof parsed);
                 return parsed;
             } catch (e) {
                 // If JSON parse fails, return the raw string
+                console.log('[deserializeResult] JSON parse failed, returning raw string:', e.message);
                 return resultStr;
             }
         };
@@ -866,28 +888,20 @@ mergeInto(LibraryManager.library, {
                                     return null;
                                 }
                                 
-                                // Evaluate the module with globals exposed as local variables
-                                // This allows modules to access UnityEngineApi, etc. directly
+                                // Evaluate the module - globals are accessed via globalThis
+                                // We don't create local variable assignments to avoid caching API stubs
                                 const globalObj = context.global;
-                                const globalKeys = Object.keys(globalObj);
-                                const globalAssignments = globalKeys.map(key => {
-                                    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
-                                        return `var ${key} = __globalThis['${key.replace(/'/g, "\\'")}'];`;
-                                    }
-                                    return '';
-                                }).filter(a => a.length > 0).join('\n');
                                 
-                                // Create evaluation function with globals exposed
-                                const evalCode = globalAssignments + '\nreturn ' + compiledData.source;
-                                const evalFunc = new Function('__globalThis', '__require', evalCode);
+                                // Create evaluation function - code should access globals via globalThis
+                                const evalCode = 'return ' + compiledData.source;
+                                const evalFunc = new Function('globalThis', '__require', evalCode);
                                 
                                 const internalRequire = function(innerModuleName) {
                                     const innerScriptId = context.modules[innerModuleName];
                                     const innerData = innerScriptId ? context.compiledScripts[innerScriptId] : null;
                                     if (innerData) {
-                                        // Recursively evaluate with globals
-                                        const innerEvalCode = globalAssignments + '\nreturn ' + innerData.source;
-                                        const innerEvalFunc = new Function('__globalThis', '__require', innerEvalCode);
+                                        const innerEvalCode = 'return ' + innerData.source;
+                                        const innerEvalFunc = new Function('globalThis', '__require', innerEvalCode);
                                         return innerEvalFunc(globalObj, internalRequire);
                                     }
                                     return {};
@@ -905,7 +919,9 @@ mergeInto(LibraryManager.library, {
                         // Skip for __resetableSource which has special void-return handling below
                         if (hostObjectName !== '__resetableSource') {
                             // Call the C# method and get the return value
+                            console.log('[HostObject] Calling:', hostObjectName + '.' + methodName);
                             const result = invokeHostObjectCallbackWithReturn(methodName, args);
+                            console.log('[HostObject] Result:', typeof result, result);
                             return result;
                         }
                         
@@ -945,6 +961,7 @@ mergeInto(LibraryManager.library, {
         });
         
         context.global[nameStr] = hostObjectProxy;
+        console.log('[JSContext_AddHostObject] Added to context.global, verify:', nameStr in context.global, typeof context.global[nameStr]);
         return 1;
     },
     
@@ -1019,8 +1036,13 @@ mergeInto(LibraryManager.library, {
     JSContext_StoreObject: function(contextId, expression, objectIdPtr, objectIdSize) {
         const contextIdStr = UTF8ToString(contextId);
         const exprStr = UTF8ToString(expression);
+        console.log('[JSContext_StoreObject] contextId:', contextIdStr);
+        console.log('[JSContext_StoreObject] expression (first 500 chars):', exprStr.substring(0, 500));
         const context = window.__dclJSContexts[contextIdStr];
-        if (!context) return 0;
+        if (!context) {
+            console.error('[JSContext_StoreObject] Context not found for:', contextIdStr);
+            return 0;
+        }
         
         try {
             // Create variable declarations for all object instances so they can be referenced in the expression
@@ -1034,10 +1056,25 @@ mergeInto(LibraryManager.library, {
             }).filter(d => d.length > 0).join('\n');
             
             const wrappedExpr = objectInstanceDeclarations + '\nreturn ' + exprStr;
-            const func = new Function('globalThis', '__objectInstances', wrappedExpr);
-            const obj = func(context.global, context.objectInstances);
+            console.log('[JSContext_StoreObject] wrappedExpr (first 600 chars):', wrappedExpr.substring(0, 600));
+            
+            // Check for promise resolvers specifically
+            const allKeys = Object.keys(context.global);
+            const resolverKeys = allKeys.filter(k => k.startsWith('__promiseResolver'));
+            console.log('[JSContext_StoreObject] context.global total keys:', allKeys.length);
+            console.log('[JSContext_StoreObject] Resolver keys found:', resolverKeys);
+            
+            // Also check if any Unity APIs are registered
+            const unityKeys = allKeys.filter(k => k.startsWith('Unity') || k.startsWith('__'));
+            console.log('[JSContext_StoreObject] Unity/internal keys:', unityKeys);
+            
+            const func = new Function('globalThis', '__objectInstances', 'console', wrappedExpr);
+            console.log('[JSContext_StoreObject] Function created successfully');
+            const obj = func(context.global, context.objectInstances, console);
+            console.log('[JSContext_StoreObject] Function executed, result:', obj, 'type:', typeof obj);
             const objectId = '__obj_' + (++context.objectIdCounter);
             context.objectInstances[objectId] = obj;
+            console.log('[JSContext_StoreObject] Stored object:', objectId, 'type:', typeof obj, 'isPromise:', obj instanceof Promise);
             const len = lengthBytesUTF8(objectId) + 1;
             if (objectIdSize < len) {
                 return -len;
@@ -1046,6 +1083,7 @@ mergeInto(LibraryManager.library, {
             return len - 1;
         } catch (e) {
             console.error('JSContext_StoreObject error:', e);
+            console.error('JSContext_StoreObject stack:', e.stack);
             return 0;
         }
     },

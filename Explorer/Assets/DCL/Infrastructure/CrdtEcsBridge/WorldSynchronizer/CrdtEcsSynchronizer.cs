@@ -1,4 +1,4 @@
-﻿using Arch.Buffer;
+using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -81,7 +81,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
             }
 
             syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
+#if !UNITY_WEBGL
             semaphore.Release();
+#endif
         }
     }
 }

@@ -1,13 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using AOT;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace SceneRuntime.WebClient
@@ -80,7 +82,8 @@ namespace SceneRuntime.WebClient
         private static MethodInfo? FindMethod(Type type, string methodName, int argCount)
         {
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            MethodInfo? bestMatch = null;
+            MethodInfo? exactMatch = null;
+            MethodInfo? zeroParamFallback = null;
 
             foreach (var method in methods)
             {
@@ -89,16 +92,32 @@ namespace SceneRuntime.WebClient
 
                 var parameters = method.GetParameters();
 
-                // Exact match on parameter count
+                // Exact match on parameter count - return immediately
                 if (parameters.Length == argCount)
                     return method;
 
-                // If no exact match yet, keep first matching method name as fallback
-                if (bestMatch == null)
-                    bestMatch = method;
+                // Keep zero-param method as fallback only if we're looking for zero args
+                // This handles cases where JS passes empty array but method has no params
+                if (parameters.Length == 0 && zeroParamFallback == null)
+                    zeroParamFallback = method;
+
+                // Keep first exact match by name
+                if (exactMatch == null)
+                    exactMatch = method;
             }
 
-            return bestMatch;
+            // Only return fallback if arg count is 0 and we have a zero-param method
+            if (argCount == 0 && zeroParamFallback != null)
+                return zeroParamFallback;
+
+            // If we have a method by name but wrong param count, log and return it
+            // The caller will get a more helpful error
+            if (exactMatch != null)
+            {
+                Debug.LogWarning($"[WebClientJavaScriptEngine] Method {methodName} found but param count mismatch. Expected: {exactMatch.GetParameters().Length}, Got: {argCount}");
+            }
+
+            return exactMatch;
         }
 
         /// <summary>
@@ -213,31 +232,66 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static object?[]? ParseAndConvertArguments(string argsJson, ParameterInfo[] parameters)
         {
-            if (string.IsNullOrEmpty(argsJson) || argsJson == "[]" || parameters.Length == 0)
-                return parameters.Length == 0 ? null : new object?[parameters.Length];
+            // No parameters expected - return null (not empty array) for proper invocation
+            if (parameters.Length == 0)
+                return null;
+
+            // Empty args but parameters expected - return array with default values
+            if (string.IsNullOrEmpty(argsJson) || argsJson == "[]")
+            {
+                var defaultArgs = new object?[parameters.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var paramType = parameters[i].ParameterType;
+                    defaultArgs[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
+                }
+                return defaultArgs;
+            }
 
             try
             {
                 var jsonArray = JArray.Parse(argsJson);
                 var args = new object?[parameters.Length];
 
-                for (var i = 0; i < parameters.Length && i < jsonArray.Count; i++)
+                for (var i = 0; i < parameters.Length; i++)
                 {
                     ParameterInfo param = parameters[i];
-                    JToken? jsonValue = jsonArray[i];
 
-                    if (jsonValue == null || jsonValue.Type == JTokenType.Null) { args[i] = null; }
-                    else if (jsonValue is JObject jObj && jObj.TryGetValue("__type", out JToken? typeToken) && typeToken.Value<string>() == "ByteArray")
+                    // If we have a JSON value for this parameter
+                    if (i < jsonArray.Count)
                     {
-                        // Handle ByteArray type marker - convert Base64 to byte array wrapper
-                        string base64Data = jObj.Value<string>("data") ?? "";
-                        byte[] bytes = string.IsNullOrEmpty(base64Data) ? Array.Empty<byte>() : Convert.FromBase64String(base64Data);
-                        args[i] = new WebClientByteArrayWrapper(bytes);
+                        JToken? jsonValue = jsonArray[i];
+
+                        if (jsonValue == null || jsonValue.Type == JTokenType.Null)
+                        {
+                            args[i] = null;
+                        }
+                        else if (jsonValue is JObject jObj && jObj.TryGetValue("__type", out JToken? typeToken) && typeToken.Value<string>() == "ByteArray")
+                        {
+                            // Handle ByteArray type marker - convert Base64 to byte array wrapper
+                            string base64Data = jObj.Value<string>("data") ?? "";
+                            byte[] bytes = string.IsNullOrEmpty(base64Data) ? Array.Empty<byte>() : Convert.FromBase64String(base64Data);
+                            args[i] = new WebClientByteArrayWrapper(bytes);
+                        }
+                        else
+                        {
+                            // Special handling for IList<object> - JSON.NET can't instantiate interfaces
+                            if (param.ParameterType == typeof(IList<object>) && jsonValue is JArray jArr)
+                            {
+                                args[i] = jArr.ToObject<List<object>>();
+                            }
+                            else
+                            {
+                                // Convert the JSON value to the expected parameter type
+                                args[i] = jsonValue.ToObject(param.ParameterType);
+                            }
+                        }
                     }
                     else
                     {
-                        // Convert the JSON value to the expected parameter type
-                        args[i] = jsonValue.ToObject(param.ParameterType);
+                        // No JSON value for this parameter - use default
+                        var paramType = param.ParameterType;
+                        args[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
                     }
                 }
 
@@ -245,8 +299,15 @@ namespace SceneRuntime.WebClient
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[WebClientJavaScriptEngine] Error parsing arguments: {ex.Message}");
-                return null;
+                Debug.LogWarning($"[WebClientJavaScriptEngine] Error parsing arguments: {ex.Message}\nArgsJson: {argsJson}\nParameters: {string.Join(", ", parameters.Select(p => p.ParameterType.Name))}\nStack: {ex.StackTrace}");
+                // Return array with defaults rather than null to avoid invoke errors
+                var fallbackArgs = new object?[parameters.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var paramType = parameters[i].ParameterType;
+                    fallbackArgs[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
+                }
+                return fallbackArgs;
             }
         }
 
@@ -255,12 +316,15 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static string SerializeResult(object? result)
         {
+            Debug.Log($"[SerializeResult] Input type: {result?.GetType().Name ?? "null"}");
+
             if (result == null)
                 return "null";
 
             // Handle PoolableByteArray - serialize as Base64 with type marker
             if (result is PoolableByteArray poolableByteArray)
             {
+                Debug.Log("[SerializeResult] Serializing PoolableByteArray");
                 if (poolableByteArray.IsEmpty) { return JsonConvert.SerializeObject(new { __type = "ByteArray", data = "", isEmpty = true }); }
 
                 byte[] bytes = poolableByteArray.Memory.ToArray();
@@ -270,18 +334,33 @@ namespace SceneRuntime.WebClient
 
             // Handle primitive types directly
             if (result is bool boolResult)
+            {
+                Debug.Log("[SerializeResult] Serializing bool");
                 return boolResult ? "true" : "false";
+            }
 
             if (result is int or long or float or double or decimal)
+            {
+                Debug.Log("[SerializeResult] Serializing number");
                 return result.ToString()!;
+            }
 
             if (result is string stringResult)
-                return JsonConvert.SerializeObject(stringResult);
+            {
+                var serialized = JsonConvert.SerializeObject(stringResult);
+                Debug.Log($"[SerializeResult] Serializing string, length={stringResult.Length}, serialized={serialized.Substring(0, Math.Min(100, serialized.Length))}...");
+                return serialized;
+            }
 
             // Handle WebClientScriptObject - return the object ID reference
-            if (result is WebClientScriptObject scriptObject) { return JsonConvert.SerializeObject(new { __objectRef = scriptObject.ObjectId }); }
+            if (result is WebClientScriptObject scriptObject)
+            {
+                Debug.Log($"[SerializeResult] Serializing WebClientScriptObject: {scriptObject.ObjectId}");
+                return JsonConvert.SerializeObject(new { __objectRef = scriptObject.ObjectId });
+            }
 
             // Default: JSON serialize the object
+            Debug.Log($"[SerializeResult] Default serialization for: {result.GetType().Name}");
             try { return JsonConvert.SerializeObject(result); }
             catch (Exception ex)
             {
@@ -502,31 +581,14 @@ namespace SceneRuntime.WebClient
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var resolver = new JSUniTaskPromiseResolver<T>(uniTask);
-            var resolverId = Guid.NewGuid().ToString();
+            var resolverId = Guid.NewGuid().ToString("N"); // "N" format = no dashes, valid JS identifier
             var resolverName = $"__promiseResolver_{resolverId}";
 
             AddHostObject(resolverName, resolver);
 
-            var promiseExpression = $@"
-                (function() {{
-                    var resolver = {resolverName};
-                    return new Promise(function(resolve, reject) {{
-                        var checkComplete = function() {{
-                            if (resolver.IsCompleted()) {{
-                                if (resolver.IsFaulted()) {{
-                                    reject(new Error(resolver.GetError()));
-                                }} else {{
-                                    var result = resolver.GetResult();
-                                    resolve(result);
-                                }}
-                            }} else {{
-                                setTimeout(checkComplete, 0);
-                            }}
-                        }};
-                        checkComplete();
-                    }});
-                }})()
-            ";
+            // IMPORTANT: Expression must start with '(' immediately (no leading whitespace/newline)
+            // to avoid JavaScript ASI treating 'return\n(...)' as 'return; (...)'
+            var promiseExpression = $"(function(){{var resolver=globalThis['{resolverName}'];if(!resolver){{return Promise.reject(new Error('Resolver not found'));}}return new Promise(function(resolve,reject){{var checkComplete=function(){{if(resolver.IsCompleted()){{if(resolver.IsFaulted()){{reject(new Error(resolver.GetError()));}}else{{resolve(resolver.GetResult());}}}}else{{setTimeout(checkComplete,0);}}}};checkComplete();}});}})()";
 
             IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(promiseExpression);
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
@@ -558,30 +620,14 @@ namespace SceneRuntime.WebClient
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             var resolver = new JSUniTaskPromiseResolver(uniTask);
-            var resolverId = Guid.NewGuid().ToString();
+            var resolverId = Guid.NewGuid().ToString("N"); // "N" format = no dashes, valid JS identifier
             var resolverName = $"__promiseResolver_{resolverId}";
 
             AddHostObject(resolverName, resolver);
 
-            var promiseExpression = $@"
-                (function() {{
-                    var resolver = {resolverName};
-                    return new Promise(function(resolve, reject) {{
-                        var checkComplete = function() {{
-                            if (resolver.IsCompleted()) {{
-                                if (resolver.IsFaulted()) {{
-                                    reject(new Error(resolver.GetError()));
-                                }} else {{
-                                    resolve();
-                                }}
-                            }} else {{
-                                setTimeout(checkComplete, 0);
-                            }}
-                        }};
-                        checkComplete();
-                    }});
-                }})()
-            ";
+            // IMPORTANT: Expression must start with '(' immediately (no leading whitespace/newline)
+            // to avoid JavaScript ASI treating 'return\n(...)' as 'return; (...)'
+            var promiseExpression = $"(function(){{var resolver=globalThis['{resolverName}'];if(!resolver){{return Promise.reject(new Error('Resolver not found'));}}return new Promise(function(resolve,reject){{var checkComplete=function(){{if(resolver.IsCompleted()){{if(resolver.IsFaulted()){{reject(new Error(resolver.GetError()));}}else{{resolve();}}}}else{{setTimeout(checkComplete,0);}}}};checkComplete();}});}})()";
 
             IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(promiseExpression);
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);

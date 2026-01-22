@@ -68,21 +68,6 @@ namespace SceneRuntime.WebClient
             // Add UnityOpsApi as a host object (the jslib proxy handles its methods directly)
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
-            
-            // Register stub host objects for APIs that modules may access during initialization
-            // These will be replaced with real implementations in RegisterAll, but the jslib
-            // stubs will handle basic method calls during module initialization
-            engine.AddHostObject("UnityEngineApi", new object());
-            engine.AddHostObject("UnitySceneApi", new object());
-            engine.AddHostObject("CommsApi", new object());
-            engine.AddHostObject("UnityRestrictedActionsApi", new object());
-            engine.AddHostObject("UnityEthereumApi", new object());
-            engine.AddHostObject("UnityUserIdentityApi", new object());
-            engine.AddHostObject("UnityWebSocketApi", new object());
-            engine.AddHostObject("UnityCommunicationsControllerApi", new object());
-            engine.AddHostObject("UnitySimpleFetchApi", new object());
-            engine.AddHostObject("UnitySDKMessageBusCommsControllerApi", new object());
-            engine.AddHostObject("UnityPortableExperiencesApi", new object());
 
             // Execute init code - this is where require() will be called
             engine.Execute(initCode);
