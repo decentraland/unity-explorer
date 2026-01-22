@@ -70,7 +70,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             // Listeners
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();
-            ;
         }
 
         private void OnDiffAccountButtonClicked()

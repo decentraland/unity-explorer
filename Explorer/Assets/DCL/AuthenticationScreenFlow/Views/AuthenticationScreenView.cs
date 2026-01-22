@@ -19,6 +19,9 @@ namespace DCL.AuthenticationScreenFlow
         public VerificationOTPAuthView VerificationOTPAuthView { get; private set; } = null!;
 
         [field: SerializeField]
+        public ProfileFetchingAuthView ProfileFetchingAuthView { get; private set; } = null!;
+
+        [field: SerializeField]
         public LobbyForExistingAccountAuthView LobbyForExistingAccountAuthView { get; private set; } = null!;
         [field: SerializeField]
         public LobbyForNewAccountAuthView LobbyForNewAccountAuthView { get; private set; } = null!;

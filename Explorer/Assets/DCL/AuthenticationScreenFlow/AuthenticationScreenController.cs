@@ -155,7 +155,7 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, buildData.InstallSource),
 
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
-                new ProfileFetchingAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                 new ProfileFetchingOTPAuthState(fsm, viewInstance, CurrentState, sentryTransactionManager, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
