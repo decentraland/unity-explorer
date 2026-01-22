@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
@@ -85,6 +86,8 @@ namespace DCL.SDKComponents.MediaStream
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
 
+            LogMediaPlayerStatus(url, mediaPlayer);
+
             var control = mediaPlayer.Control;
             //This fix prevents a rare case of crash on MacOS where the close media was called when the media was still being
             //loaded, this caused a crash When CloseMedia() is called while AVPro is still downloading the HLS playlist
@@ -107,7 +110,169 @@ namespace DCL.SDKComponents.MediaStream
 
             queue.Enqueue(info);
         }
+
+        private void LogMediaPlayerStatus(string url, MediaPlayer mediaPlayer)
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"[MediaPlayerPool] ReleaseMediaPlayer diagnostics:");
+                sb.AppendLine($"  URL: {url}");
+
+                // Basic object state
+                sb.AppendLine($"  MediaPlayer null: {mediaPlayer == null}");
+                if (mediaPlayer == null)
+                {
+                    Debug.LogWarning(sb.ToString());
+                    return;
+                }
+
+                sb.AppendLine($"  GameObject null: {mediaPlayer.gameObject == null}");
+                sb.AppendLine($"  GameObject active: {mediaPlayer.gameObject?.activeSelf}");
+                sb.AppendLine($"  Component enabled: {mediaPlayer.enabled}");
+
+                // Media state
+                sb.AppendLine($"  MediaOpened: {mediaPlayer.MediaOpened}");
+                sb.AppendLine($"  AutoOpen: {mediaPlayer.AutoOpen}");
+                sb.AppendLine($"  AudioVolume: {mediaPlayer.AudioVolume}");
+
+                // Platform options (this is what crashed!)
+                try
+                {
+                    #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                    sb.AppendLine($"  PlatformOptions_macOS null: {mediaPlayer.PlatformOptions_macOS == null}");
+                    if (mediaPlayer.PlatformOptions_macOS != null)
+                    {
+                        sb.AppendLine($"  PlatformOptions_macOS.audioMode: {mediaPlayer.PlatformOptions_macOS.audioMode}");
+                    }
+                    #endif
+
+                    #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+                    sb.AppendLine($"  PlatformOptionsWindows null: {mediaPlayer.PlatformOptionsWindows == null}");
+                    #endif
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine($"  PlatformOptions access ERROR: {e.Message}");
+                }
+
+                // Control interface
+                var control = mediaPlayer.Control;
+                sb.AppendLine($"  Control null: {control == null}");
+
+                if (control != null)
+                {
+                    try
+                    {
+                        sb.AppendLine($"  Control.HasMetaData: {control.HasMetaData()}");
+                        sb.AppendLine($"  Control.CanPlay: {control.CanPlay()}");
+                        sb.AppendLine($"  Control.IsPlaying: {control.IsPlaying()}");
+                        sb.AppendLine($"  Control.IsPaused: {control.IsPaused()}");
+                        sb.AppendLine($"  Control.IsFinished: {control.IsFinished()}");
+                        sb.AppendLine($"  Control.IsSeeking: {control.IsSeeking()}");
+                        sb.AppendLine($"  Control.IsBuffering: {control.IsBuffering()}");
+                        sb.AppendLine($"  Control.IsLooping: {control.IsLooping()}");
+                        sb.AppendLine($"  Control.GetLastError: {control.GetLastError()}");
+                        sb.AppendLine($"  Control.GetCurrentTime: {control.GetCurrentTime()}");
+                        sb.AppendLine($"  Control.GetPlaybackRate: {control.GetPlaybackRate()}");
+
+                        var bufferedTimes = control.GetBufferedTimes();
+                        sb.AppendLine($"  Control.GetBufferedTimes count: {bufferedTimes?.Count ?? -1}");
+                    }
+                    catch (Exception e)
+                    {
+                        sb.AppendLine($"  Control access ERROR: {e.Message}");
+                    }
+                }
+
+                // Info interface
+                var info = mediaPlayer.Info;
+                sb.AppendLine($"  Info null: {info == null}");
+
+                if (info != null)
+                {
+                    try
+                    {
+                        sb.AppendLine($"  Info.GetDuration: {info.GetDuration()}");
+                        sb.AppendLine($"  Info.HasVideo: {info.HasVideo()}");
+                        sb.AppendLine($"  Info.HasAudio: {info.HasAudio()}");
+                        sb.AppendLine($"  Info.GetVideoWidth: {info.GetVideoWidth()}");
+                        sb.AppendLine($"  Info.GetVideoHeight: {info.GetVideoHeight()}");
+                        sb.AppendLine($"  Info.GetVideoFrameRate: {info.GetVideoFrameRate()}");
+                        sb.AppendLine($"  Info.IsPlaybackStalled: {info.IsPlaybackStalled()}");
+                    }
+                    catch (Exception e)
+                    {
+                        sb.AppendLine($"  Info access ERROR: {e.Message}");
+                    }
+                }
+
+                // TextureProducer
+                var texProducer = mediaPlayer.TextureProducer;
+                sb.AppendLine($"  TextureProducer null: {texProducer == null}");
+
+                if (texProducer != null)
+                {
+                    try
+                    {
+                        sb.AppendLine($"  TextureProducer.GetTexture null: {texProducer.GetTexture() == null}");
+                        sb.AppendLine($"  TextureProducer.GetTextureFrameCount: {texProducer.GetTextureFrameCount()}");
+                    }
+                    catch (Exception e)
+                    {
+                        sb.AppendLine($"  TextureProducer access ERROR: {e.Message}");
+                    }
+                }
+
+                // AudioSource
+                var audioSource = mediaPlayer.AudioSource;
+                sb.AppendLine($"  AudioSource null: {audioSource == null}");
+
+                if (audioSource != null)
+                {
+                    try
+                    {
+                        sb.AppendLine($"  AudioSource.isPlaying: {audioSource.isPlaying}");
+                        sb.AppendLine($"  AudioSource.volume: {audioSource.volume}");
+                        sb.AppendLine($"  AudioSource.spatialBlend: {audioSource.spatialBlend}");
+                    }
+                    catch (Exception e)
+                    {
+                        sb.AppendLine($"  AudioSource access ERROR: {e.Message}");
+                    }
+                }
+
+                // Events
+                try
+                {
+                    sb.AppendLine($"  Events null: {mediaPlayer.Events == null}");
+                    sb.AppendLine($"  Events.HasListeners: {mediaPlayer.Events?.HasListeners()}");
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine($"  Events access ERROR: {e.Message}");
+                }
+
+                // Media path info
+                try
+                {
+                    sb.AppendLine($"  MediaPath.Path: {mediaPlayer.MediaPath?.Path ?? "null"}");
+                    sb.AppendLine($"  MediaPath.PathType: {mediaPlayer.MediaPath?.PathType}");
+                }
+                catch (Exception e)
+                {
+                    sb.AppendLine($"  MediaPath access ERROR: {e.Message}");
+                }
+
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, sb.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[MediaPlayerPool] Error logging diagnostics: {e.Message}\n{e.StackTrace}");
+            }
+        }
     }
+
 
     public class MediaPlayerInfo
     {

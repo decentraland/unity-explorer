@@ -410,6 +410,12 @@ MonoBehaviour:
       Severity: 0
     - Category: REALM
       Severity: 0
+    - Category: MEDIA_STREAM
+      Severity: 3
+    - Category: MEDIA_STREAM
+      Severity: 2
+    - Category: MEDIA_STREAM
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

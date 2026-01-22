@@ -600,6 +600,10 @@ MonoBehaviour:
       Severity: 4
     - Category: MVC_STATE_MACHINE
       Severity: 1
+    - Category: MEDIA_STREAM
+      Severity: 3
+    - Category: MEDIA_STREAM
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
