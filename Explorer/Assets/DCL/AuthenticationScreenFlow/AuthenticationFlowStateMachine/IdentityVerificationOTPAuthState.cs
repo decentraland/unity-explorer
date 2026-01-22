@@ -53,6 +53,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
+            view.InputField.Clear();
+
             // Listeners
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();

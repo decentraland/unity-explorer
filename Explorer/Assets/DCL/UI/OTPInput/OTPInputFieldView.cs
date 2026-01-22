@@ -119,11 +119,11 @@ namespace DCL.UI.OTPInput
         {
             StopClearAndFocusCoroutine();
             hiddenInput.DeactivateInputField(clearSelection: true);
-            hiddenInput.SetTextWithoutNotify(string.Empty);
+            hiddenInput.text = string.Empty;
             UnselectAll(string.Empty);
         }
 
-        public void ClearAndFocus()
+        private void ClearAndFocus()
         {
             StopClearAndFocusCoroutine();
 
