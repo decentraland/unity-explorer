@@ -29,6 +29,14 @@ namespace DCL.SDKComponents.MediaStream
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
 
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+        // On macOS, enforce a minimum gap between HLS stream opens to prevent
+        // AVFoundation resource contention that can cause crashes when opening
+        // multiple HLS streams simultaneously
+        private static float lastOpenMediaTime;
+        private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f; // 500ms between opens
+#endif
+
         public UpdateMediaPlayerSystem(
             World world,
             ISceneData sceneData,
@@ -271,8 +279,31 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // On macOS, enforce minimum gap between HLS stream opens to prevent
+            // AVFoundation crashes when opening multiple streams simultaneously.
+            // If too soon since last open, defer to next frame (don't consume the promise yet).
+            float currentTime = UnityEngine.Time.realtimeSinceStartup;
+            float timeSinceLastOpen = currentTime - lastOpenMediaTime;
+
+            if (timeSinceLastOpen < MIN_OPEN_MEDIA_INTERVAL_SECONDS)
+            {
+                // Too soon since last OpenMedia call - defer to next frame
+                // Don't consume the promise yet, it will be retried next Update
+                return false;
+            }
+#endif
+
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                // Update the last open time before calling OpenMedia
+                lastOpenMediaTime = currentTime;
+
+                ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                    $"[OpenMedia] Opening media: {component.MediaAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+#endif
+
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"
                     : "MediaPlayer.InitialiseAndOpenMedia");
