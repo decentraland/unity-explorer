@@ -54,6 +54,7 @@ namespace DCL.Diagnostics.Sentry
                 catch (Exception e) { Debug.LogException(e); }
             }
 #endif
+
         }
 
         private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
