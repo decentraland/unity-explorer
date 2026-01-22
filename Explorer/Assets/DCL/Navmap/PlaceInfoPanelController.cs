@@ -3,6 +3,8 @@ using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations;
+using DCL.Donations.UI;
 using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -49,6 +51,7 @@ namespace DCL.Navmap
         private readonly MultiStateButtonController homeButton;
         private readonly List<EventElementView> eventElements = new ();
         private readonly CameraReelGalleryController cameraReelGalleryController;
+        private readonly IDonationsService donationsService;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
@@ -73,6 +76,7 @@ namespace DCL.Navmap
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
+            IDonationsService donationsService,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
@@ -92,6 +96,7 @@ namespace DCL.Navmap
             this.mvcManager = mvcManager;
             this.galleryEventBus = galleryEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.donationsService = donationsService;
 
             thumbnailImage = imageControllerProvider.Create(view.Thumbnail);
 
@@ -132,7 +137,7 @@ namespace DCL.Navmap
             likeButton.OnButtonClicked += OnLikeButtonClick;
 
             view.FavoriteButton.OnButtonClicked += SetAsFavorite;
-            
+
             if(view.HomeButton != null)
             {
                 homeButton = new MultiStateButtonController(view.HomeButton, true);
@@ -143,6 +148,7 @@ namespace DCL.Navmap
             view.JumpInButton.onClick.AddListener(JumpIn);
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
+            view.DonateButton?.onClick.AddListener(DonateToSceneCreator);
 
             view.OverviewTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             //Photos scroll view is already handled by the camera reel gallery controller
@@ -166,6 +172,9 @@ namespace DCL.Navmap
             view.gameObject.SetActive(false);
         }
 
+        private void DonateToSceneCreator() =>
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Create(place!.creator_address, place!.base_position_processed)));
+
         public void Set(PlacesData.PlaceInfo place)
         {
             this.place = place;
@@ -186,15 +195,16 @@ namespace DCL.Navmap
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
+            view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
-            
-            if(place.IsEmptyPlace) 
+
+            if(place.IsEmptyPlace)
                 view.FavoriteButton.SetButtonState(false, false);
             else
                 view.FavoriteButton.SetButtonState(place.user_favorite);
-            
+
             if (view.HomeButton != null)
             {
                 VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
@@ -214,9 +224,9 @@ namespace DCL.Navmap
             if (originParcel == null) return;
             if (place == null) return;
             if (!TeleportUtils.IsRoad(place.title)) return;
-            
+
             view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
-            
+
             if(!homeButton.IsButtonOn)
                 homeButton.SetButtonState(homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
         }
@@ -290,7 +300,7 @@ namespace DCL.Navmap
 
         private void SetAsHome(bool isHome)
         {
-            if (place == null) 
+            if (place == null)
                 return;
 
             Vector2Int positionReference;
@@ -299,7 +309,7 @@ namespace DCL.Navmap
             else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
                 positionReference = coordinates;
             else return;
-            
+
             if(isHome)
                 homePlaceEventBus.SetAsHome(positionReference);
             else
