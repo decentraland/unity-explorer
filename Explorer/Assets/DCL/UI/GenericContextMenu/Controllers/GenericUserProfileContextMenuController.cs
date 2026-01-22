@@ -40,11 +40,13 @@ namespace DCL.UI
     {
         public string userId;
         public string userName;
+        public Color usernameColor;
 
-        public GiftData(string userId, string userName)
+        public GiftData(string userId, string userName, Color usernameColor)
         {
             this.userId = userId;
             this.userName = userName;
+            this.usernameColor = usernameColor;
         }
     }
     public class GenericUserProfileContextMenuController
@@ -186,7 +188,7 @@ namespace DCL.UI
 
                     blockButtonControlSettings.SetData(profile.UserId);
                     jumpInButtonControlSettings.SetData(profile.UserId);
-                    string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
+                    string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName,profile.UserNameColor));
                     giftButtonControlSettings.SetData(json);
 
                     contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
@@ -389,7 +391,7 @@ namespace DCL.UI
                 try
                 {
                     var data = JsonUtility.FromJson<GiftData>(payload);
-                    ShowGiftingPopupAsync(data.userId, data.userName).Forget();
+                    ShowGiftingPopupAsync(data.userId, data.userName,data.usernameColor).Forget();
                 }
                 catch
                 {
@@ -398,9 +400,9 @@ namespace DCL.UI
             }
         }
 
-        private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName)
+        private async UniTaskVoid ShowGiftingPopupAsync(string userId, string userName, Color color)
         {
-            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(userId, userName)));
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(userId, userName,color)));
         }
     }
 }

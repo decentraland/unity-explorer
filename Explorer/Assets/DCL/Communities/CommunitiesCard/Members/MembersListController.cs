@@ -127,7 +127,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {memberData.Address}");
 
             mvcManager.ShowAsync(GiftSelectionController
-                .IssueCommand(new GiftSelectionParams(memberData.Address, memberData.Name))).Forget();
+                .IssueCommand(new GiftSelectionParams(memberData.Address, memberData.Name,memberData.GetUserNameColor()))).Forget();
         }
 
         public override void Dispose()

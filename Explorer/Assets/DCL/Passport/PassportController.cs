@@ -842,7 +842,9 @@ namespace DCL.Passport
             ReportHub.Log(ReportCategory.GIFTING, $"Gifting user: {inputData.UserId}");
 
             // Open gifting popup and close passport popup
-            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile?.UserId, targetProfile?.DisplayName)));
+            await mvcManager.ShowAsync(GiftSelectionController.IssueCommand(new GiftSelectionParams(targetProfile.UserId,
+                targetProfile.DisplayName,
+                targetProfile.UserNameColor)));
         }
 
         private void BlockUserClicked()
