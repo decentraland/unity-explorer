@@ -1,5 +1,8 @@
-﻿using DCL.CharacterPreview;
+﻿using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DCL.Utility.Extensions;
+using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -8,60 +11,64 @@ using UnityEngine.UI;
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator))]
-    public class LobbyForExistingAccountAuthView : MonoBehaviour
+    public class LobbyForExistingAccountAuthView : ViewBase
     {
-        [field: SerializeField]
-        public Animator FinalizeAnimator { get; private set; } = null!;
-
+        [field: Space]
         [field: SerializeField]
         public Button JumpIntoWorldButton { get; private set; } = null!;
 
-        [field: SerializeField]
-        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
+        [Space]
+        [SerializeField] private Animator animator;
+        [SerializeField] private CanvasGroup canvasGroup;
 
+        [Space]
         [SerializeField] private LocalizeStringEvent title;
         [SerializeField] private GameObject description;
         [SerializeField] private GameObject diffAccountButton;
 
-        private StringVariable? profileNameLabel;
+        private StringVariable profileNameLabel => profileNameLabelField ??= (StringVariable)title.StringReference["back_profileName"];
+
+        private StringVariable? profileNameLabelField;
+        private int hideAnimHash = UIAnimationHashes.OUT;
 
         private void Awake()
         {
-            title.gameObject.SetActive(true); // title
+            title.gameObject.SetActive(true);
             description.SetActive(true);
-
             JumpIntoWorldButton.gameObject.SetActive(true);
             diffAccountButton.SetActive(true);
-
-            CharacterPreviewView.gameObject.SetActive(true);
-
-            profileNameLabel = (StringVariable)title.StringReference["back_profileName"];
         }
 
-        // private void OnEnable()
-        // {
-        //     FinalizeAnimator.enabled = true;
-        // }
-        //
-        // private void OnDisable()
-        // {
-        //     FinalizeAnimator.enabled = false;
-        // }
-
-        public void ShowFor(string profileName)
+        public void Show(string profileName)
         {
-            profileNameLabel!.Value = profileName;
+            profileNameLabel.Value = profileName;
             JumpIntoWorldButton.interactable = true;
 
-            // FinalizeAnimator.enabled = true;
-            // FinalizeAnimator.ResetAnimator();
-            FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
+            ShowAsync(CancellationToken.None).Forget();
         }
 
-        public void FadeOut() =>
-            FinalizeAnimator.SetTrigger(UIAnimationHashes.OUT);
+        public void Hide(int hideAnimHash)
+        {
+            this.hideAnimHash = hideAnimHash;
+            HideAsync(CancellationToken.None).Forget();
+        }
 
-        public void SlideBack() =>
-            FinalizeAnimator.SetTrigger(UIAnimationHashes.BACK);
+        public override async UniTask ShowAsync(CancellationToken ct)
+        {
+            await base.ShowAsync(ct);
+            canvasGroup.interactable = true;
+        }
+
+        public override async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
+        {
+            canvasGroup.interactable = false;
+            await base.HideAsync(ct, isInstant);
+        }
+
+        protected override async UniTask PlayShowAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(UIAnimationHashes.IN, UIAnimationHashes.IN, ct: ct);
+
+        protected override async UniTask PlayHideAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(hideAnimHash, hideAnimHash, ct: ct);
     }
 }

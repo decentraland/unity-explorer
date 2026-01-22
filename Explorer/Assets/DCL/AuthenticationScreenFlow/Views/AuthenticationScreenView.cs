@@ -1,4 +1,4 @@
-using DCL.UI.OTPInput;
+using DCL.CharacterPreview;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -8,6 +8,9 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView
     {
+        [field: SerializeField]
+        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
+
         [field: Header("SCREENS")]
         [field: SerializeField]
         public LoginSelectionAuthView LoginSelectionAuthView { get; private set; } = null!;

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.Utilities;
 using MVC;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -10,11 +11,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
     {
+        private readonly CharacterPreviewView characterPreviewView;
         private readonly AuthenticationScreenController controller;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly StringVariable? profileNameLabel;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
-        private readonly LobbyForExistingAccountAuthView subView;
+        private readonly LobbyForExistingAccountAuthView view;
 
         public LobbyForExistingAccountAuthState(
             AuthenticationScreenView viewInstance,
@@ -22,7 +24,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ReactiveProperty<AuthenticationStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
-            subView = viewInstance.LobbyForExistingAccountAuthView;
+            view = viewInstance.LobbyForExistingAccountAuthView;
+            characterPreviewView = viewInstance.CharacterPreviewView;
             this.controller = controller;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
@@ -35,14 +38,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             Profile? profile = payload.profile;
 
-            subView.gameObject.SetActive(true);
-            subView.ShowFor(IsNewUser() ? profile.Name : "back " + profile.Name);
+            view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
 
+            characterPreviewView.gameObject.SetActive(true);
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();
 
-            subView.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
+            view.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
             return;
 
             bool IsNewUser() =>
@@ -51,16 +54,16 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            subView.SlideBack();
+            characterPreviewView.gameObject.SetActive(false);
             characterPreviewController?.OnHide();
 
-            subView.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);
+            view.JumpIntoWorldButton.onClick.RemoveListener(JumpIntoWorld);
         }
 
         private void JumpIntoWorld()
         {
-            subView!.JumpIntoWorldButton.interactable = false;
-            subView.FadeOut();
+            view!.JumpIntoWorldButton.interactable = false;
+            view.Hide(UIAnimationHashes.OUT);
 
             AnimateAndAwaitAsync().Forget();
             return;

@@ -138,7 +138,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewInstantiated();
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.LobbyForExistingAccountAuthView.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             // Subscriptions
             foreach (Button button in viewInstance.UseAnotherAccountButton)
@@ -245,7 +245,7 @@ namespace DCL.AuthenticationScreenFlow
 
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance!.LobbyForExistingAccountAuthView.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
+                viewInstance!.LobbyForExistingAccountAuthView.Hide(UIAnimationHashes.BACK);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 

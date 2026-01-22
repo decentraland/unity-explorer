@@ -64,7 +64,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Hide(int hideAnimHash)
         {
-            this.hideAnimHash = hideAnimHash; //isBack ? UIAnimationHashes.BACK : UIAnimationHashes.OUT;
+            this.hideAnimHash = hideAnimHash;
             HideAsync(CancellationToken.None).Forget();
         }
 
