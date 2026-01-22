@@ -13,6 +13,8 @@ namespace DCL.PluginSystem.World
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
 
+        private AssetPreLoadUtils? utilsClass;
+
         public AssetPreLoadPlugin(ECSWorldSingletonSharedDependencies globalDeps,
             AssetPreLoadCache assetPreLoadCache)
         {
@@ -23,6 +25,7 @@ namespace DCL.PluginSystem.World
         public void Dispose()
         {
             assetPreLoadCache.Dispose();
+            utilsClass?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -31,12 +34,13 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            AssetPreLoadUtils utilsClass = new AssetPreLoadUtils(sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
+            utilsClass = new AssetPreLoadUtils();
 
             AssetPreLoadSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalDeps.FrameTimeBudget, utilsClass);
             FinalizeAssetPreLoadSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, assetPreLoadCache, utilsClass);
+            HandleAssetPreloadUpdates.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider, utilsClass);
 
-            finalizeWorldSystems.Add(CleanUpAssetPreLoadSystem.InjectToWorld(ref builder, assetPreLoadCache));
+            finalizeWorldSystems.Add(CleanUpAssetPreLoadSystem.InjectToWorld(ref builder, assetPreLoadCache, utilsClass));
         }
     }
 }

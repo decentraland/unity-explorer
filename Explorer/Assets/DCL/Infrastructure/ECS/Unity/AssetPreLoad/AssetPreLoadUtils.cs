@@ -1,35 +1,59 @@
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.AssetLoad
 {
-    public class AssetPreLoadUtils
+    public class AssetPreLoadUtils : IDisposable
     {
-        private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISceneStateProvider sceneStateProvider;
+        internal readonly Dictionary<string, LoadingUpdate> assetLoadingUpdates = new ();
 
-        public AssetPreLoadUtils(IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider)
+        public void Dispose()
         {
-            this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sceneStateProvider = sceneStateProvider;
+            ReleaseAllLists();
+            assetLoadingUpdates.Clear();
         }
 
         public void AppendAssetLoadingMessage(CRDTEntity crdtEntity, LoadingState loadingState, string assetPath)
         {
-            ecsToCRDTWriter.AppendMessage<PBAssetLoadLoadingState, (LoadingState loadingState, string assetPath, uint timestamp)>(
-                static (component, data) =>
-                {
-                    component.CurrentState = data.loadingState;
-                    component.Asset = data.assetPath;
-                    component.Timestamp = data.timestamp;
-                },
-                crdtEntity,
-                (int)sceneStateProvider.TickNumber,
-                (loadingState, assetPath, sceneStateProvider.TickNumber)
-            );
+            if (assetLoadingUpdates.TryGetValue(assetPath, out var entry))
+                entry.States.Add(loadingState);
+            else
+            {
+                List<LoadingState> states = ListPool<LoadingState>.Get();
+                states.Add(loadingState);
+
+                assetLoadingUpdates[assetPath] = new LoadingUpdate(states, -1, crdtEntity);
+            }
+        }
+
+        private void ReleaseAllLists()
+        {
+            foreach (var kvp in assetLoadingUpdates)
+            {
+                kvp.Value.States.Clear();
+                ListPool<LoadingState>.Release(kvp.Value.States);
+            }
+        }
+
+        public class LoadingUpdate
+        {
+            public readonly List<LoadingState> States;
+            public int LastTick;
+            public CRDTEntity CrdtEntity;
+
+            public LoadingUpdate(List<LoadingState> states, int lastTick, CRDTEntity crdtEntity)
+            {
+                this.States = states;
+                this.LastTick = lastTick;
+                this.CrdtEntity = crdtEntity;
+            }
         }
     }
 }
