@@ -125,11 +125,7 @@ namespace DCL.Places
         public void SharePlace(PlacesData.PlaceInfo placeInfo)
         {
             var description = string.Format(TWITTER_PLACE_DESCRIPTION, placeInfo.title);
-            string twitterLink = dclUrlSource
-                                .Url(DecentralandUrl.TwitterNewPostLink)
-                                .Replace(TWITTER_NEW_POST_LINK_TEXT_ARG_ID, description)
-                                .Replace(TWITTER_NEW_POST_LINK_HASHTAGS_ARG_ID, "DCLPlace")
-                                .Replace(TWITTER_NEW_POST_LINK_URL_ARG_ID, GetPlaceCopyLink(placeInfo));
+            var twitterLink = string.Format(dclUrlSource.Url(DecentralandUrl.TwitterNewPostLink), description, "DCLPlace", GetPlaceCopyLink(placeInfo));
 
             webBrowser.OpenUrl(twitterLink);
         }
@@ -144,16 +140,11 @@ namespace DCL.Places
         private string GetPlaceCopyLink(PlacesData.PlaceInfo place)
         {
             if (!string.IsNullOrEmpty(place.world_name))
-                return dclUrlSource
-                      .Url(DecentralandUrl.JumpInWorldLink)
-                      .Replace(JUMP_IN_WORLD_LINK_REALM_ARG_ID, place.world_name);
+                return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInWorldLink), place.world_name);
 
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
 
-            return dclUrlSource
-                  .Url(DecentralandUrl.JumpInGenesisCityLink)
-                  .Replace(JUMP_IN_GC_LINK_COORD_X_ARG_ID, coordinates.x.ToString())
-                  .Replace(JUMP_IN_GC_LINK_COORD_Y_ARG_ID, coordinates.y.ToString());
+            return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y);
         }
     }
 }
