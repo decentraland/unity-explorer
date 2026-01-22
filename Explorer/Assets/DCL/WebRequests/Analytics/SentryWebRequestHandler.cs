@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics;
 using Sentry;
 using Sentry.Unity;
@@ -36,9 +38,12 @@ namespace DCL.WebRequests.Analytics
         {
             using ProfilerMarker.AutoScope __ = onRequestStarted.Auto();
 
+            // Fast path to ignore files
+            if (envelope.CommonArguments.URL.IsFile()) return;
+
             // Before the decision of sampling has been made, minimize allocations
             // unlike UWR.url, envelope.CommonArguments.URL is already allocated
-            // Unfortunately we can't avoid building a transaction context object
+            // Transaction context can't be reused as it contains several closed fields, so the allocation is inevitable
             var transactionContext = new TransactionContext(envelope.CommonArguments.URL, OpenTelemetrySemantics.OperationHttpClient, nameSource: TransactionNameSource.Url);
 
             // We will receive the name of the transaction from the sampler

@@ -1,4 +1,5 @@
 ﻿using CDPBridges;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
@@ -110,7 +111,7 @@ namespace DCL.WebRequests
                     if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
                     {
                         // Ignore the file error as we always try to read from the file first
-                        if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+                        if (!envelope.CommonArguments.URL.IsFile())
                             SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
 
                         throw;
