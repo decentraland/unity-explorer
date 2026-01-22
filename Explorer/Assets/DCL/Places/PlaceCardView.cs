@@ -25,6 +25,7 @@ namespace DCL.Places
 
         [Header("Place info")]
         [SerializeField] private ImageView placeThumbnailImage = null!;
+        [SerializeField] private GameObject liveTag = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private TMP_Text placeDescriptionText = null!;
@@ -102,6 +103,7 @@ namespace DCL.Places
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;
+            liveTag.SetActive(placeInfo.live);
             onlineMembersText.text = $"{placeInfo.user_count}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
