@@ -74,5 +74,7 @@ namespace DCL.Prefs
         public const string GIFTING_PENDING_GIFTS = "PendingGifts";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
+
+        public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
     }
 }

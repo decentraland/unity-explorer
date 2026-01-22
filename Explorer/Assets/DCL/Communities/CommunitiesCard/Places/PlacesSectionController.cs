@@ -300,13 +300,13 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
-            Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
-                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return 0;
 
-            if (!response.Success || !response.Value.ok)
+            if (!response.Success)
             {
                 placesFetchData.PageNumber--;
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
@@ -314,7 +314,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             }
 
             using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-            foreach (var place in response.Value.data)
+            foreach (var place in response.Value.Data)
                if (!userNames.ContainsKey(place.owner))
                    userIds.Value.Add(place.owner);
 
@@ -332,14 +332,14 @@ namespace DCL.Communities.CommunitiesCard.Places
                     }
             }
 
-            foreach (var place in response.Value.data)
+            foreach (var place in response.Value.Data)
                 placesFetchData.Items.Add(new PlaceData
                 {
                     PlaceInfo = place,
                     OwnerName = userNames.GetValueOrDefault(place.owner, string.Empty)
                 });
 
-            return response.Value.total;
+            return response.Value.Total;
         }
 
         public void ShowPlaces(CommunityData community, string[] placeIds, CancellationToken token)
