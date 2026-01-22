@@ -157,6 +157,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            // TODO: This may be now obsolete, emotes are cancelled by other emotes using other execution flow and this is never executed
             StopEmote(entity, ref emoteComponent, avatarView);
         }
 
@@ -168,6 +169,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            // TODO: This may be now obsolete, emotes are cancelled by other emotes using other execution flow and this is never executed
             StopEmote(entity, ref emoteComponent, avatarView);
         }
 

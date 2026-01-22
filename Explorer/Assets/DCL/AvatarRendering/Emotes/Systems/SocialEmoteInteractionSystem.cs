@@ -173,10 +173,11 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                     moveIntent.AreAvatarsLookingAtEachOther = true;
                     World.Add(moveIntent.InitiatorEntityId, new LookAtPositionIntention(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position));
                     messageBus.SendLookAtPositionMessage(moveIntent.TriggerEmoteIntent.InitiatorWalletAddress, characterTransform.Position.x, characterTransform.Position.y, characterTransform.Position.z);
-
-                    // Rotates the receiver
-                    World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
                 }
+
+                // Rotates the receiver
+                if(!World.Has<PlayerLookAtIntent>(entity))
+                    World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
             }
         }
 
