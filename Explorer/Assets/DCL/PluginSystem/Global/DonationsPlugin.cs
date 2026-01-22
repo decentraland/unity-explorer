@@ -14,6 +14,8 @@ using DCL.Passport;
 using DCL.Profiles;
 using MVC;
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -84,7 +86,7 @@ namespace DCL.PluginSystem.Global
             DonationsPanelView donationsPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.DonationsPanelPrefab, ct: ct)).GetComponent<DonationsPanelView>();
             ControllerBase<DonationsPanelView, DonationsPanelParameter>.ViewFactoryMethod viewFactoryMethod = DonationsPanelController.Preallocate(donationsPanelViewAsset, null, out DonationsPanelView donationsPanelView);
 
-            bool recommendedAmountParseSuccess = FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.RECOMMENDED_DONATION_AMOUNT, "main", out DonationRecommendedAmount temporalTipsJson);
+            bool recommendedAmountParseSuccess = FeatureFlagsConfiguration.Instance.TryGetCsvPayload(FeatureFlagsStrings.RECOMMENDED_DONATION_AMOUNT, "main", out var csv) && csv is { Count: >= 1 };
 
             donationsPanelController = new DonationsPanelController(
                 viewFactoryMethod,
@@ -95,15 +97,11 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 decentralandUrlsSource,
                 inputBlock,
-                recommendedAmountParseSuccess ? temporalTipsJson.amount : DEFAULT_RECOMMENDED_TIP_AMOUNTS);
+                recommendedAmountParseSuccess ? csv![0].Take(3)
+                                                      .Select(s => decimal.Parse(s, CultureInfo.InvariantCulture))
+                                                      .ToArray() : DEFAULT_RECOMMENDED_TIP_AMOUNTS);
 
             mvcManager.RegisterController(donationsPanelController);
-        }
-
-        [Serializable]
-        private struct DonationRecommendedAmount
-        {
-            public decimal[] amount;
         }
     }
 
