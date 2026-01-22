@@ -88,24 +88,24 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, BACK));
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.RESTRICTED_USER, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.RESTRICTED_USER, SLIDE));
             }
         }
 

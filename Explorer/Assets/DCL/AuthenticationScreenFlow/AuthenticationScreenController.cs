@@ -249,7 +249,7 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.BACK), allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.SLIDE), allowReEnterSameState: true);
             }
         }
 

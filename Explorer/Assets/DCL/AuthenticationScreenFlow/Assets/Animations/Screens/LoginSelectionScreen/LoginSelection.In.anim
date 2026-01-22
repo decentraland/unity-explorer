@@ -52,7 +52,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
+        time: 0.16666667
         value: 107
         inSlope: 0
         outSlope: 0
@@ -82,7 +82,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
+        time: 0.16666667
         value: 76
         inSlope: 0
         outSlope: 0
@@ -112,8 +112,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 45
+        time: 0.16666667
+        value: -694
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -122,7 +122,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 199.6
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -133,7 +133,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/EmailInputField
+    path: MainElements.Panel/EmailDisalable.Container/EmailInputField
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -142,8 +142,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 76.2
+        time: 0.16666667
+        value: -442
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -152,7 +152,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 427
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -163,7 +163,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/ContinueWIthText
+    path: MainElements.Panel/EmailDisalable.Container/ContinueWIthText
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -172,8 +172,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 200.5
+        time: 0.16666667
+        value: -498
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -182,7 +182,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 506.6
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -193,7 +193,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/MoreOptions.Button
+    path: MainElements.Panel/OtherMethods.Container/Google.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -202,8 +202,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: -708.7
+        time: 0.16666667
+        value: -560
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -212,7 +212,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: -534.6
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -223,7 +223,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/MoreOptions.Panel
+    path: MainElements.Panel/OtherMethods.Container/Metamask.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -232,8 +232,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 269.5
+        time: 0.16666667
+        value: -363
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -242,7 +242,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 429
+        value: 455.5
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -253,7 +253,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/Metamask.Button
+    path: MainElements.Panel/OtherMethods.Container/MoreOptions.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -262,8 +262,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 247.9
+        time: 0.16666667
+        value: -627
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -272,7 +272,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 429
+        value: 227.63
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -283,7 +283,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/Google.Button
+    path: MainElements.Panel/OtherMethods.Container/MoreOptions.Panel
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -323,7 +323,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 3862254038
+      path: 3347503700
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -332,7 +332,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 495842787
+      path: 505062500
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -341,7 +341,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 2976433005
+      path: 3507154208
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -350,7 +350,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 1920624981
+      path: 3191570210
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -359,7 +359,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 897880988
+      path: 3619488257
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -368,7 +368,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 1580183905
+      path: 2709573519
       attribute: 1460864421
       script: {fileID: 0}
       typeID: 224
@@ -433,7 +433,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
+        time: 0.16666667
         value: 107
         inSlope: 0
         outSlope: 0
@@ -463,7 +463,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
+        time: 0.16666667
         value: 76
         inSlope: 0
         outSlope: 0
@@ -493,8 +493,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 45
+        time: 0.16666667
+        value: -694
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -503,7 +503,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 199.6
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -514,7 +514,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/EmailInputField
+    path: MainElements.Panel/EmailDisalable.Container/EmailInputField
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -523,8 +523,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 76.2
+        time: 0.16666667
+        value: -442
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -533,7 +533,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 427
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -544,7 +544,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/ContinueWIthText
+    path: MainElements.Panel/EmailDisalable.Container/ContinueWIthText
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -553,8 +553,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 200.5
+        time: 0.16666667
+        value: -498
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -563,7 +563,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 506.6
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -574,7 +574,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/MoreOptions.Button
+    path: MainElements.Panel/OtherMethods.Container/Google.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -583,8 +583,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: -708.7
+        time: 0.16666667
+        value: -560
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -593,7 +593,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: -534.6
+        value: 229
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -604,7 +604,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/MoreOptions.Panel
+    path: MainElements.Panel/OtherMethods.Container/Metamask.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -613,8 +613,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 269.5
+        time: 0.16666667
+        value: -363
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -623,7 +623,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 429
+        value: 455.5
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -634,7 +634,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/Metamask.Button
+    path: MainElements.Panel/OtherMethods.Container/MoreOptions.Button
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -643,8 +643,8 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 247.9
+        time: 0.16666667
+        value: -627
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -653,7 +653,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.6666667
-        value: 429
+        value: 227.63
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -664,7 +664,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_AnchoredPosition.x
-    path: MainElementsPanel/Google.Button
+    path: MainElements.Panel/OtherMethods.Container/MoreOptions.Panel
     classID: 224
     script: {fileID: 0}
     flags: 0

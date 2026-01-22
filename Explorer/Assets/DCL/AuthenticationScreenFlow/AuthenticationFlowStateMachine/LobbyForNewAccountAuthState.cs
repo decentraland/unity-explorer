@@ -95,7 +95,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            view.Hide(UIAnimationHashes.BACK);
+            view.Hide(UIAnimationHashes.SLIDE);
 
             characterPreviewController?.OnHide();
 
@@ -205,7 +205,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OnBackButtonClicked()
         {
-            view.Hide(UIAnimationHashes.BACK);
+            view.Hide(UIAnimationHashes.SLIDE);
             controller.ChangeAccount();
         }
 

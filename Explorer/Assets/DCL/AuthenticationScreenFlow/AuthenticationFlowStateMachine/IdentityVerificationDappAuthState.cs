@@ -89,9 +89,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    view.Hide(BACK);
+                    view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (SignatureExpiredException e)
             {
@@ -99,9 +99,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    view.Hide(BACK);
+                    view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Web3SignatureException e)
             {
@@ -109,9 +109,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    view.Hide(BACK);
+                    view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (CodeVerificationException e)
             {
@@ -119,9 +119,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    view.Hide(BACK);
+                    view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Exception e)
             {
@@ -129,9 +129,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
-                    view.Hide(BACK);
+                    view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, BACK));
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
             }
             finally
             {

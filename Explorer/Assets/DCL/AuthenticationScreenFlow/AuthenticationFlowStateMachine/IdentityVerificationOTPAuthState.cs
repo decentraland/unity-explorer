@@ -106,40 +106,40 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
-                view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                view.Hide(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (SignatureExpiredException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                view.Hide(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Web3SignatureException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                view.Hide(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (CodeVerificationException e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
+                view.Hide(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Exception e)
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, BACK));
+                view.Hide(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
             }
         }
 

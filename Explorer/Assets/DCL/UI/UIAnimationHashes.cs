@@ -19,6 +19,6 @@ namespace DCL.UI
         public static readonly int ACTIVE = Animator.StringToHash("Active");
         public static readonly int TO_OTHER = Animator.StringToHash("Different");
         public static readonly int EMPTY = Animator.StringToHash( "Empty");
-        public static readonly int BACK = Animator.StringToHash("Back");
+        public static readonly int SLIDE = Animator.StringToHash("Slide");
     }
 }

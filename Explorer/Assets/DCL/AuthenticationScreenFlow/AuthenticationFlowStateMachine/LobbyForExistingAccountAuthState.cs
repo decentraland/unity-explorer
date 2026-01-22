@@ -70,7 +70,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OnDiffAccountButtonClicked()
         {
-            view.Hide(UIAnimationHashes.BACK);
+            view.Hide(UIAnimationHashes.SLIDE);
             controller.ChangeAccount();
         }
 
