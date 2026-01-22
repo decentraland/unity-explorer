@@ -119,6 +119,7 @@ namespace Global.Dynamic
             }
 
             bootstrapContainer?.Dispose();
+            splashScreen.Dispose();
 
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }

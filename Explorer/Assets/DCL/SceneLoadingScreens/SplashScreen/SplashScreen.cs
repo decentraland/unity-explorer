@@ -8,15 +8,16 @@ namespace DCL.SceneLoadingScreens.SplashScreen
     {
         [SerializeField] private Sprite[] logoSprites;
         [SerializeField] private Image logoImage;
-        [SerializeField] private Animator splashScreenAnimation;
         [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private float fadeOutDuration = 1f;
+        [SerializeField] [Min(0f)] private float fadeOutDurationSeconds = 1f;
 
         private int frame;
         private float timer;
+        private Tween fadeTween;
 
         public void Show()
         {
+            fadeTween?.Kill(complete: false);
             canvasGroup.alpha = 1;
             gameObject.SetActive(true);
         }
@@ -26,9 +27,11 @@ namespace DCL.SceneLoadingScreens.SplashScreen
 
         public void FadeOutAndHide()
         {
-            canvasGroup.DOFade(0f, fadeOutDuration)
-                       .SetEase(Ease.Linear)
-                       .OnComplete(Hide);
+            fadeTween?.Kill(complete: false);
+
+            fadeTween = canvasGroup.DOFade(0f, fadeOutDurationSeconds)
+                                   .SetEase(Ease.Linear)
+                                   .OnComplete(Hide);
         }
 
         private void Update()

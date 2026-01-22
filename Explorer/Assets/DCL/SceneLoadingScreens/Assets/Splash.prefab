@@ -204,7 +204,7 @@ RectTransform:
   m_GameObject: {fileID: 8550087806236620490}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1608479078008436662}
@@ -441,5 +441,5 @@ MonoBehaviour:
   - {fileID: 21300000, guid: a0958a69a61fa464599acb5304361dc4, type: 3}
   - {fileID: 21300000, guid: 38ca2c3d47c97f344863c052f7bbcd36, type: 3}
   logoImage: {fileID: 8354813399403747781}
-  splashScreenAnimation: {fileID: 0}
   canvasGroup: {fileID: 9118856676628164743}
+  fadeOutDurationSeconds: 1

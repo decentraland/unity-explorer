@@ -4,7 +4,6 @@ using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -23,7 +22,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly SentryTransactionManager sentryTransactionManager;
-        private readonly SplashScreen splashScreen;
         private readonly ISelfProfile selfProfile;
 
         public ProfileFetchingAuthState(
@@ -31,25 +29,17 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenView viewInstance,
             ReactiveProperty<AuthenticationStatus> currentState,
             SentryTransactionManager sentryTransactionManager,
-            SplashScreen splashScreen,
             ISelfProfile selfProfile) : base(viewInstance)
         {
             this.machine = machine;
             this.currentState = currentState;
             this.sentryTransactionManager = sentryTransactionManager;
-            this.splashScreen = splashScreen;
             this.selfProfile = selfProfile;
         }
 
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
             FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
-        }
-
-        public override void Exit()
-        {
-            if (machine.PreviousState is InitAuthState)
-                splashScreen.FadeOutAndHide();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)

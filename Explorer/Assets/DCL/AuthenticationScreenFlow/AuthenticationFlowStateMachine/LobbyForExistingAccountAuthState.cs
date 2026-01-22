@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using DCL.Profiles;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
 using MVC;
-using System;
-using System.Threading;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
@@ -20,10 +19,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly StringVariable? profileNameLabel;
         private readonly ReactiveProperty<AuthenticationStatus> currentState;
         private readonly LobbyForExistingAccountAuthView view;
+        private readonly SplashScreen splashScreen;
 
         public LobbyForExistingAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
+            SplashScreen splashScreen,
             ReactiveProperty<AuthenticationStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
@@ -31,12 +32,16 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewView = viewInstance.CharacterPreviewView;
             this.fsm = fsm;
             this.controller = controller;
+            this.splashScreen = splashScreen;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
         }
 
         public void Enter((Profile profile, bool isCached) payload)
         {
+            if (splashScreen.gameObject.activeSelf)
+                splashScreen.FadeOutAndHide();
+
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
 
             Profile? profile = payload.profile;

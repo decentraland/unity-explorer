@@ -1,5 +1,4 @@
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
@@ -37,8 +36,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
-        private bool isFirstRun = true;
-
         public void Enter((PopupType type, int animHash) payload)
         {
             Debug.Log($"VVV {payload.animHash}");
@@ -55,11 +52,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
             }
 
-            if (isFirstRun)
-            {
-                isFirstRun = false;
+            if (splashScreen.gameObject.activeSelf)
                 splashScreen.FadeOutAndHide();
-            }
 
             currentState.Value = AuthenticationStatus.Login;
             view.Show(payload.animHash);
