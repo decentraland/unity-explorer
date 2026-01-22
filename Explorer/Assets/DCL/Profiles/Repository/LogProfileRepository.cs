@@ -2,8 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
-using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.Profiles

@@ -108,6 +108,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
@@ -142,6 +143,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
                 DecentralandUrl.CreatorHub => $"https://decentraland.{ENV}/create/",
+                DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
