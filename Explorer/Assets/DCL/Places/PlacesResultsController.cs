@@ -202,27 +202,29 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.BROWSE:
-                    placesResult = await placesAPIService.SearchPlacesAsync(
+                    placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
                                                               sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
-                    placesResult = await placesAPIService.GetFavoritesAsync(
+                    placesResult = await placesAPIService.GetFavoritesDestinationsAsync(
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
-                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                              withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
-                    placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
+                    placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct, withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct)
+                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
