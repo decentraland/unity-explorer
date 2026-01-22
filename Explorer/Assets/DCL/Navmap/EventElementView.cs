@@ -1,7 +1,9 @@
 using DCL.UI;
+using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.Navmap
@@ -48,11 +50,10 @@ namespace DCL.Navmap
 
         public MultiStateButtonController? InterestedButton { get; private set; }
 
-        public void Init(ImageControllerProvider imageControllerProvider)
+        public void Init(IWebRequestController webRequestController)
         {
-            // NOTE: only initialize once
-            Thumbnail ??= imageControllerProvider.Create(thumbnailView);
-            InterestedButton ??= new MultiStateButtonController(interestedButtonView, true);
+            Thumbnail = new ImageController(thumbnailView, webRequestController);
+            InterestedButton = new MultiStateButtonController(interestedButtonView, true);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -63,11 +64,6 @@ namespace DCL.Navmap
         public void OnPointerExit(PointerEventData eventData)
         {
             highlightContainer.gameObject.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            Thumbnail?.Dispose();
         }
     }
 }

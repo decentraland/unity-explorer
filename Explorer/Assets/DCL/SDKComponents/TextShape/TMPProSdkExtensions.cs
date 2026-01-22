@@ -1,5 +1,4 @@
-using DCL.ECSComponents;
-using DCL.SDKComponents.TextShape.Component;
+﻿using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Unity.ColorComponent;
 using System;
@@ -19,10 +18,8 @@ namespace DCL.SDKComponents.TextShape
         private const string OUTLINE_ON_KEYWORD = "OUTLINE_ON";
         private const string UNDERLAY_ON_KEYWORD = "UNDERLAY_ON";
 
-        public static void Apply(ref TextShapeComponent textShapeComponent, PBTextShape textShape, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock)
+         public static void Apply(this TextMeshPro tmpText, PBTextShape textShape, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock)
         {
-            TextMeshPro tmpText = textShapeComponent.TextMeshPro;
-
             tmpText.font = fontsStorage.Font(textShape.Font) ?? tmpText.font;
 
             // NOTE: previously width and height weren't working (setting sizeDelta before anchors and offset result in sizeDelta being reset to 0,0)
@@ -61,48 +58,22 @@ namespace DCL.SDKComponents.TextShape
 
             tmpText.renderer.GetPropertyBlock(materialPropertyBlock);
 
-            bool needsOutline = textShape.OutlineWidth > 0f;
-            bool needsUnderlay = textShape.ShadowOffsetX != 0 || textShape.ShadowOffsetY != 0;
-
-            // Only access fontMaterial and modify keywords when state actually changes to avoid allocations
-            if (needsOutline != textShapeComponent.OutlineKeywordEnabled || needsUnderlay != textShapeComponent.UnderlayKeywordEnabled)
+            if (textShape.OutlineWidth > 0f)
             {
-                Material fontMat = tmpText.fontMaterial;
-
-                if (needsOutline != textShapeComponent.OutlineKeywordEnabled)
-                {
-                    if (needsOutline)
-                        fontMat.EnableKeyword(OUTLINE_ON_KEYWORD);
-                    else
-                        fontMat.DisableKeyword(OUTLINE_ON_KEYWORD);
-
-                    textShapeComponent.OutlineKeywordEnabled = needsOutline;
-                }
-
-                if (needsUnderlay != textShapeComponent.UnderlayKeywordEnabled)
-                {
-                    if (needsUnderlay)
-                        fontMat.EnableKeyword(UNDERLAY_ON_KEYWORD);
-                    else
-                        fontMat.DisableKeyword(UNDERLAY_ON_KEYWORD);
-
-                    textShapeComponent.UnderlayKeywordEnabled = needsUnderlay;
-                }
-            }
-
-            if (needsOutline)
-            {
+                tmpText.fontMaterial.EnableKeyword(OUTLINE_ON_KEYWORD);
                 materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, textShape.OutlineColor?.ToUnityColor() ?? Color.white);
                 materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, textShape.OutlineWidth);
             }
             else
             {
+                tmpText.fontMaterial.DisableKeyword(OUTLINE_ON_KEYWORD);
                 materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, Color.clear);
                 materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, 0.0f);
             }
 
-            if (needsUnderlay)
+            if (textShape.ShadowOffsetX != 0 || textShape.ShadowOffsetY != 0)
             {
+                tmpText.fontMaterial.EnableKeyword(UNDERLAY_ON_KEYWORD);
                 materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, textShape.ShadowColor?.ToUnityColor() ?? Color.white);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, textShape.ShadowBlur);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, textShape.ShadowOffsetX);
@@ -110,11 +81,13 @@ namespace DCL.SDKComponents.TextShape
             }
             else
             {
+                tmpText.fontMaterial.DisableKeyword(UNDERLAY_ON_KEYWORD);
                 materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, Color.clear);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, 0.0f);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, 0.0f);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, 0.0f);
             }
+
 
             tmpText.renderer.SetPropertyBlock(materialPropertyBlock);
         }

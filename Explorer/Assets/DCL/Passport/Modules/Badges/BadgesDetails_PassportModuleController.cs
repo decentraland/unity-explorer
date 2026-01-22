@@ -9,7 +9,6 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Arch.Core;
 using UnityEngine;
 using Utility;
 
@@ -42,9 +41,9 @@ namespace DCL.Passport.Modules.Badges
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
+            IWebRequestController webRequestController,
             ISelfProfile selfProfile,
-            BadgePreviewCameraView badge3DPreviewCamera,
-            ImageControllerProvider imageControllerProvider)
+            BadgePreviewCameraView badge3DPreviewCamera)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -52,16 +51,8 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
-            
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView,
-                badgesAPIClient,
-                passportErrorsController,
-                badge3DPreviewCamera, imageControllerProvider);
-
-            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view,
-                imageControllerProvider,
-                badgesCategoriesController,
-                badgeInfoController);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController, badge3DPreviewCamera);
+            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
             badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;

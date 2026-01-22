@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -10,14 +10,6 @@ namespace DCL.PlacesAPIService
     public class PlacesAPIService : IPlacesAPIService
     {
         private static readonly ListObjectPool<string> COORDS_TO_REQ_POOL = new ();
-
-        /// <summary>
-        /// The maximum absolute coordinate value allowed by the Places API backend.
-        /// The backend validates coordinates with regex pattern ^-?\d{1,3},-?\d{1,3}$
-        /// which only allows 1-3 digit numbers (0-999). Even if this value is way above the parcel bounds
-        /// we introudced the check to avoid an error spam of users moving with portable experiences in odd places
-        /// </summary>
-        private const int MAX_COORDINATE_VALUE = 999;
 
         private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
@@ -34,9 +26,6 @@ namespace DCL.PlacesAPIService
             this.client = client;
             recentlyVisitedPlacesController = new RecentlyVisitedPlacesController();
         }
-
-        private static bool AreCoordinatesWithinBounds(Vector2Int coords) =>
-            Mathf.Abs(coords.x) <= MAX_COORDINATE_VALUE && Mathf.Abs(coords.y) <= MAX_COORDINATE_VALUE;
 
         public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(int pageNumber, int pageSize,
             CancellationToken ct,
@@ -61,9 +50,6 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
-            if (!AreCoordinatesWithinBounds(coords))
-                return null;
-
             if (renewCache)
                 placesByCoords.Remove(coords);
             else if (placesByCoords.TryGetValue(coords, out PlacesData.PlaceInfo placeInfo))
@@ -114,9 +100,6 @@ namespace DCL.PlacesAPIService
 
             foreach (Vector2Int coords in coordsList)
             {
-                if (!AreCoordinatesWithinBounds(coords))
-                    continue;
-
                 if (renewCache)
                 {
                     placesByCoords.Remove(coords);
@@ -182,11 +165,11 @@ namespace DCL.PlacesAPIService
         {
             placesById.TryGetValue(placeId, out var place);
             bool cachedIsFavorite = place?.user_favorite ?? false;
-
+            
             // Pre-warming cache with change for instant return in case of repeated call from different places.
             // Example: Explore's PlaceInfoPanel and minimap race.
             TryUpdateCachedPlaceFavorite(placeId, isFavorite);
-
+            
             try
             {
                 await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
@@ -203,7 +186,7 @@ namespace DCL.PlacesAPIService
         {
             if (string.IsNullOrEmpty(placeId) || !placesById.TryGetValue(placeId, out var place))
                 return;
-
+            
             place.user_favorite = isFavorite;
         }
 

@@ -139,8 +139,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If there is an ongoing request it means that the result is neither cached, nor failed
                 if (cache.OngoingRequests.SyncTryGetValue(intentionId, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
-                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Hit (Ongoing Request) for: {intention.CommonArguments.URL}");
-                    
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget?.Release();
 
@@ -301,18 +299,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
-                result = await TryLoadFromCacheAsync(intention, ct);
-
-                if (result == null)
-                {
-                    // If result is null, it means we are about to start a fresh download loop
-                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Miss - Starting Download for: {intention.CommonArguments.URL}");
-
-                    result = await RepeatLoopAsync(intention, state, partition, intentionId, ct);
-                }
-
-                // // Try load from cache first
-                // result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
+                // Try load from cache first
+                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -370,10 +358,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 Option<TAsset> option = cachedContent.Value;
 
                 if (option.Has)
-                {
-                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Hit (Memory/Disk) for: {intention.CommonArguments.URL}");
                     return new StreamableLoadingResult<TAsset>(option.Value);
-                }
             }
 
             return null;

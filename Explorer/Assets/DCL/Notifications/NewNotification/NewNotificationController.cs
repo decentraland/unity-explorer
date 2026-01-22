@@ -29,11 +29,11 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
+        private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
-        private readonly ImageControllerProvider imageControllerProvider;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
-        private ImageController? thumbnailImageController;
+        private ImageController thumbnailImageController;
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
@@ -47,14 +47,14 @@ namespace DCL.Notifications.NewNotification
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
-            IProfileRepository profileRepository,
-            ImageControllerProvider imageControllerProvider) : base(viewFactory)
+            IWebRequestController webRequestController,
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
+            this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
-            this.imageControllerProvider  = imageControllerProvider;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -62,30 +62,24 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = imageControllerProvider.Create(viewInstance!.NotificationView.NotificationImage);
+            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
-            badgeThumbnailImageController = imageControllerProvider.Create(viewInstance.BadgeNotificationView.NotificationImage);
+            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
-            friendsThumbnailImageController = imageControllerProvider.Create(viewInstance.FriendsNotificationView.NotificationImage);
+            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, webRequestController);
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
-            marketplaceCreditsThumbnailImageController = imageControllerProvider.Create(viewInstance.MarketplaceCreditsNotificationView.NotificationImage);
+            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            giftToastImageController = imageControllerProvider.Create(viewInstance.GiftToastView.NotificationImage);
+            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, webRequestController);
             viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
-                communityThumbnailImageController = imageControllerProvider.Create(viewInstance.CommunityVoiceChatNotificationView.NotificationImage);
+                communityThumbnailImageController = new ImageController(viewInstance.CommunityVoiceChatNotificationView.NotificationImage, webRequestController);
                 viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
             }
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            thumbnailImageController?.Dispose();
         }
 
         private void StopAnimation()

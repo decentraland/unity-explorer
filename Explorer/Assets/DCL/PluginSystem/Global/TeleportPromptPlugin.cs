@@ -8,7 +8,6 @@ using DCL.TeleportPrompt;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -18,7 +17,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
         private TeleportPromptController? teleportPromptController;
@@ -27,13 +26,13 @@ namespace DCL.PluginSystem.Global
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             ICursor cursor, IChatMessagesBus chatMessagesBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.cursor = cursor;
             this.chatMessagesBus = chatMessagesBus;
@@ -45,7 +44,7 @@ namespace DCL.PluginSystem.Global
                 TeleportPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 cursor,
-                imageControllerProvider,
+                webRequestController,
                 placesAPIService,
                 chatMessagesBus);
 

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.UI;
+using DCL.WebRequests;
 using MVC;
 using System.Threading;
 
@@ -8,7 +9,7 @@ namespace DCL.RewardPanel
 {
     public class RewardPanelController : ControllerBase<RewardPanelView, RewardPanelParameter>
     {
-        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly NFTColorsSO nftRarityColors;
         private readonly NftTypeIconSO nftRarityBackgrounds;
         private readonly NftTypeIconSO nftCategoryIcons;
@@ -17,13 +18,13 @@ namespace DCL.RewardPanel
 
         public RewardPanelController(
             ViewFactoryMethod viewFactory,
-            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
             NftTypeIconSO nftCategoryIcons
         ) : base(viewFactory)
         {
-            this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
             this.nftRarityColors = nftRarityColors;
             this.nftRarityBackgrounds = nftRarityBackgrounds;
             this.nftCategoryIcons = nftCategoryIcons;
@@ -31,7 +32,7 @@ namespace DCL.RewardPanel
 
         protected override void OnViewInstantiated()
         {
-            imageController = imageControllerProvider.Create(viewInstance.ThumbnailImage);
+            imageController = new ImageController(viewInstance.ThumbnailImage, webRequestController);
         }
 
         protected override void OnBeforeViewShow()
@@ -44,12 +45,6 @@ namespace DCL.RewardPanel
             viewInstance.RarityMark.color = nftRarityColors.GetColor(inputData.Rarity);
             viewInstance.RarityBackground.sprite = nftRarityBackgrounds.GetTypeImage(inputData.Rarity);
             viewInstance.CategoryImage.sprite = nftCategoryIcons.GetTypeImage(inputData.Category);
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            imageController?.Dispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
