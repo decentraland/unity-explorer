@@ -52,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
             }
 
-            if (splashScreen.gameObject.activeSelf)
+            if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
             currentState.Value = AuthenticationStatus.Login;

@@ -27,8 +27,9 @@ namespace DCL.SceneLoadingScreens.SplashScreen
 
         public void FadeOutAndHide()
         {
-            fadeTween?.Kill(complete: false);
+            if (!isActiveAndEnabled) return;
 
+            fadeTween?.Kill(complete: false);
             fadeTween = canvasGroup.DOFade(0f, fadeOutDurationSeconds)
                                    .SetEase(Ease.Linear)
                                    .OnComplete(Hide);

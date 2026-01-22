@@ -39,7 +39,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, bool isCached) payload)
         {
-            if (splashScreen.gameObject.activeSelf)
+            // valid onl
+            if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
 
             currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;

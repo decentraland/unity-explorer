@@ -38,6 +38,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private int currentAvatarIndex = -1;
         private bool baseWearablesLoaded;
 
+        private Profile newUserProfile;
+        private CancellationToken ct;
+
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -56,8 +59,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.wearablesProvider = wearablesProvider;
         }
 
-        private Profile newUserProfile;
-        private CancellationToken ct;
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
@@ -95,8 +96,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            view.Hide(UIAnimationHashes.SLIDE);
-
             characterPreviewController?.OnHide();
 
             // Listeners
@@ -104,7 +103,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.FinalizeNewUserButton.onClick.RemoveAllListeners();
             view.BackButton.onClick.RemoveAllListeners();
-            ;
 
             view.RandomizeButton.onClick.RemoveAllListeners();
             view.PrevRandomButton.onClick.RemoveAllListeners();
