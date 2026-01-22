@@ -56,7 +56,8 @@ namespace DCL.Places
             IWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard)
+            ISystemClipboard clipboard,
+            IDecentralandUrlsSource dclUrlSource)
         {
             this.view = view;
             this.placesController = placesController;
@@ -65,7 +66,7 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard);
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;

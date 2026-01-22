@@ -4,6 +4,7 @@ using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
@@ -20,26 +21,32 @@ namespace DCL.Places
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
-        private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
+        private const string TWITTER_NEW_POST_LINK_TEXT_ARG_ID = "[TEXT]";
+        private const string TWITTER_NEW_POST_LINK_HASHTAGS_ARG_ID = "[HASHTAGS]";
+        private const string TWITTER_NEW_POST_LINK_URL_ARG_ID = "[URL]";
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
-        private const string JUMP_IN_GC_LINK = " https://decentraland.org/jump/?position={0},{1}";
-        private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
+        private const string JUMP_IN_GC_LINK_COORD_X_ARG_ID = "[COORD-X]";
+        private const string JUMP_IN_GC_LINK_COORD_Y_ARG_ID = "[COORD-Y]";
+        private const string JUMP_IN_WORLD_LINK_REALM_ARG_ID = "[REALM]";
 
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWebBrowser webBrowser;
         private readonly ISystemClipboard clipboard;
+        private readonly IDecentralandUrlsSource dclUrlSource;
 
         public PlacesCardSocialActionsController(
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             IWebBrowser webBrowser,
-            ISystemClipboard clipboard)
+            ISystemClipboard clipboard,
+            IDecentralandUrlsSource dclUrlSource)
         {
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
             this.webBrowser = webBrowser;
             this.clipboard = clipboard;
+            this.dclUrlSource = dclUrlSource;
         }
 
         public async UniTaskVoid LikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView, CancellationToken ct)
@@ -118,7 +125,11 @@ namespace DCL.Places
         public void SharePlace(PlacesData.PlaceInfo placeInfo)
         {
             var description = string.Format(TWITTER_PLACE_DESCRIPTION, placeInfo.title);
-            var twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", GetPlaceCopyLink(placeInfo));
+            string twitterLink = dclUrlSource
+                                .Url(DecentralandUrl.TwitterNewPostLink)
+                                .Replace(TWITTER_NEW_POST_LINK_TEXT_ARG_ID, description)
+                                .Replace(TWITTER_NEW_POST_LINK_HASHTAGS_ARG_ID, "DCLPlace")
+                                .Replace(TWITTER_NEW_POST_LINK_URL_ARG_ID, GetPlaceCopyLink(placeInfo));
 
             webBrowser.OpenUrl(twitterLink);
         }
@@ -130,13 +141,19 @@ namespace DCL.Places
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
-        private static string GetPlaceCopyLink(PlacesData.PlaceInfo place)
+        private string GetPlaceCopyLink(PlacesData.PlaceInfo place)
         {
             if (!string.IsNullOrEmpty(place.world_name))
-                return string.Format(JUMP_IN_WORLD_LINK, place.world_name);
+                return dclUrlSource
+                      .Url(DecentralandUrl.JumpInWorldLink)
+                      .Replace(JUMP_IN_WORLD_LINK_REALM_ARG_ID, place.world_name);
 
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            return string.Format(JUMP_IN_GC_LINK, coordinates.x, coordinates.y);
+
+            return dclUrlSource
+                  .Url(DecentralandUrl.JumpInGenesisCityLink)
+                  .Replace(JUMP_IN_GC_LINK_COORD_X_ARG_ID, coordinates.x.ToString())
+                  .Replace(JUMP_IN_GC_LINK_COORD_Y_ARG_ID, coordinates.y.ToString());
         }
     }
 }

@@ -4,6 +4,7 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
@@ -65,7 +66,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IProfileRepository profileRepository) : base(view, PAGE_SIZE)
+            IProfileRepository profileRepository,
+            IDecentralandUrlsSource dclUrlSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -73,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard);
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 

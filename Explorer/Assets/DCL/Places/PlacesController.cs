@@ -2,6 +2,7 @@
 using DCL.Clipboard;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -37,7 +38,8 @@ namespace DCL.Places
             IWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard)
+            ISystemClipboard clipboard,
+            IDecentralandUrlsSource dclUrlSource)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -47,7 +49,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                webRequestController, realmNavigator, clipboard);
+                webRequestController, realmNavigator, clipboard, dclUrlSource);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
