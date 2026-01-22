@@ -264,7 +264,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(EnvChainsUtils.GetNetworkId(environment), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? EnvChainsUtils.GetNetworkId(environment), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -276,7 +276,7 @@ namespace DCL.Web3.Authenticators
             }
             catch (Exception)
             {
-                await DisconnectFromRpcAsync(ct);
+                await DisconnectFromRpcAsync(CancellationToken.None);
                 throw;
             }
             finally
