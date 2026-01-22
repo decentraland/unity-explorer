@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private PlacesController? discoverController;
+        private PlacesController? placesController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -306,7 +306,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
-            discoverController?.Dispose();
+            placesController?.Dispose();
             upscalingController?.Dispose();
         }
 
@@ -364,6 +364,8 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
+
+            ProvidedAsset<PlaceCategoriesSO> placeCategoriesSO = await assetsProvisioner.ProvideMainAssetAsync(settings.PlaceCategoriesSO, ct);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
@@ -496,7 +498,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            discoverController = new PlacesController(placesView, cursor);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -520,7 +522,7 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
-                    discoverController,
+                    placesController,
                     inputBlock,
                     includeCameraReel,
                     includeDiscover,
@@ -661,6 +663,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int PlaceThumbnailWidth { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
         }
     }
 }
