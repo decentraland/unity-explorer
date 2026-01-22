@@ -25,6 +25,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -118,6 +119,7 @@ using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PerformanceAndDiagnostics;
 using DCL.SocialEmotes;
 using DCL.SocialEmotes.UI;
@@ -558,6 +560,18 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
+            IDonationsService donationsService;
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
+            {
+                IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+                    staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                    placesAPIService, bootstrapContainer.Environment,
+                    bootstrapContainer.DecentralandUrlsSource);
+                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+            }
+            else
+                donationsService = new DonationsServiceDisabled();
+
             var coreBackpackEventBus = new BackpackEventBus();
 
             IChatEventBus chatEventBus = new ChatEventBus();
@@ -786,7 +800,8 @@ namespace Global.Dynamic
                     roomHub,
                     staticContainer.LoadingStatus,
                     includeBannedUsersFromScene,
-                    homePlaceEventBus),
+                    homePlaceEventBus,
+                    donationsService),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
@@ -890,7 +905,8 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider,
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
-                    staticContainer.LoadingStatus
+                    staticContainer.LoadingStatus,
+                    donationsService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1014,6 +1030,18 @@ namespace Global.Dynamic
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
+
+            if (donationsService.DonationFeatureEnabled)
+                globalPlugins.Add(new DonationsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    donationsService,
+                    staticContainer.ProfilesContainer.Repository,
+                    playerEntity,
+                    globalWorld,
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.InputBlock));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
