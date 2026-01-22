@@ -25,8 +25,10 @@ namespace DCL.Profiles
         /// <summary>
         ///     Compact info is requested without connection to a catalyst or to a specific version, and always with a default batching behaviour
         /// </summary>
-        public static UniTask<Profile.CompactInfo?> GetCompactAsync(this IProfileRepository profileRepository, string id, CancellationToken ct, IPartitionComponent? partition = null) =>
-            profileRepository.GetAsync(id, 0, null, ct, true, IProfileRepository.FetchBehaviour.DEFAULT, ProfileTier.Kind.Compact, partition: partition)
+        public static UniTask<Profile.CompactInfo?> GetCompactAsync(this IProfileRepository profileRepository, string id, CancellationToken ct,
+            IPartitionComponent? partition = null,
+            IProfileRepository.FetchBehaviour batchBehaviour = IProfileRepository.FetchBehaviour.DEFAULT) =>
+            profileRepository.GetAsync(id, 0, null, ct, true, batchBehaviour, ProfileTier.Kind.Compact, partition: partition)
                              .ContinueWith(static pt => pt.ToCompact());
 
         /// <summary>
