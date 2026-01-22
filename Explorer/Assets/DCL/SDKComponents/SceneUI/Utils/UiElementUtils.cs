@@ -7,6 +7,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using System.Linq;
 using UnityEngine;
+using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -169,7 +170,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             visualElementToSetup.style.opacity = model.HasOpacity ? model.Opacity : 1;
         }
 
-        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
@@ -180,14 +181,14 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
 
+            int font = (int)model.GetFont();
+            if (font < styleFontDefinitions.Length)
+                labelToSetup.style.unityFontDefinition = styleFontDefinitions[font];
+
             if (model.HasTextWrap)
-            {
                 labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
-            }
             else
-            {
                 labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
-            }
         }
 
         public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture? texture = null)

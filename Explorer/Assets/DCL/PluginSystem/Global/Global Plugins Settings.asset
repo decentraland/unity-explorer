@@ -421,6 +421,12 @@ MonoBehaviour:
         <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
         <PlaceThumbnailHeight>k__BackingField: 320
         <PlaceThumbnailWidth>k__BackingField: 404
+        <PlaceCategoriesSO>k__BackingField:
+          m_AssetGUID: 508289f0a6feab048964059d0534fdd7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

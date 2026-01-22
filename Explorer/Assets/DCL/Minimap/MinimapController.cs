@@ -415,22 +415,32 @@ namespace DCL.Minimap
 
         private async UniTaskVoid RefreshPlaceInfoUIAsync(Vector2Int parcelPosition, CancellationToken ct)
         {
-            PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
+            await realmData.WaitConfiguredAsync();
 
             if (realmData.ScenesAreFixed)
             {
                 viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                 viewInstance!.favoriteButton.SetButtonState(false, false);
-            }
-            else if (placeInfo != null)
-            {
-                viewInstance!.placeNameText.text = placeInfo.title;
-                viewInstance!.favoriteButton.SetButtonState(placeInfo.user_favorite);
+
+                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(realmData.RealmName, ct);
+                if (worldInfo != null)
+                    placesAPIService.AddRecentlyVisitedPlace(worldInfo.id);
             }
             else
             {
-                viewInstance!.placeNameText.text = "Unknown place";
-                viewInstance!.favoriteButton.SetButtonState(false, false);
+                PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(parcelPosition, ct);
+
+                if (placeInfo != null)
+                {
+                    viewInstance!.placeNameText.text = placeInfo.title;
+                    viewInstance!.favoriteButton.SetButtonState(placeInfo.user_favorite);
+                    placesAPIService.AddRecentlyVisitedPlace(placeInfo.id);
+                }
+                else
+                {
+                    viewInstance!.placeNameText.text = "Unknown place";
+                    viewInstance!.favoriteButton.SetButtonState(false, false);
+                }
             }
 
             viewInstance!.placeCoordinatesText.text = parcelPosition.ToString().Replace("(", "").Replace(")", "");
@@ -452,6 +462,27 @@ namespace DCL.Minimap
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
+            }
+            catch (Exception exception)
+            {
+                ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
+            }
+
+            return null;
+        }
+
+        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(string worldName, CancellationToken ct)
+        {
+            await realmData.WaitConfiguredAsync();
+
+            try
+            {
+                return await placesAPIService.GetWorldAsync(worldName, ct);
+            }
+            catch (OperationCanceledException _) { }
+            catch (NotAPlaceException notAPlaceException)
+            {
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}");
             }
             catch (Exception exception)
             {

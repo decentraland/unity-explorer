@@ -101,5 +101,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Support,
 
         ManaUsdRateApiUrl,
+
+        CreatorHub,
     }
 }
