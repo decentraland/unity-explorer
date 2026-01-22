@@ -77,6 +77,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
                 DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
+                DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
@@ -143,6 +144,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
                 DecentralandUrl.CreatorHub => $"https://decentraland.{ENV}/create/",
                 DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
+                DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
+                DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
