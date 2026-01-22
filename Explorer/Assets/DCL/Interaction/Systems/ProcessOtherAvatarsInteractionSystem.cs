@@ -311,9 +311,6 @@ namespace DCL.Interaction.Systems
                     World.Add(playerEntity, moveBeforePlayingSocialEmoteIntent);
                 }
 
-                // When reacting to a social emote, the camera mode is forced to be third person
-                World.Get<CameraComponent>(cameraEntityProxy.Object).Mode = CameraMode.ThirdPerson;
-
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed() <color=#FF9933>MOVING --> TO INITIATOR outcome: {outcomeIndex}</color>");
             }
         }
