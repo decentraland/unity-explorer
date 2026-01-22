@@ -197,7 +197,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var emoteUrn = new URN("urn:emote:id");
             var isLooping = true;
 
-            globalWorldActions.TriggerEmote(emoteUrn, isLooping);
+            globalWorldActions.TriggerEmoteAsync(emoteUrn, isLooping);
 
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
             var intent = world.Get<CharacterEmoteIntent>(playerEntity);
@@ -216,7 +216,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
             var emoteUrn = new URN("urn:emote:id");
 
-            globalWorldActions.TriggerEmote(emoteUrn, false);
+            globalWorldActions.TriggerEmoteAsync(emoteUrn, false);
 
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
             Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);

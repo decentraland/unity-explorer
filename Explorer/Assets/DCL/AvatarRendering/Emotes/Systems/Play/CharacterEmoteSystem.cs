@@ -330,8 +330,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                 StopEmote(entity, ref emoteComponent, avatarView);
             }
 
-            if(World.Has<CharacterEmoteIntent>(entity))
+            // In case the asset of the emote has not been downloaded yet, the emote must not play (unless it is a scene emote, which has to wait for current emote to stop before playing)
+            if (World.Has<CharacterEmoteIntent>(entity) && World.Get<CharacterEmoteIntent>(entity).TriggerSource != TriggerSource.SCENE)
+            {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "ConsumeStopEmoteIntent() CharacterEmoteIntent REMOVED");
                 World.Remove<CharacterEmoteIntent>(entity);
+            }
 
             World.Remove<StopEmoteIntent>(entity);
         }

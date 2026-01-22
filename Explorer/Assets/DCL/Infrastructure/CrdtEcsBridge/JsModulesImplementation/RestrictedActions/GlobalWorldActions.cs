@@ -50,6 +50,15 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask<bool> MoveAndRotatePlayerAsync(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget, float duration, CancellationToken ct)
         {
+            // If the player is currently playing an emote, it cancels it and waits until it has stopped
+            if (world.Has<CharacterEmoteComponent>(playerEntity))
+            {
+                world.AddOrSet(playerEntity, new StopEmoteIntent());
+
+                while (world.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                    await UniTask.Yield();
+            }
+
             if (duration > 0f)
             {
                 // Smooth movement over duration (through MovePlayerWithDurationSystem)
@@ -66,6 +75,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
                 return await completionSource.Task.AttachExternalCancellation(ct);
             }
+
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "GlobalWorldActions.MoveAndRotatePlayerAsync() ");
 
             // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
@@ -99,10 +110,19 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public void TriggerEmote(URN urn, bool isLooping)
+        public async UniTask TriggerEmoteAsync(URN urn, bool isLooping)
         {
             //TODO (Juani Emotes Refactor): Re-analyze this if, probably remove it
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape)) return;
+
+            // If the player is currently playing an emote, it cancels it and waits until it has stopped
+            if (world.Has<CharacterEmoteComponent>(playerEntity))
+            {
+                world.AddOrSet(playerEntity, new StopEmoteIntent(urn));
+
+                while (world.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                    await UniTask.Yield();
+            }
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent (urn, triggerSource: TriggerSource.SCENE, spatial: true ));
@@ -112,6 +132,15 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
+            // If the player is currently playing an emote, it cancels it and waits until it has stopped
+            if (world.Has<CharacterEmoteComponent>(playerEntity))
+            {
+                world.AddOrSet(playerEntity, new StopEmoteIntent(hash));
+
+                while (world.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                    await UniTask.Yield();
+            }
+
             world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
 
             bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
@@ -146,6 +175,15 @@ namespace CrdtEcsBridge.RestrictedActions
             //if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
             //    throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
+            // If the player is currently playing an emote, it cancels it and waits until it has stopped
+            if (world.Has<CharacterEmoteComponent>(playerEntity))
+            {
+                world.AddOrSet(playerEntity, new StopEmoteIntent(emoteHash));
+
+                while (world.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                    await UniTask.Yield();
+            }
+
             if (!avatarShape.IsVisible) return;
 
             var promise = SceneEmotePromise.Create(world,
@@ -161,7 +199,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 URN urn = value.GetUrn();
                 bool isLooping = value.IsLooping();
 
-                TriggerEmote(urn, isLooping);
+                await TriggerEmoteAsync(urn, isLooping);
             }
         }
 
@@ -169,6 +207,15 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+
+            // If the player is currently playing an emote, it cancels it and waits until it has stopped
+            if (world.Has<CharacterEmoteComponent>(playerEntity))
+            {
+                world.AddOrSet(playerEntity, new StopEmoteIntent(emoteHash));
+
+                while (world.Get<CharacterEmoteComponent>(playerEntity).IsPlayingEmote)
+                    await UniTask.Yield();
+            }
 
             var promise = LocalSceneEmotePromise.Create(world,
                 new GetSceneEmoteFromLocalSceneIntention(sceneData, emotePath, emoteHash,
@@ -183,7 +230,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 var value = consumed.Value[0]!;
                 URN urn = value.GetUrn();
 
-                TriggerEmote(urn, loop);
+                await TriggerEmoteAsync(urn, loop);
             }
         }
     }
