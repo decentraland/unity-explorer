@@ -61,8 +61,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (view.gameObject.activeSelf)
             {
                 // Listeners
-                view.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
-                view.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
+                view.LoginMetamaskButton.onClick.AddListener(LoginWithMetamask);
+                view.LoginGoogleButton.onClick.AddListener(LoginWithGoogle);
+                view.LoginDiscordButton.onClick.AddListener(LoginWithDiscord);
+                view.LoginAppleButton.onClick.AddListener(LoginWithApple);
+                view.LoginXButton.onClick.AddListener(LoginWithX);
+                view.LoginFortmaticButton.onClick.AddListener(LoginWithFormatic);
+                view.LoginCoinbaseButton.onClick.AddListener(LoginWithCoinbase);
+                view.LoginWalletConnectButton.onClick.AddListener(LoginWithWalletConnect);
 
                 viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
                 viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
@@ -81,8 +87,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             viewInstance.RestrictedUserContainer.SetActive(false);
             viewInstance!.ErrorPopupRoot.SetActive(false);
 
-            view.MetamaskLoginButton.onClick.RemoveAllListeners();
-            view.GoogleLoginButton.onClick.RemoveAllListeners();
+            view.LoginMetamaskButton.onClick.RemoveAllListeners();
+            view.LoginGoogleButton.onClick.RemoveAllListeners();
+            view.LoginDiscordButton.onClick.RemoveAllListeners();
+            view.LoginAppleButton.onClick.RemoveAllListeners();
+            view.LoginXButton.onClick.RemoveAllListeners();
+            view.LoginFortmaticButton.onClick.RemoveAllListeners();
+            view.LoginCoinbaseButton.onClick.RemoveAllListeners();
+            view.LoginWalletConnectButton.onClick.RemoveAllListeners();
 
             viewInstance.ErrorPopupCloseButton.onClick.RemoveAllListeners();
             viewInstance.ErrorPopupExitButton.onClick.RemoveAllListeners();
@@ -95,11 +107,30 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.EmailInputField.Submitted -= OTPLogin;
         }
 
+        // dApp endpoint is case insensitive
         private void LoginWithMetamask() =>
             Login(LoginMethod.METAMASK);
 
         private void LoginWithGoogle() =>
             Login(LoginMethod.GOOGLE);
+
+        private void LoginWithDiscord() =>
+            Login(LoginMethod.DISCORD);
+
+        private void LoginWithApple() =>
+            Login(LoginMethod.APPLE);
+
+        private void LoginWithX() =>
+            Login(LoginMethod.X);
+
+        private void LoginWithFormatic() =>
+            Login(LoginMethod.FORTMATIC);
+
+        private void LoginWithCoinbase() =>
+            Login(LoginMethod.COINBASE);
+
+        private void LoginWithWalletConnect() =>
+            Login(LoginMethod.WALLETCONNECT);
 
         private void Login(LoginMethod method)
         {

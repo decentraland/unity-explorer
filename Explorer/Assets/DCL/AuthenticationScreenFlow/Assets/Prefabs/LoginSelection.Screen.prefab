@@ -1352,8 +1352,14 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 0}
   <CancelLoginButton>k__BackingField: {fileID: 9108319191272288200}
   <EmailInputField>k__BackingField: {fileID: 2001940849056367380}
-  <MetamaskLoginButton>k__BackingField: {fileID: 4481630630708771614}
-  <GoogleLoginButton>k__BackingField: {fileID: 9078712830092277137}
+  <LoginMetamaskButton>k__BackingField: {fileID: 4481630630708771614}
+  <LoginGoogleButton>k__BackingField: {fileID: 9078712830092277137}
+  <LoginDiscordButton>k__BackingField: {fileID: 8034867738283704265}
+  <LoginAppleButton>k__BackingField: {fileID: 6032745886008156180}
+  <LoginXButton>k__BackingField: {fileID: 6073204497830801434}
+  <LoginFortmaticButton>k__BackingField: {fileID: 4667481865031010386}
+  <LoginCoinbaseButton>k__BackingField: {fileID: 173843821830238503}
+  <LoginWalletConnectButton>k__BackingField: {fileID: 7675320236848359482}
   <MoreOptionsButton>k__BackingField: {fileID: 8530844300445857207}
   <MoreOptionsButtonDirIcon>k__BackingField: {fileID: 9106669052353943300}
   moreOptionsPanel: {fileID: 7793966543379160465}
@@ -2957,7 +2963,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2702495720024624198, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Name
-      value: Formatic.Button
+      value: Fortmatic.Button
       objectReference: {fileID: 0}
     - target: {fileID: 2702495720024624198, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_IsActive

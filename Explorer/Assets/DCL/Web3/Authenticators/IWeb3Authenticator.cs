@@ -8,9 +8,17 @@ namespace DCL.Web3.Authenticators
     public enum LoginMethod
     {
         ANY = 0,
-        METAMASK = 1,
-        GOOGLE = 2,
-        EMAIL_OTP = 3,
+        EMAIL_OTP = 1,
+
+        METAMASK = 2,
+        GOOGLE = 3,
+
+        DISCORD = 4,
+        APPLE = 5,
+        X = 6,
+        FORTMATIC = 7,
+        COINBASE = 8,
+        WALLETCONNECT = 9,
     }
 
     public interface IWeb3Authenticator : IDisposable

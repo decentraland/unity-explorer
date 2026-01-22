@@ -21,10 +21,28 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("SECONDARY LOGINS")]
         [field: SerializeField]
-        public Button MetamaskLoginButton { get; private set; } = null!;
+        public Button LoginMetamaskButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button GoogleLoginButton { get; private set; } = null!;
+        public Button LoginGoogleButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginDiscordButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginAppleButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginXButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginFortmaticButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginCoinbaseButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button LoginWalletConnectButton { get; private set; } = null!;
 
         [field: Header("OTHER OPTIONS")]
         [field: SerializeField]

@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3458545051577201071}
   - component: {fileID: 7114365747567446418}
   - component: {fileID: 1285709191286520527}
-  - component: {fileID: 4733679325210648472}
   m_Layer: 0
   m_Name: Description
   m_TagString: Untagged
@@ -138,46 +137,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &4733679325210648472
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2934477094474805673}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_StringReference:
-    m_TableReference:
-      m_TableCollectionName: GUID:48b7b423583d84e3d9f2dbeaa25c3aa1
-    m_TableEntryReference:
-      m_KeyId: 2611913090392064
-      m_Key: 
-    m_FallbackState: 0
-    m_WaitForCompletion: 0
-    m_LocalVariables: []
-  m_FormatArguments: []
-  m_UpdateString:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1285709191286520527}
-        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
-        m_MethodName: set_text
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 1
-  references:
-    version: 2
-    RefIds: []
 --- !u!1 &3803210798613303625
 GameObject:
   m_ObjectHideFlags: 0
@@ -195,7 +154,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3930399268937052993
 RectTransform:
   m_ObjectHideFlags: 0
@@ -264,13 +223,14 @@ GameObject:
   - component: {fileID: 3983473935368924630}
   - component: {fileID: 1032869701343079646}
   - component: {fileID: 7484145463121685164}
+  - component: {fileID: 3871422066062914400}
   m_Layer: 0
   m_Name: ProfileFetching.Screen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3983473935368924630
 RectTransform:
   m_ObjectHideFlags: 0
@@ -304,7 +264,7 @@ Animator:
   m_GameObject: {fileID: 4637533876142915480}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: aef194967a65f5741ac88f2972b3c943, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1d64db59611bcb544955359f5b767634, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -328,6 +288,23 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &3871422066062914400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4637533876142915480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ad4b59864104b139e86d429f0a7c59c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.ProfileFetchingAuthView
+  <canvas>k__BackingField: {fileID: 0}
+  <raycaster>k__BackingField: {fileID: 0}
+  <CancelButton>k__BackingField: {fileID: 7673003258099740870}
+  animator: {fileID: 1032869701343079646}
+  canvasGroup: {fileID: 7484145463121685164}
 --- !u!1001 &3122263444883534784
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -425,6 +402,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 38f7059f590f90c4c91c132d77b00e05, type: 3}
+--- !u!114 &7673003258099740870 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4697106805401797382, guid: 38f7059f590f90c4c91c132d77b00e05, type: 3}
+  m_PrefabInstance: {fileID: 3122263444883534784}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!224 &8445510659708644125 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6800709479425710301, guid: 38f7059f590f90c4c91c132d77b00e05, type: 3}
