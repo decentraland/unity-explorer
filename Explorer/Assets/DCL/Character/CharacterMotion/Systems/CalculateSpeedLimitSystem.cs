@@ -35,11 +35,9 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(RandomAvatar))]
         private void ComputeLocalAvatarSpeedLimit(in ICharacterControllerSettings settings, in MovementInputComponent movementInput, in GlideState glideState, ref MovementSpeedLimit speedLimit)
         {
-            const float GLIDING_SPEED_LIMIT = 20; // TODO move to settings
-
             if (glideState.IsGliding)
             {
-                speedLimit.Value = GLIDING_SPEED_LIMIT;
+                speedLimit.Value = settings.GlideSpeed;
                 return;
             }
 

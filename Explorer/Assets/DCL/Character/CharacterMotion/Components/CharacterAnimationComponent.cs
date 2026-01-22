@@ -22,6 +22,8 @@ namespace DCL.CharacterMotion.Components
         public bool IsLongFall;
         public bool IsFalling;
         public bool IsStunned;
+        public bool IsGliding;
+        public float GlideBlendValue;
 
         public override bool Equals(object obj) =>
             obj is AnimationStates states && Equals(states);

@@ -1,8 +1,8 @@
 ﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using Utility.Animations;
 
 namespace DCL.CharacterMotion.Animation
@@ -11,38 +11,59 @@ namespace DCL.CharacterMotion.Animation
     {
         // General Animation Controller flags update
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ICharacterControllerSettings settings, ref CharacterAnimationComponent animationComponent,
+        public static void Execute(float dt,
+            ICharacterControllerSettings settings,
+            ref CharacterAnimationComponent animationComponent,
             IAvatarView view,
             CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
-            in JumpState jumpState)
+            in JumpState jumpState,
+            in GlideState glideState)
         {
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
-            float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
+
+            Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
+            float verticalVelocity = rigidTransform.GravityVelocity.y + velocity.y;
 
             bool jumpTriggered = jumpState.JustJumped && jumpState.JumpCount != animationComponent.States.JumpCount;
 
             animationComponent.States.IsGrounded = isGrounded;
-            animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
-            animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
-            animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
             animationComponent.States.JumpCount = jumpState.JumpCount;
+            animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
+            animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
+            animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
+            animationComponent.States.IsStunned = stunComponent.IsStunned;
+            animationComponent.States.IsGliding = glideState.IsGliding;
+            animationComponent.States.GlideBlendValue = UpdateGlideBlendValue(dt, settings, animationComponent.States.GlideBlendValue, view, velocity);
 
-            SetAnimatorParameters(view, ref animationComponent.States, jumpTriggered, stunComponent.IsStunned);
+            SetAnimatorParameters(view, animationComponent.States, jumpTriggered);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetAnimatorParameters(IAvatarView view, ref AnimationStates states, bool jumpTriggered, bool isStunned)
+        private static float UpdateGlideBlendValue(float dt, ICharacterControllerSettings settings, float glideBlend, IAvatarView view, Vector3 velocity)
         {
-            if (jumpTriggered)
-                view.SetAnimatorTrigger(AnimationHashes.JUMP);
+            float maxAngle = Mathf.Deg2Rad * (90 - settings.GlideAnimMaxAngle);
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
+            const float BLEND_MIN_VEL_SQ = 0.01f * 0.01f;
+            float cos = velocity.sqrMagnitude > BLEND_MIN_VEL_SQ ? Vector3.Dot(velocity.normalized, view.GetTransform().right) : 0;
+            cos = Mathf.Clamp(cos / Mathf.Cos(maxAngle), -1, 1);
+
+            return Mathf.MoveTowards(glideBlend, cos, settings.GlideAnimBlendSpeed * dt);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SetAnimatorParameters(IAvatarView view, in AnimationStates states, bool jumpTriggered)
+        {
             view.SetAnimatorBool(AnimationHashes.GROUNDED, states.IsGrounded);
             view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, states.JumpCount);
-            view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, states.IsLongJump);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
+            view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.STUNNED, states.IsStunned);
+            view.SetAnimatorBool(AnimationHashes.GLIDING, states.IsGliding);
+            view.SetAnimatorFloat(AnimationHashes.GLIDE_BLEND, states.GlideBlendValue);
+
+            if (jumpTriggered) view.SetAnimatorTrigger(AnimationHashes.JUMP);
         }
     }
 }

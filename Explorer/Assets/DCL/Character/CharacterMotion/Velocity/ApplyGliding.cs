@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion
 
             if (glideState.IsGliding)
             {
-                rigidTransform.GravityVelocity = Vector3.ClampMagnitude(rigidTransform.GravityVelocity, 1);
+                rigidTransform.GravityVelocity = Vector3.ClampMagnitude(rigidTransform.GravityVelocity, settings.GlideMaxGravity);
             }
         }
     }

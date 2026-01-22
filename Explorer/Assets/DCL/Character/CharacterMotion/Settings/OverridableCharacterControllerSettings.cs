@@ -148,6 +148,14 @@ namespace DCL.CharacterMotion.Settings
             set => impl.AirJumpDirectionChangeImpulse = value;
         }
 
+        public float GlideSpeed => impl.GlideSpeed;
+
+        public float GlideMaxGravity => impl.GlideMaxGravity;
+
+        public float GlideAnimMaxAngle => impl.GlideAnimMaxAngle;
+
+        public float GlideAnimBlendSpeed => impl.GlideAnimBlendSpeed;
+
         public float JumpGraceTime => impl.JumpGraceTime;
 
         public float JumpHeightStun => impl.JumpHeightStun;

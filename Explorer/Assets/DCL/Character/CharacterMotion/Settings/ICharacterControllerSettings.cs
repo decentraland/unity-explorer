@@ -31,8 +31,12 @@ namespace DCL.CharacterMotion.Settings
         float AirJumpHeight { get; set; }
         float AirJumpDelay { get; set; }
         float AirJumpGravityDuringDelay { get; set; }
-        float CooldownBetweenJumps { get;set; }
+        float CooldownBetweenJumps { get; set; }
         float AirJumpDirectionChangeImpulse { get; set; }
+        public float GlideSpeed { get; }
+        public float GlideMaxGravity { get; }
+        public float GlideAnimMaxAngle { get; }
+        public float GlideAnimBlendSpeed { get; }
         float JumpGraceTime { get; }
         float JumpHeightStun { get; }
         float LongFallStunTime { get; }
