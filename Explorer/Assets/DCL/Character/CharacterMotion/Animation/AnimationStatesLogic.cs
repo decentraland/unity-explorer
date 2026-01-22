@@ -30,8 +30,8 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.JumpCount = jumpState.JumpCount;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
-            animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
+            animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsStunned = stunComponent.IsStunned;
             animationComponent.States.IsGliding = glideState.IsGliding;
             animationComponent.States.GlideBlendValue = UpdateGlideBlendValue(dt, settings, animationComponent.States.GlideBlendValue, view, velocity);
@@ -57,8 +57,8 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.GROUNDED, states.IsGrounded);
             view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, states.JumpCount);
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, states.IsLongJump);
-            view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
             view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
             view.SetAnimatorBool(AnimationHashes.STUNNED, states.IsStunned);
             view.SetAnimatorBool(AnimationHashes.GLIDING, states.IsGliding);
             view.SetAnimatorFloat(AnimationHashes.GLIDE_BLEND, states.GlideBlendValue);

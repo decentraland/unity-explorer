@@ -19,8 +19,8 @@ namespace DCL.CharacterMotion.Components
         public bool IsGrounded;
         public int JumpCount;
         public bool IsLongJump;
-        public bool IsLongFall;
         public bool IsFalling;
+        public bool IsLongFall;
         public bool IsStunned;
         public bool IsGliding;
         public float GlideBlendValue;
@@ -34,9 +34,11 @@ namespace DCL.CharacterMotion.Components
             IsGrounded == other.IsGrounded &&
             JumpCount == other.JumpCount &&
             IsLongJump == other.IsLongJump &&
-            IsLongFall == other.IsLongFall &&
             IsFalling == other.IsFalling &&
-            IsStunned == other.IsStunned;
+            IsLongFall == other.IsLongFall &&
+            IsLongFall == other.IsStunned &&
+            IsGliding == other.IsGliding &&
+            Math.Abs(GlideBlendValue - other.GlideBlendValue) < EPSILON;
 
         public override int GetHashCode()
         {
@@ -48,16 +50,18 @@ namespace DCL.CharacterMotion.Components
                 hash = (hash * 23) + IsGrounded.GetHashCode();
                 hash = (hash * 23) + JumpCount;
                 hash = (hash * 23) + IsLongJump.GetHashCode();
-                hash = (hash * 23) + IsLongFall.GetHashCode();
                 hash = (hash * 23) + IsFalling.GetHashCode();
+                hash = (hash * 23) + IsLongFall.GetHashCode();
                 hash = (hash * 23) + IsStunned.GetHashCode();
+                hash = (hash * 23) + IsGliding.GetHashCode();
+                hash = (hash * 23) + GlideBlendValue.GetHashCode();
                 return hash;
             }
         }
 
         public override string ToString()
         {
-            return $"{IsGrounded}: j:{JumpCount} lf:{IsLongJump} f:{IsFalling} lf:{IsLongFall} mb:{MovementBlendValue} sb:{SlideBlendValue}";
+            return $"gr:{IsGrounded}: jc:{JumpCount} lj:{IsLongJump} f:{IsFalling} lf:{IsLongFall} gl:{IsGliding} mb:{MovementBlendValue} sb:{SlideBlendValue}";
         }
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>

@@ -91,10 +91,10 @@ namespace DCL.Multiplayer.Movement.Systems
             animationComponent.States.IsGrounded = message.animState.IsGrounded;
             animationComponent.States.JumpCount = message.animState.JumpCount;
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
-            animationComponent.States.IsLongFall = message.animState.IsLongFall;
             animationComponent.States.IsFalling = message.animState.IsFalling;
+            animationComponent.States.IsLongFall = message.animState.IsLongFall;
+            animationComponent.States.IsGliding = message.animState.IsGliding;
             animationComponent.States.IsStunned = message.isStunned;
-            animationComponent.States.IsGliding = false; // TODO add to network message
             AnimationStatesLogic.SetAnimatorParameters(view, animationComponent.States, jumpTriggered);
         }
 

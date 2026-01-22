@@ -48,7 +48,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "pQEKCFBvc2l0aW9uEg0KBWluZGV4GAEgASgNEhIKCnBvc2l0aW9uX3gYAyAB",
             "KAISEgoKcG9zaXRpb25feRgEIAEoAhISCgpwb3NpdGlvbl96GAUgASgCEhIK",
             "CnJvdGF0aW9uX3gYBiABKAISEgoKcm90YXRpb25feRgHIAEoAhISCgpyb3Rh",
-            "dGlvbl96GAggASgCEhIKCnJvdGF0aW9uX3cYCSABKAIi6QMKCE1vdmVtZW50",
+            "dGlvbl96GAggASgCEhIKCnJvdGF0aW9uX3cYCSABKAIi/QMKCE1vdmVtZW50",
             "EhEKCXRpbWVzdGFtcBgBIAEoAhISCgpwb3NpdGlvbl94GAIgASgCEhIKCnBv",
             "c2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEoAhISCgp2ZWxvY2l0",
             "eV94GAUgASgCEhIKCnZlbG9jaXR5X3kYBiABKAISEgoKdmVsb2NpdHlfehgH",
@@ -56,42 +56,42 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "bGVuZF92YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgpqdW1w",
             "X2NvdW50GAsgASgFEhQKDGlzX2xvbmdfanVtcBgMIAEoCBIUCgxpc19sb25n",
             "X2ZhbGwYDSABKAgSEgoKaXNfZmFsbGluZxgOIAEoCBISCgppc19zdHVubmVk",
-            "GA8gASgIEhIKCnJvdGF0aW9uX3kYECABKAISEgoKaXNfaW5zdGFudBgRIAEo",
-            "CBISCgppc19lbW90aW5nGBIgASgIEhsKE2hlYWRfaWtfeWF3X2VuYWJsZWQY",
-            "EyABKAgSHQoVaGVhZF9pa19waXRjaF9lbmFibGVkGBQgASgIEhAKCGhlYWRf",
-            "eWF3GBUgASgCEhIKCmhlYWRfcGl0Y2gYFiABKAIiWgoSTW92ZW1lbnRDb21w",
-            "cmVzc2VkEhUKDXRlbXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1lbnRfZGF0",
-            "YRgCIAEoAxIWCg5oZWFkX3N5bmNfZGF0YRgDIAEoBSKfAwoLUGxheWVyRW1v",
-            "dGUSFgoOaW5jcmVtZW50YWxfaWQYASABKA0SCwoDdXJuGAIgASgJEhEKCXRp",
-            "bWVzdGFtcBgDIAEoAhIYCgtpc19zdG9wcGluZxgEIAEoCEgAiAEBEhkKDGlz",
-            "X3JlcGVhdGluZxgFIAEoCEgBiAEBEhsKDmludGVyYWN0aW9uX2lkGAYgASgF",
-            "SAKIAQESIQoUc29jaWFsX2Vtb3RlX291dGNvbWUYByABKAVIA4gBARIYCgtp",
-            "c19yZWFjdGluZxgIIAEoCEgEiAEBEiMKFnNvY2lhbF9lbW90ZV9pbml0aWF0",
-            "b3IYCSABKAlIBYgBARIaCg10YXJnZXRfYXZhdGFyGAogASgJSAaIAQFCDgoM",
-            "X2lzX3N0b3BwaW5nQg8KDV9pc19yZXBlYXRpbmdCEQoPX2ludGVyYWN0aW9u",
-            "X2lkQhcKFV9zb2NpYWxfZW1vdGVfb3V0Y29tZUIOCgxfaXNfcmVhY3RpbmdC",
-            "GQoXX3NvY2lhbF9lbW90ZV9pbml0aWF0b3JCEAoOX3RhcmdldF9hdmF0YXIi",
-            "hQEKDkxvb2tBdFBvc2l0aW9uEhEKCXRpbWVzdGFtcBgBIAEoAhISCgpwb3Np",
-            "dGlvbl94GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25f",
-            "ehgEIAEoAhIkChx0YXJnZXRfYXZhdGFyX3dhbGxldF9hZGRyZXNzGAUgASgJ",
-            "IjUKClNjZW5lRW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNv",
-            "dXJjZRgCIAEoCSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2Zp",
-            "bGVfdmVyc2lvbhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNz",
-            "GAQgASgJEhcKD3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVz",
-            "cG9uc2USGgoSc2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJs",
-            "GAIgASgJIloKBENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAY",
-            "AiABKAESGwoOZm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2Fy",
-            "ZGVkX2Zyb20iJwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgC",
-            "IAEoDCKLAQoFVm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWlu",
-            "ZGV4GAIgASgNEj8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5jb21tcy5yZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxIL",
-            "CgdWQ19PUFVTEABiBnByb3RvMw=="));
+            "GA8gASgIEhIKCmlzX2dsaWRpbmcYFyABKAgSEgoKcm90YXRpb25feRgQIAEo",
+            "AhISCgppc19pbnN0YW50GBEgASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgSGwoT",
+            "aGVhZF9pa195YXdfZW5hYmxlZBgTIAEoCBIdChVoZWFkX2lrX3BpdGNoX2Vu",
+            "YWJsZWQYFCABKAgSEAoIaGVhZF95YXcYFSABKAISEgoKaGVhZF9waXRjaBgW",
+            "IAEoAiJaChJNb3ZlbWVudENvbXByZXNzZWQSFQoNdGVtcG9yYWxfZGF0YRgB",
+            "IAEoBRIVCg1tb3ZlbWVudF9kYXRhGAIgASgDEhYKDmhlYWRfc3luY19kYXRh",
+            "GAMgASgFIp8DCgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEo",
+            "DRILCgN1cm4YAiABKAkSEQoJdGltZXN0YW1wGAMgASgCEhgKC2lzX3N0b3Bw",
+            "aW5nGAQgASgISACIAQESGQoMaXNfcmVwZWF0aW5nGAUgASgISAGIAQESGwoO",
+            "aW50ZXJhY3Rpb25faWQYBiABKAVIAogBARIhChRzb2NpYWxfZW1vdGVfb3V0",
+            "Y29tZRgHIAEoBUgDiAEBEhgKC2lzX3JlYWN0aW5nGAggASgISASIAQESIwoW",
+            "c29jaWFsX2Vtb3RlX2luaXRpYXRvchgJIAEoCUgFiAEBEhoKDXRhcmdldF9h",
+            "dmF0YXIYCiABKAlIBogBAUIOCgxfaXNfc3RvcHBpbmdCDwoNX2lzX3JlcGVh",
+            "dGluZ0IRCg9faW50ZXJhY3Rpb25faWRCFwoVX3NvY2lhbF9lbW90ZV9vdXRj",
+            "b21lQg4KDF9pc19yZWFjdGluZ0IZChdfc29jaWFsX2Vtb3RlX2luaXRpYXRv",
+            "ckIQCg5fdGFyZ2V0X2F2YXRhciKFAQoOTG9va0F0UG9zaXRpb24SEQoJdGlt",
+            "ZXN0YW1wGAEgASgCEhIKCnBvc2l0aW9uX3gYAiABKAISEgoKcG9zaXRpb25f",
+            "eRgDIAEoAhISCgpwb3NpdGlvbl96GAQgASgCEiQKHHRhcmdldF9hdmF0YXJf",
+            "d2FsbGV0X2FkZHJlc3MYBSABKAkiNQoKU2NlbmVFbW90ZRIXCg9zY2VuZV9l",
+            "bnRpdHlfaWQYASABKAkSDgoGc291cmNlGAIgASgJIjEKFkFubm91bmNlUHJv",
+            "ZmlsZVZlcnNpb24SFwoPcHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlByb2Zp",
+            "bGVSZXF1ZXN0Eg8KB2FkZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJzaW9u",
+            "GAMgASgNIj8KD1Byb2ZpbGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3Byb2Zp",
+            "bGUYASABKAkSEAoIYmFzZV91cmwYAiABKAkiWgoEQ2hhdBIPCgdtZXNzYWdl",
+            "GAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoARIbCg5mb3J3YXJkZWRfZnJvbRgD",
+            "IAEoCUgAiAEBQhEKD19mb3J3YXJkZWRfZnJvbSInCgVTY2VuZRIQCghzY2Vu",
+            "ZV9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIosBCgVWb2ljZRIXCg9lbmNvZGVk",
+            "X3NhbXBsZXMYASABKAwSDQoFaW5kZXgYAiABKA0SPwoFY29kZWMYAyABKA4y",
+            "MC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9pY2VD",
+            "b2RlYyIZCgpWb2ljZUNvZGVjEgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "JumpCount", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "JumpCount", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "IsGliding", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData", "HeadSyncData" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition), global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "TargetAvatarWalletAddress" }, null, null, null, null),
@@ -1466,6 +1466,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       isLongFall_ = other.isLongFall_;
       isFalling_ = other.isFalling_;
       isStunned_ = other.isStunned_;
+      isGliding_ = other.isGliding_;
       rotationY_ = other.rotationY_;
       isInstant_ = other.isInstant_;
       isEmoting_ = other.isEmoting_;
@@ -1674,6 +1675,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "is_gliding" field.</summary>
+    public const int IsGlidingFieldNumber = 23;
+    private bool isGliding_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsGliding {
+      get { return isGliding_; }
+      set {
+        isGliding_ = value;
+      }
+    }
+
     /// <summary>Field number for the "rotation_y" field.</summary>
     public const int RotationYFieldNumber = 16;
     private float rotationY_;
@@ -1794,6 +1807,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsLongFall != other.IsLongFall) return false;
       if (IsFalling != other.IsFalling) return false;
       if (IsStunned != other.IsStunned) return false;
+      if (IsGliding != other.IsGliding) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
       if (IsInstant != other.IsInstant) return false;
       if (IsEmoting != other.IsEmoting) return false;
@@ -1823,6 +1837,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsLongFall != false) hash ^= IsLongFall.GetHashCode();
       if (IsFalling != false) hash ^= IsFalling.GetHashCode();
       if (IsStunned != false) hash ^= IsStunned.GetHashCode();
+      if (IsGliding != false) hash ^= IsGliding.GetHashCode();
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
       if (IsInstant != false) hash ^= IsInstant.GetHashCode();
       if (IsEmoting != false) hash ^= IsEmoting.GetHashCode();
@@ -1936,6 +1951,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(181, 1);
         output.WriteFloat(HeadPitch);
       }
+      if (IsGliding != false) {
+        output.WriteRawTag(184, 1);
+        output.WriteBool(IsGliding);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2034,6 +2053,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(181, 1);
         output.WriteFloat(HeadPitch);
       }
+      if (IsGliding != false) {
+        output.WriteRawTag(184, 1);
+        output.WriteBool(IsGliding);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2088,6 +2111,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (IsStunned != false) {
         size += 1 + 1;
+      }
+      if (IsGliding != false) {
+        size += 2 + 1;
       }
       if (RotationY != 0F) {
         size += 2 + 4;
@@ -2166,6 +2192,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.IsStunned != false) {
         IsStunned = other.IsStunned;
+      }
+      if (other.IsGliding != false) {
+        IsGliding = other.IsGliding;
       }
       if (other.RotationY != 0F) {
         RotationY = other.RotationY;
@@ -2291,6 +2320,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             HeadPitch = input.ReadFloat();
             break;
           }
+          case 184: {
+            IsGliding = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -2392,6 +2425,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 181: {
             HeadPitch = input.ReadFloat();
+            break;
+          }
+          case 184: {
+            IsGliding = input.ReadBool();
             break;
           }
         }

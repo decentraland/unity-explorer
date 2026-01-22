@@ -134,8 +134,9 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsGrounded = proto.IsGrounded,
                     JumpCount = proto.JumpCount,
                     IsLongJump = proto.IsLongJump,
-                    IsFalling = proto.IsFalling,
                     IsLongFall = proto.IsLongFall,
+                    IsFalling = proto.IsFalling,
+                    IsGliding = proto.IsGliding,
                 },
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
@@ -193,8 +194,9 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsGrounded = message.animState.IsGrounded;
             movement.JumpCount = message.animState.JumpCount;
             movement.IsLongJump = message.animState.IsLongJump;
-            movement.IsFalling = message.animState.IsFalling;
             movement.IsLongFall = message.animState.IsLongFall;
+            movement.IsFalling = message.animState.IsFalling;
+            movement.IsGliding = message.animState.IsGliding;
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;
