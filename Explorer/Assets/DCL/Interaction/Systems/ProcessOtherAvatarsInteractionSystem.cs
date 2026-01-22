@@ -36,7 +36,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string OPTIONS_TOOLTIP = "Interact";
+        private const string OPTIONS_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
@@ -290,18 +290,26 @@ namespace DCL.Interaction.Systems
 
                 Transform initiatorTransform = World.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
 
-                World.Add(playerEntity, new MoveBeforePlayingSocialEmoteIntent(
-                    initiatorTransform.position,
-                    interaction.InitiatorEntity,
-                    new TriggerEmoteReactingToSocialEmoteIntent(
-                        interaction.Emote.DTO.Metadata.id,
-                        outcomeIndex,
-                        interaction.InitiatorWalletAddress,
-                        interaction.Id))
-                );
+                MoveBeforePlayingSocialEmoteIntent moveBeforePlayingSocialEmoteIntent =
+                    new MoveBeforePlayingSocialEmoteIntent(
+                        initiatorTransform.position,
+                        interaction.InitiatorEntity,
+                        new TriggerEmoteReactingToSocialEmoteIntent(
+                            interaction.Emote.DTO.Metadata.id,
+                            outcomeIndex,
+                            interaction.InitiatorWalletAddress,
+                            interaction.Id));
 
-                // When reacting to a social emote, the camera mode is forced to be third person
-                World.Get<CameraComponent>(cameraEntityProxy.Object).Mode = CameraMode.ThirdPerson;
+                if (World.Has<MoveBeforePlayingSocialEmoteIntent>(playerEntity))
+                {
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed() MoveBeforePlayingSocialEmoteIntent already existed");
+                    World.Set(playerEntity, moveBeforePlayingSocialEmoteIntent);
+                }
+                else
+                {
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed() new MoveBeforePlayingSocialEmoteIntent");
+                    World.Add(playerEntity, moveBeforePlayingSocialEmoteIntent);
+                }
 
                 ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"ProcessOtherAvatarsInteractionSystem.OnOutcomePerformed() <color=#FF9933>MOVING --> TO INITIATOR outcome: {outcomeIndex}</color>");
             }

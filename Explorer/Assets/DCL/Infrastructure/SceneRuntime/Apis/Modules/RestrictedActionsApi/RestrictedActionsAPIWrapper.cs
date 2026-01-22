@@ -62,7 +62,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             async UniTask TriggerEmoteAsync()
             {
                 await UniTask.SwitchToMainThread();
-                api.TryTriggerEmote(predefinedEmote);
+                await api.TryTriggerEmoteAsync(predefinedEmote);
             }
         }
 

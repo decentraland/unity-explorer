@@ -166,9 +166,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (!movementInput.IgnoreCamera)
             {
-                if (cameraComponent.Mode == CameraMode.FirstPerson)
-                    ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
-                else
+                if (cameraComponent.Mode != CameraMode.FirstPerson)
                     ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
             }
 

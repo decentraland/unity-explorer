@@ -10,7 +10,9 @@ using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
+using System;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -31,6 +33,10 @@ namespace DCL.AvatarRendering.Emotes
         private string socialEmoteInitiatorWalletAddressForTrigger;
         private int socialEmoteInteractionIdForTrigger;
 
+        // Used in shortcuts feature
+        private readonly DCLInput.EmotesActions emotesActions;
+        private readonly Dictionary<string, int> actionNameById = new ();
+
         private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
             : base(world)
         {
@@ -38,6 +44,9 @@ namespace DCL.AvatarRendering.Emotes
             this.emotesBus = emotesBus;
 
             GetReportData();
+
+            emotesActions = DCLInput.Instance.Emotes;
+            ListenToSlotsInput(emotesActions.Get());
         }
 
         protected override void Update(float t)
@@ -61,7 +70,6 @@ namespace DCL.AvatarRendering.Emotes
         [All(typeof(PlayerComponent))]
         private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
         {
-            emotesBus.OnQuickActionEmotePlayed();
             triggeredEmoteSlotIndex = intent.Slot;
             triggeredEmoteTargetWalletAddress = intent.TargetAvatarWalletAddress;
             World.Remove<TriggerEmoteBySlotIntent>(entity);
@@ -99,9 +107,9 @@ namespace DCL.AvatarRendering.Emotes
                 if (emoteIndex < 0 || emoteIndex >= emotes.Count)
                     return;
 
-                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteUrn}</color>");
-
                 URN emoteId = emotes[emoteIndex];
+
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"UpdateEmoteInputSystem.TriggerEmote() <color=red>--------TRIGGER EMOTE---------- Normal emotes, or social emote start animation. wallet: {profile.UserId} emoteUrn: {emoteId}</color>");
 
                 string walletAddress = profile.UserId;
                 int interactionId = UnityEngine.Time.frameCount; // Whatever is unique, increasing and positive in this client (used when playing start animation of social emote)
@@ -140,5 +148,51 @@ namespace DCL.AvatarRendering.Emotes
 
             messageBus.Send(emoteId, false, emoteIntent.SocialEmote.UseOutcomeAnimation, emoteIntent.SocialEmote.OutcomeIndex, emoteIntent.SocialEmote.UseOutcomeReactionAnimation, emoteIntent.SocialEmote.InitiatorWalletAddress, emoteIntent.SocialEmote.TargetAvatarWalletAddress, false, emoteIntent.SocialEmote.InteractionId);
         }
+
+#region Shortcuts
+
+        protected override void OnDispose()
+        {
+            UnregisterSlotsInput(emotesActions.Get());
+        }
+
+        private void OnSlotPerformed(InputAction.CallbackContext obj)
+        {
+            triggeredEmoteSlotIndex = actionNameById[obj.action.name];
+
+            isWheelBlocked = true;
+            emotesBus.OnQuickActionEmotePlayed();
+        }
+
+        private void ListenToSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetActionName(i);
+
+                try
+                {
+                    InputAction inputAction = inputActionMap.FindAction(actionName);
+                    inputAction.started += OnSlotPerformed;
+                    actionNameById[actionName] = i;
+                }
+                catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+            }
+        }
+
+        private void UnregisterSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
+            {
+                string actionName = GetActionName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started -= OnSlotPerformed;
+            }
+        }
+
+        private static string GetActionName(int i) =>
+            $"Slot {i}";
+
+#endregion
     }
 }

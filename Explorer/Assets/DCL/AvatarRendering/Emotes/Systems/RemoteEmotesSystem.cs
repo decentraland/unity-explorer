@@ -102,7 +102,17 @@ namespace DCL.AvatarRendering.Emotes
                         if (remoteEmoteIntention.IsStopping)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=cyan>STOP SIGNAL emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
-                            World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+
+                            if (World.Get<CharacterEmoteComponent>(entry.Entity).IsPlayingEmote) // It may occur that a stop message arrives while the asset bundle of the emote have not been downloaded yet
+                            {
+                                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() IsPlayingEmote");
+
+                                if(World.Has<StopEmoteIntent>(entry.Entity))
+                                    World.Set(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+                                else
+                                    World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
+                            }
+
                             return;
                         }
 
@@ -165,7 +175,11 @@ namespace DCL.AvatarRendering.Emotes
                         if (entityParticipantTable.TryGet(lookAtPositionIntention.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (remote) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
-                            World.Add(entry.Entity, lookAtPositionIntention);
+
+                            if(World.Has<LookAtPositionIntention>(entry.Entity))
+                                World.Set(entry.Entity, lookAtPositionIntention);
+                            else
+                                World.Add(entry.Entity, lookAtPositionIntention);
                         }
                         else
                         {
@@ -202,7 +216,11 @@ namespace DCL.AvatarRendering.Emotes
                         if (profile.UserId == lookAtPositionIntention.WalletAddress)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() Added look at (local) {lookAtPositionIntention.WalletAddress} pos: {lookAtPositionIntention.TargetPosition.ToString("F6")}");
-                            World.Add(entity, lookAtPositionIntention);
+
+                            if(World.Has<LookAtPositionIntention>(entity))
+                                World.Set(entity, lookAtPositionIntention);
+                            else
+                                World.Add(entity, lookAtPositionIntention);
                         }
                         else
                         {

@@ -11,11 +11,9 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SocialEmotes;
-using DCL.Utilities;
 using ECS.Abstract;
 using System;
 using UnityEngine;
-using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes.SocialEmotes
 {
@@ -90,7 +88,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 return;
             }
 
-            float interpolation = (UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration;
+            float interpolation = Mathf.Clamp01((UnityEngine.Time.time - moveIntent.MovementStartTime) / socialEmotesSettings.OutcomeStartInterpolationDuration);
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"InterpolateAvatarToOutcomeStartPose() <color=#FF9933>INTERPOLATION: {interpolation.ToString("F6")} Wallet: {((AvatarBase)avatarView).name}</color>");
 
@@ -99,13 +97,6 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
             Vector3 originalPositionWithCurrentOffset = avatarView.GetTransform().position + new Vector3(currentHipToOriginalPosition.x, 0.0f, currentHipToOriginalPosition.z);
             originalPositionWithCurrentOffset.y = moveIntent.InitiatorWorldPosition.y; // In order to avoid the avatar from leaning, due to the other avatar being at a different height, we move the reacting avatar to the initiator's height
             avatarView.GetTransform().position = Vector3.Lerp(originalPositionWithCurrentOffset, moveIntent.InitiatorWorldPosition, interpolation);
-
-            Debug.DrawRay(avatarView.GetTransform().position, UnityEngine.Vector3.up, Color.yellow, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(5, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.OriginalAvatarPosition, UnityEngine.Vector3.up, Color.red, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(0, moveIntent.OriginalAvatarPosition, 0.2f, Color.red);
-            Debug.DrawRay(moveIntent.InitiatorWorldPosition, UnityEngine.Vector3.up, Color.cyan, 3.0f);
-            GizmoDrawer.Instance.DrawWireSphere(2, moveIntent.InitiatorWorldPosition, 0.2f, Color.cyan);
 
             if (interpolation >= 1.0f)
             {
@@ -120,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         /// </summary>
         [Query]
         [All(typeof(MoveBeforePlayingSocialEmoteIntent))]
-        [None(typeof(StopEmoteIntent))]
+        [None(typeof(StopEmoteIntent), typeof(TriggerEmoteReactingToSocialEmoteIntent))]
         private void WalkToInitiatorPositionBeforePlayingOutcomeAnimation(in Entity entity, ref CharacterTransform characterTransform, CharacterEmoteComponent emoteComponent,
             ref MovementInputComponent movementInput, in JumpInputComponent jumpInputComponent, ref CharacterAnimationComponent animationComponent,
             ref MoveBeforePlayingSocialEmoteIntent moveIntent)
@@ -185,7 +176,8 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
                 }
 
                 // Rotates the receiver
-                World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
+                if(!World.Has<PlayerLookAtIntent>(entity))
+                    World.Add(entity, new PlayerLookAtIntent(moveIntent.InitiatorWorldPosition));
             }
         }
 
@@ -195,7 +187,10 @@ namespace DCL.AvatarRendering.Emotes.SocialEmotes
         private void InitiatorLooksAtSocialEmoteTarget([Data] string targetWalletAddress, [Data] bool isInitiatorPlayingEmote, in CharacterTransform targetTransform, Profile targetProfile)
         {
             // A remote initiator looks at the target of a directed social emote it sent
-            if (!string.IsNullOrEmpty(targetProfile.UserId) && targetWalletAddress == targetProfile.UserId && isInitiatorPlayingEmote)
+            if (!string.IsNullOrEmpty(targetProfile.UserId) &&
+                targetWalletAddress == targetProfile.UserId &&
+                isInitiatorPlayingEmote &&
+                !World.Has<PlayerLookAtIntent>(playerEntity))
                 World.Add(playerEntity, new PlayerLookAtIntent(targetTransform.Position));
         }
 

@@ -61,6 +61,8 @@
 
         public const string DISCOVER = "discover";
 
+        public const string DO_MULTI_LOG = "do-multilog";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
