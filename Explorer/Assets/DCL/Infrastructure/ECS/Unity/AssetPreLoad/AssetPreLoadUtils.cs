@@ -13,10 +13,38 @@ namespace ECS.Unity.AssetLoad
     public class AssetPreLoadUtils : IDisposable
     {
         internal readonly Dictionary<string, LoadingUpdate> assetLoadingUpdates = new ();
+        private readonly IObjectPool<LoadingUpdate> loadingUpdatePool = new ObjectPool<LoadingUpdate>(
+            createFunc: () => new LoadingUpdate(),
+            actionOnRelease: state =>
+            {
+                state.States.Clear();
+                ListPool<LoadingState>.Release(state.States);
+                state.States = null;
+            },
+            actionOnDestroy: state =>
+            {
+                if (state.States == null) return;
+
+                state.States.Clear();
+                ListPool<LoadingState>.Release(state.States);
+            }
+        );
+
+        private LoadingUpdate GetLoadingUpdate(CRDTEntity crdtEntity, LoadingState loadingState)
+        {
+            LoadingUpdate result = loadingUpdatePool.Get();
+            result.CrdtEntity = crdtEntity;
+            result.States = ListPool<LoadingState>.Get();
+            result.States.Add(loadingState);
+            result.LastTick = -1;
+            return result;
+        }
 
         public void Dispose()
         {
-            ReleaseAllLists();
+             foreach (var kvp in assetLoadingUpdates)
+                loadingUpdatePool.Release(kvp.Value);
+
             assetLoadingUpdates.Clear();
         }
 
@@ -25,35 +53,14 @@ namespace ECS.Unity.AssetLoad
             if (assetLoadingUpdates.TryGetValue(assetPath, out var entry))
                 entry.States.Add(loadingState);
             else
-            {
-                List<LoadingState> states = ListPool<LoadingState>.Get();
-                states.Add(loadingState);
-
-                assetLoadingUpdates[assetPath] = new LoadingUpdate(states, -1, crdtEntity);
-            }
-        }
-
-        private void ReleaseAllLists()
-        {
-            foreach (var kvp in assetLoadingUpdates)
-            {
-                kvp.Value.States.Clear();
-                ListPool<LoadingState>.Release(kvp.Value.States);
-            }
+                assetLoadingUpdates[assetPath] = GetLoadingUpdate(crdtEntity, loadingState);
         }
 
         public class LoadingUpdate
         {
-            public readonly List<LoadingState> States;
+            public List<LoadingState> States;
             public int LastTick;
             public CRDTEntity CrdtEntity;
-
-            public LoadingUpdate(List<LoadingState> states, int lastTick, CRDTEntity crdtEntity)
-            {
-                this.States = states;
-                this.LastTick = lastTick;
-                this.CrdtEntity = crdtEntity;
-            }
         }
     }
 }
