@@ -15,13 +15,13 @@ namespace ECS.Unity.AssetLoad.Systems
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(FinalizeAssetPreLoadSystem))]
-    public partial class HandleAssetPreloadUpdates : BaseUnityLoopSystem
+    public partial class HandleAssetPreLoadUpdates : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly AssetPreLoadUtils assetPreLoadUtils;
 
-        internal HandleAssetPreloadUpdates(World world,
+        internal HandleAssetPreLoadUpdates(World world,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider,
             AssetPreLoadUtils assetPreLoadUtils)
