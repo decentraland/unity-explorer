@@ -16,5 +16,25 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
         public PoolableByteArray CrdtGetState();
+
+#if UNITY_INCLUDE_TESTS || UNITY_EDITOR
+        public class Fake : IEngineApi
+        {
+            public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
+            {
+               return PoolableByteArray.EMPTY;
+            }
+
+            public PoolableByteArray CrdtGetState()
+            {
+               return PoolableByteArray.EMPTY;
+            }
+
+            public void Dispose()
+            {
+                // Ignore
+            }
+        }
+#endif
     }
 }
