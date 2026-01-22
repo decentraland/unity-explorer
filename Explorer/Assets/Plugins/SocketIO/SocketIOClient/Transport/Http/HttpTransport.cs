@@ -78,18 +78,6 @@ namespace SocketIOClient.Transport.Http
             return UniTask.CompletedTask;
         }
 
-        public override void AddHeader(string key, string val)
-        {
-            _pollingHandler.AddHeader(key, val);
-        }
-
-        public override void SetProxy(IWebProxy proxy)
-        {
-            if (_dirty) { throw new InvalidOperationException("Unable to set proxy after connecting"); }
-
-            _pollingHandler.SetProxy(proxy);
-        }
-
         public override void Dispose()
         {
             base.Dispose();

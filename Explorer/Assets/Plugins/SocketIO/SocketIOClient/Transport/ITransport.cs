@@ -17,7 +17,5 @@ namespace SocketIOClient.Transport
         UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken);
 
         UniTask DisconnectAsync(CancellationToken cancellationToken);
-
-        void AddHeader(string key, string val);
     }
 }

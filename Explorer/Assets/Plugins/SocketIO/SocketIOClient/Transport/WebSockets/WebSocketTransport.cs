@@ -200,20 +200,6 @@ namespace SocketIOClient.Transport.WebSockets
             finally { _sendLock.Release(); }
         }
 
-        public override void AddHeader(string key, string val)
-        {
-            if (_dirty) { throw new InvalidOperationException("Unable to add header after connecting"); }
-
-            _ws.AddHeader(key, val);
-        }
-
-        public override void SetProxy(IWebProxy proxy)
-        {
-            if (_dirty) { throw new InvalidOperationException("Unable to set proxy after connecting"); }
-
-            //_ws.SetProxy(proxy);
-        }
-
         public override void Dispose()
         {
             base.Dispose();

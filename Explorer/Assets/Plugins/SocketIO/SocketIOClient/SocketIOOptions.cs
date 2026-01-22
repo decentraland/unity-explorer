@@ -49,8 +49,6 @@ namespace SocketIOClient
             }
         }
 
-        public Dictionary<string, string> ExtraHeaders { get; set; }
-
         public TransportProtocol Transport { get; set; }
 
         public EngineIO EIO { get; set; }

@@ -105,12 +105,6 @@ namespace SocketIOClient.Transport.WebSockets
             );
         }
 
-        public void AddHeader(string key, string val)
-        {
-            // TODO support headers?
-            //_ws.Options.SetRequestHeader(key, val);
-        }
-
         public void Dispose()
         {
             _ws.Dispose();
