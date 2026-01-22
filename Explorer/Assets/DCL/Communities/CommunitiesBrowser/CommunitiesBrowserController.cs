@@ -435,9 +435,14 @@ namespace DCL.Communities.CommunitiesBrowser
 
             async UniTaskVoid RefreshInvitesCounterAsync()
             {
-                int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
-                int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
-                view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
+                try
+                {
+                    int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
+                    int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
+                    view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
+                }
+                catch (OperationCanceledException) {}
+                catch (ObjectDisposedException) {}
             }
         }
 
