@@ -581,8 +581,6 @@ MonoBehaviour:
     - Category: OUTFITS
       Severity: 1
     - Category: GIFTING
-      Severity: 3
-    - Category: GIFTING
       Severity: 2
     - Category: GIFTING
       Severity: 0
