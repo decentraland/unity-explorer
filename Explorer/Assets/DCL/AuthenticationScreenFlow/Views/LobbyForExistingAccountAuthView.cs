@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    [RequireComponent(typeof(Animator))]
+    [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class LobbyForExistingAccountAuthView : ViewBase
     {
         [field: Space]

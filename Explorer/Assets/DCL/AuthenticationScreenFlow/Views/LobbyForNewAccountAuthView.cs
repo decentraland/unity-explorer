@@ -8,8 +8,10 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
+    [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class LobbyForNewAccountAuthView : ViewBase
     {
+        [field: Space]
         [field: SerializeField]
         public NameInputFieldView ProfileNameInputField { get; private set; } = null!;
 

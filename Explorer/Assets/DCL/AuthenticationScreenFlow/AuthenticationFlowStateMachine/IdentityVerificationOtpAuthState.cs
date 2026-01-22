@@ -105,7 +105,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState>();
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
             }
             catch (SignatureExpiredException e)
             {
@@ -113,7 +113,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState>();
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
             }
             catch (Web3SignatureException e)
             {
@@ -121,7 +121,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState>();
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
             }
             catch (CodeVerificationException e)
             {
@@ -129,7 +129,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState>();
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
             }
             catch (Exception e)
             {
@@ -137,7 +137,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(BACK);
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, BACK));
             }
         }
 

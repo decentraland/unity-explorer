@@ -1,4 +1,5 @@
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
@@ -9,7 +10,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>
+    public class LoginSelectionAuthState : AuthStateBase, IPayloadedState<(PopupType type, int animHash)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly LoginSelectionAuthView view;
@@ -31,16 +32,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.splashScreen = splashScreen;
             this.compositeWeb3Provider = compositeWeb3Provider;
 
-
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(CancelLoginAndRestartFromBeginning);
         }
 
-        public void Enter(PopupType payload)
+        public void Enter((PopupType type, int animHash) payload)
         {
-            Enter();
-
-            switch (payload)
+            switch (payload.type)
             {
                 case PopupType.NONE: break;
                 case PopupType.CONNECTION_ERROR:
@@ -51,32 +49,29 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(payload), payload, null);
             }
-        }
 
-        public void Enter()
-        {
             if (machine.PreviousState is InitAuthState)
                 splashScreen.FadeOutAndHide();
 
             currentState.Value = AuthenticationStatus.Login;
+            view.Show(payload.animHash);
 
-            //-- GameObjects state setup
-            view.gameObject.SetActive(true);
-            view.SlideIn();
+            if (view.gameObject.activeSelf)
+            {
+                // Listeners
+                view.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
+                view.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
 
-            // Listeners
-            view.MetamaskLoginButton.onClick.AddListener(LoginWithMetamask);
-            view.GoogleLoginButton.onClick.AddListener(LoginWithGoogle);
+                viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
+                viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
 
-            viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
-            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
+                // viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
 
-            // viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
+                view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
 
-            view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
-
-            // ThirdWeb
-            view.EmailInputField.Submitted += OTPLogin;
+                // ThirdWeb
+                view.EmailInputField.Submitted += OTPLogin;
+            }
         }
 
         public override void Exit()
@@ -116,7 +111,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
-            view.SlideOut();
+            view.Hide();
 
             machine.Enter<IdentityVerificationOtpAuthState, (string, CancellationToken)>(
                 payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
@@ -125,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void CancelLoginAndRestartFromBeginning()
         {
             controller.CancelLoginProcess();
-            machine.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
+            machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, -1), allowReEnterSameState: true);
         }
 
         private void CloseErrorPopup() =>

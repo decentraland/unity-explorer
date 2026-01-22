@@ -1,20 +1,16 @@
-﻿using DCL.UI;
+﻿using Cysharp.Threading.Tasks;
+using DCL.UI;
+using DCL.Utility.Extensions;
+using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
     [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
-    public class LoginSelectionAuthView : MonoBehaviour
+    public class LoginSelectionAuthView : ViewBase
     {
-        public static readonly int IS_SHOWN_ANIM_HASH = Animator.StringToHash("IsShown");
-
-        [SerializeField] private Animator loginAnimator;
-        [SerializeField] private CanvasGroup canvasGroup;
-
-        [SerializeField] private GameObject loadingSpinner;
-        [SerializeField] private GameObject mainElementsPanel;
-
         [field: Header("OTP")]
         [field: SerializeField]
         public EmailInputFieldView EmailInputField { get; private set; } = null!;
@@ -36,9 +32,16 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public RectTransform MoreOptionsButtonDirIcon { get; private set; } = null!;
 
-        [SerializeField]
-        private GameObject moreOptionsPanel;
+        [SerializeField] private GameObject moreOptionsPanel;
 
+        [Space]
+        [SerializeField] private Animator animator;
+        [SerializeField] private CanvasGroup canvasGroup;
+
+        [SerializeField] private GameObject loadingSpinner;
+        [SerializeField] private GameObject mainElementsPanel;
+
+        private int showAnimHash = UIAnimationHashes.OUT;
         private bool areOptionsExpanded;
 
         public void ToggleOptionsPanelExpansion()
@@ -53,11 +56,14 @@ namespace DCL.AuthenticationScreenFlow
             moreOptionsPanel.SetActive(isExpanded);
         }
 
-        public void SlideIn()
+        public void Show(int animHash)
         {
-            loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, true);
+            if (animHash != -1)
+            {
+                showAnimHash = animHash;
+                ShowAsync(CancellationToken.None).Forget();
+            }
 
-            canvasGroup.interactable = true;
             mainElementsPanel.SetActive(true);
             loadingSpinner.SetActive(false);
 
@@ -65,15 +71,31 @@ namespace DCL.AuthenticationScreenFlow
             SetOptionsPanelVisibility(isExpanded: false);
         }
 
-        // Anim-OUT non-interactable Login Screen
-        public void SlideOut()
+        public void Hide()
         {
-            loginAnimator.SetBool(IS_SHOWN_ANIM_HASH, false);
-
-            canvasGroup.interactable = false;
             mainElementsPanel.SetActive(false);
             loadingSpinner.SetActive(false);
+
+            HideAsync(CancellationToken.None).Forget();
         }
+
+        public override async UniTask ShowAsync(CancellationToken ct)
+        {
+            await base.ShowAsync(ct);
+            canvasGroup.interactable = true;
+        }
+
+        public override async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
+        {
+            canvasGroup.interactable = false;
+            await base.HideAsync(ct, isInstant);
+        }
+
+        protected override async UniTask PlayShowAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(showAnimHash, showAnimHash, ct: ct);
+
+        protected override async UniTask PlayHideAnimationAsync(CancellationToken ct) =>
+            await animator.PlayAndAwaitAsync(UIAnimationHashes.OUT, UIAnimationHashes.OUT, ct: ct);
 
         public void ShowLoading()
         {

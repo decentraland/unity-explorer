@@ -14,6 +14,7 @@ using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
+    [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class VerificationDappAuthView : ViewBase, IPointerClickHandler
     {
         [field: Space]

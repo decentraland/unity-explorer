@@ -14,6 +14,7 @@ using System.Threading;
 using ThirdWebUnity;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
@@ -81,24 +82,24 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 catch (OperationCanceledException)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    machine.Enter<LoginSelectionAuthState>();
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    machine.Enter<LoginSelectionAuthState>();
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, BACK));
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, BACK));
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.RESTRICTED_USER, BACK));
             }
         }
 

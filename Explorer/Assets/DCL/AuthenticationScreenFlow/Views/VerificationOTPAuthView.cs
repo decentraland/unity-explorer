@@ -10,6 +10,7 @@ using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
+    [RequireComponent(typeof(Animator), typeof(CanvasGroup))]
     public class VerificationOTPAuthView : ViewBase
     {
         [field: Space]

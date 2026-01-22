@@ -185,7 +185,7 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.IN), allowReEnterSameState: true);
             }
         }
 
@@ -249,7 +249,7 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
 
-                fsm.Enter<LoginSelectionAuthState>(allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.BACK), allowReEnterSameState: true);
             }
         }
 

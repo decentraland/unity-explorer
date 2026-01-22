@@ -11906,7 +11906,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3551910338184537301, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Name
-      value: Lobby.ExistingUser.Screen
+      value: Lobby.ExistingAccount.Screen
+      objectReference: {fileID: 0}
+    - target: {fileID: 3551910338184537301, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8909398026496194027, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Pivot.x
@@ -12112,6 +12116,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Verification.Dapp.Screen
       objectReference: {fileID: 0}
+    - target: {fileID: 8188599465147508810, guid: 773eb01f8aca24e47a5b577ca7d873e0, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12173,6 +12181,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -152.89238
       objectReference: {fileID: 0}
+    - target: {fileID: 1894263104519943120, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: aef194967a65f5741ac88f2972b3c943, type: 2}
     - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -12180,10 +12192,6 @@ PrefabInstance:
     - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchorMin.y
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2034299800128287215, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2545835288679838424, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_Pivot.x
@@ -12372,10 +12380,6 @@ PrefabInstance:
     - target: {fileID: 8649205214199132474, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -23.3865
-      objectReference: {fileID: 0}
-    - target: {fileID: 8979018636815086978, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0.3999939
       objectReference: {fileID: 0}
     - target: {fileID: 9221370285674914100, guid: dfbc5788cdafba7439818132b6790dc8, type: 3}
       propertyPath: m_AnchorMax.y
