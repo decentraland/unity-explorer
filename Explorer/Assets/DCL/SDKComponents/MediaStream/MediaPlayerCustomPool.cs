@@ -85,15 +85,14 @@ namespace DCL.SDKComponents.MediaStream
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
 
-            mediaPlayer.Stop();
-
             var control = mediaPlayer.Control;
             //This fix prevents a rare case of crash on MacOS where the close media was called when the media was still being
             //loaded, this caused a crash When CloseMedia() is called while AVPro is still downloading the HLS playlist
             //forcing the Swift continuation for the AVFoundation to never complete
-            if (control != null && control.HasMetaData())
-                mediaPlayer.CloseMedia();
+            if (control == null || !control.HasMetaData()) return;
 
+            mediaPlayer.Stop();
+            mediaPlayer.CloseMedia();
             mediaPlayer.AudioVolume = 0f;
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
