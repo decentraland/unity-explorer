@@ -10,151 +10,112 @@ namespace DCL.WebSockets.JS
 {
     public sealed class WebGLWebSocket : IDisposable
     {
+        [DllImport("__Internal")] private static extern int WS_New();
+        [DllImport("__Internal")] private static extern void WS_Dispose(int id);
+
+        [DllImport("__Internal")] private static extern int WS_State(int id);
+
+        [DllImport("__Internal")] private static extern void WS_Connect(int id, string url);
+        [DllImport("__Internal")] private static extern void WS_Close(int id);
+
         /* TODO
-        [DllImport("__Internal")] private static extern int  WS_New();
         [DllImport("__Internal")] private static extern void WS_BeginConnect(int id, string url);
         [DllImport("__Internal")] private static extern void WS_SendText(int id, string msg, int len);
         [DllImport("__Internal")] private static extern void WS_SendBinary(int id, IntPtr ptr, int len);
         [DllImport("__Internal")] private static extern int  WS_Poll(int id);
         [DllImport("__Internal")] private static extern int  WS_Dequeue(int id, IntPtr outPtr);
-        [DllImport("__Internal")] private static extern void WS_Close(int id);
-        [DllImport("__Internal")] private static extern void WS_Destroy(int id);
         [DllImport("__Internal")] private static extern void WS_Free(IntPtr ptr);
         */
 
 
         private readonly int handleId;
-        private WebSocketState state;
 
-        public WebSocketState State => state;
+        public WebSocketState State => (WebSocketState) WS_State(handleId);
 
         public WebGLWebSocket()
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:33"); // SPECIAL_DEBUG_LINE_STATEMENT
-            handleId = 0;//WS_New();
+            handleId = WS_New();
+UnityEngine.Debug.Log($"JsWebSocket.cs: Ctor, handleId: {handleId}");
         }
 
         public void Dispose()
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:39"); // SPECIAL_DEBUG_LINE_STATEMENT
-            /*
-            WS_Destroy(handleId);
-            */
+            WS_Dispose(handleId);
+UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose, handleId: {handleId}");
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:47"); // SPECIAL_DEBUG_LINE_STATEMENT
-            /*
-            if (state != WebSocketState.Open)
-                throw new InvalidOperationException();
-
-            if (messageType == WebSocketMessageType.Text)
-            {
-                var text = System.Text.Encoding.UTF8.GetString(buffer.Span);
-                WS_SendText(handleId, text, text.Length);
-            }
-            else if (messageType == WebSocketMessageType.Binary)
-            {
-                unsafe
-                {
-                    fixed (byte* ptr = buffer.Span)
-                        WS_SendBinary(handleId, (IntPtr)ptr, buffer.Length);
-                }
-            }
-            else
-            {
-                throw new NotSupportedException();
-            }
-
-            await UniTask.CompletedTask;
-            */
+UnityEngine.Debug.Log("JsWebSocket.cs:50"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
 
         public async UniTask<WebSocketReceiveResult> ReceiveAsync(Memory<byte> buffer, CancellationToken cancellationToken)
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:76"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("JsWebSocket.cs:55"); // SPECIAL_DEBUG_LINE_STATEMENT
             while (cancellationToken.IsCancellationRequested == false)
                 await UniTask.Yield();
 
-UnityEngine.Debug.Log("JsWebSocket.cs:80"); // SPECIAL_DEBUG_LINE_STATEMENT
+UnityEngine.Debug.Log("JsWebSocket.cs:59"); // SPECIAL_DEBUG_LINE_STATEMENT
             throw new Exception();
-            /*
-            while (WS_Poll(handleId) == 0)
-                await UniTask.Yield();
-
-            int type;
-            int ptr;
-            int len;
-
-            unsafe
-            {
-                int* tmp = stackalloc int[2];
-                type = WS_Dequeue(handleId, (IntPtr)tmp);
-                ptr  = tmp[0];
-                len  = tmp[1];
-            }
-
-            switch (type)
-            {
-                case 0: // open
-                    state = WebSocketState.Open;
-                    return null;
-
-                case 1: // close
-                    state = WebSocketState.Closed;
-                    return new WebSocketReceiveResult(
-                            0,
-                            WebSocketMessageType.Close,
-                            true);
-
-                case 2: // error
-                    state = WebSocketState.Aborted;
-                    throw new WebSocketException("WebSocket error");
-
-                case 3: // text
-                case 4: // binary
-                    int copyLen = Math.Min(len, buffer.Length);
-                    var array = buffer.Array!;
-                    Marshal.Copy((IntPtr)ptr, array, buffer.Offset, copyLen);
-                    WS_Free((IntPtr)ptr);
-
-                    return new WebSocketReceiveResult(
-                            copyLen,
-                            type == 3
-                            ? WebSocketMessageType.Text
-                            : WebSocketMessageType.Binary,
-                            true);
-            }
-
-            throw new InvalidOperationException();
-            */
         }
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:136"); // SPECIAL_DEBUG_LINE_STATEMENT
-            /*
-            if (state != WebSocketState.None)
-                throw new InvalidOperationException();
+UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync, handleId: {handleId}");
+            if (uri == null)
+                throw new ArgumentNullException(nameof(uri));
 
-            state = WebSocketState.Connecting;
-            WS_BeginConnect(handleId, uri.ToString());
+            // Trigger JS-side connect (WebSocket ctor)
+            WS_Connect(handleId, uri.AbsoluteUri);
 
-            // browser connect is async but event-driven
-            // state becomes Open once first open event is observed
-            while (state == WebSocketState.Connecting)
-                await UniTask.Yield();
-            */
+            // Wait until OPEN / terminal state
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var state = (WebSocketState)WS_State(handleId);
+
+                switch (state)
+                {
+                    case WebSocketState.Open:
+                        return;
+
+                    case WebSocketState.Closed:
+                    case WebSocketState.Aborted:
+                        throw new InvalidOperationException($"WebSocket connect failed. State={state}");
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
         }
 
-        public async UniTask CloseAsync(WebSocketCloseStatus status, String? description, CancellationToken CancellationToken)
+        public async UniTask CloseAsync(
+                WebSocketCloseStatus status,
+                string? description,
+                CancellationToken cancellationToken)
         {
-UnityEngine.Debug.Log("JsWebSocket.cs:153"); // SPECIAL_DEBUG_LINE_STATEMENT
-            /*
-            WS_Destroy(handleId);
-            state = WebSocketState.Closed;
-            */
+UnityEngine.Debug.Log($"JsWebSocket.cs: CloseAsync, handleId: {handleId}");
+
+            // status / description are advisory on WebGL (JS close() has no reliable mapping)
+            WS_Close(handleId);
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var state = (WebSocketState)WS_State(handleId);
+
+                switch (state)
+                {
+                    case WebSocketState.Closed:
+                        return;
+
+                    case WebSocketState.Aborted:
+                        throw new InvalidOperationException("WebSocket aborted during close");
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
         }
     }
 }
