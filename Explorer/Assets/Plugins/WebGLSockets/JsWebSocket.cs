@@ -1,6 +1,7 @@
 #if UNITY_WEBGL
 
 using System;
+using System.Threading;
 using System.Runtime.InteropServices;
 using Cysharp.Threading.Tasks;
 using Utility.Networking;
@@ -28,6 +29,7 @@ namespace DCL.WebSockets.JS
             get
             {
             // TODO
+            throw new NotImplementedException();
             }
         }
 

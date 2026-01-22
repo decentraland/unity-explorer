@@ -4,7 +4,6 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
 using System.Net;
-using System.Net.WebSockets;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -15,12 +14,11 @@ using System.Collections.Generic;
 
 namespace SocketIOClient.Transport.WebSockets
 {
-#if !UNITY_WEBGL
     public class DefaultClientWebSocket : IClientWebSocket
     {
         public DefaultClientWebSocket()
         {
-            _ws = new ClientWebSocket();
+            _ws = new Utility.Networking.DCLWebSocket();
 #if NET461_OR_GREATER
             AllowHeaders();
 #endif
@@ -68,28 +66,29 @@ namespace SocketIOClient.Transport.WebSockets
         }
 #endif
 
-        private readonly ClientWebSocket _ws;
+        private readonly Utility.Networking.DCLWebSocket _ws;
         private readonly IMemoryPool memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
-        public WebSocketState State => (WebSocketState)_ws.State;
+        public SocketIOClient.Transport.WebSockets.WebSocketState State =>
+            (SocketIOClient.Transport.WebSockets.WebSocketState)_ws.State;
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+            await _ws.ConnectAsync(uri, cancellationToken);
         }
 
         public async UniTask DisconnectAsync(CancellationToken cancellationToken)
         {
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
+            await _ws.CloseAsync(Utility.Networking.WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken);
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
-            WebSocketMessageType msgType = WebSocketMessageType.Text;
+            Utility.Networking.WebSocketMessageType msgType = Utility.Networking.WebSocketMessageType.Text;
 
-            if (type == TransportMessageType.Binary) { msgType = WebSocketMessageType.Binary; }
+            if (type == TransportMessageType.Binary) { msgType = Utility.Networking.WebSocketMessageType.Binary; }
 
-            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
+            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken);
         }
 
         public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
@@ -97,8 +96,7 @@ namespace SocketIOClient.Transport.WebSockets
             var memory = memoryPool.Memory(bufferSize);
             byte[] buffer = memory.DangerousBuffer();
 
-            System.Net.WebSockets.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!
-                                                                            .ConfigureAwait(false);
+            Utility.Networking.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!;
             return new WebSocketReceiveResult(
                 memory,
                 result.Count,
@@ -109,75 +107,13 @@ namespace SocketIOClient.Transport.WebSockets
 
         public void AddHeader(string key, string val)
         {
-            _ws.Options.SetRequestHeader(key, val);
+            // TODO support headers?
+            //_ws.Options.SetRequestHeader(key, val);
         }
-
-        public void SetProxy(IWebProxy proxy) =>
-            _ws.Options.Proxy = proxy;
 
         public void Dispose()
         {
             _ws.Dispose();
         }
     }
-#else
-    public class DefaultClientWebSocket : IClientWebSocket
-    {
-        public DefaultClientWebSocket()
-        {
-        }
-
-        public WebSocketState State
-        {
-            get
-            {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:134"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("State is not supported");
-            }
-        }
-
-        public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
-        {
-//THIS
-
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:141"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("ConnectAsync is not supported");
-        }
-
-        public async UniTask DisconnectAsync(CancellationToken cancellationToken)
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:147"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("DisconnectAsync is not supported");
-        }
-
-        public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:153"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("SendAsync is not supported");
-        }
-
-        public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:159"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("ReceiveAsync is not supported");
-        }
-
-        public void AddHeader(string key, string val)
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:165"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("AddHeader is not supported");
-        }
-
-        public void SetProxy(IWebProxy proxy)
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:171"); // SPECIAL_DEBUG_LINE_STATEMENT
-            throw new Exception("SetProxy is not supported");
-        }
-
-        public void Dispose()
-        {
-UnityEngine.Debug.Log("DefaultClientWebSocket.cs:177"); // SPECIAL_DEBUG_LINE_STATEMENT
-        }
-    }
-#endif
 }

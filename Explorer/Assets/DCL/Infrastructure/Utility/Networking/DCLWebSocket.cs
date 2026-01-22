@@ -5,11 +5,10 @@ using Cysharp.Threading.Tasks;
 namespace Utility.Networking
 {
     // Desktop / WebGL friendly implementation
-    // TODO consider throwing System.Net.WebSockets.WebSocketException
     public class DCLWebSocket : IDisposable
     {
 #if UNITY_WEBGL
-        // TODO
+        private DCL.WebSockets.JS.WebGLWebSocket ws = new ();
 #else
 
         private System.Net.WebSockets.ClientWebSocket ws = new ();
@@ -20,12 +19,9 @@ namespace Utility.Networking
         {
             get
             {
-
 #if UNITY_WEBGL
-            // TODO
-               throw new Exception(); //return (WSState) ws.State; // Direct mapping
+                return ws.State;
 #else
-
                 return (WebSocketState) ws.State; // Direct mapping
 #endif
             }
@@ -33,39 +29,61 @@ namespace Utility.Networking
 
         public void Dispose()
         {
-#if UNITY_WEBGL
-            // TODO
-#else
-
-               ws.Dispose();
-#endif
+            ws.Dispose();
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
-            //TODO
+            try
+            {
+                await ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
+            }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                throw new WebSocketException(e);
+            }
         }
 
         public async UniTask<WebSocketReceiveResult> ReceiveAsync(Memory<byte> buffer, CancellationToken cancellationToken)
         {
-            //TODO
-            throw new NotImplementedException();
+            try
+            {
+                return await ws.ReceiveAsync(buffer, cancellationToken);
+            }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                throw new WebSocketException(e);
+            }
         }
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            //TODO
+            try
+            {
+                await ws.ConnectAsync(uri, cancellationToken);
+            }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                throw new WebSocketException(e);
+            }
         }
 
-        public async UniTask CloseAsync(WebSocketCloseStatus status, String? description, CancellationToken CancellationToken)
+        public async UniTask CloseAsync(WebSocketCloseStatus status, String? description, CancellationToken cancellationToken)
         {
-            //TODO
+            try
+            {
+                await ws.CloseAsync(status, description, cancellationToken);
+            }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                throw new WebSocketException(e);
+            }
         }
 
         public void Abort()
         {
 #if UNITY_WEBGL
-            // Ignore
+            // Ignore, WebGL doesn't expose raw TCP sockets to hard interrupt
 #else
             ws.Abort();
 #endif
