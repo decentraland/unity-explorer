@@ -103,6 +103,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -392,6 +393,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3604137211807971006, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3839358371985702382 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2999183216935663511, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4228669688390808703 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2772064026238959110, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -429,6 +435,8 @@ MonoBehaviour:
   <ContainerTransform>k__BackingField: {fileID: 5337782633102568864}
   <HoverBackgroundTransform>k__BackingField: {fileID: 6749943394813585919}
   <EquipButton>k__BackingField: {fileID: 5665178272263481625}
+  <EquipSpinner>k__BackingField: {fileID: 0}
+  <EquipButtonText>k__BackingField: {fileID: 0}
   <UnEquipButton>k__BackingField: {fileID: 7903757533396073920}
   <EquippedIcon>k__BackingField: {fileID: 1877216464682181992}
   <NewTag>k__BackingField: {fileID: 1516561254018689797}
@@ -441,6 +449,10 @@ MonoBehaviour:
   <IsEquipped>k__BackingField: 0
   incompatibleWithBodyShapeContainer: {fileID: 3374162131891453127}
   incompatibleWithBodyShapeHoverContainer: {fileID: 4228669688390808703}
+  pendingTransferContainer: {fileID: 3839358371985702382}
+  pendingTransferHoverContainer: {fileID: 8045011785916068164}
+  nftCountContainer: {fileID: 0}
+  nftCountText: {fileID: 0}
   <SmartWearableBadgeContainer>k__BackingField: {fileID: 0}
   <EquipWearableAudio>k__BackingField: {fileID: 11400000, guid: d1d7149ae3c90e449b657edfd7109eff, type: 2}
   <UnEquipWearableAudio>k__BackingField: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
@@ -498,5 +510,10 @@ MonoBehaviour:
 --- !u!1 &7977896227215181824 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8241648339715965561, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8045011785916068164 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8318859614241815357, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
