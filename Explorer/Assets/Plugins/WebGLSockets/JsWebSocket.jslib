@@ -19,25 +19,22 @@ mergeInto(
 
       ws.onopen = () => {
         states[id] = WS_STATE_OPEN;
-        queues[id].push({ t: 0 });
       };
 
       ws.onclose = () => {
         // browser does not distinguish sent/received close reliably
         states[id] = WS_STATE_CLOSED;
-        queues[id].push({ t: 1 });
       };
 
       ws.onerror = () => {
         states[id] = WS_STATE_ABORTED;
-        queues[id].push({ t: 2 });
       };
 
       ws.onmessage = (e) => {
         if (typeof e.data === "string") {
-          queues[id].push({ t: 3, s: e.data });
+          queues[id].push({ t: 1, s: e.data });
         } else {
-          queues[id].push({ t: 4, b: new Uint8Array(e.data) });
+          queues[id].push({ t: 0, b: new Uint8Array(e.data) });
         }
       };
     }
@@ -128,6 +125,97 @@ mergeInto(
           console.error(`WS_Close exception for id=${id}`, e);
           states[id] = WS_STATE_ABORTED;
         }
+      },
+
+      WS_Send: function (id, dataPtr, dataLen, messageType) {
+        // int error code
+        // 0 = OK
+        // 1 = invalid handle
+        // 2 = invalid state
+        // 3 = send failed
+
+        if (!(id in states)) {
+          console.error(`WS_Send: no state entry for id=${id}`);
+          return 1;
+        }
+
+        const ws = sockets[id];
+        if (!ws) {
+          states[id] = WS_STATE_CLOSED;
+          return 1;
+        }
+
+        if (ws.readyState !== WebSocket.OPEN) {
+          return 2;
+        }
+
+        try {
+          if (messageType === 0) {
+            // Binary
+            const view = HEAPU8.subarray(dataPtr, dataPtr + dataLen);
+            // copy to detach from WASM memory
+            ws.send(view.slice());
+          } else {
+            // Text
+            const str = UTF8ArrayToString(HEAPU8, dataPtr, dataLen);
+            ws.send(str);
+          }
+
+          return 0;
+        } catch (e) {
+          console.error(`WS_Send failed for id=${id}`, e);
+          states[id] = WS_STATE_ABORTED;
+          return 3;
+        }
+      },
+
+      // Returns:
+      //  -1 = nothing available
+      //   0 = binary
+      //   1 = text
+      WS_NextAvailableToReceive: function (id) {
+        const q = queues[id];
+        if (!q || q.length === 0) return -1;
+
+        const it = q[0];
+        // t: 0 = binary, 1 = text
+        return it.t === 0 || it.t === 1 ? it.t : -1;
+      },
+
+      // Copies payload into bufferPtr.
+      // Returns:
+      //  >0  = number of bytes copied
+      //  -1  = buffer too small
+      //   0  = nothing consumed (no data available)
+      WS_TryConsumeNextReceived: function (id, bufferPtr, bufferLen) {
+        const q = queues[id];
+        if (!q || q.length === 0) return 0;
+
+        const it = q[0];
+        if (it.t !== 0 && it.t !== 1) return 0;
+
+        let bytes;
+
+        if (it.t === 0) {
+          // binary
+          bytes = it.b;
+        } else {
+          // text -> UTF8 bytes
+          const s = it.s ?? "";
+          const n = lengthBytesUTF8(s);
+          if (n > bufferLen) return -1;
+
+          bytes = new Uint8Array(n);
+          stringToUTF8Array(s, bytes, 0, n + 1); // terminator ignored
+        }
+
+        if (bytes.length > bufferLen) return -1;
+
+        // consume
+        q.shift();
+        HEAPU8.set(bytes, bufferPtr);
+
+        return bytes.length;
       },
     };
   })(),
