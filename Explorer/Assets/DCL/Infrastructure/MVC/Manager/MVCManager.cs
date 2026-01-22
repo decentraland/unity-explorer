@@ -140,7 +140,7 @@ namespace MVC
                 windowsStackManager.PopFullscreen(overlayPushInfo.FullscreenController);
 
             // Hide the popup closer
-            popupCloser.HideAsync(ct).Forget();
+            await popupCloser.HideAsync(ct);
 
             await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
 
@@ -192,8 +192,7 @@ namespace MVC
             {
                 CloseAllPopups(fullscreenPushInfo.PopupControllers);
 
-                // Hide the popup closer
-                popupCloser.HideAsync(ct).Forget();
+                await popupCloser.HideAsync(ct);
 
                 await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
                     fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct),
@@ -234,7 +233,7 @@ namespace MVC
                     popupCloser.SetDrawOrder(popupPopInfo.PopupCloserOrdering);
                     popupPopInfo.NewTopMostController.Focus();
                 }
-                else { popupCloser.HideAsync(ct).Forget(); }
+                else { await popupCloser.HideAsync(ct); }
             }
         }
 

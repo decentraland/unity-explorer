@@ -388,12 +388,12 @@ namespace DCL.UI.Sidebar
             viewInstance.BlockSidebar();
             button?.Select();
 
-            try { await mvcManager.ShowAsync(command, ct).SuppressCancellationThrow(); }
+            try { await mvcManager.ShowAsync(command, ct); }
             catch (OperationCanceledException){} // Expected cancellation when a new panel is opened
             catch (Exception e) { ReportHub.LogException(new Exception("Exception on opening panel from Sidebar: " + e.Message, e), ReportCategory.UI); }
             finally
             {
-                if (viewInstance)
+                if (viewInstance != null)
                 {
                     button?.Deselect();
                     viewInstance.UnblockSidebar();
