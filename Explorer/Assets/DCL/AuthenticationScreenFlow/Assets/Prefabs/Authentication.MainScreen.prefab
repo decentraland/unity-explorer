@@ -11906,7 +11906,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3551910338184537301, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Name
-      value: Lobby.Screen.ExistingUser
+      value: Lobby.ExistingUser.Screen
       objectReference: {fileID: 0}
     - target: {fileID: 8909398026496194027, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Pivot.x
@@ -12110,7 +12110,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8188599465147508810, guid: 773eb01f8aca24e47a5b577ca7d873e0, type: 3}
       propertyPath: m_Name
-      value: Verification.Screen.Dapp
+      value: Verification.Dapp.Screen
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12424,7 +12424,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 817603707793266358, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}
       propertyPath: m_Name
-      value: Verification.Screen.OTP
+      value: Verification.OTP.Screen
       objectReference: {fileID: 0}
     - target: {fileID: 817603707793266358, guid: 8759ec5bb9160bc4e8d6c804318bbcdf, type: 3}
       propertyPath: m_IsActive
@@ -12968,59 +12968,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3269863560478414764, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
       propertyPath: m_Name
-      value: NewAccountLobbyContainer
-      objectReference: {fileID: 0}
-    - target: {fileID: 3269863560478414764, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4087306367503763202, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4087306367503763202, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4087306367503763202, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 289.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4087306367503763202, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -23
-      objectReference: {fileID: 0}
-    - target: {fileID: 5960527187105256418, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5960527187105256418, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5960527187105256418, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 161.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5960527187105256418, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -23
-      objectReference: {fileID: 0}
-    - target: {fileID: 6581960442703234763, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6581960442703234763, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6581960442703234763, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 54
-      objectReference: {fileID: 0}
-    - target: {fileID: 6581960442703234763, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -23
+      value: Lobby.NewAccount.Screen
       objectReference: {fileID: 0}
     - target: {fileID: 7462045094642091666, guid: 0940179db0295a645a270543c7d4bedd, type: 3}
       propertyPath: m_Pivot.x

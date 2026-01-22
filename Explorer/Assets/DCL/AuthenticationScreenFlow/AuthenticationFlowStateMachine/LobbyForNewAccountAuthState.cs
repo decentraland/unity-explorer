@@ -55,7 +55,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         }
 
         private Profile newUserProfile;
-
         private CancellationToken ct;
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
@@ -71,8 +70,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             newUserProfile = payload.profile;
 
-            lobbyForNewAccountSubView.gameObject.SetActive(true);
-            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.IN);
+            lobbyForNewAccountSubView.Show();
 
             lobbyForNewAccountSubView.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
 
@@ -93,8 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.BACK);
-            lobbyForNewAccountSubView.NextRandomButton.interactable = false;
+            lobbyForNewAccountSubView.Hide(UIAnimationHashes.BACK);
 
             characterPreviewController?.OnHide();
 
@@ -312,7 +309,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            lobbyForNewAccountSubView.Animator.SetTrigger(UIAnimationHashes.OUT);
+            lobbyForNewAccountSubView.Hide(UIAnimationHashes.OUT);
             AnimateAndAwaitAsync().Forget();
             return;
 
