@@ -62,6 +62,7 @@ namespace DCL.PlacesAPIService
             public Realm[] realms_detail;
             public string like_rate;
             public bool live;
+            public string[] connected_addresses;
 
             [SerializeField] private string[] positions;
 
