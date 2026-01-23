@@ -1042,12 +1042,16 @@ MonoBehaviour:
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <ControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
-        <GliderPropPrefab>k__BackingField:
-          m_AssetGUID: 887a8e3e1114d4540b25bec9271d9eab
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <Gliding>k__BackingField:
+          <PropPrefab>k__BackingField:
+            m_AssetGUID: a7a4ab5039f63fb43b40798062be0153
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <AnimationSpeed>k__BackingField: 3
+          <StartingRotation>k__BackingField: -60
+          <CompleteRotationT>k__BackingField: 0.5
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

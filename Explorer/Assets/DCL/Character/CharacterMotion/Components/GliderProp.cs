@@ -1,10 +1,8 @@
-﻿using UnityEngine;
-
-namespace DCL.CharacterMotion.Components
+﻿namespace DCL.CharacterMotion.Components
 {
     public struct GliderProp
     {
-        public Transform Prop;
+        public GliderPropController Controller;
 
         public float Animation;
     }

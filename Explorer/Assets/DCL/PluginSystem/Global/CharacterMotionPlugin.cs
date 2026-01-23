@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private CharacterControllerSettings controllerSettings;
+        private CharacterMotionSettings settings;
         private GameObject gliderPropPrefab;
 
         public CharacterMotionPlugin(
@@ -57,8 +57,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
         {
-            controllerSettings = settings.ControllerSettings;
-            gliderPropPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GliderPropPrefab, ct)).Value;
+            this.settings = settings;
+            gliderPropPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.Gliding.PropPrefab, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
             // Add Motion components
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
-                (ICharacterControllerSettings)controllerSettings,
+                (ICharacterControllerSettings)settings.ControllerSettings,
                 characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
@@ -95,10 +95,10 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, controllerSettings);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.ControllerSettings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
-            GliderPropControllerSystem.InjectToWorld(ref builder, gliderPropPrefab, componentPoolsRegistry);
+            GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
         }
     }
 }
