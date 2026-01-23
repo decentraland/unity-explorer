@@ -217,26 +217,23 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
-            // var dropdownField = dropdownToSetup.DropdownField;
-            dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
-            dropdownToSetup.DropdownField.style.color = model.GetColor();
-            dropdownToSetup.DropdownField.choices.Clear();
-            dropdownToSetup.DropdownField.choices.AddRange(model.Options);
-            dropdownToSetup.DropdownField.SetValueWithoutNotify(dropdownToSetup.DropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
-            dropdownToSetup.DropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
-            dropdownToSetup.DropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
+            var dropdownField = dropdownToSetup.DropdownField;
+            dropdownField.style.fontSize = model.GetFontSize();
+            dropdownField.style.color = model.GetColor();
+            dropdownField.choices.Clear();
+            dropdownField.choices.AddRange(model.Options);
+            dropdownField.SetValueWithoutNotify(dropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
+            dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
+            dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
 
             // To enforce an opacity transition since Unity instantiates the popup on demand,
             // and we cannot be animating a property on it from the uss stylesheet...
-            dropdownToSetup.DropdownField.RegisterCallback<PointerDownEvent>( (x) =>
+            dropdownField.RegisterCallback<PointerDownEvent>(_ =>
             {
-                DropdownField dropDown = x.currentTarget as DropdownField;
-                if (dropDown == null) return;
-
-                dropDown.schedule.Execute(() =>
+                dropdownField.schedule.Execute(() =>
                 {
-                    var root = dropDown.panel.visualTree;
+                    var root = dropdownField.panel.visualTree;
                     var popup = root.Q(null, "unity-base-dropdown");
                     if (popup == null)
                         return;
