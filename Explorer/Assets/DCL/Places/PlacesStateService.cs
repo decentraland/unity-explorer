@@ -31,10 +31,13 @@ namespace DCL.Places
             foreach (PlacesData.PlaceInfo place in places)
             {
                 List<Profile.CompactInfo> friendsConnectedToPlace = new();
-                foreach (string addressConnected in place.connected_addresses)
+                if (place.connected_addresses != null)
                 {
-                    if (TryGetFriendById(addressConnected, out Profile.CompactInfo friend))
-                        friendsConnectedToPlace.Add(friend);
+                    foreach (string addressConnected in place.connected_addresses)
+                    {
+                        if (TryGetFriendById(addressConnected, out Profile.CompactInfo friend))
+                            friendsConnectedToPlace.Add(friend);
+                    }
                 }
 
                 CurrentPlaces[place.id] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace);
