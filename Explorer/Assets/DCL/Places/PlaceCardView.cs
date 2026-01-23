@@ -143,8 +143,8 @@ namespace DCL.Places
                     bool friendExists = i < friends.Count;
                     friendsThumbnails[i].root.SetActive(friendExists);
                     if (!friendExists) continue;
-                    Profile.CompactInfo mutualFriend = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, mutualFriend);
+                    Profile.CompactInfo friendInfo = friends[i];
+                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
                 }
             }
 
