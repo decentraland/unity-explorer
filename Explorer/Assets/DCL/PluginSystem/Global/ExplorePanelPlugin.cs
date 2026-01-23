@@ -71,6 +71,7 @@ using DCL.Utilities;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -166,6 +167,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IDonationsService donationsService;
+        private readonly IRealmNavigator realmNavigator;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -232,7 +234,8 @@ namespace DCL.PluginSystem.Global
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
-            IDonationsService donationsService)
+            IDonationsService donationsService,
+            IRealmNavigator realmNavigator)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -300,6 +303,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
             this.donationsService = donationsService;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -502,7 +506,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,

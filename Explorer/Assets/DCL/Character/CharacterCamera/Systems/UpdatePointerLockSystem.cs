@@ -6,6 +6,7 @@ using DCL.Input.Component;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
+using Utility.Arch;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -45,7 +46,7 @@ namespace DCL.CharacterCamera.Systems
         {
             if (!sdkPointerLock.IsDirty) return;
 
-            globalWorld.Add(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
+            globalWorld.AddOrSet(cameraData.CameraEntityProxy.Object, new PointerLockIntention(sdkPointerLock.IsPointerLocked));
 
             sdkPointerLock.IsDirty = false;
         }
