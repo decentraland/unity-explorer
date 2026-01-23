@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!legacyAnimationsEnabled)
                     return false;
 
-                PlayLegacyEmote(view.AvatarAnimator.gameObject, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
+                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
             }
             else
                 PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
@@ -220,13 +220,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             return references;
         }
 
-        private void PlayLegacyEmote(GameObject avatarAnimatorGameObject, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
+        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
 // TODO: Adapt this to social emotes like PlayMecanimEmote
-            Animation animationComp;
-
-            if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
-                animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
+            Animation animationComp = avatarView.AddOrGetLegacyAnimation();
 
             animationComp.playAutomatically = false;
             animationComp.Stop();

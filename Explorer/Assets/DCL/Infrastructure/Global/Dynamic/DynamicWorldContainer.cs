@@ -906,7 +906,8 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
                     staticContainer.LoadingStatus,
-                    donationsService
+                    donationsService,
+                    realmNavigator
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

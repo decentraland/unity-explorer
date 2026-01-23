@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DiscordLink,
         DiscordDirectLink,
         TwitterLink,
+        TwitterNewPostLink,
         NewsletterSubscriptionLink,
         MarketplaceLink,
 
@@ -103,5 +104,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ManaUsdRateApiUrl,
 
         CreatorHub,
+
+        JumpInGenesisCityLink,
+        JumpInWorldLink,
     }
 }

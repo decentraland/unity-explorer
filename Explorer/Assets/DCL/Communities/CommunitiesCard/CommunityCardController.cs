@@ -397,7 +397,8 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser,
-                profileRepository);
+                profileRepository,
+                decentralandUrlsSource);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

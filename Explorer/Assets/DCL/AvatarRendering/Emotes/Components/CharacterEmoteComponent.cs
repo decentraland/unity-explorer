@@ -86,6 +86,8 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        public readonly bool IsPlayingLegacyEmote => CurrentEmoteReference && CurrentEmoteReference.legacy;
+
         public void Reset()
         {
             EmoteUrn = default;

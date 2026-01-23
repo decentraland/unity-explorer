@@ -19,8 +19,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
-        [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
+        public Animation? LegacyAnimation { get; private set; }
+
+        [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
@@ -134,6 +136,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Transform GetTransform() =>
             transform;
+
+        public Animation AddOrGetLegacyAnimation()
+        {
+            if (LegacyAnimation != null) return LegacyAnimation;
+            LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
+            return LegacyAnimation;
+        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -273,6 +282,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         Transform GetTransform();
 
         Animator AvatarAnimator { get; }
+        Animation? LegacyAnimation { get; }
+
+        Animation AddOrGetLegacyAnimation();
 
         void SetAnimatorFloat(int hash, float value);
 

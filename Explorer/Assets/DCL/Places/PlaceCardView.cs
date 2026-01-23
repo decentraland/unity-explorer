@@ -1,3 +1,4 @@
+using DCL.Communities;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -6,15 +7,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utility;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
 
-namespace DCL.Communities.CommunitiesCard.Places
+namespace DCL.Places
 {
     public class PlaceCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
+        private const string FEATURED_CATEGORY = "featured";
 
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
@@ -26,7 +28,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private TMP_Text placeDescriptionText = null!;
+        [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
+        [SerializeField] private GameObject featuredTag = null!;
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle = null!;
@@ -42,8 +46,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Tweener? descriptionTween;
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
-
         private PlaceInfo? currentPlaceInfo;
+        private CancellationTokenSource loadingThumbnailCts;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -86,16 +90,31 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceData placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct)
+        private void OnDisable() =>
+            loadingThumbnailCts.SafeCancelAndDispose();
+
+        public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader)
         {
-            currentPlaceInfo = placeInfo.PlaceInfo;
+            currentPlaceInfo = placeInfo;
 
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.PlaceInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct, true).Forget();
+            loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, loadingThumbnailCts.Token, true).Forget();
 
-            placeNameText.text = placeInfo.PlaceInfo.title;
-            placeDescriptionText.text = placeInfo.OwnerName;
-            onlineMembersText.text = $"{placeInfo.PlaceInfo.user_count}";
-            placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.PlaceInfo.world_name) ? placeInfo.PlaceInfo.base_position : placeInfo.PlaceInfo.world_name;
+            placeNameText.text = placeInfo.title;
+            placeDescriptionText.text = ownerName;
+            onlineMembersText.text = $"{placeInfo.user_count}";
+            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
+            placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
+
+            featuredTag.SetActive(false);
+            foreach (string category in placeInfo.categories)
+            {
+                if (category.Equals(FEATURED_CATEGORY, StringComparison.OrdinalIgnoreCase))
+                {
+                    featuredTag.SetActive(true);
+                    break;
+                }
+            }
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
@@ -104,9 +123,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             DislikeToggleChanged = null;
             FavoriteToggleChanged = null;
 
-            likeToggle.Toggle.isOn = placeInfo.PlaceInfo.user_like;
-            dislikeToggle.Toggle.isOn = placeInfo.PlaceInfo.user_dislike;
-            favoriteToggle.Toggle.isOn = placeInfo.PlaceInfo.user_favorite;
+            likeToggle.Toggle.isOn = placeInfo.user_like;
+            dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
+            favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,
