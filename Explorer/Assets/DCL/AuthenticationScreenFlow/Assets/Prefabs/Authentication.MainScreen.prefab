@@ -12195,6 +12195,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ProfileFetching.Screen
       objectReference: {fileID: 0}
+    - target: {fileID: 4637533876142915480, guid: c6c10bb641435ca4c8cc5e227ce8f17e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
