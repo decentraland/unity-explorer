@@ -1,3 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/DCL/SDKComponents/SceneUI/ScenesUIStyleSheet.uss" />
+    <!-- Stylesheet now loaded at DCLSceneDefaultTheme -->
+    <!-- <Style src="project://database/Assets/DCL/SDKComponents/SceneUI/ScenesUIStyleSheet.uss" /> -->
 </ui:UXML>

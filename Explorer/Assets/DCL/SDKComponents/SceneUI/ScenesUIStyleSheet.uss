@@ -1,3 +1,4 @@
+
 /* MAIN CANVAS STYLES */
 .sceneUIMainCanvas {
     width: 100%;
@@ -37,6 +38,15 @@
 
 .dcl-dropdown > .unity-base-popup-field__input > .unity-base-popup-field__text {
     margin: 0;
+}
+
+.dcl-dropdown > .unity-base-popup-field__input {
+    border-radius: var(--dcl-border-radius);
+}
+
+.unity-base-dropdown__container-inner,
+.unity-base-dropdown__container-outer {
+    border-radius: var(--dcl-border-radius);
 }
 
 .dcl-dropdown > .unity-base-popup-field__input,
