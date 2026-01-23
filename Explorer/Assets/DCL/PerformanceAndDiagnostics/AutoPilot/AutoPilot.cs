@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using Global.AppArgs;
+using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -23,25 +24,54 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         public async UniTask RunAsync()
         {
-            await using var writer = new StreamWriter("autopilot.csv", false,
-                new UTF8Encoding(false));
+            StreamWriter csv = null;
+            var exitCode = 0;
 
-            writer.NewLine = "\r\n"; // https://www.rfc-editor.org/rfc/rfc4180
-            await writer.WriteLineAsync("\"Frame\",\"CPU Time\",\"GPU Time\"");
+            try
+            {
+                if (!appArgs.TryGetValue(AppArgsFlags.AUTOPILOT, out string outPath)
+                    || outPath == null)
+                    throw new Exception("Did not specify automated test output path");
 
-            while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
-                await UniTask.Yield();
+                csv = new StreamWriter(outPath, false, new UTF8Encoding(false));
+                csv.NewLine = "\r\n"; // https://www.rfc-editor.org/rfc/rfc4180
+                await csv.WriteLineAsync("\"Frame\",\"CPU Time\",\"GPU Time\"");
 
-            // The minimal performance test: stand at spawn for 1000 frames.
+                while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                    await UniTask.Yield();
+
+                await StandAtSpawnTest(csv);
+            }
+            catch (Exception ex)
+            {
+                if (csv != null)
+                    await csv.WriteLineAsync(
+                        $"\"Error: {ex.Message.Replace("\"", "\"\"")}\"");
+
+                exitCode = ex.HResult;
+                throw;
+            }
+            finally
+            {
+                if (csv != null)
+                    await csv.DisposeAsync();
+
+                Application.Quit(exitCode);
+            }
+        }
+
+        /// <summary>
+        /// The minimal performance test: stand at spawn for 1000 frames.
+        /// </summary>
+        private async UniTask StandAtSpawnTest(StreamWriter csv)
+        {
             for (var i = 0; i < 1000; i++)
             {
-                await writer.WriteLineAsync(
+                await csv.WriteLineAsync(
                     $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
 
                 await UniTask.Yield();
             }
-
-            Application.Quit(0);
         }
     }
 }
