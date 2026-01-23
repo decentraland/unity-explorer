@@ -100,6 +100,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 508289f0a6feab048964059d0534fdd7
+    m_Address: PlaceCategories
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52c856180dc5d6447b902f06d38f4161
     m_Address: LightSourceDefaults
     m_ReadOnly: 0
@@ -192,6 +197,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
     m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 925419b3e8ba740ef9f36530d3e3a0bc
+    m_Address: Assets/DCL/Donations/UI/Prefabs/DonationsPanel.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
