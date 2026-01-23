@@ -42,20 +42,24 @@ namespace DCL.Places
         public void ConfigurePlaceData(
             PlacesData.PlaceInfo placeInfo,
             ThumbnailLoader thumbnailLoader,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
-            Profile.CompactInfo? creatorProfile,
             CancellationToken cancellationToken)
         {
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
 
+            creatorThumbnail.gameObject.SetActive(false);
+            creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
+            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
+            visitsText.text = GetKFormat(placeInfo.user_visits);
+        }
+
+        public void SetCreatorThumbnail(
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            Profile.CompactInfo? creatorProfile)
+        {
             creatorThumbnail.gameObject.SetActive(creatorProfile != null);
             if (creatorProfile != null)
                 creatorThumbnail.Setup(profileRepositoryWrapper, creatorProfile.Value);
-
-            creatorNameText.text = placeInfo.contact_name;
-            likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
-            visitsText.text = GetKFormat(placeInfo.user_visits);
         }
 
         private static string GetKFormat(int num)

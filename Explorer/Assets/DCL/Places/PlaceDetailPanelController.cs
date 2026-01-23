@@ -44,23 +44,22 @@ namespace DCL.Places
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            SetupAsync(panelCts.Token).Forget();
+            viewInstance!.ConfigurePlaceData(inputData.PlaceData, thumbnailLoader, panelCts.Token);
+            SetCreatorThumbnailAsync(panelCts.Token).Forget();
             return;
 
-            async UniTaskVoid SetupAsync(CancellationToken ct)
+            async UniTaskVoid SetCreatorThumbnailAsync(CancellationToken ct)
             {
                 Profile.CompactInfo? creatorProfile = null;
 
                 if (!string.IsNullOrEmpty(inputData.PlaceData.owner))
                     creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
 
-                viewInstance!.ConfigurePlaceData(inputData.PlaceData, thumbnailLoader, profileRepositoryWrapper, creatorProfile, panelCts.Token);
+                viewInstance!.SetCreatorThumbnail(profileRepositoryWrapper, creatorProfile);
             }
         }
 
-        protected override void OnViewClose()
-        {
+        protected override void OnViewClose() =>
             panelCts.SafeCancelAndDispose();
-        }
     }
 }

@@ -443,6 +443,7 @@ MonoBehaviour:
   defaultPlaceThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
   placeNameText: {fileID: 7128827007575367659}
   creatorThumbnail: {fileID: 6974345814752392230}
+  createByText: {fileID: 5781814102863111849}
   creatorNameText: {fileID: 2011430163614308745}
   likeRateText: {fileID: 3538198045634200666}
   visitsText: {fileID: 5511795897971971415}
