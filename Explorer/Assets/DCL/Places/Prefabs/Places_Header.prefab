@@ -626,7 +626,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_text
-      value: Recently Visited
+      value: Last Visited
       objectReference: {fileID: 0}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
@@ -658,7 +658,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 194
+      value: 155
       objectReference: {fileID: 0}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1130,6 +1130,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3220712856232064781, guid: 307d566a98a62d34585ba5853e6498d7, type: 3}
+      propertyPath: m_text
+      value: Best Ranked
+      objectReference: {fileID: 0}
     - target: {fileID: 3490696017552377410, guid: 307d566a98a62d34585ba5853e6498d7, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1245,6 +1249,10 @@ PrefabInstance:
     - target: {fileID: 5725950976107409072, guid: 307d566a98a62d34585ba5853e6498d7, type: 3}
       propertyPath: m_Name
       value: Places_FilterSelector
+      objectReference: {fileID: 0}
+    - target: {fileID: 5919480050053650184, guid: 307d566a98a62d34585ba5853e6498d7, type: 3}
+      propertyPath: m_Name
+      value: BestRanked
       objectReference: {fileID: 0}
     - target: {fileID: 8287948132522725094, guid: 307d566a98a62d34585ba5853e6498d7, type: 3}
       propertyPath: m_AnchorMax.y
