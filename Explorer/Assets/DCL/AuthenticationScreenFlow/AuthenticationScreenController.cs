@@ -274,6 +274,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void SetupTransactionConfirmationCallback()
         {
+            viewInstance.TransactionFeeConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
             viewInstance.TransactionFeeConfirmationView!.transform.parent = null;
             compositeWeb3Provider.SetTransactionConfirmationCallback(viewInstance.TransactionFeeConfirmationView.ShowAsync);
         }

@@ -37,7 +37,7 @@ namespace DCL.AuthenticationScreenFlow
         public GameObject RestrictedUserContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public Web3ConfirmationView? TransactionFeeConfirmationView { get; private set; }
+        public Web3ConfirmationPopupView? TransactionFeeConfirmationView { get; private set; }
 
         [field: Header("BUTTONS")]
         [field: SerializeField]

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Web3.Authenticators;
+using MVC;
 using System;
 using TMPro;
 using UnityEngine;
@@ -10,13 +11,15 @@ namespace DCL.AuthenticationScreenFlow
     [Serializable]
     public class Web3ConfirmationPopupConfig
     {
-        public string Title;
-        public string Description;
         public string ConfirmButtonText;
+        public string Title;
+        [Multiline]
+        public string Description;
     }
 
-    public class Web3ConfirmationView : MonoBehaviour
+    public class Web3ConfirmationPopupView : ViewBase
     {
+        [Space]
         [SerializeField] private TMP_Text title;
         [SerializeField] private TMP_Text description;
 
@@ -24,25 +27,39 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button continueButton;
         [SerializeField] private TMP_Text continueButtonText;
+        [SerializeField] private GameObject tooltip;
 
         [Header("TRANSACTION")]
         [SerializeField] private GameObject transactionInfoPanel;
-
         [Space]
         [SerializeField] private TMP_Text balanceValue;
         [SerializeField] private TMP_Text costValue;
         [SerializeField] private TMP_Text estimatedGasFeeValue;
 
+        [Space]
         [SerializeField] private Web3ConfirmationPopupConfig transactionConfig;
         [SerializeField] private Web3ConfirmationPopupConfig signingConfig;
 
         private bool isTransaction;
+        private bool isFirstClick = true;
+
+        private void OnEnable()
+        {
+            tooltip.SetActive(false);
+            isFirstClick = true;
+        }
 
         private void UseConfig(Web3ConfirmationPopupConfig config)
         {
             title.text = config.Title;
             description.text = config.Description;
             continueButtonText.text = config.ConfirmButtonText;
+        }
+
+        [ContextMenu(nameof(Show))]
+        public void Show()
+        {
+            ShowAsync(new TransactionConfirmationRequest());
         }
 
         public UniTask<bool> ShowAsync(TransactionConfirmationRequest request)
@@ -81,8 +98,16 @@ namespace DCL.AuthenticationScreenFlow
 
             void OnContinue()
             {
-                Cleanup();
-                tcs.TrySetResult(true);
+                if (isFirstClick)
+                {
+                    tooltip.SetActive(true);
+                    isFirstClick = false;
+                }
+                else
+                {
+                    Cleanup();
+                    tcs.TrySetResult(true);
+                }
             }
 
             void Cleanup()
@@ -90,6 +115,8 @@ namespace DCL.AuthenticationScreenFlow
                 cancelButton.onClick.RemoveListener(OnCancel);
                 continueButton.onClick.RemoveListener(OnContinue);
                 gameObject.SetActive(false);
+                tooltip.SetActive(false);
+                isFirstClick = true;
             }
         }
     }

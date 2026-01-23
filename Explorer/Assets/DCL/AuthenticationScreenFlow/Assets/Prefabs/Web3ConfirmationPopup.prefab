@@ -467,6 +467,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 5520647684489353372}
   - {fileID: 8254379506874121477}
   - {fileID: 8131188492947950091}
   m_Father: {fileID: 8923801153950425337}
@@ -2163,28 +2164,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da9bb98e83027746b40c1f5f43ba19c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.TransactionFeeConfirmationView
+  <canvas>k__BackingField: {fileID: 3986082657087735042}
+  <raycaster>k__BackingField: {fileID: 7857501929645492386}
   title: {fileID: 1186803141811227918}
   description: {fileID: 1537673553196285883}
   cancelButton: {fileID: 2064352090273611970}
   continueButton: {fileID: 6887516498286652005}
   continueButtonText: {fileID: 6839760442487993625}
+  tooltip: {fileID: 3713731086327051427}
   transactionInfoPanel: {fileID: 1235409549632294784}
   balanceValue: {fileID: 3154375944492424615}
   costValue: {fileID: 3484660924689283499}
   estimatedGasFeeValue: {fileID: 4639814591422094003}
   transactionConfig:
+    ConfirmButtonText: CONFIRM
     Title: Confirm Transaction
     Description: "This action will perform a transaction using your wallet. Transactions
-      can make changes to your account and may include a small network fee. \LOnly
+      can make changes to your account and may include a small network fee. \L\nOnly
       continue if you trust this experience and understand the details below."
-    ConfirmButtonText: CONFIRM
   signingConfig:
+    ConfirmButtonText: SIGN
     Title: Confirm Signature
     Description: "This experience is asking you to confirm an action using your wallet.
       This does not move any funds or create a blockchain transaction.It\u2019s commonly
-      used to continue a scene, save a choice, or verify your account. \LOnly continue
+      used to continue a scene, save a choice, or verify your account. \L\nOnly continue
       if you trust this experience."
-    ConfirmButtonText: SIGN
 --- !u!1 &6665411606974361329
 GameObject:
   m_ObjectHideFlags: 0
@@ -2976,3 +2980,142 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &7505876544514429917
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2189691134055959041}
+    m_Modifications:
+    - target: {fileID: 1866076170160042593, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.40000153
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 226
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 56
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 97.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 56.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_Name
+      value: Tooltip
+      objectReference: {fileID: 0}
+    - target: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 7322643854979495269, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1469610662446300393}
+  m_SourcePrefab: {fileID: 100100000, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+--- !u!1 &3713731086327051427 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+  m_PrefabInstance: {fileID: 7505876544514429917}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1469610662446300393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3713731086327051427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 1
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
+--- !u!224 &5520647684489353372 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
+  m_PrefabInstance: {fileID: 7505876544514429917}
+  m_PrefabAsset: {fileID: 0}
