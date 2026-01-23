@@ -8,8 +8,12 @@ namespace DCL.PluginSystem.Global
     [Serializable]
     public class CharacterMotionSettings : IDCLPluginSettings
     {
-        [field: Header(nameof(CharacterMotionSettings))] [field: Space]
+        [field: Header(nameof(CharacterMotionSettings))]
+        [field: Space]
         [field: SerializeField]
-        internal CharacterControllerSettings controllerSettings { get; private set; }
+        public CharacterControllerSettings ControllerSettings { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceT<GameObject> GliderPropPrefab { get; private set; }
     }
 }

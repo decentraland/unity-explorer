@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Systems;
@@ -27,8 +28,10 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILandscape landscape;
         private readonly IScenesCache scenesCache;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
-        private CharacterControllerSettings settings;
+        private CharacterControllerSettings controllerSettings;
+        private GameObject gliderPropPrefab;
 
         public CharacterMotionPlugin(
             ICharacterObject characterObject,
@@ -36,7 +39,8 @@ namespace DCL.PluginSystem.Global
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILandscape landscape,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -44,16 +48,17 @@ namespace DCL.PluginSystem.Global
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.landscape = landscape;
             this.scenesCache = scenesCache;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void Dispose()
         {
         }
 
-        public UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
         {
-            this.settings = settings.controllerSettings;
-            return UniTask.CompletedTask;
+            controllerSettings = settings.ControllerSettings;
+            gliderPropPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GliderPropPrefab, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -63,7 +68,7 @@ namespace DCL.PluginSystem.Global
             // Add Motion components
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
-                (ICharacterControllerSettings)settings,
+                (ICharacterControllerSettings)controllerSettings,
                 characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
@@ -90,9 +95,10 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, controllerSettings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            GliderPropControllerSystem.InjectToWorld(ref builder, gliderPropPrefab, componentPoolsRegistry);
         }
     }
 }
