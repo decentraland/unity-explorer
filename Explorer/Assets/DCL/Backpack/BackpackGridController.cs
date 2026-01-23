@@ -232,21 +232,14 @@ namespace DCL.Backpack
                     && gridWearables[i].GetCategory() != WearableCategories.Categories.EYEBROWS
                     && gridWearables[i].GetCategory() != WearableCategories.Categories.MOUTH;
                 
-                // Calculate pending transfer status and display amount for on-chain wearables
                 URN urn = wearable.GetUrn();
                 bool isBaseWearable = urn.IsBaseWearable();
                 int totalOwned = wearable.Amount;
                 int pendingCount = isBaseWearable ? 0 : pendingTransferService.GetPendingCount(urn);
                 int displayAmount = totalOwned - pendingCount;
-                
-                // Mark as pending transfer if ALL instances are being transferred
                 backpackItemView.IsPendingTransfer = !isBaseWearable && displayAmount <= 0;
-                
-                // Show NFT count (only for on-chain wearables with amount > 1)
                 backpackItemView.NftCount = isBaseWearable ? 0 : Math.Max(displayAmount, 0);
-                
                 backpackItemView.SetEquipButtonsState();
-
                 backpackItemView.SmartWearableBadgeContainer.SetActive(false);
 
                 InitializeItemViewAsync(wearable, backpackItemView, pageFetchCancellationToken!.Token).Forget();
