@@ -12,6 +12,13 @@ namespace ECS.Unity.AssetLoad
 {
     public class AssetPreLoadUtils : IDisposable
     {
+        public class LoadingUpdate
+        {
+            public List<LoadingState> States;
+            public int LastTick;
+            public CRDTEntity CrdtEntity;
+        }
+
         internal readonly Dictionary<string, LoadingUpdate> assetLoadingUpdates = new ();
         private readonly IObjectPool<LoadingUpdate> loadingUpdatePool = new ObjectPool<LoadingUpdate>(
             createFunc: () => new LoadingUpdate(),
@@ -42,7 +49,7 @@ namespace ECS.Unity.AssetLoad
 
         public void Dispose()
         {
-             foreach (var kvp in assetLoadingUpdates)
+            foreach (var kvp in assetLoadingUpdates)
                 loadingUpdatePool.Release(kvp.Value);
 
             assetLoadingUpdates.Clear();
@@ -54,13 +61,6 @@ namespace ECS.Unity.AssetLoad
                 entry.States.Add(loadingState);
             else
                 assetLoadingUpdates[assetPath] = GetLoadingUpdate(crdtEntity, loadingState);
-        }
-
-        public class LoadingUpdate
-        {
-            public List<LoadingState> States;
-            public int LastTick;
-            public CRDTEntity CrdtEntity;
         }
     }
 }

@@ -37,7 +37,6 @@ namespace ECS.Unity.AssetLoad.Systems
             this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
-
         protected override void Update(float t)
         {
             FinalizeGltfLoadingQuery(World);
