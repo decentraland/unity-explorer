@@ -299,8 +299,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -10, y: 0.0000076293945}
-  m_SizeDelta: {x: 50, y: 28}
+  m_AnchoredPosition: {x: -10, y: 0}
+  m_SizeDelta: {x: 90, y: 28}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &2897917166576559458
 CanvasRenderer:
@@ -364,7 +364,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -734,7 +734,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5019608}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.29803923}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -964,12 +964,13 @@ MonoBehaviour:
   characterCountLabel: {fileID: 8571574862034620475}
   maxNameLength: 15
   characterLimitReachedMessage: Character limit reached
+  textErrorColor: {r: 1, g: 0.8039216, b: 0.8039216, a: 1}
   errorContainer: {fileID: 2011157474057826879}
   inputErrorMessage: {fileID: 4370450345763013987}
   outline: {fileID: 3832558693348880918}
   outlineNormalColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineErrorColor: {r: 1, g: 0, b: 0, a: 1}
-  caretColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineErrorColor: {r: 0.8784314, g: 0, b: 0, a: 1}
+  caretColor: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
   caretWidth: 2
   caretBlinkRate: 0.85
 --- !u!1 &9150734743725728515
