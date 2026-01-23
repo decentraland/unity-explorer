@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Font = DCL.ECSComponents.Font;
@@ -216,6 +217,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
+            // var dropdownField = dropdownToSetup.DropdownField;
             dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
             dropdownToSetup.DropdownField.style.color = model.GetColor();
             dropdownToSetup.DropdownField.choices.Clear();
@@ -224,6 +226,37 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownToSetup.DropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
             dropdownToSetup.DropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
+
+            // To enforce an opacity transition since Unity instantiates the popup on demand,
+            // and we cannot be animating a property on it from the uss stylesheet...
+            dropdownToSetup.DropdownField.RegisterCallback<PointerDownEvent>( (x) =>
+            {
+                DropdownField dropDown = x.currentTarget as DropdownField;
+                if (dropDown == null) return;
+
+                dropDown.schedule.Execute(() =>
+                {
+                    var root = dropDown.panel.visualTree;
+                    var popup = root.Q(null, "unity-base-dropdown");
+                    if (popup == null)
+                        return;
+
+                    popup.style.opacity = 0;
+                    popup.style.transitionProperty = new List<StylePropertyName>
+                    {
+                        "opacity"
+                    };
+                    popup.style.transitionDuration = new List<TimeValue>
+                    {
+                        new(0.3f, TimeUnit.Second)
+                    };
+
+                    popup.schedule.Execute(() =>
+                    {
+                        popup.style.opacity = 1;
+                    }).StartingIn(1);
+                });
+            });
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

@@ -45,10 +45,10 @@
 }
 
 .unity-base-dropdown__container-inner,
-.unity-base-dropdown__container-outer,
-.unity-base-dropdown__item {
+.unity-base-dropdown__container-outer {
     border-radius: var(--dcl-border-radius);
     color: black;
+    overflow: hidden
 }
 
 .unity-base-dropdown__checkmark {
