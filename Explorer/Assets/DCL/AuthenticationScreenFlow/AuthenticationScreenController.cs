@@ -22,7 +22,6 @@ using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -275,97 +274,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void SetupTransactionConfirmationCallback()
         {
-            compositeWeb3Provider.SetTransactionConfirmationCallback(ShowTransactionConfirmationAsync);
-        }
-
-        private UniTask<bool> ShowTransactionConfirmationAsync(TransactionConfirmationRequest request)
-        {
-            // Dedicated flow for eth_sendTransaction (fee/balance confirmation)
-            if (string.Equals(request.Method, "eth_sendTransaction", StringComparison.OrdinalIgnoreCase))
-            {
-                string networkName = string.IsNullOrEmpty(request.NetworkName) ? "Ethereum Mainnet" : request.NetworkName;
-                string feeEth = string.IsNullOrEmpty(request.EstimatedGasFeeEth) ? "0.0" : request.EstimatedGasFeeEth;
-                string balanceEth = string.IsNullOrEmpty(request.BalanceEth) ? "0.0" : request.BalanceEth;
-
-                viewInstance.TransactionFeeConfirmationView.transform.parent = null;
-
-                return viewInstance.TransactionFeeConfirmationView.ShowAsync(
-                    networkName: networkName,
-                    estimatedGasFeeEth: feeEth,
-                    balanceEth: balanceEth
-                );
-            }
-
-            // viewInstance!.ConfPopupRootText.text = BuildTransactionInfoText(request);
-
-            // Show popup
-            viewInstance.ConfPopupRoot.transform.parent = null;
-            viewInstance.ConfPopupRoot.SetActive(true);
-
-            var tcs = new UniTaskCompletionSource<bool>();
-
-            viewInstance.ConfPopupRootConfirmButton.onClick.AddListener(OnConfirm);
-            viewInstance.ConfPopupRootCancelButton.onClick.AddListener(OnCancel);
-
-            return tcs.Task;
-
-            void OnCancel()
-            {
-                Cleanup();
-                tcs.TrySetResult(false);
-            }
-
-            void OnConfirm()
-            {
-                Cleanup();
-                tcs.TrySetResult(true);
-            }
-
-            void Cleanup()
-            {
-                viewInstance.ConfPopupRootConfirmButton.onClick.RemoveListener(OnConfirm);
-                viewInstance.ConfPopupRootCancelButton.onClick.RemoveListener(OnCancel);
-                viewInstance.ConfPopupRoot.SetActive(false);
-            }
-        }
-
-        private static string BuildTransactionInfoText(TransactionConfirmationRequest request)
-        {
-            var sb = new StringBuilder();
-            sb.Append($"Method: {request.Method}");
-
-            if (!string.IsNullOrEmpty(request.To))
-                sb.Append($" | To: {request.To}");
-
-            if (!string.IsNullOrEmpty(request.Value) && request.Value != "0x0" && request.Value != "0x")
-                sb.Append($" | Value: {request.Value}");
-
-            if (!string.IsNullOrEmpty(request.Data) && request.Data != "0x")
-            {
-                // Show truncated data if too long
-                string dataPreview = request.Data.Length > 20
-                    ? request.Data[..20] + "..."
-                    : request.Data;
-
-                sb.Append($" | Data: {dataPreview}");
-            }
-
-            // For signing methods, show the message being signed
-            if (string.Equals(request.Method, "personal_sign") && request.Params?.Length > 0)
-            {
-                string message = request.Params[0]?.ToString() ?? "";
-                string messagePreview = message.Length > 50 ? message[..50] + "..." : message;
-                sb.Append($" | Message: {messagePreview}");
-            }
-
-            if (string.Equals(request.Method, "eth_signTypedData_v4") && request.Params?.Length > 1)
-            {
-                string typedData = request.Params[1]?.ToString() ?? "";
-                string dataPreview = typedData.Length > 50 ? typedData[..50] + "..." : typedData;
-                sb.Append($" | TypedData: {dataPreview}");
-            }
-
-            return sb.ToString();
+            viewInstance.TransactionFeeConfirmationView!.transform.parent = null;
+            compositeWeb3Provider.SetTransactionConfirmationCallback(viewInstance.TransactionFeeConfirmationView.ShowAsync);
         }
     }
 }
