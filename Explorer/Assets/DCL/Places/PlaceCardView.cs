@@ -46,6 +46,7 @@ namespace DCL.Places
         [SerializeField] private Button infoButton = null!;
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private Button deleteButton = null!;
+        [SerializeField] private Button mainButton = null!;
 
         [Serializable]
         private struct FriendsConnectedConfig
@@ -78,6 +79,7 @@ namespace DCL.Places
         public event Action<PlaceInfo>? InfoButtonClicked;
         public event Action<PlaceInfo>? JumpInButtonClicked;
         public event Action<PlaceInfo>? DeleteButtonClicked;
+        public event Action<PlaceInfo>? MainButtonClicked;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -107,6 +109,7 @@ namespace DCL.Places
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
             deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo!));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentPlaceInfo!));
         }
 
         private void OnEnable() =>
@@ -176,7 +179,8 @@ namespace DCL.Places
             Action<PlaceInfo, Vector2, PlaceCardView> shareButtonClicked,
             Action<PlaceInfo> infoButtonClicked,
             Action<PlaceInfo> jumpInButtonClicked,
-            Action<PlaceInfo> deleteButtonClicked)
+            Action<PlaceInfo> deleteButtonClicked,
+            Action<PlaceInfo> mainButtonClicked)
         {
             LikeToggleChanged = null;
             DislikeToggleChanged = null;
@@ -185,6 +189,7 @@ namespace DCL.Places
             InfoButtonClicked = null;
             JumpInButtonClicked = null;
             DeleteButtonClicked = null;
+            MainButtonClicked = null;
 
             LikeToggleChanged += likeToggleChanged;
             DislikeToggleChanged += dislikeToggleChanged;
@@ -193,6 +198,7 @@ namespace DCL.Places
             InfoButtonClicked += infoButtonClicked;
             JumpInButtonClicked += jumpInButtonClicked;
             DeleteButtonClicked += deleteButtonClicked;
+            MainButtonClicked += mainButtonClicked;
         }
 
         public void SilentlySetLikeToggle(bool isOn)

@@ -158,6 +158,7 @@ namespace DCL.PluginSystem.Global
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
         private PlacesController? placesController;
+        private PlaceDetailPanelController? placeDetailPanelController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -320,6 +321,7 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             upscalingController?.Dispose();
+            placeDetailPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -509,9 +511,15 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
+            var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource,
-                friendServiceProxy, profileRepositoryWrapper);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader);
+
+            PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
+            var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
+            placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, webRequestController, placesThumbnailLoader);
+            mvcManager.RegisterController(placeDetailPanelController);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -679,6 +687,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
+
+            [field: Header("Place Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
         }
     }
 }

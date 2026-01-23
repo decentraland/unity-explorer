@@ -17,6 +17,7 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace DCL.Places
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IMVCManager mvcManager;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -66,7 +68,9 @@ namespace DCL.Places
             ISystemClipboard clipboard,
             IDecentralandUrlsSource dclUrlSource,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader)
         {
             this.view = view;
             this.placesController = placesController;
@@ -76,6 +80,7 @@ namespace DCL.Places
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.friendServiceProxy = friendServiceProxy;
+            this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
 
             view.BackButtonClicked += OnBackButtonClicked;
@@ -87,10 +92,11 @@ namespace DCL.Places
             view.PlaceJumpInButtonClicked += OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked += OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked += OnPlaceCopyLinkButtonClicked;
+            view.MainButtonClicked += OnMainButtonClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
-            view.SetDependencies(placesStateService, new ThumbnailLoader(new SpriteCache(webRequestController)), profileRepositoryWrapper);
+            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper);
             view.InitializePlacesGrid();
         }
 
@@ -105,6 +111,7 @@ namespace DCL.Places
             view.PlaceJumpInButtonClicked -= OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked -= OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked -= OnPlaceCopyLinkButtonClicked;
+            view.MainButtonClicked -= OnMainButtonClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
 
@@ -167,6 +174,9 @@ namespace DCL.Places
 
         private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
+
+        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo) =>
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo))).Forget();
 
         private void OnFiltersChanged(PlacesFilters filters)
         {

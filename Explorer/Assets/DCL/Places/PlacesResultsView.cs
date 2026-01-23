@@ -30,6 +30,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? PlaceJumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceShareButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceCopyLinkButtonClicked;
+        public event Action<PlacesData.PlaceInfo>? MainButtonClicked;
 
         private ThumbnailLoader? placesCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -159,7 +160,8 @@ namespace DCL.Places
                 shareButtonClicked: OpenCardContextMenu,
                 infoButtonClicked: _ => { },
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),
-                deleteButtonClicked: _ => { });
+                deleteButtonClicked: _ => { },
+                mainButtonClicked: place => MainButtonClicked?.Invoke(place));
 
             return gridItem;
         }

@@ -89,6 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementInfoButtonClicked += OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked += OnElementJumpInButtonClicked;
             view.ElementDeleteButtonClicked += OnElementDeleteButtonClicked;
+            view.ElementMainButtonClicked += OnElementMainButtonClicked;
         }
 
         public override void Dispose()
@@ -103,6 +104,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked -= OnElementJumpInButtonClicked;
             view.ElementDeleteButtonClicked -= OnElementDeleteButtonClicked;
+            view.ElementMainButtonClicked -= OnElementMainButtonClicked;
 
             placeCardOperationsCts.SafeCancelAndDispose();
 
@@ -142,6 +144,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 RefreshGrid(true);
             }
         }
+
+        private void OnElementMainButtonClicked(PlaceInfo placeInfo) =>
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo))).Forget();
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
         {

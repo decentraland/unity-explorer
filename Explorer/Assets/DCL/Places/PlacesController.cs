@@ -1,5 +1,6 @@
 ﻿using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
@@ -11,6 +12,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -44,7 +46,9 @@ namespace DCL.Places
             ISystemClipboard clipboard,
             IDecentralandUrlsSource dclUrlSource,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -54,7 +58,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                webRequestController, realmNavigator, clipboard, dclUrlSource, friendServiceProxy, profileRepositoryWrapper);
+                webRequestController, realmNavigator, clipboard, dclUrlSource, friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

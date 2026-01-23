@@ -694,6 +694,7 @@ MonoBehaviour:
   infoButton: {fileID: 524240571711971154}
   jumpInButton: {fileID: 6223524337999859739}
   deleteButton: {fileID: 465932536586291329}
+  mainButton: {fileID: 2295804181648494722}
 --- !u!114 &2295804181648494722
 MonoBehaviour:
   m_ObjectHideFlags: 0
