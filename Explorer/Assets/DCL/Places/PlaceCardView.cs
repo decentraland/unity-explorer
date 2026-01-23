@@ -125,7 +125,7 @@ namespace DCL.Places
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;
-            onlineMembersText.text = $"{placeInfo.user_count}";
+            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
             liveTag.SetActive(placeInfo.live);
