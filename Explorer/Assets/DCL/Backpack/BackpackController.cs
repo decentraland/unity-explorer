@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -56,6 +57,7 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
         private readonly IRealmData realmData;
+        private readonly IPendingTransferService pendingTransferService;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -92,7 +94,9 @@ namespace DCL.Backpack
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             Sprite deleteIcon,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPendingTransferService pendingTransferService)
+        
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -104,6 +108,7 @@ namespace DCL.Backpack
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
+            this.pendingTransferService = pendingTransferService;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
@@ -149,7 +154,9 @@ namespace DCL.Backpack
                 previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
-                outfitSlotFactory);
+                outfitSlotFactory,
+                wearableStorage,
+                pendingTransferService);
 
             avatarController = new AvatarController(
                 avatarView,

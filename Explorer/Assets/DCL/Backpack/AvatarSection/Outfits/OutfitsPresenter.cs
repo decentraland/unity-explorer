@@ -5,6 +5,7 @@ using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
@@ -13,6 +14,8 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
 using DCL.Backpack.CharacterPreview;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Utils;
 using DCL.Backpack.Slots;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -43,7 +46,8 @@ namespace DCL.Backpack
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
         private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         private readonly PreviewOutfitCommand previewOutfitCommand;
-
+        private readonly IWearableStorage wearableStorage;
+        private readonly IPendingTransferService pendingTransferService;
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
         
@@ -61,7 +65,9 @@ namespace DCL.Backpack
             PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
-            OutfitSlotPresenterFactory slotFactory)
+            OutfitSlotPresenterFactory slotFactory,
+            IWearableStorage wearableStorage,
+            IPendingTransferService pendingTransferService)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -78,6 +84,8 @@ namespace DCL.Backpack
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
             this.slotFactory = slotFactory;
+            this.wearableStorage = wearableStorage;
+            this.pendingTransferService = pendingTransferService;
 
             outfitBannerPresenter = new OutfitBannerPresenter(view.OutfitsBanner,
                 OnGetANameClicked, OnLinkClicked);
@@ -126,14 +134,20 @@ namespace DCL.Backpack
             {
                 SetAllSlotsToLoading();
 
+                // Load raw outfits
                 var outfits = await LoadAndCacheOutfitsAsync(ct);
                 if (ct.IsCancellationRequested) return;
 
                 // Precache wearables in the background.
                 PrewarmWearablesCacheAsync(outfits.Values, ct).Forget();
 
+                // Filter Blocked Outfits
+                // We create a new dictionary containing ONLY the outfits that are safe to wear.
+                // The ones with pending transfers will be excluded, making the slot appear Empty.
+                var validOutfits = FilterBlockedOutfits(outfits);
+                
                 // Update the UI with the primary data.
-                PopulateAllSlots(outfits);
+                PopulateAllSlots(validOutfits);
             }
             catch (OperationCanceledException)
             {
@@ -176,6 +190,78 @@ namespace DCL.Backpack
             await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
         }
         
+        private Dictionary<int, OutfitItem> FilterBlockedOutfits(IReadOnlyDictionary<int, OutfitItem> source)
+        {
+            var result = new Dictionary<int, OutfitItem>();
+
+            foreach (var kvp in source)
+            {
+                // If returns TRUE (it is blocked), we skip adding it.
+                // The slot will render as Empty.
+                if (IsOutfitBlocked(kvp.Value.outfit)) 
+                    continue;
+
+                result.Add(kvp.Key, kvp.Value);
+            }
+
+            return result;
+        }
+        
+        private bool IsOutfitBlocked(Outfit? outfit)
+        {
+            if (outfit == null || outfit.wearables == null) return false;
+
+            // Check BodyShape
+            if (!string.IsNullOrEmpty(outfit.bodyShape) && IsItemBlocked(outfit.bodyShape))
+                return true;
+
+            // Check all Wearables
+            foreach (string urn in outfit.wearables)
+            {
+                if (IsItemBlocked(urn))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsItemBlocked(string urn)
+        {
+            // Convert string to URN object to access helper methods
+            URN urnObj = new URN(urn);
+
+            // Off-chain (Base) items are never blocked by pending transfers.
+            // They don't live in the NFT registry, so we skip the count check for them.
+            if (urnObj.IsBaseWearable())
+                return false;
+            
+            // Rule 1: If the user is CURRENTLY wearing this specific item, 
+            // the outfit is valid (we don't strip the avatar).
+            // FIX: We use a helper method here because IsEquipped expects an object
+            // if (IsUrnEquipped(urn))
+            //     return false;
+
+            // Rule 2: Check availability based on Pending Transfers
+            if (!GiftingUrnParsingHelper.TryGetBaseUrn(urn, out string baseUrn))
+                baseUrn = urn;
+
+            URN baseUrnObj = new URN(baseUrn);
+
+            // Get total owned in inventory
+            int totalOwned = 0;
+            if (wearableStorage.TryGetOwnedNftRegistry(baseUrnObj, out var registry))
+                totalOwned = registry.Count;
+
+            // Get pending count
+            int pendingCount = pendingTransferService.GetPendingCount(baseUrn);
+
+            // Calculate available amount
+            int available = totalOwned - pendingCount;
+
+            // If available is <= 0, this item cannot be equipped, so the outfit is blocked.
+            return available <= 0;
+        }
+
         private void OnSaveOutfitRequested(int slotIndex)
         {
             OnSaveOutfitRequestedAsync(slotIndex, cts.Token).Forget();

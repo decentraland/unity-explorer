@@ -305,7 +305,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 deleteIcon,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                pendingTransferService
             );
         }
 
