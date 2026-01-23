@@ -57,7 +57,6 @@ namespace DCL.Backpack
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
         private readonly IRealmData realmData;
-        private readonly IPendingTransferService pendingTransferService;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -108,7 +107,6 @@ namespace DCL.Backpack
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
-            this.pendingTransferService = pendingTransferService;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             var categoriesPresenter = new CategoriesPresenter(avatarView.CategoriesView,
