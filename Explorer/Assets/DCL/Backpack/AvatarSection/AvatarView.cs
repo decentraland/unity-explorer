@@ -42,6 +42,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Button marketplaceButton { get; private set; }
+
+        [field: SerializeField]
+        public Button vrmExportButton { get; private set; }
     }
 
     [Serializable]

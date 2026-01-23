@@ -24,7 +24,7 @@ namespace DCL.CharacterPreview
         {
             "wave", "fistpump", "dab"
         };
-        
+
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -298,6 +298,9 @@ namespace DCL.CharacterPreview
             spinner.SetActive(true);
             return spinner;
         }
+
+        public UniTask ExportAvatarAsync(string fileName, string profileName) =>
+            previewController?.ExportAvatarAsync(fileName, profileName, previewAvatarModel) ?? UniTask.CompletedTask;
 
         private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct) =>
             await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask);

@@ -23,10 +23,10 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.CharacterPreview;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using Runtime.Wearables;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -141,6 +141,9 @@ namespace DCL.PluginSystem.Global
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
+
+            // TODO: Ask Misha how to do this correctly.
+            CharacterPreviewController.FacialFeaturesTexturesByBodyShape = facialFeaturesTextures;
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;

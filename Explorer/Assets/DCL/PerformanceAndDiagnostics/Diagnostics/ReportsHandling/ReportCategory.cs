@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace DCL.Diagnostics
+﻿namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Contains names of report categories, IDs must be constant so they can be specified in the attribute
@@ -185,6 +183,7 @@ namespace DCL.Diagnostics
         ///     Avatar rendering
         /// </summary>
         public const string AVATAR = nameof(AVATAR);
+        public const string AVATAR_EXPORT = nameof(AVATAR_EXPORT);
 
         public const string PROFILE = nameof(PROFILE);
 

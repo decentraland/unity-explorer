@@ -2,7 +2,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Runtime.Wearables;
@@ -10,7 +9,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace DCL.AvatarRendering.Wearables.Components
@@ -41,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             get => Model;
             set => Model = value;
         }
-        
+
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
@@ -49,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public AvatarAttachmentDTO DTO => Model.Asset!;
         public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
-        
+
         public WearableType Type { get; private set; }
 
         public bool IsLoading { get; private set; }
@@ -73,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
-            
+
 
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;
@@ -197,6 +195,32 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         private bool IsSkin() =>
             GetCategory() == WearableCategories.Categories.SKIN;
+
+        private bool IsCollectible()
+        {
+            string? id = Model.Asset!.metadata.id;
+
+            return !string.IsNullOrEmpty(id) && !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+
+        public string GetMarketplaceUrl()
+        {
+            const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
+
+            if (!IsCollectible())
+                return "";
+
+            string? id = Model.Asset!.metadata.id;
+            string[]? split = id.Split(":");
+
+            if (split.Length < 2)
+                return "";
+
+            if (!split[^2].StartsWith("0x") || !int.TryParse(split[^1], out int _))
+                return "";
+
+            return string.Format(MARKETPLACE, split[^2], split[^1]);
+        }
 
         private bool IsFacialFeature() =>
             WearableCategories.FACIAL_FEATURES.Contains(GetCategory());
