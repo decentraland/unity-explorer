@@ -42,17 +42,20 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
 
             view.OnViewHidden += ReparentCharacterPreview;
-        }
+            return;
 
-        private void ReparentCharacterPreview()
-        {
-            characterPreviewView.transform.SetParent(viewInstance.transform);
-            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+            void ReparentCharacterPreview()
+            {
+                characterPreviewView.transform.SetParent(viewInstance.transform);
+                characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+            }
         }
 
         public void Enter((Profile profile, bool isCached) payload)
         {
-            // valid onl
+            view.JumpIntoWorldButton.interactable = true;
+
+            // splashScreen is destroyed after the first login
             if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
 
@@ -80,10 +83,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            characterPreviewView.gameObject.SetActive(false);
-            characterPreviewController?.OnHide();
-
-            // Listeners
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();
         }
@@ -97,21 +96,19 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnJumpIntoWorld()
         {
             view!.JumpIntoWorldButton.interactable = false;
-            view.Hide(UIAnimationHashes.OUT);
-            fsm.Enter<InitAuthState>();
 
             AnimateAndAwaitAsync().Forget();
             return;
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
-                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
-                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+
+                view.Hide(UIAnimationHashes.OUT);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
 
+                fsm.Enter<InitAuthState>();
                 controller.TrySetLifeCycle();
             }
         }

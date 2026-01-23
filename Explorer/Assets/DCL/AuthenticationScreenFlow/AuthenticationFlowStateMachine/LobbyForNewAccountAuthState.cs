@@ -113,8 +113,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            characterPreviewController?.OnHide();
-
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
@@ -207,14 +205,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void FinalizeNewUser()
         {
+            JumpIntoWorld();
             PublishNewProfile(ct).Forget();
+            return;
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
                 newUserProfile.Name = view.ProfileNameInputField.Text;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
-                JumpIntoWorld();
             }
         }
 
@@ -338,8 +337,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void JumpIntoWorld()
         {
-            view.Hide(UIAnimationHashes.OUT);
-            fsm.Enter<InitAuthState>();
+            view.FinalizeNewUserButton.interactable = false;
 
             AnimateAndAwaitAsync().Forget();
             return;
@@ -348,11 +346,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
 
-                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
-                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+                view.Hide(UIAnimationHashes.OUT);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 characterPreviewController?.OnHide();
 
+                fsm.Enter<InitAuthState>();
                 controller.TrySetLifeCycle();
             }
         }
