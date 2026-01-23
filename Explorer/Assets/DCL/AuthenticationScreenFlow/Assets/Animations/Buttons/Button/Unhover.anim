@@ -65,7 +65,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    path: Text (TMP)
+    path: Icon
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -90,7 +90,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    path: Icon
+    path: Text
   m_FloatCurves: []
   m_PPtrCurves: []
   m_SampleRate: 60
@@ -110,7 +110,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 271242783
+      path: 3316025061
       attribute: 3
       script: {fileID: 0}
       typeID: 4
@@ -119,7 +119,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 3316025061
+      path: 2612594937
       attribute: 3
       script: {fileID: 0}
       typeID: 4
@@ -265,7 +265,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.x
-    path: Text (TMP)
+    path: Icon
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -295,7 +295,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.y
-    path: Text (TMP)
+    path: Icon
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -325,7 +325,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.z
-    path: Text (TMP)
+    path: Icon
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -355,7 +355,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.x
-    path: Icon
+    path: Text
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -385,7 +385,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.y
-    path: Icon
+    path: Text
     classID: 224
     script: {fileID: 0}
     flags: 0
@@ -415,7 +415,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalScale.z
-    path: Icon
+    path: Text
     classID: 224
     script: {fileID: 0}
     flags: 0
