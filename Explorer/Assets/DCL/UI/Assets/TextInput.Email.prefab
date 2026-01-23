@@ -444,7 +444,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.8784314, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -519,7 +519,7 @@ MonoBehaviour:
   outline: {fileID: 4418198438385915273}
   outlineNormalColor: {r: 1, g: 1, b: 1, a: 1}
   outlineErrorColor: {r: 1, g: 0, b: 0, a: 1}
-  caretColor: {r: 0, g: 0, b: 0, a: 1}
+  caretColor: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
   caretWidth: 2
   caretBlinkRate: 0.85
 --- !u!1001 &4122355885637972248
@@ -891,6 +891,10 @@ PrefabInstance:
     - target: {fileID: 2807192840470977149, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_Name
       value: EmailInput
+      objectReference: {fileID: 0}
+    - target: {fileID: 2807192840470977149, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6541559947333370402, guid: 593328dae0676544bbbac027ee30f9d5, type: 3}
       propertyPath: m_Text
