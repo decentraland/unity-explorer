@@ -45,8 +45,14 @@
 }
 
 .unity-base-dropdown__container-inner,
-.unity-base-dropdown__container-outer {
+.unity-base-dropdown__container-outer,
+.unity-base-dropdown__item {
     border-radius: var(--dcl-border-radius);
+    color: black;
+}
+
+.unity-base-dropdown__checkmark {
+    margin-top: 15px;
 }
 
 .dcl-dropdown > .unity-base-popup-field__input,
