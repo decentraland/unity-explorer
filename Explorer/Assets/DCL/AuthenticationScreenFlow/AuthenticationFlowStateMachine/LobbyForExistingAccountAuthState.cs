@@ -5,6 +5,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
 using MVC;
+using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
@@ -21,6 +22,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly LobbyForExistingAccountAuthView view;
         private readonly SplashScreen splashScreen;
 
+        private readonly Vector3 characterPreviewOrigPosition;
+
         public LobbyForExistingAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -29,12 +32,22 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
             view = viewInstance.LobbyForExistingAccountAuthView;
-            characterPreviewView = viewInstance.CharacterPreviewView;
             this.fsm = fsm;
             this.controller = controller;
             this.splashScreen = splashScreen;
             this.currentState = currentState;
             this.characterPreviewController = characterPreviewController;
+
+            characterPreviewView = viewInstance.CharacterPreviewView;
+            characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
+
+            view.OnViewHidden += ReparentCharacterPreview;
+        }
+
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
         public void Enter((Profile profile, bool isCached) payload)
@@ -49,7 +62,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
 
-            characterPreviewView.gameObject.SetActive(true);
+            characterPreviewView.transform.SetParent(view.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
             characterPreviewController?.OnBeforeShow();
             characterPreviewController?.OnShow();

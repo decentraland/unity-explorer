@@ -14,7 +14,9 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
+using Avatar = DCL.Profiles.Avatar;
 using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -41,6 +43,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private Profile newUserProfile;
         private CancellationToken ct;
 
+        private readonly CharacterPreviewView characterPreviewView;
+        private readonly Vector3 characterPreviewOrigPosition;
+
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -57,8 +62,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
             this.wearablesProvider = wearablesProvider;
+
+            characterPreviewView = viewInstance.CharacterPreviewView;
+            characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
+
+            view.OnViewHidden += ReparentCharacterPreview;
         }
 
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
+        }
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
@@ -74,6 +89,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             newUserProfile = payload.profile;
 
             view.Show();
+            characterPreviewView.transform.SetParent(view.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
             view.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;
 
