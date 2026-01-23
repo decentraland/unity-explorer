@@ -38,10 +38,10 @@ namespace ECS.Unity.AssetLoad.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAssetLoad))]
-        [All(typeof(AssetLoadComponent))]
+        [All(typeof(AssetPreLoadComponent))]
         private void HandleComponentRemoval(in Entity entity)
         {
-            World.Remove<AssetLoadComponent>(entity);
+            World.Remove<AssetPreLoadComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)

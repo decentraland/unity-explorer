@@ -49,7 +49,7 @@ namespace ECS.Unity.AssetLoad.Systems
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeGltfLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref GltfContainerComponent component)
+        private void FinalizeGltfLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref GltfContainerComponent component)
         {
             if (!capBudget.TrySpendBudget())
                 return;
@@ -59,11 +59,11 @@ namespace ECS.Unity.AssetLoad.Systems
             {
                 if (result.Succeeded)
                 {
-                    assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, result.Asset);
-                    assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.Finished, assetLoadChildComponent.AssetPath);
+                    assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, result.Asset);
+                    assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, LoadingState.Finished, assetPreLoadChildComponent.AssetPath);
                 }
                 else
-                    assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+                    assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
 
                 World.Destroy(entity);
             }
@@ -71,7 +71,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeAudioClipLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref AudioPromise audioPromise)
+        private void FinalizeAudioClipLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref AudioPromise audioPromise)
         {
             if (audioPromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -81,16 +81,16 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeTextureLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref TexturePromise texturePromise)
+        private void FinalizeTextureLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref TexturePromise texturePromise)
         {
             if (texturePromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -100,9 +100,9 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetPreLoadCache.TryAdd(assetLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, promiseResult.Asset);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }
@@ -110,7 +110,7 @@ namespace ECS.Unity.AssetLoad.Systems
         [Query]
         [All(typeof(PBVideoPlayer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeVideoLoading(in Entity entity, ref AssetLoadChildComponent assetLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
+        private void FinalizeVideoLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
         {
             //UpdateMediaPlayerSystem already tried to consume the promise, so we just need to check if it was consumed or not
             if (mediaPlayerComponent.OpenMediaPromise?.IsConsumed == false
@@ -120,7 +120,7 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!mediaPlayerComponent.HasFailed)
                 assetPreLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetLoadChildComponent.AssetPath);
+            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetPreLoadChildComponent.AssetPath);
 
             World.Destroy(entity);
         }

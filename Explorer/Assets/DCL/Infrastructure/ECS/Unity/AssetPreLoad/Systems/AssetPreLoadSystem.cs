@@ -53,21 +53,21 @@ namespace ECS.Unity.AssetLoad.Systems
         }
 
         [Query]
-        [None(typeof(AssetLoadComponent))]
+        [None(typeof(AssetPreLoadComponent))]
         private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent, ref CRDTEntity crdtEntity)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             sdkComponent.IsDirty = false;
 
-            AssetLoadComponent component = AssetLoadComponent.Create();
+            AssetPreLoadComponent component = AssetPreLoadComponent.Create();
             World.Add(entity, component);
 
             ProcessAssetList(crdtEntity, ref sdkComponent, ref component);
         }
 
         [Query]
-        private void UpdateAssetLoading(in CRDTEntity entity, ref PBAssetLoad sdkComponent, ref AssetLoadComponent component)
+        private void UpdateAssetLoading(in CRDTEntity entity, ref PBAssetLoad sdkComponent, ref AssetPreLoadComponent component)
         {
             if (!sdkComponent.IsDirty) return;
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
@@ -76,7 +76,7 @@ namespace ECS.Unity.AssetLoad.Systems
             ProcessAssetList(entity, ref sdkComponent, ref component);
         }
 
-        private void ProcessAssetList(in CRDTEntity crdtEntity, ref PBAssetLoad sdkComponent, ref AssetLoadComponent existingComponent)
+        private void ProcessAssetList(in CRDTEntity crdtEntity, ref PBAssetLoad sdkComponent, ref AssetPreLoadComponent existingComponent)
         {
             foreach (string path in sdkComponent.Assets)
             {
@@ -84,13 +84,12 @@ namespace ECS.Unity.AssetLoad.Systems
 
                 if (!sceneData.TryGetHash(path, out string hash))
                 {
-                    assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
-                    existingComponent.LoadingAssetPaths.Add(path);
+                    SendUpdateAndStore(path, crdtEntity, LoadingState.NotFound, ref existingComponent);
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
                 }
 
-                AssetLoadChildComponent assetLoadChildComponent = new AssetLoadChildComponent(crdtEntity, hash, path);
+                AssetPreLoadChildComponent assetPreLoadChildComponent = new AssetPreLoadChildComponent(crdtEntity, hash, path);
 
                 // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
                 if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
@@ -99,12 +98,11 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
                     {
-                        assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.FinishedWithError, path);
-                        existingComponent.LoadingAssetPaths.Add(path);
+                        SendUpdateAndStore(path, crdtEntity, LoadingState.FinishedWithError, ref existingComponent);
                         continue;
                     }
 
-                    World.Create(assetPromise!.Value, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
+                    World.Create(assetPromise!.Value, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
                 }
                 else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -112,7 +110,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
@@ -120,8 +118,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
                     {
-                        assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.NotFound, path);
-                        existingComponent.LoadingAssetPaths.Add(path);
+                        SendUpdateAndStore(path, crdtEntity, LoadingState.NotFound, ref existingComponent);
                         continue;
                     }
 
@@ -132,7 +129,7 @@ namespace ECS.Unity.AssetLoad.Systems
                             ReportSource = GetReportCategory(),
                         },
                         PartitionComponent.MIN_PRIORITY);
-                    World.Create(promise, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
+                    World.Create(promise, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
@@ -141,7 +138,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetLoadChildComponent);
+                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
                 }
                 else
                 {
@@ -149,10 +146,14 @@ namespace ECS.Unity.AssetLoad.Systems
                     continue;
                 }
 
-                assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, LoadingState.Loading, path);
-
-                existingComponent.LoadingAssetPaths.Add(path);
+                SendUpdateAndStore(path, crdtEntity, LoadingState.Loading, ref existingComponent);
             }
+        }
+
+        private void SendUpdateAndStore(string path, CRDTEntity crdtEntity, LoadingState loadingState, ref AssetPreLoadComponent existingComponent)
+        {
+            assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, loadingState, path);
+            existingComponent.LoadingAssetPaths.Add(path);
         }
     }
 }

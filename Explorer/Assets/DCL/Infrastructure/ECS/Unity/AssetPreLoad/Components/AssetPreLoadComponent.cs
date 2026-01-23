@@ -4,16 +4,16 @@ namespace ECS.Unity.AssetLoad.Components
 {
     /// <summary>
     ///     Tracks which entities are loading assets for this PBAssetLoad component
-    ///     Maps asset hash -> loading entity
+    ///     Contains the list of asset paths that are being loaded
     /// </summary>
-    public struct AssetLoadComponent
+    public struct AssetPreLoadComponent
     {
         public readonly List<string> LoadingAssetPaths;
 
-        public static AssetLoadComponent Create() =>
+        public static AssetPreLoadComponent Create() =>
             new (true);
 
-        private AssetLoadComponent(bool _)
+        private AssetPreLoadComponent(bool _)
         {
             LoadingAssetPaths = new List<string>();
         }
