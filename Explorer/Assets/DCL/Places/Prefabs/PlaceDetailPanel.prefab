@@ -439,9 +439,13 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 6579474225357820591}
   backgroundCloseButton: {fileID: 6113321632732672044}
   closeButton: {fileID: 3261299304199055675}
-  defaultPlaceThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
   placeThumbnailImage: {fileID: 3089515216463953658}
+  defaultPlaceThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
   placeNameText: {fileID: 7128827007575367659}
+  creatorThumbnail: {fileID: 6974345814752392230}
+  creatorNameText: {fileID: 2011430163614308745}
+  likeRateText: {fileID: 3538198045634200666}
+  visitsText: {fileID: 5511795897971971415}
 --- !u!1 &1145380363332634218
 GameObject:
   m_ObjectHideFlags: 0
@@ -2614,7 +2618,7 @@ GameObject:
   - component: {fileID: 5511795897971971415}
   - component: {fileID: 1856356282431248263}
   m_Layer: 5
-  m_Name: LikeRateText
+  m_Name: UserVisitsText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2763,7 +2767,7 @@ GameObject:
   - component: {fileID: 6686124880049609112}
   - component: {fileID: 8705364469330647728}
   m_Layer: 5
-  m_Name: LikeRateAndCoordsRow
+  m_Name: UserVisitsAndLikeRateRow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5286,6 +5290,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
+--- !u!114 &6974345814752392230 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_PrefabInstance: {fileID: 7546480085012893932}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 948336296306091683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7757419470809676243 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}

@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities;
-using DCL.UI;
-using DCL.WebRequests;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
 using Utility;
@@ -14,13 +14,18 @@ namespace DCL.Places
 
         private CancellationTokenSource panelCts = new ();
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IProfileRepository profileRepository;
 
         public PlaceDetailPanelController(
             ViewFactoryMethod viewFactory,
-            IWebRequestController webRequestController,
-            ThumbnailLoader thumbnailLoader) : base(viewFactory)
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.profileRepository = profileRepository;
         }
 
         public override void Dispose()
@@ -39,7 +44,18 @@ namespace DCL.Places
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigurePlaceData(inputData.PlaceData, thumbnailLoader, panelCts.Token);
+            SetupAsync(panelCts.Token).Forget();
+            return;
+
+            async UniTaskVoid SetupAsync(CancellationToken ct)
+            {
+                Profile.CompactInfo? creatorProfile = null;
+
+                if (!string.IsNullOrEmpty(inputData.PlaceData.owner))
+                    creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
+
+                viewInstance!.ConfigurePlaceData(inputData.PlaceData, thumbnailLoader, profileRepositoryWrapper, creatorProfile, panelCts.Token);
+            }
         }
 
         protected override void OnViewClose()
