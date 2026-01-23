@@ -14,6 +14,6 @@ namespace CommunicationData.URLHelpers
             URLBuilder.Combine(address, subdirectory);
 
         public static bool IsFile(in this URLAddress urlAddress) =>
-            urlAddress.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase));
+            urlAddress.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase);
     }
 }
