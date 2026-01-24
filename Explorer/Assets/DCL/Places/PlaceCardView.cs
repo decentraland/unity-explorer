@@ -79,7 +79,7 @@ namespace DCL.Places
         public event Action<PlaceInfo>? InfoButtonClicked;
         public event Action<PlaceInfo>? JumpInButtonClicked;
         public event Action<PlaceInfo>? DeleteButtonClicked;
-        public event Action<PlaceInfo>? MainButtonClicked;
+        public event Action<PlaceInfo, PlaceCardView>? MainButtonClicked;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -109,7 +109,7 @@ namespace DCL.Places
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
             deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo!));
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentPlaceInfo!));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentPlaceInfo!, this));
         }
 
         private void OnEnable() =>
@@ -180,7 +180,7 @@ namespace DCL.Places
             Action<PlaceInfo> infoButtonClicked,
             Action<PlaceInfo> jumpInButtonClicked,
             Action<PlaceInfo> deleteButtonClicked,
-            Action<PlaceInfo> mainButtonClicked)
+            Action<PlaceInfo, PlaceCardView> mainButtonClicked)
         {
             LikeToggleChanged = null;
             DislikeToggleChanged = null;

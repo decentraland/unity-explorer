@@ -49,7 +49,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo>? ElementInfoButtonClicked;
         public event Action<PlaceInfo>? ElementJumpInButtonClicked;
         public event Action<PlaceInfo>? ElementDeleteButtonClicked;
-        public event Action<PlaceInfo>? ElementMainButtonClicked;
+        public event Action<PlaceInfo, PlaceCardView>? ElementMainButtonClicked;
 
         private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
@@ -133,7 +133,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo => ElementInfoButtonClicked?.Invoke(placeInfo),
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo),
                 placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name),
-                placeInfo => ElementMainButtonClicked?.Invoke(placeInfo));
+                (placeInfo, cardView) => ElementMainButtonClicked?.Invoke(placeInfo, cardView));
 
             if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();

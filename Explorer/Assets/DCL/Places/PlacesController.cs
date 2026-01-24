@@ -1,17 +1,13 @@
 ﻿using DCL.Browser;
-using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using UnityEngine;
@@ -41,14 +37,11 @@ namespace DCL.Places
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            PlacesCardSocialActionsController placesCardSocialActionsController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -58,7 +51,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                webRequestController, realmNavigator, clipboard, dclUrlSource, friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

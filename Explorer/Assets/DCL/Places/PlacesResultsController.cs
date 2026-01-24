@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -10,13 +9,10 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -63,14 +59,11 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            PlacesCardSocialActionsController placesCardSocialActionsController)
         {
             this.view = view;
             this.placesController = placesController;
@@ -81,7 +74,7 @@ namespace DCL.Places
             this.webBrowser = webBrowser;
             this.friendServiceProxy = friendServiceProxy;
             this.mvcManager = mvcManager;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
+            this.placesCardSocialActionsController = placesCardSocialActionsController;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
@@ -148,19 +141,19 @@ namespace DCL.Places
         private void OnPlaceLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnPlaceDislikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnPlaceFavoriteToggleChanged(PlacesData.PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnPlaceJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
@@ -175,8 +168,8 @@ namespace DCL.Places
         private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
 
-        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo) =>
-            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo))).Forget();
+        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView) =>
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView))).Forget();
 
         private void OnFiltersChanged(PlacesFilters filters)
         {

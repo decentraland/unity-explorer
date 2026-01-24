@@ -4,7 +4,9 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
+using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
@@ -75,7 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource, null, null);
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -145,8 +147,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             }
         }
 
-        private void OnElementMainButtonClicked(PlaceInfo placeInfo) =>
-            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo))).Forget();
+        private void OnElementMainButtonClicked(PlaceInfo placeInfo, PlaceCardView placeCardView) =>
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView))).Forget();
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
         {
@@ -171,19 +173,19 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnElementDislikeToggleChanged(PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnElementLikeToggleChanged(PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         public override void Reset()
