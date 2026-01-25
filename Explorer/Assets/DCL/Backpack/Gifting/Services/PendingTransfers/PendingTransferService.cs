@@ -66,13 +66,11 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             string pendingUrn,
             URN fullUrnKey)
         {
-            // Primary: URN-based lookup (O(1))
             if (instances.ContainsKey(fullUrnKey))
                 return true;
 
-            // Fallback: Normalized string comparison (O(n) but safe)
-            // This handles cases where the URN format differs slightly between
-            // what was stored in pending transfers and what the server returns
+            // Fallback: Normalize strings and compare
+            // NOTE: verify if this is needed
             string normalizedPending = pendingUrn.Trim().ToLowerInvariant();
             foreach (var key in instances.Keys)
             {
@@ -115,9 +113,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 var baseUrn = new URN(baseUrnString);
                 var fullUrnKey = new URN(pendingUrn);
 
-                if (wearableRegistry.ContainsKey(baseUrn))
+                if (wearableRegistry.TryGetValue(baseUrn, out var wearableValue))
                 {
-                    if (!TryFindInRegistry(wearableRegistry[baseUrn], pendingUrn, fullUrnKey))
+                    if (!TryFindInRegistry(wearableValue, pendingUrn, fullUrnKey))
                     {
                         toRemove.Add(pendingUrn);
                         ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Wearable transfer confirmed (token gone): {pendingUrn}");
@@ -126,17 +124,14 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                     continue;
                 }
 
-                if (emoteRegistry.ContainsKey(baseUrn))
+                if (emoteRegistry.TryGetValue(baseUrn, out var emoteValue))
                 {
-                    // The Base URN exists in Emotes. This IS an emote.
-                    if (!TryFindInRegistry(emoteRegistry[baseUrn], pendingUrn, fullUrnKey))
+                    if (!TryFindInRegistry(emoteValue, pendingUrn, fullUrnKey))
                     {
-                        // Base exists, but Token is gone -> Transfer Confirmed.
                         toRemove.Add(pendingUrn);
                         ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Emote transfer confirmed (token gone): {pendingUrn}");
                     }
-
-                    // Else: Token still exists. Keep it.
+                    
                     continue;
                 }
 

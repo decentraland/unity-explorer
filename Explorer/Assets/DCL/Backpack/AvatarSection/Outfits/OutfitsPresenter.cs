@@ -235,13 +235,8 @@ namespace DCL.Backpack
             if (urnObj.IsBaseWearable())
                 return false;
             
-            // Rule 1: If the user is CURRENTLY wearing this specific item, 
-            // the outfit is valid (we don't strip the avatar).
-            // FIX: We use a helper method here because IsEquipped expects an object
-            // if (IsUrnEquipped(urn))
-            //     return false;
 
-            // Rule 2: Check availability based on Pending Transfers
+            // Check availability based on Pending Transfers
             if (!GiftingUrnParsingHelper.TryGetBaseUrn(urn, out string baseUrn))
                 baseUrn = urn;
 

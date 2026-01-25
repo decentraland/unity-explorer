@@ -309,19 +309,13 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
                 
-                // Calculate pending transfer status for on-chain emotes
                 var emote = emotes[i];
                 bool isOnChain = emote.IsOnChain();
                 int emoteAmount = emote.Amount;
                 int pendingCount = isOnChain ? pendingTransferService.GetPendingCount(emote.GetUrn()) : 0;
                 int displayAmount = emoteAmount - pendingCount;
-                
-                // Mark as pending transfer if ALL instances are being transferred
                 backpackItemView.IsPendingTransfer = isOnChain && displayAmount <= 0;
-                
-                // Show NFT count (only for on-chain emotes with amount > 1)
                 backpackItemView.NftCount = isOnChain ? Math.Max(displayAmount, 0) : 0;
-
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(emote, backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
