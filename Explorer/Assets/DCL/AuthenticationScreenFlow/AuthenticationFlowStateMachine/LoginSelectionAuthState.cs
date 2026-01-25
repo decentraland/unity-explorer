@@ -38,7 +38,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((PopupType type, int animHash) payload)
         {
-            Debug.Log($"VVV {payload.animHash}");
 
             switch (payload.type)
             {
@@ -145,7 +144,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
             view.Hide();
-
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
                 payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
