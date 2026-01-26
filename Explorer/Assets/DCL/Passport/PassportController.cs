@@ -88,7 +88,6 @@ namespace DCL.Passport
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
-        private readonly IWebRequestController webRequestController;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
@@ -148,8 +147,7 @@ namespace DCL.Passport
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         public event Action<string, bool>? PassportOpened;
         public event Action<string, bool, string>? BadgesSectionOpened;
@@ -195,7 +193,8 @@ namespace DCL.Passport
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
-            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
+            CommunitiesDataProvider communitiesDataProvider,
+            ImageControllerProvider imageControllerProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -211,7 +210,6 @@ namespace DCL.Passport
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
-            this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -233,6 +231,7 @@ namespace DCL.Passport
             this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.imageControllerProvider = imageControllerProvider;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             includeFriendshipInteractions = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -294,22 +293,23 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController));
+                passportErrorsController,
+                imageControllerProvider));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController));
+                imageControllerProvider));
 
             badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController,
                 selfProfile,
-                badge3DPreviewCamera);
+                badge3DPreviewCamera,
+                imageControllerProvider);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,

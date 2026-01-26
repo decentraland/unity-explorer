@@ -13,11 +13,6 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public void UpdateLoadingStatus(bool isLoading);
 
-        /// <summary>
-        ///     If null - promise has never been created, otherwise it could contain the result or be un-initialized
-        /// </summary>
-        StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-
         AvatarAttachmentDTO? DTO { get; }
 
         int Amount { get; }
