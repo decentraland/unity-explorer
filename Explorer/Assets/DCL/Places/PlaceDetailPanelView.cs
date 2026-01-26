@@ -6,12 +6,14 @@ using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 using Utility;
 
@@ -19,9 +21,13 @@ namespace DCL.Places
 {
     public class PlaceDetailPanelView : ViewBase, IView
     {
+        private const int CATEGORY_TAGS_POOL_DEFAULT_CAPACITY = 10;
+        private const string NO_DESCRIPTION_TEXT = "No description.";
+
         [Header("Panel")]
         [SerializeField] private Button backgroundCloseButton = null!;
         [SerializeField] private Button closeButton = null!;
+        [SerializeField] private ScrollRect mainScroll = null!;
 
         [Header("Place info")]
         [SerializeField] private ImageView placeThumbnailImage = null!;
@@ -31,9 +37,14 @@ namespace DCL.Places
         [SerializeField] private TMP_Text creatorNameText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
+        [SerializeField] private GameObject liveTag = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
-
+        [SerializeField] private TMP_Text descriptionText = null!;
+        [SerializeField] private TMP_Text coordsText = null!;
+        [SerializeField] private TMP_Text parcelsText = null!;
+        [SerializeField] private TMP_Text favoritesText = null!;
+        [SerializeField] private TMP_Text updatedDateText = null!;
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle = null!;
@@ -47,6 +58,12 @@ namespace DCL.Places
 
         [Header("Configuration")]
         [SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration = null!;
+
+        [Header("Categories")]
+        [SerializeField] private GameObject categoriesModule = null!;
+        [SerializeField] private Transform categoriesContainer = null!;
+        [SerializeField] private PlaceCategoryButton categoryButtonPrefab = null!;
+        [SerializeField] private PlaceCategoriesSO placesCategoriesConfiguration = null!;
 
         [Serializable]
         private struct FriendsConnectedConfig
@@ -63,6 +80,9 @@ namespace DCL.Places
                 public ProfilePictureView picture;
             }
         }
+
+        private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
+        private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
 
         public event Action<PlacesData.PlaceInfo, bool>? LikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool>? DislikeToggleChanged;
@@ -94,6 +114,19 @@ namespace DCL.Places
             contextMenu = new GenericContextMenu(placeCardContextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: placeCardContextMenuConfiguration.VerticalPadding, elementsSpacing: placeCardContextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => ShareButtonClicked?.Invoke(currentPlaceInfo)))
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.CopyLinkText, placeCardContextMenuConfiguration.CopyLinkSprite, () => CopyLinkButtonClicked?.Invoke(currentPlaceInfo)));
+
+            // Categories pool configuration
+            categoryButtonsPool = new ObjectPool<PlaceCategoryButton>(
+                InstantiateCategoryButtonPrefab,
+                defaultCapacity: CATEGORY_TAGS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: categoryButtonView =>
+                {
+                    categoryButtonView.gameObject.SetActive(true);
+                    categoryButtonView.transform.SetAsLastSibling();
+                },
+                actionOnRelease: categoryButtonView => categoryButtonView.gameObject.SetActive(false));
+
+            mainScroll.SetScrollSensitivityBasedOnPlatform();
         }
 
         public UniTask[] GetCloseTasks()
@@ -112,6 +145,8 @@ namespace DCL.Places
             ProfileRepositoryWrapper? profileRepositoryWrapper = null)
         {
             currentPlaceInfo = placeInfo;
+            mainScroll.verticalNormalizedPosition = 1;
+
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
             creatorThumbnail.gameObject.SetActive(false);
@@ -122,6 +157,12 @@ namespace DCL.Places
             dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
             favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
             onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+            descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
+            coordsText.text = placeInfo.base_position;
+            parcelsText.text = placeInfo.Positions.Length.ToString();
+            favoritesText.text = GetKFormat(placeInfo.favorites);
+            updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
+            liveTag.SetActive(placeInfo.live);
 
             bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
             friendsConnected.root.SetActive(showFriendsConnected);
@@ -145,6 +186,8 @@ namespace DCL.Places
             startExitNavigationButtonsContainer.SetActive(!isWorld);
             if (!isWorld)
                 SetNavigation(isNavigating);
+
+            SetCategories(placeInfo.categories);
         }
 
         public void SetCreatorThumbnail(
@@ -195,6 +238,47 @@ namespace DCL.Places
             openContextMenuCts = openContextMenuCts.SafeRestart();
             ViewDependencies.ContextMenuOpener.OpenContextMenu(
                 new GenericContextMenuParameter(contextMenu!, position), openContextMenuCts.Token);
+        }
+
+        private PlaceCategoryButton InstantiateCategoryButtonPrefab()
+        {
+            PlaceCategoryButton invitedCommunityCardView = Instantiate(categoryButtonPrefab, categoriesContainer);
+            return invitedCommunityCardView;
+        }
+
+        private void SetCategories(string[] categories)
+        {
+            ClearCategories();
+
+            var categoriesFound = 0;
+            foreach (string categoryId in categories)
+            {
+                foreach (var categoryData in placesCategoriesConfiguration.categories)
+                {
+                    if (categoryId != categoryData.id)
+                        continue;
+
+                    CreateAndSetupCategoryButton(categoryData);
+                    categoriesFound++;
+                }
+            }
+
+            categoriesModule.SetActive(categoriesFound > 0);
+        }
+
+        private void CreateAndSetupCategoryButton(PlaceCategoriesSO.PlaceCategoryData categoryData)
+        {
+            PlaceCategoryButton categoryButtonView = categoryButtonsPool.Get();
+            categoryButtonView.Configure(categoryData);
+            currentCategories.Add(new KeyValuePair<string, PlaceCategoryButton>(categoryData.id, categoryButtonView));
+        }
+
+        private void ClearCategories()
+        {
+            foreach (var categoryButton in currentCategories)
+                categoryButtonsPool.Release(categoryButton.Value);
+
+            currentCategories.Clear();
         }
     }
 }
