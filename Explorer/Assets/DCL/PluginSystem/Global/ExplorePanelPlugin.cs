@@ -236,7 +236,7 @@ namespace DCL.PluginSystem.Global
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
-            IPendingTransferService pendingTransferService)
+            IPendingTransferService pendingTransferService,
             IDonationsService donationsService,
             IRealmNavigator realmNavigator)
         {
