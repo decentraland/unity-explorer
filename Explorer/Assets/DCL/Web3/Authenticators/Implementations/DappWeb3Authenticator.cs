@@ -85,8 +85,14 @@ namespace DCL.Web3.Authenticators
             catch (ObjectDisposedException) { }
         }
 
-        public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
+        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
+            SendAsync(request, Web3RequestSource.SDKScene, ct);
+
+        public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
+            // Note: DappWeb3Authenticator doesn't show in-app confirmation UI - it uses browser for signing.
+            // The source parameter is accepted for interface compatibility but not used here.
+
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
 

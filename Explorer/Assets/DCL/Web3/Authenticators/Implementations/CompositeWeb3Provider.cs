@@ -86,6 +86,9 @@ namespace DCL.Web3.Authenticators
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, ct);
 
+        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
+            CurrentEthereumApi.SendAsync(request, source, ct);
+
         public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback)
         {
             thirdWebAuth.SetTransactionConfirmationCallback(callback);

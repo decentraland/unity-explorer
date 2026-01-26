@@ -58,3 +58,4 @@ MonoBehaviour:
   - eth_getBlockByNumber
   - eth_getCode
   - eth_chainId
+  - eth_getBalance

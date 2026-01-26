@@ -207,7 +207,10 @@ namespace DCL.Web3.Authenticators
             return await SendAsync(request, ct);
         }
 
-        public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
+        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
+            SendAsync(request, Web3RequestSource.SDKScene, ct);
+
+        public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
@@ -222,7 +225,7 @@ namespace DCL.Web3.Authenticators
                 if (IsReadOnly(request))
                     return await SendWithoutConfirmationAsync(request, ct);
 
-                return await SendWithConfirmationAsync(request, ct);
+                return await SendWithConfirmationAsync(request, source, ct);
             }
             finally
             {
@@ -275,10 +278,11 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Handles methods that require user confirmation (signing, transactions)
         /// </summary>
-        private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
+        private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
-            // Request user confirmation before proceeding
-            if (transactionConfirmationCallback != null)
+            // Request user confirmation before proceeding, but only for SDKScene requests.
+            // Internal requests (Gifting, Donations, etc.) skip this UI since they have their own confirmation flow.
+            if (source == Web3RequestSource.SDKScene && transactionConfirmationCallback != null)
             {
                 TransactionConfirmationRequest confirmationRequest = await CreateConfirmationRequestAsync(request);
                 bool confirmed = await transactionConfirmationCallback(confirmationRequest);

@@ -15,12 +15,15 @@ namespace DCL.Web3
             this.jsApiPermissionsProvider = jsApiPermissionsProvider;
         }
 
-        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
+        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
+            SendAsync(request, Web3RequestSource.SDKScene, ct);
+
+        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             if (!jsApiPermissionsProvider.CanInvokeWeb3API())
                 throw new Web3Exception("The Web3 API is not allowed");
 
-            return impl.SendAsync(request, ct);
+            return impl.SendAsync(request, source, ct);
         }
 
         public void Dispose()
