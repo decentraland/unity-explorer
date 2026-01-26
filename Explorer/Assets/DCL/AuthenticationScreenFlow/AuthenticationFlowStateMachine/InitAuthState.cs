@@ -25,11 +25,15 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             // Screens
             {
+                // Login
                 viewInstance.LoginSelectionAuthView.gameObject.SetActive(false);
 
                 // Verification
                 viewInstance.VerificationDappAuthView.gameObject.SetActive(false);
                 viewInstance.VerificationOTPAuthView.gameObject.SetActive(false);
+
+                // Profile fetching
+                viewInstance.ProfileFetchingAuthView.gameObject.SetActive(false);
 
                 // Lobby
                 viewInstance.LobbyForExistingAccountAuthView.gameObject.SetActive(false);
@@ -37,8 +41,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
 
             // Popups
-            viewInstance.ErrorPopupRoot.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
+            viewInstance.LoginSelectionAuthView.ErrorPopupRoot.SetActive(false);
+            viewInstance.LoginSelectionAuthView.RestrictedUserContainer.SetActive(false);
         }
     }
 }

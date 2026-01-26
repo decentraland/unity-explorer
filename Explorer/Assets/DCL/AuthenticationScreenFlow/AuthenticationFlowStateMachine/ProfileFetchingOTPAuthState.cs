@@ -6,6 +6,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -26,6 +27,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileFetchingAuthView view;
+        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
 
         public ProfileFetchingOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -33,7 +35,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenController controller,
             ReactiveProperty<AuthenticationStatus> currentState,
             SentryTransactionManager sentryTransactionManager,
-            ISelfProfile selfProfile) : base(viewInstance)
+            ISelfProfile selfProfile,
+            IWeb3VerifiedAuthenticator web3Authenticator) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
             this.machine = machine;
@@ -41,6 +44,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.currentState = currentState;
             this.sentryTransactionManager = sentryTransactionManager;
             this.selfProfile = selfProfile;
+            this.web3Authenticator = web3Authenticator;
         }
 
         public void Enter((string email, IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
@@ -58,6 +62,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
         {
+            if (isCached)
+                await web3Authenticator.TryAutoConnectAsync(ct);
+
             var identityValidationSpan = new SpanData
             {
                 TransactionName = LOADING_TRANSACTION_NAME,

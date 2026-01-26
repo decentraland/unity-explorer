@@ -12,7 +12,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityVerificationOTPAuthState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
+    public class IdentityVerificationOTPAuthState : AuthStateBase, IPayloadedState<string>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -38,12 +38,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
-        public void Enter((string email, CancellationToken ct) payload)
+        public void Enter(string email)
         {
             currentState.Value = AuthenticationStatus.VerificationInProgress;
 
-            view.Show(payload.email);
-            AuthenticateAsync(payload.email, payload.ct).Forget();
+            view.Show(email);
+
+            CancellationToken loginToken = controller.RestartLoginToken();
+            AuthenticateAsync(email, loginToken).Forget();
 
             // Listeners
             view.BackButton.onClick.AddListener(controller.CancelLoginProcess);

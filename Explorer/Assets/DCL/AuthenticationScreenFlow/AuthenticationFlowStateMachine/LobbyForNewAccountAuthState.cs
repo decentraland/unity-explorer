@@ -21,7 +21,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken loginCancellationToken)>
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
@@ -41,7 +41,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private bool baseWearablesLoaded;
 
         private Profile newUserProfile;
-        private CancellationToken ct;
+        private CancellationToken loginCancellationToken;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -75,11 +75,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
-        public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, bool isCached, CancellationToken loginCancellationToken) payload)
         {
-            ct = payload.ct;
+            loginCancellationToken = payload.loginCancellationToken;
 
-            InitializeAvatarAsync().Forget();
+            InitializeAvatarAsync(loginCancellationToken).Forget();
 
             view.PrevRandomButton.interactable = false;
             view.NextRandomButton.interactable = false;
@@ -133,9 +133,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.TermsOfUse.SetIsOnWithoutNotify(false);
         }
 
-        private async UniTask InitializeAvatarAsync()
+        private async UniTask InitializeAvatarAsync(CancellationToken loginCancellationToken)
         {
-            await LoadBaseWearablesAsync(ct);
+            await LoadBaseWearablesAsync(loginCancellationToken);
             UpdateCharacterPreview(RandomizeAvatar());
             UpdateAvatarNavigationButtons();
             InitializeAvatarHistory(newUserProfile.Avatar);
@@ -191,7 +191,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
                 // Fallback to hardcoded defaults will be used
                 baseWearablesLoaded = false;
             }
@@ -208,7 +207,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void FinalizeNewUser()
         {
             JumpIntoWorld();
-            PublishNewProfile(ct).Forget();
+            PublishNewProfile(loginCancellationToken).Forget();
             return;
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
@@ -349,7 +348,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
 
                 view.Hide(UIAnimationHashes.OUT);
-                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: loginCancellationToken);
                 characterPreviewController?.OnHide();
 
                 fsm.Enter<InitAuthState>();

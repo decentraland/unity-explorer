@@ -7,6 +7,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -18,7 +19,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
+    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken loginCancellationToken)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -43,12 +44,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.selfProfile = selfProfile;
         }
 
-        public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
+        public void Enter((IWeb3Identity identity, bool isCached, CancellationToken loginCancellationToken) payload)
         {
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
+            FetchProfileFlowAsync(payload.identity, payload.isCached, payload.loginCancellationToken).Forget();
         }
 
         public override void Exit()
@@ -56,7 +57,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.CancelButton.onClick.RemoveAllListeners();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken loginCancellationToken)
         {
             var identityValidationSpan = new SpanData
             {
@@ -84,7 +85,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    Profile? profile = await FetchProfileAsync(ct);
+                    Profile? profile = await FetchProfileAsync(loginCancellationToken);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     view.Hide(OUT);
