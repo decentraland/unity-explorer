@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -20,6 +21,9 @@ namespace DCL.SkyBox
         private readonly Light directionalLight;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
+        private readonly FeatureFlagsConfiguration featureFlags;
+
+        private SkyboxSettings settingsJson;
 
         private SkyboxSettingsAsset? skyboxSettings;
         private SkyboxRenderController? skyboxRenderController;
@@ -27,12 +31,14 @@ namespace DCL.SkyBox
         public SkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IScenesCache scenesCache,
-            ISceneRestrictionBusController sceneRestrictionController)
+            ISceneRestrictionBusController sceneRestrictionController,
+            FeatureFlagsConfiguration featureFlags)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
+            this.featureFlags = featureFlags;
         }
 
         public void Dispose() { }
@@ -48,6 +54,14 @@ namespace DCL.SkyBox
             {
                 skyboxSettings = pluginSettings.Settings;
                 skyboxSettings.Reset();
+
+                if (featureFlags.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out settingsJson))
+                {
+                    float normalizedTime = SkyboxSettingsAsset.NormalizeTime(settingsJson.time);
+                    skyboxSettings.TimeOfDayNormalized = normalizedTime;
+                    skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
+                }
+
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
@@ -74,6 +88,13 @@ namespace DCL.SkyBox
         {
             [field: SerializeField]
             public SkyboxSettingsAsset Settings { get; private set; }
+        }
+
+        [Serializable]
+        private struct SkyboxSettings
+        {
+            public uint time;
+            public uint speed;
         }
     }
 }
