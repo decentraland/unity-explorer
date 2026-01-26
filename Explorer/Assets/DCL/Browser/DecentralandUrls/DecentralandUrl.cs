@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DiscordLink,
         DiscordDirectLink,
         TwitterLink,
+        TwitterNewPostLink,
         NewsletterSubscriptionLink,
         MarketplaceLink,
 
@@ -48,6 +49,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DAO,
 
         Help,
+        Account,
         MinimumSpecs,
 
         FeatureFlags,
@@ -97,6 +99,13 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ActiveCommunityVoiceChats,
 
-        Support
+        Support,
+
+        ManaUsdRateApiUrl,
+
+        CreatorHub,
+
+        JumpInGenesisCityLink,
+        JumpInWorldLink,
     }
 }

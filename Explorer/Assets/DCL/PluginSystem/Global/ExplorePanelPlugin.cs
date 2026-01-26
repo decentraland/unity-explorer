@@ -45,6 +45,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
@@ -71,6 +72,7 @@ using DCL.Utilities;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -155,7 +157,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
-        private PlacesController? discoverController;
+        private PlacesController? placesController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -165,6 +167,9 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IDonationsService donationsService;
+        private readonly IRealmNavigator realmNavigator;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -227,10 +232,13 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
+            ImageControllerProvider imageControllerProvider,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
             IPendingTransferService pendingTransferService)
+            IDonationsService donationsService,
+            IRealmNavigator realmNavigator)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -293,9 +301,12 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.imageControllerProvider = imageControllerProvider;
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.donationsService = donationsService;
+            this.realmNavigator = realmNavigator;
             this.pendingTransferService = pendingTransferService;
         }
 
@@ -307,7 +318,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
-            discoverController?.Dispose();
+            placesController?.Dispose();
             upscalingController?.Dispose();
         }
 
@@ -367,6 +378,8 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
+            ProvidedAsset<PlaceCategoriesSO> placeCategoriesSO = await assetsProvisioner.ProvideMainAssetAsync(settings.PlaceCategoriesSO, ct);
+
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
@@ -387,8 +400,8 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
+                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -399,8 +412,8 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser);
+                navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                userCalendar, shareContextMenu, webBrowser, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
@@ -413,8 +426,8 @@ namespace DCL.PluginSystem.Global
 
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
+                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -498,7 +511,7 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            discoverController = new PlacesController(placesView, cursor);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -522,7 +535,7 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
-                    discoverController,
+                    placesController,
                     inputBlock,
                     includeCameraReel,
                     includeDiscover,
@@ -546,7 +559,7 @@ namespace DCL.PluginSystem.Global
             PlaceElementView CreatePoolElements(PlaceElementView asset)
             {
                 PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
-                placeElementView.ConfigurePlaceImageController(webRequestController);
+                placeElementView.ConfigurePlaceImageController(imageControllerProvider);
                 return placeElementView;
             }
         }
@@ -663,6 +676,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int PlaceThumbnailWidth { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
         }
     }
 }
