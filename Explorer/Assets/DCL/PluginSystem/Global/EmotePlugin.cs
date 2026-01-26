@@ -7,8 +7,8 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.SocialEmotes;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
+using DCL.UI;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
-        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IScenesCache scenesCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWeb3IdentityCache identityCache;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
             IAppArgs appArgs,
-            IThumbnailProvider thumbnailProvider,
+            ImageControllerProvider imageControllerProvider,
             IScenesCache scenesCache,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWeb3IdentityCache identityCache,
@@ -121,7 +121,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
-            this.thumbnailProvider = thumbnailProvider;
+            this.imageControllerProvider = imageControllerProvider;
             this.scenesCache = scenesCache;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.identityCache = identityCache;
@@ -194,8 +194,8 @@ namespace DCL.PluginSystem.Global
             NftTypeIconSO emoteWheelRarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteWheelRarityBackgrounds, ct)).Value;
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
-                inputBlock, cursor, sharedSpaceManager);
+                selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, imageControllerProvider,
+                realmData, inputBlock, cursor, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 

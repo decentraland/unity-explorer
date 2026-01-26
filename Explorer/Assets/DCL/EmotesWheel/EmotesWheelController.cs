@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.EmotesWheel.Params;
@@ -14,7 +13,9 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
+using ECS;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -32,7 +33,8 @@ namespace DCL.EmotesWheel
         private readonly NftTypeIconSO emoteTypeIcons;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IRealmData realmData;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly ICursor cursor;
@@ -52,7 +54,8 @@ namespace DCL.EmotesWheel
             NftTypeIconSO rarityBackgrounds,
             World world,
             Entity playerEntity,
-            IThumbnailProvider thumbnailProvider,
+            ImageControllerProvider imageControllerProvider,
+            IRealmData realmData,
             IInputBlock inputBlock,
             ICursor cursor,
             ISharedSpaceManager sharedSpaceManager)
@@ -63,7 +66,8 @@ namespace DCL.EmotesWheel
             this.rarityBackgrounds = rarityBackgrounds;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.thumbnailProvider = thumbnailProvider;
+            this.imageControllerProvider = imageControllerProvider;
+            this.realmData = realmData;
             this.inputBlock = inputBlock;
             emoteWheelInput = DCLInput.Instance.EmoteWheel;
             this.cursor = cursor;
@@ -203,11 +207,35 @@ namespace DCL.EmotesWheel
             view.Thumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
 
-            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+            try
+            {
+                string url = GetThumbnailUrl(emote);
+                var textureRef = await imageControllerProvider.LoadTextureAsync(url, ct);
 
-            view.Thumbnail.sprite = sprite;
-            view.Thumbnail.gameObject.SetActive(true);
-            view.LoadingSpinner.SetActive(false);
+                if (textureRef.HasValue)
+                {
+                    var texture = textureRef.Value.Texture;
+                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                    view.Thumbnail.sprite = sprite;
+                    view.Thumbnail.gameObject.SetActive(true);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when wheel is closed - do nothing
+            }
+            finally
+            {
+                view.LoadingSpinner.SetActive(false);
+            }
+        }
+
+        private string GetThumbnailUrl(IEmote emote)
+        {
+            var thumbnailPath = ((IThumbnailAttachment)emote).GetThumbnail();
+            var contentUrl = emote.DTO.ContentDownloadUrl;
+            var baseUrl = !string.IsNullOrEmpty(contentUrl) ? contentUrl : realmData.Ipfs.ContentBaseUrl.Value;
+            return baseUrl + thumbnailPath.Value;
         }
 
         private void UpdateCurrentEmote(int slot)
