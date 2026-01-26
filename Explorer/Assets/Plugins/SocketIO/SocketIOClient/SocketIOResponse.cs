@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace SocketIOClient
 {
@@ -50,14 +50,14 @@ namespace SocketIOClient
             return builder.ToString();
         }
 
-        public async UniTask CallbackAsync(params object[] data)
+        public async Task CallbackAsync(params object[] data)
         {
-            await SocketIO.ClientAckAsync(PacketId, CancellationToken.None, data);
+            await SocketIO.ClientAckAsync(PacketId, CancellationToken.None, data).ConfigureAwait(false);
         }
 
-        public async UniTask CallbackAsync(CancellationToken cancellationToken, params object[] data)
+        public async Task CallbackAsync(CancellationToken cancellationToken, params object[] data)
         {
-            await SocketIO.ClientAckAsync(PacketId, cancellationToken, data);
+            await SocketIO.ClientAckAsync(PacketId, cancellationToken, data).ConfigureAwait(false);
         }
     }
 }

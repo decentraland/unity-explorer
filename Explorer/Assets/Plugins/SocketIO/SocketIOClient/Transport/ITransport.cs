@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using SocketIOClient.Messages;
 
 namespace SocketIOClient.Transport
@@ -12,10 +12,14 @@ namespace SocketIOClient.Transport
         Action<Exception> OnError { get; set; }
         string Namespace { get; set; }
 
-        UniTask SendAsync(IMessage msg, CancellationToken cancellationToken);
+        Task SendAsync(IMessage msg, CancellationToken cancellationToken);
 
-        UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken);
+        Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
 
-        UniTask DisconnectAsync(CancellationToken cancellationToken);
+        Task DisconnectAsync(CancellationToken cancellationToken);
+
+        void AddHeader(string key, string val);
+
+        void SetProxy(IWebProxy proxy);
     }
 }

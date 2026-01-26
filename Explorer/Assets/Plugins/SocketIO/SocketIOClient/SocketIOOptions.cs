@@ -49,6 +49,8 @@ namespace SocketIOClient
             }
         }
 
+        public Dictionary<string, string> ExtraHeaders { get; set; }
+
         public TransportProtocol Transport { get; set; }
 
         public EngineIO EIO { get; set; }
@@ -56,5 +58,6 @@ namespace SocketIOClient
         public bool AutoUpgrade { get; set; }
 
         public object Auth { get; set; }
+        public IWebProxy Proxy { get; set; }
     }
 }

@@ -4,11 +4,11 @@ using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
-using Utility.Networking;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             try
             {
-                await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token);
+                await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false);
                 return Result.SuccessResult();
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot connect to adapter url: {adapterUrl}, {e.Message}"); }
@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             try
             {
                 TryUpdateWebSocket();
-                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
+                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
                 return Result.SuccessResult();
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot disconnect: {e}"); }
@@ -165,17 +165,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         private readonly struct Current : IDisposable
         {
-            public readonly DCLWebSocket WebSocket;
+            public readonly ClientWebSocket WebSocket;
             public readonly Atomic<bool> IsSomeoneReceiving;
 
-            private Current(DCLWebSocket webSocket, Atomic<bool> isSomeoneReceiving)
+            private Current(ClientWebSocket webSocket, Atomic<bool> isSomeoneReceiving)
             {
                 WebSocket = webSocket;
                 IsSomeoneReceiving = isSomeoneReceiving;
             }
 
             public static Current New() =>
-                new (new DCLWebSocket(), new Atomic<bool>(false));
+                new (new ClientWebSocket(), new Atomic<bool>(false));
 
             public void Dispose()
             {

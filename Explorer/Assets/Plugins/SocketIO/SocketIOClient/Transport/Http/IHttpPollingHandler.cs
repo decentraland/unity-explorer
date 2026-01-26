@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace SocketIOClient.Transport.Http
 {
     public interface IHttpPollingHandler
     {
-        Func<string, UniTask> OnTextReceived { get; set; }
+        Func<string, Task> OnTextReceived { get; set; }
         Action<byte[]> OnBytesReceived { get; set; }
 
-        UniTask GetAsync(string uri, CancellationToken cancellationToken);
+        Task GetAsync(string uri, CancellationToken cancellationToken);
 
-        UniTask SendAsync(HttpRequestMessage req, CancellationToken cancellationToken);
+        Task SendAsync(HttpRequestMessage req, CancellationToken cancellationToken);
 
-        UniTask PostAsync(string uri, string content, CancellationToken cancellationToken);
+        Task PostAsync(string uri, string content, CancellationToken cancellationToken);
 
-        UniTask PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken);
+        Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken);
 
         void AddHeader(string key, string val);
 

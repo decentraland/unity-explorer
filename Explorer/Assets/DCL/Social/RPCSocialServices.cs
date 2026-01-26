@@ -7,9 +7,9 @@ using rpc_csharp;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Networking;
 using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
@@ -64,8 +64,7 @@ namespace DCL.SocialService
         private WebSocketRpcTransport? transport;
         private RpcClient? client;
 
-        private bool isConnectionReady => transport != null
-                                          && transport.State == WebSocketState.Open
+        private bool isConnectionReady => transport?.State == WebSocketState.Open
                                           && module != null
                                           && client != null
                                           && port != null;

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Http.Headers;
 using SocketIOClient.Extensions;
@@ -12,7 +12,7 @@ namespace SocketIOClient.Transport.Http
     {
         public Eio3HttpPollingHandler(IHttpClient adapter) : base(adapter) { }
 
-        public override async UniTask PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
+        public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
             var list = new List<byte>();
 
@@ -28,7 +28,7 @@ namespace SocketIOClient.Transport.Http
 
             var content = new ByteArrayContent(list.ToArray());
             content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            await HttpClient.PostAsync(AppendRandom(uri), content, cancellationToken);
+            await HttpClient.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
         }
 
         private static List<int> SplitInt(int number)
@@ -45,7 +45,7 @@ namespace SocketIOClient.Transport.Http
             return list;
         }
 
-        protected override async UniTask ProduceText(string text)
+        protected override async Task ProduceText(string text)
         {
             var p = 0;
 
@@ -68,7 +68,7 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        public override async UniTask PostAsync(string uri, string content, CancellationToken cancellationToken)
+        public override async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(content)) { return; }
 

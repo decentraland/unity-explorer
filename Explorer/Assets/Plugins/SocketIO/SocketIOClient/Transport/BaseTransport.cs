@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
-using Utility.Multithreading;
 
 #if DEBUG
 using System.Diagnostics;
@@ -36,7 +35,7 @@ namespace SocketIOClient.Transport
         public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
 
-        public async UniTask SendAsync(IMessage msg, CancellationToken cancellationToken)
+        public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
         {
             msg.EIO = Options.EIO;
             msg.Protocol = Protocol;
@@ -48,10 +47,10 @@ namespace SocketIOClient.Transport
 
             if (msg.OutgoingBytes != null) { payload.Bytes = msg.OutgoingBytes; }
 
-            await SendAsync(payload, cancellationToken);
+            await SendAsync(payload, cancellationToken).ConfigureAwait(false);
         }
 
-        protected virtual async UniTask OpenAsync(OpenedMessage msg)
+        protected virtual async Task OpenAsync(OpenedMessage msg)
         {
             OpenedMessage = msg;
 
@@ -70,7 +69,7 @@ namespace SocketIOClient.Transport
             {
                 try
                 {
-                    await SendAsync(connectMsg, CancellationToken.None);
+                    await SendAsync(connectMsg, CancellationToken.None).ConfigureAwait(false);
                     break;
                 }
                 catch (Exception e)
@@ -78,7 +77,7 @@ namespace SocketIOClient.Transport
                     if (i == 3)
                         OnError.TryInvoke(e);
                     else
-                        await UniTask.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, i) * 100));
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, i) * 100));
                 }
             }
         }
@@ -86,18 +85,18 @@ namespace SocketIOClient.Transport
         private void StartPing(CancellationToken cancellationToken)
         {
             // _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
-            DCLTask.RunOnThreadPool(async () =>
+            Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await UniTask.Delay(OpenedMessage.PingInterval, cancellationToken: cancellationToken);
+                    await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
 
                     try
                     {
                         var ping = new PingMessage();
 
                         // _logger.LogDebug($"[Ping] Sending");
-                        using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout)) { await SendAsync(ping, cts.Token); }
+                        using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout)) { await SendAsync(ping, cts.Token).ConfigureAwait(false); }
 
                         // _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
@@ -110,12 +109,16 @@ namespace SocketIOClient.Transport
                         break;
                     }
                 }
-            });
+            }, TaskCreationOptions.LongRunning);
         }
 
-        public abstract UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken);
+        public abstract Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
 
-        public abstract UniTask DisconnectAsync(CancellationToken cancellationToken);
+        public abstract Task DisconnectAsync(CancellationToken cancellationToken);
+
+        public abstract void AddHeader(string key, string val);
+
+        public abstract void SetProxy(IWebProxy proxy);
 
         public virtual void Dispose()
         {
@@ -128,9 +131,9 @@ namespace SocketIOClient.Transport
             }
         }
 
-        public abstract UniTask SendAsync(Payload payload, CancellationToken cancellationToken);
+        public abstract Task SendAsync(Payload payload, CancellationToken cancellationToken);
 
-        protected async UniTask OnTextReceived(string text)
+        protected async Task OnTextReceived(string text)
         {
             // TODO: refactor
 #if DEBUG
@@ -149,7 +152,7 @@ namespace SocketIOClient.Transport
                 return;
             }
 
-            if (msg.Type == MessageType.Opened) { await OpenAsync(msg as OpenedMessage); }
+            if (msg.Type == MessageType.Opened) { await OpenAsync(msg as OpenedMessage).ConfigureAwait(false); }
 
             if (Options.EIO == EngineIO.V3)
             {
@@ -159,7 +162,7 @@ namespace SocketIOClient.Transport
 
                     while (OpenedMessage is null)
                     {
-                        await UniTask.Delay(10);
+                        await Task.Delay(10);
                         ms += 10;
 
                         if (ms > Options.ConnectionTimeout.TotalMilliseconds)
@@ -196,7 +199,7 @@ namespace SocketIOClient.Transport
 
                 try
                 {
-                    await SendAsync(new PongMessage(), CancellationToken.None);
+                    await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
 
                     OnReceived.TryInvoke(new PongMessage
                     {
