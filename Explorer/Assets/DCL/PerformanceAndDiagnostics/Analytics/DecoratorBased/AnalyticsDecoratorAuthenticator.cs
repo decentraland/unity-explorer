@@ -22,9 +22,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core?.Dispose();
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? callback)
         {
-            IWeb3Identity identity = await core.LoginAsync(ct);
+            IWeb3Identity identity = await core.LoginAsync(ct, callback);
             analytics.Identify(identity);
             return identity;
         }

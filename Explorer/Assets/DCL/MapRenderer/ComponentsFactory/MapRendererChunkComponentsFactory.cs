@@ -24,7 +24,6 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -280,7 +279,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             return new ParcelHighlightMarker(obj);
         }
 
-        internal async Task<SpriteRenderer> GetAtlasChunkPrefabAsync(Transform parent, CancellationToken ct) =>
+        internal async UniTask<SpriteRenderer> GetAtlasChunkPrefabAsync(Transform parent, CancellationToken ct) =>
             (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, parent, ct: ct)).Value;
 
         private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefabAsync(CancellationToken ct) =>

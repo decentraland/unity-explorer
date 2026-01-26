@@ -23,17 +23,23 @@ namespace DCL.Web3.Authenticators
             identityCache.Dispose();
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
-            IWeb3Identity identity = await authenticator.LoginAsync(ct);
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:28"); // SPECIAL_DEBUG_LINE_STATEMENT
+            IWeb3Identity identity = await authenticator.LoginAsync(ct, codeVerificationCallback);
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:30"); // SPECIAL_DEBUG_LINE_STATEMENT
             identityCache.Identity = identity;
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:32"); // SPECIAL_DEBUG_LINE_STATEMENT
             return identity;
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:38"); // SPECIAL_DEBUG_LINE_STATEMENT
             await authenticator.LogoutAsync(cancellationToken);
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:40"); // SPECIAL_DEBUG_LINE_STATEMENT
             identityCache.Clear();
+UnityEngine.Debug.Log("ProxyWeb3Authenticator.cs:42"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
     }
 }

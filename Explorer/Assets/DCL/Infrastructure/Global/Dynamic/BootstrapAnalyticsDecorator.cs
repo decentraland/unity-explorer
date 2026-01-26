@@ -18,6 +18,7 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
+using UnityEngine;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
 namespace Global.Dynamic
@@ -96,12 +97,16 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
+Debug.Log("BootstrapAnalyticsDecorator.cs:99");
             await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
 
+Debug.Log("BootstrapAnalyticsDecorator.cs:102");
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
+Debug.Log("BootstrapAnalyticsDecorator.cs:105");
             var enabledFeatureFlags = new JArray();
 
+Debug.Log("BootstrapAnalyticsDecorator.cs:108");
             foreach (string flag in configuration.AllEnabledFlags)
             {
                 string name = flag;
@@ -113,11 +118,13 @@ namespace Global.Dynamic
                 enabledFeatureFlags.Add(name);
             }
 
+Debug.Log("BootstrapAnalyticsDecorator.cs:120");
             analytics.Track(FeatureFlags.ENABLED_FEATURES, new JObject
             {
                 { "featureFlags", enabledFeatureFlags },
             });
 
+Debug.Log("BootstrapAnalyticsDecorator.cs:126");
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
                 { STAGE_KEY, "2 - feature flag initialized" },

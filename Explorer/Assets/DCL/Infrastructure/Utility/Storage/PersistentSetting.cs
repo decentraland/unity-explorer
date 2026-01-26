@@ -154,8 +154,11 @@ namespace Utility.Storage
         [Conditional("DEBUG")]
         private void EnsureMainThread()
         {
+// It's always main thread on WebGL
+#if !UNITY_WEBGL
             if (PlayerLoopHelper.IsMainThread == false)
-                throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread, key: {key}, current thread: {Thread.CurrentThread.ManagedThreadId}, main thread: {PlayerLoopHelper.MainThreadId}");
+                throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread, key: {key}, current thread: {Thread.CurrentThread.ManagedThreadId}, main thread: {PlayerLoopHelper.MainThreadId}"); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
         }
     }
 }

@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly SemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;

@@ -1,3 +1,6 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
@@ -6,6 +9,9 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.IO;
 using Unity.Collections;
+
+#endif
+
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
@@ -14,6 +20,8 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
     {
         [SerializeField] private string cacheDirectory = string.Empty;
         [SerializeField] private Texture2D texture = null!;
+
+#if !UNITY_WEBGL
         private const string TEST_FILE = "texture.png";
 
         private void Start()
@@ -56,5 +64,9 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             var result = await diskCache.RemoveAsync(hashKey, Path.GetExtension(TEST_FILE), destroyCancellationToken);
             print($"Remove result: success {result.Success} and error {result.Error?.Message}");
         }
+
+#endif
+
     }
 }
+

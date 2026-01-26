@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
@@ -45,6 +47,7 @@ namespace DCL.RuntimeDeepLink
                 if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
 
                 Result<string> contentResult = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!.SuppressToResultAsync<string>(ReportCategory.RUNTIME_DEEPLINKS);
+
                 if (contentResult.Success == false) continue;
 
                 // Notify emitter that file has been consumed
@@ -68,3 +71,5 @@ namespace DCL.RuntimeDeepLink
         }
     }
 }
+
+#endif

@@ -207,10 +207,13 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
+Debug.Log("Bootstraper.cs:210");
             try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+Debug.Log("Bootstraper.cs:214");
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+Debug.Log("Bootstraper.cs:216");
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
         }
@@ -235,7 +238,16 @@ namespace Global.Dynamic
             {
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
-                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer()));
+
+
+#if UNITY_WEBGL
+            var diskCacheInstance = IDiskCache<string>.Null.INSTANCE;
+#else
+            var diskCacheInstance = new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer());
+#endif
+
+
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, diskCacheInstance);
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
@@ -290,7 +302,7 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
+            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct, null); }
             // Exceptions on auto-login should not block the application bootstrap
             catch (AutoLoginTokenNotFoundException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

@@ -21,7 +21,7 @@ namespace DCL.Profiling
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
         private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
-        private ProfilerRecorder mainThreadTimeRecorder = new (ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
+        private ProfilerRecorder mainThreadTimeRecorder = new (ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         private ProfilerRecorder gpuFrameTimeRecorder = new (ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
         private bool isCollectingFrameTimings;

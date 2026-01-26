@@ -25,7 +25,7 @@ namespace DCL.CharacterMotion
             if (characterPhysics.IsGrounded && !isJumpDisabled)
                 characterPhysics.LastGroundedFrame = physicsTick;
 
-            // (Coyote Timer: Pressing Jump before touching ground)
+            // (Coyote timer: Pressing Jump before touching ground)
             // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
             int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
 
@@ -41,7 +41,7 @@ namespace DCL.CharacterMotion
 
             bool canJump = characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames;
 
-            // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
+            // (Coyote timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
 
             if (canJump && wantsToJump && !isJumpDisabled)
             {

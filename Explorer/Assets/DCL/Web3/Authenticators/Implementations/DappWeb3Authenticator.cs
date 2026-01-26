@@ -6,20 +6,27 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
+
+///*
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
+//*/
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+    internal delegate void VerificationWeb3Delegate(int code, DateTime expiration);
+
+    public partial class DappWeb3Authenticator : IWeb3Authenticator, IEthereumApi
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
@@ -43,20 +50,20 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new (1, 1);
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
-        private ClientWebSocket? rpcWebSocket;
+        private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? codeVerificationCallback;
-        private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
+        private VerificationWeb3Delegate? signatureVerificationCallback;
 
-        public DappWeb3Authenticator(IWebBrowser webBrowser,
+        //private 
+        public    DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             URLDomain rpcServerUrl,
@@ -146,75 +153,105 @@ namespace DCL.Web3.Authenticators
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:152"); // SPECIAL_DEBUG_LINE_STATEMENT
             await mutex.WaitAsync(ct);
 
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:155"); // SPECIAL_DEBUG_LINE_STATEMENT
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:160"); // SPECIAL_DEBUG_LINE_STATEMENT
             try
             {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:163"); // SPECIAL_DEBUG_LINE_STATEMENT
                 await UniTask.SwitchToMainThread(ct);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:166"); // SPECIAL_DEBUG_LINE_STATEMENT
                 await ConnectToAuthApiAsync();
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:169"); // SPECIAL_DEBUG_LINE_STATEMENT
                 var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:172"); // SPECIAL_DEBUG_LINE_STATEMENT
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = identityExpirationDuration != null
                     ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
                     : DateTime.UtcNow.AddDays(7);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:178"); // SPECIAL_DEBUG_LINE_STATEMENT
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:181"); // SPECIAL_DEBUG_LINE_STATEMENT
                 SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new LoginAuthApiRequest
                 {
                     method = "dcl_personal_sign",
                     @params = new object[] { ephemeralMessage },
                 }, ct);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:188"); // SPECIAL_DEBUG_LINE_STATEMENT
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:191"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (!string.IsNullOrEmpty(authenticationResponse.expiration))
                     signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:195"); // SPECIAL_DEBUG_LINE_STATEMENT
                 await UniTask.SwitchToMainThread(ct);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:198"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (codeVerificationFeatureFlag.ShouldWaitForCodeVerificationFromServer)
-                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
+                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct, codeVerificationCallback).Forget();
                 else
                     codeVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:204"); // SPECIAL_DEBUG_LINE_STATEMENT
                 LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:208"); // SPECIAL_DEBUG_LINE_STATEMENT
                 await DisconnectFromAuthApiAsync();
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:211"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (string.IsNullOrEmpty(response.sender))
                     throw new Web3Exception($"Cannot solve the signer's address from the signature. Request id: {authenticationResponse.requestId}");
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:215"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (string.IsNullOrEmpty(response.result))
                     throw new Web3Exception($"Cannot solve the signature. Request id: {authenticationResponse.requestId}");
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:219"); // SPECIAL_DEBUG_LINE_STATEMENT
                 AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:222"); // SPECIAL_DEBUG_LINE_STATEMENT
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 return new DecentralandIdentity(new Web3Address(response.sender),
                     ephemeralAccount, sessionExpiration, authChain);
             }
             catch (Exception)
             {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:229"); // SPECIAL_DEBUG_LINE_STATEMENT
                 await DisconnectFromAuthApiAsync();
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:231"); // SPECIAL_DEBUG_LINE_STATEMENT
                 throw;
             }
             finally
-            {
+           {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:236"); // SPECIAL_DEBUG_LINE_STATEMENT
+// There is no need for switching the threads on WebGL
+#if !UNITY_WEBGL
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:239"); // SPECIAL_DEBUG_LINE_STATEMENT
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
                     await UniTask.SwitchToMainThread(CancellationToken.None);
+#endif
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:246"); // SPECIAL_DEBUG_LINE_STATEMENT
                 mutex.Release();
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STATEMENT
             }
         }
 
@@ -230,10 +267,7 @@ namespace DCL.Web3.Authenticators
             codeVerificationTask?.TrySetCanceled();
         }
         
-        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-            codeVerificationCallback = callback;
-
-        public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
+        private void AddVerificationListener(VerificationWeb3Delegate callback) =>
             signatureVerificationCallback = callback;
 
         private async UniTask DisconnectFromAuthApiAsync()
@@ -247,7 +281,9 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             try
             {
@@ -274,6 +310,8 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+// There is no need for switching the threads on WebGL
+#if !UNITY_WEBGL
                 // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
                 // If the token is cancelled, the await will throw an OperationCanceledException immediately.
                 // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
@@ -281,6 +319,7 @@ namespace DCL.Web3.Authenticators
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
                     await UniTask.SwitchToMainThread();
+#endif
 
                 mutex.Release();
                 rpcPendingOperations--;
@@ -305,7 +344,7 @@ namespace DCL.Web3.Authenticators
             urlBuilder.AppendDomain(rpcServerUrl);
             urlBuilder.AppendPath(new URLPath(network));
 
-            rpcWebSocket = new ClientWebSocket();
+            rpcWebSocket = new DCLWebSocket();
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
@@ -339,7 +378,9 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG  
+#endif
 
             try
             {
@@ -387,6 +428,8 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+// There is no need for switching the threads on WebGL
+#if !UNITY_WEBGL
                 // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
                 // If the token is cancelled, the await will throw an OperationCanceledException immediately.
                 // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
@@ -394,6 +437,7 @@ namespace DCL.Web3.Authenticators
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
                     await UniTask.SwitchToMainThread();
+#endif
 
                 mutex.Release();
                 authApiPendingOperations--;
@@ -475,29 +519,40 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask ConnectToAuthApiAsync()
         {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:519"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (authApiWebSocket == null)
             {
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:522"); // SPECIAL_DEBUG_LINE_STATEMENT
                 var uri = new Uri(authApiUrl);
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:525"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket = new SocketIO(uri, new SocketIOOptions
                 {
                     Transport = TransportProtocol.WebSocket,
                 });
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:531"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:534"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:536"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket.On("request-validation-status", ProcessCodeVerificationStatus);
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:538"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket.OnDisconnected += OnWebSocketDisconnected;
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:540"); // SPECIAL_DEBUG_LINE_STATEMENT
                 authApiWebSocket.OnError += OnWebSocketError;
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:542"); // SPECIAL_DEBUG_LINE_STATEMENT
             }
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:545"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (authApiWebSocket.Connected) return;
 
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:548"); // SPECIAL_DEBUG_LINE_STATEMENT
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
 
         private void OnWebSocketError(object sender, string error)
@@ -537,7 +592,7 @@ namespace DCL.Web3.Authenticators
         /// Waits until we receive the verification status from the server
         /// So then we execute the loginVerificationCallback
         /// </summary>
-        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
+        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
         {
             codeVerificationTask?.TrySetCanceled(ct);
             codeVerificationTask = new UniTaskCompletionSource<SocketIOResponse>();

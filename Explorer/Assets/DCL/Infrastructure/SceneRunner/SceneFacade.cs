@@ -7,7 +7,6 @@ using SceneRuntime;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
 
@@ -156,17 +155,18 @@ namespace SceneRunner
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
-                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    await Task.Delay(sleepMS, ct);
-                    MultithreadingUtility.AssertMainThread(nameof(Task.Delay));
+                    // UPD - Task is not supported on WebGL, UniTask is used
+                    await UniTask.Delay(sleepMS, cancellationToken: ct);
+                    MultithreadingUtility.AssertMainThread(nameof(UniTask.Delay));
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
             catch (OperationCanceledException) { }
         }
 
-        private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
+        private async UniTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
             {
@@ -186,7 +186,8 @@ namespace SceneRunner
                     return false;
 
                 // Just idle, don't do anything, need to wait for an actual value
-                await Task.Delay(10, ct);
+                // WebGL-friendly
+                await UniTask.Delay(10, cancellationToken: ct); 
             }
 
             return true;

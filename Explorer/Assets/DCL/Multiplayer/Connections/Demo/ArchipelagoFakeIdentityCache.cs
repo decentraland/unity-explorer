@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
+#if !UNITY_WEBGL
     public static class ArchipelagoFakeIdentityCache
     {
         public static async UniTask<IWeb3IdentityCache> NewAsync(
@@ -37,4 +38,5 @@ namespace DCL.Multiplayer.Connections.Demo
             return identityCache;
         }
     }
+#endif
 }

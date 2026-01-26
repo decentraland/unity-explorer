@@ -24,6 +24,7 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class GateKeeperRoomPlayground : MonoBehaviour
     {
+#if !UNITY_WEBGL
         private void Start()
         {
             LaunchAsync().Forget();
@@ -57,5 +58,6 @@ namespace DCL.Multiplayer.Connections.Demo
                  .Forget();
 #endif
         }
+#endif
     }
 }

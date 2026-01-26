@@ -6,7 +6,6 @@ using DCL.WebRequests;
 using System;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -71,7 +70,7 @@ namespace DCL.MarketplaceCredits
             return creditsProgramProgressResponse;
         }
 
-        private async Task<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
+        private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/seasons";
 

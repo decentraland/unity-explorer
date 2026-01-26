@@ -78,6 +78,8 @@ namespace DCL.PluginSystem.Global
                 settings.UseCompression = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN);
             else if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
                 settings.UseCompression = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC);
+            else if (IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL)) // TODO feature flag for WebGL
+                settings.UseCompression = false;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

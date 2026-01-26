@@ -1,10 +1,14 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace DCL.Prefs
 {
@@ -245,3 +249,5 @@ namespace DCL.Prefs
         }
     }
 }
+
+#endif

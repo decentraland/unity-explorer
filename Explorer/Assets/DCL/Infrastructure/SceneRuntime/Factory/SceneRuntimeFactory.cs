@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 #if UNITY_WEBGL
 
@@ -93,10 +94,13 @@ namespace SceneRuntime.Factory
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SWITCH_TO_THREAD_POOL)
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
-            // Provide basic Thread Pool synchronization context
-            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+#if !UNITY_WEBGL
+            // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
 #if UNITY_WEBGL
