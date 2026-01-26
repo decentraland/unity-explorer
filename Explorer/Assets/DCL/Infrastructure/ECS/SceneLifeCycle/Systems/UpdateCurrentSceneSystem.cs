@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -42,6 +43,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private bool sceneVisible = true;
+        private bool backfaceCulling;
+        private readonly Dictionary<Material, int> originalCullValues = new ();
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
@@ -77,7 +80,8 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Global Pos:", globalPositionBinding)
                          .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
                          .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
-                         .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible);
+                         .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible)
+                         .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling);
             this.debugBuilder = debugBuilder;
         }
 
@@ -146,6 +150,50 @@ namespace ECS.SceneLifeCycle.Systems
 
                 foreach (Renderer renderer in renderers)
                     renderer.enabled = sceneVisible;
+            }
+        }
+
+        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            backfaceCulling = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            // Store original value and set to Front (cull front faces, show back faces)
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            // Restore original value
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
             }
         }
 
