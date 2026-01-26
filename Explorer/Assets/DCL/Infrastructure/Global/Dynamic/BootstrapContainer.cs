@@ -66,6 +66,7 @@ namespace Global.Dynamic
             // Don't dispose Web3Authenticator/EthereumApi separately as they reference the same composite
             CompositeWeb3Provider?.Dispose();
             IdentityCache?.Dispose();
+            Analytics?.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
