@@ -168,8 +168,11 @@ namespace DCL.Places
         private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
 
-        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView) =>
-            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView))).Forget();
+        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
+        {
+            var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends))).Forget();
+        }
 
         private void OnFiltersChanged(PlacesFilters filters)
         {

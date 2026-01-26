@@ -8,6 +8,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,9 @@ namespace DCL.Places
         [SerializeField] private TMP_Text creatorNameText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
+        [SerializeField] private TMP_Text onlineMembersText = null!;
+        [SerializeField] private FriendsConnectedConfig friendsConnected;
+
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle = null!;
@@ -43,6 +47,22 @@ namespace DCL.Places
 
         [Header("Configuration")]
         [SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration = null!;
+
+        [Serializable]
+        private struct FriendsConnectedConfig
+        {
+            public GameObject root;
+            public FriendsConnectedThumbnail[] thumbnails;
+            public GameObject amountContainer;
+            public TMP_Text amountLabel;
+
+            [Serializable]
+            public struct FriendsConnectedThumbnail
+            {
+                public GameObject root;
+                public ProfilePictureView picture;
+            }
+        }
 
         public event Action<PlacesData.PlaceInfo, bool>? LikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool>? DislikeToggleChanged;
@@ -87,7 +107,9 @@ namespace DCL.Places
             PlacesData.PlaceInfo placeInfo,
             bool isNavigating,
             ThumbnailLoader thumbnailLoader,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            List<Profile.CompactInfo>? friends = null,
+            ProfileRepositoryWrapper? profileRepositoryWrapper = null)
         {
             currentPlaceInfo = placeInfo;
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
@@ -99,6 +121,25 @@ namespace DCL.Places
             likeToggle.Toggle.isOn = placeInfo.user_like;
             dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
             favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
+            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+
+            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
+            friendsConnected.root.SetActive(showFriendsConnected);
+            if (showFriendsConnected)
+            {
+                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
+                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
+
+                var friendsThumbnails = friendsConnected.thumbnails;
+                for (var i = 0; i < friendsThumbnails.Length; i++)
+                {
+                    bool friendExists = i < friends.Count;
+                    friendsThumbnails[i].root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    Profile.CompactInfo friendInfo = friends[i];
+                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                }
+            }
 
             bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
             startExitNavigationButtonsContainer.SetActive(!isWorld);

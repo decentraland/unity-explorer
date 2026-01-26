@@ -64,8 +64,10 @@ namespace DCL.Places
             viewInstance!.ConfigurePlaceData(
                 placeInfo: inputData.PlaceData,
                 isNavigating: currentNavigationPlaceId == inputData.PlaceData.id,
-                thumbnailLoader,
-                panelCts.Token);
+                thumbnailLoader: thumbnailLoader,
+                cancellationToken: panelCts.Token,
+                friends: inputData.ConnectedFriends,
+                profileRepositoryWrapper: profileRepositoryWrapper);
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
         }
