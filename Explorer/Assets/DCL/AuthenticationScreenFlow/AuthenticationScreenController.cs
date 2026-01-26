@@ -139,10 +139,6 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            // Subscriptions
-            foreach (Button button in viewInstance.UseAnotherAccountButton)
-                button.onClick.AddListener(ChangeAccount);
-
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
@@ -186,7 +182,7 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.IN), allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, allowReEnterSameState: true);
             }
         }
 
@@ -237,17 +233,21 @@ namespace DCL.AuthenticationScreenFlow
             return loginCancellationTokenSource.Token;
         }
 
-        public void ChangeAccount()
+        internal void RestartLogin() =>
+            RestartLogin(false);
+
+        internal void RestartLogin(bool enterLoginState)
         {
-            ChangeAccountAsync(GetRestartedLoginToken()).Forget();
+            loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart();
+            Web3LogoutAsync(loginCancellationTokenSource!.Token).Forget();
             return;
 
-            async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
+            async UniTaskVoid Web3LogoutAsync(CancellationToken ct)
             {
-                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                // await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
-                characterPreviewController?.OnHide();
-                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.SLIDE), allowReEnterSameState: true);
+
+                if (enterLoginState) fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, allowReEnterSameState: true);
             }
         }
 

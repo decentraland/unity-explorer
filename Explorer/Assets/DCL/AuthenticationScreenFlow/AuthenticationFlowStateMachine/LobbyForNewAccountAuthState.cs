@@ -113,6 +113,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
+            characterPreviewController?.OnHide();
+
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
@@ -220,7 +222,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnBackButtonClicked()
         {
             view.Hide(UIAnimationHashes.SLIDE);
-            controller.ChangeAccount();
+            controller.RestartLogin(enterLoginState: true);
         }
 
         private Avatar RandomizeAvatar()

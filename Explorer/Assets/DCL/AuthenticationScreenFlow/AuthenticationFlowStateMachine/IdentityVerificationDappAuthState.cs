@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (SignatureExpiredException e)
             {
@@ -101,7 +101,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Web3SignatureException e)
             {
@@ -111,7 +111,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (CodeVerificationException e)
             {
@@ -121,7 +121,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Exception e)
             {
@@ -131,7 +131,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 if (currentState.Value == AuthenticationStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
-                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
+                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             finally
             {
