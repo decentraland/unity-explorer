@@ -26,15 +26,19 @@ namespace DCL.CharacterMotion.Animation
             { (MovementKind.RUN, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
             { (MovementKind.RUN, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },
             { (MovementKind.RUN, AvatarAnimationEventType.Step), AvatarAudioClipType.StepRun },
+            { (MovementKind.RUN, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.JOG, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartJog },
             { (MovementKind.JOG, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandJog },
             { (MovementKind.JOG, AvatarAnimationEventType.Step), AvatarAudioClipType.StepJog },
+            { (MovementKind.JOG, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.WALK, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
             { (MovementKind.WALK, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
             { (MovementKind.WALK, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
+            { (MovementKind.WALK, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.IDLE, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
             { (MovementKind.IDLE, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
-            { (MovementKind.IDLE, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk }
+            { (MovementKind.IDLE, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
+            { (MovementKind.IDLE, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
         };
 
         [SerializeField] private AvatarAudioPlaybackController AudioPlaybackController;
@@ -61,17 +65,6 @@ namespace DCL.CharacterMotion.Animation
         private bool playingContinuousAudio;
 
         public event Action? PlayerStepped;
-
-        private void Awake()
-        {
-            AddSimpleEvent(AvatarAnimationEventType.AirJump, AvatarAudioClipType.AirJump);
-
-            void AddSimpleEvent(AvatarAnimationEventType anim, AvatarAudioClipType clip)
-            {
-                for (int i = (int)MovementKind.IDLE; i <= (int)MovementKind.RUN; i++)
-                    AUDIO_CLIP_LOOKUP.Add(((MovementKind)i, anim), clip);
-            }
-        }
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
@@ -172,7 +165,7 @@ namespace DCL.CharacterMotion.Animation
         private void PlaySfxWithParticles(AvatarAudioClipType audioClipType, Transform particlesAttach, AvatarAnimationEventType animationEventType)
         {
             PlayAudioForType(audioClipType);
-            ParticlesController.ShowParticles(particlesAttach, animationEventType);
+            ParticlesController.PlayVfx(particlesAttach, animationEventType);
         }
 
         [PublicAPI("Used by Animation Events")]

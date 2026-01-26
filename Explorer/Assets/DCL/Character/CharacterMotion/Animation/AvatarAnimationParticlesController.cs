@@ -1,76 +1,89 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Serialization;
+using UnityEngine.VFX;
 using Utility;
 
 namespace DCL.CharacterMotion.Animation
 {
-    public class AvatarAnimationParticlesController : MonoBehaviour, IDisposable
+    public class AvatarAnimationParticlesController : MonoBehaviour
     {
-        [SerializeField] private List<AnimationParticlesData> particleSystemPerAnimationTypeList = new ();
+        [FormerlySerializedAs("particleSystemPerAnimationTypeList")]
+        [SerializeField]
+        private List<AnimationParticlesData> visualEffects = new ();
 
-        private readonly Dictionary<AvatarAnimationEventType, GameObjectPool<ParticleSystem>> particlePoolsPerAnimationType = new ();
+        private readonly Dictionary<AvatarAnimationEventType, IObjectPool<IVfx>> poolLookup = new ();
 
         private CancellationTokenSource cancellationTokenSource = null!;
 
         private void Start()
         {
-            Transform thisTransform = transform;
+            Transform vfxParent = transform;
 
-            foreach (AnimationParticlesData pair in particleSystemPerAnimationTypeList) { particlePoolsPerAnimationType.Add(pair.Type, new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(pair.ParticleSystem))); }
+            foreach (AnimationParticlesData data in visualEffects)
+            {
+                if (!TryCreatePool(data, vfxParent, out ObjectPool<IVfx> pool)) continue;
+
+                poolLookup.Add(data.Type, pool);
+            }
 
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        private void OnDestroy()
+        private bool TryCreatePool(AnimationParticlesData data, Transform vfxParent, out ObjectPool<IVfx>? pool)
         {
-            Dispose();
+            Func<IVfx> factory;
+
+            if (data.ParticleSystem != null)
+                factory = () => new ParticleSystemVfx(Instantiate(data.ParticleSystem, vfxParent));
+            else if (data.VisualEffect != null)
+                factory = () => new VisualEffectVfx(Instantiate(data.VisualEffect, vfxParent));
+            else
+            {
+                ReportHub.LogError(ReportCategory.AVATAR, $"Invalid VFX config for {data.Type}");
+
+                pool = null;
+                return false;
+            }
+
+            pool = new ObjectPool<IVfx>(factory, vfx => vfx.OnSpawn(), vfx => vfx.OnReleased());
+            return true;
         }
 
-        public void Dispose()
-        {
+        private void OnDestroy() =>
             cancellationTokenSource.SafeCancelAndDispose();
 
-            foreach (KeyValuePair<AvatarAnimationEventType, GameObjectPool<ParticleSystem>> pair in particlePoolsPerAnimationType) { pair.Value.Dispose(); }
+        public void PlayVfx(Transform position, AvatarAnimationEventType animationType)
+        {
+            if (!poolLookup.TryGetValue(animationType, out IObjectPool<IVfx> pool)) return;
 
-            particleSystemPerAnimationTypeList.Clear();
-            particlePoolsPerAnimationType.Clear();
+            IVfx vfx = pool.Get();
+            vfx.SetPosition(position.position);
+
+            ScheduleReturnVfxToPoolAsync(vfx, pool, cancellationTokenSource.Token).Forget();
         }
 
-        public void ShowParticles(Transform position, AvatarAnimationEventType animationType)
+        private async UniTask ScheduleReturnVfxToPoolAsync(IVfx vfx, IObjectPool<IVfx> pool, CancellationToken ct)
         {
-            if (!particlePoolsPerAnimationType.TryGetValue(animationType, out GameObjectPool<ParticleSystem> particlesPool)) return;
-
-            ParticleSystem? particles = particlesPool.Get();
-            particles.transform.position = position.position;
-            CancellationToken ct = cancellationTokenSource.Token;
-            ScheduleReturnParticlesToPoolAsync(particles, particlesPool, ct).Forget();
-        }
-
-        private async UniTask ScheduleReturnParticlesToPoolAsync(ParticleSystem particles, IObjectPool<ParticleSystem> particlesPool, CancellationToken ct)
-        {
-            // Wait the particle system duration so that all particles have been emitted
-            await UniTask.Delay((int)(particles.main.duration * 1000), cancellationToken: ct);
-
-            // Now wait till all particles have died off
-            while (particles.particleCount > 0) await UniTask.NextFrame(ct);
-
-            if (ct.IsCancellationRequested) return;
-
-            particles.Stop();
-            particles.time = 0;
-            particlesPool.Release(particles);
+            await vfx.WaitForCompletion(ct);
+            
+            pool.Release(vfx);
         }
 
         [Serializable]
         private struct AnimationParticlesData
         {
             public AvatarAnimationEventType Type;
+
             public ParticleSystem ParticleSystem;
+
+            public VisualEffect VisualEffect;
         }
     }
 }
