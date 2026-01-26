@@ -44,6 +44,9 @@ namespace ECS.SceneLifeCycle.Systems
         private bool showDebugCube;
         private bool sceneVisible = true;
         private bool backfaceCulling;
+        private bool shadowsDisabled;
+        private Light? directionalLight;
+        private LightShadows? originalShadowType;
         private readonly Dictionary<Material, int> originalCullValues = new ();
         private readonly Dictionary<Renderer, ShadowCastingMode> originalShadowModes = new ();
         private GameObject? sceneBoundsCube;
@@ -84,7 +87,8 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible)
                          .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling)
                          .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnLimitShadowCasters)
-                         .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters);
+                         .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters)
+                         .AddToggleField("Disable Shadows:", OnDisableShadowsToggle, shadowsDisabled);
             this.debugBuilder = debugBuilder;
         }
 
@@ -259,6 +263,39 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 originalShadowModes.Clear();
+            }
+        }
+
+        private void OnDisableShadowsToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            shadowsDisabled = evt.newValue;
+
+            // Find the main directional light
+            if (directionalLight == null)
+            {
+                GameObject lightObject = GameObject.Find("Directional Light");
+                if (lightObject != null)
+                {
+                    directionalLight = lightObject.GetComponent<Light>();
+                }
+            }
+
+            if (directionalLight != null)
+            {
+                if (shadowsDisabled)
+                {
+                    // Store original shadow type and disable shadows
+                    if (!originalShadowType.HasValue)
+                        originalShadowType = directionalLight.shadows;
+
+                    directionalLight.shadows = LightShadows.None;
+                }
+                else
+                {
+                    // Restore original shadow type
+                    if (originalShadowType.HasValue)
+                        directionalLight.shadows = originalShadowType.Value;
+                }
             }
         }
 
