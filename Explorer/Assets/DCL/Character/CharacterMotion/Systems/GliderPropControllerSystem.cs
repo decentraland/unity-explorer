@@ -40,9 +40,9 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [None(typeof(GliderProp))]
-        private void CreateProp(Entity entity, in IAvatarView avatarView, in GlideState glideState)
+        private void CreateProp(Entity entity, in IAvatarView avatarView, in CharacterAnimationComponent animationComponent)
         {
-            if (!glideState.IsGliding) return;
+            if (!animationComponent.States.IsGliding) return;
 
             var prop = propPool!.Get();
 
@@ -56,11 +56,11 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void AnimateProp([Data] float dt, Entity entity, in GlideState glideState, ref GliderProp gliderProp)
+        private void AnimateProp([Data] float dt, Entity entity, in CharacterAnimationComponent animationComponent, ref GliderProp gliderProp)
         {
             var transform = gliderProp.Controller.transform;
 
-            float sign = glideState.IsGliding ? 1 : -1;
+            float sign = animationComponent.States.IsGliding ? 1 : -1;
 
             gliderProp.Animation = Mathf.Clamp01(gliderProp.Animation + (sign * glidingSettings.AnimationSpeed * dt));
 
@@ -72,7 +72,7 @@ namespace DCL.CharacterMotion.Systems
             float scale = sign > 0 ? EaseOutBack(gliderProp.Animation) : EaseInBack(gliderProp.Animation);
             transform.localScale = Vector3.one * scale;
 
-            if (!glideState.IsGliding && gliderProp.Animation <= 0)
+            if (!animationComponent.States.IsGliding && gliderProp.Animation <= 0)
             {
                 World.Remove<GliderProp>(entity);
                 propPool!.Release(gliderProp.Controller);
@@ -95,10 +95,10 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void UpdateTrail(in CharacterRigidTransform rigidTransform, in GlideState glideState, in GliderProp gliderProp)
+        private void UpdateTrail(in CharacterRigidTransform rigidTransform, in CharacterAnimationComponent animationComponent, in GliderProp gliderProp)
         {
             float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
-            gliderProp.Controller.TrailEnabled = glideState.IsGliding &&
+            gliderProp.Controller.TrailEnabled = animationComponent.States.IsGliding &&
                                                  gliderProp.Animation >= 1 &&
                                                  rigidTransform.MoveVelocity.Velocity.sqrMagnitude > thresholdSq;
         }
