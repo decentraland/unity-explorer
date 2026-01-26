@@ -21,7 +21,6 @@ namespace DCL.SkyBox
         private readonly Light directionalLight;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
-        private readonly FeatureFlagsConfiguration featureFlags;
 
         private SkyboxSettings settingsJson;
 
@@ -31,14 +30,12 @@ namespace DCL.SkyBox
         public SkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IScenesCache scenesCache,
-            ISceneRestrictionBusController sceneRestrictionController,
-            FeatureFlagsConfiguration featureFlags)
+            ISceneRestrictionBusController sceneRestrictionController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
-            this.featureFlags = featureFlags;
         }
 
         public void Dispose() { }
@@ -55,7 +52,7 @@ namespace DCL.SkyBox
                 skyboxSettings = pluginSettings.Settings;
                 skyboxSettings.Reset();
 
-                if (featureFlags.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out settingsJson))
+                if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out settingsJson))
                 {
                     float normalizedTime = SkyboxSettingsAsset.NormalizeTime(settingsJson.time);
                     skyboxSettings.TimeOfDayNormalized = normalizedTime;
