@@ -23,7 +23,6 @@ namespace DCL.Backpack.Gifting.Presenters
         
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
         
-        private readonly IProfileRepository profileRepository;
         private readonly GiftSelectionComponentFactory componentFactory;
         private readonly GiftInventoryService giftInventoryService;
         private readonly IAvatarEquippedStatusProvider  equippedStatusProvider;
@@ -44,13 +43,11 @@ namespace DCL.Backpack.Gifting.Presenters
             GiftSelectionComponentFactory componentFactory,
             GiftInventoryService giftInventoryService,
             IAvatarEquippedStatusProvider  equippedStatusProvider,
-            IProfileRepository profileRepository,
             IMVCManager mvcManager) : base(viewFactory)
         {
             this.componentFactory = componentFactory;
             this.giftInventoryService = giftInventoryService;
             this.equippedStatusProvider = equippedStatusProvider;
-            this.profileRepository = profileRepository;
             this.mvcManager = mvcManager;
         }
 
@@ -203,6 +200,9 @@ namespace DCL.Backpack.Gifting.Presenters
             if (activePresenter == null || string.IsNullOrEmpty(selectedUrn))
                 return;
 
+            var ct = lifeCts?.Token ?? CancellationToken.None;
+            if (ct.IsCancellationRequested) return;
+            
             try
             {
                 string itemType = activePresenter is WearableGridPresenter
@@ -221,12 +221,8 @@ namespace DCL.Backpack.Gifting.Presenters
 
                 if (!activePresenter.TryBuildStyleSnapshot(selectedUrn, out var style))
                     style = new GiftItemStyleSnapshot(null, null, Color.white);
-
-                var ct = lifeCts?.Token ?? CancellationToken.None;
-                var recipientProfile = await profileRepository.GetAsync(inputData.userAddress, ct);
-                if (ct.IsCancellationRequested) return;
-
-                var userNameColor = recipientProfile?.UserNameColor ?? Color.black;
+                
+                var userNameColor = inputData.userNameColor;
                 string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
 
                 var transferParams = new GiftTransferParams(
@@ -244,6 +240,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 );
 
                 await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams), CancellationToken.None);
+                
             }
             catch (OperationCanceledException)
             {

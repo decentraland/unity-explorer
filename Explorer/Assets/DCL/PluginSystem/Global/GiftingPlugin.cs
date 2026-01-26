@@ -194,7 +194,6 @@ namespace DCL.PluginSystem.Global
                 componentFactory,
                 giftInventoryService,
                 equippedStatusProvider,
-                profileRepository,
                 mvcManager
             );
 

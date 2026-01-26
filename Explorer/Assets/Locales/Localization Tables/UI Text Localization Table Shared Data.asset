@@ -45,6 +45,10 @@ MonoBehaviour:
     m_Key: Places
     m_Metadata:
       m_Items: []
+  - m_Id: 299644359562919936
+    m_Key: PENDING_WEARABLE_TRANSFER
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

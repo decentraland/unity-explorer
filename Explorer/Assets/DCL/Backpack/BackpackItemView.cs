@@ -4,6 +4,7 @@ using DCL.UI;
 using DG.Tweening;
 using System;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -74,6 +75,14 @@ namespace DCL.Backpack
 
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
+        
+        [Header("Pending Transfer")]
+        [SerializeField] private GameObject pendingTransferContainer;
+        [SerializeField] private GameObject pendingTransferHoverContainer;
+        
+        [Header("NFT Count")]
+        [SerializeField] private GameObject nftCountContainer;
+        [SerializeField] private TextMeshProUGUI nftCountText;
 
         [field: SerializeField]
         public GameObject SmartWearableBadgeContainer { get; private set; }
@@ -101,6 +110,32 @@ namespace DCL.Backpack
                 isCompatibleWithBodyShape = value;
             }
         }
+        
+        public bool IsPendingTransfer
+        {
+            get => isPendingTransfer;
+
+            set
+            {
+                isPendingTransfer = value;
+                if (pendingTransferContainer != null)
+                    pendingTransferContainer.SetActive(value);
+            }
+        }
+        
+        public int NftCount
+        {
+            set
+            {
+                if (nftCountContainer != null)
+                {
+                    bool showCount = value > 1;
+                    nftCountContainer.SetActive(showCount);
+                    if (showCount && nftCountText != null)
+                        nftCountText.text = $"x{value}";
+                }
+            }
+        }
 
         public bool CanHover { get; set; } = true;
 
@@ -119,6 +154,7 @@ namespace DCL.Backpack
 
         private CancellationTokenSource cts;
         private bool isCompatibleWithBodyShape;
+        private bool isPendingTransfer;
 
         private void Awake()
         {
@@ -139,8 +175,8 @@ namespace DCL.Backpack
 
         public void SetEquipButtonsState()
         {
-            EquipButton.gameObject.SetActive(!IsEquipped && IsCompatibleWithBodyShape);
-            UnEquipButton.gameObject.SetActive(IsEquipped && IsUnequippable);
+            EquipButton.gameObject.SetActive(!IsEquipped && IsCompatibleWithBodyShape && !IsPendingTransfer);
+            UnEquipButton.gameObject.SetActive(IsEquipped && IsUnequippable && !IsPendingTransfer);
         }
 
         private void OnDisable()
@@ -162,6 +198,9 @@ namespace DCL.Backpack
                 EquippedIcon.gameObject.SetActive(false);
 
             incompatibleWithBodyShapeHoverContainer.SetActive(!IsCompatibleWithBodyShape);
+            
+            if (pendingTransferHoverContainer != null)
+                pendingTransferHoverContainer.SetActive(IsPendingTransfer);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -169,6 +208,9 @@ namespace DCL.Backpack
             AnimateExit();
             EquippedIcon.gameObject.SetActive(IsEquipped);
             incompatibleWithBodyShapeHoverContainer.SetActive(false);
+            
+            if (pendingTransferHoverContainer != null)
+                pendingTransferHoverContainer.SetActive(false);
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -185,7 +227,7 @@ namespace DCL.Backpack
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
                     break;
                 case 2:
-                    if (IsCompatibleWithBodyShape)
+                    if (IsCompatibleWithBodyShape && !IsPendingTransfer)
                     {
                         OnEquip?.Invoke(Slot, ItemId);
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -51,6 +52,8 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IWearableStorage wearableStorage;
         private readonly bool builderEmotesPreview;
 
         private CancellationTokenSource? loadElementsCancellationToken;
@@ -76,7 +79,9 @@ namespace DCL.Backpack.EmotesSection
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
             IAppArgs appArgs,
-            IEmoteStorage emoteStorage)
+            IEmoteStorage emoteStorage,
+            IPendingTransferService pendingTransferService,
+            IWearableStorage wearableStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -92,6 +97,8 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
+            this.pendingTransferService = pendingTransferService;
+            this.wearableStorage = wearableStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
@@ -173,6 +180,9 @@ namespace DCL.Backpack.EmotesSection
                     ),
                     customOwnedEmotes
                 );
+
+                // Prune stale pending transfers that have been confirmed by the indexer
+                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
 
                 // TODO: request base emotes collection instead of pointers:
                 // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
@@ -307,9 +317,16 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
-
+                
+                var emote = emotes[i];
+                bool isOnChain = emote.IsOnChain();
+                int emoteAmount = emote.Amount;
+                int pendingCount = isOnChain ? pendingTransferService.GetPendingCount(emote.GetUrn()) : 0;
+                int displayAmount = emoteAmount - pendingCount;
+                backpackItemView.IsPendingTransfer = isOnChain && displayAmount <= 0;
+                backpackItemView.NftCount = isOnChain ? Math.Max(displayAmount, 0) : 0;
                 backpackItemView.SetEquipButtonsState();
-                WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
+                WaitForThumbnailAsync(emote, backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
 
@@ -359,6 +376,8 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 backpackItemView.Value.IsEquipped = false;
                 backpackItemView.Value.IsCompatibleWithBodyShape = false;
+                backpackItemView.Value.IsPendingTransfer = false;
+                backpackItemView.Value.NftCount = 0;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }

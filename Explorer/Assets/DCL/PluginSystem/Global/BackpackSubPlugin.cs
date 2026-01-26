@@ -13,6 +13,7 @@ using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.FeatureFlags;
@@ -73,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IPendingTransferService pendingTransferService;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -111,7 +113,8 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
             IMVCManager mvcManager,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPendingTransferService pendingTransferService)
         {
             this.featureFlags = featureFlags;
             this.assetsProvisioner = assetsProvisioner;
@@ -145,6 +148,7 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.pendingTransferService = pendingTransferService;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -238,12 +242,15 @@ namespace DCL.PluginSystem.Global
                 bodyshapeColors,
                 wearableStorage,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                pendingTransferService,
+                emoteStorage
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
                 web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, appArgs, emoteStorage);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, appArgs, emoteStorage,
+                pendingTransferService, wearableStorage);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
@@ -298,7 +305,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 deleteIcon,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                pendingTransferService
             );
         }
 

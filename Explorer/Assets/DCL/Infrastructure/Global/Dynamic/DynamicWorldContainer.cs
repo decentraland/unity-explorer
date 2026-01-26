@@ -350,7 +350,10 @@ namespace Global.Dynamic
 
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
-
+            
+            var giftingDiagnosticToolGO = new GameObject("Gifting_Diagnostic_Tool");
+            Object.DontDestroyOnLoad(giftingDiagnosticToolGO);
+            
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
@@ -890,6 +893,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
                     staticContainer.LoadingStatus,
+                    pendingTransferService,
                     donationsService,
                     realmNavigator
                 ),

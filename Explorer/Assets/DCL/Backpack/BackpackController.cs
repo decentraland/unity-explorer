@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -92,7 +93,9 @@ namespace DCL.Backpack
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             Sprite deleteIcon,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPendingTransferService pendingTransferService)
+        
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -149,7 +152,9 @@ namespace DCL.Backpack
                 previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
-                outfitSlotFactory);
+                outfitSlotFactory,
+                wearableStorage,
+                pendingTransferService);
 
             avatarController = new AvatarController(
                 avatarView,
