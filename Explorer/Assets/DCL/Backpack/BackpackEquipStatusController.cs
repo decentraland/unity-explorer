@@ -193,45 +193,51 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
-            bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
-
-            Profile? oldProfile = await selfProfile.ProfileAsync(ct);
-
-            if (oldProfile == null)
+            // Snapshot the CTS associated with THIS specific execution
+            var capturedCts  = publishProfileCts;
+            
+            try
             {
-                ShowErrorNotificationAsync(ct).Forget();
-                return;
-            }
+                bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                                            && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
-            if (!publishProfileChange)
-            {
-                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-                
-                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                    forceRenderList, emoteStorage, wearableStorage);
-
-                // Skip publishing the same profile
-                if (newProfile.IsSameProfile(oldProfile))
+                if (!publishProfileChange)
                 {
-                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    Profile? oldProfile = await selfProfile.ProfileAsync(ct);
+
+                    if (oldProfile == null)
+                    {
+                        ShowErrorNotificationAsync(ct).Forget();
+                        return;
+                    }
+
+                    var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+                    
+                    Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
+                        equippedWearables,
+                        forceRenderList,
+                        emoteStorage,
+                        wearableStorage);
+
+                    // Skip publishing the same profile
+                    if (newProfile.IsSameProfile(oldProfile))
+                    {
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                        return;
+                    }
+
+                    profileCache.Set(newProfile.UserId, newProfile);
+                    UpdateAvatarInWorld(newProfile);
+                    profileChangesBus.PushUpdate(newProfile);
+                    
                     return;
                 }
 
-                profileCache.Set(newProfile.UserId, newProfile);
-                UpdateAvatarInWorld(newProfile);
-                profileChangesBus.PushUpdate(newProfile);
-                
-                return;
-            }
-
-            try
-            {
-                Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
-                if (newProfile != null)
-                    profileChangesBus.PushUpdate(newProfile);
+                if (updatedProfile != null)
+                    profileChangesBus.PushUpdate(updatedProfile);
             }
             catch (OperationCanceledException) { }
             catch (IdenticalProfileUpdateException)
@@ -242,6 +248,16 @@ namespace DCL.Backpack
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 ShowErrorNotificationAsync(ct).Forget();
+            }
+            finally
+            {
+                // Only nullify the global field if it still points to the CTS 
+                // that belongs to this specific execution.
+                if (ReferenceEquals(publishProfileCts, capturedCts ))
+                {
+                    capturedCts?.Dispose();
+                    publishProfileCts = null;
+                }
             }
         }
 
