@@ -17,12 +17,15 @@ namespace DCL.Tests
     [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
-        public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
-        public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+        private const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
+        private const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
 
-        public const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
+        private const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
+        private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
+
+        private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
         
-        public static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
+        private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
         {
             "UniTask.SwitchToThreadPool",
             "UniTask.RunOnThreadPool"
@@ -33,14 +36,27 @@ namespace DCL.Tests
             "Assets/DCL/Input/UnityInputSystem/DCLInput.cs"
         }; // cause it's autogen
 
+        private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs"
+        }; // cause it's autogen
+
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
-        private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
+
+        private static readonly string[] EXCLUDED_PATHS_INCLUDE_SOCKET_IO = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/" };
+
 
         private static IEnumerable<string> AllCSharpFiles() =>
             AssetDatabase.FindAssets("t:Script")
                          .Select(AssetDatabase.GUIDToAssetPath)
                          .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
                                              !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
+
+
+        private static IEnumerable<string> AllCSharpFilesWithSocketIO() =>
+            AssetDatabase.FindAssets("t:Script")
+                         .Select(AssetDatabase.GUIDToAssetPath)
+                         .Where(assetPath => Path.GetFileName(assetPath) != "AssemblyInfo.cs" && Path.GetExtension(assetPath) == ".cs" &&
+                                             !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS_INCLUDE_SOCKET_IO.Any(assetPath.Contains));
 
         private static string[] THREADING_FORBIDDEN_CLASSES = null!;
 
@@ -68,7 +84,7 @@ namespace DCL.Tests
             UsingUnityEditorShouldBeSurroundedByDirectives(root, filePath);
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
         public void VerifyShouldNotUseThreadingApiDirectly(string filePath)
         {
             if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
@@ -78,18 +94,28 @@ namespace DCL.Tests
             ShouldNotUseThreadingApiDirectly(fileContent, filePath);
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
         public void VerifyShouldNotUseDangerousUniTask(string filePath)
         {
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseDangerousUniTask(fileContent, filePath);
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
         public void VerifyShouldNotUseSystemTask(string filePath)
         {
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseSystemTask(fileContent, filePath);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
+        public void VerifyShouldNotUseNativeWebSocket(string filePath)
+        {
+            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseNativeWebSocket(fileContent, filePath);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -138,6 +164,35 @@ namespace DCL.Tests
         }
 
         // To support WebGL compatability
+        private static void ShouldNotUseNativeWebSocket(string fileContent, string filePath)
+        {
+            //if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
+             //   return;
+
+            var lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                string pattern = "System.Net.WebSockets";
+                if (line.Contains(pattern))
+                        //&& line.Contains(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG) == false)
+                {
+                    violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
+                }
+            }
+
+            Assert.IsTrue(
+                    violations.Count == 0,
+                    violations.Count == 0 
+                    ? string.Empty 
+                    : $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLWebSocket instead"
+                    );
+        }
+
+        // To support WebGL compatability
         private static void ShouldNotUseSystemTask(string fileContent, string filePath)
         {
             if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
@@ -151,7 +206,8 @@ namespace DCL.Tests
                 string line = lines[i];
 
                 string pattern = "System.Threading.Tasks";
-                if (line.Contains(pattern))
+                if (line.Contains(pattern)
+                        && line.Contains(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG) == false)
                 {
                     violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
                 }
