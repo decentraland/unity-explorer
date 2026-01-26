@@ -909,6 +909,7 @@ namespace Global.Dynamic
                     eventBus,
                     webBrowser,
                     bootstrapContainer.EthereumApi,
+                    dynamicWorldDependencies.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
                     screenModeController,

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -63,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
         private readonly IEthereumApi ethereumApi;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
@@ -89,6 +90,7 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
+            ICompositeWeb3Provider compositeWeb3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
             IScreenModeController screenModeController,
@@ -110,6 +112,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
@@ -186,7 +189,8 @@ namespace DCL.PluginSystem.Global
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 inputBlock,
-                gridFactory);
+                gridFactory,
+                compositeWeb3Provider);
 
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController

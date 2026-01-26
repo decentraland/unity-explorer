@@ -1,4 +1,4 @@
-﻿using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
@@ -6,6 +6,7 @@ using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Web3.Authenticators;
 
 namespace DCL.Backpack.Gifting.Factory
 {
@@ -14,15 +15,18 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
+        private readonly ICompositeWeb3Provider web3Provider;
 
         public GiftSelectionComponentFactory(
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
-            IGiftingGridPresenterFactory gridFactory)
+            IGiftingGridPresenterFactory gridFactory,
+            ICompositeWeb3Provider web3Provider)
         {
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.gridFactory = gridFactory;
+            this.web3Provider = web3Provider;
         }
 
         public GiftingHeaderPresenter CreateHeader(GiftingHeaderView view)
@@ -30,10 +34,8 @@ namespace DCL.Backpack.Gifting.Factory
             return new GiftingHeaderPresenter(view, profileRepository, inputBlock);
         }
 
-        public GiftingFooterPresenter CreateFooter(GiftingFooterView view)
-        {
-            return new GiftingFooterPresenter(view);
-        }
+        public GiftingFooterPresenter CreateFooter(GiftingFooterView view) =>
+            new (view, web3Provider);
 
         public GiftingErrorsController CreateErrorController(GiftingView view)
         {
