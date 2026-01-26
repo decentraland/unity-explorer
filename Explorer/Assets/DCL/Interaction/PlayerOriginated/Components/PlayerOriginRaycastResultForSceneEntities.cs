@@ -21,6 +21,8 @@ namespace DCL.Interaction.PlayerOriginated.Components
 
         public GlobalColliderSceneEntityInfo? EntityInfo { get; private set; }
 
+        public float DistanceToPlayer { get; private set; }
+
         public PlayerOriginRaycastResultForSceneEntities(RaycastHit unityRaycastHit) : this()
         {
             this.RaycastHit = unityRaycastHit;
@@ -40,11 +42,12 @@ namespace DCL.Interaction.PlayerOriginated.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetupHit(RaycastHit hitInfo, GlobalColliderSceneEntityInfo sceneEntityInfo, float distance)
+        public void SetupHit(RaycastHit hitInfo, GlobalColliderSceneEntityInfo sceneEntityInfo, float distance, float playerDistance)
         {
             RaycastHit = hitInfo;
             this.EntityInfo = sceneEntityInfo;
             this.distance = distance;
+            DistanceToPlayer = playerDistance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
