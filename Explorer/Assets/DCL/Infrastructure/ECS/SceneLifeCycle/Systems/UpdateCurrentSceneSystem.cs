@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Globalization;
 using UnityEngine;
@@ -40,6 +41,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneRelativePositionBinding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
+        private bool sceneVisible = true;
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
@@ -74,7 +76,8 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
                          .AddCustomMarker("Global Pos:", globalPositionBinding)
                          .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
-                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
+                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
+                         .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible);
             this.debugBuilder = debugBuilder;
         }
 
@@ -123,6 +126,27 @@ namespace ECS.SceneLifeCycle.Systems
         {
             currentSceneInfo.Update(currentActiveScene);
             scenesCache.SetCurrentScene(currentActiveScene);
+        }
+
+        private void OnSceneVisibleToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            sceneVisible = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            // Get the scene container transform and toggle all renderers
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                    renderer.enabled = sceneVisible;
+            }
         }
 
         protected override void OnDispose()

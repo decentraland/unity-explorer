@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -27,6 +27,7 @@ namespace DCL.Landscape.Systems
         private readonly ElementBinding<int> cullDistance;
 
         private int lastCullDistanceApplied;
+        private bool landscapeEnabled = true;
 
         private LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder,
             SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings,
@@ -42,7 +43,8 @@ namespace DCL.Landscape.Systems
             lastCullDistanceApplied = (int)landscapeData.DetailDistance;
 
             debugBuilder.TryAddWidget("Landscape")
-                       ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels,
+                       ?.AddToggleField("Landscape", OnLandscapeToggle, landscapeEnabled)
+                       .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels,
                              "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 50, 250)
                         .AddIntSliderField("Draw Distance", cullDistance, 12, 7250)
@@ -50,6 +52,28 @@ namespace DCL.Landscape.Systems
                         .AddToggleField("Trees", OnTreesToggle, landscapeData.RenderTrees)
                         .AddToggleField("Grass", OnGrassToggle, landscapeData.RenderGrass)
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.ShowSatelliteFloor);
+        }
+
+        private void OnLandscapeToggle(ChangeEvent<bool> evt)
+        {
+            landscapeEnabled = evt.newValue;
+
+            landscapeData.RenderGround = landscapeEnabled;
+            landscapeData.RenderTrees = landscapeEnabled;
+            landscapeData.RenderGrass = landscapeEnabled;
+
+            // Handle trees visibility
+            TreeData? trees = landscape.CurrentTerrain.Trees;
+            if (trees != null)
+            {
+                if (landscapeEnabled)
+                    trees.Show();
+                else
+                    trees.Hide();
+            }
+
+            // Handle satellite floor visibility
+            floor.SwitchVisibilitySetting(landscapeEnabled);
         }
 
         private void OnGroundToggle(ChangeEvent<bool> evt) =>
