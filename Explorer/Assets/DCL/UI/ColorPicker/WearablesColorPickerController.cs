@@ -2,37 +2,46 @@ using Runtime.Wearables;
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.UI
 {
     public class WearablesColorPickerController : IDisposable
     {
         private readonly ColorPickerCore core;
-        private readonly ColorPickerView view;
+        private readonly WearablesColorPickerView view;
         private readonly ColorPresetsSO hairColors;
         private readonly ColorPresetsSO eyesColors;
         private readonly ColorPresetsSO bodyshapeColors;
 
-        private Color hairsColor;
+        private Color hairColor;
         private Color eyesColor;
-        private Color bodyshapeColor;
+        private Color bodyShapeColor;
         private string currentCategory = "";
 
         public event Action<Color, string> OnColorChanged;
 
-        public WearablesColorPickerController(ColorPickerView view, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
+        public WearablesColorPickerController(
+            WearablesColorPickerView view,
+            ColorToggleView colorToggle,
+            ColorPresetsSO hairColors,
+            ColorPresetsSO eyesColors,
+            ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.hairColors = hairColors;
             this.eyesColors = eyesColors;
             this.bodyshapeColors = bodyshapeColors;
 
-            core = new ColorPickerCore(view, colorToggle);
+            core = new ColorPickerCore(view.ColorPickerView, colorToggle);
             core.OnColorChanged += OnCoreColorChanged;
+
+            view.ToggleButton.onClick.AddListener(TogglePanel);
         }
 
         public void Dispose()
         {
+            view.ToggleButton.onClick.RemoveAllListeners();
             core.OnColorChanged -= OnCoreColorChanged;
             core.Dispose();
         }
@@ -45,10 +54,10 @@ namespace DCL.UI
                     eyesColor = newColor;
                     break;
                 case WearableCategories.Categories.HAIR:
-                    hairsColor = newColor;
+                    hairColor = newColor;
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
-                    bodyshapeColor = newColor;
+                    bodyShapeColor = newColor;
                     break;
             }
         }
@@ -56,41 +65,59 @@ namespace DCL.UI
         public void SetColorPickerStatus(string category)
         {
             view.gameObject.SetActive(WearableCategories.COLOR_PICKER_CATEGORIES.Contains(category));
-            view.Container.SetActive(false);
             core.ClearPresets();
 
             switch (category)
             {
                 case WearableCategories.Categories.EYES:
-                    SetColors(eyesColors, WearableCategories.Categories.EYES);
-                    core.UpdateSliderValues(eyesColor);
+                    SetPresets(eyesColors);
+                    core.SetColor(eyesColor);
                     currentCategory = WearableCategories.Categories.EYES;
                     break;
                 case WearableCategories.Categories.HAIR:
                 case WearableCategories.Categories.EYEBROWS:
                 case WearableCategories.Categories.FACIAL_HAIR:
-                    SetColors(hairColors, WearableCategories.Categories.HAIR);
-                    core.UpdateSliderValues(hairsColor);
+                    SetPresets(hairColors);
+                    core.SetColor(hairColor);
                     currentCategory = WearableCategories.Categories.HAIR;
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
-                    SetColors(bodyshapeColors, WearableCategories.Categories.BODY_SHAPE);
-                    core.UpdateSliderValues(bodyshapeColor);
+                    SetPresets(bodyshapeColors);
+                    core.SetColor(bodyShapeColor);
                     currentCategory = WearableCategories.Categories.BODY_SHAPE;
                     break;
             }
+
+            // RectTransform colorControlsTransform = view.ColorPickerView.ColorPresetsParent.parent.parent.GetComponent<RectTransform>();
+            // LayoutRebuilder.ForceRebuildLayoutImmediate(colorControlsTransform);
+
+            ResetPanel();
         }
 
-        private void OnCoreColorChanged(Color color) =>
-            OnColorChanged(color, currentCategory);
-
-        private void SetColors(ColorPresetsSO colorPreset, string category) =>
-            core.SetPresets(colorPreset.colors, (presetColor, _) => OnPresetClicked(presetColor, category));
-
-        private void OnPresetClicked(Color presetColor, string category)
+        private void OnCoreColorChanged(Color color)
         {
-            core.UpdateSliderValues(presetColor);
-            OnColorChanged(presetColor, category);
+            UpdateColorPreviewImage(color);
+            OnColorChanged(color, currentCategory);
         }
+
+        private void TogglePanel()
+        {
+            view.ColorPickerView.gameObject.SetActive(!view.ColorPickerView.gameObject.activeInHierarchy);
+            view.ArrowDownMark.SetActive(!view.ArrowDownMark.activeInHierarchy);
+            view.ArrowUpMark.SetActive(!view.ArrowUpMark.activeInHierarchy);
+        }
+
+        private void ResetPanel()
+        {
+            view.ColorPickerView.gameObject.SetActive(false);
+            view.ArrowDownMark.SetActive(true);
+            view.ArrowUpMark.SetActive(false);
+        }
+
+        private void SetPresets(ColorPresetsSO colorPreset) =>
+            core.SetPresets(colorPreset.colors);
+
+        private void UpdateColorPreviewImage(Color newColor) =>
+            view.ColorPreviewImage.color = newColor;
     }
 }

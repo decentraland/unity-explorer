@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.Web3;
 using MVC;
 using System;
@@ -31,13 +29,6 @@ namespace DCL.UI.ProfileNames
         private readonly ProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
-        private readonly ColorToggleView colorToggle;
-        private readonly ColorPresetsSO colorPresets;
-
-        private readonly bool isNameColorChangeEnabled;
-
-        private NameColorPickerController? colorPickerController;
-
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;
@@ -52,19 +43,13 @@ namespace DCL.UI.ProfileNames
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus,
-            ColorToggleView colorToggle,
-            ColorPresetsSO colorPresets) : base(viewFactory)
+            ProfileChangesBus profileChangesBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
-            this.colorToggle = colorToggle;
-            this.colorPresets = colorPresets;
-
-            isNameColorChangeEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -82,18 +67,6 @@ namespace DCL.UI.ProfileNames
 
             ProfileNameEditorView.ClaimedNameConfig claimedConfig = viewInstance.ClaimedNameContainer;
             Initialize(claimedConfig.NonClaimedNameTabConfig);
-
-            if (isNameColorChangeEnabled) {
-
-                colorPickerController = new NameColorPickerController(viewInstance!.ColorPickerView, colorToggle, colorPresets);
-                colorPickerController.OnColorChanged += color =>
-                {
-                    UpdateConfigNameColor(color);
-                    claimedConfig.saveButtonInteractable = true;
-                };
-            }
-
-            claimedConfig.colorPicker.SetActive(isNameColorChangeEnabled);
 
             claimedConfig.ClaimedNameTabHeader.Select();
             claimedConfig.NonClaimedNameTabHeader.Deselect();
@@ -165,12 +138,6 @@ namespace DCL.UI.ProfileNames
 
                 using INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(profile!.UserId), 1, 100, ct);
 
-                if (colorPickerController != null && isNameColorChangeEnabled) {
-                    colorPickerController!.Reset();
-                    colorPickerController.SetColorPickerStatus(profile.UserNameColor);
-                    UpdateConfigNameColor(profile.UserNameColor);
-                }
-
                 nonClaimedConfig.root.SetActive(names.TotalAmount <= 0);
                 claimedConfig.NonClaimedNameTabConfig.root.SetActive(names.TotalAmount > 0);
                 claimedConfig.dropdownLoadingSpinner.SetActive(false);
@@ -207,7 +174,6 @@ namespace DCL.UI.ProfileNames
 
                 int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
                 config.claimedNameDropdown.SetValueWithoutNotify(selectedIndex);
-
                 // Always start as disabled as it makes no sense save your own current name again..
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(false);
@@ -256,16 +222,6 @@ namespace DCL.UI.ProfileNames
         {
             webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
-        }
-
-        private void UpdateConfigNameColor(Color color)
-        {
-            var config = viewInstance!.ClaimedNameContainer;
-            config.nameColor = color;
-            viewInstance!.ClaimedNameContainer = config;
-
-            // TODO (Maurizio) remove after tests
-            Debug.Log($"[MAURIZIO] Updated config name color to: {viewInstance!.ClaimedNameContainer.nameColor}");
         }
 
         private void Save(ProfileNameEditorView.NonClaimedNameConfig config)
@@ -323,15 +279,6 @@ namespace DCL.UI.ProfileNames
                     profile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
                     profile.HasClaimedName = true;
 
-                    if (isNameColorChangeEnabled) {
-                        Color actualColor = viewInstance!.ClaimedNameContainer.nameColor;
-
-                        // TODO (Maurizio) save color here, something like:
-                        //  profile.UserNameColor = actualColor;
-                        //  the related field right now has an internal set to CompactInfo
-                        Debug.Log($"[MAURIZIO] profile color would be {actualColor}");
-                    }
-
                     try
                     {
                         Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
@@ -353,16 +300,5 @@ namespace DCL.UI.ProfileNames
 
         private void Close() =>
             lifeCycleTask?.TrySetResult();
-
-        public override void Dispose()
-        {
-            if (colorPickerController != null && isNameColorChangeEnabled)
-            {
-                colorPickerController.OnColorChanged -= UpdateConfigNameColor;
-                colorPickerController.Dispose();
-            }
-
-            base.Dispose();
-        }
     }
 }

@@ -38,30 +38,6 @@ namespace DCL.UI
         [field: Range(0f, 1f)]
         public float DefaultValue { get; private set; } = 1f;
 
-        [field: Header("Toggle Button")]
-        [field: SerializeField]
-        public Button ToggleButton { get; private set; }
-
-        /// <summary>
-        /// The "COLOR" text GameObject child under ToggleButton
-        /// </summary>
-        [field: SerializeField]
-        public GameObject ToggleText { get; private set; }
-
-        [field: SerializeField]
-        public bool ShowToggleText { get; set; } = true;
-
-        [field: Header("Container")]
-        [field: SerializeField]
-        public GameObject Container { get; private set; }
-
-        [field: SerializeField]
-        public Image ContainerImage { get; private set; }
-
-        [field: Header("Color Display")]
-        [field: SerializeField]
-        public Image ColorPreviewImage { get; private set; }
-
         /// <summary>
         /// Parent transform where color preset toggles are instantiated
         /// </summary>
@@ -70,13 +46,6 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject ColorSelectorObject { get; private set; }
-
-        [field: Header("UI Indicators")]
-        [field: SerializeField]
-        public GameObject ArrowUpMark { get; private set; }
-
-        [field: SerializeField]
-        public GameObject ArrowDownMark { get; private set; }
 
 #if UNITY_EDITOR
         private void OnValidate()
@@ -89,9 +58,6 @@ namespace DCL.UI
 
             if (SliderValue != null)
                 SliderValue.gameObject.SetActive(EnableValueSlider);
-
-            if (ToggleText != null)
-                ToggleText.SetActive(ShowToggleText);
         }
 #endif
     }

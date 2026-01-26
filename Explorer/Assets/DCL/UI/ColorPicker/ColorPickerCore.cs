@@ -27,29 +27,28 @@ namespace DCL.UI
                 actionOnRelease: (toggle) => toggle.gameObject.SetActive(false));
 
             SetupSliderListeners();
-            view.ToggleButton.onClick.AddListener(TogglePanel);
         }
 
         private void SetupSliderListeners()
         {
             if (view.EnableHueSlider)
             {
-                view.SliderHue.Slider.onValueChanged.AddListener(_ => SetColor());
-                view.SliderHue.Slider.onValueChanged.AddListener(_ => SetSaturationColor());
+                view.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
+                view.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSaturationColor());
                 view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, INCREMENT_AMOUNT));
                 view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, -INCREMENT_AMOUNT));
             }
 
             if (view.EnableSaturationSlider)
             {
-                view.SliderSaturation.Slider.onValueChanged.AddListener(_ => SetColor());
+                view.SliderSaturation.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
                 view.SliderSaturation.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, INCREMENT_AMOUNT));
                 view.SliderSaturation.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, -INCREMENT_AMOUNT));
             }
 
             if (view.EnableValueSlider)
             {
-                view.SliderValue.Slider.onValueChanged.AddListener(_ => SetColor());
+                view.SliderValue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
                 view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, INCREMENT_AMOUNT));
                 view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
             }
@@ -68,34 +67,15 @@ namespace DCL.UI
             view.SliderValue.Slider.onValueChanged.RemoveAllListeners();
             view.SliderValue.IncreaseButton.onClick.RemoveAllListeners();
             view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
-
-            view.ToggleButton.onClick.RemoveAllListeners();
         }
 
-        public void SetColor(Color color, string? context = null)
+        public void SetColor(Color color)
         {
             UpdateSliderValues(color);
             OnColorChanged(color);
         }
 
-        public void UpdateSliderValues(Color currentColor)
-        {
-            Color.RGBToHSV(currentColor, out float h, out float s, out float v);
-            view.ColorPreviewImage.color = currentColor;
-
-            if (view.EnableHueSlider && view.SliderHue != null)
-                view.SliderHue.Slider.SetValueWithoutNotify(h);
-
-            if (view.EnableSaturationSlider && view.SliderSaturation != null)
-                view.SliderSaturation.Slider.SetValueWithoutNotify(s);
-
-            if (view.EnableValueSlider && view.SliderValue != null)
-                view.SliderValue.Slider.SetValueWithoutNotify(v);
-
-            SetSaturationColor();
-        }
-
-        public void SetPresets(IEnumerable<Color> presetColors, Action<Color, string?> onPresetClicked)
+        public void SetPresets(IEnumerable<Color> presetColors)
         {
             ClearPresets();
 
@@ -105,8 +85,19 @@ namespace DCL.UI
                 toggleView.transform.parent = view.ColorPresetsParent;
                 toggleView.SelectionHighlight.gameObject.SetActive(false);
                 toggleView.SetColor(presetColor, false);
-                toggleView.Button.onClick.AddListener(() => onPresetClicked(presetColor, null));
+                toggleView.Button.onClick.AddListener(() => SelectPreset(presetColor, toggleView));
                 usedColorToggles.Add(toggleView);
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.ColorPresetsParent.GetComponent<RectTransform>());
+
+            void SelectPreset(Color color, ColorToggleView selectedToggleView)
+            {
+                foreach (var toggle in usedColorToggles)
+                    toggle.SelectionHighlight.gameObject.SetActive(false);
+
+                selectedToggleView.SelectionHighlight.gameObject.SetActive(true);
+                SetColor(color);
             }
         }
 
@@ -121,14 +112,23 @@ namespace DCL.UI
             usedColorToggles.Clear();
         }
 
-        public void Reset()
+        private void UpdateSliderValues(Color currentColor)
         {
-            view.Container.SetActive(false);
-            view.ArrowDownMark.SetActive(true);
-            view.ArrowUpMark.SetActive(false);
+            Color.RGBToHSV(currentColor, out float h, out float s, out float v);
+
+            if (view.EnableHueSlider && view.SliderHue != null)
+                view.SliderHue.Slider.SetValueWithoutNotify(h);
+
+            if (view.EnableSaturationSlider && view.SliderSaturation != null)
+                view.SliderSaturation.Slider.SetValueWithoutNotify(s);
+
+            if (view.EnableValueSlider && view.SliderValue != null)
+                view.SliderValue.Slider.SetValueWithoutNotify(v);
+
+            UpdateSaturationColor();
         }
 
-        private void SetSaturationColor()
+        private void UpdateSaturationColor()
         {
             if (!view.EnableSaturationSlider || view.SliderSaturation == null)
                 return;
@@ -146,14 +146,11 @@ namespace DCL.UI
             view.SliderSaturation.Slider.colors = block;
         }
 
-        private void TogglePanel() {
-            view.Container.SetActive(!view.Container.activeInHierarchy);
-            view.ArrowDownMark.SetActive(!view.ArrowDownMark.activeInHierarchy);
-            view.ArrowUpMark.SetActive(!view.ArrowUpMark.activeInHierarchy);
-        }
-
-        private void SetColor()
+        private void UpdateSlidersColor()
         {
+            foreach (var toggle in usedColorToggles)
+                toggle.SelectionHighlight.gameObject.SetActive(false);
+
             float h = view.EnableHueSlider && view.SliderHue != null
                 ? view.SliderHue.Slider.value
                 : view.DefaultHue;
@@ -167,7 +164,6 @@ namespace DCL.UI
                 : view.DefaultValue;
 
             Color newColor = Color.HSVToRGB(h, s, v);
-            view.ColorPreviewImage.color = newColor;
 
             if (view.EnableHueSlider && view.SliderHue != null)
                 CheckButtonInteractivity(view.SliderHue);

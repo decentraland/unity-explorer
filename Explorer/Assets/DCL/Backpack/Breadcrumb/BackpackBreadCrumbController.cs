@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -23,7 +22,7 @@ namespace DCL.Backpack.Breadcrumb
             this.eventBus = eventBus;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
-            colorPickerController = new WearablesColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            colorPickerController = new WearablesColorPickerController(view.WearablesColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
             colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterEvent += OnFilterEvent;
             eventBus.ChangeColorEvent += UpdateColorPickerColors;

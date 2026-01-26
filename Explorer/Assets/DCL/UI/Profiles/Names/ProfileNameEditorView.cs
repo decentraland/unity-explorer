@@ -17,9 +17,6 @@ namespace DCL.UI.ProfileNames
         [field: SerializeField]
         public Button OverlayCloseButton { get; set; }
 
-        [field: SerializeField]
-        public ColorPickerView ColorPickerView { get; private set; }
-
         [Serializable]
         public struct NonClaimedNameConfig
         {
@@ -64,9 +61,6 @@ namespace DCL.UI.ProfileNames
             public GameObject dropdownLoadingSpinner;
             public GameObject dropdownVerifiedIcon;
             public TMP_Text_ClickeableLink clickeableLink;
-
-            public Color nameColor;
-            public GameObject colorPicker;
 
             public bool saveButtonInteractable
             {

@@ -177,6 +177,8 @@ namespace DCL.PluginSystem.Global
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
+            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
 
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
@@ -222,20 +224,18 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
-                communitiesDataProvider
+                communitiesDataProvider,
+                colorToggle,
+                nameColors
             );
 
             mvcManager.RegisterController(passportController);
 
             ProfileNameEditorView profileNameEditorView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.NameEditorPrefab, ct)).Value.GetComponent<ProfileNameEditorView>();
 
-            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
-            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
-
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus,
-                colorToggle, nameColors));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
         }
 
         public class PassportSettings : IDCLPluginSettings
