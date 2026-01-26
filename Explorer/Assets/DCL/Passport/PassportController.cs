@@ -119,6 +119,8 @@ namespace DCL.Passport
         private readonly ISystemClipboard systemClipboard;
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly BadgePreviewCameraView badge3DPreviewCamera;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -146,8 +148,8 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
-        private readonly BadgePreviewCameraView badge3DPreviewCamera;
-        private readonly ImageControllerProvider imageControllerProvider;
+
+        public override CanvasOrdering.SortingLayer Layer { get; } = CanvasOrdering.SortingLayer.POPUP;
 
         public event Action<string, bool>? PassportOpened;
         public event Action<string, bool, string>? BadgesSectionOpened;
