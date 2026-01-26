@@ -45,6 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
         private bool sceneVisible = true;
         private bool backfaceCulling;
         private readonly Dictionary<Material, int> originalCullValues = new ();
+        private readonly Dictionary<Renderer, ShadowCastingMode> originalShadowModes = new ();
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
@@ -81,7 +82,9 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
                          .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
                          .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible)
-                         .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling);
+                         .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling)
+                         .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnLimitShadowCasters)
+                         .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters);
             this.debugBuilder = debugBuilder;
         }
 
@@ -194,6 +197,68 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (!backfaceCulling)
                     originalCullValues.Clear();
+            }
+        }
+
+        private void OnLimitShadowCasters(int maxShadowCasters)
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                int shadowCasterCount = 0;
+
+                foreach (Renderer renderer in renderers)
+                {
+                    if (renderer.shadowCastingMode == ShadowCastingMode.Off)
+                        continue;
+
+                    // Store original value if not already stored
+                    if (!originalShadowModes.ContainsKey(renderer))
+                        originalShadowModes[renderer] = renderer.shadowCastingMode;
+
+                    if (maxShadowCasters < 0 || shadowCasterCount < maxShadowCasters)
+                    {
+                        // Keep shadow casting enabled (restore if previously disabled)
+                        renderer.shadowCastingMode = originalShadowModes[renderer];
+                        shadowCasterCount++;
+                    }
+                    else
+                    {
+                        // Disable shadow casting
+                        renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    }
+                }
+            }
+        }
+
+        private void OnRestoreShadowCasters()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    if (originalShadowModes.TryGetValue(renderer, out ShadowCastingMode originalMode))
+                        renderer.shadowCastingMode = originalMode;
+                }
+
+                originalShadowModes.Clear();
             }
         }
 
