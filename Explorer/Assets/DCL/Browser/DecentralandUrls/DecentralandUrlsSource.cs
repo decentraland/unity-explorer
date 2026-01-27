@@ -86,6 +86,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CodeOfEthics => $"https://decentraland.{ENV}/ethics",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
+                DecentralandUrl.ApiDestinations => $"https://places.decentraland.{ENV}/api/destinations",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
                 DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}", //  $"https://decentraland.{ENV}/auth/requests",
