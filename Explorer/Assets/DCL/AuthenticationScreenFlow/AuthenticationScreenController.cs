@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
+using DCL.FeatureFlags;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -139,6 +140,9 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
+            bool enableEmailOTP = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
+            viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
+
             // Subscriptions
             foreach (Button button in viewInstance.UseAnotherAccountButton)
                 button.onClick.AddListener(ChangeAccount);
@@ -155,12 +159,18 @@ namespace DCL.AuthenticationScreenFlow
 
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
-                new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
-                new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
-                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
-                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
+                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
             );
+
+            if (enableEmailOTP)
+            {
+                fsm.AddStates(
+                    new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
+                    new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
+                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
+                );
+            }
 
             fsm.Enter<InitAuthState>();
         }

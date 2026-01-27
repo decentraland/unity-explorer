@@ -17,6 +17,9 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Header("PRIMARY LOGIN")]
         [field: SerializeField]
+        public GameObject EmailOTPContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public EmailInputFieldView EmailInputField { get; private set; } = null!;
 
         [field: Header("SECONDARY LOGINS")]
