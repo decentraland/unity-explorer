@@ -54,7 +54,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
         [Query]
         [None(typeof(AssetPreLoadComponent))]
-        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent, ref CRDTEntity crdtEntity)
+        private void StartAssetLoading(in Entity entity, ref PBAssetLoad sdkComponent, in CRDTEntity crdtEntity)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
@@ -63,7 +63,7 @@ namespace ECS.Unity.AssetLoad.Systems
             AssetPreLoadComponent component = AssetPreLoadComponent.Create();
             World.Add(entity, component);
 
-            ProcessAssetList(crdtEntity, ref sdkComponent, ref component);
+            ProcessAssetList(crdtEntity, in sdkComponent, ref component);
         }
 
         [Query]
@@ -73,10 +73,10 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
 
             sdkComponent.IsDirty = false;
-            ProcessAssetList(entity, ref sdkComponent, ref component);
+            ProcessAssetList(entity, in sdkComponent, ref component);
         }
 
-        private void ProcessAssetList(in CRDTEntity crdtEntity, ref PBAssetLoad sdkComponent, ref AssetPreLoadComponent existingComponent)
+        private void ProcessAssetList(in CRDTEntity crdtEntity, in PBAssetLoad sdkComponent, ref AssetPreLoadComponent existingComponent)
         {
             foreach (string path in sdkComponent.Assets)
             {
