@@ -424,6 +424,8 @@ MonoBehaviour:
       Severity: 4
     - Category: AVATAR
       Severity: 0
+    - Category: SOCIAL_EMOTE
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
