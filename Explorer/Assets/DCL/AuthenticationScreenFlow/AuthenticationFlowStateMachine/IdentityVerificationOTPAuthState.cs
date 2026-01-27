@@ -16,7 +16,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
@@ -27,7 +27,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState,
+            ReactiveProperty<AuthStatus> currentState,
             IWeb3VerifiedAuthenticator web3Authenticator,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
@@ -42,7 +42,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((string email, CancellationToken ct) payload)
         {
-            currentState.Value = AuthenticationStatus.VerificationInProgress;
+            currentState.Value = AuthStatus.VerificationInProgress;
 
             view.Show(payload.email);
             AuthenticateAsync(payload.email, payload.ct).Forget();

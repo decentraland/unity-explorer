@@ -21,7 +21,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly VerificationDappAuthView view;
         private readonly AuthenticationScreenController controller;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
@@ -31,7 +31,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState,
+            ReactiveProperty<AuthStatus> currentState,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IAppArgs appArgs,
             List<Resolution> possibleResolutions,
@@ -88,7 +88,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
-                if (currentState.Value == AuthenticationStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
@@ -98,7 +98,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthenticationStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
@@ -108,7 +108,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthenticationStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
@@ -118,7 +118,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthenticationStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
@@ -128,7 +128,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthenticationStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationInProgress)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
@@ -142,7 +142,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
             web3Authenticator.VerificationRequired -= ShowVerification;
-            currentState.Value = AuthenticationStatus.VerificationInProgress;
+            currentState.Value = AuthStatus.VerificationInProgress;
 
             controller.CurrentRequestID = data.requestId;
 
