@@ -240,18 +240,24 @@ namespace DCL.Places
                                                               sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
-                                                              withConnectedUsers: true)
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
                     placesResult = await placesAPIService.GetFavoritesDestinationsAsync(
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
                                                               sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              withConnectedUsers: true)
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: false)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
-                    placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct, withConnectedUsers: true)
+                    placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
+                                                              ownerAddress: ownProfile.UserId,
+                                                              ct: ct,
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: false)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
