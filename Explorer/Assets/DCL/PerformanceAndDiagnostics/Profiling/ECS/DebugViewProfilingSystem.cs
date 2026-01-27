@@ -125,6 +125,7 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable Scene Renderers", OnSceneRenderersDisabledChange, false)
                             .AddToggleField("Enable Backface Culling", OnBackfaceCullingChange, false)
                             .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnShadowLimiterChange)
+                            .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
                             .AddToggleField("Disable Landscape", OnLandscapeDisabledChange, false)
                             .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
                             .AddSingleButton("Disconnect Livekit Rooms", OnDisconnectLivekitRooms)
@@ -388,6 +389,11 @@ namespace DCL.Profiling.ECS
         private void OnShadowLimiterChange(int value)
         {
             VisualDebugSettings.ShadowLimiterValue = value;
+        }
+
+        private void OnShadowsDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.ShadowsDisabled = evt.newValue;
         }
 
         private void OnLandscapeDisabledChange(ChangeEvent<bool> evt)

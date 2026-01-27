@@ -111,5 +111,19 @@ namespace DCL.CharacterCamera
                 OnLODRenderersDisabledChanged?.Invoke(value);
             }
         }
+
+        // Current Scene - Disable Shadows (directional light)
+        public static event Action<bool>? OnShadowsDisabledChanged;
+        private static bool shadowsDisabled;
+        public static bool ShadowsDisabled
+        {
+            get => shadowsDisabled;
+            set
+            {
+                if (shadowsDisabled == value) return;
+                shadowsDisabled = value;
+                OnShadowsDisabledChanged?.Invoke(value);
+            }
+        }
     }
 }
