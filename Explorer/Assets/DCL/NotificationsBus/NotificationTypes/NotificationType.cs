@@ -66,6 +66,8 @@ namespace DCL.NotificationsBus.NotificationTypes
 
         COMMUNITY_DEEP_LINK,
 
-        TRANSFER_RECEIVED
+        TRANSFER_RECEIVED,
+
+        TIP_RECEIVED,
     }
 }

@@ -109,8 +109,8 @@ namespace DCL.AvatarRendering.Emotes.Load
             RepoolableList<IEmote> resolvedEmotesTmp)
         {
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
-            // Keep only successful emotes in the result list
-            resolvedEmotesTmp.List.RemoveAll(emote => !successfulPointers.Contains(emote.GetUrn()));
+            // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
+            resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
 
             World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
@@ -128,6 +128,13 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
+                // Skip emotes with unresolved DTO - treat as failed
+                if (emote.DTO?.Metadata == null)
+                {
+                    emotesWithResponse++;
+                    continue;
+                }
+
                 if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;

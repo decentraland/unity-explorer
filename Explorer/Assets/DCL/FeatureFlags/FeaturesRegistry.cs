@@ -39,7 +39,9 @@ namespace DCL.FeatureFlags
                 [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT),
                 [FeatureId.CHAT_MESSAGE_BUFFER] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG),
                 [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
+                [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
+                [FeatureId.DONATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -143,6 +145,8 @@ namespace DCL.FeatureFlags
         CHAT_MESSAGE_RATE_LIMIT,
         CHAT_MESSAGE_BUFFER,
         HEAD_SYNC,
+        STOP_ON_DUPLICATE_IDENTITY,
         PRIVATE_CHAT_REQUIRES_TOPIC,
+        DONATIONS,
     }
 }

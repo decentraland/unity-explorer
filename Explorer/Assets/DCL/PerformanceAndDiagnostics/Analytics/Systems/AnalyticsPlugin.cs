@@ -38,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
         private AutoTranslateAnalytics? autoTranslateAnalytics;
         private OutfitsAnalytics outfitsAnalytics;
+        private GiftAnalytics giftAnalytics;
         private HomeMarkerAnalytics homeMarkerAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
@@ -84,6 +85,7 @@ namespace DCL.PluginSystem.Global
 
             autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
             outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
+            giftAnalytics = new GiftAnalytics(analytics, eventBus);
             homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
 
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
