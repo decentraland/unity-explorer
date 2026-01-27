@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
@@ -52,6 +53,38 @@ namespace DCL.Landscape.Systems
                         .AddToggleField("Trees", OnTreesToggle, landscapeData.RenderTrees)
                         .AddToggleField("Grass", OnGrassToggle, landscapeData.RenderGrass)
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.ShowSatelliteFloor);
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnLandscapeEnabledChanged += OnLandscapeEnabledFromDebugPanel;
+        }
+
+        protected override void OnDispose()
+        {
+            VisualDebugSettings.OnLandscapeEnabledChanged -= OnLandscapeEnabledFromDebugPanel;
+        }
+
+        private void OnLandscapeEnabledFromDebugPanel(bool enabled)
+        {
+            landscapeEnabled = enabled;
+            ApplyLandscapeVisibility();
+        }
+
+        private void ApplyLandscapeVisibility()
+        {
+            landscapeData.RenderGround = landscapeEnabled;
+            landscapeData.RenderTrees = landscapeEnabled;
+            landscapeData.RenderGrass = landscapeEnabled;
+
+            TreeData? trees = landscape.CurrentTerrain.Trees;
+            if (trees != null)
+            {
+                if (landscapeEnabled)
+                    trees.Show();
+                else
+                    trees.Hide();
+            }
+
+            floor.SwitchVisibilitySetting(landscapeEnabled);
         }
 
         private void OnLandscapeToggle(ChangeEvent<bool> evt)

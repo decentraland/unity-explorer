@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -15,6 +16,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
+using UnityEngine.UIElements;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -117,7 +119,16 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU MainThread:", cpuMainThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
+                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty))
+                            // Visual Debug Settings - Centralized toggles for quick debugging
+                            .AddToggleField("Disable Minimap Camera", OnMinimapCameraDisabledChange, false)
+                            .AddToggleField("Disable Scene Renderers", OnSceneRenderersDisabledChange, false)
+                            .AddToggleField("Enable Backface Culling", OnBackfaceCullingChange, false)
+                            .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnShadowLimiterChange)
+                            .AddToggleField("Disable Landscape", OnLandscapeDisabledChange, false)
+                            .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
+                            .AddSingleButton("Disconnect Livekit Rooms", OnDisconnectLivekitRooms)
+                            .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false);
 
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
@@ -356,6 +367,47 @@ namespace DCL.Profiling.ECS
                               };
 
             elementBinding.Value = frameTimeInMS == 0 ? "collecting.." : $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
+        }
+
+        // Visual Debug Settings callbacks
+        private void OnMinimapCameraDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.MinimapCameraDisabled = evt.newValue;
+        }
+
+        private void OnSceneRenderersDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.SceneRendererVisible = !evt.newValue;
+        }
+
+        private void OnBackfaceCullingChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.BackfaceCullingEnabled = evt.newValue;
+        }
+
+        private void OnShadowLimiterChange(int value)
+        {
+            VisualDebugSettings.ShadowLimiterValue = value;
+        }
+
+        private void OnLandscapeDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.LandscapeEnabled = !evt.newValue;
+        }
+
+        private void OnRoadsDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.RoadsEnabled = !evt.newValue;
+        }
+
+        private void OnDisconnectLivekitRooms()
+        {
+            VisualDebugSettings.DisconnectLivekitRooms();
+        }
+
+        private void OnLODRenderersDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.LODRenderersDisabled = evt.newValue;
         }
     }
 }

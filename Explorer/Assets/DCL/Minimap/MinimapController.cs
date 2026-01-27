@@ -146,7 +146,7 @@ namespace DCL.Minimap
             disposeCts = new CancellationTokenSource();
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorButton;
-            MinimapCameraDebugSettings.OnMinimapCameraDisabledChanged += OnMinimapCameraDebugDisabledChanged;
+            VisualDebugSettings.OnMinimapCameraDisabledChanged += OnMinimapCameraDebugDisabledChanged;
         }
 
         public override void Dispose()
@@ -158,7 +158,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
-            MinimapCameraDebugSettings.OnMinimapCameraDisabledChanged -= OnMinimapCameraDebugDisabledChanged;
+            VisualDebugSettings.OnMinimapCameraDisabledChanged -= OnMinimapCameraDebugDisabledChanged;
 
             if (includeBannedUsersFromScene)
             {

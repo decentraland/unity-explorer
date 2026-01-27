@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
@@ -90,6 +91,86 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters)
                          .AddToggleField("Disable Shadows:", OnDisableShadowsToggle, shadowsDisabled);
             this.debugBuilder = debugBuilder;
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnSceneRendererVisibleChanged += OnSceneRendererVisibleFromDebugPanel;
+            VisualDebugSettings.OnBackfaceCullingChanged += OnBackfaceCullingFromDebugPanel;
+            VisualDebugSettings.OnShadowLimiterChanged += OnShadowLimiterFromDebugPanel;
+        }
+
+        private void OnSceneRendererVisibleFromDebugPanel(bool visible)
+        {
+            sceneVisible = visible;
+            ApplySceneVisibility();
+        }
+
+        private void OnBackfaceCullingFromDebugPanel(bool enabled)
+        {
+            backfaceCulling = enabled;
+            ApplyBackfaceCulling();
+        }
+
+        private void OnShadowLimiterFromDebugPanel(int maxShadowCasters)
+        {
+            OnLimitShadowCasters(maxShadowCasters);
+        }
+
+        private void ApplySceneVisibility()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                    renderer.enabled = sceneVisible;
+            }
+        }
+
+        private void ApplyBackfaceCulling()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
+            }
         }
 
         protected override void Update(float t)
@@ -302,6 +383,11 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void OnDispose()
         {
             Object.Destroy(sceneBoundsCube);
+
+            // Unsubscribe from centralized visual debug settings
+            VisualDebugSettings.OnSceneRendererVisibleChanged -= OnSceneRendererVisibleFromDebugPanel;
+            VisualDebugSettings.OnBackfaceCullingChanged -= OnBackfaceCullingFromDebugPanel;
+            VisualDebugSettings.OnShadowLimiterChanged -= OnShadowLimiterFromDebugPanel;
         }
 
         private void RefreshSceneDebugInfo()

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -34,6 +35,14 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             sceneParticipantsHub = this.gateKeeperSceneRoom.Room().Participants;
 
             AllLocalRoomsRemoteParticipantIdentities();
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnDisconnectLivekitRooms += OnDisconnectLivekitRoomsFromDebugPanel;
+        }
+
+        private void OnDisconnectLivekitRoomsFromDebugPanel()
+        {
+            StopLocalRoomsAsync().Forget();
         }
 
         public IRoom IslandRoom() =>
