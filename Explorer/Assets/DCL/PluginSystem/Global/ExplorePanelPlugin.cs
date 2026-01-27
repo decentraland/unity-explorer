@@ -47,6 +47,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -138,6 +139,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         private readonly bool includeCameraReel;
         private readonly bool includeDiscover;
@@ -235,7 +237,8 @@ namespace DCL.PluginSystem.Global
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus,
             IDonationsService donationsService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -304,6 +307,7 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.donationsService = donationsService;
             this.realmNavigator = realmNavigator;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public void Dispose()
@@ -506,7 +510,8 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource,
+                friendServiceProxy, profileRepositoryWrapper);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,

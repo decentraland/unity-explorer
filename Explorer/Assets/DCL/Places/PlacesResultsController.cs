@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.Friends;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -10,12 +11,15 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Utility;
 
@@ -25,6 +29,7 @@ namespace DCL.Places
     {
         private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
         private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
+        private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
@@ -36,12 +41,14 @@ namespace DCL.Places
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
+        private bool allFriendsLoaded;
 
         private CancellationTokenSource? loadPlacesCts;
         private CancellationTokenSource? placeCardOperationsCts;
@@ -57,7 +64,9 @@ namespace DCL.Places
             IWebRequestController webRequestController,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource)
+            IDecentralandUrlsSource dclUrlSource,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.placesController = placesController;
@@ -66,6 +75,7 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
+            this.friendServiceProxy = friendServiceProxy;
             this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
 
             view.BackButtonClicked += OnBackButtonClicked;
@@ -80,7 +90,7 @@ namespace DCL.Places
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
 
-            view.SetDependencies(placesStateService, new ThumbnailLoader(new SpriteCache(webRequestController)));
+            view.SetDependencies(placesStateService, new ThumbnailLoader(new SpriteCache(webRequestController)), profileRepositoryWrapper);
             view.InitializePlacesGrid();
         }
 
@@ -183,6 +193,13 @@ namespace DCL.Places
         {
             isPlacesGridLoadingItems = true;
 
+            if (!allFriendsLoaded)
+            {
+                List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
+                placesStateService.SetAllFriends(allFriends);
+                allFriendsLoaded = true;
+            }
+
             if (pageNumber == 0)
             {
                 placesStateService.ClearPlaces();
@@ -202,27 +219,29 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.BROWSE:
-                    placesResult = await placesAPIService.SearchPlacesAsync(
+                    placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
                                                               sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
-                    placesResult = await placesAPIService.GetFavoritesAsync(
+                    placesResult = await placesAPIService.GetFavoritesDestinationsAsync(
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
-                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                              withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
-                    placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
+                    placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct, withConnectedUsers: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct)
+                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
@@ -318,6 +337,31 @@ namespace DCL.Places
             loadPlacesCts?.SafeCancelAndDispose();
             view.ClearPlacesResults(null);
             placesStateService.ClearPlaces();
+            placesStateService.ClearAllFriends();
+            allFriendsLoaded = false;
+        }
+
+        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
+        {
+            var emptyResult = new List<Profile.CompactInfo>();
+
+            if (!friendServiceProxy.Configured)
+                return emptyResult;
+
+            var result = await friendServiceProxy.StrictObject
+                                                 .GetFriendsAsync(0, 1000, ct)
+                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested)
+                return emptyResult;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_FRIENDS_ERROR_MESSAGE));
+                return emptyResult;
+            }
+
+            return result.Value.Friends.ToList();
         }
     }
 }
