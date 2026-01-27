@@ -32,7 +32,8 @@ namespace DCL.UI
             controller.Dispose();
         }
 
-        // TODO (Maurizio) should set the color from the profile when opening passport?
+        public void ResetPanel() =>
+            view.ColorPickerView.gameObject.SetActive(false);
 
         public void SetColor(Color color) =>
             controller.SetColor(color);
@@ -42,15 +43,10 @@ namespace DCL.UI
 
         private void TogglePanel()
         {
-            // TODO (Maurizio) change button state here?
-
             bool isActive = view.ColorPickerView.gameObject.activeInHierarchy;
             view.ColorPickerView.gameObject.SetActive(!isActive);
 
             if (isActive) OnColorPickerClosed.Invoke();
         }
-
-        private void ResetPanel() =>
-            view.ColorPickerView.gameObject.SetActive(false);
     }
 }

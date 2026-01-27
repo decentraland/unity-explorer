@@ -496,7 +496,7 @@ namespace DCL.Passport
         protected override void OnBeforeViewShow()
         {
             viewInstance!.ContextMenuButton.gameObject.SetActive(false);
-            viewInstance.UserBasicInfoModuleView.NameColorPickerView.ColorPickerView.gameObject.SetActive(false);
+            colorPickerController?.ResetPanel();
         }
 
         protected override void OnViewShow()
@@ -531,6 +531,8 @@ namespace DCL.Passport
 
         protected override void OnViewClose()
         {
+            SaveUserNameColor();
+
             passportErrorsController!.Hide(true);
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
@@ -611,6 +613,8 @@ namespace DCL.Passport
                 if (profile == null)
                     return;
 
+                // Setup claimed name color picker
+                colorPickerController?.SetColor(profile.UserNameColor);
                 viewInstance!.UserBasicInfoModuleView.NameColorPickerView.gameObject.SetActive(
                     FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && profile.HasClaimedName
                 );

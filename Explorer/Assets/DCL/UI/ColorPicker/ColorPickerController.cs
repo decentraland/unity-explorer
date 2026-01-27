@@ -69,8 +69,17 @@ namespace DCL.UI
             view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
         }
 
-        public void SetColor(Color color) =>
+        public void SetColor(Color color)
+        {
             UpdateSliderValues(color);
+            PreselectMatchingPreset(color);
+
+            void PreselectMatchingPreset(Color color)
+            {
+                foreach (var toggle in usedColorToggles)
+                    toggle.SelectionHighlight.gameObject.SetActive(color.Equals(toggle.ColorPicker.color));
+            }
+        }
 
         public void SetPresets(IEnumerable<Color> presetColors)
         {
