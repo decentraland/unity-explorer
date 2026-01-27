@@ -9,11 +9,17 @@ namespace DCL.UI.OTPInput
     public class OTPInputFieldView : MonoBehaviour
     {
         [SerializeField] private TMP_InputField hiddenInput;
+        [SerializeField] private GameObject slotsParent;
         [SerializeField] private OTPSlotView[] slots;
 
         [Header("CARET")]
         [SerializeField] private Image caretImage;
         [SerializeField] private float caretBlinkRate = 1.5f;
+
+        [Header("RESULT")]
+        [SerializeField] private TMP_Text resultText;
+        [SerializeField] private GameObject resultSuccessIcon;
+        [SerializeField] private GameObject resultErrorIcon;
 
         public event Action<string>? CodeEntered;
 
@@ -59,6 +65,8 @@ namespace DCL.UI.OTPInput
 
         private void OnEnable()
         {
+            resultText.gameObject.SetActive(false);
+
             hiddenInput.onSelect.AddListener(OnSelected);
             hiddenInput.onValueChanged.AddListener(UpdateSlotsWithText);
             hiddenInput.onEndEdit.AddListener(UnselectAll);
@@ -67,6 +75,8 @@ namespace DCL.UI.OTPInput
         private void OnDisable()
         {
             StopClearAndFocusCoroutine();
+            Clear();
+
             hiddenInput.onSelect.RemoveAllListeners();
             hiddenInput.onValueChanged.RemoveAllListeners();
             hiddenInput.onEndEdit.RemoveAllListeners();
@@ -118,6 +128,8 @@ namespace DCL.UI.OTPInput
         public void Clear()
         {
             StopClearAndFocusCoroutine();
+            resultText.gameObject.SetActive(false);
+
             hiddenInput.DeactivateInputField(clearSelection: true);
             hiddenInput.text = string.Empty;
             UnselectAll(string.Empty);
@@ -126,6 +138,7 @@ namespace DCL.UI.OTPInput
         private void ClearAndFocus()
         {
             StopClearAndFocusCoroutine();
+            resultText.gameObject.SetActive(false);
 
             hiddenInput.interactable = true;
             hiddenInput.SetTextWithoutNotify(string.Empty);
@@ -136,12 +149,6 @@ namespace DCL.UI.OTPInput
 
             hiddenInput.ActivateInputField();
             hiddenInput.Select();
-        }
-
-        public void ClearAndFocusDelayed(float seconds)
-        {
-            StopClearAndFocusCoroutine();
-            clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(seconds));
         }
 
         private IEnumerator ClearAndFocusAfterDelay(float seconds)
@@ -161,8 +168,15 @@ namespace DCL.UI.OTPInput
         [ContextMenu(nameof(SetSuccess))]
         public void SetSuccess()
         {
+            hiddenInput.interactable = false;
+
             foreach (OTPSlotView slot in slots)
                 slot.SetState(OTPSlotView.SlotState.SUCCESS);
+
+            resultText.gameObject.SetActive(true);
+            resultText.text = "Success";
+            resultSuccessIcon.SetActive(true);
+            resultErrorIcon.SetActive(false);
         }
 
         [ContextMenu(nameof(SetFailure))]
@@ -173,10 +187,19 @@ namespace DCL.UI.OTPInput
             foreach (OTPSlotView slot in slots)
                 slot.SetState(OTPSlotView.SlotState.ERROR);
 
-            ShakeOtpInputField();
+            ShakeAnimation();
+
+            resultText.gameObject.SetActive(true);
+            resultText.text = "Incorrect code";
+            resultSuccessIcon.SetActive(false);
+            resultErrorIcon.SetActive(true);
+
+            // After showing error feedback, clear the field and refocus it so user can retry
+            StopClearAndFocusCoroutine();
+            clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(1.5f));
         }
 
-        private void ShakeOtpInputField()
+        private void ShakeAnimation()
         {
             // throw new NotImplementedException();
         }

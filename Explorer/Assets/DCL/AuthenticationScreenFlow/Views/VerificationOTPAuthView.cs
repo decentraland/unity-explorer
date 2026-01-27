@@ -23,15 +23,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button ResendCodeButton { get; private set; } = null!;
 
-        [field: SerializeField]
-        public TMP_Text VerificationResultText { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject VerificationSuccessIcon { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject VerificationErrorIcon { get; private set; } = null!;
-
         private int hideAnimHash = UIAnimationHashes.OUT;
 
         [Space]
@@ -41,10 +32,9 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Show(string email)
         {
+            InputField.Clear();
             ShowAsync(CancellationToken.None).Forget();
-
             description.text = description.text.Replace("your@email.com", email); // Update description with user email
-            VerificationResultText.gameObject.SetActive(false); // Reset OTP result UI
         }
 
         public void Hide(int hideAnimHash)

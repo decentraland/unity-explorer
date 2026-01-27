@@ -55,8 +55,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            view.InputField.Clear();
-
             // Listeners
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();
@@ -147,10 +145,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OnEntered(string otp)
         {
-            view.VerificationResultText.gameObject.SetActive(false);
-            view.VerificationSuccessIcon.SetActive(false);
-            view.VerificationErrorIcon.SetActive(false);
-
             OnOtpEnteredAsync().Forget();
             return;
 
@@ -159,38 +153,23 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 try
                 {
                     await web3Authenticator.SubmitOtp(otp);
-                    ShowOtpSuccess();
+                    ShowOtpResult(true);
                 }
                 catch (CodeVerificationException)
                 {
-                    ShowOtpError();
+                    ShowOtpResult(false);
                 }
             }
         }
 
-        private void ShowOtpSuccess()
+        private void ShowOtpResult(bool isSuccess)
         {
-            OTPVerified?.Invoke(true);
-            view.InputField.SetSuccess();
+            OTPVerified?.Invoke(isSuccess);
 
-            view.VerificationResultText.gameObject.SetActive(true);
-            view.VerificationResultText.text = "Success";
-            view.VerificationSuccessIcon.SetActive(true);
-            view.VerificationErrorIcon.SetActive(false);
-        }
-
-        private void ShowOtpError()
-        {
-            OTPVerified?.Invoke(false);
-            view.InputField.SetFailure();
-
-            view.VerificationResultText.gameObject.SetActive(true);
-            view.VerificationResultText.text = "Incorrect code";
-            view.VerificationSuccessIcon.SetActive(false);
-            view.VerificationErrorIcon.SetActive(true);
-
-            // After showing error feedback, clear the field and refocus it so user can retry
-            view.InputField.ClearAndFocusDelayed(1.5f);
+            if (isSuccess)
+                view.InputField.SetSuccess();
+            else
+                view.InputField.SetFailure();
         }
     }
 }
