@@ -22,6 +22,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
+using DCL.CharacterCamera;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Donations;
@@ -89,6 +90,7 @@ namespace DCL.Minimap
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
+        private bool minimapCameraDisabledByDebug;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -144,6 +146,7 @@ namespace DCL.Minimap
             disposeCts = new CancellationTokenSource();
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorButton;
+            MinimapCameraDebugSettings.OnMinimapCameraDisabledChanged += OnMinimapCameraDebugDisabledChanged;
         }
 
         public override void Dispose()
@@ -155,6 +158,7 @@ namespace DCL.Minimap
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
+            MinimapCameraDebugSettings.OnMinimapCameraDisabledChanged -= OnMinimapCameraDebugDisabledChanged;
 
             if (includeBannedUsersFromScene)
             {
@@ -190,6 +194,16 @@ namespace DCL.Minimap
             if (viewInstance == null) return;
 
             viewInstance.donateButton.gameObject.SetActive(donationStatus.enabled);
+        }
+
+        private void OnMinimapCameraDebugDisabledChanged(bool disabled)
+        {
+            minimapCameraDisabledByDebug = disabled;
+
+            if (disabled)
+                mapCameraController?.SuspendRendering();
+            else
+                mapCameraController?.ResumeRendering();
         }
 
         protected override void OnViewInstantiated()
@@ -385,7 +399,8 @@ namespace DCL.Minimap
 
         protected override void OnFocus()
         {
-            mapCameraController?.ResumeRendering();
+            if (!minimapCameraDisabledByDebug)
+                mapCameraController?.ResumeRendering();
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);

@@ -45,7 +45,8 @@ namespace DCL.Character.CharacterCamera.Systems
 
             widget?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
                    .AddToggleField("Enable Noise", OnNoiseChange, false)
-                   .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
+                   .AddFloatSliderField("Noise Value", noiseSlider, 0, 20)
+                   .AddToggleField("Disable Minimap Camera", OnMinimapCameraDisabledChange, false);
 
             if (isDebug && widget != null)
             {
@@ -86,6 +87,11 @@ namespace DCL.Character.CharacterCamera.Systems
         private void OnNoiseChange(ChangeEvent<bool> evt)
         {
             cameraNoise = evt.newValue;
+        }
+
+        private void OnMinimapCameraDisabledChange(ChangeEvent<bool> evt)
+        {
+            MinimapCameraDebugSettings.MinimapCameraDisabled = evt.newValue;
         }
 
         protected override void Update(float t)
