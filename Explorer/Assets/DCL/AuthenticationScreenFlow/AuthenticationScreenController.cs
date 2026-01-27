@@ -38,7 +38,7 @@ namespace DCL.AuthenticationScreenFlow
             FetchingProfileCached,
             LoggedInCached,
 
-            Login,
+            LoginRequested,
             VerificationInProgress,
             FetchingProfile,
             LoggedIn,

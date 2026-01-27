@@ -38,7 +38,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((PopupType type, int animHash) payload)
         {
-
             switch (payload.type)
             {
                 case PopupType.NONE: break;
@@ -54,7 +53,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (splashScreen != null) // it can be destroyed after first login
                 splashScreen.FadeOutAndHide();
 
-            currentState.Value = AuthenticationStatus.Login;
             view.Show(payload.animHash);
 
             if (view.gameObject.activeSelf)
@@ -133,6 +131,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void Login(LoginMethod method)
         {
+            currentState.Value = AuthenticationStatus.LoginRequested;
             compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
 
             view.ShowLoading();
@@ -141,6 +140,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OTPLogin()
         {
+            currentState.Value = AuthenticationStatus.LoginRequested;
             compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
 
             view.Hide();

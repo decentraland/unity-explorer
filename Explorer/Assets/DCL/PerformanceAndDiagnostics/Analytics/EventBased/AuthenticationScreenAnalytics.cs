@@ -37,7 +37,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
                 // Triggers when the user is not logged in (login is requested)
                 // TODO: We should also track the auth Request UUID here to link the explorer_v2 event with the auth page view and login events.
-                case AuthenticationStatus.Login:
+                case AuthenticationStatus.LoginRequested:
                     analytics.Track(Authentication.LOGIN_REQUESTED); break;
 
                 // Triggered when the user tries to log in and is redirected to the authentication site
