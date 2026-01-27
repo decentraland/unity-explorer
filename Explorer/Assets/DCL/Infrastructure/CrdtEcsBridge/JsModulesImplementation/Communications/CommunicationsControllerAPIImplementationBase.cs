@@ -22,7 +22,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
           RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
         }
 
-        protected readonly List<ITypedArray<byte>> eventsToProcess = new ();
+        protected readonly List<PoolableByteArray> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
@@ -31,7 +31,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
-        internal IReadOnlyList<ITypedArray<byte>> EventsToProcess => eventsToProcess;
+        internal IReadOnlyList<PoolableByteArray> EventsToProcess => eventsToProcess;
 
         protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
@@ -100,8 +100,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             {
                 eventArray.SetProperty("length", eventsToProcess.Count);
 
-                for (int i = 0; i < eventsToProcess.Count; i++)
-                    eventArray.SetProperty(i, eventsToProcess[i]);
+                for (var i = 0; i < eventsToProcess.Count; i++)
+                {
+                    PoolableByteArray src = eventsToProcess[i];
+                    ITypedArray dst = jsOperations.GetTempUint8Array();
+                    dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
+                    src.Dispose();
+                    object subArray = dst.InvokeMethod("subarray", 0, src.Length);
+                    eventArray.SetProperty(i, subArray);
+                }
 
                 eventsToProcess.Clear();
                 return eventArray;
