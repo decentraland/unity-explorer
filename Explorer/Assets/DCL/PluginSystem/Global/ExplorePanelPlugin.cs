@@ -43,6 +43,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Donations;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -157,6 +158,7 @@ namespace DCL.PluginSystem.Global
         private CommunitiesBrowserController? communitiesBrowserController;
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
+        private EventsController? eventsController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -318,6 +320,7 @@ namespace DCL.PluginSystem.Global
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
+            eventsController?.Dispose();
             upscalingController?.Dispose();
             placeDetailPanelController?.Dispose();
         }
@@ -521,6 +524,9 @@ namespace DCL.PluginSystem.Global
                 placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
             mvcManager.RegisterController(placeDetailPanelController);
 
+            EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
+            eventsController = new EventsController(eventsView, cursor);
+
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
                     navmapController,
@@ -544,6 +550,7 @@ namespace DCL.PluginSystem.Global
                         profileRepositoryWrapper),
                     communitiesBrowserController,
                     placesController,
+                    eventsController,
                     inputBlock,
                     includeCameraReel,
                     includeDiscover,
