@@ -4,6 +4,8 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem;
+using DCL.Rendering.RenderSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -14,6 +16,7 @@ using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -27,6 +30,7 @@ namespace DCL.LOD.Systems
         private IGltfContainerAssetsCache gltfCache;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
+        private MaterialManager materialManager;
 
         public ResolveISSLODSystem(World world, IGltfContainerAssetsCache gltfCache, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
@@ -112,7 +116,7 @@ namespace DCL.LOD.Systems
                 {
                     if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.UNINITIALIZED)
                     {
-                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, materialManager, out GltfContainerAsset asset))
                             PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
                                 creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
                         else

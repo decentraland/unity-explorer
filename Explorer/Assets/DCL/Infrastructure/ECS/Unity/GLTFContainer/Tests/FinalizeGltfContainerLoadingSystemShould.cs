@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.RenderSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -56,7 +57,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget, new MaterialManager());
         }
 
         [TearDown]
