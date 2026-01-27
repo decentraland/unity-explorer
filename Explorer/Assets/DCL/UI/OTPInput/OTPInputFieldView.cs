@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,13 @@ namespace DCL.UI.OTPInput
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private GameObject resultSuccessIcon;
         [SerializeField] private GameObject resultErrorIcon;
+
+        [Header("SHAKE ANIMATION")]
+        [SerializeField] private float shakeStrength = 15f;
+        [SerializeField] private float shakeDuration = 0.5f;
+        [SerializeField] private int shakeVibrato = 3;
+        [SerializeField] private float shakeElasticity;
+        [SerializeField] private Ease shakeEase = Ease.OutSine;
 
         public event Action<string>? CodeEntered;
 
@@ -196,12 +204,14 @@ namespace DCL.UI.OTPInput
 
             // After showing error feedback, clear the field and refocus it so user can retry
             StopClearAndFocusCoroutine();
-            clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(1.5f));
+            clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(shakeDuration));
         }
 
         private void ShakeAnimation()
         {
-            // throw new NotImplementedException();
+            slotsParent.transform
+                       .DOPunchPosition(new Vector3(shakeStrength, 0f, 0f), shakeDuration, shakeVibrato, shakeElasticity)
+                       .SetEase(shakeEase);
         }
     }
 }

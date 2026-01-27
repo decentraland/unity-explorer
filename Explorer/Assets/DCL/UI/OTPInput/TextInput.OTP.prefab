@@ -37,7 +37,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: -20}
+  m_AnchoredPosition: {x: 0, y: -28.7}
   m_SizeDelta: {x: 403.39697, y: 20}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &8118811165113820758
@@ -913,6 +913,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UI::DCL.UI.OTPInput.MyOTPInputFieldView
   hiddenInput: {fileID: 5947844483155430197}
+  slotsParent: {fileID: 1623578482067128555}
   slots:
   - {fileID: 4784755599772935340}
   - {fileID: 4730975420690055600}
@@ -925,6 +926,11 @@ MonoBehaviour:
   resultText: {fileID: 973667196508952741}
   resultSuccessIcon: {fileID: 4735152705605063727}
   resultErrorIcon: {fileID: 8235318434804399863}
+  shakeStrength: 15
+  shakeDuration: 1.5
+  shakeVibrato: 5
+  shakeElasticity: 5
+  shakeEase: 25
 --- !u!1001 &1450504443393890793
 PrefabInstance:
   m_ObjectHideFlags: 0
