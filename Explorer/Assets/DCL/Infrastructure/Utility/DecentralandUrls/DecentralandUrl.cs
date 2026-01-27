@@ -107,7 +107,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         JumpInGenesisCityLink,
         JumpInWorldLink,
-        Support,
 
         /// <summary>
         ///     Normally Entities Active are served through Asset Bundle Registry, and not via a catalyst, it's transparent for consumers
