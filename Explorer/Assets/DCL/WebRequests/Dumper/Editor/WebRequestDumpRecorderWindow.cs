@@ -14,11 +14,13 @@ namespace DCL.WebRequests.Dumper.Editor
     public class WebRequestDumpRecorderWindow : EditorWindow
     {
         private const string FILTER_PREFS_KEY = "WebRequestDumper.Filter";
+        private const string IS_REGEX_PREFS_KEY = "WebRequestDumper.IsRegex";
         private const string DISABLE_DISK_CACHE_PREFS_KEY = "WebRequestDumper.DisableCache";
 
         private RequestMetricRecorder[] activeMetrics => WebRequestsDumper.Instance.activeMetrics;
 
         private TextField filterField;
+        private Toggle isRegexToggle;
         private ListView metricsView;
         private Button restartButton;
         private Button saveButton;
@@ -53,7 +55,6 @@ namespace DCL.WebRequests.Dumper.Editor
 
             // Filter field
             filterField = new TextField("URL Filter (Regex)");
-            filterField.style.marginBottom = 10;
 
             // Load filter from EditorPrefs
             string savedFilter = EditorPrefs.GetString(FILTER_PREFS_KEY, string.Empty);
@@ -62,11 +63,29 @@ namespace DCL.WebRequests.Dumper.Editor
 
             filterField.RegisterValueChangedCallback(evt =>
             {
-                WebRequestsDumper.Instance.Filter = evt.newValue;
-                EditorPrefs.SetString(FILTER_PREFS_KEY, evt.newValue);
+                string value = evt.newValue.Trim();
+                WebRequestsDumper.Instance.Filter = value;
+                EditorPrefs.SetString(FILTER_PREFS_KEY, value);
             });
 
             root.Add(filterField);
+
+            // Is Regex field
+            isRegexToggle = new Toggle("Is Regex");
+            isRegexToggle.style.marginBottom = 10;
+
+            // Load the value from EditorPrefs
+            bool isRegex = EditorPrefs.GetBool(IS_REGEX_PREFS_KEY, false);
+            isRegexToggle.value = isRegex;
+            WebRequestsDumper.Instance.IsRegEx = isRegex;
+
+            isRegexToggle.RegisterValueChangedCallback(evt =>
+            {
+                WebRequestsDumper.Instance.IsRegEx = evt.newValue;
+                EditorPrefs.SetBool(IS_REGEX_PREFS_KEY, evt.newValue);
+            });
+
+            root.Add(isRegexToggle);
 
             // Disable Disk Cache
             var disableCacheToggle = new Toggle("Disable Cache");

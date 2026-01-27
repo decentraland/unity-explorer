@@ -21,10 +21,12 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         }
 
         internal const string SEND_REQUEST_MARKER = "WebRequest.Send";
+        internal const string SEND_REQUEST_FAILED_MARKER = "WebRequest.Failed";
         internal const string PROCESS_DATA_MARKER = "WebRequest.ProcessData";
         internal const string DOWNLOADED_DATA_SIZE_MARKER = "WebRequest.DownloadedDataSize";
 
         internal readonly SampleGroup sendRequest = new (SEND_REQUEST_MARKER, SampleUnit.Microsecond);
+        internal readonly SampleGroup sendRequestFailed = new (SEND_REQUEST_FAILED_MARKER, SampleUnit.Undefined);
         internal readonly SampleGroup processData = new (PROCESS_DATA_MARKER, SampleUnit.Microsecond);
         internal readonly SampleGroup downloadedDataSize = new (DOWNLOADED_DATA_SIZE_MARKER, SampleUnit.Megabyte);
 
@@ -52,8 +54,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             if (WarmingUp) return;
 
-            Measure.Custom(sendRequest, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
-            Measure.Custom(downloadedDataSize, request.UnityWebRequest.downloadedBytes / 1_000_000D);
+            if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
+            {
+                Measure.Custom(sendRequest, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
+                Measure.Custom(downloadedDataSize, request.UnityWebRequest.downloadedBytes / 1_000_000D);
+            }
+            else { Measure.Custom(sendRequestFailed, 1); }
+
             requests.Remove(request.UnityWebRequest);
         }
 
@@ -68,7 +75,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             if (WarmingUp) return;
 
-            Measure.Custom(processData, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp()));
+            if (request.UnityWebRequest.result == UnityWebRequest.Result.Success) { Measure.Custom(processData, ToMs(requests[request.UnityWebRequest].started, Stopwatch.GetTimestamp())); }
+
             requests.Remove(request.UnityWebRequest);
         }
     }
