@@ -5,11 +5,15 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -46,6 +50,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcel;
 
+        private readonly Dictionary<Material, int> originalCullValues = new ();
+        private readonly Dictionary<Material, Color> originalColors = new ();
+        private bool backfaceCulling;
+        private bool isPaintedBackface;
+
+
         internal UpdateCurrentSceneSystem(
             World world,
             IRealmData realmData,
@@ -66,16 +76,77 @@ namespace ECS.SceneLifeCycle.Systems
             globalPositionBinding = new ElementBinding<string>(string.Empty);
             sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
+
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
-                         .SetVisibilityBinding(debugInfoVisibilityBinding)
-                         .AddCustomMarker("SDK 6:", sdk6Binding)
-                         .AddCustomMarker("Name:", sceneNameBinding)
-                         .AddCustomMarker("Parcels:", sceneParcelsBinding)
-                         .AddCustomMarker("Height (m):", sceneHeightBinding)
-                         .AddCustomMarker("Global Pos:", globalPositionBinding)
-                         .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
-                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
+                        .SetVisibilityBinding(debugInfoVisibilityBinding)
+                        .AddCustomMarker("SDK 6:", sdk6Binding)
+                        .AddCustomMarker("Name:", sceneNameBinding)
+                        .AddCustomMarker("Parcels:", sceneParcelsBinding)
+                        .AddCustomMarker("Height (m):", sceneHeightBinding)
+                        .AddCustomMarker("Global Pos:", globalPositionBinding)
+                        .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
+                        .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling)
+                        .AddSingleButton("Backface debugger", PaintBackFaceMaterials)
+                        .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
             this.debugBuilder = debugBuilder;
+        }
+
+        private void PaintBackFaceMaterials()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (!sceneWorld.Has<TransformComponent>(sceneContainer))
+                return;
+
+            ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+            Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+            if (isPaintedBackface)
+            {
+                // Restore original colors
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        if (originalColors.TryGetValue(material, out Color originalColor))
+                            material.color = originalColor;
+                    }
+                }
+
+                originalColors.Clear();
+                isPaintedBackface = false;
+            }
+            else
+            {
+                // Paint based on backface culling setting
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        // Store original color
+                        if (!originalColors.ContainsKey(material))
+                            originalColors[material] = material.color;
+
+                        // Check if material has backface culling enabled (CullMode.Back = 2)
+                        bool hasBackfaceCulling = material.HasProperty(CULL) && material.GetInt(CULL) == (int)CullMode.Back;
+
+                        // Green if has backface culling, Red otherwise
+                        material.color = hasBackfaceCulling ? Color.green : Color.red;
+                    }
+                }
+
+                isPaintedBackface = true;
+            }
         }
 
         protected override void Update(float t)
@@ -92,6 +163,50 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
                 RefreshSceneDebugInfo();
+        }
+
+        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            backfaceCulling = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            // Store original value and set to Front (cull front faces, show back faces)
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            // Restore original value
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
+            }
         }
 
         private void UpdateSceneReadiness(Vector2Int parcel)
