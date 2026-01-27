@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
-    public class ColorPickerCore : IDisposable
+    public class ColorPickerController : IDisposable
     {
         private const float INCREMENT_AMOUNT = 0.1f;
 
@@ -17,7 +17,7 @@ namespace DCL.UI
 
         public event Action<Color> OnColorChanged;
 
-        public ColorPickerCore(ColorPickerView view, ColorToggleView colorToggle)
+        public ColorPickerController(ColorPickerView view, ColorToggleView colorToggle)
         {
             this.view = view;
 
@@ -69,11 +69,8 @@ namespace DCL.UI
             view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
         }
 
-        public void SetColor(Color color)
-        {
+        public void SetColor(Color color) =>
             UpdateSliderValues(color);
-            OnColorChanged(color);
-        }
 
         public void SetPresets(IEnumerable<Color> presetColors)
         {
@@ -97,7 +94,8 @@ namespace DCL.UI
                     toggle.SelectionHighlight.gameObject.SetActive(false);
 
                 selectedToggleView.SelectionHighlight.gameObject.SetActive(true);
-                SetColor(color);
+                UpdateSliderValues(color);
+                OnColorChanged(color);
             }
         }
 

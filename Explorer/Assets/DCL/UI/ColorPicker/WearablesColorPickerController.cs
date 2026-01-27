@@ -8,7 +8,7 @@ namespace DCL.UI
 {
     public class WearablesColorPickerController : IDisposable
     {
-        private readonly ColorPickerCore core;
+        private readonly ColorPickerController controller;
         private readonly WearablesColorPickerView view;
         private readonly ColorPresetsSO hairColors;
         private readonly ColorPresetsSO eyesColors;
@@ -33,8 +33,8 @@ namespace DCL.UI
             this.eyesColors = eyesColors;
             this.bodyshapeColors = bodyshapeColors;
 
-            core = new ColorPickerCore(view.ColorPickerView, colorToggle);
-            core.OnColorChanged += OnCoreColorChanged;
+            controller = new ColorPickerController(view.ColorPickerView, colorToggle);
+            controller.OnColorChanged += OnControllerColorChanged;
 
             view.ToggleButton.onClick.AddListener(TogglePanel);
         }
@@ -42,8 +42,8 @@ namespace DCL.UI
         public void Dispose()
         {
             view.ToggleButton.onClick.RemoveAllListeners();
-            core.OnColorChanged -= OnCoreColorChanged;
-            core.Dispose();
+            controller.OnColorChanged -= OnControllerColorChanged;
+            controller.Dispose();
         }
 
         public void SetCurrentColor(Color newColor, string category)
@@ -65,36 +65,39 @@ namespace DCL.UI
         public void SetColorPickerStatus(string category)
         {
             view.gameObject.SetActive(WearableCategories.COLOR_PICKER_CATEGORIES.Contains(category));
-            core.ClearPresets();
+            controller.ClearPresets();
 
             switch (category)
             {
                 case WearableCategories.Categories.EYES:
-                    SetPresets(eyesColors);
-                    core.SetColor(eyesColor);
-                    currentCategory = WearableCategories.Categories.EYES;
+                    ApplyColorPreset(eyesColors, eyesColor, category);
                     break;
                 case WearableCategories.Categories.HAIR:
                 case WearableCategories.Categories.EYEBROWS:
                 case WearableCategories.Categories.FACIAL_HAIR:
-                    SetPresets(hairColors);
-                    core.SetColor(hairColor);
-                    currentCategory = WearableCategories.Categories.HAIR;
+                    ApplyColorPreset(hairColors, hairColor, category);
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
-                    SetPresets(bodyshapeColors);
-                    core.SetColor(bodyShapeColor);
-                    currentCategory = WearableCategories.Categories.BODY_SHAPE;
+                    ApplyColorPreset(bodyshapeColors, bodyShapeColor, category);
                     break;
             }
 
-            // RectTransform colorControlsTransform = view.ColorPickerView.ColorPresetsParent.parent.parent.GetComponent<RectTransform>();
-            // LayoutRebuilder.ForceRebuildLayoutImmediate(colorControlsTransform);
-
             ResetPanel();
+            return;
+
+            void ApplyColorPreset(
+                ColorPresetsSO presets,
+                Color color,
+                string wearableCategory)
+            {
+                SetPresets(presets);
+                controller.SetColor(color);
+                UpdateColorPreviewImage(color);
+                currentCategory = wearableCategory;
+            }
         }
 
-        private void OnCoreColorChanged(Color color)
+        private void OnControllerColorChanged(Color color)
         {
             UpdateColorPreviewImage(color);
             OnColorChanged(color, currentCategory);
@@ -115,7 +118,7 @@ namespace DCL.UI
         }
 
         private void SetPresets(ColorPresetsSO colorPreset) =>
-            core.SetPresets(colorPreset.colors);
+            controller.SetPresets(colorPreset.colors);
 
         private void UpdateColorPreviewImage(Color newColor) =>
             view.ColorPreviewImage.color = newColor;

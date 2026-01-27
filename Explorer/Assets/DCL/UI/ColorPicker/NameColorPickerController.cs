@@ -5,7 +5,7 @@ namespace DCL.UI
 {
     public class NameColorPickerController : IDisposable
     {
-        private readonly ColorPickerCore core;
+        private readonly ColorPickerController controller;
         private readonly NameColorPickerView view;
 
         public event Action<Color> OnColorChanged;
@@ -18,9 +18,9 @@ namespace DCL.UI
         {
             this.view = view;
 
-            core = new ColorPickerCore(view.ColorPickerView, colorToggle);
-            core.OnColorChanged += OnCoreColorChanged;
-            core.SetPresets(colorPresets.colors);
+            controller = new ColorPickerController(view.ColorPickerView, colorToggle);
+            controller.OnColorChanged += OnControllerColorChanged;
+            controller.SetPresets(colorPresets.colors);
 
             view.ToggleButton.onClick.AddListener(TogglePanel);
         }
@@ -28,16 +28,16 @@ namespace DCL.UI
         public void Dispose()
         {
             view.ToggleButton.onClick.RemoveAllListeners();
-            core.OnColorChanged -= OnCoreColorChanged;
-            core.Dispose();
+            controller.OnColorChanged -= OnControllerColorChanged;
+            controller.Dispose();
         }
 
         // TODO (Maurizio) should set the color from the profile when opening passport?
 
         public void SetColor(Color color) =>
-            core.SetColor(color);
+            controller.SetColor(color);
 
-        private void OnCoreColorChanged(Color color) =>
+        private void OnControllerColorChanged(Color color) =>
             OnColorChanged(color);
 
         private void TogglePanel()
