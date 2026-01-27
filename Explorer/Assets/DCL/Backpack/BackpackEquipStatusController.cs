@@ -193,9 +193,6 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
-            // Snapshot the CTS associated with THIS specific execution
-            var capturedCts  = publishProfileCts;
-            
             try
             {
                 bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
@@ -248,16 +245,6 @@ namespace DCL.Backpack
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
                 ShowErrorNotificationAsync(ct).Forget();
-            }
-            finally
-            {
-                // Only nullify the global field if it still points to the CTS 
-                // that belongs to this specific execution.
-                if (ReferenceEquals(publishProfileCts, capturedCts ))
-                {
-                    capturedCts?.Dispose();
-                    publishProfileCts = null;
-                }
             }
         }
 

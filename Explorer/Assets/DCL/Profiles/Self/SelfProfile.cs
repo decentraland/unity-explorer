@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -102,11 +103,13 @@ namespace DCL.Profiles.Self
         /// <returns>The updated avatar</returns>
         public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true)
         {
+            Profile? profile = await ProfileAsync(ct);
+
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
-            // Use cached profile if available to avoid network fetch failures during cancellation
-            Profile? profile = OwnProfile ?? await ProfileAsync(ct);
+            // // Use cached profile if available to avoid network fetch failures during cancellation
+            // Profile? profile = OwnProfile ?? await ProfileAsync(ct);
 
             if (profile == null)
                 throw new Exception("Self profile not found");
