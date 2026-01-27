@@ -21,6 +21,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
+        public event Action<bool> OTPVerified;
+
         public IdentityVerificationOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
@@ -168,6 +170,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void ShowOtpSuccess()
         {
+            OTPVerified?.Invoke(true);
             view.InputField.SetSuccess();
 
             view.VerificationResultText.gameObject.SetActive(true);
@@ -178,6 +181,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void ShowOtpError()
         {
+            OTPVerified?.Invoke(false);
             view.InputField.SetFailure();
 
             view.VerificationResultText.gameObject.SetActive(true);

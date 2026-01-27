@@ -78,6 +78,7 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; internal set; } = string.Empty;
 
         public event Action DiscordButtonClicked;
+        public event Action<bool> OTPVerified;
 
         private MVCStateMachine<AuthStateBase> fsm;
         private AuthenticationScreenAudio audio;
@@ -165,9 +166,12 @@ namespace DCL.AuthenticationScreenFlow
 
             if (enableEmailOTP)
             {
+                var otpVerificationState = new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager);
+                otpVerificationState.OTPVerified += success => OTPVerified?.Invoke(success);
+
                 fsm.AddStates(
                     new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
-                    new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
+                    otpVerificationState,
                     new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider)
                 );
             }

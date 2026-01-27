@@ -584,7 +584,7 @@ namespace DCL.Web3.Authenticators
                 await pendingWallet.LoginWithOtp(otp);
                 loginCompletionSource?.TrySetResult(true);
             }
-            catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect code", e); }
+            catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
         }
 
         public async UniTask ResendOtp()

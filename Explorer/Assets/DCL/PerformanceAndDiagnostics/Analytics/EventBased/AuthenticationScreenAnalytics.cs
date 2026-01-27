@@ -1,4 +1,4 @@
-﻿using DCL.AuthenticationScreenFlow;
+using DCL.AuthenticationScreenFlow;
 using Newtonsoft.Json.Linq;
 using System;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
@@ -17,12 +17,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.authenticationController = authenticationController;
             authenticationController.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
             authenticationController.DiscordButtonClicked += OnDiscordButtonClicked;
+            authenticationController.OTPVerified += OnOTPVerified;
         }
 
         public void Dispose()
         {
             authenticationController.CurrentState.OnUpdate -= OnAuthenticationScreenStateChanged;
             authenticationController.DiscordButtonClicked -= OnDiscordButtonClicked;
+            authenticationController.OTPVerified -= OnOTPVerified;
         }
 
         private void OnAuthenticationScreenStateChanged(AuthenticationStatus state)
@@ -53,5 +55,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnDiscordButtonClicked() =>
             analytics.Track(Authentication.CLICK_COMMUNITY_GUIDANCE);
+
+        private void OnOTPVerified(bool success) =>
+            analytics.Track(Authentication.OTP_VERIFIED, new JObject
+            {
+                { "success", success },
+            });
     }
 }
