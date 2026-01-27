@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         GatekeeperStatus,
         ArchipelagoHotScenes,
 
-        DiscordLink,
+        SupportLink,
         DiscordDirectLink,
         TwitterLink,
         TwitterNewPostLink,

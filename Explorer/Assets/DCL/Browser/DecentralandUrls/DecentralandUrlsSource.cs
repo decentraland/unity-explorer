@@ -74,7 +74,7 @@ namespace DCL.Browser.DecentralandUrls
         private string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
-                DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.SupportLink => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",

@@ -151,7 +151,7 @@ namespace DCL.AuthenticationScreenFlow
                 button.onClick.AddListener(ChangeAccount);
 
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
+            viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 
             // States
@@ -267,9 +267,9 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void OpenDiscord()
+        private void OpenSupportUrl()
         {
-            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
+            webBrowser.OpenUrl(DecentralandUrl.SupportLink);
             DiscordButtonClicked?.Invoke();
         }
 
