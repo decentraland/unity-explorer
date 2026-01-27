@@ -115,7 +115,20 @@
         public static class Endpoints
         {
             /// <summary>
+            ///     The whole path to resolve an avatar:
+            ///     <list type="bullet">
+            ///         <item> wearables_count: total number of wearables equipped by the avatar </item>
+            ///         <item> new_pointers: the pointers number to request (not cached yet) </item>
+            ///         <item> wearables_resolution_duration: time to load network objects</item>
+            ///         <item> instantiation_duration: time passed from the wearables resolution to the avatar instantiation</item>
+            ///         <item> total_duration: to aggregate in metabase</item>
+            ///     </list>
+            /// </summary>
+            public const string AVATAR_RESOLVED = "avatar_resolved";
+
+            /// <summary>
             ///     Complemented with:
+            ///     user_id (needed for the further aggregation)
             ///     duration
             /// </summary>
             public const string PROFILE_RETRIEVED = "profile_retrieved";
@@ -125,6 +138,18 @@
             ///     duration
             /// </summary>
             public const string PROFILE_FAILED = "profile_retrieval_failed";
+
+            /// <summary>
+            ///     count
+            ///     failed_count
+            ///     duration
+            /// </summary>
+            public const string SCENE_ENTITIES_RETRIEVED = "scene_entities_retrieved";
+
+            /// <summary>
+            ///     <inheritdoc cref="SCENE_ENTITIES_RETRIEVED" />
+            /// </summary>
+            public const string AVATAR_ATTACHMENT_RETRIEVED = "avatar_attachment_retrieved";
         }
 
         public static class Donations
