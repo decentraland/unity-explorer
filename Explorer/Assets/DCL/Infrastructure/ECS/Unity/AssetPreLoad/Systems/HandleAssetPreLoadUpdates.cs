@@ -1,10 +1,13 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using ECS.Unity.GLTFContainer;
+using ECS.Groups;
+using ECS.Unity.AssetLoad.Components;
 using SceneRunner.Scene;
 
 namespace ECS.Unity.AssetLoad.Systems
@@ -13,43 +16,41 @@ namespace ECS.Unity.AssetLoad.Systems
     ///     Processes the asset loading updates and sends them to CRDT avoiding sending multiple updates per tick for the same asset.
     ///     This can happen when an asset is already cached and loading progresses very fast.
     /// </summary>
-    [UpdateInGroup(typeof(GltfContainerGroup))]
-    [UpdateAfter(typeof(FinalizeAssetPreLoadSystem))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateAfter(typeof(AssetPreLoadSystem))]
+    [ThrottlingEnabled]
     public partial class HandleAssetPreLoadUpdates : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
         internal HandleAssetPreLoadUpdates(World world,
             IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider,
-            AssetPreLoadUtils assetPreLoadUtils)
+            ISceneStateProvider sceneStateProvider)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
-            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
         protected override void Update(float t)
         {
-            if (assetPreLoadUtils.assetLoadingUpdates.Count == 0)
-                return;
+            SendUpdateQuery(World);
+        }
+
+        [Query]
+        private void SendUpdate(ref AssetPreLoadLoadingStateComponent loadingStateComponent)
+        {
+            if (!loadingStateComponent.IsDirty) return;
 
             int tick = (int)sceneStateProvider.TickNumber;
 
-            foreach (var kvp in assetPreLoadUtils.assetLoadingUpdates)
-            {
-                if (kvp.Value.LastTick >= tick || kvp.Value.States.Count == 0)
-                    continue;
+            if (tick <= loadingStateComponent.LastUpdatedTick) return;
 
-                SendUpdate(kvp.Value.CrdtEntity, kvp.Value.States[0], kvp.Key, tick);
+            SendUpdate(loadingStateComponent.MainCRDTEntity, loadingStateComponent.LoadingState, loadingStateComponent.AssetPath, tick);
 
-                kvp.Value.States.RemoveAt(0);
-                kvp.Value.LastTick = tick;
-            }
-
+            loadingStateComponent.LastUpdatedTick = tick;
+            loadingStateComponent.IsDirty = false;
         }
 
         private void SendUpdate(CRDTEntity crdtEntity, LoadingState loadingState, string assetPath, int tick)

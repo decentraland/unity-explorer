@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -20,21 +21,19 @@ namespace ECS.Unity.AssetLoad.Systems
 {
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
+    [ThrottlingEnabled]
     public partial class FinalizeAssetPreLoadSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget capBudget;
         private readonly AssetPreLoadCache assetPreLoadCache;
-        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
         internal FinalizeAssetPreLoadSystem(World world,
             IPerformanceBudget capBudget,
-            AssetPreLoadCache assetPreLoadCache,
-            AssetPreLoadUtils assetPreLoadUtils)
+            AssetPreLoadCache assetPreLoadCache)
             : base(world)
         {
             this.capBudget = capBudget;
             this.assetPreLoadCache = assetPreLoadCache;
-            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
         protected override void Update(float t)
@@ -48,29 +47,25 @@ namespace ECS.Unity.AssetLoad.Systems
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeGltfLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref GltfContainerComponent component)
+        private void FinalizeGltfLoading(ref AssetPreLoadLoadingStateComponent assetPreLoadLoadingStateComponent, ref GltfContainerComponent component)
         {
             if (!capBudget.TrySpendBudget())
                 return;
 
             if (component.State == LoadingState.Loading
+                && !component.Promise.IsConsumed
                 && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (result.Succeeded)
-                {
-                    assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, result.Asset);
-                    assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, LoadingState.Finished, assetPreLoadChildComponent.AssetPath);
-                }
-                else
-                    assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
+                    assetPreLoadCache.TryAdd(assetPreLoadLoadingStateComponent.AssetHash, result.Asset);
 
-                World.Destroy(entity);
+                MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
             }
         }
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeAudioClipLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref AudioPromise audioPromise)
+        private void FinalizeAudioClipLoading(ref AssetPreLoadLoadingStateComponent assetPreLoadLoadingStateComponent, ref AudioPromise audioPromise)
         {
             if (audioPromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -80,16 +75,14 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetPreLoadLoadingStateComponent.AssetHash, promiseResult.Asset);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
-
-            World.Destroy(entity);
+            MarkForUpdate(promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
         }
 
         [Query]
         [None(typeof(CRDTEntity))]
-        private void FinalizeTextureLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref TexturePromise texturePromise)
+        private void FinalizeTextureLoading(ref AssetPreLoadLoadingStateComponent assetPreLoadLoadingStateComponent, ref TexturePromise texturePromise)
         {
             if (texturePromise.IsConsumed
                 || !capBudget.TrySpendBudget())
@@ -99,17 +92,15 @@ namespace ECS.Unity.AssetLoad.Systems
                 return;
 
             if (promiseResult.Succeeded)
-                assetPreLoadCache.TryAdd(assetPreLoadChildComponent.AssetHash, promiseResult.Asset);
+                assetPreLoadCache.TryAdd(assetPreLoadLoadingStateComponent.AssetHash, promiseResult.Asset);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, assetPreLoadChildComponent.AssetPath);
-
-            World.Destroy(entity);
+            MarkForUpdate(promiseResult.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
         }
 
         [Query]
         [All(typeof(PBVideoPlayer))]
         [None(typeof(CRDTEntity))]
-        private void FinalizeVideoLoading(in Entity entity, ref AssetPreLoadChildComponent assetPreLoadChildComponent, ref MediaPlayerComponent mediaPlayerComponent)
+        private void FinalizeVideoLoading(ref AssetPreLoadLoadingStateComponent assetPreLoadLoadingStateComponent, ref MediaPlayerComponent mediaPlayerComponent)
         {
             //UpdateMediaPlayerSystem already tried to consume the promise, so we just need to check if it was consumed or not
             if (mediaPlayerComponent.OpenMediaPromise?.IsConsumed == false
@@ -119,9 +110,13 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!mediaPlayerComponent.HasFailed)
                 assetPreLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
 
-            assetPreLoadUtils.AppendAssetLoadingMessage(assetPreLoadChildComponent.Parent, mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, assetPreLoadChildComponent.AssetPath);
+            MarkForUpdate(mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, ref assetPreLoadLoadingStateComponent);
+        }
 
-            World.Destroy(entity);
+        private void MarkForUpdate(LoadingState loadingState, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
+        {
+            loadingStateComponent.LoadingState = loadingState;
+            loadingStateComponent.IsDirty = true;
         }
     }
 }

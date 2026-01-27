@@ -8,14 +8,11 @@ namespace ECS.Unity.AssetLoad.Components
     /// </summary>
     public struct AssetPreLoadComponent
     {
-        public readonly List<string> LoadingAssetPaths;
+        public List<string> LoadingAssetPaths { get; private set; }
 
-        public static AssetPreLoadComponent Create() =>
-            new (true);
-
-        private AssetPreLoadComponent(bool _)
+        public static AssetPreLoadComponent Empty => new ()
         {
-            LoadingAssetPaths = new List<string>();
-        }
+            LoadingAssetPaths = new List<string>()
+        };
     }
 }

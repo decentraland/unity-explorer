@@ -16,24 +16,33 @@ namespace ECS.Unity.AssetLoad.Systems
     ///     Cleans up asset loading when PBAssetLoad component is removed
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateAfter(typeof(HandleAssetPreLoadUpdates))]
     [ThrottlingEnabled]
     public partial class CleanUpAssetPreLoadSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly AssetPreLoadCache assetPreLoadCache;
-        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
         internal CleanUpAssetPreLoadSystem(World world,
-            AssetPreLoadCache assetPreLoadCache,
-            AssetPreLoadUtils assetPreLoadUtils)
+            AssetPreLoadCache assetPreLoadCache)
             : base(world)
         {
             this.assetPreLoadCache = assetPreLoadCache;
-            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
+            DestroyCompletedEntitiesQuery(World);
+        }
+
+        [Query]
+        private void DestroyCompletedEntities(in Entity entity, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
+        {
+            if (loadingStateComponent.IsDirty) return;
+            // Only destroy entities that have finished loading
+            if (loadingStateComponent.LoadingState is LoadingState.Loading or LoadingState.Unknown) return;
+
+            World.Destroy(entity);
         }
 
         [Query]
@@ -47,7 +56,6 @@ namespace ECS.Unity.AssetLoad.Systems
         public void FinalizeComponents(in Query query)
         {
             assetPreLoadCache.Dispose();
-            assetPreLoadUtils.Dispose();
         }
     }
 }

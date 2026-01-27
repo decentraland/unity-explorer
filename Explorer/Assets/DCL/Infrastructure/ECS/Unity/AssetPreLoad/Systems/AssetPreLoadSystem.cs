@@ -33,17 +33,14 @@ namespace ECS.Unity.AssetLoad.Systems
     {
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
-        private readonly AssetPreLoadUtils assetPreLoadUtils;
 
         internal AssetPreLoadSystem(World world,
             ISceneData sceneData,
-            IPerformanceBudget frameTimeBudgetProvider,
-            AssetPreLoadUtils assetPreLoadUtils)
+            IPerformanceBudget frameTimeBudgetProvider)
             : base(world)
         {
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
-            this.assetPreLoadUtils = assetPreLoadUtils;
         }
 
         protected override void Update(float t)
@@ -60,7 +57,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
             sdkComponent.IsDirty = false;
 
-            AssetPreLoadComponent component = AssetPreLoadComponent.Create();
+            AssetPreLoadComponent component = AssetPreLoadComponent.Empty;
             World.Add(entity, component);
 
             ProcessAssetList(crdtEntity, in sdkComponent, ref component);
@@ -82,14 +79,17 @@ namespace ECS.Unity.AssetLoad.Systems
             {
                 if (existingComponent.LoadingAssetPaths.Contains(path)) continue;
 
+                AssetPreLoadLoadingStateComponent loadingStateComponent = new AssetPreLoadLoadingStateComponent(crdtEntity, path);
+                Entity createdEntity = World.Create(PartitionComponent.MIN_PRIORITY);
+
                 if (!sceneData.TryGetHash(path, out string hash))
                 {
-                    SendUpdateAndStore(path, crdtEntity, LoadingState.NotFound, ref existingComponent);
+                    MarkForUpdateAndStore(LoadingState.NotFound, createdEntity, ref existingComponent, ref loadingStateComponent);
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
                 }
 
-                AssetPreLoadChildComponent assetPreLoadChildComponent = new AssetPreLoadChildComponent(crdtEntity, hash, path);
+                loadingStateComponent.AssetHash = hash;
 
                 // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
                 if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
@@ -98,11 +98,11 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
                     {
-                        SendUpdateAndStore(path, crdtEntity, LoadingState.FinishedWithError, ref existingComponent);
+                        MarkForUpdateAndStore(LoadingState.FinishedWithError, createdEntity, ref existingComponent, ref loadingStateComponent);
                         continue;
                     }
 
-                    World.Create(assetPromise!.Value, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
+                    World.Add(createdEntity, assetPromise!.Value);
                 }
                 else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -110,7 +110,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
+                    World.Add(createdEntity, component);
                 }
                 else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
@@ -118,7 +118,7 @@ namespace ECS.Unity.AssetLoad.Systems
                 {
                     if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
                     {
-                        SendUpdateAndStore(path, crdtEntity, LoadingState.NotFound, ref existingComponent);
+                        MarkForUpdateAndStore(LoadingState.NotFound, createdEntity, ref existingComponent, ref loadingStateComponent);
                         continue;
                     }
 
@@ -129,7 +129,7 @@ namespace ECS.Unity.AssetLoad.Systems
                             ReportSource = GetReportCategory(),
                         },
                         PartitionComponent.MIN_PRIORITY);
-                    World.Create(promise, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
+                    World.Add(createdEntity, promise);
                 }
                 else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
                          || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
@@ -138,7 +138,7 @@ namespace ECS.Unity.AssetLoad.Systems
                     {
                         Src = path,
                     };
-                    World.Create(component, PartitionComponent.MIN_PRIORITY, assetPreLoadChildComponent);
+                    World.Add(createdEntity, component);
                 }
                 else
                 {
@@ -146,14 +146,19 @@ namespace ECS.Unity.AssetLoad.Systems
                     continue;
                 }
 
-                SendUpdateAndStore(path, crdtEntity, LoadingState.Loading, ref existingComponent);
+                MarkForUpdateAndStore(LoadingState.Loading, createdEntity, ref existingComponent, ref loadingStateComponent);
             }
         }
 
-        private void SendUpdateAndStore(string path, CRDTEntity crdtEntity, LoadingState loadingState, ref AssetPreLoadComponent existingComponent)
+        // Note: every loop iteration we are manipulating the World twice (adding the specific promise/component + adding here the loading state component)
+        //       this works because we're passing the Entity here as value rather than a ref.
+        private void MarkForUpdateAndStore(LoadingState loadingState, Entity entity, ref AssetPreLoadComponent existingComponent, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
         {
-            assetPreLoadUtils.AppendAssetLoadingMessage(crdtEntity, loadingState, path);
-            existingComponent.LoadingAssetPaths.Add(path);
+            loadingStateComponent.LoadingState = loadingState;
+            loadingStateComponent.IsDirty = true;
+
+            World.Add(entity, loadingStateComponent);
+            existingComponent.LoadingAssetPaths.Add(loadingStateComponent.AssetPath);
         }
     }
 }
