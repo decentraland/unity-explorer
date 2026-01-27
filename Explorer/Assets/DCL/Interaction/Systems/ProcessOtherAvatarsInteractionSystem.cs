@@ -288,6 +288,10 @@ namespace DCL.Interaction.Systems
                     outcomeIndex = Random.Range(0, outcomeCount);
                 }
 
+                // It may happen that the entity has been deleted but the interaction data is still there, if the interaction was canceled while the menu was open
+                if(!World.IsAlive(interaction.InitiatorEntity))
+                    return;
+
                 Transform initiatorTransform = World.Get<CharacterTransform>(interaction.InitiatorEntity).Transform;
 
                 MoveBeforePlayingSocialEmoteIntent moveBeforePlayingSocialEmoteIntent =
