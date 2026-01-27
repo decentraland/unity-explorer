@@ -81,14 +81,16 @@ namespace DCL.UI
             }
         }
 
-        public void SetPresets(IEnumerable<Color> presetColors)
+        public void SetPresets(List<Color> presetColors)
         {
             ClearPresets();
 
-            foreach (Color presetColor in presetColors)
+            for (int i = 0; i < presetColors.Count; i++)
             {
+                Color presetColor = presetColors[i];
                 ColorToggleView toggleView = colorTogglesPool.Get();
-                toggleView.transform.parent = view.ColorPresetsParent;
+                toggleView.transform.SetParent(view.ColorPresetsParent, false);
+                toggleView.transform.SetSiblingIndex(i);
                 toggleView.SelectionHighlight.gameObject.SetActive(false);
                 toggleView.SetColor(presetColor, false);
                 toggleView.Button.onClick.AddListener(() => SelectPreset(presetColor, toggleView));
