@@ -8,27 +8,20 @@ using DCL.Web3;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using TMPro;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.ProfileNames
 {
     public class ProfileNameEditorController : ControllerBase<ProfileNameEditorView>
     {
-        private const int MAX_NAME_LENGTH = 15;
-        private const string CHARACTER_LIMIT_REACHED_MESSAGE = "Character limit reached";
-        private const string VALID_CHARACTERS_ARE_ALLOWED_MESSAGE = "Please use only letters and numbers";
-
         private readonly IWebBrowser webBrowser;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
-        private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? saveCancellationToken;
         private CancellationTokenSource? setupCancellationToken;

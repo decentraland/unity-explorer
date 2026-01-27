@@ -35,6 +35,9 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Toggle TermsOfUse { get; private set; } = null!;
 
+        [field: SerializeField]
+        public TMP_Text_ClickeableLink TermsOfUseAndPrivacyLink { get; private set; } = null!;
+
         [Space]
         [SerializeField] private Animator animator;
         [SerializeField] private CanvasGroup canvasGroup;

@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -31,6 +32,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly LobbyForNewAccountAuthView view;
 
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebBrowser webBrowser;
 
         private readonly List<Avatar> avatarHistory = new ();
 
@@ -52,7 +54,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ReactiveProperty<AuthStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
-            IWearablesProvider wearablesProvider) : base(viewInstance)
+            IWearablesProvider wearablesProvider,
+            IWebBrowser webBrowser) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -62,6 +65,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.characterPreviewController = characterPreviewController;
             this.selfProfile = selfProfile;
             this.wearablesProvider = wearablesProvider;
+            this.webBrowser = webBrowser;
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -108,6 +112,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.SubscribeToggle.onValueChanged.AddListener(OnToggleChanged);
             view.TermsOfUse.onValueChanged.AddListener(OnToggleChanged);
 
+            view.TermsOfUseAndPrivacyLink.OnLinkClicked += OpenClickableURL;
+
             UpdateFinalizeButtonState();
         }
 
@@ -129,7 +135,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
             view.TermsOfUse.SetIsOnWithoutNotify(false);
+
+            view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
         }
+
+        private void OpenClickableURL(string url) =>
+            webBrowser.OpenUrl(url);
 
         private async UniTask InitializeAvatarAsync()
         {
@@ -289,7 +300,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void UpdateFinalizeButtonState() =>
             view.FinalizeNewUserButton.interactable =
                 view.ProfileNameInputField.IsValidName &&
-                view.SubscribeToggle.isOn &&
                 view.TermsOfUse.isOn;
 
         private Avatar CreateRandomAvatar()
