@@ -45,15 +45,14 @@ namespace DCL.UI
             inputField.caretWidth = caretWidth;
             inputField.caretBlinkRate = caretBlinkRate;
 
+            inputField.characterLimit = maxNameLength * 3;
             inputField.characterValidation = TMP_InputField.CharacterValidation.Alphanumeric;
-
-            inputField.text = string.Empty;
-            characterCountLabel.text = $"{0}/{maxNameLength}";
         }
 
         private void OnEnable()
         {
             inputField.text = string.Empty;
+            characterCountLabel.text = $"{0}/{maxNameLength}";
 
             outline.enabled = false;
             outline.color = outlineNormalColor;

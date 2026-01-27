@@ -852,7 +852,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 1979326266a1bec44bc70519850f7a5a, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -882,7 +882,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  unloadedColor: {r: 1, g: 1, b: 1, a: 1}
+  unloadedColor: {r: 1, g: 1, b: 1, a: 0}
   loadedColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &5312144585228980273
 GameObject:
