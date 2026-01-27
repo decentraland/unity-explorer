@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public interface IAnalyticsController
+    public interface IAnalyticsController : IDisposable
     {
         public const string UNDEFINED = "UNDEFINED";
 
@@ -51,6 +51,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void Identify(IWeb3Identity? _) { }
 
             public void Flush() { }
+
+            public void Dispose() { }
         }
     }
 }
