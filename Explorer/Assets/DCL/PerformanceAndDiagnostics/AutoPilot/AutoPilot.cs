@@ -5,7 +5,9 @@ using Global.AppArgs;
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.PerformanceAndDiagnostics.AutoPilot
 {
@@ -14,6 +16,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         private readonly IAppArgs appArgs;
         private readonly ILoadingStatus loadingStatus;
         private readonly IProfiler profiler;
+        private StreamWriter csv;
 
         public AutoPilot(IAppArgs appArgs, ILoadingStatus loadingStatus, IProfiler profiler)
         {
@@ -24,23 +27,39 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         public async UniTask RunAsync()
         {
-            StreamWriter csv = null;
             var exitCode = 0;
 
             try
             {
-                if (!appArgs.TryGetValue(AppArgsFlags.AUTOPILOT, out string outPath)
-                    || outPath == null)
-                    throw new Exception("Did not specify automated test output path");
+                if (appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_CSV,
+                        out string csvFile))
+                {
+                    if (csvFile == null)
+                        throw new Exception($"{nameof(csvFile)} is null");
 
-                csv = new StreamWriter(outPath, false, new UTF8Encoding(false));
-                csv.NewLine = "\r\n"; // https://www.rfc-editor.org/rfc/rfc4180
-                await csv.WriteLineAsync("\"Frame\",\"CPU Time\",\"GPU Time\"");
+                    csv = new StreamWriter(csvFile, false, new UTF8Encoding(false));
+                    csv.NewLine = "\r\n"; // https://www.rfc-editor.org/rfc/rfc4180
+                    await csv.WriteLineAsync("\"Frame\",\"CPU Time\",\"GPU Time\"");
+                }
 
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
 
-                await StandAtSpawnTest(csv);
+                if (appArgs.TryGetValue(AppArgsFlags.PROFILER_LOG_FILE,
+                        out string logFile))
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Profiler.logFile = logFile;
+                    Profiler.enableBinaryLog = true;
+                    Profiler.enabled = true;
+#else
+                    DCL.Diagnostics.ReportHub.LogWarning(
+                        DCL.Diagnostics.ReportCategory.ALWAYS,
+                        $"You set the --{AppArgsFlags.PROFILER_LOG_FILE} argument, but the profiler is only available in development builds.");
+#endif
+                }
+
+                await StandAtSpawnTest();
             }
             catch (Exception ex)
             {
@@ -63,15 +82,17 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         /// <summary>
         /// The minimal performance test: stand at spawn for 1000 frames.
         /// </summary>
-        private async UniTask StandAtSpawnTest(StreamWriter csv)
+        private async UniTask StandAtSpawnTest()
         {
             for (var i = 0; i < 1000; i++)
             {
-                await csv.WriteLineAsync(
-                    $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
-
+                await WriteSample();
                 await UniTask.Yield();
             }
         }
+
+        private Task WriteSample() =>
+            csv.WriteLineAsync(
+                $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
     }
 }
