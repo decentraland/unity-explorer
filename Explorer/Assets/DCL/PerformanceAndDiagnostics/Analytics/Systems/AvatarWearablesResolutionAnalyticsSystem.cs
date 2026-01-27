@@ -33,7 +33,7 @@ namespace DCL.Analytics.Systems
             // $"{nameof(TryGetResult)} was called before {nameof(TryConsume)} for {LoadingIntention.ToString()}, the flow is inconclusive and should be fixed!"
 
             // If we have the result, wearables are already resolved
-            if (avatarShapeComponent.WearablePromise.TryGetResult(World, out _) && avatarAnalytics.WearablesResolvedAt == -1)
+            if (avatarShapeComponent.WearablePromise.TryGetResult(World, out _) && avatarAnalytics.WearablesResolvedAt == AvatarAnalytics.WEARABLES_NOT_RESOLVED)
             {
                 avatarAnalytics.WearablesResolvedAt = UnityEngine.Time.realtimeSinceStartup;
 

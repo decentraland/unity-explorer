@@ -5,6 +5,8 @@
     /// </summary>
     public struct AvatarAnalytics
     {
+        public const int WEARABLES_NOT_RESOLVED = -1;
+
         public readonly float StartedAt;
         public readonly int WearablesCount;
 
@@ -17,7 +19,7 @@
             WearablesCount = wearablesCount;
 
             // Non-resolved indicator
-            WearablesResolvedAt = -1;
+            WearablesResolvedAt = WEARABLES_NOT_RESOLVED;
         }
     }
 }

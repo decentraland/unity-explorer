@@ -57,7 +57,6 @@ namespace DCL.SocialService
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
-        private readonly Func<Uri, WebSocketRpcTransport> createTransport;
 
         private double retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
 
