@@ -22,7 +22,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileFetchingAuthView view;
@@ -31,7 +31,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState,
+            ReactiveProperty<AuthStatus> currentState,
             SentryTransactionManager sentryTransactionManager,
             ISelfProfile selfProfile) : base(viewInstance)
         {
@@ -70,7 +70,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             if (IsUserAllowedToAccessToBeta(identity))
             {
-                currentState.Value = isCached ? AuthenticationStatus.FetchingProfileCached : AuthenticationStatus.FetchingProfile;
+                currentState.Value = isCached ? AuthStatus.FetchingProfileCached : AuthStatus.FetchingProfile;
 
                 try
                 {

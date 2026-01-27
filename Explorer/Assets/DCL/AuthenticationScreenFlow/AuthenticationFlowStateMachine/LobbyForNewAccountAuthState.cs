@@ -25,7 +25,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly ISelfProfile selfProfile;
         private readonly LobbyForNewAccountAuthView view;
@@ -49,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState,
+            ReactiveProperty<AuthStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider) : base(viewInstance)
@@ -84,7 +84,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.PrevRandomButton.interactable = false;
             view.NextRandomButton.interactable = false;
 
-            currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
+            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             newUserProfile = payload.profile;
 

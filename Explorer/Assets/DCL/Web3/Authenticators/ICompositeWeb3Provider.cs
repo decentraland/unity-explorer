@@ -38,12 +38,12 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         /// Currently selected authentication method
         /// </summary>
-        AuthMethod CurrentMethod { get; set; }
+        AuthProvider CurrentProvider { get; set; }
 
         /// <summary>
         /// Event fired when the authentication method changes
         /// </summary>
-        event Action<AuthMethod>? OnMethodChanged;
+        event Action<AuthProvider>? OnMethodChanged;
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected

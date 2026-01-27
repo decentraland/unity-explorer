@@ -15,13 +15,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly LoginSelectionAuthView view;
         private readonly AuthenticationScreenController controller;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
-            ReactiveProperty<AuthenticationStatus> currentState, SplashScreen splashScreen,
+            ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
             ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
@@ -131,8 +131,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void Login(LoginMethod method)
         {
-            currentState.Value = AuthenticationStatus.LoginRequested;
-            compositeWeb3Provider.CurrentMethod = AuthMethod.DappWallet;
+            controller.CurrentLoginMethod = method;
+            compositeWeb3Provider.CurrentProvider = AuthProvider.DappWallet;
+            currentState.Value = AuthStatus.LoginRequested;
 
             view.ShowLoading();
             machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
@@ -140,8 +141,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OTPLogin()
         {
-            currentState.Value = AuthenticationStatus.LoginRequested;
-            compositeWeb3Provider.CurrentMethod = AuthMethod.ThirdWebOTP;
+            controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
+            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWebOTP;
+            currentState.Value = AuthStatus.LoginRequested;
 
             view.Hide();
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(

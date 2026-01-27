@@ -32,7 +32,7 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        public enum AuthenticationStatus
+        public enum AuthStatus
         {
             Init,
             FetchingProfileCached,
@@ -74,8 +74,10 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-        public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
+        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.Init);
         public string CurrentRequestID { get; internal set; } = string.Empty;
+        public LoginMethod CurrentLoginMethod { get; internal set; }
+        public AuthProvider CurrentProvider => compositeWeb3Provider.CurrentProvider;
 
         public event Action DiscordButtonClicked;
         public event Action<bool> OTPVerified;

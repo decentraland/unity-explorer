@@ -17,17 +17,17 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3Authenticator dappAuth;
 
-        private AuthMethod currentMethod = AuthMethod.DappWallet;
+        private AuthProvider currentProvider = AuthProvider.DappWallet;
 
-        public AuthMethod CurrentMethod
+        public AuthProvider CurrentProvider
         {
-            get => currentMethod;
+            get => currentProvider;
 
             set
             {
-                if (currentMethod != value)
+                if (currentProvider != value)
                 {
-                    currentMethod = value;
+                    currentProvider = value;
                     OnMethodChanged?.Invoke(value);
                 }
             }
@@ -39,13 +39,13 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        public event Action<AuthMethod>? OnMethodChanged;
-        public bool IsThirdWebOTP => currentMethod == AuthMethod.ThirdWebOTP;
-        public bool IsDappWallet => currentMethod == AuthMethod.DappWallet;
+        public event Action<AuthProvider>? OnMethodChanged;
+        public bool IsThirdWebOTP => currentProvider == AuthProvider.ThirdWebOTP;
+        public bool IsDappWallet => currentProvider == AuthProvider.DappWallet;
 
-        private IWeb3VerifiedAuthenticator CurrentAuthenticator => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
+        private IWeb3VerifiedAuthenticator CurrentAuthenticator => currentProvider == AuthProvider.ThirdWebOTP ? thirdWebAuth : dappAuth;
 
-        private IEthereumApi CurrentEthereumApi => currentMethod == AuthMethod.ThirdWebOTP ? thirdWebAuth : dappAuth;
+        private IEthereumApi CurrentEthereumApi => currentProvider == AuthProvider.ThirdWebOTP ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth)
         {
@@ -78,7 +78,7 @@ namespace DCL.Web3.Authenticators
         {
             // Temporary heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
             string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
-            CurrentMethod = string.IsNullOrEmpty(email) ? AuthMethod.DappWallet : AuthMethod.ThirdWebOTP;
+            CurrentProvider = string.IsNullOrEmpty(email) ? AuthProvider.DappWallet : AuthProvider.ThirdWebOTP;
 
             return CurrentAuthenticator.TryAutoConnectAsync(ct);
         }

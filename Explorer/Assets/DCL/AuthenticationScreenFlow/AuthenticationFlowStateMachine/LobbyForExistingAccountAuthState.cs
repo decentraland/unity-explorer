@@ -18,7 +18,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly AuthenticationScreenController controller;
         private readonly AuthenticationScreenCharacterPreviewController characterPreviewController;
         private readonly StringVariable? profileNameLabel;
-        private readonly ReactiveProperty<AuthenticationStatus> currentState;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly LobbyForExistingAccountAuthView view;
         private readonly SplashScreen splashScreen;
 
@@ -28,7 +28,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             SplashScreen splashScreen,
-            ReactiveProperty<AuthenticationStatus> currentState,
+            ReactiveProperty<AuthStatus> currentState,
             AuthenticationScreenCharacterPreviewController characterPreviewController) : base(viewInstance)
         {
             view = viewInstance.LobbyForExistingAccountAuthView;
@@ -59,7 +59,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
 
-            currentState.Value = payload.isCached ? AuthenticationStatus.LoggedInCached : AuthenticationStatus.LoggedIn;
+            currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             Profile? profile = payload.profile;
 
