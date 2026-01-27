@@ -3,6 +3,7 @@ using DCL.Communities;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using MVC;
 using SuperScrollView;
@@ -31,9 +32,10 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? PlaceCopyLinkButtonClicked;
 
         private ThumbnailLoader? placesCardsThumbnailLoader;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private PlacesData.PlaceInfo? lastClickedPlaceCtx;
         private GenericContextMenu? contextMenu;
-        private CancellationTokenSource openContextMenuCts;
+        private CancellationTokenSource? openContextMenuCts;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -77,10 +79,12 @@ namespace DCL.Places
 
         public void SetDependencies(
             PlacesStateService stateService,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepoWrapper)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
+            this.profileRepositoryWrapper = profileRepoWrapper;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
@@ -134,16 +138,18 @@ namespace DCL.Places
 
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            PlacesData.PlaceInfo placeInfo = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
+            var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
             cardView.Configure(
-                placeInfo: placeInfo,
-                ownerName: placeInfo.contact_name,
+                placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
+                ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
                 userOwnsPlace: false,
-                thumbnailLoader: placesCardsThumbnailLoader!);
+                thumbnailLoader: placesCardsThumbnailLoader!,
+                friends: placeInfoWithConnectedFriends.ConnectedFriends,
+                profileRepositoryWrapper);
 
             // Setup card events
             cardView.SubscribeToInteractions(
@@ -165,7 +171,7 @@ namespace DCL.Places
 
             openContextMenuCts = openContextMenuCts.SafeRestart();
             ViewDependencies.ContextMenuOpener.OpenContextMenu(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true), openContextMenuCts.Token);
+                new GenericContextMenuParameter(contextMenu!, position, actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true), openContextMenuCts.Token);
         }
 
         private void SetPlacesGridAsEmpty(bool isEmpty, PlacesSection? section)
