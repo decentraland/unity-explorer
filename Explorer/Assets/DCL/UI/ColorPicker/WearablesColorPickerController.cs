@@ -75,7 +75,7 @@ namespace DCL.UI
                 case WearableCategories.Categories.HAIR:
                 case WearableCategories.Categories.EYEBROWS:
                 case WearableCategories.Categories.FACIAL_HAIR:
-                    ApplyColorPreset(hairColors, hairColor, category);
+                    ApplyColorPreset(hairColors, hairColor, WearableCategories.Categories.HAIR);
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
                     ApplyColorPreset(bodyshapeColors, bodyShapeColor, category);
