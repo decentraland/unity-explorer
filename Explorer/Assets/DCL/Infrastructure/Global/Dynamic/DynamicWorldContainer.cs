@@ -891,7 +891,8 @@ namespace Global.Dynamic
                     communitiesDataService,
                     staticContainer.LoadingStatus,
                     donationsService,
-                    realmNavigator
+                    realmNavigator,
+                    friendServiceProxy
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
