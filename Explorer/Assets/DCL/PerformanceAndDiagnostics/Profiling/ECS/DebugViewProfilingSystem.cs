@@ -128,7 +128,7 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
                             .AddToggleField("Disable Landscape", OnLandscapeDisabledChange, false)
                             .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
-                            .AddSingleButton("Disconnect Livekit Rooms", OnDisconnectLivekitRooms)
+                            .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
                             .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false);
 
 
@@ -406,9 +406,9 @@ namespace DCL.Profiling.ECS
             VisualDebugSettings.RoadsEnabled = !evt.newValue;
         }
 
-        private void OnDisconnectLivekitRooms()
+        private void OnLivekitRoomsDisabledChange(ChangeEvent<bool> evt)
         {
-            VisualDebugSettings.DisconnectLivekitRooms();
+            VisualDebugSettings.LivekitRoomsActive = !evt.newValue;
         }
 
         private void OnLODRenderersDisabledChange(ChangeEvent<bool> evt)

@@ -37,12 +37,41 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             AllLocalRoomsRemoteParticipantIdentities();
 
             // Subscribe to centralized visual debug settings
-            VisualDebugSettings.OnDisconnectLivekitRooms += OnDisconnectLivekitRoomsFromDebugPanel;
+            VisualDebugSettings.OnLivekitRoomsActiveChanged += OnLivekitRoomsActiveChangedFromDebugPanel;
         }
 
-        private void OnDisconnectLivekitRoomsFromDebugPanel()
+        private void OnLivekitRoomsActiveChangedFromDebugPanel(bool active)
         {
-            StopLocalRoomsAsync().Forget();
+            if (active)
+                ActivateLocalRoomsAsync().Forget();
+            else
+                DeactivateLocalRoomsAsync().Forget();
+        }
+
+        private UniTask ActivateLocalRoomsAsync()
+        {
+            if (archipelagoIslandRoom is IActivatableConnectiveRoom activatableIsland &&
+                gateKeeperSceneRoom is IActivatableConnectiveRoom activatableScene)
+            {
+                return UniTask.WhenAll(
+                    activatableIsland.ActivateAsync(),
+                    activatableScene.ActivateAsync()
+                );
+            }
+            return UniTask.CompletedTask;
+        }
+
+        private UniTask DeactivateLocalRoomsAsync()
+        {
+            if (archipelagoIslandRoom is IActivatableConnectiveRoom activatableIsland &&
+                gateKeeperSceneRoom is IActivatableConnectiveRoom activatableScene)
+            {
+                return UniTask.WhenAll(
+                    activatableIsland.DeactivateAsync(),
+                    activatableScene.DeactivateAsync()
+                );
+            }
+            return UniTask.CompletedTask;
         }
 
         public IRoom IslandRoom() =>

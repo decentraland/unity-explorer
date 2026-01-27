@@ -96,6 +96,7 @@ namespace ECS.SceneLifeCycle.Systems
             VisualDebugSettings.OnSceneRendererVisibleChanged += OnSceneRendererVisibleFromDebugPanel;
             VisualDebugSettings.OnBackfaceCullingChanged += OnBackfaceCullingFromDebugPanel;
             VisualDebugSettings.OnShadowLimiterChanged += OnShadowLimiterFromDebugPanel;
+            VisualDebugSettings.OnShadowsDisabledChanged += OnShadowsDisabledFromDebugPanel;
         }
 
         private void OnSceneRendererVisibleFromDebugPanel(bool visible)
@@ -113,6 +114,39 @@ namespace ECS.SceneLifeCycle.Systems
         private void OnShadowLimiterFromDebugPanel(int maxShadowCasters)
         {
             OnLimitShadowCasters(maxShadowCasters);
+        }
+
+        private void OnShadowsDisabledFromDebugPanel(bool disabled)
+        {
+            shadowsDisabled = disabled;
+            ApplyShadowsDisabled();
+        }
+
+        private void ApplyShadowsDisabled()
+        {
+            // Find the main directional light
+            if (directionalLight == null)
+            {
+                GameObject lightObject = GameObject.Find("Directional Light");
+                if (lightObject != null)
+                    directionalLight = lightObject.GetComponent<Light>();
+            }
+
+            if (directionalLight != null)
+            {
+                if (shadowsDisabled)
+                {
+                    if (!originalShadowType.HasValue)
+                        originalShadowType = directionalLight.shadows;
+
+                    directionalLight.shadows = LightShadows.None;
+                }
+                else
+                {
+                    if (originalShadowType.HasValue)
+                        directionalLight.shadows = originalShadowType.Value;
+                }
+            }
         }
 
         private void ApplySceneVisibility()
@@ -388,6 +422,7 @@ namespace ECS.SceneLifeCycle.Systems
             VisualDebugSettings.OnSceneRendererVisibleChanged -= OnSceneRendererVisibleFromDebugPanel;
             VisualDebugSettings.OnBackfaceCullingChanged -= OnBackfaceCullingFromDebugPanel;
             VisualDebugSettings.OnShadowLimiterChanged -= OnShadowLimiterFromDebugPanel;
+            VisualDebugSettings.OnShadowsDisabledChanged -= OnShadowsDisabledFromDebugPanel;
         }
 
         private void RefreshSceneDebugInfo()

@@ -91,11 +91,18 @@ namespace DCL.CharacterCamera
             }
         }
 
-        // Livekit Rooms - Disconnect both Island and Scene rooms
-        public static event Action? OnDisconnectLivekitRooms;
-        public static void DisconnectLivekitRooms()
+        // Livekit Rooms - Activate/Deactivate both Island and Scene rooms
+        public static event Action<bool>? OnLivekitRoomsActiveChanged;
+        private static bool livekitRoomsActive = true;
+        public static bool LivekitRoomsActive
         {
-            OnDisconnectLivekitRooms?.Invoke();
+            get => livekitRoomsActive;
+            set
+            {
+                if (livekitRoomsActive == value) return;
+                livekitRoomsActive = value;
+                OnLivekitRoomsActiveChanged?.Invoke(value);
+            }
         }
 
         // LODs - Disable renderers of visible LODs
