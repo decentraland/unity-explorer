@@ -10,7 +10,6 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Prefs;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -43,6 +42,8 @@ namespace DCL.AuthenticationScreenFlow
             FetchingProfile,
             LoggedIn,
         }
+
+        private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
         internal const int ANIMATION_DELAY = 300;
         internal const string LOADING_TRANSACTION_NAME = "loading_process";
@@ -138,6 +139,7 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
+            viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 
@@ -146,9 +148,10 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, buildData.InstallSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider, webBrowser),
+
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
-                new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile, web3Authenticator),
+                new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
@@ -170,24 +173,17 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
             if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
-                // entered only on first cached login
+                CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
-                if (compositeWeb3Provider.IsThirdWebOTP && DCLPlayerPrefs.HasKey(DCLPrefKeys.LOGGEDIN_EMAIL))
-                    fsm.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>
-                        ((DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL), storedIdentity, true, loginCancellationTokenSource.Token));
-                else
-                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>
-                        ((storedIdentity, true, loginCancellationTokenSource.Token));
+                web3Authenticator.TryAutoConnectAsync(loginCancellationTokenSource.Token).Forget();
+                fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, loginCancellationTokenSource.Token));
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, allowReEnterSameState: true);
             }
-
-            // Setup transaction confirmation callback for ThirdWeb (Instance is guaranteed to exist at this point)
-            SetupTransactionConfirmationCallback();
         }
 
         protected override void OnViewShow()
@@ -196,6 +192,9 @@ namespace DCL.AuthenticationScreenFlow
 
             BlockUnwantedInputs();
             audio.OnShow();
+
+            // Setup transaction confirmation callback for ThirdWeb (Instance is guaranteed to exist at this point)
+            SetupTransactionConfirmationCallback();
         }
 
         protected override void OnViewClose()
@@ -228,24 +227,26 @@ namespace DCL.AuthenticationScreenFlow
             loginCancellationTokenSource = null;
         }
 
-        internal CancellationToken RestartLoginToken() =>
-            (loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart()).Token;
+        internal CancellationToken GetRestartedLoginToken()
+        {
+            loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart();
+            return loginCancellationTokenSource.Token;
+        }
 
         internal void RestartLogin() =>
             RestartLogin(false);
 
         internal void RestartLogin(bool enterLoginState)
         {
-            Web3LogoutAsync(
-                    RestartLoginToken())
-               .Forget();
-
+            loginCancellationTokenSource = loginCancellationTokenSource.SafeRestart();
+            Web3LogoutAsync(loginCancellationTokenSource!.Token).Forget();
             return;
 
             async UniTaskVoid Web3LogoutAsync(CancellationToken ct)
             {
                 // await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
+
                 if (enterLoginState) fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, allowReEnterSameState: true);
             }
         }
@@ -261,6 +262,9 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             ExitUtils.Exit();
         }
+
+        private void RequestAlphaAccess() =>
+            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
 
         private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);

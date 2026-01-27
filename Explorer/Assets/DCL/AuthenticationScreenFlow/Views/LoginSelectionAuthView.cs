@@ -53,29 +53,6 @@ namespace DCL.AuthenticationScreenFlow
 
         [SerializeField] private GameObject moreOptionsPanel;
 
-        [field: Header("ERROR POPUP")]
-        [field: SerializeField]
-        public GameObject ErrorPopupRoot { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button ErrorPopupRetryButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button ErrorPopupExitButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button ErrorPopupCloseButton { get; private set; } = null!;
-
-        [field: Header("RESTRICTED USER")]
-        [field: SerializeField]
-        public GameObject RestrictedUserContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button RequestAlphaAccessButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button[] UseAnotherAccountButton { get; private set; } = null!;
-
         [Space]
         [SerializeField] private Animator animator;
         [SerializeField] private CanvasGroup canvasGroup;

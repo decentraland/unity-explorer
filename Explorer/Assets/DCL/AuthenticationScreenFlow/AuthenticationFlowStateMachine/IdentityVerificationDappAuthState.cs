@@ -16,7 +16,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<LoginMethod>
+    public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly VerificationDappAuthView view;
@@ -47,14 +47,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
-        public void Enter(LoginMethod method)
+        public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
 
-            CancellationToken loginToken = controller.RestartLoginToken();
-            AuthenticateAsync(method, loginToken).Forget();
+            AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
