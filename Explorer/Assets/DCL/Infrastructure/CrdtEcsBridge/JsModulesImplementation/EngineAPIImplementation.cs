@@ -56,9 +56,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler
-
 #if !UNITY_WEBGL
-            MultiThreadSync multiThreadSync,
+            ,MultiThreadSync multiThreadSync,
             MultiThreadSync.Owner syncOwner
 #endif
         )

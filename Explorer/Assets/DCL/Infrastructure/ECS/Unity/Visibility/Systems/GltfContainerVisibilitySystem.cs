@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -25,7 +25,28 @@ namespace ECS.Unity.Visibility.Systems
             List<Renderer> renderers = component.Promise.Result!.Value.Asset!.Renderers;
 
             for (var i = 0; i < renderers.Count; i++)
-                renderers[i].enabled = visible;
+            {
+                if (renderers[i] != null)
+                {
+                    bool wasEnabled = renderers[i].enabled;
+                    renderers[i].enabled = visible;
+                    Vector3 rendererWorldPos = renderers[i].transform.position;
+                    UnityEngine.Debug.Log($"[Visibility] GltfContainerVisibilitySystem: Renderer[{i}] " +
+                        $"enabled: {wasEnabled} -> {visible}, " +
+                        $"worldPos={rendererWorldPos}, " +
+                        $"gameObject={renderers[i].gameObject.name}, " +
+                        $"activeInHierarchy={renderers[i].gameObject.activeInHierarchy}, " +
+                        $"activeSelf={renderers[i].gameObject.activeSelf}, " +
+                        $"material={(renderers[i].sharedMaterial != null ? renderers[i].sharedMaterial.name : "NULL")}, " +
+                        $"shader={(renderers[i].sharedMaterial != null ? renderers[i].sharedMaterial.shader.name : "NULL")}, " +
+                        $"bounds={renderers[i].bounds}, " +
+                        $"isVisible={renderers[i].isVisible}");
+                }
+                else
+                {
+                    UnityEngine.Debug.LogWarning($"[Visibility] GltfContainerVisibilitySystem: Renderer[{i}] is null!");
+                }
+            }
         }
     }
 }

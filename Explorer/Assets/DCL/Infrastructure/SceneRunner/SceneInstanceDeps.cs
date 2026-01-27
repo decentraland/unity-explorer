@@ -157,14 +157,14 @@ namespace SceneRunner
                     ecsToCRDTWriter,
                     entitiesMap,
                     ExceptionsHandler,
-                    EntityCollidersCache, 
-                    entityCollidersGlobalCache, 
-                    SceneStateProvider, 
-                    entityEventsBuilder, 
+                    EntityCollidersCache,
+                    entityCollidersGlobalCache,
+                    SceneStateProvider,
+                    entityEventsBuilder,
 #if !UNITY_WEBGL
                     ecsMultiThreadSync,
 #endif
-                    systemGroupThrottler, 
+                    systemGroupThrottler,
                     systemsUpdateGate
                     );
 
@@ -294,7 +294,8 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler
 #if !UNITY_WEBGL
-                        . syncDeps.ecsMultiThreadSync,
+                        ,
+                        syncDeps.ecsMultiThreadSync,
                         syncOwner
 #endif
                         ),

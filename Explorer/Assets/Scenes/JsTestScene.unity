@@ -259,7 +259,7 @@ GameObject:
   - component: {fileID: 1118682192}
   - component: {fileID: 1118682196}
   m_Layer: 0
-  m_Name: Camera
+  m_Name: Main Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -277,7 +277,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
-  m_RenderShadows: 0
+  m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
@@ -342,7 +342,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 70.1
+  field of view: 114.1
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -420,6 +420,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c43bc7f195bdd14393b3844bdc5cb55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.SceneRuntime.WebClient.Bootstrapper::SceneRuntime.WebClient.Bootstrapper.WebGLSceneBootstrapper
+  MainCamera: {fileID: 1118682194}
 --- !u!4 &1684430301
 Transform:
   m_ObjectHideFlags: 0

@@ -429,7 +429,7 @@ mergeInto(LibraryManager.library, {
             // Create require function FIRST and add it to global
             // so that globalAssignments will include it
             var requireFunc = function(moduleName) {
-                console.log('[require] Loading module:', moduleName);
+                // console.log('[require] Loading module:', moduleName);
                 
                 var scriptId = context.modules[moduleName];
                 if (!scriptId) {
@@ -456,7 +456,7 @@ mergeInto(LibraryManager.library, {
                 var wrappedPattern = /^\s*\(function\s*\(\s*exports\s*,\s*require\s*,\s*module\s*,\s*__filename\s*,\s*__dirname\s*\)\s*\{/;
                 
                 if (wrappedPattern.test(source)) {
-                    console.log('[require] Detected CommonJS wrapper, will invoke it');
+                    // console.log('[require] Detected CommonJS wrapper, will invoke it');
                     
                     // Evaluate the source to get the wrapper function, then call it
                     var moduleGlobalAssignments = getGlobalAssignments();
@@ -473,26 +473,26 @@ mergeInto(LibraryManager.library, {
                     var wrapperFunc;
                     try {
                         wrapperFunc = getWrapperFunc(globalObj);
-                        console.log('[require] Got wrapper function, type:', typeof wrapperFunc);
+                        // console.log('[require] Got wrapper function, type:', typeof wrapperFunc);
                     } catch (evalError) {
                         console.error('[require] Error evaluating wrapper:', moduleName, evalError);
                         return {};
                     }
                     
                     // Now call the wrapper with the CommonJS arguments
-                    console.log('[require] Calling wrapper for', moduleName, '(this may take a while for large files)...');
+                    // console.log('[require] Calling wrapper for', moduleName, '(this may take a while for large files)...');
                     var startTime = performance.now();
                     try {
                         wrapperFunc.call(globalObj, exportsObj, requireFunc, moduleObj, '/' + moduleName, '/');
                         var elapsed = performance.now() - startTime;
-                        console.log('[require] Wrapper executed successfully in', elapsed.toFixed(0), 'ms');
+                        // console.log('[require] Wrapper executed successfully in', elapsed.toFixed(0), 'ms');
                     } catch (moduleError) {
                         console.error('[require] Error executing wrapper:', moduleName, moduleError);
                         console.error('[require] Stack:', moduleError.stack);
                         return {};
                     }
                 } else {
-                    console.log('[require] No CommonJS wrapper detected, executing directly');
+                    // console.log('[require] No CommonJS wrapper detected, executing directly');
                     var moduleGlobalAssignments = getGlobalAssignments();
                     var moduleCode = moduleGlobalAssignments + '\n' + source;
                     
@@ -513,9 +513,9 @@ mergeInto(LibraryManager.library, {
                 }
                 
                 // Debug: log what we got
-                console.log('[require] module.exports keys:', Object.keys(moduleObj.exports || {}));
-                var onStartType = moduleObj.exports && moduleObj.exports.onStart ? typeof moduleObj.exports.onStart : 'undefined';
-                console.log('[require] Module loaded:', moduleName, 'exports.onStart:', onStartType);
+                // console.log('[require] module.exports keys:', Object.keys(moduleObj.exports || {}));
+                // var onStartType = moduleObj.exports && moduleObj.exports.onStart ? typeof moduleObj.exports.onStart : 'undefined';
+                // console.log('[require] Module loaded:', moduleName, 'exports.onStart:', onStartType);
                 return moduleObj.exports;
             };
             
@@ -672,13 +672,13 @@ mergeInto(LibraryManager.library, {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
         const objectIdStr = UTF8ToString(objectId);
-        console.log('[JSContext_AddHostObject] contextId:', contextIdStr, 'name:', nameStr);
+        // console.log('[JSContext_AddHostObject] contextId:', contextIdStr, 'name:', nameStr);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_AddHostObject] Context not found!');
             return 0;
         }
-        console.log('[JSContext_AddHostObject] context.global before add, has name?:', nameStr in context.global);
+        // console.log('[JSContext_AddHostObject] context.global before add, has name?:', nameStr in context.global);
         
         context.hostObjects[objectIdStr] = nameStr;
         
@@ -804,23 +804,23 @@ mergeInto(LibraryManager.library, {
         // Helper function to deserialize C# result with special type handling
         // Note: contextIdStr is captured from outer closure in JSContext_AddHostObject
         const deserializeResult = function(resultStr, context) {
-            console.log('[deserializeResult] contextId:', contextIdStr, 'Input resultStr:', typeof resultStr, resultStr ? resultStr.substring(0, 200) : resultStr);
-            console.log('[deserializeResult] Context objectInstances keys:', Object.keys(context.objectInstances));
+            // console.log('[deserializeResult] contextId:', contextIdStr, 'Input resultStr:', typeof resultStr, resultStr ? resultStr.substring(0, 200) : resultStr);
+            // console.log('[deserializeResult] Context objectInstances keys:', Object.keys(context.objectInstances));
             
             if (!resultStr || resultStr === 'null') {
-                console.log('[deserializeResult] Returning null (empty or null string)');
+                // console.log('[deserializeResult] Returning null (empty or null string)');
                 return null;
             }
             
             try {
                 const parsed = JSON.parse(resultStr);
-                console.log('[deserializeResult] Parsed type:', typeof parsed, Array.isArray(parsed) ? 'array' : '');
+                // console.log('[deserializeResult] Parsed type:', typeof parsed, Array.isArray(parsed) ? 'array' : '');
                 
                 // Handle special types (objects with markers)
                 if (parsed && typeof parsed === 'object') {
                     // ByteArray type - convert Base64 to Uint8Array
                     if (parsed.__type === 'ByteArray') {
-                        console.log('[deserializeResult] Returning ByteArray');
+                        // console.log('[deserializeResult] Returning ByteArray');
                         if (parsed.isEmpty) {
                             return new Uint8Array(0);
                         }
@@ -836,7 +836,7 @@ mergeInto(LibraryManager.library, {
                     // Object reference - look up in context
                     if (parsed.__objectRef) {
                         const obj = context.objectInstances[parsed.__objectRef];
-                        console.log('[deserializeResult] Returning objectRef:', parsed.__objectRef, 'found:', !!obj);
+                        // console.log('[deserializeResult] Returning objectRef:', parsed.__objectRef, 'found:', !!obj);
                         return obj || parsed;
                     }
                     
@@ -848,16 +848,16 @@ mergeInto(LibraryManager.library, {
                     
                     // Plain object without special markers - return unparsed string
                     // so the caller (SDK) can parse it if needed
-                    console.log('[deserializeResult] Plain object, returning unparsed string');
+                    // console.log('[deserializeResult] Plain object, returning unparsed string');
                     return resultStr;
                 }
                 
                 // Primitives (string, number, boolean) - return parsed value
-                console.log('[deserializeResult] Returning primitive:', typeof parsed);
+                // console.log('[deserializeResult] Returning primitive:', typeof parsed);
                 return parsed;
             } catch (e) {
                 // If JSON parse fails, return the raw string
-                console.log('[deserializeResult] JSON parse failed, returning raw string:', e.message);
+                // console.log('[deserializeResult] JSON parse failed, returning raw string:', e.message);
                 return resultStr;
             }
         };
@@ -919,9 +919,9 @@ mergeInto(LibraryManager.library, {
                         // Skip for __resetableSource which has special void-return handling below
                         if (hostObjectName !== '__resetableSource') {
                             // Call the C# method and get the return value
-                            console.log('[HostObject] Calling:', hostObjectName + '.' + methodName);
+                            // console.log('[HostObject] Calling:', hostObjectName + '.' + methodName);
                             const result = invokeHostObjectCallbackWithReturn(methodName, args);
-                            console.log('[HostObject] Result:', typeof result, result);
+                            // console.log('[HostObject] Result:', typeof result, result);
                             return result;
                         }
                         
@@ -961,7 +961,7 @@ mergeInto(LibraryManager.library, {
         });
         
         context.global[nameStr] = hostObjectProxy;
-        console.log('[JSContext_AddHostObject] Added to context.global, verify:', nameStr in context.global, typeof context.global[nameStr]);
+        // console.log('[JSContext_AddHostObject] Added to context.global, verify:', nameStr in context.global, typeof context.global[nameStr]);
         return 1;
     },
     
@@ -1036,8 +1036,8 @@ mergeInto(LibraryManager.library, {
     JSContext_StoreObject: function(contextId, expression, objectIdPtr, objectIdSize) {
         const contextIdStr = UTF8ToString(contextId);
         const exprStr = UTF8ToString(expression);
-        console.log('[JSContext_StoreObject] contextId:', contextIdStr);
-        console.log('[JSContext_StoreObject] expression (first 500 chars):', exprStr.substring(0, 500));
+        // console.log('[JSContext_StoreObject] contextId:', contextIdStr);
+        // console.log('[JSContext_StoreObject] expression (first 500 chars):', exprStr.substring(0, 500));
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_StoreObject] Context not found for:', contextIdStr);
@@ -1056,25 +1056,25 @@ mergeInto(LibraryManager.library, {
             }).filter(d => d.length > 0).join('\n');
             
             const wrappedExpr = objectInstanceDeclarations + '\nreturn ' + exprStr;
-            console.log('[JSContext_StoreObject] wrappedExpr (first 600 chars):', wrappedExpr.substring(0, 600));
+            // console.log('[JSContext_StoreObject] wrappedExpr (first 600 chars):', wrappedExpr.substring(0, 600));
             
             // Check for promise resolvers specifically
-            const allKeys = Object.keys(context.global);
-            const resolverKeys = allKeys.filter(k => k.startsWith('__promiseResolver'));
-            console.log('[JSContext_StoreObject] context.global total keys:', allKeys.length);
-            console.log('[JSContext_StoreObject] Resolver keys found:', resolverKeys);
+            // const allKeys = Object.keys(context.global);
+            // const resolverKeys = allKeys.filter(k => k.startsWith('__promiseResolver'));
+            // console.log('[JSContext_StoreObject] context.global total keys:', allKeys.length);
+            // console.log('[JSContext_StoreObject] Resolver keys found:', resolverKeys);
             
             // Also check if any Unity APIs are registered
-            const unityKeys = allKeys.filter(k => k.startsWith('Unity') || k.startsWith('__'));
-            console.log('[JSContext_StoreObject] Unity/internal keys:', unityKeys);
+            // const unityKeys = allKeys.filter(k => k.startsWith('Unity') || k.startsWith('__'));
+            // console.log('[JSContext_StoreObject] Unity/internal keys:', unityKeys);
             
             const func = new Function('globalThis', '__objectInstances', 'console', wrappedExpr);
-            console.log('[JSContext_StoreObject] Function created successfully');
+            // console.log('[JSContext_StoreObject] Function created successfully');
             const obj = func(context.global, context.objectInstances, console);
-            console.log('[JSContext_StoreObject] Function executed, result:', obj, 'type:', typeof obj);
+            // console.log('[JSContext_StoreObject] Function executed, result:', obj, 'type:', typeof obj);
             const objectId = '__obj_' + (++context.objectIdCounter);
             context.objectInstances[objectId] = obj;
-            console.log('[JSContext_StoreObject] Stored object:', objectId, 'type:', typeof obj, 'isPromise:', obj instanceof Promise);
+            // console.log('[JSContext_StoreObject] Stored object:', objectId, 'type:', typeof obj, 'isPromise:', obj instanceof Promise);
             const len = lengthBytesUTF8(objectId) + 1;
             if (objectIdSize < len) {
                 return -len;

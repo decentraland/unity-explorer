@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -13,6 +13,7 @@ using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Visibility.Systems;
 using SceneRunner.Scene;
+using UnityEngine;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -75,11 +76,16 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (!result.Succeeded)
                 {
+                    Debug.LogWarning($"[AB-Loading] FinalizeGltfContainerLoadingSystem: FinishedWithError entity={entity.Id}");
                     component.State = LoadingState.FinishedWithError;
                     component.RootGameObject = null;
                     eventsBuffer.Add(entity, component);
                     return;
                 }
+
+                bool rootNull = result.Asset!.Root == null;
+                int rendererCount = result.Asset!.Renderers?.Count ?? 0;
+                Debug.Log($"[AB-Loading] FinalizeGltfContainerLoadingSystem: finalizing entity={entity.Id}, Root==null={rootNull}, renderers={rendererCount}");
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
                 ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
@@ -93,6 +99,39 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset!.Root.transform.SetParent(transformComponent.Transform);
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
+
+                // Log position information
+                Vector3 rootWorldPos = result.Asset.Root.transform.position;
+                Vector3 transformPos = transformComponent.Transform.position;
+                Debug.Log($"[AB-Loading] Finalize: entity={entity.Id}, " +
+                    $"Root worldPos={rootWorldPos}, " +
+                    $"Transform worldPos={transformPos}, " +
+                    $"Root localPos={result.Asset.Root.transform.localPosition}");
+
+                // Log detailed renderer state after activation
+                if (result.Asset.Renderers != null && result.Asset.Renderers.Count > 0)
+                {
+                    for (int i = 0; i < result.Asset.Renderers.Count; i++)
+                    {
+                        var renderer = result.Asset.Renderers[i];
+                        if (renderer != null)
+                        {
+                            Vector3 rendererWorldPos = renderer.transform.position;
+                            Debug.Log($"[AB-Loading] Finalize: Renderer[{i}] entity={entity.Id}, " +
+                                $"enabled={renderer.enabled}, " +
+                                $"worldPos={rendererWorldPos}, " +
+                                $"activeInHierarchy={renderer.gameObject.activeInHierarchy}, " +
+                                $"activeSelf={renderer.gameObject.activeSelf}, " +
+                                $"material={(renderer.sharedMaterial != null ? renderer.sharedMaterial.name : "NULL")}, " +
+                                $"shader={(renderer.sharedMaterial != null ? renderer.sharedMaterial.shader.name : "NULL")}, " +
+                                $"bounds={renderer.bounds}");
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[AB-Loading] FinalizeGltfContainerLoadingSystem: No renderers found for entity={entity.Id}");
+                }
 
                 result.Asset.ToggleAnimationState(true);
 

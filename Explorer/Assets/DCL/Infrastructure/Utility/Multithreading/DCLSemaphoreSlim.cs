@@ -35,7 +35,7 @@ namespace Utility.Multithreading
             this.maxCount = maxCount;
 #endif
         }
-        
+
         public void Dispose()
         {
 #if !UNITY_WEBGL
@@ -54,6 +54,15 @@ namespace Utility.Multithreading
 #endif
         }
 
+        public bool Wait(int millisecondsTimeout)
+        {
+#if !UNITY_WEBGL
+            return semaphore.Wait(millisecondsTimeout);
+#else
+            return false;
+#endif
+        }
+
         public UniTask WaitAsync()
         {
 #if !UNITY_WEBGL
@@ -68,7 +77,7 @@ namespace Utility.Multithreading
             var ucs = new UniTaskCompletionSource();
             queue.Enqueue(ucs);
             return ucs.Task;
-#endif        
+#endif
         }
 
 
@@ -141,7 +150,7 @@ namespace Utility.Multithreading
 
                 count++;
             }
-#endif        
+#endif
         }
     }
 }

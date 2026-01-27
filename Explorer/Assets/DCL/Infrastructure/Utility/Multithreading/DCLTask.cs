@@ -19,27 +19,24 @@ namespace Utility.Multithreading
         {
             return new SwitchToThreadPoolAwaitable();
         }
-#endif    
+#endif
 
 
 #if UNITY_WEBGL
         public static async UniTask RunOnThreadPool(
-                Func<UniTask> action, 
-                bool configureAwait = true, 
+                Func<UniTask> action,
+                bool configureAwait = true,
                 CancellationToken cancellationToken = default)
         {
             await action();
         }
 #else
         public static async UniTask RunOnThreadPool(
-                Func<UniTask> action, 
-                bool configureAwait = true, 
-                CancellationToken cancellationToken = default)
-        {
-        {
-            return UniTask.RunOnThreadPool(action, configureAwait, cancellationToken);
-        }
-#endif    
+                Func<UniTask> action,
+                bool configureAwait = true,
+                CancellationToken cancellationToken = default) =>
+            UniTask.RunOnThreadPool(action, configureAwait, cancellationToken);
+#endif
 
 
 

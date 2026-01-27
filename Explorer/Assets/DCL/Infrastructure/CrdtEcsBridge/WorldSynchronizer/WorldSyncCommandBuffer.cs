@@ -122,10 +122,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         // ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
                         return CRDTReconciliationEffect.NoChanges;
                     }
-                    
-                    // Skip logging for Transform (componentId=1) to reduce spam
-                    if (message.ComponentId != 1)
-                        UnityEngine.Debug.Log($"[WorldSyncBuffer] Processing Entity={message.EntityId}, ComponentId={message.ComponentId}, Effect={reconciliationEffect}");
+
+                    if (message.ComponentId == 1081)
+                        UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
 
                     // Store the first and the last result
                     bool componentBatchExists;

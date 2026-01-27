@@ -41,7 +41,7 @@ namespace DCL.Utility
                 case RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer:
                     platformSuffix = "_linux"; break;
                 case RuntimePlatform.WebGLPlayer:
-                    platformSuffix = "_webGL"; break;
+                    platformSuffix = string.Empty; break;
                 default:
                     platformSuffix = string.Empty; break;
             }
@@ -57,22 +57,20 @@ namespace DCL.Utility
             try
             {
                 var drive = new DriveInfo(root);
+
                 return new DriveData
                 {
                     Name = path,
                     AvailableFreeSpace = (ulong)drive.AvailableFreeSpace,
-                    TotalSize = (ulong)drive.TotalSize
+                    TotalSize = (ulong)drive.TotalSize,
                 };
             }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            catch (Exception ex) { return null; }
         }
 
         /// <summary>
-        /// Retrieves a list of all local, fixed drives with their storage information.
-        /// Uses native P/Invoke calls for high performance and reliability.
+        ///     Retrieves a list of all local, fixed drives with their storage information.
+        ///     Uses native P/Invoke calls for high performance and reliability.
         /// </summary>
         /// <returns>A list of DriveData objects. Returns an empty list on failure or unsupported platforms.</returns>
         public static List<DriveData> GetAllDrivesInfo()
@@ -87,10 +85,7 @@ namespace DCL.Utility
                 return new List<DriveData>();
 #endif
             }
-            catch (Exception e)
-            {
-                return new List<DriveData>();
-            }
+            catch (Exception e) { return new List<DriveData>(); }
         }
 
         public static void ShellExecute(string fileName)
@@ -122,12 +117,12 @@ namespace DCL.Utility
 #endif
         }
 
-
 #if UNITY_STANDALONE_WIN
         private static List<DriveData> GetWindowsDrivesInfo()
         {
             var allDrivesData = new List<DriveData>();
-            var driveLetters = GetDrivesByBitmask();
+            List<string> driveLetters = GetDrivesByBitmask();
+
             foreach (string driveLetter in driveLetters)
             {
                 if (GetDiskFreeSpaceEx(driveLetter, out ulong freeBytes, out ulong totalBytes, out _))
@@ -136,28 +131,32 @@ namespace DCL.Utility
                     {
                         Name = driveLetter,
                         AvailableFreeSpace = freeBytes,
-                        TotalSize = totalBytes
+                        TotalSize = totalBytes,
                     });
                 }
             }
+
             return allDrivesData;
         }
 
         // Kernel32.dll exports GetLogicalDrives, no parameters:
         [DllImport("kernel32.dll")]
         private static extern uint GetLogicalDrives();
+
         /// <summary>
-        /// Returns all existing drive letters (e.g. ["C:\\", "D:\\", ...]).
+        ///     Returns all existing drive letters (e.g. ["C:\\", "D:\\", ...]).
         /// </summary>
         private static List<string> GetDrivesByBitmask()
         {
             uint bitmask = GetLogicalDrives();
             var drives = new List<string>();
-            for (int i = 0; i < 26; i++)
+
+            for (var i = 0; i < 26; i++)
             {
                 if ((bitmask & (1u << i)) != 0)
                     drives.Add($"{(char)('A' + i)}:\\");
             }
+
             return drives;
         }
 
@@ -181,7 +180,6 @@ namespace DCL.Utility
         private const int SW_NORMAL = 1;
 
 #elif UNITY_STANDALONE_OSX
-
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct StatfsRaw
         {

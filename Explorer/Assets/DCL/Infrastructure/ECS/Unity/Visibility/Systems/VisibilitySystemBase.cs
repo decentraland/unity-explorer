@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -43,6 +43,7 @@ namespace ECS.Unity.Visibility.Systems
             // First check ResolvedVisibilityComponent (supports propagation)
             if (World.TryGet(entity, out ResolvedVisibilityComponent resolved))
             {
+                UnityEngine.Debug.Log($"[Visibility] ProcessEvent: entity={entity.Id}, has ResolvedVisibilityComponent, visible={resolved.IsVisible}");
                 UpdateVisibilityInternal(in @event, resolved.IsVisible);
                 return;
             }

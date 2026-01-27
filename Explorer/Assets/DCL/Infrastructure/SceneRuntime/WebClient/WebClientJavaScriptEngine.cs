@@ -316,7 +316,7 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static string SerializeResult(object? result)
         {
-            Debug.Log($"[SerializeResult] Input type: {result?.GetType().Name ?? "null"}");
+            // Debug.Log($"[SerializeResult] Input type: {result?.GetType().Name ?? "null"}");
 
             if (result == null)
                 return "null";
@@ -324,7 +324,7 @@ namespace SceneRuntime.WebClient
             // Handle PoolableByteArray - serialize as Base64 with type marker
             if (result is PoolableByteArray poolableByteArray)
             {
-                Debug.Log("[SerializeResult] Serializing PoolableByteArray");
+                // Debug.Log("[SerializeResult] Serializing PoolableByteArray");
                 if (poolableByteArray.IsEmpty) { return JsonConvert.SerializeObject(new { __type = "ByteArray", data = "", isEmpty = true }); }
 
                 byte[] bytes = poolableByteArray.Memory.ToArray();
@@ -335,32 +335,33 @@ namespace SceneRuntime.WebClient
             // Handle primitive types directly
             if (result is bool boolResult)
             {
-                Debug.Log("[SerializeResult] Serializing bool");
+                // Debug.Log("[SerializeResult] Serializing bool");
                 return boolResult ? "true" : "false";
             }
 
             if (result is int or long or float or double or decimal)
             {
-                Debug.Log("[SerializeResult] Serializing number");
+                // Debug.Log("[SerializeResult] Serializing number");
                 return result.ToString()!;
             }
 
             if (result is string stringResult)
             {
-                var serialized = JsonConvert.SerializeObject(stringResult);
-                Debug.Log($"[SerializeResult] Serializing string, length={stringResult.Length}, serialized={serialized.Substring(0, Math.Min(100, serialized.Length))}...");
+                string serialized = JsonConvert.SerializeObject(stringResult);
+
+                // Debug.Log($"[SerializeResult] Serializing string, length={stringResult.Length}, serialized={serialized.Substring(0, Math.Min(100, serialized.Length))}...");
                 return serialized;
             }
 
             // Handle WebClientScriptObject - return the object ID reference
             if (result is WebClientScriptObject scriptObject)
             {
-                Debug.Log($"[SerializeResult] Serializing WebClientScriptObject: {scriptObject.ObjectId}");
+                // Debug.Log($"[SerializeResult] Serializing WebClientScriptObject: {scriptObject.ObjectId}");
                 return JsonConvert.SerializeObject(new { __objectRef = scriptObject.ObjectId });
             }
 
             // Default: JSON serialize the object
-            Debug.Log($"[SerializeResult] Default serialization for: {result.GetType().Name}");
+            // Debug.Log($"[SerializeResult] Default serialization for: {result.GetType().Name}");
             try { return JsonConvert.SerializeObject(result); }
             catch (Exception ex)
             {
@@ -783,19 +784,13 @@ namespace SceneRuntime.WebClient
 
         private async UniTaskVoid RunAsync(UniTask<T> uniTask)
         {
-            try
-            {
-                result = await uniTask;
-            }
+            try { result = await uniTask; }
             catch (Exception e)
             {
                 isFaulted = true;
                 error = e.Message;
             }
-            finally
-            {
-                isCompleted = true;
-            }
+            finally { isCompleted = true; }
         }
 
         [UsedImplicitly]
@@ -828,19 +823,13 @@ namespace SceneRuntime.WebClient
 
         private async UniTaskVoid RunAsync(UniTask uniTask)
         {
-            try
-            {
-                await uniTask;
-            }
+            try { await uniTask; }
             catch (Exception e)
             {
                 isFaulted = true;
                 error = e.Message;
             }
-            finally
-            {
-                isCompleted = true;
-            }
+            finally { isCompleted = true; }
         }
 
         [UsedImplicitly]
