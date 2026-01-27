@@ -83,8 +83,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            characterPreviewController?.OnHide();
-
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();
         }
@@ -92,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnDiffAccountButtonClicked()
         {
             view.Hide(UIAnimationHashes.SLIDE);
-            controller.RestartLogin(enterLoginState: true);
+            controller.ChangeAccount();
         }
 
         private void OnJumpIntoWorld()

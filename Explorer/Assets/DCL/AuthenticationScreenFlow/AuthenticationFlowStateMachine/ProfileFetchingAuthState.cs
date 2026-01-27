@@ -94,27 +94,27 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
                     view.Hide(SLIDE);
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
                 }
                 catch (ProfileNotFoundException e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     view.Hide(SLIDE);
-                    machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
                 }
                 catch (Exception e)
                 {
                     sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     view.Hide(SLIDE);
-                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
                 }
             }
             else
             {
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.RESTRICTED_USER, SLIDE));
             }
         }
 

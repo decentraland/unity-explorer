@@ -107,7 +107,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (SignatureExpiredException e)
             {
@@ -115,7 +115,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Web3SignatureException e)
             {
@@ -123,7 +123,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (CodeVerificationException e)
             {
@@ -131,7 +131,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, SLIDE));
             }
             catch (Exception e)
             {
@@ -139,7 +139,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.CONNECTION_ERROR, SLIDE));
             }
         }
 
