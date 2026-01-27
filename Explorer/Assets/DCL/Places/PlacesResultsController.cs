@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Friends;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -63,7 +64,8 @@ namespace DCL.Places
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
-            PlacesCardSocialActionsController placesCardSocialActionsController)
+            PlacesCardSocialActionsController placesCardSocialActionsController,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.view = view;
             this.placesController = placesController;
@@ -82,14 +84,16 @@ namespace DCL.Places
             view.PlaceLikeToggleChanged += OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged += OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged += OnPlaceFavoriteToggleChanged;
+            view.PlaceHomeToggleChanged += OnPlaceHomeToggleChanged;
             view.PlaceJumpInButtonClicked += OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked += OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked += OnPlaceCopyLinkButtonClicked;
             view.MainButtonClicked += OnMainButtonClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
+            placesCardSocialActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
 
-            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper);
+            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper, homePlaceEventBus);
             view.InitializePlacesGrid();
         }
 
@@ -101,12 +105,14 @@ namespace DCL.Places
             view.PlaceLikeToggleChanged -= OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged -= OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged -= OnPlaceFavoriteToggleChanged;
+            view.PlaceHomeToggleChanged -= OnPlaceHomeToggleChanged;
             view.PlaceJumpInButtonClicked -= OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked -= OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked -= OnPlaceCopyLinkButtonClicked;
             view.MainButtonClicked -= OnMainButtonClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
+            placesCardSocialActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
 
             loadPlacesCts?.SafeCancelAndDispose();
             placeCardOperationsCts.SafeCancelAndDispose();
@@ -155,6 +161,9 @@ namespace DCL.Places
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
             placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
+
+        private void OnPlaceHomeToggleChanged(PlacesData.PlaceInfo placeInfo, bool homeValue, PlaceCardView placeCardView) =>
+            placesCardSocialActionsController.SetPlaceAsHome(placeInfo, homeValue, placeCardView, null);
 
         private void OnPlaceJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
         {
@@ -346,6 +355,9 @@ namespace DCL.Places
             placesStateService.ClearAllFriends();
             allFriendsLoaded = false;
         }
+
+        private void OnPlaceSetAsHome(string newPlaceAsHomeId) =>
+            view.RefreshOldPlaceAsHome(newPlaceAsHomeId);
 
         private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
         {

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -21,6 +22,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly INavmapBus navmapBus;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private string currentNavigationPlaceId = string.Empty;
 
@@ -33,7 +35,8 @@ namespace DCL.Places
             IProfileRepository profileRepository,
             PlacesCardSocialActionsController placesCardSocialActionsController,
             INavmapBus navmapBus,
-            IMapPathEventBus mapPathEventBus) : base(viewFactory)
+            IMapPathEventBus mapPathEventBus,
+            HomePlaceEventBus homePlaceEventBus) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -41,6 +44,7 @@ namespace DCL.Places
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.navmapBus = navmapBus;
             this.mapPathEventBus = mapPathEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
         }
 
         protected override void OnViewInstantiated()
@@ -48,6 +52,7 @@ namespace DCL.Places
             viewInstance!.LikeToggleChanged += OnLikeToggleChanged;
             viewInstance.DislikeToggleChanged += DislikeToggleChanged;
             viewInstance.FavoriteToggleChanged += OnFavoriteToggleChanged;
+            viewInstance.HomeToggleChanged += OnHomeToggleChanged;
             viewInstance.ShareButtonClicked += OnShareButtonClicked;
             viewInstance.CopyLinkButtonClicked += OnCopyLinkButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
@@ -67,7 +72,8 @@ namespace DCL.Places
                 thumbnailLoader: thumbnailLoader,
                 cancellationToken: panelCts.Token,
                 friends: inputData.ConnectedFriends,
-                profileRepositoryWrapper: profileRepositoryWrapper);
+                profileRepositoryWrapper: profileRepositoryWrapper,
+                homePlaceEventBus: homePlaceEventBus);
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
         }
@@ -85,6 +91,7 @@ namespace DCL.Places
             viewInstance.LikeToggleChanged -= OnLikeToggleChanged;
             viewInstance.DislikeToggleChanged -= DislikeToggleChanged;
             viewInstance.FavoriteToggleChanged -= OnFavoriteToggleChanged;
+            viewInstance.HomeToggleChanged -= OnHomeToggleChanged;
             viewInstance.ShareButtonClicked -= OnShareButtonClicked;
             viewInstance.CopyLinkButtonClicked -= OnCopyLinkButtonClicked;
             viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
@@ -124,6 +131,9 @@ namespace DCL.Places
             panelCts = panelCts.SafeRestart();
             placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, inputData.SummonerPlaceCard, viewInstance, panelCts.Token).Forget();
         }
+
+        private void OnHomeToggleChanged(PlacesData.PlaceInfo placeInfo, bool homeValue) =>
+            placesCardSocialActionsController.SetPlaceAsHome(placeInfo, homeValue, inputData.SummonerPlaceCard, viewInstance);
 
         private void OnShareButtonClicked(PlacesData.PlaceInfo placeInfo)
         {

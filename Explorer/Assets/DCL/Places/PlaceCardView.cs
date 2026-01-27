@@ -42,6 +42,7 @@ namespace DCL.Places
         [SerializeField] private ToggleView likeToggle = null!;
         [SerializeField] private ToggleView dislikeToggle = null!;
         [SerializeField] private ToggleView favoriteToggle = null!;
+        [SerializeField] private ToggleView homeToggle = null!;
         [SerializeField] private Button shareButton = null!;
         [SerializeField] private Button infoButton = null!;
         [SerializeField] private Button jumpInButton = null!;
@@ -75,11 +76,14 @@ namespace DCL.Places
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? FavoriteToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? HomeToggleChanged;
         public event Action<PlaceInfo, Vector2, PlaceCardView>? ShareButtonClicked;
         public event Action<PlaceInfo>? InfoButtonClicked;
         public event Action<PlaceInfo>? JumpInButtonClicked;
         public event Action<PlaceInfo>? DeleteButtonClicked;
         public event Action<PlaceInfo, PlaceCardView>? MainButtonClicked;
+
+        public bool IsSetAsHome => homeToggle.Toggle.isOn;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -105,6 +109,7 @@ namespace DCL.Places
             likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo!, value, this));
             dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo!, value, this));
             favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo!, value, this));
+            homeToggle.Toggle.onValueChanged.AddListener(value => HomeToggleChanged?.Invoke(currentPlaceInfo!, value, this));
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo!, shareButton.transform.position, this));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
@@ -119,7 +124,7 @@ namespace DCL.Places
             loadingThumbnailCts.SafeCancelAndDispose();
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null)
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false)
         {
             currentPlaceInfo = placeInfo;
 
@@ -167,15 +172,18 @@ namespace DCL.Places
             LikeToggleChanged = null;
             DislikeToggleChanged = null;
             FavoriteToggleChanged = null;
+            HomeToggleChanged = null;
 
-            likeToggle.Toggle.isOn = placeInfo.user_like;
-            dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
-            favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
+            SilentlySetLikeToggle(placeInfo.user_like);
+            SilentlySetDislikeToggle(placeInfo.user_dislike);
+            SilentlySetFavoriteToggle(placeInfo.user_favorite);
+            SilentlySetHomeToggle(isHome);
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,
             Action<PlaceInfo, bool, PlaceCardView> dislikeToggleChanged,
             Action<PlaceInfo, bool, PlaceCardView> favoriteToggleChanged,
+            Action<PlaceInfo, bool, PlaceCardView> homeToggleChanged,
             Action<PlaceInfo, Vector2, PlaceCardView> shareButtonClicked,
             Action<PlaceInfo> infoButtonClicked,
             Action<PlaceInfo> jumpInButtonClicked,
@@ -185,6 +193,7 @@ namespace DCL.Places
             LikeToggleChanged = null;
             DislikeToggleChanged = null;
             FavoriteToggleChanged = null;
+            HomeToggleChanged = null;
             ShareButtonClicked = null;
             InfoButtonClicked = null;
             JumpInButtonClicked = null;
@@ -194,6 +203,7 @@ namespace DCL.Places
             LikeToggleChanged += likeToggleChanged;
             DislikeToggleChanged += dislikeToggleChanged;
             FavoriteToggleChanged += favoriteToggleChanged;
+            HomeToggleChanged += homeToggleChanged;
             ShareButtonClicked += shareButtonClicked;
             InfoButtonClicked += infoButtonClicked;
             JumpInButtonClicked += jumpInButtonClicked;
@@ -217,6 +227,12 @@ namespace DCL.Places
         {
             favoriteToggle.Toggle.SetIsOnWithoutNotify(isOn);
             favoriteToggle.SetToggleGraphics(isOn);
+        }
+
+        public void SilentlySetHomeToggle(bool isOn)
+        {
+            homeToggle.Toggle.SetIsOnWithoutNotify(isOn);
+            homeToggle.SetToggleGraphics(isOn);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

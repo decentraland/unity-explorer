@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.UI;
@@ -50,6 +51,7 @@ namespace DCL.Places
         [SerializeField] private ToggleView likeToggle = null!;
         [SerializeField] private ToggleView dislikeToggle = null!;
         [SerializeField] private ToggleView favoriteToggle = null!;
+        [SerializeField] private ToggleView homeToggle = null!;
         [SerializeField] private Button shareButton = null!;
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private GameObject startExitNavigationButtonsContainer = null!;
@@ -87,6 +89,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo, bool>? LikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool>? DislikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool>? FavoriteToggleChanged;
+        public event Action<PlacesData.PlaceInfo, bool>? HomeToggleChanged;
         public event Action<PlacesData.PlaceInfo>? ShareButtonClicked;
         public event Action<PlacesData.PlaceInfo>? CopyLinkButtonClicked;
         public event Action<PlacesData.PlaceInfo>? JumpInButtonClicked;
@@ -106,6 +109,7 @@ namespace DCL.Places
             likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value));
             dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value));
             favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value));
+            homeToggle.Toggle.onValueChanged.AddListener(value => HomeToggleChanged?.Invoke(currentPlaceInfo, value));
             shareButton.onClick.AddListener(() => OpenCardContextMenu(shareButton.transform.position));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
             startNavigationButton.onClick.AddListener(() => StartNavigationButtonClicked?.Invoke(currentPlaceInfo));
@@ -142,7 +146,8 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             CancellationToken cancellationToken,
             List<Profile.CompactInfo>? friends = null,
-            ProfileRepositoryWrapper? profileRepositoryWrapper = null)
+            ProfileRepositoryWrapper? profileRepositoryWrapper = null,
+            HomePlaceEventBus? homePlaceEventBus = null)
         {
             currentPlaceInfo = placeInfo;
             mainScroll.verticalNormalizedPosition = 1;
@@ -153,9 +158,9 @@ namespace DCL.Places
             creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             visitsText.text = GetKFormat(placeInfo.user_visits);
-            likeToggle.Toggle.isOn = placeInfo.user_like;
-            dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
-            favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
+            SilentlySetLikeToggle(placeInfo.user_like);
+            SilentlySetDislikeToggle(placeInfo.user_dislike);
+            SilentlySetFavoriteToggle(placeInfo.user_favorite);
             onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
             coordsText.text = placeInfo.base_position;
@@ -163,6 +168,10 @@ namespace DCL.Places
             favoritesText.text = GetKFormat(placeInfo.favorites);
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
             liveTag.SetActive(placeInfo.live);
+
+            VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates);
+            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            SilentlySetHomeToggle(isHome);
 
             bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
             friendsConnected.root.SetActive(showFriendsConnected);
@@ -215,6 +224,12 @@ namespace DCL.Places
         {
             favoriteToggle.Toggle.SetIsOnWithoutNotify(isOn);
             favoriteToggle.SetToggleGraphics(isOn);
+        }
+
+        public void SilentlySetHomeToggle(bool isOn)
+        {
+            homeToggle.Toggle.SetIsOnWithoutNotify(isOn);
+            homeToggle.SetToggleGraphics(isOn);
         }
 
         public void SetNavigation(bool isNavigating)

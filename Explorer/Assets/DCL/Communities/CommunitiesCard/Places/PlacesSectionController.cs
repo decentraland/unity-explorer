@@ -5,6 +5,7 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Navmap;
 using DCL.NotificationsBus;
@@ -69,15 +70,18 @@ namespace DCL.Communities.CommunitiesCard.Places
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IProfileRepository profileRepository,
-            IDecentralandUrlsSource dclUrlSource) : base(view, PAGE_SIZE)
+            IDecentralandUrlsSource dclUrlSource,
+            HomePlaceEventBus homePlaceEventBus) : base(view, PAGE_SIZE)
         {
             this.view = view;
+            view.SetDependencies(homePlaceEventBus);
+
             this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource, null, null);
+            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource, null, null, homePlaceEventBus);
 
             view.InitGrid(thumbnailLoader, cancellationToken);
 
@@ -86,6 +90,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementLikeToggleChanged += OnElementLikeToggleChanged;
             view.ElementDislikeToggleChanged += OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged += OnElementFavoriteToggleChanged;
+            view.ElementHomeToggleChanged += OnElementHomeToggleChanged;
             view.ElementShareButtonClicked += OnElementShareButtonClicked;
             view.ElementCopyLinkButtonClicked += OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked += OnElementInfoButtonClicked;
@@ -101,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementLikeToggleChanged -= OnElementLikeToggleChanged;
             view.ElementDislikeToggleChanged -= OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged -= OnElementFavoriteToggleChanged;
+            view.ElementHomeToggleChanged -= OnElementHomeToggleChanged;
             view.ElementShareButtonClicked -= OnElementShareButtonClicked;
             view.ElementCopyLinkButtonClicked -= OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
@@ -175,6 +181,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
             placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
+
+        private void OnElementHomeToggleChanged(PlaceInfo placeInfo, bool homeValue, PlaceCardView placeCardView) =>
+            placesCardSocialActionsController.SetPlaceAsHome(placeInfo, homeValue, placeCardView, null);
 
         private void OnElementDislikeToggleChanged(PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {

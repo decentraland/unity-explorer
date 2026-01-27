@@ -1,5 +1,6 @@
 ﻿using DCL.Audio;
 using DCL.Communities;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
@@ -27,6 +28,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceLikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceDislikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceFavoriteToggleChanged;
+        public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceHomeToggleChanged;
         public event Action<PlacesData.PlaceInfo>? PlaceJumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceShareButtonClicked;
         public event Action<PlacesData.PlaceInfo>? PlaceCopyLinkButtonClicked;
@@ -37,6 +39,7 @@ namespace DCL.Places
         private PlacesData.PlaceInfo? lastClickedPlaceCtx;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? openContextMenuCts;
+        private HomePlaceEventBus? homePlaceEventBus;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -81,11 +84,13 @@ namespace DCL.Places
         public void SetDependencies(
             PlacesStateService stateService,
             ThumbnailLoader thumbnailLoader,
-            ProfileRepositoryWrapper profileRepoWrapper)
+            ProfileRepositoryWrapper profileRepoWrapper,
+            HomePlaceEventBus homeEventBus)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
+            this.homePlaceEventBus = homeEventBus;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
@@ -137,6 +142,27 @@ namespace DCL.Places
         public void PlayOnLinkClickAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clickOnLinksAudio);
 
+        public void RefreshOldPlaceAsHome(string newPlaceAsHomeId)
+        {
+            //placesResultsLoopGrid.RefreshAllShownItem();
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                if (currentPlacesIds[i] != newPlaceAsHomeId)
+                {
+                    var item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                    if (item != null)
+                    {
+                        var cardView = item.GetComponent<PlaceCardView>();
+                        if (cardView.IsSetAsHome)
+                        {
+                            cardView.SilentlySetHomeToggle(false);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
@@ -144,19 +170,23 @@ namespace DCL.Places
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
+            VectorUtilities.TryParseVector2Int(placeInfoWithConnectedFriends.PlaceInfo.base_position, out var coordinates);
+            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
             cardView.Configure(
                 placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
                 ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
                 userOwnsPlace: false,
                 thumbnailLoader: placesCardsThumbnailLoader!,
                 friends: placeInfoWithConnectedFriends.ConnectedFriends,
-                profileRepositoryWrapper);
+                profileRepositoryWrapper,
+                isHome);
 
             // Setup card events
             cardView.SubscribeToInteractions(
                 likeToggleChanged: (place, value, card) => PlaceLikeToggleChanged?.Invoke(place, value, card),
                 dislikeToggleChanged: (place, value, card) => PlaceDislikeToggleChanged?.Invoke(place, value, card),
                 favoriteToggleChanged: (place, value, card) => PlaceFavoriteToggleChanged?.Invoke(place, value, card),
+                homeToggleChanged: (place, value, card) => PlaceHomeToggleChanged?.Invoke(place, value, card),
                 shareButtonClicked: OpenCardContextMenu,
                 infoButtonClicked: _ => { },
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),

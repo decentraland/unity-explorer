@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Places;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
@@ -14,6 +15,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetCommunityResponse.CommunityData;
 using PlaceData = DCL.Communities.CommunitiesCard.Places.PlacesSectionController.PlaceData;
@@ -44,12 +46,15 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, bool, PlaceCardView>? ElementLikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? ElementDislikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? ElementFavoriteToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? ElementHomeToggleChanged;
         public event Action<PlaceInfo>? ElementShareButtonClicked;
         public event Action<PlaceInfo>? ElementCopyLinkButtonClicked;
         public event Action<PlaceInfo>? ElementInfoButtonClicked;
         public event Action<PlaceInfo>? ElementJumpInButtonClicked;
         public event Action<PlaceInfo>? ElementDeleteButtonClicked;
         public event Action<PlaceInfo, PlaceCardView>? ElementMainButtonClicked;
+
+        private HomePlaceEventBus? homePlaceEventBus;
 
         private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
@@ -68,6 +73,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.CopyLinkText, placeCardContextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx!)));
         }
+
+        public void SetDependencies(HomePlaceEventBus homeEventBus) =>
+            this.homePlaceEventBus = homeEventBus;
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
@@ -120,15 +128,21 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceData placeInfo = membersData.Items[realIndex];
+
+            VectorUtilities.TryParseVector2Int(placeInfo.PlaceInfo.base_position, out var coordinates);
+            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+
             elementView.Configure(
                 placeInfo: placeInfo.PlaceInfo,
                 ownerName: placeInfo.OwnerName,
                 userOwnsPlace: placeInfo.PlaceInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify,
-                thumbnailLoader: thumbnailLoader!);
+                thumbnailLoader: thumbnailLoader!,
+                isHome: isHome);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementFavoriteToggleChanged?.Invoke(placeInfo, value, cardView),
+                (placeInfo, value, cardView) => ElementHomeToggleChanged?.Invoke(placeInfo, value, cardView),
                 OpenCardContextMenu,
                 placeInfo => ElementInfoButtonClicked?.Invoke(placeInfo),
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo),

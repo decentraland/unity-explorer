@@ -3,6 +3,7 @@ using DCL.Communities;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -41,7 +42,8 @@ namespace DCL.Places
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
-            PlacesCardSocialActionsController placesCardSocialActionsController)
+            PlacesCardSocialActionsController placesCardSocialActionsController,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -51,7 +53,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

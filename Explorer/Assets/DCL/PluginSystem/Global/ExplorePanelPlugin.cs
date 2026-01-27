@@ -509,16 +509,16 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
-            var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus);
+            var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
             placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepositoryWrapper, profileRepository,
-                placesCardSocialActionsController, navmapBus, mapPathEventBus);
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
             mvcManager.RegisterController(placeDetailPanelController);
 
             ExplorePanelController explorePanelController = new

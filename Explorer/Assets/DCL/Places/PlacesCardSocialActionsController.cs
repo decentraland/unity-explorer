@@ -5,6 +5,7 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Navmap;
 using DCL.NotificationsBus;
@@ -12,6 +13,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Threading;
 using Utility;
 
@@ -19,6 +21,8 @@ namespace DCL.Places
 {
     public class PlacesCardSocialActionsController
     {
+        public event Action<string>? PlaceSetAsHome;
+
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
@@ -32,6 +36,7 @@ namespace DCL.Places
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly INavmapBus? navmapBus;
         private readonly IMapPathEventBus? mapPathEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         public PlacesCardSocialActionsController(
             IPlacesAPIService placesAPIService,
@@ -40,7 +45,8 @@ namespace DCL.Places
             ISystemClipboard clipboard,
             IDecentralandUrlsSource dclUrlSource,
             INavmapBus? navmapBus,
-            IMapPathEventBus? mapPathEventBus)
+            IMapPathEventBus? mapPathEventBus,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
@@ -49,6 +55,7 @@ namespace DCL.Places
             this.dclUrlSource = dclUrlSource;
             this.navmapBus = navmapBus;
             this.mapPathEventBus = mapPathEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
         }
 
         public async UniTaskVoid LikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView, CancellationToken ct)
@@ -72,9 +79,9 @@ namespace DCL.Places
                 placeCardView?.SilentlySetDislikeToggle(false);
                 placeDetailPanelView?.SilentlySetDislikeToggle(false);
                 placeInfo.user_dislike = false;
-                placeInfo.user_like = true;
             }
 
+            placeInfo.user_like = likeValue;
             placeCardView?.SilentlySetLikeToggle(likeValue);
             placeDetailPanelView?.SilentlySetLikeToggle(likeValue);
         }
@@ -99,10 +106,10 @@ namespace DCL.Places
             {
                 placeCardView?.SilentlySetLikeToggle(false);
                 placeDetailPanelView?.SilentlySetLikeToggle(false);
-                placeInfo.user_dislike = true;
                 placeInfo.user_like = false;
             }
 
+            placeInfo.user_dislike = dislikeValue;
             placeCardView?.SilentlySetDislikeToggle(dislikeValue);
             placeDetailPanelView?.SilentlySetDislikeToggle(dislikeValue);
         }
@@ -125,6 +132,23 @@ namespace DCL.Places
             placeInfo.user_favorite = favoriteValue;
             placeCardView?.SilentlySetFavoriteToggle(favoriteValue);
             placeDetailPanelView?.SilentlySetFavoriteToggle(favoriteValue);
+        }
+
+        public void SetPlaceAsHome(PlacesData.PlaceInfo placeInfo, bool isHome, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView)
+        {
+            if (!VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates))
+                return;
+
+            if (isHome)
+            {
+                homePlaceEventBus.SetAsHome(coordinates);
+                PlaceSetAsHome?.Invoke(placeInfo.id);
+            }
+            else
+                homePlaceEventBus.UnsetHome();
+
+            placeCardView?.SilentlySetHomeToggle(isHome);
+            placeDetailPanelView?.SilentlySetHomeToggle(isHome);
         }
 
         public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
