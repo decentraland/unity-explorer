@@ -117,7 +117,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void NotTriggerEmoteWhenAvatarIsNotVisible()
+        public void CanTriggerEmoteWhenAvatarIsNotVisible()
         {
             // Arrange
             var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:dance");
@@ -128,8 +128,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             system.Update(0);
 
             // Assert
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(entity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
+            Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
+            Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
@@ -304,14 +304,35 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             public List<(URN emoteId, bool loopCyclePassed)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed)
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => new OwnedBunch<RemoteEmoteIntention>();
+
+            public OwnedBunch<LookAtPositionIntention> LookAtPositionIntentions() => new OwnedBunch<LookAtPositionIntention>();
+
+            public void Send(URN urn, bool loopCyclePassed, bool isUsingSocialEmoteOutcome, int socialEmoteOutcomeIndex, bool isReactingToSocialEmote,
+                string socialEmoteInitiatorWalletAddress, string targetAvatarWalletAddress, bool isStopping, int interactionId)
             {
                 SentEmotes.Add((urn, loopCyclePassed));
             }
 
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+            public void OnPlayerRemoved(string walletId)
+            {
+
+            }
+
+            public void SaveForRetry(RemoteEmoteIntention intention)
+            {
+
+            }
+
+            public void SaveForRetry(LookAtPositionIntention intention)
+            {
+
+            }
+
+            public void SendLookAtPositionMessage(string walletAddress, float worldPositionX, float worldPositionY, float worldPositionZ)
+            {
+
+            }
         }
     }
 }

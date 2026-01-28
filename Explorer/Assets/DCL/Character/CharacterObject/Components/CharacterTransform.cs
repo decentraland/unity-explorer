@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System;
 using UnityEngine;

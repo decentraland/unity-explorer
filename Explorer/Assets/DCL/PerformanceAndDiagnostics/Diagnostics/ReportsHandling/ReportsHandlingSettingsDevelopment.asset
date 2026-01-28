@@ -600,6 +600,28 @@ MonoBehaviour:
       Severity: 4
     - Category: MVC_STATE_MACHINE
       Severity: 1
+    - Category: EMOTE_DEBUG
+      Severity: 3
+    - Category: EMOTE_DEBUG
+      Severity: 2
+    - Category: EMOTE_DEBUG
+      Severity: 0
+    - Category: EMOTE_DEBUG
+      Severity: 4
+    - Category: EMOTE_DEBUG
+      Severity: 1
+    - Category: ANALYTICS_INTERNAL
+      Severity: 0
+    - Category: ANALYTICS_INTERNAL
+      Severity: 4
+    - Category: ANALYTICS_INTERNAL
+      Severity: 1
+    - Category: ANALYTICS_INTERNAL
+      Severity: 2
+    - Category: SOCIAL_EMOTE
+      Severity: 4
+    - Category: SOCIAL_EMOTE
+      Severity: 0
   sentryMatrix:
     entries: []
   debounceEnabled: 1

@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 
         bool TryChangeRealm(string message, string realm);
 
-        void TryTriggerEmote(string predefinedEmote);
+        UniTask TryTriggerEmoteAsync(string predefinedEmote);
 
         UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct);
 
