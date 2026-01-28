@@ -135,7 +135,8 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
                             .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
                             .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false)
-                            .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false);
+                            .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false)
+                            .AddToggleField("Pause Video Players", OnVideoPlayersPausedChange, false);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -444,6 +445,11 @@ namespace DCL.Profiling.ECS
         private void OnDisableMainUIChanged(ChangeEvent<bool> evt)
         {
             VisualDebugSettings.DisableMainUI = evt.newValue;
+        }
+
+        private void OnVideoPlayersPausedChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.VideoPlayersPaused = evt.newValue;
         }
     }
 }

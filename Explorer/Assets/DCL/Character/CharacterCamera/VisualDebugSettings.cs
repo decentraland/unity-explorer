@@ -214,5 +214,19 @@ namespace DCL.CharacterCamera
                 OnDisableMainUIChanged?.Invoke(value);
             }
         }
+
+        // Video Players - Pause all video updates
+        public static event Action<bool>? OnVideoPlayersPausedChanged;
+        private static bool videoPlayersPaused;
+        public static bool VideoPlayersPaused
+        {
+            get => videoPlayersPaused;
+            set
+            {
+                if (videoPlayersPaused == value) return;
+                videoPlayersPaused = value;
+                OnVideoPlayersPausedChanged?.Invoke(value);
+            }
+        }
     }
 }
