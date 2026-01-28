@@ -2,11 +2,9 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using ECS.Abstract;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -20,13 +18,11 @@ namespace DCL.JumpIndicator
 
         private readonly Entity playerEntity;
         private readonly GameObject jumpIndicatorPrefab;
-        private readonly float groundCheckRadius;
 
-        private JumpIndicatorSystem(World world, Entity playerEntity, GameObject jumpIndicatorPrefab, float groundCheckRadius) : base(world)
+        private JumpIndicatorSystem(World world, Entity playerEntity, GameObject jumpIndicatorPrefab) : base(world)
         {
             this.playerEntity = playerEntity;
             this.jumpIndicatorPrefab = jumpIndicatorPrefab;
-            this.groundCheckRadius = groundCheckRadius;
         }
 
         protected override void Update(float t)
@@ -50,22 +46,15 @@ namespace DCL.JumpIndicator
         }
 
         [Query]
-        private void UpdateJumpIndicator(in IAvatarView avatarView, in JumpIndicator jumpIndicator, in CharacterRigidTransform transform)
+        private void UpdateJumpIndicator(in JumpIndicator jumpIndicator, in CharacterRigidTransform transform)
         {
             DecalProjector decalProjector = jumpIndicator.DecalProjector;
 
             decalProjector.enabled = !transform.IsGrounded;
             if (!decalProjector.enabled) return;
 
-            Vector3 groundCheckOrigin = avatarView.GetTransform().position + ((groundCheckRadius + 0.001f) * Vector3.up);
-            float maxDistance = decalProjector.size.z;
-            LayerMask layerMask = PhysicsLayers.CHARACTER_ONLY_MASK;
-
-            bool didHit = Physics.SphereCast(groundCheckOrigin, groundCheckRadius, Vector3.down, out RaycastHit hit, maxDistance, layerMask);
-            float groundDistance = didHit ? hit.distance : maxDistance;
-
-            decalProjector.material.SetFloat(MAX_GROUND_DISTANCE_ID, maxDistance);
-            decalProjector.material.SetFloat(PLAYER_GROUND_DISTANCE_ID, groundDistance);
+            decalProjector.material.SetFloat(MAX_GROUND_DISTANCE_ID, decalProjector.size.z);
+            decalProjector.material.SetFloat(PLAYER_GROUND_DISTANCE_ID, transform.GroundDistance);
         }
 
 

@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CalculateSpeedLimitSystem.InjectToWorld(ref builder);
-            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
+            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, settings.Gliding, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
             CharacterPlatformUpdateSceneTickSystem.InjectToWorld(ref builder, scenesCache);
@@ -98,6 +98,7 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.ControllerSettings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            GroundDistanceSystem.InjectToWorld(ref builder);
             GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
         }
     }

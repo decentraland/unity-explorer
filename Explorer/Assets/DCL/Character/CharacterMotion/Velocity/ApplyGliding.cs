@@ -9,16 +9,22 @@ namespace DCL.CharacterMotion
     public static class ApplyGliding
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(in ICharacterControllerSettings settings, in CharacterRigidTransform rigidTransform, in JumpState jumpState, in JumpInputComponent jump, ref GlideState glideState, int physicsTick)
+        public static void Execute(in ICharacterControllerSettings settings,
+            in CharacterRigidTransform rigidTransform,
+            in JumpState jumpState,
+            in JumpInputComponent jump,
+            ref GlideState glideState,
+            float minGroundDistance,
+            int physicsTick)
         {
-            bool canGlide = jumpState.JumpCount > settings.AirJumpCount;
-            bool wantsToGlide = jump.IsPressed && jump.Trigger.IsAvailable(physicsTick, 0);
+            bool canGlide = jumpState.JumpCount > settings.AirJumpCount && !rigidTransform.IsGrounded && rigidTransform.GroundDistance > minGroundDistance;
+            bool wantsToGlide = jump.Trigger.IsAvailable(physicsTick, 0);
 
             // Start gliding if can and want
             glideState.IsGliding |= canGlide && wantsToGlide;
 
-            // Stop gliding if the jump button is released or we touched ground
-            glideState.IsGliding &= jump.IsPressed && !rigidTransform.IsGrounded;
+            // Stop gliding if the jump button is released or any other condition prevents it
+            glideState.IsGliding &= canGlide && jump.IsPressed;
 
             if (glideState.IsGliding)
             {

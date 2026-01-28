@@ -15,6 +15,7 @@ using ECS.LifeCycle.Components;
 using UnityEngine;
 using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.CharacterMotion.Utils;
+using DCL.PluginSystem.Global;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -50,7 +51,16 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
         private readonly ElementBinding<float> airJumpImpulse = new (0);
 
-        public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
+        private readonly CharacterMotionSettings.GlidingSettings glideSettings;
+
+        public CalculateCharacterVelocitySystem(World world, CharacterMotionSettings.GlidingSettings glideSettings, IDebugContainerBuilder debugBuilder) : base(world)
+        {
+            this.glideSettings = glideSettings;
+
+            BuildDebugWidget(debugBuilder);
+        }
+
+        private void BuildDebugWidget(IDebugContainerBuilder debugBuilder)
         {
             debugBuilder.TryAddWidget("Locomotion: Base")?
                         .AddFloatField("Camera Run FOV", cameraRunFov)
@@ -216,7 +226,7 @@ namespace DCL.CharacterMotion.Systems
             // Apply vertical velocity
             ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, jumpState, in jumpInput, physicsTick, dt);
-            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick);
+            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, glideSettings.MinGroundDistance, physicsTick);
 
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 

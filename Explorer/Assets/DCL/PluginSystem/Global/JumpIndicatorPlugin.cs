@@ -14,7 +14,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private GameObject jumpIndicatorPrefab;
-        private float groundCheckRadius;
 
         public JumpIndicatorPlugin(IAssetsProvisioner assetsProvisioner)
         {
@@ -25,23 +24,17 @@ namespace DCL.PluginSystem.Global
         {
         }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
-        {
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
             jumpIndicatorPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.JumpIndicatorPrefab, ct)).Value;
-            groundCheckRadius = settings.GroundCheckRadius;
-        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            JumpIndicatorSystem.InjectToWorld(ref builder, arguments.PlayerEntity, jumpIndicatorPrefab, groundCheckRadius);
+            JumpIndicatorSystem.InjectToWorld(ref builder, arguments.PlayerEntity, jumpIndicatorPrefab);
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField]
             public AssetReferenceT<GameObject> JumpIndicatorPrefab { get; private set; }
-
-            [field: SerializeField]
-            public float GroundCheckRadius { get; private set; } = 0.1f;
         }
     }
 }
