@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿#if !NO_LIVEKIT_MODE
+
+using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
@@ -120,3 +122,5 @@ namespace DCL.Chat.ChatCommands
         }
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Bunches;
@@ -88,3 +90,5 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
     }
 }
+
+#endif

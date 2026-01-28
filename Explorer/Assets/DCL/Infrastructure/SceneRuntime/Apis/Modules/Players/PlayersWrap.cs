@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.RoomHubs;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
+#endif
+
 using DCL.Profiles;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
@@ -15,24 +18,44 @@ using UnityEngine.Pool;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
+#if !NO_LIVEKIT_MODE
+using DCL.Multiplayer.Connections.RoomHubs;
+#endif
+
 namespace SceneRuntime.Apis.Modules.Players
 {
     public class PlayersWrap : JsApiWrapper
     {
+#if !NO_LIVEKIT_MODE
         private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
-        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, CancellationTokenSource disposeCts) : base(disposeCts)
+        public PlayersWrap(
+#if !NO_LIVEKIT_MODE
+                IRoomHub roomHub, 
+#endif
+                IProfileRepository profileRepository, 
+                IRemoteMetadata remoteMetadata, 
+                CancellationTokenSource disposeCts
+                ) : base(disposeCts)
         {
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
             this.profileRepository = profileRepository;
             this.remoteMetadata = remoteMetadata;
         }
-
+#else
+        public PlayersWrap(CancellationTokenSource disposeCts) : base(disposeCts)
+        {}
+#endif
         [UsedImplicitly]
         public object PlayerData(string walletId)
         {
+#if NO_LIVEKIT_MODE
+            return "{ data: undefined }";
+#else
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
                 Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), disposeCts.Token);
@@ -40,16 +63,32 @@ namespace SceneRuntime.Apis.Modules.Players
             }
 
             return ExecuteAsync().ToDisconnectedPromise(this);
+#endif
         }
 
         [UsedImplicitly]
         public object ConnectedPlayers() =>
+#if NO_LIVEKIT_MODE
+            "{ players: [] }";
+#else
             new PlayerListResponse(roomHub.IslandRoom().Participants);
+#endif
 
         [UsedImplicitly]
         public object PlayersInScene() =>
+#if NO_LIVEKIT_MODE
+            "{ players: [] }";
+#else
             new PlayerListResponse(roomHub.SceneRoom().Room().Participants);
+#endif
 
+        /* from https://github.com/decentraland/js-sdk-toolchain/blob/1c2ff7242cd11eb981666a8318f670c0b302813b/packages/%40dcl/sdk-commands/src/commands/code-to-composite/scene-executor.ts#L202
+        getPlayerData: async () => ({ data: undefined }),
+        getPlayersInScene: async () => ({ players: [] }),
+        getConnectedPlayers: async () => ({ players: [] })
+        */
+
+#if !NO_LIVEKIT_MODE
         [Serializable]
         [PublicAPI]
         public struct PlayerListResponse
@@ -188,5 +227,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 this.face256 = face256;
             }
         }
+#endif
+
     }
 }

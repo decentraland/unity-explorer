@@ -121,7 +121,11 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; } = null!;
+
+#if !NO_LIVEKIT_MODE
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
+#endif
+
         [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
         [field: SerializeField] public AnnouncementsSectionView AnnouncementsSectionView { get; private set; } = null!;
 
@@ -336,7 +340,11 @@ namespace DCL.Communities.CommunitiesCard
 
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
+
+#if !NO_LIVEKIT_MODE
             PlacesSectionView.SetActive(section == Sections.PLACES);
+#endif
+
             AnnouncementsSectionView.SetActive(section == Sections.ANNOUNCEMENTS);
 
             if (invokeEvent)

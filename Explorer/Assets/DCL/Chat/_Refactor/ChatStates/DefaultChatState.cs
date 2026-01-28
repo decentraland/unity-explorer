@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatStates
+﻿#if !NO_LIVEKIT_MODE
+
+namespace DCL.Chat.ChatStates
 {
     /// <summary>
     ///     Blurred/Unfocused state of the chat.
@@ -33,3 +35,5 @@
             ChangeState<MembersChatState>();
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -174,3 +176,5 @@ namespace DCL.Multiplayer.Profiles.Poses
         }
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 #nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
@@ -180,3 +182,5 @@ namespace DCL.Chat.MessageBus
         }
     }
 }
+
+#endif

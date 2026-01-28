@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
@@ -226,3 +228,5 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
+
+#endif

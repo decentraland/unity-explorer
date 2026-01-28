@@ -58,7 +58,11 @@ namespace DCL.AvatarRendering.AvatarShape
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             BlockAvatarsQuery(World);
+
+#if !NO_LIVEKIT_MODE
             BanAvatarsQuery(World);
+#endif
+
             UpdateAvatarsVisibilityStateQuery(World);
             UpdateMainPlayerAvatarVisibilityStateQuery(World, camera.GetCameraComponent(World));
             GetAvatarsVisibleWithOutlineQuery(World);
@@ -149,6 +153,7 @@ namespace DCL.AvatarRendering.AvatarShape
             SetHiddenComponent(entity, isBlocked, HiddenPlayerComponent.HiddenReason.BLOCKED);
         }
 
+#if !NO_LIVEKIT_MODE
         [Query]
         [None(typeof(PlayerComponent))]
         private void BanAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
@@ -159,6 +164,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
         }
+#endif
 
         private void SetHiddenComponent(Entity entity, bool hiddenValue, HiddenPlayerComponent.HiddenReason hiddenReason)
         {

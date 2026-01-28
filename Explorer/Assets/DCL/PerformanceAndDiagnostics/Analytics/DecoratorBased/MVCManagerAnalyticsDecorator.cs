@@ -35,7 +35,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
+
+#if !NO_LIVEKIT_MODE
                 { typeof(ChatMainSharedAreaController), CreateAnalytics<ChatMainSharedAreaController>(c => new ChatEventsAnalytics(analytics, c)) },
+#endif
+
                 { typeof(PhotoDetailController), CreateAnalytics<PhotoDetailController>(c => new PhotoDetailAnalytics(analytics, c)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },

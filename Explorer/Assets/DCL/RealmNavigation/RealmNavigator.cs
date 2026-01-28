@@ -40,7 +40,10 @@ namespace DCL.RealmNavigation
         private readonly SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analyticsController;
+
+#if !UNITY_WEBGL
         private readonly ILandscape landscape;
+#endif
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -50,7 +53,11 @@ namespace DCL.RealmNavigation
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             ILoadingStatus loadingStatus,
+
+#if !UNITY_WEBGL
             ILandscape landscape,
+#endif
+
             IAnalyticsController analyticsController,
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
             SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation)
@@ -65,7 +72,11 @@ namespace DCL.RealmNavigation
             this.analyticsController = analyticsController;
             this.realmChangeOperations = realmChangeOperations;
             this.teleportInSameRealmOperation = teleportInSameRealmOperation;
+
+#if !UNITY_WEBGL
             this.landscape = landscape;
+#endif
+
         }
 
         private bool CheckIsNewRealm(URLDomain realm)
@@ -204,10 +215,12 @@ namespace DCL.RealmNavigation
             if (!isLocal && realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
 
+#if !UNITY_WEBGL
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
 
             if (!parcelCheckResult.Success)
                 return parcelCheckResult.AsEnumResult(TaskError.MessageError);
+#endif
 
             if (!isLocal && !realmController.RealmData.IsGenesis())
             {

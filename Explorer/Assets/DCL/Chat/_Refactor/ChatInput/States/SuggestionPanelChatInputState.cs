@@ -1,4 +1,6 @@
-﻿using DCL.Audio;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Audio;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Profiles;
@@ -148,3 +150,5 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
+
+#endif

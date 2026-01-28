@@ -1,8 +1,11 @@
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
+#endif
+
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -29,6 +32,10 @@ using SceneRuntime.Apis.Modules.UserActions;
 using SceneRuntime.Apis.Modules.UserIdentityApi;
 using System;
 using System.Threading;
+
+#if !NO_LIVEKIT_MODE
+using DCL.Multiplayer.Connections.RoomHubs;
+#endif
 
 namespace SceneRuntime
 {
@@ -60,7 +67,9 @@ namespace SceneRuntime
         public static void RegisterAll(this ISceneRuntime sceneRuntime,
             IEngineApi engineApi,
             ISceneExceptionsHandler exceptionsHandler,
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
             IProfileRepository profileRepository,
             ISceneApi sceneApi,
             IWebRequestController webRequestController,
@@ -75,14 +84,28 @@ namespace SceneRuntime
             ISimpleFetchApi simpleFetchApi,
             ISceneData sceneData,
             IRealmData realmData,
-            IPortableExperiencesController portableExperiencesController,
-            IRemoteMetadata remoteMetadata
+            IPortableExperiencesController portableExperiencesController
+#if !NO_LIVEKIT_MODE
+            , IRemoteMetadata remoteMetadata
+#endif
         )
         {
             sceneRuntime.RegisterEngineAPI(sceneData, engineApi, instancePoolsProvider, exceptionsHandler);
+
+#if !NO_LIVEKIT_MODE
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
+#else
+            sceneRuntime.RegisterPlayers();
+#endif
+
             sceneRuntime.RegisterSceneApi(sceneApi);
+
+#if !NO_LIVEKIT_MODE
             sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+#else
+            sceneRuntime.RegisterCommsApi(exceptionsHandler);
+#endif
+
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -99,7 +122,9 @@ namespace SceneRuntime
             ISDKObservableEventsEngineApi engineApi,
             ISDKMessageBusCommsControllerAPI commsApiImplementation,
             ISceneExceptionsHandler exceptionsHandler,
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
             IProfileRepository profileRepository,
             ISceneApi sceneApi,
             IWebRequestController webRequestController,
@@ -114,14 +139,30 @@ namespace SceneRuntime
             ISimpleFetchApi simpleFetchApi,
             ISceneData sceneData,
             IRealmData realmData,
-            IPortableExperiencesController portableExperiencesController,
+            IPortableExperiencesController portableExperiencesController
+
+#if !NO_LIVEKIT_MODE
+                ,
             IRemoteMetadata remoteMetadata
+#endif
         )
         {
             sceneRuntime.RegisterEngineAPI( sceneData, engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
+
+#if !NO_LIVEKIT_MODE
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
+#else
+            sceneRuntime.RegisterPlayers();
+#endif
+
             sceneRuntime.RegisterSceneApi(sceneApi);
+
+#if !NO_LIVEKIT_MODE
             sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+#else
+            sceneRuntime.RegisterCommsApi(exceptionsHandler);
+#endif
+
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -148,9 +189,24 @@ namespace SceneRuntime
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
-        private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        private static void RegisterPlayers(
+                this ISceneRuntime sceneRuntime 
+#if !NO_LIVEKIT_MODE
+                ,
+                IRoomHub roomHub, 
+                IProfileRepository profileRepository, 
+                IRemoteMetadata remoteMetadata
+#endif
+                )
         {
-            sceneRuntime.Register("UnityPlayers", new PlayersWrap(roomHub, profileRepository, remoteMetadata, sceneRuntime.IsDisposingTokenSource));
+            sceneRuntime.Register("UnityPlayers", new PlayersWrap(
+#if !NO_LIVEKIT_MODE
+                        roomHub, 
+                        profileRepository, 
+                        remoteMetadata, 
+#endif
+                        sceneRuntime.IsDisposingTokenSource
+                        ));
         }
 
         private static void RegisterSceneApi(this ISceneRuntime sceneRuntime, ISceneApi api)
@@ -158,9 +214,20 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api, sceneRuntime.IsDisposingTokenSource));
         }
 
-        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler)
+        private static void RegisterCommsApi(
+                this ISceneRuntime sceneRuntime, 
+#if !NO_LIVEKIT_MODE
+                IRoomHub roomHub, 
+#endif
+                ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneExceptionsHandler, sceneRuntime.IsDisposingTokenSource));
+            sceneRuntime.Register("CommsApi", new CommsApiWrap(
+#if !NO_LIVEKIT_MODE
+                        roomHub, 
+#endif
+                        sceneExceptionsHandler, 
+                        sceneRuntime.IsDisposingTokenSource
+                        ));
         }
 
         private static void RegisterSignedFetch(

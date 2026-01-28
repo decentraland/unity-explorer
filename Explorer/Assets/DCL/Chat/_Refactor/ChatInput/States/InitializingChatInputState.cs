@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatInput
+﻿#if !NO_LIVEKIT_MODE
+
+namespace DCL.Chat.ChatInput
 {
     /// <summary>
     ///     Denotes the state when the capability to send messages is being resolved
@@ -16,3 +18,5 @@
         }
     }
 }
+
+#endif

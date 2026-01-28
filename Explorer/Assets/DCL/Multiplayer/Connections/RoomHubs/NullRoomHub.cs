@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -39,3 +41,5 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public bool HasAnyRoomConnected => true;
     }
 }
+
+#endif

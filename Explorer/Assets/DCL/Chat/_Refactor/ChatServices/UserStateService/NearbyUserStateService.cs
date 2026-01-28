@@ -1,4 +1,6 @@
-﻿using DCL.Chat.History;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Chat.History;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
@@ -133,3 +135,5 @@ namespace DCL.Chat.ChatServices
         }
     }
 }
+
+#endif

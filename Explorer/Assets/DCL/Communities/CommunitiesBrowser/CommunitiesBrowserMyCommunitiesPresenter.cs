@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
@@ -111,3 +113,5 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
+
+#endif

@@ -10,8 +10,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Connections.RoomHubs;
+#endif
+
 using DCL.Profiles;
 using DCL.SkyBox;
 using DCL.Web3;
@@ -51,7 +55,11 @@ namespace SceneRunner
         private readonly IWeb3IdentityCache identityCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebRequestController webRequestController;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRoomHub roomHub;
+#endif
+
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
@@ -60,7 +68,11 @@ namespace SceneRunner
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneCommunicationPipe messagePipesHub;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRemoteMetadata remoteMetadata;
+#endif
+
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
 
@@ -80,12 +92,20 @@ namespace SceneRunner
             IWeb3IdentityCache identityCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
+
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
+
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
+
+#if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
+#endif
+
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard)
         {
@@ -102,13 +122,21 @@ namespace SceneRunner
             this.identityCache = identityCache;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webRequestController = webRequestController;
+
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
+
             this.systemClipboard = systemClipboard;
             this.realmData = realmData;
             this.portableExperiencesController = portableExperiencesController;
             this.skyboxSettings = skyboxSettings;
             this.messagePipesHub = messagePipesHub;
+
+#if !NO_LIVEKIT_MODE
             this.remoteMetadata = remoteMetadata;
+#endif
+
             this.dclEnvironment = dclEnvironment;
         }
 
@@ -217,7 +245,11 @@ namespace SceneRunner
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
                     sdkCommsControllerAPI,
                     deps.ExceptionsHandler,
+
+#if !NO_LIVEKIT_MODE
                     roomHub,
+#endif
+
                     profileRepository,
                     runtimeDeps.SceneApiImplementation,
                     webRequestController,
@@ -232,8 +264,12 @@ namespace SceneRunner
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
                     realmData!,
-                    portableExperiencesController,
-                    remoteMetadata
+                    portableExperiencesController
+
+#if !NO_LIVEKIT_MODE
+                    , remoteMetadata
+#endif
+
                 );
             }
             else
@@ -258,7 +294,11 @@ namespace SceneRunner
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
                     deps.ExceptionsHandler,
+
+#if !NO_LIVEKIT_MODE
                     roomHub,
+#endif
+
                     profileRepository,
                     runtimeDeps.SceneApiImplementation,
                     webRequestController,
@@ -273,8 +313,12 @@ namespace SceneRunner
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
                     realmData!,
-                    portableExperiencesController,
-                    remoteMetadata
+                    portableExperiencesController
+
+#if !NO_LIVEKIT_MODE
+                    , remoteMetadata
+#endif
+
                 );
             }
 

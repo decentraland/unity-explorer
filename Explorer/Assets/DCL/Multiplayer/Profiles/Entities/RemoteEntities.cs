@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.Core;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
@@ -178,3 +180,5 @@ namespace DCL.Multiplayer.Profiles.Entities
         }
     }
 }
+
+#endif

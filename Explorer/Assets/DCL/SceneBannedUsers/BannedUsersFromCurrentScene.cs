@@ -1,4 +1,6 @@
-﻿using CodeLess.Attributes;
+﻿#if !NO_LIVEKIT_MODE
+
+using CodeLess.Attributes;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using Newtonsoft.Json;
@@ -64,3 +66,5 @@ namespace DCL.SceneBannedUsers
         }
     }
 }
+
+#endif

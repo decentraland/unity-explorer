@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -79,3 +81,4 @@ namespace DCL.PluginSystem.Global
     }
 }
 
+#endif

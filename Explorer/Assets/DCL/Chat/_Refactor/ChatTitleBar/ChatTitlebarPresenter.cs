@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -492,3 +494,5 @@ namespace DCL.Chat
         }
     }
 }
+
+#endif

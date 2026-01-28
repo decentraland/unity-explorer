@@ -8,7 +8,11 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
+#endif
+
 using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
@@ -39,17 +43,27 @@ namespace DCL.UserInAppInitializationFlow
         private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
         private readonly IRealmController realmController;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRoomHub roomHub;
+#endif
+
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+
+#if !NO_LIVEKIT_MODE
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
+#endif
 
         private readonly ICharacterObject characterObject;
         private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
+
+#if !UNITY_WEBGL
         private readonly bool isLocalSceneDevelopment;
+#endif
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -60,27 +74,38 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IRealmController realmController,
             IPortableExperiencesController portableExperiencesController,
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
             CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
+#if !NO_LIVEKIT_MODE
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
+#endif
             IAppArgs appArgs,
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
-            StartParcel startParcel,
-            bool isLocalSceneDevelopment)
+            StartParcel startParcel
+#if !UNITY_WEBGL
+            , bool isLocalSceneDevelopment
+#endif
+            )
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
             this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
+#if !NO_LIVEKIT_MODE
             this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
+#endif
             this.appArgs = appArgs;
             this.characterObject = characterObject;
             this.startParcel = startParcel;
+#if !UNITY_WEBGL
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+#endif
             this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
@@ -91,7 +116,9 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
             this.portableExperiencesController = portableExperiencesController;
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
@@ -172,12 +199,14 @@ namespace DCL.UserInAppInitializationFlow
                                 = characterObject.Controller.transform.position
                                     = startParcel.Peek().ParcelToPositionFlat();
 
+#if !NO_LIVEKIT_MODE
                             // This operation is not awaited immediately to save approximately 3-4 seconds during the load process,
                             // as it runs in parallel with other tasks.
                             // However, this approach introduces potential risks.
                             // If any of the LiveKit parameters change after this call (e.g., realm configuration),
                             // the task may become outdated, leading to an inconsistent state.
                             UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+#endif
 
                             //Create a child report to be able to hold the parallel livekit operation
                             AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
@@ -188,10 +217,14 @@ namespace DCL.UserInAppInitializationFlow
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
                             else
                             {
+#if !NO_LIVEKIT_MODE
                                 // Finally, wait for livekit to end handshake that started before.
                                 // At this point it is necessary that the task did not become invalid by any modification in the process
                                 var livekitOperationResult = await livekitHandshake;
+#endif
 
+
+#if !UNITY_WEBGL
                                 if (isLocalSceneDevelopment)
                                 {
                                     // Fix: https://github.com/decentraland/unity-explorer/issues/5250
@@ -208,6 +241,13 @@ namespace DCL.UserInAppInitializationFlow
                                         parentLoadReport.SetProgress(
                                             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
                                 }
+#else
+                                // Pass in WebGL immediately because there is no livekitOperationResult
+                                parentLoadReport.SetProgress(
+                                        loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+#endif
+
+
                             }
 
                             return operationResult;
@@ -234,13 +274,17 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
+#if !NO_LIVEKIT_MODE
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
+#endif
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
+#if !NO_LIVEKIT_MODE
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
+#endif
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)

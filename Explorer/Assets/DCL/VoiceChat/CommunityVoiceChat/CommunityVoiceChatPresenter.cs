@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
@@ -366,3 +368,5 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         }
     }
 }
+
+#endif

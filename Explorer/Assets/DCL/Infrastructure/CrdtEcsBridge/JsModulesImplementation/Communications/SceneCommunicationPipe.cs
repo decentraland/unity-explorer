@@ -1,4 +1,6 @@
-﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -114,3 +116,5 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         }
     }
 }
+
+#endif

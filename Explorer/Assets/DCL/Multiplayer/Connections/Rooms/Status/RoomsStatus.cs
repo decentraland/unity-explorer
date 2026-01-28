@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using LiveKit.Proto;
@@ -33,3 +35,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Status
         }
     }
 }
+
+#endif

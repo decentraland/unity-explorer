@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !NO_LIVEKIT_MODE
+
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -179,3 +181,5 @@ namespace DCL.Multiplayer.Connections.Systems
         }
     }
 }
+
+#endif

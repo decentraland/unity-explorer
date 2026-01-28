@@ -1,6 +1,9 @@
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using LiveKit.Rooms.TrackPublications;
+#endif
+
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
@@ -12,7 +15,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 {
     public sealed class CommsApiWrap : JsApiWrapper
     {
+#if !NO_LIVEKIT_MODE
         private readonly IRoomHub roomHub;
+#endif
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
 
@@ -20,9 +25,17 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
 
-        public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
+        public CommsApiWrap(
+#if !NO_LIVEKIT_MODE
+                IRoomHub roomHub, 
+#endif
+                ISceneExceptionsHandler sceneExceptionsHandler, 
+                CancellationTokenSource disposeCts
+                ) : base(disposeCts)
         {
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             stringBuilder = new StringBuilder();
             stringWriter = new StringWriter(stringBuilder);
@@ -38,7 +51,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         public string GetActiveVideoStreams()
         {
-            try
+#if NO_LIVEKIT_MODE
+            return EMPTY_RESPONSE;
+#else
+           try
             {
                 lock (this)
                 {
@@ -91,6 +107,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 sceneExceptionsHandler.OnEngineException(e);
                 return EMPTY_RESPONSE;
             }
+#endif
         }
     }
 }
