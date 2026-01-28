@@ -101,7 +101,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             // Check events to process
             Assert.AreEqual(1, api.EventsToProcess.Count);
-            CollectionAssert.AreEqual(expectedMessage, api.EventsToProcess[0].Array);
+
+            CollectionAssert.AreEqual(expectedMessage,
+                api.EventsToProcess[0].Array.Take(api.EventsToProcess[0].Length));
         }
 
         [Test]

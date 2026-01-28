@@ -103,7 +103,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 for (var i = 0; i < eventsToProcess.Count; i++)
                 {
                     PoolableByteArray src = eventsToProcess[i];
-                    ITypedArray dst = jsOperations.GetTempUint8Array();
+                    ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
                     dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
                     src.Dispose();
                     object subArray = dst.InvokeMethod("subarray", 0, src.Length);
