@@ -182,6 +182,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
+            if (current == null) return;
+
             string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
             // Required to avoid polluting Sentry with retry messages
