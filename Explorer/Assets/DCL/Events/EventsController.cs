@@ -7,11 +7,14 @@ namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
+        public event Action? EventsClosed;
+
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
+        private readonly EventsCalendarController eventsCalendarController;
 
         public EventsController(
             EventsView view,
@@ -20,12 +23,12 @@ namespace DCL.Events
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
+
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this);
         }
 
-        public void Dispose()
-        {
-
-        }
+        public void Dispose() =>
+            eventsCalendarController.Dispose();
 
         public void Activate()
         {
@@ -41,6 +44,7 @@ namespace DCL.Events
         {
             isSectionActivated = false;
             view.SetViewActive(false);
+            EventsClosed?.Invoke();
         }
 
         public void Animate(int triggerId) =>
