@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using ECS.Abstract;
@@ -15,9 +15,15 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private static readonly string[] COMMON_SHADERS =
         {
-            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
+#if UNITY_WEBGL
+            //"dcl/scene_ignore",
+            "dcl/universal render pipeline/lit_ignore",
+#else
+            "dcl/scene_ignore_windows",
+            "dcl/scene_ignore_mac",
             "dcl/universal render pipeline/lit_ignore_windows",
             "dcl/universal render pipeline/lit_ignore_mac",
+#endif
         };
 
         private readonly URLDomain streamingAssetURL;

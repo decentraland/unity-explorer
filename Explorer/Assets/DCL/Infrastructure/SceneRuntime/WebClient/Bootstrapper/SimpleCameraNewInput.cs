@@ -14,8 +14,8 @@ namespace SceneRuntime.WebClient.Bootstrapper
     public class SimpleCameraNewInput : MonoBehaviour
     {
         [Header("Movement")]
-        [SerializeField] private float moveSpeed = 10f;
-        [SerializeField] private float verticalSpeed = 10f;
+        [SerializeField] private float moveSpeed = 1000f;
+        [SerializeField] private float verticalSpeed = 100f;
 
         [Header("Look")]
         [SerializeField] private float lookSensitivity = 0.1f;

@@ -395,6 +395,9 @@ namespace SceneRuntime.WebClient.Bootstrapper
         {
             try
             {
+                // Preload shader bundles before loading any scenes
+                //await PreloadShaderBundlesAsync();
+
                 // Check for world parameter first (e.g., ?world=olavra.dcl.eth)
                 string? worldName = GetWorldFromQueryString();
                 IRealmData realmData;
@@ -667,8 +670,70 @@ namespace SceneRuntime.WebClient.Bootstrapper
             return facade;
         }
 
+        /// <summary>
+        /// Preloads shader bundles from StreamingAssets so they're available when GLTF Asset Bundles load.
+        /// </summary>
+        private async UniTask PreloadShaderBundlesAsync()
+        {
+            string[] shaderBundles = { "dcl/universal render pipeline/lit_ignore"};
+            string streamingAssetsPath = Application.streamingAssetsPath;
+
+            foreach (string bundleName in shaderBundles)
+            {
+                string bundlePath = $"{streamingAssetsPath}/AssetBundles/{bundleName}";
+
+                try
+                {
+                    Debug.Log($"[WebGLSceneBootstrapper] Loading shader bundle: {bundlePath}");
+
+                    // Use UnityWebRequest for WebGL compatibility
+                    using var request = UnityEngine.Networking.UnityWebRequestAssetBundle.GetAssetBundle(bundlePath);
+                    await request.SendWebRequest();
+
+                    if (request.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                    {
+                        AssetBundle bundle = UnityEngine.Networking.DownloadHandlerAssetBundle.GetContent(request);
+                        if (bundle != null)
+                        {
+                            // Load all shaders from the bundle to make them available
+                            var shaders = bundle.LoadAllAssets<Shader>();
+                            Debug.Log($"[WebGLSceneBootstrapper] Loaded shader bundle '{bundleName}' with {shaders.Length} shaders");
+
+                            foreach (var shader in shaders)
+                            {
+                                Debug.Log($"[WebGLSceneBootstrapper]   - Shader: {shader.name}");
+                            }
+
+                            // Also load shader variant collections if any
+                            var variantCollections = bundle.LoadAllAssets<ShaderVariantCollection>();
+                            foreach (var collection in variantCollections)
+                            {
+                                Debug.Log($"[WebGLSceneBootstrapper]   - Warming up ShaderVariantCollection: {collection.name} ({collection.variantCount} variants)");
+                                collection.WarmUp();
+                            }
+
+                            // Keep bundle loaded - don't unload it
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[WebGLSceneBootstrapper] Shader bundle '{bundleName}' loaded but content is null");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to load shader bundle '{bundleName}': {request.error}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[WebGLSceneBootstrapper] Exception loading shader bundle '{bundleName}': {e.Message}");
+                }
+            }
+        }
+
         private void PositionCameraAtSceneOrigin(Vector2Int? baseParcel = null)
         {
+
             Camera mainCamera = MainCamera;
 
             if (mainCamera == null)
@@ -688,6 +753,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
             mainCamera.transform.LookAt(sceneCenter);
 
             Debug.Log($"[WebGLSceneBootstrapper] Repositioned camera to {cameraPosition}, looking at {sceneCenter}");
+
         }
 
         private class MockedDependencies

@@ -27,12 +27,7 @@ namespace DCL.Rendering.Menus
 
         private static readonly string[] URP_LIT_SHADER_ASSET_NAMES =
         {
-            "Lit.shader"
-        };
-
-        private static readonly string[] URP_UNLIT_SHADER_ASSET_NAMES =
-        {
-            "Unlit.shader"
+            "Lit.shader", "LitVariants.shadervariants"
         };
 
         // Add file extensions to copy when copying shader folder
@@ -62,19 +57,13 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Compile \"URP Lit\" Shader Variants")]
         public static void CompileURPLitShaderMenuItem()
         {
-            CompileTheSceneShader("dcl/urp_lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP");
-        }
-
-        [MenuItem("Decentraland/Shaders/Compile \"URP Unlit\" Shader Variants")]
-        public static void CompileURPUnlitShaderMenuItem()
-        {
-            CompileTheSceneShader("dcl/urp_unlit_ignore", URP_UNLIT_SHADER_ASSET_NAMES, "URP");
+            CompileTheSceneShader("dcl/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP");
         }
 
         [MenuItem("Decentraland/Shaders/Force Recompile \"URP Lit\" Shader Variants")]
         public static void ForceRecompileURPLitMenuItem()
         {
-            CompileTheSceneShader("dcl/urp_lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
+            CompileTheSceneShader("dcl/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
         }
 
         private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, bool forceRecompile = false)

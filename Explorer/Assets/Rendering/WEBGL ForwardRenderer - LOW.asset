@@ -1,43 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-9074318883601618405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7fec970849e34d64594738fe00927fa0, type: 3}
-  m_Name: SkyboxToCubemapRendererFeature
-  m_EditorClassIdentifier: SkyboxEnvironmentProbe::SkyboxToCubemapRendererFeature
-  m_Active: 0
-  settings:
-    skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
-    dimensions: 256
-    executeInEditMode: 0
-    assignAsReflectionProbe: 1
---- !u!114 &-9034674521452425196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0e55c940029bd334090aa23984102ddb, type: 3}
-  m_Name: RendererFeature_Ocean
-  m_EditorClassIdentifier: 
-  m_Active: 0
-  screenSpaceReflectionSettings:
-    enable: 0
-  directionalCaustics: 0
-  displacementPrePassSettings:
-    enable: 0
-    range: 500
-    cellSize: 0.25
 --- !u!114 &-8059470703887012630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108,19 +70,6 @@ MonoBehaviour:
     dimensions: 256
     executeInEditMode: 0
     assignAsReflectionProbe: 1
---- !u!114 &-1628976218549508611
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f09f39579534653887b8ee087826266, type: 3}
-  m_Name: RendererFeature_AvatarOutline
-  m_EditorClassIdentifier: 
-  m_Active: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,17 +94,11 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures:
-  - {fileID: 5020021736804485952}
-  - {fileID: 2915607160997281497}
-  - {fileID: -1628976218549508611}
-  - {fileID: 6840260418858268937}
-  - {fileID: -9034674521452425196}
-  - {fileID: -9074318883601618405}
-  m_RendererFeatureMap: 408bf8222cb3aa45d9fed3ef43517628fd25cc89c2b664e9093936159c7ced5e14508ef763639e821b6a4e9c0d8b1182
+  m_RendererFeatures: []
+  m_RendererFeatureMap: 
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
-  postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
+  postProcessData: {fileID: 0}
   m_AssetVersion: 3
   m_PrepassLayerMask:
     serializedVersion: 2
@@ -174,7 +117,7 @@ MonoBehaviour:
     failOperation: 0
     zFailOperation: 0
   m_ShadowTransparentReceive: 0
-  m_RenderingMode: 2
+  m_RenderingMode: 0
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
   m_DepthAttachmentFormat: 0
@@ -194,21 +137,6 @@ MonoBehaviour:
   m_Name: RendererFeature_AvatarOutline
   m_EditorClassIdentifier: 
   m_Active: 1
---- !u!114 &2915607160997281497
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff2a98f790a0453da51b245c6caf70c3, type: 3}
-  m_Name: GPUInstancingRenderFeature
-  m_EditorClassIdentifier: 
-  m_Active: 0
-  m_Settings:
-    settings: {fileID: 11400000, guid: fb981fee23899ef4eacd98e0c788b4e0, type: 2}
 --- !u!114 &3627907081910566147
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,64 +150,6 @@ MonoBehaviour:
   m_Name: RendererFeature_AvatarOutline
   m_EditorClassIdentifier: 
   m_Active: 1
---- !u!114 &5020021736804485952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
-  m_Name: RenderNameTags
-  m_EditorClassIdentifier: 
-  m_Active: 0
-  settings:
-    passTag: RenderNameTags
-    Event: 550
-    filterSettings:
-      RenderQueueType: 1
-      LayerMask:
-        serializedVersion: 2
-        m_Bits: 536870912
-      PassNames: []
-    overrideMaterial: {fileID: 0}
-    overrideMaterialPassIndex: 0
-    overrideShader: {fileID: 0}
-    overrideShaderPassIndex: 0
-    overrideMode: 0
-    overrideDepthState: 0
-    depthCompareFunction: 4
-    enableWrite: 1
-    stencilSettings:
-      overrideStencilState: 0
-      stencilReference: 0
-      stencilCompareFunction: 8
-      passOperation: 0
-      failOperation: 0
-      zFailOperation: 0
-    cameraSettings:
-      overrideCamera: 0
-      restoreCamera: 1
-      offset: {x: 0, y: 0, z: 0, w: 0}
-      cameraFieldOfView: 60
---- !u!114 &6840260418858268937
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bd5c64af15e426a932a23d627f2d07f, type: 3}
-  m_Name: RenderFeature_ObjectHighlight
-  m_EditorClassIdentifier: 
-  m_Active: 0
-  highlightInputMaterial: {fileID: 2100000, guid: 55a3f55bb348e95418783121e0b8ce1e, type: 2}
-  highlightInputBlurMaterial: {fileID: 2100000, guid: c7d4b82b1c0428c4d815890b615064eb, type: 2}
-  highlightOutputMaterial: {fileID: 2100000, guid: 1015f0654e3a1524aa9c0f38ed24692b, type: 2}
 --- !u!114 &7060319286991363971
 MonoBehaviour:
   m_ObjectHideFlags: 0

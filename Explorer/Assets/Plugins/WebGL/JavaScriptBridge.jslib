@@ -455,9 +455,7 @@ mergeInto(LibraryManager.library, {
                 // This wrapper is NOT self-invoking, so we need to call it
                 var wrappedPattern = /^\s*\(function\s*\(\s*exports\s*,\s*require\s*,\s*module\s*,\s*__filename\s*,\s*__dirname\s*\)\s*\{/;
                 
-                if (wrappedPattern.test(source)) {
-                    // console.log('[require] Detected CommonJS wrapper, will invoke it');
-                    
+                if (wrappedPattern.test(source)) {                    
                     // Evaluate the source to get the wrapper function, then call it
                     var moduleGlobalAssignments = getGlobalAssignments();
                     var evalCode = moduleGlobalAssignments + '\nreturn ' + source + ';';
@@ -473,19 +471,16 @@ mergeInto(LibraryManager.library, {
                     var wrapperFunc;
                     try {
                         wrapperFunc = getWrapperFunc(globalObj);
-                        // console.log('[require] Got wrapper function, type:', typeof wrapperFunc);
                     } catch (evalError) {
                         console.error('[require] Error evaluating wrapper:', moduleName, evalError);
                         return {};
                     }
                     
                     // Now call the wrapper with the CommonJS arguments
-                    // console.log('[require] Calling wrapper for', moduleName, '(this may take a while for large files)...');
                     var startTime = performance.now();
                     try {
                         wrapperFunc.call(globalObj, exportsObj, requireFunc, moduleObj, '/' + moduleName, '/');
                         var elapsed = performance.now() - startTime;
-                        // console.log('[require] Wrapper executed successfully in', elapsed.toFixed(0), 'ms');
                     } catch (moduleError) {
                         console.error('[require] Error executing wrapper:', moduleName, moduleError);
                         console.error('[require] Stack:', moduleError.stack);
@@ -511,11 +506,6 @@ mergeInto(LibraryManager.library, {
                 return {};
                     }
                 }
-                
-                // Debug: log what we got
-                // console.log('[require] module.exports keys:', Object.keys(moduleObj.exports || {}));
-                // var onStartType = moduleObj.exports && moduleObj.exports.onStart ? typeof moduleObj.exports.onStart : 'undefined';
-                // console.log('[require] Module loaded:', moduleName, 'exports.onStart:', onStartType);
                 return moduleObj.exports;
             };
             
@@ -759,8 +749,8 @@ mergeInto(LibraryManager.library, {
             const argsJson = serializeArgs(args);
             const argsJsonLen = lengthBytesUTF8(argsJson) + 1;
             
-            // Allocate result buffer (start with 64KB, can grow if needed)
-            const resultBufferSize = 65536;
+            // Allocate result buffer (start with 128KB to handle large CRDT state responses)
+            const resultBufferSize = 131072;
             
             const contextIdPtr = _malloc(contextIdLen);
             const objectIdPtr = _malloc(objectIdLen);
