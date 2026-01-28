@@ -101,7 +101,7 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(dclVersion.Version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddControl(new AverageFpsBannerDef(avgDisplayData = new ElementBinding<AverageFpsBannerData>(default)), null)
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
@@ -120,21 +120,22 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty))
-                            // Visual Debug Settings - Centralized toggles for quick debugging
+
+                             // Visual Debug Settings - Centralized toggles for quick debugging
                             .AddToggleField("Disable Minimap Camera", OnMinimapCameraDisabledChange, false)
                             .AddToggleField("Disable Scene Renderers", OnSceneRenderersDisabledChange, false)
                             .AddToggleField("Enable Backface Culling", OnBackfaceCullingChange, false)
                             .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnShadowLimiterChange)
-                           .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
+                            .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
                             .AddToggleField("Disable Landscape", OnDisableLandscapeChanged, false)
-                           .AddToggleField("Disable Ground", OnDisableGroundChanged, false)
-                           .AddToggleField("Disable Trees", OnDisableTreesChanged, false)
-                           .AddToggleField("Disable Grass", OnDisableGrassChanged, false)
-                           .AddToggleField("Disable Satellite", OnDisableSatelliteChanged, false)
+                            .AddToggleField("Disable Ground", OnDisableGroundChanged, false)
+                            .AddToggleField("Disable Trees", OnDisableTreesChanged, false)
+                            .AddToggleField("Disable Grass", OnDisableGrassChanged, false)
+                            .AddToggleField("Disable Satellite", OnDisableSatelliteChanged, false)
                             .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
                             .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
-                            .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false);
-
+                            .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false)
+                            .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -438,6 +439,11 @@ namespace DCL.Profiling.ECS
         private void OnLODRenderersDisabledChange(ChangeEvent<bool> evt)
         {
             VisualDebugSettings.LODRenderersDisabled = evt.newValue;
+        }
+
+        private void OnDisableMainUIChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableMainUI = evt.newValue;
         }
     }
 }

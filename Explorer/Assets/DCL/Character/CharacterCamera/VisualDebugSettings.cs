@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace DCL.CharacterCamera
 {
@@ -195,6 +196,22 @@ namespace DCL.CharacterCamera
                 if (shadowsDisabled == value) return;
                 shadowsDisabled = value;
                 OnShadowsDisabledChanged?.Invoke(value);
+            }
+        }
+
+        // Main UI
+        public static event Action<bool>? OnDisableMainUIChanged;
+        public static Canvas? MainUICanvas;
+
+        public static bool DisableMainUI
+        {
+            get => MainUICanvas == null || !MainUICanvas.enabled;
+
+            set
+            {
+                if (MainUICanvas == null || MainUICanvas.enabled != value) return;
+                MainUICanvas.enabled = !value;
+                OnDisableMainUIChanged?.Invoke(value);
             }
         }
     }
