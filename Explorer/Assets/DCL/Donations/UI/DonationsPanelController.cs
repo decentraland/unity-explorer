@@ -41,7 +41,7 @@ namespace DCL.Donations.UI
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public DonationsPanelController(ViewFactoryMethod viewFactory,
             IDonationsService donationsService,

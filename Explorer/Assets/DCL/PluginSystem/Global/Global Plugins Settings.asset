@@ -13,54 +13,54 @@ MonoBehaviour:
   m_Name: Global Plugins Settings
   m_EditorClassIdentifier: 
   settings:
-  - rid: 6784895264912310272
-  - rid: 6784895265412481026
-  - rid: 6784895265412481027
-  - rid: 1268264176566403074
-  - rid: 5215741520409264128
-  - rid: 1501337502808539138
-  - rid: 1095376790733193218
-  - rid: 4107643854440628226
-  - rid: 3022170012058910723
-  - rid: 1841402216112979969
-  - rid: 4340256219339423747
-  - rid: 7162477498503790594
-  - rid: 2174542042650378245
-  - rid: 6156380652633325570
-  - rid: 7162477752737071106
-  - rid: 7162477796324278274
-  - rid: 3836309668583964676
-  - rid: 6697045322133929986
-  - rid: 4132209997426458630
+  - rid: 8449516130764587014
   - rid: 758312859982102531
-  - rid: 3601421940623147010
+  - rid: 5190442831932031144
+  - rid: 5215741520409264128
   - rid: 2306906494740202818
-  - rid: 2872862648882692098
+  - rid: 7162477796324278274
+  - rid: 6784895265412481026
+  - rid: 1841402216112979969
+  - rid: 6784895265412481027
+  - rid: 4340256219339423747
+  - rid: 7621844642437005314
+  - rid: 1766526334245273896
+  - rid: 648265872610426982
+  - rid: 6478896861045588059
+  - rid: 657752310186246267
+  - rid: 2563261270153757000
+  - rid: 1154744868092248158
+  - rid: 6697045322133929986
+  - rid: 2799748311381442562
+  - rid: 1501337502808539138
+  - rid: 7162477498503790594
+  - rid: 2168772563850493955
+  - rid: 4782308287844188162
+  - rid: 7621844642437005315
+  - rid: 745469515127586908
+  - rid: 1268264176566403074
+  - rid: 6849204606292983808
+  - rid: 4132209997426458630
+  - rid: 3022170012058910723
+  - rid: 4107643854440628226
+  - rid: 8813103964372074592
+  - rid: 6169970366055448665
+  - rid: 1221415613651484787
+  - rid: 6156380652633325570
   - rid: 2872862648882692099
+  - rid: 3836309668583964676
+  - rid: 3601421940623147010
+  - rid: 2872862648882692098
+  - rid: 2008243996523495520
+  - rid: 2174542042650378245
   - rid: 3601422141625466883
   - rid: 3601422469352914947
-  - rid: 2799748311381442562
-  - rid: 6849204606292983808
-  - rid: 4782308287844188162
-  - rid: 2168772563850493955
-  - rid: 7621844642437005314
-  - rid: 7621844642437005315
-  - rid: 8449516130764587014
-  - rid: 8813103964372074592
-  - rid: 1766526334245273896
-  - rid: 3511243270148325472
   - rid: 6144113899072913496
-  - rid: 648265872610426982
-  - rid: 657752310186246267
-  - rid: 6478896861045588059
-  - rid: 6169970366055448665
-  - rid: 2008243996523495520
   - rid: 3821626543930605662
-  - rid: 1154744868092248158
-  - rid: 745469515127586908
-  - rid: 2563261270153757000
-  - rid: 5190442831932031144
-  - rid: 1221415613651484787
+  - rid: 6784895264912310272
+  - rid: 7162477752737071106
+  - rid: 3511243270148325472
+  - rid: 1095376790733193218
   references:
     version: 2
     RefIds:
@@ -170,28 +170,6 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -298,7 +276,7 @@ MonoBehaviour:
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        ExplorePanelPrefab:
+        <ExplorePanelPrefab>k__BackingField:
           m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
           m_SubObjectName: 
           m_SubObjectType: 
@@ -698,7 +676,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <SettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
-        ControlsPanelPrefab:
+        <ControlsPanelPrefab>k__BackingField:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
           m_SubObjectName: 
           m_SubObjectType: 

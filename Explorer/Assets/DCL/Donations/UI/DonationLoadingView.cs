@@ -14,15 +14,14 @@ namespace DCL.Donations.UI
         [field: Space(5)]
         [field: SerializeField] private UserWalletAddressElement creatorAddressElement { get; set; } = null!;
 
-        private UserWalletAddressElementController? creatorAddressController;
+        private UserWalletAddressElementPresenter? creatorAddressController;
 
         private void Awake()
         {
-            creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
+            creatorAddressController = new UserWalletAddressElementPresenter(creatorAddressElement);
         }
 
-        public void ConfigurePanel(DonationPanelViewModel viewModel,
-            decimal donationAmount)
+        public void ConfigurePanel(DonationPanelViewModel viewModel, decimal donationAmount)
         {
             titleText.text = string.Format(TITLE_FORMAT, donationAmount);
 
