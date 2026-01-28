@@ -1,6 +1,6 @@
+using DG.Tweening;
 using System;
 using System.Collections;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,6 +35,7 @@ namespace DCL.UI.OTPInput
         private int codeLength;
         private bool prevIsFocused;
         private Coroutine? clearAndFocusCoroutine;
+        private Coroutine? activateInputCoroutine;
 
         private void Awake()
         {
@@ -64,7 +65,7 @@ namespace DCL.UI.OTPInput
                 }
 
                 // set slot selected with caret disabled
-                if (prevIsFocused == false && textLength >= slots.Length)
+                if (!prevIsFocused && textLength >= slots.Length)
                     slots[textLength - 1].SetState(OTPSlotView.SlotState.SELECTED);
             }
 
@@ -74,14 +75,20 @@ namespace DCL.UI.OTPInput
         private void OnEnable()
         {
             resultText.gameObject.SetActive(false);
+            hiddenInput.interactable = true;
 
             hiddenInput.onSelect.AddListener(OnSelected);
             hiddenInput.onValueChanged.AddListener(UpdateSlotsWithText);
             hiddenInput.onEndEdit.AddListener(UnselectAll);
+
+            activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
         }
 
         private void OnDisable()
         {
+            if (activateInputCoroutine != null)
+                StopCoroutine(activateInputCoroutine);
+
             StopClearAndFocusCoroutine();
             Clear();
 
@@ -207,11 +214,20 @@ namespace DCL.UI.OTPInput
             clearAndFocusCoroutine = StartCoroutine(ClearAndFocusAfterDelay(shakeDuration));
         }
 
-        private void ShakeAnimation()
-        {
+        private void ShakeAnimation() =>
             slotsParent.transform
                        .DOPunchPosition(new Vector3(shakeStrength, 0f, 0f), shakeDuration, shakeVibrato, shakeElasticity)
                        .SetEase(shakeEase);
+
+        private IEnumerator ActivateInputFieldDelayed()
+        {
+            yield return null;
+
+            hiddenInput.caretPosition = 0;
+            hiddenInput.ActivateInputField();
+            hiddenInput.Select();
+
+            activateInputCoroutine = null;
         }
     }
 }
