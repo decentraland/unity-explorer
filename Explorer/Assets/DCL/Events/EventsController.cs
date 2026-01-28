@@ -7,6 +7,7 @@ namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
+        public event Action? EventsOpen;
         public event Action? EventsClosed;
 
         private readonly EventsView view;
@@ -38,6 +39,7 @@ namespace DCL.Events
             isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
+            EventsOpen?.Invoke();
         }
 
         public void Deactivate()
