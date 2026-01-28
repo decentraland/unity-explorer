@@ -1,7 +1,6 @@
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
+using DCL.Web3.Authenticators;
 using System;
 using System.Globalization;
 using TMPro;
@@ -54,10 +53,15 @@ namespace DCL.Donations.UI
         [field: Header("Donation recommendations")]
         [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; }
 
+        [SerializeField] private GameObject? confirmationTooltip;
+
         private UserWalletAddressElementController? creatorAddressController;
         private Color donationBorderOriginalColor;
         private Color manaAvailableOriginalColor;
         private DonationPanelViewModel currentViewModel;
+        private ICompositeWeb3Provider? compositeWeb3Provider;
+
+        private bool isFirstClick = true;
 
         private void Awake()
         {
@@ -73,6 +77,9 @@ namespace DCL.Donations.UI
             recommendationButtons[THIRD_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(THIRD_RECOMMENDATION_INDEX));
             recommendationButtons[OTHER_RECOMMENDATION_INDEX].Button.onClick.AddListener(() => ManageRecommendationClick(OTHER_RECOMMENDATION_INDEX));
         }
+
+        public void SetWeb3Provider(ICompositeWeb3Provider provider) =>
+            compositeWeb3Provider = provider;
 
         public void ConfigurePanel(DonationPanelViewModel viewModel)
         {
@@ -99,12 +106,33 @@ namespace DCL.Donations.UI
             recommendationButtons[SECOND_RECOMMENDATION_INDEX].Text.text = viewModel.SuggestedDonationAmount[SECOND_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
             recommendationButtons[THIRD_RECOMMENDATION_INDEX].Text.text = viewModel.SuggestedDonationAmount[THIRD_RECOMMENDATION_INDEX].ToString(DECIMAL_FORMAT);
 
+            ResetConfirmationState();
+
             sendButton.onClick.RemoveAllListeners();
-            sendButton.onClick.AddListener( TriggerSendDonationRequested);
+            sendButton.onClick.AddListener(HandleSendButtonClick);
         }
 
-        private void TriggerSendDonationRequested() =>
-            SendDonationRequested?.Invoke(currentViewModel, decimal.Parse(donationInputFieldMana.text));
+        private void HandleSendButtonClick()
+        {
+            if (compositeWeb3Provider.IsThirdWebOTP && isFirstClick)
+            {
+                // First click: show tooltip warning
+                confirmationTooltip!.SetActive(true);
+                isFirstClick = false;
+            }
+            else
+            {
+                // Second click (or non-ThirdWeb): proceed with send
+                ResetConfirmationState();
+                SendDonationRequested?.Invoke(currentViewModel, decimal.Parse(donationInputFieldMana.text));
+            }
+        }
+
+        private void ResetConfirmationState()
+        {
+            isFirstClick = true;
+            confirmationTooltip!.SetActive(false);
+        }
 
         public void ManaOverlayInputClicked()
         {
