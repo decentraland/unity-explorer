@@ -5,7 +5,6 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
 using Utility;
@@ -17,7 +16,6 @@ namespace DCL.Places
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ThumbnailLoader thumbnailLoader;
-        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IProfileRepository profileRepository;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly INavmapBus navmapBus;
@@ -31,7 +29,6 @@ namespace DCL.Places
         public PlaceDetailPanelController(
             ViewFactoryMethod viewFactory,
             ThumbnailLoader thumbnailLoader,
-            ProfileRepositoryWrapper profileRepositoryWrapper,
             IProfileRepository profileRepository,
             PlacesCardSocialActionsController placesCardSocialActionsController,
             INavmapBus navmapBus,
@@ -39,7 +36,6 @@ namespace DCL.Places
             HomePlaceEventBus homePlaceEventBus) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
-            this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.profileRepository = profileRepository;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.navmapBus = navmapBus;
@@ -72,7 +68,6 @@ namespace DCL.Places
                 thumbnailLoader: thumbnailLoader,
                 cancellationToken: panelCts.Token,
                 friends: inputData.ConnectedFriends,
-                profileRepositoryWrapper: profileRepositoryWrapper,
                 homePlaceEventBus: homePlaceEventBus);
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
@@ -111,7 +106,7 @@ namespace DCL.Places
             if (!string.IsNullOrEmpty(inputData.PlaceData.owner))
                 creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
 
-            viewInstance!.SetCreatorThumbnail(profileRepositoryWrapper, creatorProfile);
+            await viewInstance!.SetCreatorThumbnailAsync(creatorProfile, ct);
         }
 
         private void OnLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue)
