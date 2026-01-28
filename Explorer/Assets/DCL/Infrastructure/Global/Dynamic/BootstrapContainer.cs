@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -65,6 +65,7 @@ namespace Global.Dynamic
             Web3Authenticator?.Dispose();
             VerifiedEthereumApi?.Dispose();
             IdentityCache?.Dispose();
+            Analytics?.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(

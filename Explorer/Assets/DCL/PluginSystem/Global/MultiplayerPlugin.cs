@@ -120,6 +120,10 @@ namespace DCL.PluginSystem.Global
         {
             archipelagoIslandRoom.Dispose();
             gateKeeperSceneRoom.Dispose();
+
+#if !NO_LIVEKIT_MODE
+            IFFIClient.Default.Dispose();
+#endif
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
