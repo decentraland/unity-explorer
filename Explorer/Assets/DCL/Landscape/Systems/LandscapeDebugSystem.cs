@@ -55,36 +55,21 @@ namespace DCL.Landscape.Systems
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.ShowSatelliteFloor);
 
             // Subscribe to centralized visual debug settings
-            VisualDebugSettings.OnLandscapeEnabledChanged += OnLandscapeEnabledFromDebugPanel;
-        }
 
-        protected override void OnDispose()
-        {
-            VisualDebugSettings.OnLandscapeEnabledChanged -= OnLandscapeEnabledFromDebugPanel;
-        }
+            VisualDebugSettings.OnDisableLandscapeChanged += value =>
+                OnLandscapeToggle(ChangeEvent<bool>.GetPooled(landscapeEnabled, !value));
 
-        private void OnLandscapeEnabledFromDebugPanel(bool enabled)
-        {
-            landscapeEnabled = enabled;
-            ApplyLandscapeVisibility();
-        }
+            VisualDebugSettings.OnDisableGroundChanged += value =>
+                OnGroundToggle(ChangeEvent<bool>.GetPooled(landscapeData.RenderGround, !value));
 
-        private void ApplyLandscapeVisibility()
-        {
-            landscapeData.RenderGround = landscapeEnabled;
-            landscapeData.RenderTrees = landscapeEnabled;
-            landscapeData.RenderGrass = landscapeEnabled;
+            VisualDebugSettings.OnDisableTreesChanged += value =>
+                OnTreesToggle(ChangeEvent<bool>.GetPooled(landscapeData.RenderTrees, !value));
 
-            TreeData? trees = landscape.CurrentTerrain.Trees;
-            if (trees != null)
-            {
-                if (landscapeEnabled)
-                    trees.Show();
-                else
-                    trees.Hide();
-            }
+            VisualDebugSettings.OnDisableGrassChanged += value =>
+                OnGrassToggle(ChangeEvent<bool>.GetPooled(landscapeData.RenderGrass, !value));
 
-            floor.SwitchVisibilitySetting(landscapeEnabled);
+            VisualDebugSettings.OnDisableSatelliteChanged += value =>
+                OnSatelliteToggle(ChangeEvent<bool>.GetPooled(value, !value));
         }
 
         private void OnLandscapeToggle(ChangeEvent<bool> evt)

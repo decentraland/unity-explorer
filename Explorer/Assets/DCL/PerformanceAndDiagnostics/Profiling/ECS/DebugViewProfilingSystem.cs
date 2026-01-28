@@ -125,8 +125,12 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable Scene Renderers", OnSceneRenderersDisabledChange, false)
                             .AddToggleField("Enable Backface Culling", OnBackfaceCullingChange, false)
                             .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnShadowLimiterChange)
-                            .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
-                            .AddToggleField("Disable Landscape", OnLandscapeDisabledChange, false)
+                           .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
+                            .AddToggleField("Disable Landscape", OnDisableLandscapeChanged, false)
+                           .AddToggleField("Disable Ground", OnDisableGroundChanged, false)
+                           .AddToggleField("Disable Trees", OnDisableTreesChanged, false)
+                           .AddToggleField("Disable Grass", OnDisableGrassChanged, false)
+                           .AddToggleField("Disable Satellite", OnDisableSatelliteChanged, false)
                             .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
                             .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
                             .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false);
@@ -396,9 +400,29 @@ namespace DCL.Profiling.ECS
             VisualDebugSettings.ShadowsDisabled = evt.newValue;
         }
 
-        private void OnLandscapeDisabledChange(ChangeEvent<bool> evt)
+        private void OnDisableLandscapeChanged(ChangeEvent<bool> evt)
         {
-            VisualDebugSettings.LandscapeEnabled = !evt.newValue;
+            VisualDebugSettings.DisableLandscape = evt.newValue;
+        }
+
+        private void OnDisableGroundChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableGround = evt.newValue;
+        }
+
+        private void OnDisableTreesChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableTrees = evt.newValue;
+        }
+
+        private void OnDisableGrassChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableGrass = evt.newValue;
+        }
+
+        private void OnDisableSatelliteChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableSatellite = evt.newValue;
         }
 
         private void OnRoadsDisabledChange(ChangeEvent<bool> evt)

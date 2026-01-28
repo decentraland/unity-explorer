@@ -4,7 +4,8 @@ namespace DCL.CharacterCamera
 {
     /// <summary>
     ///     Centralized static settings for visual debug controls.
-    ///     Used to quickly toggle various rendering features from the Camera debug panel.
+    ///     Used to quickly toggle various rendering features from the
+    ///     Performance debug panel.
     /// </summary>
     public static class VisualDebugSettings
     {
@@ -63,17 +64,81 @@ namespace DCL.CharacterCamera
             }
         }
 
-        // Landscape - Enable
-        public static event Action<bool>? OnLandscapeEnabledChanged;
-        private static bool landscapeEnabled = true;
-        public static bool LandscapeEnabled
+        // Landscape - All
+        public static event Action<bool>? OnDisableLandscapeChanged;
+        private static bool disableLandscape;
+        public static bool DisableLandscape
         {
-            get => landscapeEnabled;
+            get => disableLandscape;
             set
             {
-                if (landscapeEnabled == value) return;
-                landscapeEnabled = value;
-                OnLandscapeEnabledChanged?.Invoke(value);
+                if (disableLandscape == value) return;
+                disableLandscape = value;
+                OnDisableLandscapeChanged?.Invoke(value);
+            }
+        }
+
+        // Landscape - Ground
+        public static event Action<bool>? OnDisableGroundChanged;
+        private static bool disableGround;
+
+        public static bool DisableGround
+        {
+            get => disableGround;
+
+            set
+            {
+                if (disableGround == value) return;
+                disableGround = value;
+                OnDisableGroundChanged?.Invoke(value);
+            }
+        }
+
+        // Landscape - Trees
+        public static event Action<bool>? OnDisableTreesChanged;
+        private static bool disableTrees;
+
+        public static bool DisableTrees
+        {
+            get => disableTrees;
+
+            set
+            {
+                if (disableTrees == value) return;
+                disableTrees = value;
+                OnDisableTreesChanged?.Invoke(value);
+            }
+        }
+
+        // Landscape - Grass
+        public static event Action<bool>? OnDisableGrassChanged;
+        private static bool disableGrass;
+
+        public static bool DisableGrass
+        {
+            get => disableGrass;
+
+            set
+            {
+                if (disableGrass == value) return;
+                disableGrass = value;
+                OnDisableGrassChanged?.Invoke(value);
+            }
+        }
+
+        // Landscape - Satellite
+        public static event Action<bool>? OnDisableSatelliteChanged;
+        private static bool disableSatellite;
+
+        public static bool DisableSatellite
+        {
+            get => disableSatellite;
+
+            set
+            {
+                if (disableSatellite == value) return;
+                disableSatellite = value;
+                OnDisableSatelliteChanged?.Invoke(value);
             }
         }
 
