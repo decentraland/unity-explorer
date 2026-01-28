@@ -517,7 +517,7 @@ namespace DCL.PluginSystem.Global
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
-            placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepositoryWrapper, profileRepository,
+            placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
                 placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
             mvcManager.RegisterController(placeDetailPanelController);
 

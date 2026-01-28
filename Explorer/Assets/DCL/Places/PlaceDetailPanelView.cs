@@ -6,8 +6,8 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -85,6 +85,8 @@ namespace DCL.Places
 
         private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
         private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();
+        private readonly List<ReactiveProperty<ProfileThumbnailViewModel>> friendsProfileThumbnails = new ();
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> creatorProfileThumbnail = new (ProfileThumbnailViewModel.Default());
 
         public event Action<PlacesData.PlaceInfo, bool>? LikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool>? DislikeToggleChanged;
@@ -131,6 +133,14 @@ namespace DCL.Places
                 actionOnRelease: categoryButtonView => categoryButtonView.gameObject.SetActive(false));
 
             mainScroll.SetScrollSensitivityBasedOnPlatform();
+
+            for (var i = 0; i < friendsConnected.thumbnails.Length; i++)
+            {
+                friendsProfileThumbnails.Add(new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default()));
+                friendsConnected.thumbnails[i].picture.Bind(friendsProfileThumbnails[i]);
+            }
+
+            creatorThumbnail.Bind(creatorProfileThumbnail);
         }
 
         public UniTask[] GetCloseTasks()
@@ -146,7 +156,6 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             CancellationToken cancellationToken,
             List<Profile.CompactInfo>? friends = null,
-            ProfileRepositoryWrapper? profileRepositoryWrapper = null,
             HomePlaceEventBus? homePlaceEventBus = null)
         {
             currentPlaceInfo = placeInfo;
@@ -173,23 +182,7 @@ namespace DCL.Places
             bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
             SilentlySetHomeToggle(isHome);
 
-            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
-            friendsConnected.root.SetActive(showFriendsConnected);
-            if (showFriendsConnected)
-            {
-                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
-                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
-
-                var friendsThumbnails = friendsConnected.thumbnails;
-                for (var i = 0; i < friendsThumbnails.Length; i++)
-                {
-                    bool friendExists = i < friends.Count;
-                    friendsThumbnails[i].root.SetActive(friendExists);
-                    if (!friendExists) continue;
-                    Profile.CompactInfo friendInfo = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
-                }
-            }
+            LoadFriendsThumbnailsAsync(friends, cancellationToken).Forget();
 
             bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
             startExitNavigationButtonsContainer.SetActive(!isWorld);
@@ -199,13 +192,58 @@ namespace DCL.Places
             SetCategories(placeInfo.categories);
         }
 
-        public void SetCreatorThumbnail(
-            ProfileRepositoryWrapper profileRepositoryWrapper,
-            Profile.CompactInfo? creatorProfile)
+        private async UniTask LoadFriendsThumbnailsAsync(List<Profile.CompactInfo>? friendProfiles, CancellationToken cancellationToken)
         {
-            creatorThumbnail.gameObject.SetActive(creatorProfile != null);
+            bool showFriendsConnected = friendProfiles is { Count: > 0 };
+            friendsConnected.root.SetActive(showFriendsConnected);
+
+            if (showFriendsConnected)
+            {
+                friendsConnected.amountContainer.SetActive(friendProfiles!.Count > friendsConnected.thumbnails.Length);
+                friendsConnected.amountLabel.text = $"+{friendProfiles.Count - friendsConnected.thumbnails.Length}";
+
+                for (var i = 0; i < friendsConnected.thumbnails.Length; i++)
+                {
+                    friendsConnected.thumbnails[i].root.SetActive(false);
+                    bool friendExists = i < friendProfiles.Count;
+                    if (!friendExists) continue;
+                    Profile.CompactInfo friendInfo = friendProfiles[i];
+
+                    friendsProfileThumbnails[i].SetLoading(friendInfo.UserNameColor);
+                    if (!string.IsNullOrEmpty(friendInfo.FaceSnapshotUrl))
+                    {
+                        await GetProfileThumbnailCommand.Instance.ExecuteAsync(
+                            friendsProfileThumbnails[i],
+                            null,
+                            friendInfo.UserId,
+                            friendInfo.FaceSnapshotUrl,
+                            cancellationToken);
+
+                        friendsConnected.thumbnails[i].root.SetActive(friendsProfileThumbnails[i].Value.Sprite != null);
+                    }
+                }
+            }
+        }
+
+        public async UniTask SetCreatorThumbnailAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
+        {
+            creatorThumbnail.gameObject.SetActive(false);
+
             if (creatorProfile != null)
-                creatorThumbnail.Setup(profileRepositoryWrapper, creatorProfile.Value);
+            {
+                creatorProfileThumbnail.SetLoading(creatorProfile.Value.UserNameColor);
+                if (!string.IsNullOrEmpty(creatorProfile.Value.FaceSnapshotUrl))
+                {
+                    await GetProfileThumbnailCommand.Instance.ExecuteAsync(
+                        creatorProfileThumbnail,
+                        null,
+                        creatorProfile.Value.UserId,
+                        creatorProfile.Value.FaceSnapshotUrl,
+                        cancellationToken);
+
+                    creatorThumbnail.gameObject.SetActive(creatorProfileThumbnail.Value.Sprite != null);
+                }
+            }
         }
 
         public void SilentlySetLikeToggle(bool isOn)
