@@ -207,6 +207,16 @@ namespace DCL.Web3.Authenticators
             return await SendAsync(request, ct);
         }
 
+        public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
+        {
+            var targetChainId = new BigInteger(chainId);
+
+            this.chainId = targetChainId;
+            await ThirdWebManager.Instance.ActiveWallet.SwitchNetwork(this.chainId);
+
+            return await SendAsync(request, source, ct);
+        }
+
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
             SendAsync(request, Web3RequestSource.SDKScene, ct);
 
@@ -321,7 +331,11 @@ namespace DCL.Web3.Authenticators
             }
 
             if (string.Equals(request.method, "eth_sendTransaction"))
-                return await HandleSendTransactionAsync(request);
+            {
+                // Internal transactions (gifting, donations) use meta-transactions via Decentraland relay
+                bool useMetaTx = source == Web3RequestSource.Internal;
+                return await HandleSendTransactionAsync(request, useMetaTx);
+            }
 
             // Fallback for any other non-read-only methods
             throw new Web3Exception($"Unsupported method requiring confirmation: {request.method}");
@@ -429,7 +443,7 @@ namespace DCL.Web3.Authenticators
                 _ => $"Chain {chainId}",
             };
 
-        private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request)
+        private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request, bool useMetaTx = false)
         {
             if (ThirdWebManager.Instance.ActiveWallet == null)
                 throw new Web3Exception("No active wallet connected");
@@ -446,6 +460,21 @@ namespace DCL.Web3.Authenticators
 
             // Parse value
             BigInteger weiValue = ParseHexToBigInteger(value);
+
+            // For meta-transactions (internal ops like gifting), use Decentraland relay
+            // The user signs an EIP-712 message, and the relay pays for gas
+            if (useMetaTx && !string.IsNullOrEmpty(data) && data != "0x")
+            {
+                Debug.Log($"[ThirdWeb] Using meta-transaction for contract call to {to}");
+                string txHash = await SendMetaTransactionAsync(to, data);
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = txHash,
+                };
+            }
 
             // For simple ETH transfers (no data), use Transfer method
             if (string.IsNullOrEmpty(data) || data == "0x")
@@ -466,13 +495,13 @@ namespace DCL.Web3.Authenticators
 
             // For contract interactions, decode the data and use ThirdwebContract.Prepare with proper ABI
             // This is the recommended approach by Thirdweb SDK
-            string txHash = await ExecuteContractCallAsync(to, data, weiValue);
+            string hash = await ExecuteContractCallAsync(to, data, weiValue);
 
             return new EthApiResponse
             {
                 id = request.id,
                 jsonrpc = "2.0",
-                result = txHash,
+                result = hash,
             };
         }
 
@@ -505,6 +534,325 @@ namespace DCL.Web3.Authenticators
 
             return await ThirdwebTransaction.Send(transaction);
         }
+
+#region Meta-Transactions (Decentraland Relay)
+        private const string TRANSACTIONS_SERVER_URL = "https://transactions-api.decentraland.org/v1/transactions";
+
+        /// <summary>
+        ///     Sends a meta-transaction via Decentraland's transactions-server.
+        ///     The user signs an EIP-712 message, and the server relays the transaction paying for gas.
+        /// </summary>
+        private async UniTask<string> SendMetaTransactionAsync(string contractAddress, string functionSignature)
+        {
+            string from = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+
+            Debug.Log("[ThirdWeb] Sending meta-transaction via Decentraland relay");
+            Debug.Log($"[ThirdWeb] From: {from}, Contract: {contractAddress}");
+            Debug.Log($"[ThirdWeb] Function signature: {functionSignature}");
+
+            // 1. Get meta-tx nonce from the contract
+            BigInteger nonce = await GetMetaTxNonceAsync(contractAddress, from);
+            Debug.Log($"[ThirdWeb] Meta-tx nonce: {nonce}");
+
+            // 2. Get contract data for EIP-712 domain
+            ContractMetaTxInfo contractInfo = await GetContractMetaTxInfoAsync(contractAddress);
+            Debug.Log($"[ThirdWeb] Contract info - Name: {contractInfo.Name}, Version: {contractInfo.Version}");
+
+            // 3. Create EIP-712 typed data
+            string typedDataJson = CreateMetaTxTypedData(
+                contractInfo.Name,
+                contractInfo.Version,
+                contractAddress,
+                (int)chainId,
+                nonce,
+                from,
+                functionSignature
+            );
+
+            Debug.Log("[ThirdWeb] EIP-712 typed data created");
+
+            // 4. Sign with ThirdWeb wallet
+            string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+            Debug.Log($"[ThirdWeb] Signature obtained: {signature[..20]}...");
+
+            // 5. Split signature into r, s, v components
+            (string r, string s, int v) = SplitSignature(signature);
+
+            // 6. POST to transactions-server
+            return await PostToTransactionsServerAsync(from, contractAddress, functionSignature, r, s, v);
+        }
+
+        /// <summary>
+        ///     Gets the meta-transaction nonce for a user from the contract.
+        ///     Calls getNonce(address) on the contract.
+        /// </summary>
+        private async UniTask<BigInteger> GetMetaTxNonceAsync(string contractAddress, string userAddress)
+        {
+            // getNonce(address) selector = keccak256("getNonce(address)")[:4] = 0x2d0335ab
+            string cleanAddress = userAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? userAddress[2..]
+                : userAddress;
+
+            string data = "0x2d0335ab" + cleanAddress.ToLower().PadLeft(64, '0');
+
+            var request = new EthApiRequest
+            {
+                id = Guid.NewGuid().GetHashCode(),
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data },
+                    "latest",
+                },
+            };
+
+            EthApiResponse response = await SendRpcRequestAsync(request);
+            return ParseHexToBigInteger(response.result?.ToString() ?? "0x0");
+        }
+
+        /// <summary>
+        ///     Gets contract metadata needed for EIP-712 domain.
+        ///     First tries known contracts, then falls back to on-chain queries.
+        /// </summary>
+        private async UniTask<ContractMetaTxInfo> GetContractMetaTxInfoAsync(string contractAddress)
+        {
+            string addressLower = contractAddress.ToLower();
+
+            // Check known Decentraland contracts first
+            if (KnownMetaTxContracts.TryGetValue(addressLower, out ContractMetaTxInfo? known))
+                return known;
+
+            // For collection contracts (like the one in gifting), try to get name from contract
+            // Most DCL collections use "Decentraland Collection" as name and "2" as version
+            try
+            {
+                string name = await GetContractNameAsync(contractAddress);
+
+                if (!string.IsNullOrEmpty(name))
+                    return new ContractMetaTxInfo(name, "2");
+            }
+            catch (Exception e) { Debug.LogWarning($"[ThirdWeb] Failed to get contract name: {e.Message}"); }
+
+            // Fallback for DCL collection contracts
+            return new ContractMetaTxInfo("Decentraland Collection", "2");
+        }
+
+        /// <summary>
+        ///     Calls name() on the contract to get its EIP-712 domain name.
+        /// </summary>
+        private async UniTask<string> GetContractNameAsync(string contractAddress)
+        {
+            // name() selector = 0x06fdde03
+            var request = new EthApiRequest
+            {
+                id = Guid.NewGuid().GetHashCode(),
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0x06fdde03" },
+                    "latest",
+                },
+            };
+
+            EthApiResponse response = await SendRpcRequestAsync(request);
+            var hex = response.result?.ToString();
+
+            if (string.IsNullOrEmpty(hex) || hex == "0x")
+                return string.Empty;
+
+            return DecodeStringFromHex(hex);
+        }
+
+        /// <summary>
+        ///     Creates EIP-712 typed data JSON for meta-transaction signing.
+        /// </summary>
+        private static string CreateMetaTxTypedData(
+            string contractName,
+            string contractVersion,
+            string contractAddress,
+            int chainIdValue,
+            BigInteger nonce,
+            string from,
+            string functionSignature)
+        {
+            // Salt is chainId padded to bytes32
+            string salt = "0x" + chainIdValue.ToString("x").PadLeft(64, '0');
+
+            var typedData = new
+            {
+                types = new
+                {
+                    EIP712Domain = new object[]
+                    {
+                        new { name = "name", type = "string" },
+                        new { name = "version", type = "string" },
+                        new { name = "verifyingContract", type = "address" },
+                        new { name = "salt", type = "bytes32" },
+                    },
+                    MetaTransaction = new object[]
+                    {
+                        new { name = "nonce", type = "uint256" },
+                        new { name = "from", type = "address" },
+                        new { name = "functionSignature", type = "bytes" },
+                    },
+                },
+                primaryType = "MetaTransaction",
+                domain = new
+                {
+                    name = contractName,
+                    version = contractVersion,
+                    verifyingContract = contractAddress,
+                    salt,
+                },
+                message = new
+                {
+                    nonce = nonce.ToString(),
+                    from,
+                    functionSignature,
+                },
+            };
+
+            return JsonConvert.SerializeObject(typedData);
+        }
+
+        /// <summary>
+        ///     Splits an Ethereum signature into r, s, v components.
+        /// </summary>
+        private static (string r, string s, int v) SplitSignature(string signature)
+        {
+            string sig = signature.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? signature[2..]
+                : signature;
+
+            string r = "0x" + sig[..64];
+            string s = "0x" + sig.Substring(64, 64);
+            var v = Convert.ToInt32(sig.Substring(128, 2), 16);
+
+            // Normalize v value (some wallets return 0/1 instead of 27/28)
+            if (v < 27)
+                v += 27;
+
+            return (r, s, v);
+        }
+
+        /// <summary>
+        ///     POSTs the signed meta-transaction to Decentraland's transactions-server.
+        /// </summary>
+        private async UniTask<string> PostToTransactionsServerAsync(
+            string from,
+            string contractAddress,
+            string functionSignature,
+            string sigR,
+            string sigS,
+            int sigV)
+        {
+            var payload = new
+            {
+                transactionData = new
+                {
+                    from,
+                    @params = new[] { contractAddress, functionSignature },
+                    userAddress = from,
+                    contractAddress,
+                    functionSignature,
+                    sigR,
+                    sigS,
+                    sigV,
+                },
+            };
+
+            string payloadJson = JsonConvert.SerializeObject(payload);
+            Debug.Log($"[ThirdWeb] Posting to transactions-server: {TRANSACTIONS_SERVER_URL}");
+
+            IThirdwebHttpClient httpClient = ThirdWebManager.Instance.Client.HttpClient;
+
+            var content = new System.Net.Http.StringContent(
+                payloadJson,
+                System.Text.Encoding.UTF8,
+                "application/json"
+            );
+
+            ThirdwebHttpResponseMessage response = await httpClient.PostAsync(
+                TRANSACTIONS_SERVER_URL,
+                content,
+                CancellationToken.None
+            );
+
+            string responseJson = await response.Content.ReadAsStringAsync();
+            Debug.Log($"[ThirdWeb] Transactions-server response: {responseJson}");
+
+            if (!response.IsSuccessStatusCode)
+                throw new Web3Exception($"Meta-transaction relay failed: {response.StatusCode} - {responseJson}");
+
+            TransactionsServerResponse? result = JsonConvert.DeserializeObject<TransactionsServerResponse>(responseJson);
+
+            if (result == null || string.IsNullOrEmpty(result.txHash))
+                throw new Web3Exception($"Meta-transaction relay returned empty txHash: {responseJson}");
+
+            Debug.Log($"[ThirdWeb] Meta-transaction successful! TxHash: {result.txHash}");
+            return result.txHash;
+        }
+
+        /// <summary>
+        ///     Decodes a hex-encoded string from eth_call result.
+        /// </summary>
+        private static string DecodeStringFromHex(string hex)
+        {
+            if (string.IsNullOrEmpty(hex) || hex.Length < 130)
+                return string.Empty;
+
+            string clean = hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hex[2..] : hex;
+
+            // Skip offset (32 bytes) and length (32 bytes), then read string data
+            // Format: offset (32) + length (32) + data (variable)
+            var lengthOffset = 64; // Skip offset
+            var length = Convert.ToInt32(clean.Substring(lengthOffset, 64), 16);
+
+            if (length == 0)
+                return string.Empty;
+
+            int dataOffset = lengthOffset + 64;
+            int hexLength = Math.Min(length * 2, clean.Length - dataOffset);
+
+            if (hexLength <= 0)
+                return string.Empty;
+
+            string dataHex = clean.Substring(dataOffset, hexLength);
+            var bytes = new byte[dataHex.Length / 2];
+
+            for (var i = 0; i < bytes.Length; i++)
+                bytes[i] = Convert.ToByte(dataHex.Substring(i * 2, 2), 16);
+
+            return System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+        }
+
+        /// <summary>
+        ///     Known Decentraland contracts that support meta-transactions.
+        ///     Key = lowercase contract address, Value = (name, version) for EIP-712 domain.
+        /// </summary>
+        private static readonly Dictionary<string, ContractMetaTxInfo> KnownMetaTxContracts = new ()
+        {
+            // MANA on Polygon
+            { "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4", new ContractMetaTxInfo("Decentraland MANA", "1") },
+
+            // Marketplace V2 on Polygon
+            { "0x480a0f4e360e8964e68858dd231c2922f1df45ef", new ContractMetaTxInfo("Decentraland Marketplace", "2") },
+
+            // Bids V2 on Polygon
+            { "0xb96697fa4a3361ba35b774a42c58daccaad1b8e1", new ContractMetaTxInfo("Decentraland Bid", "2") },
+
+            // Collection Manager on Polygon
+            { "0x9d32aac179153a991e832550d9f96f6d1e05d4b4", new ContractMetaTxInfo("CollectionManager", "2") },
+        };
+
+        private record ContractMetaTxInfo(string Name, string Version);
+
+        private class TransactionsServerResponse
+        {
+            public string? txHash { get; set; }
+            public string? error { get; set; }
+        }
+#endregion
 
         private static BigInteger ParseHexToBigInteger(string hexValue)
         {

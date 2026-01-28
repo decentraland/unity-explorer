@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+using DCL.Backpack.Gifting.Utils;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Numerics;
 using Thirdweb;
@@ -299,6 +301,116 @@ namespace DCL.Web3.Authenticators
             {
                 Debug.LogError($"❌ MANA transfer failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        ///     Тест gifting-сценария (NFT transferFrom) через relay.
+        ///     Использует Web3RequestSource.Internal для отправки через Decentraland RPC relay.
+        ///     Это тестирует fix для "insufficient funds for gas" ошибки.
+        /// </summary>
+        [ContextMenu(nameof(TestGiftingViaRelay))]
+        public async void TestGiftingViaRelay()
+        {
+            // Реальные тестовые данные из gifting flow
+            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            var recipientAddress = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+            var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
+            var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
+
+            // Используем ManualTxEncoder как в Web3GiftTransferService
+            string data = ManualTxEncoder.EncodeTransferFrom(senderAddress, recipientAddress, tokenId);
+
+            Debug.Log("=== Gifting Relay Test ===");
+            Debug.Log($"Sender: {senderAddress}");
+            Debug.Log($"Recipient: {recipientAddress}");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Token ID: {tokenId}");
+            Debug.Log($"Encoded data: {data}");
+
+            // Формируем запрос как в Web3GiftTransferService (JObject)
+            var tx = new JObject
+            {
+                ["from"] = senderAddress,
+                ["to"] = contractAddress,
+                ["data"] = data,
+            };
+
+            var request = new EthApiRequest
+            {
+                id = System.Guid.NewGuid().GetHashCode(),
+                method = "eth_sendTransaction",
+                @params = new object[] { tx },
+            };
+
+            Debug.Log($"Request params: {tx}");
+
+            try
+            {
+                // Gifting использует Polygon Mainnet (137)
+                // Используем Web3RequestSource.Internal для отправки через relay
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                    137, // Polygon Mainnet
+                    request,
+                    Web3RequestSource.Internal,
+                    destroyCancellationToken);
+
+                string txHash = response.result?.ToString() ?? "null";
+
+                Debug.Log("✅ Gifting relay transaction sent!");
+                Debug.Log($"Transaction Hash: {txHash}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"❌ Gifting relay failed: {ex.Message}");
+                Debug.LogError($"Full exception: {ex}");
+            }
+        }
+
+        /// <summary>
+        ///     Тест gifting-сценария БЕЗ relay (обычная транзакция).
+        ///     Ожидается ошибка "insufficient funds for gas" если у кошелька нет MATIC.
+        /// </summary>
+        [ContextMenu(nameof(TestGiftingWithoutRelay))]
+        public async void TestGiftingWithoutRelay()
+        {
+            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            var recipientAddress = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+            var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
+            var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
+
+            string data = ManualTxEncoder.EncodeTransferFrom(senderAddress, recipientAddress, tokenId);
+
+            Debug.Log("=== Gifting WITHOUT Relay Test (expected to fail) ===");
+            Debug.Log($"Encoded data: {data}");
+
+            var tx = new JObject
+            {
+                ["from"] = senderAddress,
+                ["to"] = contractAddress,
+                ["data"] = data,
+            };
+
+            var request = new EthApiRequest
+            {
+                id = System.Guid.NewGuid().GetHashCode(),
+                method = "eth_sendTransaction",
+                @params = new object[] { tx },
+            };
+
+            try
+            {
+                // Используем Web3RequestSource.SDKScene - НЕ relay, обычная транзакция
+                // Ожидается "insufficient funds for gas"
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                    137, // Polygon Mainnet
+                    request,
+                    Web3RequestSource.SDKScene,
+                    destroyCancellationToken);
+
+                string txHash = response.result?.ToString() ?? "null";
+                Debug.Log($"✅ Transaction sent (unexpected success): {txHash}");
+            }
+            catch (System.Exception ex) { Debug.LogError($"❌ Expected failure (no gas): {ex.Message}"); }
         }
     }
 }
