@@ -138,6 +138,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(Profile))]
         private void CancelEmotesByDeletionWhenProfileIsNotPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotesByDeletionWhenProfileIsNotPresent()");
             StopEmote(entity, ref emoteComponent, avatarView);
         }
 
@@ -145,6 +146,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [All(typeof(DeleteEntityIntention), typeof(Profile))]
         private void CancelEmotesByDeletionWhenProfileIsPresent(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotesByDeletionWhenProfileIsPresent()");
             StopEmote(entity, ref emoteComponent, avatarView);
         }
 
@@ -157,6 +159,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotesByTeleportIntention()");
+
             // TODO: This may be now obsolete, emotes are cancelled by other emotes using other execution flow and this is never executed
             StopEmote(entity, ref emoteComponent, avatarView);
         }
@@ -169,6 +173,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Profile profile)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotesByMoveToWithDuration()");
             // TODO: This may be now obsolete, emotes are cancelled by other emotes using other execution flow and this is never executed
             StopEmote(entity, ref emoteComponent, avatarView);
         }
@@ -195,6 +200,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotes() should cancel");
                 StopEmote(entity, ref emoteComponent, avatarView);
                 return;
             }
@@ -211,7 +217,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
                 if (isOnAnotherTag)
+                {
+                    ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CancelEmotes() different animator state tag");
                     StopEmote(entity, ref emoteComponent, avatarView);
+                }
             }
         }
 
@@ -569,7 +578,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 if (!playedSuccessfully)
                 {
-                    ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteIntent.EmoteId} cant be played.");
+                    ReportHub.LogError(ReportCategory.SOCIAL_EMOTE, $"Emote name:{emoteIntent.EmoteId} cant be played.");
                     World.Remove<CharacterEmoteIntent>(entity);
                     return;
                 }
@@ -643,17 +652,26 @@ namespace DCL.AvatarRendering.Emotes.Play
                     PrepareToAdjustReceiverBeforeOutcomeAnimation(emoteIntent.SocialEmote.InitiatorWalletAddress, entity);
 
                     // The rotation of the avatar has to coincide with initiator avatar's when the emote starts, which occurs at least 1 frame later
-                    RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent rotateIntent = new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity);
+                    Entity initiatorEntity = SocialEmoteInteractionsManager.Instance.GetInteractionState(emoteIntent.WalletAddress)!.InitiatorEntity;
 
-                    if (World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                    if (World.IsAlive(initiatorEntity))
                     {
-                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent already existed");
-                        World.Set(entity, rotateIntent);
+                        RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent rotateIntent = new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent(initiatorEntity);
+
+                        if (World.Has<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity))
+                        {
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent already existed");
+                            World.Set(entity, rotateIntent);
+                        }
+                        else
+                        {
+                            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent");
+                            World.Add(entity, rotateIntent);
+                        }
                     }
                     else
                     {
-                        ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "AfterPlayingUpdateSocialEmoteInteractions() new RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent");
-                        World.Add(entity, rotateIntent);
+                        ReportHub.LogError(ReportCategory.SOCIAL_EMOTE, "Something went trying to prepare the receiver before playing the outcome animation. The initiator entity does not exist: " + initiatorEntity);
                     }
                 }
 
@@ -693,14 +711,21 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "RotateReceiverAvatarToCoincideWithInitiatorAvatar()");
 
-            // Makes sure the avatar of the initiator is looking at the receiver's
-            IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
-            Vector3 initiatorForward = avatarView.GetTransform().position - initiatorAvatar.GetTransform().position;
-            initiatorForward.y = 0.0f;
-            initiatorAvatar.GetTransform().forward = initiatorForward.normalized;
+            if (World.IsAlive(animationInfo.InitiatorEntity))
+            {
+                // Makes sure the avatar of the initiator is looking at the receiver's
+                IAvatarView initiatorAvatar = World.Get<IAvatarView>(animationInfo.InitiatorEntity);
+                Vector3 initiatorForward = avatarView.GetTransform().position - initiatorAvatar.GetTransform().position;
+                initiatorForward.y = 0.0f;
+                initiatorAvatar.GetTransform().forward = initiatorForward.normalized;
+                // Rotates the reacting avatar to coincide with the initiator's avatar, because the animation of the reaction occurs at the same place with same pose
+                avatarView.GetTransform().rotation = initiatorAvatar.GetTransform().rotation;
+            }
+            else
+            {
+                ReportHub.LogError(ReportCategory.SOCIAL_EMOTE, "The initiator entity does not exist, the rotation of the receiver is ignored: " + animationInfo.InitiatorEntity);
+            }
 
-            // Rotates the reacting avatar to coincide with the initiator's avatar, because the animation of the reaction occurs at the same place with same pose
-            avatarView.GetTransform().rotation = initiatorAvatar.GetTransform().rotation;
             World.Remove<RotateReceiverAvatarToCoincideWithInitiatorAvatarIntent>(entity);
         }
 
@@ -744,8 +769,15 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void CleanUp(Entity entity, Profile profile, ref CharacterEmoteComponent emoteComponent, in DeleteEntityIntention deleteEntityIntention)
         {
+            ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"CleanUp() Cleaning avatar... {entity} {profile.UserId}");
+
             if(SocialEmoteInteractionsManager.Instance.InteractionExists(profile.UserId))
             {
+                ReportHub.Log(ReportCategory.SOCIAL_EMOTE, "CleanUp() cleaning social smote stuff...");
+
+                if (World.Has<AvatarStateMachineEventHandler>(entity))
+                    World.Get<AvatarStateMachineEventHandler>(entity).EmoteStateExiting = null;
+
                 StopOtherParticipant(entity, ref emoteComponent);
                 SocialEmoteInteractionsManager.Instance.StopInteraction(profile.UserId);
             }

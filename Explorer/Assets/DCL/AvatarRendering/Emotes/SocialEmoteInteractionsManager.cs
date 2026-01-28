@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.AvatarRendering.Emotes;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -196,5 +197,24 @@ namespace DCL.SocialEmotes
         /// <returns>True if the interaction existed; False otherwise.</returns>
         public bool HasInteractionExisted(int interactionId) =>
             everExistingInteractions.Contains(interactionId);
+
+
+#if UNITY_EDITOR
+
+        [UnityEditor.MenuItem("Tools/Social Emotes Debug/Print interactions")]
+        private static void PrintSocialEmoteInteractions()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append("<color=yellow>INTERACTIONS:\n");
+
+            foreach (KeyValuePair<string,SocialEmoteInteraction?> interactionPairs in Instance.participantInteractions)
+                builder.Append($"Interaction: {interactionPairs.Value!.Id} Participant: {interactionPairs.Key}\n");
+
+            builder.Append("</color>");
+
+            Debug.Log(builder.ToString());
+        }
+#endif
     }
 }
