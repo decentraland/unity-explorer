@@ -80,8 +80,15 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
 
                 if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
-                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance,
-                        Vector3.Distance(hitInfo.point, playerInteractionEntity.PlayerPosition));
+                {
+                    Vector3? playerPosition = playerInteractionEntity.PlayerPosition;
+                    float? playerDistance = null;
+
+                    if (playerPosition != null)
+                        playerDistance = Vector3.Distance(hitInfo.point, (Vector3)playerPosition);
+
+                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance, playerDistance);
+                }
                 else
                     raycastResultForSceneEntities.Reset();
 

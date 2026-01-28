@@ -23,7 +23,15 @@ namespace DCL.Interaction.PlayerOriginated
 
         public ref PlayerOriginRaycastResultForSceneEntities PlayerOriginRaycastResultForSceneEntities => ref globalWorld.Get<PlayerOriginRaycastResultForSceneEntities>(Entity);
         public ref PlayerOriginRaycastResultForGlobalEntities PlayerOriginRaycastResultForGlobalEntities => ref globalWorld.Get<PlayerOriginRaycastResultForGlobalEntities>(Entity);
-        public Vector3 PlayerPosition =>
-            globalWorld.Get<CharacterController>(playerEntity).transform.position;
+        public Vector3? PlayerPosition
+        {
+            get
+            {
+                if (globalWorld.TryGet(playerEntity, out CharacterController? cc))
+                    return cc!.transform.position;
+
+                return null;
+            }
+        }
     }
 }
