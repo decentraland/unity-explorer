@@ -2,10 +2,10 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
-using DCL.FeatureFlags;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -202,7 +202,7 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.IN), allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
 
@@ -263,7 +263,7 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 characterPreviewController?.OnHide();
-                fsm.Enter<LoginSelectionAuthState, (PopupType type, int animHash)>((PopupType.NONE, UIAnimationHashes.SLIDE), allowReEnterSameState: true);
+                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
 

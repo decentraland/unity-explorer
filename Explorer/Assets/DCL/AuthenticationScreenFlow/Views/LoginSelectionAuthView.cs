@@ -83,11 +83,10 @@ namespace DCL.AuthenticationScreenFlow
             showAnimHash = animHash;
             ShowAsync(CancellationToken.None).Forget();
 
-            mainElementsPanel.SetActive(true);
-            loadingSpinner.SetActive(false);
-
             areOptionsExpanded = false;
             SetOptionsPanelVisibility(isExpanded: false);
+
+            SetLoadingSpinnerVisibility(false);
         }
 
         public void Hide()
@@ -96,6 +95,12 @@ namespace DCL.AuthenticationScreenFlow
             loadingSpinner.SetActive(false);
 
             HideAsync(CancellationToken.None).Forget();
+        }
+
+        public void SetLoadingSpinnerVisibility(bool isLoading)
+        {
+            mainElementsPanel.SetActive(!isLoading);
+            loadingSpinner.SetActive(isLoading);
         }
 
         public override async UniTask ShowAsync(CancellationToken ct)
@@ -115,11 +120,5 @@ namespace DCL.AuthenticationScreenFlow
 
         protected override async UniTask PlayHideAnimationAsync(CancellationToken ct) =>
             await animator.PlayAndAwaitAsync(UIAnimationHashes.OUT, UIAnimationHashes.OUT, ct: ct);
-
-        public void ShowLoading()
-        {
-            mainElementsPanel.SetActive(false);
-            loadingSpinner.SetActive(true);
-        }
     }
 }
