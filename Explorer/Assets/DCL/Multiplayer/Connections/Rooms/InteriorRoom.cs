@@ -1,7 +1,3 @@
-// TODO remove tasks to support WebGL
-// Currently Livekit is not supposed to be called on WebGL
-// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -19,7 +15,6 @@ using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine.Pool;
 using RichTypes;
 
@@ -90,7 +85,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            var disconnectTask = assigned.DisconnectAsync(ct).AsUniTask();
+            var disconnectTask = assigned.DisconnectAsync(ct);
             var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
             var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
             if (winIndex != 0)
@@ -265,10 +260,10 @@ namespace DCL.Multiplayer.Connections.Rooms
         public void SetLocalName(string name) =>
             assigned.SetLocalName(name);
 
-        public Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+        public UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             assigned.EnsureAssigned().ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
-        public Task DisconnectAsync(CancellationToken token) =>
+        public UniTask DisconnectAsync(CancellationToken token) =>
             assigned.EnsureAssigned().DisconnectAsync(token);
     }
 }

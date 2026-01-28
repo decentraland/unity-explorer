@@ -1,7 +1,3 @@
-// TODO remove tasks to support WebGL
-// Currently Livekit is not supposed to be called on WebGL
-// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
@@ -13,7 +9,7 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using RichTypes;
 
 namespace DCL.Multiplayer.Connections.Rooms
@@ -51,10 +47,10 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public void SetLocalName(string name) { }
 
-        public Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
-            Task.FromResult(Result.SuccessResult());
+        public UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            UniTask.FromResult(Result.SuccessResult());
 
-        public Task DisconnectAsync(CancellationToken cancellationToken) =>
-            Task.CompletedTask;
+        public UniTask DisconnectAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
     }
 }

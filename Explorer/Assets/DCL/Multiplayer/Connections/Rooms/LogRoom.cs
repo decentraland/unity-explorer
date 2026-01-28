@@ -16,7 +16,7 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using RichTypes;
 
 namespace DCL.Multiplayer.Connections.Rooms
@@ -218,7 +218,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             origin.SetLocalName(name);
         }
 
-        public async Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
+        public async UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -233,7 +233,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             return result;
         }
 
-        public async Task DisconnectAsync(CancellationToken token)
+        public async UniTask DisconnectAsync(CancellationToken token)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
