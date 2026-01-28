@@ -168,6 +168,7 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST:
                 case NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED:
+                case NotificationType.TIP_RECEIVED:
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[FRIENDS_NOTIFICATION_INDEX].mItemPrefab.name);
                     notificationView = listItem!.GetComponent<FriendsNotificationView>();
                     break;
@@ -260,6 +261,33 @@ namespace DCL.Notifications.NotificationsMenu
                     giftView.Configure(giftNotification);
                     UpdateGiftSenderNameAsync(giftView, giftNotification.Metadata.SenderAddress, notificationThumbnailCts.Token).Forget();
                     break;
+                case TipReceivedNotification tipNotification:
+                    FriendsNotificationView friendNotificationView3 = (FriendsNotificationView)notificationView;
+                    friendNotificationView3.TimeText.gameObject.SetActive(true);
+                    ConfigureTipReceivedAsync(friendNotificationView3, tipNotification, notificationThumbnailCts.Token).Forget();
+                    break;
+            }
+        }
+
+        private async UniTaskVoid ConfigureTipReceivedAsync(FriendsNotificationView friendNotificationView, TipReceivedNotification tipNotification, CancellationToken ct)
+        {
+            try
+            {
+                if (!tipNotification.SenderProfile.HasValue)
+                {
+                    Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
+                    tipNotification.SenderProfile = profile;
+                }
+
+                friendNotificationView.ConfigureFromTipReceivedNotificationData(tipNotification);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.DONATIONS);
+            }
+            finally
+            {
+                LoadNotificationThumbnailAsync(friendNotificationView, tipNotification, notificationDefaultThumbnails.GetNotificationDefaultThumbnail(tipNotification.Type), ct).Forget();
             }
         }
 

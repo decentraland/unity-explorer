@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
@@ -186,7 +187,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position + new Vector3(0, 0, 3));
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Act
             system.Update(0);
@@ -200,7 +201,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             // Arrange
             var avatarShape = CreateAvatarShapeComponent();
-            Entity otherEntity = world.Create(avatarShape, avatarBase);
+            Entity otherEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
             system.Update(0);
@@ -218,7 +219,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position);
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Set camera to first person mode
             ref var cameraComponent = ref world.Get<CameraComponent>(cameraEntity);
@@ -241,7 +242,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position + new Vector3(0, 0, 5)); // Far from camera
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Start in first person mode - this should hide the avatar
             ref var cameraComponent = ref world.Get<CameraComponent>(cameraEntity);
@@ -274,7 +275,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             userBlockingCache.UserIsBlocked(BLOCKED_USER_ID).Returns(true);
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
             system.Update(0);
@@ -295,7 +296,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             userBlockingCache.UserIsBlocked(USER_ID).Returns(true);
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First update - user is blocked
             system.Update(0);
@@ -330,7 +331,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             );
             testSystem.Initialize();
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
             testSystem.Update(0);
@@ -351,7 +352,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             userBlockingCache.UserIsBlocked(USER_ID).Returns(true);
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
             system.Update(0);
@@ -368,7 +369,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarShape.HiddenByModifierArea = true;
             avatarShape.IsVisible = true;
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // Act
             system.Update(0);
@@ -386,7 +387,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var avatarShape = CreateAvatarShapeComponent();
             avatarShape.HiddenByModifierArea = true; // Start hidden
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First update - avatar should be hidden due to modifier area
             system.Update(0);
@@ -413,7 +414,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position + new Vector3(0, 0, 3));
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Act - first update adds component
             system.Update(0);
@@ -443,7 +444,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             userBlockingCache.UserIsBlocked(USER_ID).Returns(true);
 
-            Entity avatarEntity = world.Create(avatarShape, avatarBase);
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
 
             // First, add blocked reason
             system.Update(0);
@@ -477,7 +478,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position + new Vector3(0, 0, 0.5f));
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Set camera to first person mode and mark transitioning
             ref var cameraComponent = ref world.Get<CameraComponent>(cameraEntity);
@@ -503,7 +504,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var cameraFocus = CreateCameraFocus(cameraGameObject.transform.position + new Vector3(0, 0, 10f));
             var playerComponent = new PlayerComponent(cameraFocus);
 
-            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase);
+            Entity playerEntity = world.Create(avatarShape, playerComponent, avatarBase, new CharacterEmoteComponent());
 
             // Set camera to first person mode and mark transitioning
             ref var cameraComponent = ref world.Get<CameraComponent>(cameraEntity);

@@ -24,6 +24,7 @@ using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -115,6 +116,7 @@ using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.Translation;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
@@ -546,6 +548,18 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
+            IDonationsService donationsService;
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
+            {
+                IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
+                    staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                    placesAPIService, bootstrapContainer.Environment,
+                    bootstrapContainer.DecentralandUrlsSource);
+                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+            }
+            else
+                donationsService = new DonationsServiceDisabled();
+
             var coreBackpackEventBus = new BackpackEventBus();
 
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
@@ -667,6 +681,8 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            var entitiesAnalytics = new EntitiesAnalytics(bootstrapContainer.Analytics);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -699,14 +715,20 @@ namespace Global.Dynamic
                 ),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
+                new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
+                    URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)),
+                    staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity,
+                    builderContentURL.Value, localSceneDevelopment, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics),
+
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
+                    staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
                 #if UNITY_EDITOR
                     new RenderingSystemPlugin(debugBuilder),
                 #endif
@@ -771,7 +793,8 @@ namespace Global.Dynamic
                     roomHub,
                     staticContainer.LoadingStatus,
                     includeBannedUsersFromScene,
-                    homePlaceEventBus),
+                    homePlaceEventBus,
+                    donationsService),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
@@ -867,7 +890,10 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider,
                     bootstrapContainer.Analytics!,
                     communitiesDataService,
-                    staticContainer.LoadingStatus
+                    staticContainer.LoadingStatus,
+                    donationsService,
+                    realmNavigator,
+                    friendServiceProxy
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -984,6 +1010,18 @@ namespace Global.Dynamic
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
+
+            if (donationsService.DonationFeatureEnabled)
+                globalPlugins.Add(new DonationsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    donationsService,
+                    staticContainer.ProfilesContainer.Repository,
+                    playerEntity,
+                    globalWorld,
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.InputBlock));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
@@ -1177,7 +1215,8 @@ namespace Global.Dynamic
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData,
-                builderCollectionsPreview
+                builderCollectionsPreview,
+                entitiesAnalytics
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

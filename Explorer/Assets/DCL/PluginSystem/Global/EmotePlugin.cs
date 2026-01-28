@@ -13,6 +13,7 @@ using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
@@ -54,14 +55,16 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private AudioSource? audioSourceReference;
-        private EmotesWheelController? emotesWheelController;
         private readonly bool localSceneDevelopment;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
         private readonly DCLInput dclInput;
+        private readonly EntitiesAnalytics entitiesAnalytics;
+
+        private AudioSource? audioSourceReference;
+        private EmotesWheelController? emotesWheelController;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -82,7 +85,8 @@ namespace DCL.PluginSystem.Global
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            EntitiesAnalytics entitiesAnalytics)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -104,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.dclInput = DCLInput.Instance;
+            this.entitiesAnalytics = entitiesAnalytics;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -122,7 +127,7 @@ namespace DCL.PluginSystem.Global
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory);
+                emoteStorage, realmData, customStreamingSubdirectory, entitiesAnalytics);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),

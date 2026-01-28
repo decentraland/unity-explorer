@@ -23,6 +23,8 @@ using DCL.UI;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Donations;
+using DCL.Donations.UI;
 using DCL.Minimap.Settings;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
@@ -32,6 +34,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -71,6 +74,7 @@ namespace DCL.Minimap
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IDonationsService donationsService;
         private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
         private SideMenuPresenter? sideMenuPresenter;
@@ -109,7 +113,8 @@ namespace DCL.Minimap
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
-            MinimapContextMenuSettings minimapContextMenuSettings)
+            MinimapContextMenuSettings minimapContextMenuSettings,
+            IDonationsService donationsService)
                 : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -130,9 +135,12 @@ namespace DCL.Minimap
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
             this.minimapContextMenuSettings = minimapContextMenuSettings;
+            this.donationsService = donationsService;
 
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
+
+            donationsService.DonationsEnabledCurrentScene.OnUpdate += EvaluateDonateToCreatorButton;
         }
 
         public override void Dispose()
@@ -143,6 +151,8 @@ namespace DCL.Minimap
             favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+
+            donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
 
             if (includeBannedUsersFromScene)
             {
@@ -155,8 +165,10 @@ namespace DCL.Minimap
             sceneRestrictionsController?.Dispose();
 
             if (viewInstance == null) return;
+
             viewInstance.minimapContextualButtonView.Button.onClick.RemoveAllListeners();
             viewInstance.favoriteButton.OnButtonClicked -= OnFavoriteButtonClicked;
+            viewInstance.donateButton.onClick.RemoveAllListeners();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -171,6 +183,13 @@ namespace DCL.Minimap
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
+        private void EvaluateDonateToCreatorButton((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
+        {
+            if (viewInstance == null) return;
+
+            viewInstance.donateButton.gameObject.SetActive(donationStatus.enabled);
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
@@ -178,6 +197,7 @@ namespace DCL.Minimap
             viewInstance.minimapRendererButton.Button.onClick.AddListener(OnMinimapRendererButtonClicked);
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
+            viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -194,16 +214,12 @@ namespace DCL.Minimap
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
             contextMenu = new GenericContextMenu()
-
-                          // Add title control to prevent incorrect layout height when the context menu has a single control
-                          // May be removed if a new control is added
-                         .AddControl(new TextContextMenuControlSettings(minimapContextMenuSettings.ContextMenuTitle))
-                         .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(homeToggleSettings = new ToggleContextMenuControlSettings(minimapContextMenuSettings.SetAsHomeText, SetAsHomeToggledAsync))
                          .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.CopyLinkText, minimapContextMenuSettings.CopyLinkSprite, CopyJumpInLink))
                          .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
+            EvaluateDonateToCreatorButton(donationsService.DonationsEnabledCurrentScene.Value);
             SetInitialHomeToggleValue();
             viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
@@ -276,6 +292,9 @@ namespace DCL.Minimap
                 }
             }
         }
+
+        private void OpenDonateToCreatorPanel() =>
+            mvcManager.ShowAndForget(DonationsPanelController.IssueCommand(DonationsPanelParameter.Empty));
 
         private void CopyJumpInLink()
         {

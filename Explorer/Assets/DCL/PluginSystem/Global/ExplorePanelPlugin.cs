@@ -40,8 +40,10 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -66,6 +68,7 @@ using DCL.Utilities;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -140,9 +143,12 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
-        private readonly bool isVoiceChatEnabled;
-        private readonly bool isTranslationChatEnabled;
+        private readonly bool isVoiceChatFeatureEnabled;
+        private readonly bool isChatTranslationFeatureEnabled;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IDonationsService donationsService;
+        private readonly IRealmNavigator realmNavigator;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -216,7 +222,10 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IDonationsService donationsService,
+            IRealmNavigator realmNavigator,
+            ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -278,6 +287,9 @@ namespace DCL.PluginSystem.Global
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.donationsService = donationsService;
+            this.realmNavigator = realmNavigator;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public void Dispose()
@@ -388,7 +400,7 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -414,7 +426,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -495,7 +507,8 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource,
+                friendServiceProxy, profileRepositoryWrapper);
 
             explorePanelController = new
                 ExplorePanelController(

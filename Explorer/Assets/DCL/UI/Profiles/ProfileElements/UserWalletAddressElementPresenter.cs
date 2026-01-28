@@ -8,7 +8,7 @@ namespace DCL.UI.ProfileElements
     {
         public readonly UserWalletAddressElement Element;
 
-        private Profile.CompactInfo? currentProfile;
+        private string currentProfileId;
 
         public UserWalletAddressElementPresenter(UserWalletAddressElement element)
         {
@@ -17,18 +17,24 @@ namespace DCL.UI.ProfileElements
             element.CopyWalletWarningNotification.Hide(true);
             element.CopyWalletAddressButton.onClick.AddListener(() =>
             {
-                if (currentProfile == null)
+                if (currentProfileId == null)
                     return;
 
-                UserInfoHelper.CopyToClipboard(currentProfile.Value.UserId);
+                UserInfoHelper.CopyToClipboard(currentProfileId);
                 UserInfoHelper.ShowCopyWarningAsync(element.CopyWalletWarningNotification, CancellationToken.None).Forget();
             });
         }
 
         public void Setup(Profile.CompactInfo profile)
         {
-            currentProfile = profile;
+            currentProfileId = profile.UserId;
             Element.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
+        }
+
+        public void Setup(string profileId)
+        {
+            currentProfileId = profileId;
+            Element.UserWalletAddressText.text = $"{profileId[..5]}...{profileId[^5..]}";
         }
 
         public void Dispose()

@@ -1,4 +1,4 @@
-﻿using DCL.Web3.Identities;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
@@ -98,5 +98,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Flush() =>
             analytics.Flush();
+
+        public void Dispose() =>
+            (analytics as IDisposable)?.Dispose();
     }
 }
