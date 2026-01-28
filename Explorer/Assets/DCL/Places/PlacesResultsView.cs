@@ -144,7 +144,6 @@ namespace DCL.Places
 
         public void RefreshOldPlaceAsHome(string newPlaceAsHomeId)
         {
-            //placesResultsLoopGrid.RefreshAllShownItem();
             for (var i = 0; i < currentPlacesIds.Count; i++)
             {
                 if (currentPlacesIds[i] != newPlaceAsHomeId)
