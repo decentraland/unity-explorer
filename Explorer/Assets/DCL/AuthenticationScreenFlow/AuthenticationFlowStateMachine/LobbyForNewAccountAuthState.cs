@@ -119,6 +119,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
+            characterPreviewController?.OnHide();
+
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 

@@ -37,8 +37,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
 
             // Popups
-            viewInstance.ErrorPopupRoot.SetActive(false);
-            viewInstance.RestrictedUserContainer.SetActive(false);
+            viewInstance.LoginSelectionAuthView.ErrorPopupRoot.SetActive(false);
+            viewInstance.LoginSelectionAuthView.RestrictedUserContainer.SetActive(false);
         }
     }
 }

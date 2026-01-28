@@ -1,3 +1,4 @@
+using DCL.Browser;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
@@ -12,17 +13,20 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
     public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>, IPayloadedState<int>
     {
+        private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
+
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly LoginSelectionAuthView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
+        private readonly IWebBrowser webBrowser;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, IWebBrowser webBrowser) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -31,6 +35,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.currentState = currentState;
             this.splashScreen = splashScreen;
             this.compositeWeb3Provider = compositeWeb3Provider;
+            this.webBrowser = webBrowser;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
@@ -52,11 +57,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 view.LoginCoinbaseButton.onClick.AddListener(LoginWithCoinbase);
                 view.LoginWalletConnectButton.onClick.AddListener(LoginWithWalletConnect);
 
-                viewInstance.ErrorPopupRetryButton.onClick.AddListener(OnRetryFromError);
-                viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
-                viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
+                view.ErrorPopupRetryButton.onClick.AddListener(OnRetryFromError);
+                view.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
+                view.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
 
                 view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
+                view.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
@@ -69,10 +75,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 case PopupType.NONE: break;
                 case PopupType.CONNECTION_ERROR:
-                    viewInstance!.ErrorPopupRoot.SetActive(true);
+                    view!.ErrorPopupRoot.SetActive(true);
                     break;
                 case PopupType.RESTRICTED_USER:
-                    viewInstance!.RestrictedUserContainer.SetActive(true);
+                    view!.RestrictedUserContainer.SetActive(true);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(popupType), popupType, null);
             }
@@ -91,8 +97,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public override void Exit()
         {
-            viewInstance.RestrictedUserContainer.SetActive(false);
-            viewInstance!.ErrorPopupRoot.SetActive(false);
+            view.RestrictedUserContainer.SetActive(false);
+            view!.ErrorPopupRoot.SetActive(false);
 
             view.LoginMetamaskButton.onClick.RemoveAllListeners();
             view.LoginGoogleButton.onClick.RemoveAllListeners();
@@ -103,9 +109,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.LoginCoinbaseButton.onClick.RemoveAllListeners();
             view.LoginWalletConnectButton.onClick.RemoveAllListeners();
 
-            viewInstance.ErrorPopupRetryButton.onClick.RemoveAllListeners();
-            viewInstance.ErrorPopupCloseButton.onClick.RemoveAllListeners();
-            viewInstance.ErrorPopupExitButton.onClick.RemoveAllListeners();
+            view.ErrorPopupRetryButton.onClick.RemoveAllListeners();
+            view.ErrorPopupCloseButton.onClick.RemoveAllListeners();
+            view.ErrorPopupExitButton.onClick.RemoveAllListeners();
 
             view.MoreOptionsButton.onClick.RemoveAllListeners();
 
@@ -173,7 +179,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         }
 
         private void CloseErrorPopup() =>
-            viewInstance!.ErrorPopupRoot.SetActive(false);
+            view!.ErrorPopupRoot.SetActive(false);
+
+        private void RequestAlphaAccess() =>
+            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
     }
 
     public enum PopupType
