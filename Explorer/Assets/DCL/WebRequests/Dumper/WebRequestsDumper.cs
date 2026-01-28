@@ -80,8 +80,13 @@ namespace DCL.WebRequests.Dumper
 
         public string Filter { get; set; } = string.Empty;
 
+        /// <summary>
+        ///     Whether the <see cref="Filter" /> is treated as Regex (C# format)
+        /// </summary>
+        public bool IsRegEx { get; set; }
+
         public bool IsMatch(bool signed, string url) =>
-            Enabled && !signed && (string.IsNullOrEmpty(Filter) || Regex.IsMatch(url, Filter));
+            Enabled && !signed && (string.IsNullOrEmpty(Filter) || (IsRegEx ? Regex.IsMatch(url, Filter) : url.Contains(Filter, StringComparison.OrdinalIgnoreCase)));
 
         public WebRequestsAnalyticsContainer? AnalyticsContainer { get; set; }
 
@@ -115,6 +120,21 @@ namespace DCL.WebRequests.Dumper
         internal readonly List<Envelope> entries = new ();
 
         public IReadOnlyList<Envelope> Entries => entries;
+
+        public UniTask RecreateWithTiming(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken ct)
+        {
+            if (entries.Count == 0) return UniTask.CompletedTask;
+
+            DateTime startTime = entries[0].StartTime;
+
+            return UniTask.WhenAll(entries.Select(ScheduleRequestAsync));
+
+            async UniTask ScheduleRequestAsync(Envelope envelope)
+            {
+                await UniTask.Delay(envelope.StartTime - startTime, DelayType.Realtime, cancellationToken: ct);
+                await envelope.RecreateWithNoOp(webRequestController, assetBundleLoadingMutex, ct);
+            }
+        }
 
         [Serializable]
         [Preserve]

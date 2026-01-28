@@ -68,7 +68,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d53770b979b6f53b8e74720e773707813788813e"
+      "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#chore/rust-audio-for-mac-intel",
@@ -87,12 +87,19 @@
       "dependencies": {},
       "hash": "d39a0d38580af74a07ff44f4a5c41a059438a220"
     },
-    "com.decentraland.rpc-csharp": {
-      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
+    "com.decentraland.renum.sourcegen": {
+      "version": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
+      "hash": "6dbce7af5c48df0c682b26d4f78bdbb605c2bfb9"
+    },
+    "com.decentraland.rpc-csharp": {
+      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src#f3dd251c7837cc2d844e1c07e741177a53676064",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "git@github.com:decentraland/unity-shared-dependencies.git",
@@ -133,9 +140,10 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum"
+        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
+        "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4"
       },
-      "hash": "bad0a5c9cc068c1d6a0fbcb9ee6f4f9b9e3ebab1"
+      "hash": "203782b16258373426a02088b8cb8b2d9628dfeb"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",

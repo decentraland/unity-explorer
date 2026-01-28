@@ -19,6 +19,11 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public readonly List<URN> Pointers;
 
         /// <summary>
+        ///     How many pointers were missing when resolution began
+        /// </summary>
+        public int MissingPointersCount;
+
+        /// <summary>
         ///     Instead of storing a separate collection for the resolved wearables, we store the indices of the resolved wearables in the WearableAssetResults array.
         /// </summary>
         public long ResolvedWearablesIndices;
@@ -31,6 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
             ResolvedWearablesIndices = 0;
+            MissingPointersCount = 0;
 
             ProfilingCounters.GetWearablesIntentionAmount.Value++;
         }
