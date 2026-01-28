@@ -52,10 +52,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 view.LoginCoinbaseButton.onClick.AddListener(LoginWithCoinbase);
                 view.LoginWalletConnectButton.onClick.AddListener(LoginWithWalletConnect);
 
+                viewInstance.ErrorPopupRetryButton.onClick.AddListener(OnRetryFromError);
                 viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
                 viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
-
-                // viewInstance.ErrorPopupRetryButton.onClick.AddListener(Login);
 
                 view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
 
@@ -104,10 +103,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.LoginCoinbaseButton.onClick.RemoveAllListeners();
             view.LoginWalletConnectButton.onClick.RemoveAllListeners();
 
+            viewInstance.ErrorPopupRetryButton.onClick.RemoveAllListeners();
             viewInstance.ErrorPopupCloseButton.onClick.RemoveAllListeners();
             viewInstance.ErrorPopupExitButton.onClick.RemoveAllListeners();
-
-            // viewInstance.ErrorPopupRetryButton.onClick.RemoveAllListeners();
 
             view.MoreOptionsButton.onClick.RemoveAllListeners();
 
@@ -116,6 +114,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         }
 
         // dApp endpoint is case insensitive
+
         private void LoginWithMetamask() =>
             Login(LoginMethod.METAMASK);
 
@@ -159,6 +158,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.Hide();
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
                 payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
+        }
+
+        private void OnRetryFromError()
+        {
+            controller.CancelLoginProcess();
+            machine.Enter<LoginSelectionAuthState>(true);
         }
 
         private void OnCancelBeforeVerification()
