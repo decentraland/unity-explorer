@@ -209,11 +209,11 @@ namespace DCL.SocialEmotes
             builder.Append("<color=yellow>INTERACTIONS:\n");
 
             foreach (KeyValuePair<string,SocialEmoteInteraction?> interactionPairs in Instance.participantInteractions)
-                builder.Append($"Interaction: {interactionPairs.Value!.Id} Participant: {interactionPairs.Key}\n");
+                builder.Append($"Interaction: {interactionPairs.Value!.Id} Participants: {interactionPairs.Value.InitiatorWalletAddress} ({interactionPairs.Value.InitiatorEntity}) // {interactionPairs.Value.ReceiverWalletAddress} ({interactionPairs.Value.ReceiverEntity}) Target: {interactionPairs.Value.TargetWalletAddress} KEY: {interactionPairs.Key}\n");
 
             builder.Append("</color>");
 
-            Debug.Log(builder.ToString());
+            ReportHub.Log(ReportCategory.ALWAYS, builder.ToString());
         }
 #endif
     }
