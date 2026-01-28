@@ -63,23 +63,30 @@ namespace DCL.UserInAppInitializationFlow
 #if !NO_LIVEKIT_MODE
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
 #endif
+
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+
 #if !UNITY_WEBGL
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
 #endif
 
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
+
+
+            // TODO teleportation is broken at the moment, fix required
+            //var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
             var loadingOperations = new List<IStartupOperation>()
             {
                 blocklistCheckStartupOperation,
-                loadPlayerAvatarStartupOperation,
+                loadPlayerAvatarStartupOperation
+
 #if !UNITY_WEBGL
-                loadLandscapeStartupOperation,
+                , loadLandscapeStartupOperation
 #endif
-                teleportStartupOperation
+
+                //teleportStartupOperation
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
@@ -119,16 +126,20 @@ namespace DCL.UserInAppInitializationFlow
                         loadingScreen: loadingScreen,
                         realmController: realmContainer.RealmController,
                         portableExperiencesController: staticContainer.PortableExperiencesController,
+
 #if !NO_LIVEKIT_MODE
                         roomHub,
 #endif
+
                         initOps: startUpOps,
                         reloginOps: reLoginOps,
                         checkOnboardingStartupOperation: checkOnboardingStartupOperation,
                         identityCache: bootstrapContainer.IdentityCache.EnsureNotNull(),
+
 #if !NO_LIVEKIT_MODE
                         ensureLivekitConnectionStartupOperation,
 #endif
+
                         appArgs: appArgs,
                         characterObject: characterContainer.CharacterObject,
                         characterExposedTransform: characterContainer.Transform,
