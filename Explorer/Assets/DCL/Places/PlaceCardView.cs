@@ -1,7 +1,11 @@
 using DCL.Communities;
+using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -31,6 +35,8 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
+        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle = null!;
@@ -40,6 +46,22 @@ namespace DCL.Places
         [SerializeField] private Button infoButton = null!;
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private Button deleteButton = null!;
+
+        [Serializable]
+        private struct FriendsConnectedConfig
+        {
+            public GameObject root;
+            public FriendsConnectedThumbnail[] thumbnails;
+            public GameObject amountContainer;
+            public TMP_Text amountLabel;
+
+            [Serializable]
+            public struct FriendsConnectedThumbnail
+            {
+                public GameObject root;
+                public ProfilePictureView picture;
+            }
+        }
 
         private Tweener? headerTween;
         private Tweener? footerTween;
@@ -93,7 +115,8 @@ namespace DCL.Places
         private void OnDisable() =>
             loadingThumbnailCts.SafeCancelAndDispose();
 
-        public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader)
+        public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null)
         {
             currentPlaceInfo = placeInfo;
 
@@ -102,9 +125,28 @@ namespace DCL.Places
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;
-            onlineMembersText.text = $"{placeInfo.user_count}";
+            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
+            liveTag.SetActive(placeInfo.live);
+
+            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
+            friendsConnected.root.SetActive(showFriendsConnected);
+            if (showFriendsConnected)
+            {
+                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
+                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
+
+                var friendsThumbnails = friendsConnected.thumbnails;
+                for (var i = 0; i < friendsThumbnails.Length; i++)
+                {
+                    bool friendExists = i < friends.Count;
+                    friendsThumbnails[i].root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    Profile.CompactInfo friendInfo = friends[i];
+                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                }
+            }
 
             featuredTag.SetActive(false);
             foreach (string category in placeInfo.categories)
