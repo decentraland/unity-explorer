@@ -215,7 +215,7 @@ MonoBehaviour:
     - line: '|   androidSplitApplicationBinary: 0'
     - line: '|   keepLoadedShadersAlive: 1'
     - line: '|   StripUnusedMeshComponents: 1'
-    - line: '|   strictShaderVariantMatching: 0'
+    - line: '|   strictShaderVariantMatching: 1'
     - line: '|   VertexChannelCompressionMask: 4054'
     - line: '|   iPhoneSdkVersion: 988'
     - line: '|   iOSSimulatorArchitecture: 0'

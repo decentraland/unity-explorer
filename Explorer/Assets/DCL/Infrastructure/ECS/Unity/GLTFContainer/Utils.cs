@@ -34,6 +34,29 @@ namespace ECS.Unity.GLTFContainer
             {
                 instance.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
+
+                // Remap error shader materials to DCL Lit shader (WebGL shader stripping workaround)
+                var dclLitShader = Shader.Find("DCL/Universal Render Pipeline/Lit");
+                if (dclLitShader != null)
+                {
+                    foreach (var renderer in instanceRenderers.Value)
+                    {
+                        if (renderer == null) continue;
+                        
+                        var materials = renderer.sharedMaterials;
+                        for (int i = 0; i < materials.Length; i++)
+                        {
+                            var mat = materials[i];
+                            if (mat == null) continue;
+                            
+                            string shaderName = mat.shader != null ? mat.shader.name : null;
+                            if (shaderName != null && (shaderName.Contains("Error") || shaderName.Contains("Hidden")))
+                            {
+                                mat.shader = dclLitShader;
+                            }
+                        }
+                    }
+                }
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)

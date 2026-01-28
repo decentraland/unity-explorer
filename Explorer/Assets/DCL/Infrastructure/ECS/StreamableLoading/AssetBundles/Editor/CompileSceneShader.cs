@@ -63,7 +63,7 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Force Recompile \"URP Lit\" Shader Variants")]
         public static void ForceRecompileURPLitMenuItem()
         {
-            CompileTheSceneShader("dcl/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
+            CompileTheSceneShader("dcl/universal render pipeline/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
         }
 
         private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, bool forceRecompile = false)

@@ -1,0 +1,271 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: LitVariants
+  m_Shaders:
+  - first: {fileID: 4800000, guid: 71b22c46a39ba46498cb2d8fab22343f, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _NORMALMAP
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION
+        passType: 0
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _EMISSION _ENVIRONMENTREFLECTIONS_OFF _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON
+        passType: 0
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE _ADDITIONAL_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _EMISSION _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _SURFACE_TYPE_TRANSPARENT _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_EXP _MAIN_LIGHT_SHADOWS _SHADOWS_SOFT
+        passType: 0
+      - keywords: FOG_EXP _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
+      - keywords: FOG_EXP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_EXP _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_EXP _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_EXP _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_EXP _ALPHATEST_ON _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_LINEAR _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_LINEAR _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 0
+      - keywords: FOG_LINEAR _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: FOG_LINEAR _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: 
+        passType: 8
+      - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 8
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS
+        passType: 8
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 8
+      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 8
+      - keywords: 
+        passType: 1
+      - keywords: _ALPHATEST_ON
+        passType: 1
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 1
+      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 1
+      - keywords: 
+        passType: 10
+      - keywords: _ALPHATEST_ON
+        passType: 10
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 10
+      - keywords: _ALPHATEST_ON _MAIN_LIGHT_SHADOWS
+        passType: 10
+      - keywords: 
+        passType: 12
+      - keywords: _NORMALMAP
+        passType: 12
+      - keywords: _ALPHATEST_ON
+        passType: 12
+      - keywords: _ALPHATEST_ON _NORMALMAP
+        passType: 12
