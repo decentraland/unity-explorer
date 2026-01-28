@@ -74,6 +74,10 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button RequestAlphaAccessButton { get; private set; } = null!;
 
+        [field: Space]
+        [field: SerializeField]
+        public Button[] UseAnotherAccountButton { get; private set; } = null!;
+
         [Space]
         [SerializeField] private GameObject moreOptionsPanel;
 

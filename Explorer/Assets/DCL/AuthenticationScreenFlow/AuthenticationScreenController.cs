@@ -144,10 +144,6 @@ namespace DCL.AuthenticationScreenFlow
             bool enableEmailOTP = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
-            // Subscriptions
-            foreach (Button button in viewInstance.UseAnotherAccountButton)
-                button.onClick.AddListener(ChangeAccount);
-
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 

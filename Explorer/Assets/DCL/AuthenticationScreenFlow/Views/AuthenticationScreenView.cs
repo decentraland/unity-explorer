@@ -10,6 +10,9 @@ namespace DCL.AuthenticationScreenFlow
     {
         [field: Space]
         [field: SerializeField]
+        public TMP_Text VersionText { get; private set; } = null!;
+
+        [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
@@ -33,10 +36,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public LobbyForNewAccountAuthView LobbyForNewAccountAuthView { get; private set; } = null!;
 
-        [field: Space]
-        [field: SerializeField]
-        public TMP_Text VersionText { get; private set; } = null!;
-
         [field: Header("BUTTONS")]
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
@@ -46,8 +45,5 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public MuteButtonView MuteButton { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Button[] UseAnotherAccountButton { get; private set; } = null!;
     }
 }

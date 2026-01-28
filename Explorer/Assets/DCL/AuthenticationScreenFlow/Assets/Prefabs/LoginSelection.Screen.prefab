@@ -3310,6 +3310,9 @@ MonoBehaviour:
   <ErrorPopupCloseButton>k__BackingField: {fileID: 8304414330433677525}
   <RestrictedUserContainer>k__BackingField: {fileID: 2097943679478999692}
   <RequestAlphaAccessButton>k__BackingField: {fileID: 32519328460558143}
+  <UseAnotherAccountButton>k__BackingField:
+  - {fileID: 7711361100836759718}
+  - {fileID: 6349546140463897589}
   moreOptionsPanel: {fileID: 7793966543379160465}
   animator: {fileID: 1894263104519943120}
   canvasGroup: {fileID: 8341156212924183970}

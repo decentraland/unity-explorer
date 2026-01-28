@@ -7,6 +7,7 @@ using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine.UI;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -61,12 +62,45 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 view.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
                 view.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
 
-                view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
                 view.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
+
+                view.MoreOptionsButton.onClick.AddListener(view.ToggleOptionsPanelExpansion);
+
+                foreach (Button button in view.UseAnotherAccountButton)
+                    button.onClick.AddListener(controller.ChangeAccount);
 
                 // ThirdWeb
                 view.EmailInputField.Submitted += OTPLogin;
             }
+        }
+
+        public override void Exit()
+        {
+            view.RestrictedUserContainer.SetActive(false);
+            view!.ErrorPopupRoot.SetActive(false);
+
+            view.LoginMetamaskButton.onClick.RemoveAllListeners();
+            view.LoginGoogleButton.onClick.RemoveAllListeners();
+            view.LoginDiscordButton.onClick.RemoveAllListeners();
+            view.LoginAppleButton.onClick.RemoveAllListeners();
+            view.LoginXButton.onClick.RemoveAllListeners();
+            view.LoginFortmaticButton.onClick.RemoveAllListeners();
+            view.LoginCoinbaseButton.onClick.RemoveAllListeners();
+            view.LoginWalletConnectButton.onClick.RemoveAllListeners();
+
+            view.ErrorPopupRetryButton.onClick.RemoveAllListeners();
+            view.ErrorPopupCloseButton.onClick.RemoveAllListeners();
+            view.ErrorPopupExitButton.onClick.RemoveAllListeners();
+
+            view.RequestAlphaAccessButton.onClick.RemoveAllListeners();
+
+            view.MoreOptionsButton.onClick.RemoveAllListeners();
+
+            foreach (Button button in view.UseAnotherAccountButton)
+                button.onClick.RemoveAllListeners();
+
+            // ThirdWeb
+            view.EmailInputField.Submitted -= OTPLogin;
         }
 
         public void Enter(PopupType popupType)
@@ -93,30 +127,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.Show(animHash);
             Enter();
-        }
-
-        public override void Exit()
-        {
-            view.RestrictedUserContainer.SetActive(false);
-            view!.ErrorPopupRoot.SetActive(false);
-
-            view.LoginMetamaskButton.onClick.RemoveAllListeners();
-            view.LoginGoogleButton.onClick.RemoveAllListeners();
-            view.LoginDiscordButton.onClick.RemoveAllListeners();
-            view.LoginAppleButton.onClick.RemoveAllListeners();
-            view.LoginXButton.onClick.RemoveAllListeners();
-            view.LoginFortmaticButton.onClick.RemoveAllListeners();
-            view.LoginCoinbaseButton.onClick.RemoveAllListeners();
-            view.LoginWalletConnectButton.onClick.RemoveAllListeners();
-
-            view.ErrorPopupRetryButton.onClick.RemoveAllListeners();
-            view.ErrorPopupCloseButton.onClick.RemoveAllListeners();
-            view.ErrorPopupExitButton.onClick.RemoveAllListeners();
-
-            view.MoreOptionsButton.onClick.RemoveAllListeners();
-
-            // ThirdWeb
-            view.EmailInputField.Submitted -= OTPLogin;
         }
 
         // dApp endpoint is case insensitive
