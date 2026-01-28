@@ -1,5 +1,6 @@
 ﻿using DCL.UI.Utilities;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -10,11 +11,36 @@ namespace DCL.Events
 {
     public class EventsCalendarView : MonoBehaviour
     {
+        [Header("Events")]
+        [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
+
+        [Header("Events")]
         [SerializeField] private GameObject loadingSpinner = null!;
         [SerializeField] private GameObject eventsContainer = null!;
         [SerializeField] private List<LoopListView2> eventsLoopLists = null!;
 
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
+
+        private void Awake()
+        {
+            foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
+                daySelectorButton.ButtonClicked += OnDaySelectorButtonClicked;
+        }
+
+        private void OnDestroy()
+        {
+            foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
+                daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
+        }
+
+        public void SetupDaysSelector(DateTime initialDate)
+        {
+            for (var i = 0; i < daySelectorButtons.Count; i++)
+            {
+                EventsDaySelectorButton daySelectorButton = daySelectorButtons[i];
+                daySelectorButton.Setup(initialDate.AddDays(i));
+            }
+        }
 
         public void InitializeEventsLists()
         {
@@ -60,6 +86,11 @@ namespace DCL.Events
             // ...
 
             return listItem;
+        }
+
+        private void OnDaySelectorButtonClicked(DateTime date)
+        {
+
         }
     }
 }

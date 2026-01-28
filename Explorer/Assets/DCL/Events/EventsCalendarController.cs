@@ -33,8 +33,11 @@ namespace DCL.Events
             loadEventsCts?.SafeCancelAndDispose();
         }
 
-        private void OnSectionOpened() =>
+        private void OnSectionOpened()
+        {
+            view.SetupDaysSelector(DateTime.Today);
             LoadEvents();
+        }
 
         private void OnSectionClosed() =>
             UnloadEvents();

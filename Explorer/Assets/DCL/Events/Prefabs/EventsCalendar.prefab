@@ -51,6 +51,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c97f5475597c4579a500f6f87d418372, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsCalendarView
+  daySelectorButtons:
+  - {fileID: 2387487686277149133}
+  - {fileID: 787158845941801302}
+  - {fileID: 5878530540099078878}
+  - {fileID: 7034474231271840694}
+  - {fileID: 5038620344774083585}
   loadingSpinner: {fileID: 5957560512985662118}
   eventsContainer: {fileID: 3811546956518490301}
   eventsLoopLists:
@@ -508,6 +514,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+--- !u!114 &5038620344774083585 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5412659664740003952, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+  m_PrefabInstance: {fileID: 1076755910157235313}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48281807e70645c6ac7969199a6d3584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsDaySelectorButton
 --- !u!224 &8213133971491161237 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 9154566932997206244, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
@@ -743,6 +760,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+--- !u!114 &5878530540099078878 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5412659664740003952, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+  m_PrefabInstance: {fileID: 1912091578676918958}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48281807e70645c6ac7969199a6d3584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsDaySelectorButton
 --- !u!224 &7314570611867011658 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 9154566932997206244, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
@@ -983,6 +1011,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9154566932997206244, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
   m_PrefabInstance: {fileID: 3063248477068815302}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7034474231271840694 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5412659664740003952, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+  m_PrefabInstance: {fileID: 3063248477068815302}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48281807e70645c6ac7969199a6d3584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsDaySelectorButton
 --- !u!1001 &3812916409234078156
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1213,6 +1252,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+--- !u!114 &787158845941801302 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5412659664740003952, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+  m_PrefabInstance: {fileID: 4751629132662788390}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48281807e70645c6ac7969199a6d3584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsDaySelectorButton
 --- !u!224 &4538119457374380482 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 9154566932997206244, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
@@ -1462,6 +1512,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9154566932997206244, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
   m_PrefabInstance: {fileID: 7656029409123664317}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2387487686277149133 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5412659664740003952, guid: 3f8a23e5e4bdc5b44b1e7503284524c6, type: 3}
+  m_PrefabInstance: {fileID: 7656029409123664317}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48281807e70645c6ac7969199a6d3584, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsDaySelectorButton
 --- !u!1001 &7875330926175376922
 PrefabInstance:
   m_ObjectHideFlags: 0
