@@ -66,6 +66,8 @@ namespace DCL.Web3.Authenticators
 
             try
             {
+                await UniTask.SwitchToMainThread(ct);
+
                 InAppWallet? wallet = await InAppWallet.Create(
                     ThirdWebManager.Instance.Client,
                     email,
@@ -96,8 +98,12 @@ namespace DCL.Web3.Authenticators
             await mutex.WaitAsync(ct);
             var email = payload as string;
 
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+
             try
             {
+                await UniTask.SwitchToMainThread(ct);
+
                 ThirdWebManager.Instance.ActiveWallet
                     = await LoginViaOTP(email, ct);
 
@@ -133,6 +139,15 @@ namespace DCL.Web3.Authenticators
             {
                 await LogoutAsync(CancellationToken.None);
                 throw;
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
+                else
+                    await UniTask.SwitchToMainThread(CancellationToken.None);
+
+                mutex.Release();
             }
         }
 
