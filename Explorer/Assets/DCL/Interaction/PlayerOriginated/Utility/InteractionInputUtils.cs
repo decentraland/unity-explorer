@@ -28,9 +28,21 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsQualifiedByDistance(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PBPointerEvents.Types.Info info) =>
-            raycastResultForSceneEntities.GetDistance() <= info.MaxDistance
-            || (info.HasMaxPlayerDistance && raycastResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance);
+        public static bool IsQualifiedByDistance(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PBPointerEvents.Types.Info info)
+        {
+            if (info is {HasMaxDistance: true, HasMaxPlayerDistance: false })
+                return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance;
+
+            if (info is { HasMaxDistance: false, HasMaxPlayerDistance: true })
+                return raycastResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance;
+
+            if (info is { HasMaxDistance: true, HasMaxPlayerDistance: true })
+                return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance
+                       || raycastResultForSceneEntities.DistanceToPlayer <= info.MaxPlayerDistance;
+
+            // Uses the default behavior in case both values are missing
+            return raycastResultForSceneEntities.GetDistance() <= info.MaxDistance;
+        }
 
         /// <summary>
         ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
