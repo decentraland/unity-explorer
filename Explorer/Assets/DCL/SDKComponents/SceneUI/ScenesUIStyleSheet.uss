@@ -1,3 +1,7 @@
+/*:root {*/
+/*    --unity-colors-dropdown-background-hover: rgb(0, 255, 0);*/
+/*    --unity-colors-dropdown-background: rgb(0, 0, 255);*/
+/*}*/
 
 /* MAIN CANVAS STYLES */
 .sceneUIMainCanvas {
@@ -14,6 +18,7 @@
     align-content: stretch;
     position: absolute;
 }
+
 /* INPUT STYLES */
 .dcl-input {
     flex-grow: 1;
@@ -42,35 +47,51 @@
 
 .dcl-dropdown > .unity-base-popup-field__input {
     border-radius: var(--dcl-border-radius);
+    margin: 0;
+    background-color: #FCFCFC;
 }
 
-.unity-base-dropdown__container-inner,
+.dcl-dropdown:hover:enabled > .unity-popup-field__input
+{
+    background-color: #ECEBED;
+}
+
+.dcl-dropdown:active:enabled > .unity-base-popup-field__input
+{
+    background-color: #D9D9D9;
+}
+
 .unity-base-dropdown__container-outer {
+    background-color: rgb(255, 255, 255);
     border-radius: var(--dcl-border-radius);
-    color: black;
+    color: rgb(0, 0, 0);
     overflow: hidden
 }
 
-.unity-base-dropdown__checkmark {
+.unity-base-dropdown__container-inner {
+    background-color: rgb(255, 255, 255);
+    margin: 15px;
+}
+
+.unity-base-dropdown__item {
+    border-radius: 15px;
+}
+
+.unity-base-dropdown__item:hover:enabled {
+    background-color: #ECEBED;
+    color: rgb(0, 0, 0);
+}
+
+.unity-base-dropdown__item:hover:enabled > .unity-base-dropdown__item-content > .unity-base-dropdown__label {
+    color: rgb(0, 0, 0);
+}
+
+.unity-base-dropdown__checkmark,
+.unity-base-dropdown__item:hover:enabled > .unity-base-dropdown__item-content > .unity-base-dropdown__checkmark {
     margin-top: 15px;
+    -unity-background-image-tint-color: rgb(0, 0, 0);
 }
 
-.dcl-dropdown > .unity-base-popup-field__input,
-.dcl-dropdown:hover > .unity-base-popup-field__input {
-    margin: 0;
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.unity-base-dropdown__item:hover {
-    background-color: #c2c2c2;
-}
-
-.unity-enum-field:hover.dcl-dropdown-readonly:hover > .unity-enum-field__input,
-.unity-base-popup-field:hover.dcl-dropdown-readonly:hover > .unity-base-popup-field__input {
-    background-color: #bcbcbc;
-}
-
-/* override unity default style to hide the arrow */
 .unity-base-popup-field__arrow {
-    visibility: hidden;
+    margin-right: 10px;
 }

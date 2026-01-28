@@ -227,8 +227,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
 
+            // TODO: Can we override the DropDown that Unity instantiates using the same one but adding classes ???
+            var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
+            arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
+
             // To enforce an opacity transition since Unity instantiates the popup on demand,
             // and we cannot be animating a property on it from the uss stylesheet...
+            // TODO: Fix inner-container not transitioning...
             dropdownField.RegisterCallback<PointerDownEvent>(_ =>
             {
                 dropdownField.schedule.Execute(() =>
