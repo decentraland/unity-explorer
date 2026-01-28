@@ -575,11 +575,12 @@ namespace DCL.Web3.Authenticators
             string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
             Debug.Log($"[ThirdWeb] Signature obtained: {signature[..20]}...");
 
-            // 5. Split signature into r, s, v components
-            (string r, string s, int v) = SplitSignature(signature);
+            // 5. Encode executeMetaTransaction call data
+            string txData = EncodeExecuteMetaTransaction(from, signature, functionSignature);
+            Debug.Log($"[ThirdWeb] Encoded executeMetaTransaction: {txData[..50]}...");
 
             // 6. POST to transactions-server
-            return await PostToTransactionsServerAsync(from, contractAddress, functionSignature, r, s, v);
+            return await PostToTransactionsServerAsync(from, contractAddress, txData);
         }
 
         /// <summary>
@@ -716,53 +717,77 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
-        ///     Splits an Ethereum signature into r, s, v components.
+        ///     Encodes the executeMetaTransaction(address,bytes,bytes32,bytes32,uint8) call.
+        ///     This is what gets sent to the transactions-server as the second param.
+        ///     Based on: https://github.com/decentraland/decentraland-transactions/blob/master/src/utils.ts
         /// </summary>
-        private static (string r, string s, int v) SplitSignature(string signature)
+        private static string EncodeExecuteMetaTransaction(string userAddress, string signature, string functionSignature)
         {
+            // executeMetaTransaction selector = 0x0c53c51c
+            const string EXECUTE_META_TX_SELECTOR = "0c53c51c";
+
             string sig = signature.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
                 ? signature[2..]
                 : signature;
 
-            string r = "0x" + sig[..64];
-            string s = "0x" + sig.Substring(64, 64);
-            var v = Convert.ToInt32(sig.Substring(128, 2), 16);
+            string r = sig[..64];
+            string s = sig.Substring(64, 64);
+            var vInt = Convert.ToInt32(sig.Substring(128, 2), 16);
 
             // Normalize v value (some wallets return 0/1 instead of 27/28)
-            if (v < 27)
-                v += 27;
+            if (vInt < 27)
+                vInt += 27;
 
-            return (r, s, v);
+            string v = vInt.ToString("x").PadLeft(64, '0');
+
+            string method = functionSignature.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? functionSignature[2..]
+                : functionSignature;
+
+            string signatureLength = (method.Length / 2).ToString("x").PadLeft(64, '0');
+            var signaturePadding = (int)Math.Ceiling(method.Length / 64.0);
+
+            string address = userAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? userAddress[2..]
+                : userAddress;
+
+            // Build the encoded call:
+            // selector + address(32) + offset(32) + r(32) + s(32) + v(32) + length(32) + data(padded)
+            return string.Concat(
+                "0x",
+                EXECUTE_META_TX_SELECTOR,
+                address.ToLower().PadLeft(64, '0'), // userAddress
+                "a0".PadLeft(64, '0'), // offset to functionSignature (160 = 0xa0)
+                r, // r
+                s, // s
+                v, // v
+                signatureLength, // length of functionSignature
+                method.PadRight(64 * signaturePadding, '0') // functionSignature padded
+            );
         }
 
         /// <summary>
         ///     POSTs the signed meta-transaction to Decentraland's transactions-server.
+        ///     Based on: https://github.com/decentraland/decentraland-transactions/blob/master/src/sendMetaTransaction.ts
         /// </summary>
         private async UniTask<string> PostToTransactionsServerAsync(
             string from,
             string contractAddress,
-            string functionSignature,
-            string sigR,
-            string sigS,
-            int sigV)
+            string txData)
         {
+            // Format expected by transactions-server:
+            // { transactionData: { from, params: [contractAddress, txData] } }
             var payload = new
             {
                 transactionData = new
                 {
                     from,
-                    @params = new[] { contractAddress, functionSignature },
-                    userAddress = from,
-                    contractAddress,
-                    functionSignature,
-                    sigR,
-                    sigS,
-                    sigV,
+                    @params = new[] { contractAddress, txData },
                 },
             };
 
             string payloadJson = JsonConvert.SerializeObject(payload);
-            Debug.Log($"[ThirdWeb] Posting to transactions-server: {TRANSACTIONS_SERVER_URL}");
+            Debug.Log($"[ThirdWeb] Posting to transactions-server, payload length: {payloadJson.Length}");
 
             IThirdwebHttpClient httpClient = ThirdWebManager.Instance.Client.HttpClient;
 
