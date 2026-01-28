@@ -55,6 +55,9 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void HandleSendGiftClick()
         {
+            OnSendGift?.Invoke();
+            return;
+
             // For ThirdWeb (OTP) provider, require double confirmation
             // For Dapp wallet, no double confirmation needed (browser handles it)
             if (web3Provider.IsThirdWebOTP && isFirstClick)

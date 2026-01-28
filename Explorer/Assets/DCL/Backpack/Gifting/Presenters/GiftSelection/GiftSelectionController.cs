@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -39,11 +39,6 @@ namespace DCL.Backpack.Gifting.Presenters
         private GiftingErrorsController? giftingErrorsController;
 
         private CancellationTokenSource? lifeCts;
-
-        /// <summary>
-        ///     Used to signal close intent when Send Gift is confirmed (after double-click for ThirdWeb).
-        /// </summary>
-        private UniTaskCompletionSource? sendGiftCloseSignal;
 
         public GiftSelectionController(ViewFactoryMethod viewFactory,
             GiftSelectionComponentFactory componentFactory,
@@ -158,8 +153,6 @@ namespace DCL.Backpack.Gifting.Presenters
             emotesGridPresenter?.Deactivate();
 
             giftingErrorsController?.Hide(true);
-            sendGiftCloseSignal?.TrySetCanceled();
-            sendGiftCloseSignal = null;
             lifeCts.SafeCancelAndDispose();
         }
 
@@ -198,9 +191,6 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void HandleSendGift()
         {
-            // Signal close intent - this is called only after confirmation (double-click for ThirdWeb)
-            sendGiftCloseSignal?.TrySetResult();
-
             OpenTransferPopupAsync()
                 .Forget();
         }
@@ -274,15 +264,11 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (viewInstance == null)
                 return UniTask.Never(ct);
-
-            // Create a signal that will be triggered when Send Gift is confirmed
-            // (after double-click for ThirdWeb, or single click for Dapp)
-            sendGiftCloseSignal = new UniTaskCompletionSource();
-
+            
             return UniTask.WhenAny(
                 viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance!.BackgroundButton.OnClickAsync(ct),
-                sendGiftCloseSignal.Task.AttachExternalCancellation(ct),
+                viewInstance!.FooterView.SendGiftButton.OnClickAsync(ct),
                 viewInstance!.FooterView.CancelButton.OnClickAsync(ct)
             );
         }
