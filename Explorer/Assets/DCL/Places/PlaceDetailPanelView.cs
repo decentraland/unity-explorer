@@ -157,7 +157,7 @@ namespace DCL.Places
             creatorThumbnail.gameObject.SetActive(false);
             creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
-            visitsText.text = GetKFormat(placeInfo.user_visits);
+            visitsText.text = UIUtils.GetKFormat(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
@@ -165,7 +165,7 @@ namespace DCL.Places
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
             coordsText.text = placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
-            favoritesText.text = GetKFormat(placeInfo.favorites);
+            favoritesText.text = UIUtils.GetKFormat(placeInfo.favorites);
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
             liveTag.SetActive(placeInfo.live);
 
@@ -236,16 +236,6 @@ namespace DCL.Places
         {
             startNavigationButton.gameObject.SetActive(!isNavigating);
             exitNavigationButton.gameObject.SetActive(isNavigating);
-        }
-
-        private static string GetKFormat(int num)
-        {
-            if (num < 1000)
-                return num.ToString();
-
-            float divided = num / 1000.0f;
-            divided = (int)(divided * 100) / 100f;
-            return $"{divided:F2}k";
         }
 
         private void OpenCardContextMenu(Vector2 position)
