@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Settings.Utils;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Global.AppArgs;
@@ -122,6 +123,16 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+            }
+            catch (Web3Exception e)
+            {
+                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Connection  error during authentication flow", e);
+                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                if (currentState.Value == AuthStatus.VerificationInProgress)
+                    view.Hide(SLIDE);
+
+                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             catch (Exception e)
             {

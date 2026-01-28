@@ -201,7 +201,8 @@ namespace DCL.Web3.Authenticators
                     throw new Web3Exception($"Cannot solve the signer's address from the signature. Request id: {authenticationResponse.requestId}");
 
                 if (string.IsNullOrEmpty(response.result))
-                    throw new Web3Exception($"Cannot solve the signature. Request id: {authenticationResponse.requestId}");
+                    throw new CodeVerificationException("An error occurred while verifying the code.",
+                        new Web3Exception($"Cannot solve the signature. Request id: {authenticationResponse.requestId}"));
 
                 AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
