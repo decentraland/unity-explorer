@@ -15,6 +15,8 @@ namespace DCL.SDKComponents.AvatarLocomotion.Components
             JUMP_HEIGHT = 1 << 3,
             RUN_JUMP_HEIGHT = 1 << 4,
             HARD_LANDING_COOLDOWN = 1 << 5,
+            DOUBLE_JUMP_HEIGHT = 1 << 6,
+            GLIDE_SPEED = 1 << 7,
         }
 
         public OverrideID WriteMask;
@@ -24,5 +26,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Components
         public float JumpHeight;
         public float RunJumpHeight;
         public float HardLandingCooldown;
+        public float DoubleJumpHeight;
+        public float GlidingSpeed;
     }
 }

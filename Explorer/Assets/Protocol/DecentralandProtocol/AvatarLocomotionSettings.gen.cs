@@ -26,18 +26,20 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjxkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2xvY29tb3Rp",
             "b25fc2V0dGluZ3MucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
-            "cyKqAgoaUEJBdmF0YXJMb2NvbW90aW9uU2V0dGluZ3MSFwoKd2Fsa19zcGVl",
+            "cyKQAwoaUEJBdmF0YXJMb2NvbW90aW9uU2V0dGluZ3MSFwoKd2Fsa19zcGVl",
             "ZBgBIAEoAkgAiAEBEhYKCWpvZ19zcGVlZBgCIAEoAkgBiAEBEhYKCXJ1bl9z",
             "cGVlZBgDIAEoAkgCiAEBEhgKC2p1bXBfaGVpZ2h0GAQgASgCSAOIAQESHAoP",
             "cnVuX2p1bXBfaGVpZ2h0GAUgASgCSASIAQESIgoVaGFyZF9sYW5kaW5nX2Nv",
-            "b2xkb3duGAYgASgCSAWIAQFCDQoLX3dhbGtfc3BlZWRCDAoKX2pvZ19zcGVl",
-            "ZEIMCgpfcnVuX3NwZWVkQg4KDF9qdW1wX2hlaWdodEISChBfcnVuX2p1bXBf",
-            "aGVpZ2h0QhgKFl9oYXJkX2xhbmRpbmdfY29vbGRvd25CFKoCEURDTC5FQ1ND",
-            "b21wb25lbnRzYgZwcm90bzM="));
+            "b2xkb3duGAYgASgCSAWIAQESHwoSZG91YmxlX2p1bXBfaGVpZ2h0GAcgASgC",
+            "SAaIAQESGgoNZ2xpZGluZ19zcGVlZBgIIAEoAkgHiAEBQg0KC193YWxrX3Nw",
+            "ZWVkQgwKCl9qb2dfc3BlZWRCDAoKX3J1bl9zcGVlZEIOCgxfanVtcF9oZWln",
+            "aHRCEgoQX3J1bl9qdW1wX2hlaWdodEIYChZfaGFyZF9sYW5kaW5nX2Nvb2xk",
+            "b3duQhUKE19kb3VibGVfanVtcF9oZWlnaHRCEAoOX2dsaWRpbmdfc3BlZWRC",
+            "FKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarLocomotionSettings), global::DCL.ECSComponents.PBAvatarLocomotionSettings.Parser, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown" }, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarLocomotionSettings), global::DCL.ECSComponents.PBAvatarLocomotionSettings.Parser, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed" }, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed" }, null, null, null)
           }));
     }
     #endregion
@@ -90,6 +92,8 @@ namespace DCL.ECSComponents {
       jumpHeight_ = other.jumpHeight_;
       runJumpHeight_ = other.runJumpHeight_;
       hardLandingCooldown_ = other.hardLandingCooldown_;
+      doubleJumpHeight_ = other.doubleJumpHeight_;
+      glidingSpeed_ = other.glidingSpeed_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -267,6 +271,62 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~32;
     }
 
+    /// <summary>Field number for the "double_jump_height" field.</summary>
+    public const int DoubleJumpHeightFieldNumber = 7;
+    private float doubleJumpHeight_;
+    /// <summary>
+    /// Height of the double jump (in meters)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float DoubleJumpHeight {
+      get { if ((_hasBits0 & 64) != 0) { return doubleJumpHeight_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 64;
+        doubleJumpHeight_ = value;
+      }
+    }
+    /// <summary>Gets whether the "double_jump_height" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasDoubleJumpHeight {
+      get { return (_hasBits0 & 64) != 0; }
+    }
+    /// <summary>Clears the value of the "double_jump_height" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearDoubleJumpHeight() {
+      _hasBits0 &= ~64;
+    }
+
+    /// <summary>Field number for the "gliding_speed" field.</summary>
+    public const int GlidingSpeedFieldNumber = 8;
+    private float glidingSpeed_;
+    /// <summary>
+    /// Maximum speed when gliding (in meters per second)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float GlidingSpeed {
+      get { if ((_hasBits0 & 128) != 0) { return glidingSpeed_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 128;
+        glidingSpeed_ = value;
+      }
+    }
+    /// <summary>Gets whether the "gliding_speed" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasGlidingSpeed {
+      get { return (_hasBits0 & 128) != 0; }
+    }
+    /// <summary>Clears the value of the "gliding_speed" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearGlidingSpeed() {
+      _hasBits0 &= ~128;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -288,6 +348,8 @@ namespace DCL.ECSComponents {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(JumpHeight, other.JumpHeight)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RunJumpHeight, other.RunJumpHeight)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HardLandingCooldown, other.HardLandingCooldown)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(DoubleJumpHeight, other.DoubleJumpHeight)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(GlidingSpeed, other.GlidingSpeed)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -301,6 +363,8 @@ namespace DCL.ECSComponents {
       if (HasJumpHeight) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(JumpHeight);
       if (HasRunJumpHeight) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RunJumpHeight);
       if (HasHardLandingCooldown) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HardLandingCooldown);
+      if (HasDoubleJumpHeight) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(DoubleJumpHeight);
+      if (HasGlidingSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(GlidingSpeed);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -343,6 +407,14 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(53);
         output.WriteFloat(HardLandingCooldown);
       }
+      if (HasDoubleJumpHeight) {
+        output.WriteRawTag(61);
+        output.WriteFloat(DoubleJumpHeight);
+      }
+      if (HasGlidingSpeed) {
+        output.WriteRawTag(69);
+        output.WriteFloat(GlidingSpeed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -377,6 +449,14 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(53);
         output.WriteFloat(HardLandingCooldown);
       }
+      if (HasDoubleJumpHeight) {
+        output.WriteRawTag(61);
+        output.WriteFloat(DoubleJumpHeight);
+      }
+      if (HasGlidingSpeed) {
+        output.WriteRawTag(69);
+        output.WriteFloat(GlidingSpeed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -403,6 +483,12 @@ namespace DCL.ECSComponents {
         size += 1 + 4;
       }
       if (HasHardLandingCooldown) {
+        size += 1 + 4;
+      }
+      if (HasDoubleJumpHeight) {
+        size += 1 + 4;
+      }
+      if (HasGlidingSpeed) {
         size += 1 + 4;
       }
       if (_unknownFields != null) {
@@ -434,6 +520,12 @@ namespace DCL.ECSComponents {
       }
       if (other.HasHardLandingCooldown) {
         HardLandingCooldown = other.HardLandingCooldown;
+      }
+      if (other.HasDoubleJumpHeight) {
+        DoubleJumpHeight = other.DoubleJumpHeight;
+      }
+      if (other.HasGlidingSpeed) {
+        GlidingSpeed = other.GlidingSpeed;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -474,6 +566,14 @@ namespace DCL.ECSComponents {
             HardLandingCooldown = input.ReadFloat();
             break;
           }
+          case 61: {
+            DoubleJumpHeight = input.ReadFloat();
+            break;
+          }
+          case 69: {
+            GlidingSpeed = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -511,6 +611,14 @@ namespace DCL.ECSComponents {
           }
           case 53: {
             HardLandingCooldown = input.ReadFloat();
+            break;
+          }
+          case 61: {
+            DoubleJumpHeight = input.ReadFloat();
+            break;
+          }
+          case 69: {
+            GlidingSpeed = input.ReadFloat();
             break;
           }
         }

@@ -120,7 +120,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float AirJumpHeight
         {
-            get => impl.AirJumpHeight;
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT, impl.AirJumpHeight);
             set => impl.AirJumpHeight = value;
         }
 
@@ -148,7 +148,7 @@ namespace DCL.CharacterMotion.Settings
             set => impl.AirJumpDirectionChangeImpulse = value;
         }
 
-        public float GlideSpeed => impl.GlideSpeed;
+        public float GlideSpeed => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED, impl.GlideSpeed);
 
         public float GlideMaxGravity => impl.GlideMaxGravity;
 
