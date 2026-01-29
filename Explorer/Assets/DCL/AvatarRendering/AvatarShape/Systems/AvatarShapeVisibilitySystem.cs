@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
+using DCL.Optimization.AdaptivePerformance.Components;
 using DCL.Quality;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.SceneBannedUsers;
@@ -30,6 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly bool includeBannedUsersFromScene;
 
         private SingleInstanceEntity camera;
+        private SingleInstanceEntity avatarVisibilityConfig;
         private GameObject? playerCamera;
 
         public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
@@ -38,8 +40,6 @@ namespace DCL.AvatarRendering.AvatarShape
             this.outlineFeature = outlineFeature.GetRendererFeature<RendererFeature_AvatarOutline>();
             planes = new Plane[6];
 
-            this.startFadeDithering = startFadeDithering;
-            this.endFadeDithering = endFadeDithering;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
         }
 
@@ -47,6 +47,22 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             camera = World.CacheCamera();
             playerCamera = camera.GetCameraComponent(World).Camera.gameObject;
+
+            // Create singleton entity for avatar visibility config if it doesn't exist
+            var existingEntity = World.GetSingleInstanceEntityOrNull(new QueryDescription().WithAll<AvatarVisibilityConfigComponent>());
+
+            if (existingEntity.IsNull())
+            {
+                // Create the singleton entity with default max quality values
+                var configEntity = World.Create(new AvatarVisibilityConfigComponent
+                {
+                    MaxVisibleAvatars = 60,
+                    MaxVisibilityDistance = 60f
+                });
+            }
+
+            // Cache the singleton entity
+            avatarVisibilityConfig = World.CacheAvatarVisibilityConfig();
         }
 
         protected override void Update(float t)
@@ -117,6 +133,11 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
             }
 
+            // Read current distance config from adaptive performance singleton
+            ref readonly var config = ref avatarVisibilityConfig.GetAvatarVisibilityConfig(World);
+            float startFadeDithering = config.MaxVisibilityDistance * 0.75f; // Start fade at 75% of max distance
+            float endFadeDithering = config.MaxVisibilityDistance; // Complete fade at 100% of max distance
+
             float currentDistance = (playerComponent.CameraFocus.position - playerCamera!.transform.position).magnitude;
 
             if (avatarCachedVisibility.ShouldUpdateDitherState(currentDistance, startFadeDithering, endFadeDithering))
@@ -132,6 +153,11 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarCachedVisibility.ResetDitherState();
                 return;
             }
+
+            // Read current distance config from adaptive performance singleton
+            ref readonly var config = ref avatarVisibilityConfig.GetAvatarVisibilityConfig(World);
+            float startFadeDithering = config.MaxVisibilityDistance * 0.75f; // Start fade at 75% of max distance
+            float endFadeDithering = config.MaxVisibilityDistance; // Complete fade at 100% of max distance
 
             float currentDistance = (avatarBase.HeadAnchorPoint.position - playerCamera!.transform.position).magnitude;
 
@@ -190,7 +216,11 @@ namespace DCL.AvatarRendering.AvatarShape
             in AvatarBase avatarBase,
             in CharacterEmoteComponent characterEmoteComponent)
         {
-            bool shouldBeHidden;
+            // Read current distance config from adaptive performance singleton
+            ref readonly var config = ref avatarVisibilityConfig.GetAvatarVisibilityConfig(World);
+            float startFadeDithering = config.MaxVisibilityDistance * 0.75f; // Start fade at 75% of max distance
+
+            bool shouldBeHidden = false;
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
             {

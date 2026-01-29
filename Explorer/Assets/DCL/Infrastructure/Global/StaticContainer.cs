@@ -87,7 +87,7 @@ namespace Global
         public CharacterContainer CharacterContainer { get; private set; }
         public MediaPlayerContainer MediaContainer { get; private set; }
         public ProfilesContainer ProfilesContainer { get; private set; }
-        public QualityContainer QualityContainer { get; private set; }
+        public IRendererFeaturesCache RendererFeaturesCache { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
@@ -126,7 +126,7 @@ namespace Global
 
         public void Dispose()
         {
-            QualityContainer.Dispose();
+            // QualityContainer.Dispose();
             Profiler.Dispose();
             SceneRestrictionBusController.Dispose();
         }
@@ -210,7 +210,7 @@ namespace Global
             if (!result)
                 return (null, false);
 
-            container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
+            container.RendererFeaturesCache = new RendererFeaturesCache();
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.Profiler = profilingProvider;
@@ -246,7 +246,7 @@ namespace Global
                     container.RealmData.Ipfs.LambdasBaseUrl.Value);
             });
 
-            var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            var renderFeature = container.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
             if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
                 container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);

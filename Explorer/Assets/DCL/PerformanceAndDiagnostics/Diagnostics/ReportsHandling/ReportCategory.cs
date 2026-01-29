@@ -358,5 +358,7 @@ namespace DCL.Diagnostics
         public const string PLACES = nameof(PLACES);
 
         public const string DONATIONS = nameof(DONATIONS);
+
+        public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
     }
 }
