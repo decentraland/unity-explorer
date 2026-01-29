@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
