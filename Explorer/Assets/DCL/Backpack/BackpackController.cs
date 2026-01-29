@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
