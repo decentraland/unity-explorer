@@ -136,14 +136,14 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages#feat/response-timings",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
         "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4"
       },
-      "hash": "72a49e9cc6050a59bb28a3f61165afa82619cc20"
+      "hash": "5ea7798478c66648d0da3c4475e2f02a189b7baa"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
