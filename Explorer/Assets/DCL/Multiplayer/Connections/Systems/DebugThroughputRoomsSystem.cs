@@ -122,7 +122,11 @@ namespace DCL.Multiplayer.Connections.Systems
 
             foreach ((string sid, _) in participants)
             {
+#if UNITY_WEBGL
+                var participant = participantsHub.RemoteParticipant(sid).Value;
+#else
                 var participant = participantsHub.RemoteParticipant(sid);
+#endif
                 if (participant == null) continue;
                 mutableList.Add((sid, participant.ConnectionQuality.ToString()));
             }

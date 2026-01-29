@@ -250,7 +250,7 @@ namespace DCL.Chat.ChatServices
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
 
             //If we allow ALL messages, we need to know their settings.
-            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)!.Metadata);
+            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)?.Metadata);
 
             if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);

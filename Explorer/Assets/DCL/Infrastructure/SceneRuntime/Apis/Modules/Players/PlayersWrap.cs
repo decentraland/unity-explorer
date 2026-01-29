@@ -107,7 +107,11 @@ namespace SceneRuntime.Apis.Modules.Players
                 {
                     foreach ((string identity, _) in identities)
                     {
+#if !UNITY_WEBGL
                         LKParticipant remote = participantsHub.RemoteParticipant(identity)!;
+#else
+                        LKParticipant remote = participantsHub.RemoteParticipant(identity).Value;
+#endif
                         players!.Add(new Player(remote));
                     }
                 }
