@@ -27,23 +27,24 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcG9pbnRlcl9ldmVudHMu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo1ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9pbnB1dF9hY3Rpb24ucHJvdG8i",
-            "hAQKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
+            "vgQKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
             "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBvaW50ZXJFdmVudHMu",
-            "RW50cnkaiQIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
+            "RW50cnkawwIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
             "LnNkay5jb21wb25lbnRzLmNvbW1vbi5JbnB1dEFjdGlvbkgAiAEBEhcKCmhv",
             "dmVyX3RleHQYAiABKAlIAYgBARIZCgxtYXhfZGlzdGFuY2UYAyABKAJIAogB",
             "ARIaCg1zaG93X2ZlZWRiYWNrGAQgASgISAOIAQESGwoOc2hvd19oaWdobGln",
-            "aHQYBSABKAhIBIgBAUIJCgdfYnV0dG9uQg0KC19ob3Zlcl90ZXh0Qg8KDV9t",
-            "YXhfZGlzdGFuY2VCEAoOX3Nob3dfZmVlZGJhY2tCEQoPX3Nob3dfaGlnaGxp",
-            "Z2h0GpgBCgVFbnRyeRJICgpldmVudF90eXBlGAEgASgOMjQuZGVjZW50cmFs",
-            "YW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5Qb2ludGVyRXZlbnRUeXBlEkUK",
-            "CmV2ZW50X2luZm8YAiABKAsyMS5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
-            "dHMuUEJQb2ludGVyRXZlbnRzLkluZm9CFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "aHQYBSABKAhIBIgBARIgChNtYXhfcGxheWVyX2Rpc3RhbmNlGAYgASgCSAWI",
+            "AQFCCQoHX2J1dHRvbkINCgtfaG92ZXJfdGV4dEIPCg1fbWF4X2Rpc3RhbmNl",
+            "QhAKDl9zaG93X2ZlZWRiYWNrQhEKD19zaG93X2hpZ2hsaWdodEIWChRfbWF4",
+            "X3BsYXllcl9kaXN0YW5jZRqYAQoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEo",
+            "DjI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uUG9pbnRl",
+            "ckV2ZW50VHlwZRJFCgpldmVudF9pbmZvGAIgASgLMjEuZGVjZW50cmFsYW5k",
+            "LnNkay5jb21wb25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvQhSqAhFEQ0wu",
+            "RUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.InputActionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo" }, null, null, null, null)})
           }));
     }
@@ -291,6 +292,7 @@ namespace DCL.ECSComponents {
           maxDistance_ = other.maxDistance_;
           showFeedback_ = other.showFeedback_;
           showHighlight_ = other.showHighlight_;
+          maxPlayerDistance_ = other.maxPlayerDistance_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -439,6 +441,34 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~8;
         }
 
+        /// <summary>Field number for the "max_player_distance" field.</summary>
+        public const int MaxPlayerDistanceFieldNumber = 6;
+        private float maxPlayerDistance_;
+        /// <summary>
+        /// range of interaction from the avatar's position (default 0)
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float MaxPlayerDistance {
+          get { if ((_hasBits0 & 16) != 0) { return maxPlayerDistance_; } else { return 0F; } }
+          set {
+            _hasBits0 |= 16;
+            maxPlayerDistance_ = value;
+          }
+        }
+        /// <summary>Gets whether the "max_player_distance" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasMaxPlayerDistance {
+          get { return (_hasBits0 & 16) != 0; }
+        }
+        /// <summary>Clears the value of the "max_player_distance" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearMaxPlayerDistance() {
+          _hasBits0 &= ~16;
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -459,6 +489,7 @@ namespace DCL.ECSComponents {
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxDistance, other.MaxDistance)) return false;
           if (ShowFeedback != other.ShowFeedback) return false;
           if (ShowHighlight != other.ShowHighlight) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxPlayerDistance, other.MaxPlayerDistance)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -471,6 +502,7 @@ namespace DCL.ECSComponents {
           if (HasMaxDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxDistance);
           if (HasShowFeedback) hash ^= ShowFeedback.GetHashCode();
           if (HasShowHighlight) hash ^= ShowHighlight.GetHashCode();
+          if (HasMaxPlayerDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxPlayerDistance);
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -509,6 +541,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(40);
             output.WriteBool(ShowHighlight);
           }
+          if (HasMaxPlayerDistance) {
+            output.WriteRawTag(53);
+            output.WriteFloat(MaxPlayerDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -539,6 +575,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(40);
             output.WriteBool(ShowHighlight);
           }
+          if (HasMaxPlayerDistance) {
+            output.WriteRawTag(53);
+            output.WriteFloat(MaxPlayerDistance);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -563,6 +603,9 @@ namespace DCL.ECSComponents {
           }
           if (HasShowHighlight) {
             size += 1 + 1;
+          }
+          if (HasMaxPlayerDistance) {
+            size += 1 + 4;
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -590,6 +633,9 @@ namespace DCL.ECSComponents {
           }
           if (other.HasShowHighlight) {
             ShowHighlight = other.ShowHighlight;
+          }
+          if (other.HasMaxPlayerDistance) {
+            MaxPlayerDistance = other.MaxPlayerDistance;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -626,6 +672,10 @@ namespace DCL.ECSComponents {
                 ShowHighlight = input.ReadBool();
                 break;
               }
+              case 53: {
+                MaxPlayerDistance = input.ReadFloat();
+                break;
+              }
             }
           }
         #endif
@@ -659,6 +709,10 @@ namespace DCL.ECSComponents {
               }
               case 40: {
                 ShowHighlight = input.ReadBool();
+                break;
+              }
+              case 53: {
+                MaxPlayerDistance = input.ReadFloat();
                 break;
               }
             }
