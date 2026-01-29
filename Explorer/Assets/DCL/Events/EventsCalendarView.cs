@@ -1,9 +1,9 @@
-﻿using DCL.UI.Utilities;
+﻿using DCL.EventsApi;
+using DCL.UI.Utilities;
 using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,6 +35,7 @@ namespace DCL.Events
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
+        private EventsStateService eventsStateService;
 
         private void Awake()
         {
@@ -53,6 +54,9 @@ namespace DCL.Events
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
         }
+
+        public void SetDependencies(EventsStateService eventsStateService) =>
+            this.eventsStateService = eventsStateService;
 
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
         {
@@ -86,9 +90,13 @@ namespace DCL.Events
                 eventList.eventsLoopList.SetListItemCount(0, false);
         }
 
-        public void SetEvents(string[] events, int eventsListIndex, bool resetPos)
+        public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
-            currentEventsIds.TryAdd(eventsListIndex, events.ToList());
+            currentEventsIds.Clear();
+            currentEventsIds[eventsListIndex] = new List<string>();
+            foreach (EventDTO eventInfo in events)
+                currentEventsIds[eventsListIndex].Add(eventInfo.id);
+
             eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(currentEventsIds[eventsListIndex].Count, resetPos);
             eventsLists[eventsListIndex].eventsLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
@@ -102,9 +110,9 @@ namespace DCL.Events
         private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int index)
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
-            string eventInfo = currentEventsIds[eventsListIndex][index];
+            var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][index]);
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            listItem.GetComponentInChildren<TMP_Text>().text = eventInfo;
+            listItem.GetComponentInChildren<TMP_Text>().text = eventInfo.name;
 
             // Setup card data
             // ...

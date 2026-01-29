@@ -525,7 +525,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
-            eventsController = new EventsController(eventsView, cursor);
+            eventsController = new EventsController(eventsView, cursor, eventsApiService);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,

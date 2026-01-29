@@ -1,4 +1,5 @@
-﻿using DCL.Input;
+﻿using DCL.EventsApi;
+using DCL.Input;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -19,13 +20,14 @@ namespace DCL.Events
 
         public EventsController(
             EventsView view,
-            ICursor cursor)
+            ICursor cursor,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
 
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this);
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, new EventsStateService());
         }
 
         public void Dispose() =>
