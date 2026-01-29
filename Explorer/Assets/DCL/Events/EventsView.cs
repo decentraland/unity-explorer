@@ -1,9 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Events
 {
     public class EventsView : MonoBehaviour
     {
+        public event Action? CreateButtonClicked;
+
+        [Header("Buttons")]
+        [SerializeField] private Button createEventButton = null!;
+
         [Header("Views")]
         [SerializeField] private EventsCalendarView eventsCalendarView = null!;
 
@@ -12,6 +19,12 @@ namespace DCL.Events
         [SerializeField] private Animator headerAnimator = null!;
 
         public EventsCalendarView EventsCalendarView => eventsCalendarView;
+
+        private void Awake() =>
+            createEventButton.onClick.AddListener(() => CreateButtonClicked?.Invoke());
+
+        private void OnDestroy() =>
+            createEventButton.onClick.RemoveAllListeners();
 
         public void SetViewActive(bool isActive)
         {
