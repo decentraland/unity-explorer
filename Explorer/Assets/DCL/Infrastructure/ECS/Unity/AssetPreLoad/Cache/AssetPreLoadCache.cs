@@ -54,6 +54,11 @@ namespace ECS.Unity.AssetLoad.Cache
 
         public void Dispose()
         {
+            cache.Clear();
+        }
+
+        public void Clear()
+        {
             foreach(var kvp in cache)
                 switch (kvp.Value)
                 {

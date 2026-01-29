@@ -55,7 +55,7 @@ namespace ECS.Unity.AssetLoad.Systems
 
         public void FinalizeComponents(in Query query)
         {
-            assetPreLoadCache.Dispose();
+            assetPreLoadCache.Clear();
         }
     }
 }

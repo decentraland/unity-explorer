@@ -73,92 +73,131 @@ namespace ECS.Unity.AssetLoad.Systems
             ProcessAssetList(entity, in sdkComponent, ref component);
         }
 
+        private AssetPreLoadLoadingStateComponent RegisterAndCreateAssetLoadingStateComponent(ref AssetPreLoadComponent existingComponent,
+            in CRDTEntity crdtEntity, string path, string? hash, LoadingState loadingState)
+        {
+            AssetPreLoadLoadingStateComponent loadingStateComponent = new AssetPreLoadLoadingStateComponent(crdtEntity, path)
+            {
+                AssetHash =  hash ?? string.Empty,
+                LoadingState = loadingState,
+                IsDirty = true
+            };
+            existingComponent.LoadingAssetPaths.Add(loadingStateComponent.AssetPath);
+            return loadingStateComponent;
+        }
+
+        private bool TryCreateAudioAssetPromise(in CRDTEntity crdtEntity, string path, string hash, ref AssetPreLoadComponent existingComponent)
+        {
+            if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
+                || path.EndsWith(".wav", StringComparison.InvariantCultureIgnoreCase)
+                || path.EndsWith(".ogg", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
+                {
+                    World.Create(PartitionComponent.MIN_PRIORITY,
+                        RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.FinishedWithError));
+
+                    return true;
+                }
+                World.Create(PartitionComponent.MIN_PRIORITY,
+                    RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.Loading), assetPromise!.Value);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateTextureAssetPromise(in CRDTEntity crdtEntity, string path, string hash, ref AssetPreLoadComponent existingComponent)
+        {
+            if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
+                || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
+                || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
+                {
+                    World.Create(PartitionComponent.MIN_PRIORITY,
+                        RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.NotFound));
+
+                    return true;
+                }
+
+                var promise = TexturePromise.Create(World,
+                    new GetTextureIntention
+                    {
+                        CommonArguments = new CommonLoadingArguments(contentUrl),
+                        ReportSource = GetReportCategory(),
+                    },
+                    PartitionComponent.MIN_PRIORITY);
+                World.Create(PartitionComponent.MIN_PRIORITY,
+                    RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.Loading), promise);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateVideoAssetPromise(in CRDTEntity crdtEntity, string path, string hash, ref AssetPreLoadComponent existingComponent)
+        {
+            if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
+            {
+                PBVideoPlayer component = new PBVideoPlayer
+                {
+                    Src = path,
+                };
+                World.Create(PartitionComponent.MIN_PRIORITY,
+                    RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.Loading), component);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryCreateModelAssetPromise(in CRDTEntity crdtEntity, string path, string hash, ref AssetPreLoadComponent existingComponent)
+        {
+            if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
+                || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
+            {
+                PBGltfContainer component = new PBGltfContainer
+                {
+                    Src = path,
+                };
+                World.Create(PartitionComponent.MIN_PRIORITY,
+                    RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, hash, LoadingState.Loading), component);
+
+                return true;
+            }
+
+            return false;
+        }
+
         private void ProcessAssetList(in CRDTEntity crdtEntity, in PBAssetLoad sdkComponent, ref AssetPreLoadComponent existingComponent)
         {
             foreach (string path in sdkComponent.Assets)
             {
                 if (existingComponent.LoadingAssetPaths.Contains(path)) continue;
 
-                AssetPreLoadLoadingStateComponent loadingStateComponent = new AssetPreLoadLoadingStateComponent(crdtEntity, path);
-                Entity createdEntity = World.Create(PartitionComponent.MIN_PRIORITY);
-
                 if (!sceneData.TryGetHash(path, out string hash))
                 {
-                    MarkForUpdateAndStore(LoadingState.NotFound, createdEntity, ref existingComponent, ref loadingStateComponent);
+                    World.Create(PartitionComponent.MIN_PRIORITY,
+                        RegisterAndCreateAssetLoadingStateComponent(ref existingComponent, crdtEntity, path, null, LoadingState.NotFound));
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} not found in scene content");
                     continue;
                 }
 
-                loadingStateComponent.AssetHash = hash;
+                bool anyPromiseCreated = false;
 
                 // Supported formats https://docs.decentraland.org/creator/scene-editor/build/import-items#supported-formats
-                if (path.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)
-                    || path.EndsWith(".wav", StringComparison.InvariantCultureIgnoreCase)
-                    || path.EndsWith(".ogg", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, path, PartitionComponent.MIN_PRIORITY, out AudioPromise? assetPromise))
-                    {
-                        MarkForUpdateAndStore(LoadingState.FinishedWithError, createdEntity, ref existingComponent, ref loadingStateComponent);
-                        continue;
-                    }
+                anyPromiseCreated |= TryCreateTextureAssetPromise(crdtEntity, path, hash, ref existingComponent);
+                anyPromiseCreated |= TryCreateModelAssetPromise(crdtEntity, path, hash, ref existingComponent);
+                anyPromiseCreated |= TryCreateVideoAssetPromise(crdtEntity, path, hash, ref existingComponent);
+                anyPromiseCreated |= TryCreateAudioAssetPromise(crdtEntity, path, hash, ref existingComponent);
 
-                    World.Add(createdEntity, assetPromise!.Value);
-                }
-                else if (path.EndsWith(".mp4", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    PBVideoPlayer component = new PBVideoPlayer
-                    {
-                        Src = path,
-                    };
-                    World.Add(createdEntity, component);
-                }
-                else if (path.EndsWith(".png", StringComparison.InvariantCultureIgnoreCase)
-                         || path.EndsWith(".jpg", StringComparison.InvariantCultureIgnoreCase)
-                         || path.EndsWith(".jpeg", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (!sceneData.TryGetContentUrl(path, out URLAddress contentUrl))
-                    {
-                        MarkForUpdateAndStore(LoadingState.NotFound, createdEntity, ref existingComponent, ref loadingStateComponent);
-                        continue;
-                    }
-
-                    var promise = TexturePromise.Create(World,
-                        new GetTextureIntention
-                        {
-                            CommonArguments = new CommonLoadingArguments(contentUrl),
-                            ReportSource = GetReportCategory(),
-                        },
-                        PartitionComponent.MIN_PRIORITY);
-                    World.Add(createdEntity, promise);
-                }
-                else if (path.EndsWith(".glTF", StringComparison.InvariantCultureIgnoreCase)
-                         || path.EndsWith(".glb", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    PBGltfContainer component = new PBGltfContainer
-                    {
-                        Src = path,
-                    };
-                    World.Add(createdEntity, component);
-                }
-                else
-                {
+                if (!anyPromiseCreated)
                     ReportHub.LogWarning(GetReportData(), $"Asset {path} has unsupported format");
-                    continue;
-                }
-
-                MarkForUpdateAndStore(LoadingState.Loading, createdEntity, ref existingComponent, ref loadingStateComponent);
             }
-        }
-
-        // Note: every loop iteration we are manipulating the World twice (adding the specific promise/component + adding here the loading state component)
-        //       this works because we're passing the Entity here as value rather than a ref.
-        private void MarkForUpdateAndStore(LoadingState loadingState, Entity entity, ref AssetPreLoadComponent existingComponent, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
-        {
-            loadingStateComponent.LoadingState = loadingState;
-            loadingStateComponent.IsDirty = true;
-
-            World.Add(entity, loadingStateComponent);
-            existingComponent.LoadingAssetPaths.Add(loadingStateComponent.AssetPath);
         }
     }
 }
