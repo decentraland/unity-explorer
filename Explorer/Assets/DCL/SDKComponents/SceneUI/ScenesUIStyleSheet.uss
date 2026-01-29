@@ -27,8 +27,9 @@
 
 .dcl-input > .unity-base-text-field__input {
     margin: 0;
-    background-color: rgba(0, 0, 0, 0);
+    background-color: #FFFFFF;
     border-color: #959595;
+    border-radius: var(--dcl-border-radius);
 }
 
 .dcl-input:hover > .unity-base-text-field__input {
