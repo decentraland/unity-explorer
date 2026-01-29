@@ -436,7 +436,6 @@ namespace DCL.PluginSystem.Global
                 settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
                 landscapeData.Value,
-                settings.QualitySettingsAsset,
                 settings.SkyboxSettingsAsset,
                 settings.ControlsSettingsAsset,
                 systemMemoryCap,
@@ -638,8 +637,8 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public LandscapeDataRef LandscapeData { get; private set; }
 
-            [field: SerializeField]
-            public QualitySettingsAsset QualitySettingsAsset { get; private set; }
+            // [field: SerializeField]
+            // public QualitySettingsAsset QualitySettingsAsset { get; private set; }
             [field: SerializeField]
             public SkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
 

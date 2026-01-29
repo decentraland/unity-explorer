@@ -126,7 +126,7 @@ namespace Global
 
         public void Dispose()
         {
-            // QualityContainer.Dispose();
+            RendererFeaturesCache.Dispose();
             Profiler.Dispose();
             SceneRestrictionBusController.Dispose();
         }
