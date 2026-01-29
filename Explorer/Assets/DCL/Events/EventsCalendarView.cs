@@ -1,4 +1,5 @@
 ﻿using DCL.UI.Utilities;
+using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -11,43 +12,69 @@ namespace DCL.Events
 {
     public class EventsCalendarView : MonoBehaviour
     {
-        [Header("Events")]
+        public event Action<DateTime, int>? DaysRangeChanged;
+
+        [Header("Days Selector")]
         [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
+        [SerializeField] private Button previousDateRangeButton = null!;
+        [SerializeField] private Button nextDateRangeButton = null!;
 
         [Header("Events")]
         [SerializeField] private GameObject loadingSpinner = null!;
         [SerializeField] private GameObject eventsContainer = null!;
-        [SerializeField] private List<LoopListView2> eventsLoopLists = null!;
+        [SerializeField] private List<EventListConfiguration> eventsLists = null!;
+
+        [Serializable]
+        private struct EventListConfiguration
+        {
+            public LoopListView2 eventsLoopList;
+            public HoverableUiElement hoverableUiElement;
+            public CanvasGroup scrollBarCanvasGroup;
+        }
 
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
+        private DateTime currentFromDate;
+        private int currentNumberOfDaysShowed;
 
         private void Awake()
         {
+            previousDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(-currentNumberOfDaysShowed), currentNumberOfDaysShowed));
+            nextDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(currentNumberOfDaysShowed), currentNumberOfDaysShowed));
+
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked += OnDaySelectorButtonClicked;
         }
 
         private void OnDestroy()
         {
+            previousDateRangeButton.onClick.RemoveAllListeners();
+            nextDateRangeButton.onClick.RemoveAllListeners();
+
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
         }
 
-        public void SetupDaysSelector(DateTime initialDate)
+        public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
         {
             for (var i = 0; i < daySelectorButtons.Count; i++)
             {
                 EventsDaySelectorButton daySelectorButton = daySelectorButtons[i];
-                daySelectorButton.Setup(initialDate.AddDays(i));
+                daySelectorButton.Setup(fromDate.AddDays(i));
             }
+
+            currentFromDate = fromDate;
+            currentNumberOfDaysShowed = numberOfDaysToShow;
+            DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
         }
 
         public void InitializeEventsLists()
         {
-            foreach (LoopListView2 eventList in eventsLoopLists)
+            foreach (var eventList in eventsLists)
             {
-                eventList.InitListView(0, SetupEventCardByIndex);
-                eventList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+                eventList.eventsLoopList.InitListView(0, SetupEventCardByIndex);
+                eventList.eventsLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+                eventList.hoverableUiElement.HoverStateChanged += isHovering => eventList.scrollBarCanvasGroup.DOFade(isHovering ? 1f : 0f, 0.3f);
+                eventList.scrollBarCanvasGroup.alpha = 0f;
             }
         }
 
@@ -55,15 +82,15 @@ namespace DCL.Events
         {
             currentEventsIds.Clear();
 
-            foreach (LoopListView2 eventList in eventsLoopLists)
-                eventList.SetListItemCount(0, false);
+            foreach (var eventList in eventsLists)
+                eventList.eventsLoopList.SetListItemCount(0, false);
         }
 
         public void SetEvents(string[] events, int eventsListIndex, bool resetPos)
         {
             currentEventsIds.TryAdd(eventsListIndex, events.ToList());
-            eventsLoopLists[eventsListIndex].SetListItemCount(currentEventsIds[eventsListIndex].Count, resetPos);
-            eventsLoopLists[eventsListIndex].ScrollRect.verticalNormalizedPosition = 1f;
+            eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(currentEventsIds[eventsListIndex].Count, resetPos);
+            eventsLists[eventsListIndex].eventsLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
         public void SetAsLoading(bool isLoading)

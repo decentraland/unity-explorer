@@ -23,32 +23,34 @@ namespace DCL.Events
 
             eventsController.EventsOpen += OnSectionOpened;
             eventsController.EventsClosed += OnSectionClosed;
+            view.DaysRangeChanged += OnDaysRangeChanged;
         }
 
         public void Dispose()
         {
             eventsController.EventsOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
+            view.DaysRangeChanged -= OnDaysRangeChanged;
 
             loadEventsCts?.SafeCancelAndDispose();
         }
 
-        private void OnSectionOpened()
-        {
-            view.SetupDaysSelector(DateTime.Today);
-            LoadEvents();
-        }
+        private void OnSectionOpened() =>
+            view.SetupDaysSelector(DateTime.Today, 5);
 
         private void OnSectionClosed() =>
             UnloadEvents();
 
-        private void LoadEvents()
+        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays) =>
+            LoadEvents(fromDate, numberOfDays);
+
+        private void LoadEvents(DateTime fromDate, int numberOfDays)
         {
             loadEventsCts = loadEventsCts.SafeRestart();
-            LoadEventsAsync(loadEventsCts.Token).Forget();
+            LoadEventsAsync(fromDate, numberOfDays, loadEventsCts.Token).Forget();
         }
 
-        private async UniTask LoadEventsAsync(CancellationToken ct)
+        private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)
         {
             view.ClearAllEvents();
             view.SetAsLoading(true);

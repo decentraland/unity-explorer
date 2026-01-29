@@ -8,6 +8,9 @@ namespace DCL.Events
 {
     public class EventsDaySelectorButton : MonoBehaviour
     {
+        private const string TODAY_TEXT = "Today";
+        private const string TOMORROW_TEXT = "Tomorrow";
+
         public event Action<DateTime>? ButtonClicked;
 
         [SerializeField] private Button mainButton = null!;
@@ -31,13 +34,13 @@ namespace DCL.Events
             var today = DateTime.Today;
 
             if (date.Date == today)
-                dayText.text = "Today";
+                dayText.text = TODAY_TEXT;
             else if (date.Date == today.AddDays(1))
-                dayText.text = "Tomorrow";
+                dayText.text = TOMORROW_TEXT;
             else
                 dayText.text = date.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
 
-            backgroundImage.enabled = date.Date == today;
+            backgroundImage.color = new Color(backgroundImage.color.r, backgroundImage.color.g, backgroundImage.color.b, date.Date == today ? 1f : 0f);
             dayText.color = date.Date == today ? todayTextColor : nonTodayTextColor;
         }
     }

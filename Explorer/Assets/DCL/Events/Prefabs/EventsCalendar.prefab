@@ -57,14 +57,26 @@ MonoBehaviour:
   - {fileID: 5878530540099078878}
   - {fileID: 7034474231271840694}
   - {fileID: 5038620344774083585}
+  previousDateRangeButton: {fileID: 7955386156779794739}
+  nextDateRangeButton: {fileID: 6017399350395625319}
   loadingSpinner: {fileID: 5957560512985662118}
   eventsContainer: {fileID: 3811546956518490301}
-  eventsLoopLists:
-  - {fileID: 1551500722282560470}
-  - {fileID: 3738975182734106253}
-  - {fileID: 5487901310950478848}
-  - {fileID: 198525293060395570}
-  - {fileID: 3199526206237952356}
+  eventsLists:
+  - eventsLoopList: {fileID: 1551500722282560470}
+    hoverableUiElement: {fileID: 3477280417435618825}
+    scrollBarCanvasGroup: {fileID: 2461234395685577569}
+  - eventsLoopList: {fileID: 3738975182734106253}
+    hoverableUiElement: {fileID: 1597163425666689874}
+    scrollBarCanvasGroup: {fileID: 307234426083345978}
+  - eventsLoopList: {fileID: 5487901310950478848}
+    hoverableUiElement: {fileID: 7629432675356336607}
+    scrollBarCanvasGroup: {fileID: 8901636387862514871}
+  - eventsLoopList: {fileID: 198525293060395570}
+    hoverableUiElement: {fileID: 2812651906672781293}
+    scrollBarCanvasGroup: {fileID: 3846438812686060165}
+  - eventsLoopList: {fileID: 3199526206237952356}
+    hoverableUiElement: {fileID: 697707833446644923}
+    scrollBarCanvasGroup: {fileID: 2001575339934601683}
 --- !u!1 &3811546956518490301
 GameObject:
   m_ObjectHideFlags: 0
@@ -290,7 +302,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2276224598985677260, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Name
-      value: EventsByDay5ListView
+      value: Day5EventsListView
       objectReference: {fileID: 0}
     - target: {fileID: 3154296616034530270, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -397,6 +409,22 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+--- !u!114 &697707833446644923 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336638952596027333, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 938220744999144318}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::HoverableUiElement
+--- !u!225 &2001575339934601683 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 1639940152546056877, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 938220744999144318}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3199526206237952356 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2405549927914422810, guid: 7a44239bf7231454eac81127662aa285, type: 3}
@@ -540,7 +568,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2276224598985677260, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Name
-      value: EventsByDay2ListView
+      value: Day2EventsListView
       objectReference: {fileID: 0}
     - target: {fileID: 3154296616034530270, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -647,6 +675,22 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+--- !u!225 &307234426083345978 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 1639940152546056877, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 1333550324535811223}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1597163425666689874 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336638952596027333, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 1333550324535811223}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::HoverableUiElement
 --- !u!224 &3255921047262768608 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
@@ -786,7 +830,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2276224598985677260, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Name
-      value: EventsByDay4ListView
+      value: Day4EventsListView
       objectReference: {fileID: 0}
     - target: {fileID: 3154296616034530270, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -907,6 +951,22 @@ MonoBehaviour:
 --- !u!224 &2021436033279009119 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 2568027440106819624}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2812651906672781293 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336638952596027333, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 2568027440106819624}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::HoverableUiElement
+--- !u!225 &3846438812686060165 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 1639940152546056877, guid: 7a44239bf7231454eac81127662aa285, type: 3}
   m_PrefabInstance: {fileID: 2568027440106819624}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3063248477068815302
@@ -1032,11 +1092,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2276224598985677260, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Name
-      value: EventsByDay1ListView
-      objectReference: {fileID: 0}
-    - target: {fileID: 3154296616034530270, guid: 7a44239bf7231454eac81127662aa285, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: Day1EventsListView
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Pivot.x
@@ -1118,20 +1174,12 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7002605165360782189, guid: 7a44239bf7231454eac81127662aa285, type: 3}
-      propertyPath: m_Size
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 9001029575592712955, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9001029575592712955, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9001029575592712955, guid: 7a44239bf7231454eac81127662aa285, type: 3}
-      propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1155,6 +1203,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e190d043ef387ee4fad4acea6146931e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!225 &2461234395685577569 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 1639940152546056877, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 3812916409234078156}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3477280417435618825 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336638952596027333, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 3812916409234078156}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::HoverableUiElement
 --- !u!1001 &4751629132662788390
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1410,6 +1474,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7607163653512616225, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
   m_PrefabInstance: {fileID: 5551821502663093472}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7955386156779794739 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2552201450955513299, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
+  m_PrefabInstance: {fileID: 5551821502663093472}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428181091319991981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &7656029409123664317
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1533,7 +1608,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2276224598985677260, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_Name
-      value: EventsByDay3ListView
+      value: Day3EventsListView
       objectReference: {fileID: 0}
     - target: {fileID: 3154296616034530270, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1654,6 +1729,22 @@ MonoBehaviour:
 --- !u!224 &5972944935938434925 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 7875330926175376922}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7629432675356336607 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336638952596027333, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 7875330926175376922}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::HoverableUiElement
+--- !u!225 &8901636387862514871 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 1639940152546056877, guid: 7a44239bf7231454eac81127662aa285, type: 3}
   m_PrefabInstance: {fileID: 7875330926175376922}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8136075301715165876
@@ -1798,6 +1889,17 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &6017399350395625319 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2552201450955513299, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
+  m_PrefabInstance: {fileID: 8136075301715165876}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4040882475407171833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8270515067384120367
 PrefabInstance:
   m_ObjectHideFlags: 0
