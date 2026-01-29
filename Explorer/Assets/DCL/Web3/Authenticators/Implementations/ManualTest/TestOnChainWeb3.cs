@@ -304,18 +304,364 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
+        ///     Проверяет domain separator контракта и сравнивает с нашим.
+        ///     Тестирует ВСЕ возможные форматы EIP712Domain.
+        /// </summary>
+        [ContextMenu(nameof(CheckDomainSeparator))]
+        public async void CheckDomainSeparator()
+        {
+            string contractAddress = testContractAddress;
+            const int chainId = 137; // Polygon Mainnet
+
+            Debug.Log("╔══════════════════════════════════════════════════════════════════╗");
+            Debug.Log("║  DOMAIN SEPARATOR COMPREHENSIVE TEST                              ║");
+            Debug.Log("╚══════════════════════════════════════════════════════════════════╝");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Chain ID: {chainId}");
+
+            // First, get the contract name
+            var contractName = "";
+
+            try
+            {
+                var nameRequest = new EthApiRequest
+                {
+                    id = 1,
+                    method = "eth_call",
+                    @params = new object[]
+                    {
+                        new { to = contractAddress, data = "0x06fdde03" }, // name()
+                        "latest",
+                    },
+                };
+
+                EthApiResponse nameResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, nameRequest, destroyCancellationToken);
+                string nameHex = nameResponse.result?.ToString() ?? "0x";
+
+                // Decode string
+                if (nameHex.Length > 130)
+                {
+                    string clean = nameHex.StartsWith("0x") ? nameHex.Substring(2) : nameHex;
+                    var length = System.Convert.ToInt32(clean.Substring(64, 64), 16);
+                    string dataHex = clean.Substring(128, length * 2);
+                    var bytes = new byte[dataHex.Length / 2];
+
+                    for (var i = 0; i < bytes.Length; i++)
+                        bytes[i] = System.Convert.ToByte(dataHex.Substring(i * 2, 2), 16);
+
+                    contractName = System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+                }
+
+                Debug.Log($"Contract name: '{contractName}'");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"Failed to get contract name: {ex.Message}");
+                contractName = "Unknown";
+            }
+
+            // Get contract's domain separator
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0xf698da25" }, // domainSeparator()
+                    "latest",
+                },
+            };
+
+            var contractDomainSep = "";
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request, destroyCancellationToken);
+                contractDomainSep = response.result?.ToString() ?? "0x";
+            }
+            catch (System.Exception ex) { Debug.LogWarning($"domainSeparator() failed: {ex.Message}"); }
+
+            Debug.Log("");
+            Debug.Log($"★★★ CONTRACT DOMAIN SEPARATOR: {contractDomainSep}");
+            Debug.Log("");
+
+            // Test ALL possible formats
+            Debug.Log("Testing all EIP712Domain formats...");
+            Debug.Log("");
+
+            var found = false;
+
+            // Format 1: DCL/Matic with salt (our current implementation)
+            // EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)
+            foreach (string version in new[] { "1", "2" })
+            {
+                string sep = ThirdWebAuthenticator.ComputeDomainSeparator(contractName, version, contractAddress, chainId);
+                bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+                Debug.Log($"[Salt format, v='{version}'] {sep} {(match ? "✅ MATCH!" : "")}");
+                if (match) found = true;
+            }
+
+            Debug.Log("");
+
+            // Format 2: Standard EIP-712 with chainId
+            // EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)
+            foreach (string version in new[] { "1", "2" })
+            {
+                string sep = ThirdWebAuthenticator.ComputeDomainSeparatorStandard(contractName, version, contractAddress, chainId);
+                bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+                Debug.Log($"[Standard format, v='{version}'] {sep} {(match ? "✅ MATCH!" : "")}");
+                if (match) found = true;
+            }
+
+            Debug.Log("");
+
+            // Format 3: Minimal (no verifyingContract)
+            foreach (string version in new[] { "1", "2" })
+            {
+                string sep = ThirdWebAuthenticator.ComputeDomainSeparatorMinimal(contractName, version, chainId);
+                bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+                Debug.Log($"[Minimal format, v='{version}'] {sep} {(match ? "✅ MATCH!" : "")}");
+                if (match) found = true;
+            }
+
+            Debug.Log("");
+
+            // Format 4: DCL Collection contracts use HARDCODED name "Decentraland Collection"!
+            // See: ERC721BaseCollectionV2.sol -> _initializeEIP712('Decentraland Collection', '2')
+            Debug.Log("Testing with HARDCODED EIP712 name 'Decentraland Collection'...");
+            const string DCL_COLLECTION_NAME = "Decentraland Collection";
+
+            foreach (string version in new[] { "1", "2" })
+            {
+                string sep = ThirdWebAuthenticator.ComputeDomainSeparator(DCL_COLLECTION_NAME, version, contractAddress, chainId);
+                bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+                Debug.Log($"[DCL Collection, v='{version}'] {sep} {(match ? "✅ MATCH!" : "")}");
+
+                if (match)
+                {
+                    found = true;
+                    Debug.Log($"🎯 FOUND! Use name='{DCL_COLLECTION_NAME}', version='{version}' for ALL DCL collection contracts!");
+                }
+            }
+
+            Debug.Log("");
+
+            if (!found)
+            {
+                Debug.LogError("❌ NO FORMAT MATCHED! Contract uses unknown EIP712Domain format.");
+                Debug.Log("");
+                Debug.Log("Possible reasons:");
+                Debug.Log("1. Contract name encoding differs (UTF-8 vs ASCII?)");
+                Debug.Log("2. Contract uses a different domain type string");
+                Debug.Log("3. Contract was deployed with different chainId");
+                Debug.Log("");
+                Debug.Log("Try checking contract source code on Polygonscan.");
+            }
+            else { Debug.Log("✅ Found matching format! Update ThirdWebAuthenticator to use it."); }
+
+            Debug.Log("══════════════════════════════════════════════════════════════════");
+
+            // Also check what chainId the contract thinks it has
+            Debug.Log("");
+            Debug.Log("Checking contract's getChainId()...");
+
+            try
+            {
+                var chainIdRequest = new EthApiRequest
+                {
+                    id = 1,
+                    method = "eth_call",
+                    @params = new object[]
+                    {
+                        new { to = contractAddress, data = "0x3408e470" }, // getChainId()
+                        "latest",
+                    },
+                };
+
+                EthApiResponse chainIdResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, chainIdRequest, destroyCancellationToken);
+                string chainIdHex = chainIdResponse.result?.ToString() ?? "0x0";
+                BigInteger contractChainId = chainIdHex.HexToNumber();
+                Debug.Log($"Contract's getChainId(): {contractChainId}");
+
+                if (contractChainId != chainId)
+                {
+                    Debug.LogError($"❌ CHAIN ID MISMATCH! Contract thinks it's on chain {contractChainId}, but we're using {chainId}");
+                    Debug.Log("This could explain the domain separator mismatch!");
+                }
+                else { Debug.Log($"✅ Chain ID matches: {chainId}"); }
+            }
+            catch (System.Exception ex) { Debug.LogWarning($"getChainId() failed: {ex.Message}"); }
+        }
+
+        /// <summary>
+        ///     Проверяет domain separator для Test Case 2 контракта.
+        /// </summary>
+        [ContextMenu(nameof(CheckDomainSeparator2))]
+        public async void CheckDomainSeparator2()
+        {
+            string contractAddress = testContractAddress2;
+            const int chainId = 137; // Polygon Mainnet
+
+            Debug.Log("╔══════════════════════════════════════════════════════════════════╗");
+            Debug.Log("║  DOMAIN SEPARATOR TEST - Case 2                                   ║");
+            Debug.Log("╚══════════════════════════════════════════════════════════════════╝");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Chain ID: {chainId}");
+
+            // Get contract's domain separator
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0xf698da25" }, // domainSeparator()
+                    "latest",
+                },
+            };
+
+            var contractDomainSep = "";
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request, destroyCancellationToken);
+                contractDomainSep = response.result?.ToString() ?? "0x";
+            }
+            catch (System.Exception ex) { Debug.LogWarning($"domainSeparator() failed: {ex.Message}"); }
+
+            Debug.Log("");
+            Debug.Log($"★★★ CONTRACT DOMAIN SEPARATOR: {contractDomainSep}");
+            Debug.Log("");
+
+            // Test with DCL Collection hardcoded values
+            Debug.Log("Testing with DCL Collection EIP-712 domain (name='Decentraland Collection', version='2')...");
+            const string DCL_COLLECTION_NAME = "Decentraland Collection";
+            string sep = ThirdWebAuthenticator.ComputeDomainSeparator(DCL_COLLECTION_NAME, "2", contractAddress, chainId);
+            bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+            Debug.Log($"[DCL Collection, v='2'] {sep} {(match ? "✅ MATCH!" : "❌ NO MATCH")}");
+
+            if (match) { Debug.Log($"🎯 SUCCESS! Domain separator matches with name='{DCL_COLLECTION_NAME}', version='2'"); }
+            else { Debug.LogError("❌ Domain separator does not match. Check contract source code."); }
+        }
+
+        /// <summary>
+        ///     Проверяет текущую цену газа на Polygon.
+        ///     Relay лимит: 800 gwei. Если текущая цена ниже — можно отправлять.
+        /// </summary>
+        [ContextMenu(nameof(CheckPolygonGasPrice))]
+        public async void CheckPolygonGasPrice()
+        {
+            const long RELAY_MAX_GAS_PRICE = 800_000_000_000; // 800 gwei
+
+            Debug.Log("=== Checking Polygon Gas Price ===");
+
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_gasPrice",
+                @params = System.Array.Empty<object>(),
+            };
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(137, request, destroyCancellationToken);
+                string gasPriceHex = response.result?.ToString() ?? "0x0";
+                BigInteger gasPriceWei = gasPriceHex.HexToNumber();
+
+                double gasPriceGwei = (double)gasPriceWei / 1_000_000_000;
+                double relayLimitGwei = (double)RELAY_MAX_GAS_PRICE / 1_000_000_000;
+
+                Debug.Log($"Current gas price: {gasPriceGwei:F2} gwei");
+                Debug.Log($"Relay limit: {relayLimitGwei:F2} gwei");
+
+                if (gasPriceWei <= RELAY_MAX_GAS_PRICE)
+                    Debug.Log("✅ GAS IS OK! You can send meta-transactions now.");
+                else
+                {
+                    double overage = (((double)gasPriceWei / RELAY_MAX_GAS_PRICE) - 1) * 100;
+                    Debug.LogWarning($"❌ Gas too high ({overage:F1}% over limit). Wait and try again later.");
+                }
+            }
+            catch (System.Exception ex) { Debug.LogError($"Failed to check gas: {ex.Message}"); }
+        }
+
+        /// <summary>
+        ///     Проверяет владельца NFT токена.
+        /// </summary>
+        [ContextMenu(nameof(CheckNftOwner))]
+        public async void CheckNftOwner()
+        {
+            var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
+            var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
+
+            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            Debug.Log("=== Checking NFT Owner ===");
+            Debug.Log($"My wallet: {walletAddress}");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Token ID: {tokenId}");
+
+            // ownerOf(uint256) selector = 0x6352211e
+            var tokenIdBig = BigInteger.Parse(tokenId);
+            string tokenIdHex = tokenIdBig.ToString("x").PadLeft(64, '0');
+            string data = "0x6352211e" + tokenIdHex;
+
+            var request = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data },
+                    "latest",
+                },
+            };
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(137, request, destroyCancellationToken);
+                string ownerHex = response.result?.ToString() ?? "0x";
+
+                // Decode address from result (last 40 chars)
+                if (ownerHex.Length >= 42)
+                {
+                    string owner = "0x" + ownerHex.Substring(ownerHex.Length - 40);
+                    Debug.Log($"NFT Owner: {owner}");
+
+                    if (owner.Equals(walletAddress, System.StringComparison.OrdinalIgnoreCase))
+                        Debug.Log("✅ YOU own this NFT - transfer should work");
+                    else
+                        Debug.LogWarning("❌ Someone else owns this NFT! You cannot transfer it.");
+                }
+                else { Debug.LogWarning($"Unexpected ownerOf result: {ownerHex}"); }
+            }
+            catch (System.Exception ex) { Debug.LogError($"Failed to check owner: {ex.Message}"); }
+        }
+
+        // Configurable test data - change these in Inspector to test with fresh data
+        [Header("Gifting Test Data - Test Case 1 (Decentraland Tutorial Wearables)")]
+        [SerializeField] private string testRecipientAddress = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+        [SerializeField] private string testContractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
+        [SerializeField] private string testTokenId = "210624583337114373395836055367340864637790190801098222508621978860";
+
+        [Header("Gifting Test Data - Test Case 2 (Another Collection)")]
+        [SerializeField] private string testRecipientAddress2 = "0xda2d974646fa7ee9f75f288db2050aae09c3ba1f";
+        [SerializeField] private string testContractAddress2 = "0x66871d01e15af85ea6c172b7c4821b0f9bb71880";
+        [SerializeField] private string testTokenId2 = "674";
+
+        /// <summary>
         ///     Тест gifting-сценария (NFT transferFrom) через relay.
         ///     Использует Web3RequestSource.Internal для отправки через Decentraland RPC relay.
         ///     Это тестирует fix для "insufficient funds for gas" ошибки.
+        ///     ВАЖНО: Измените testTokenId в Inspector если нужно протестировать с новыми данными!
         /// </summary>
         [ContextMenu(nameof(TestGiftingViaRelay))]
         public async void TestGiftingViaRelay()
         {
-            // Реальные тестовые данные из gifting flow
+            // Используем данные из Inspector - можно менять для тестов
             string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
-            var recipientAddress = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
-            var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
-            var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
+            string recipientAddress = testRecipientAddress;
+            string contractAddress = testContractAddress;
+            string tokenId = testTokenId;
 
             // Используем ManualTxEncoder как в Web3GiftTransferService
             string data = ManualTxEncoder.EncodeTransferFrom(senderAddress, recipientAddress, tokenId);
@@ -367,6 +713,68 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
+        ///     Тест gifting-сценария (NFT transferFrom) через relay - Test Case 2.
+        ///     Использует другую коллекцию для проверки что EIP-712 domain работает универсально.
+        /// </summary>
+        [ContextMenu(nameof(TestGiftingViaRelay2))]
+        public async void TestGiftingViaRelay2()
+        {
+            // Используем данные Test Case 2 из Inspector
+            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string recipientAddress = testRecipientAddress2;
+            string contractAddress = testContractAddress2;
+            string tokenId = testTokenId2;
+
+            // Используем ManualTxEncoder как в Web3GiftTransferService
+            string data = ManualTxEncoder.EncodeTransferFrom(senderAddress, recipientAddress, tokenId);
+
+            Debug.Log("=== Gifting Relay Test (Case 2) ===");
+            Debug.Log($"Sender: {senderAddress}");
+            Debug.Log($"Recipient: {recipientAddress}");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Token ID: {tokenId}");
+            Debug.Log($"Encoded data: {data}");
+
+            // Формируем запрос как в Web3GiftTransferService (JObject)
+            var tx = new JObject
+            {
+                ["from"] = senderAddress,
+                ["to"] = contractAddress,
+                ["data"] = data,
+            };
+
+            var request = new EthApiRequest
+            {
+                id = System.Guid.NewGuid().GetHashCode(),
+                method = "eth_sendTransaction",
+                @params = new object[] { tx },
+            };
+
+            Debug.Log($"Request params: {tx}");
+
+            try
+            {
+                // Gifting использует Polygon Mainnet (137)
+                // Используем Web3RequestSource.Internal для отправки через relay
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                    137, // Polygon Mainnet
+                    request,
+                    Web3RequestSource.Internal,
+                    destroyCancellationToken);
+
+                string txHash = response.result?.ToString() ?? "null";
+
+                Debug.Log("✅ Gifting relay transaction sent (Case 2)!");
+                Debug.Log($"Transaction Hash: {txHash}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"❌ Gifting relay failed (Case 2): {ex.Message}");
+                Debug.LogError($"Full exception: {ex}");
+            }
+        }
+
+        /// <summary>
         ///     Тест gifting-сценария БЕЗ relay (обычная транзакция).
         ///     Ожидается ошибка "insufficient funds for gas" если у кошелька нет MATIC.
         /// </summary>
@@ -411,6 +819,153 @@ namespace DCL.Web3.Authenticators
                 Debug.Log($"✅ Transaction sent (unexpected success): {txHash}");
             }
             catch (System.Exception ex) { Debug.LogError($"❌ Expected failure (no gas): {ex.Message}"); }
+        }
+
+        // ============================================================================
+        // SIGNATURE CACHING TESTS - 3 different wearables to verify signature changes
+        // ============================================================================
+
+        [Header("Signature Caching Test Data - Wearable 1")]
+        [SerializeField] private string cacheTest1_ContractAddress = "";
+        [SerializeField] private string cacheTest1_TokenId = "";
+        [SerializeField] private string cacheTest1_Recipient = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+
+        [Header("Signature Caching Test Data - Wearable 2")]
+        [SerializeField] private string cacheTest2_ContractAddress = "";
+        [SerializeField] private string cacheTest2_TokenId = "";
+        [SerializeField] private string cacheTest2_Recipient = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+
+        [Header("Signature Caching Test Data - Wearable 3")]
+        [SerializeField] private string cacheTest3_ContractAddress = "";
+        [SerializeField] private string cacheTest3_TokenId = "";
+        [SerializeField] private string cacheTest3_Recipient = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
+
+        /// <summary>
+        ///     Test 1 of 3 for signature caching verification.
+        ///     Run all 3 tests and compare signatures - they should ALL be DIFFERENT.
+        ///     If signatures are same, ThirdWeb SDK is caching.
+        /// </summary>
+        [ContextMenu("CacheTest 1 - First Wearable")]
+        public async void CacheTest1_FirstWearable()
+        {
+            await RunSignatureCacheTestAsync(1, cacheTest1_ContractAddress, cacheTest1_TokenId, cacheTest1_Recipient);
+        }
+
+        /// <summary>
+        ///     Test 2 of 3 for signature caching verification.
+        /// </summary>
+        [ContextMenu("CacheTest 2 - Second Wearable")]
+        public async void CacheTest2_SecondWearable()
+        {
+            await RunSignatureCacheTestAsync(2, cacheTest2_ContractAddress, cacheTest2_TokenId, cacheTest2_Recipient);
+        }
+
+        /// <summary>
+        ///     Test 3 of 3 for signature caching verification.
+        /// </summary>
+        [ContextMenu("CacheTest 3 - Third Wearable")]
+        public async void CacheTest3_ThirdWearable()
+        {
+            await RunSignatureCacheTestAsync(3, cacheTest3_ContractAddress, cacheTest3_TokenId, cacheTest3_Recipient);
+        }
+
+        /// <summary>
+        ///     Runs a signature cache test with the given parameters.
+        ///     Logs all relevant data for comparison.
+        /// </summary>
+        private async System.Threading.Tasks.Task RunSignatureCacheTestAsync(int testNumber, string contractAddress, string tokenId, string recipient)
+        {
+            Debug.Log("");
+            Debug.Log("╔══════════════════════════════════════════════════════════════════╗");
+            Debug.Log($"║  SIGNATURE CACHING TEST #{testNumber}                                       ║");
+            Debug.Log("╚══════════════════════════════════════════════════════════════════╝");
+
+            if (string.IsNullOrEmpty(contractAddress) || string.IsNullOrEmpty(tokenId))
+            {
+                Debug.LogError($"[CacheTest{testNumber}] Contract address or token ID is empty! Fill in the Inspector.");
+                return;
+            }
+
+            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+
+            Debug.Log($"[CacheTest{testNumber}] ▶ INPUT DATA:");
+            Debug.Log($"[CacheTest{testNumber}]   Sender: {senderAddress}");
+            Debug.Log($"[CacheTest{testNumber}]   Recipient: {recipient}");
+            Debug.Log($"[CacheTest{testNumber}]   Contract: {contractAddress}");
+            Debug.Log($"[CacheTest{testNumber}]   Token ID: {tokenId}");
+            Debug.Log($"[CacheTest{testNumber}]   Timestamp: {System.DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} UTC");
+
+            // Encode transferFrom
+            string functionSignature = ManualTxEncoder.EncodeTransferFrom(senderAddress, recipient, tokenId);
+            Debug.Log($"[CacheTest{testNumber}]   Function Signature: {functionSignature}");
+
+            var tx = new JObject
+            {
+                ["from"] = senderAddress,
+                ["to"] = contractAddress,
+                ["data"] = functionSignature,
+            };
+
+            var request = new EthApiRequest
+            {
+                id = System.Guid.NewGuid().GetHashCode(),
+                method = "eth_sendTransaction",
+                @params = new object[] { tx },
+            };
+
+            Debug.Log($"[CacheTest{testNumber}] ▶ SENDING via meta-transaction relay...");
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                    137, // Polygon Mainnet
+                    request,
+                    Web3RequestSource.Internal,
+                    destroyCancellationToken);
+
+                string result = response.result?.ToString() ?? "null";
+
+                Debug.Log($"[CacheTest{testNumber}] ▶ RESULT:");
+                Debug.Log($"[CacheTest{testNumber}]   ✅ SUCCESS! TxHash: {result}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[CacheTest{testNumber}] ▶ RESULT:");
+                Debug.LogError($"[CacheTest{testNumber}]   ❌ FAILED: {ex.Message}");
+
+                // Still log the signature from logs if available
+                Debug.Log($"[CacheTest{testNumber}]   Check [ThirdWeb] logs above for signature details.");
+            }
+
+            Debug.Log($"[CacheTest{testNumber}] ══════════════════════════════════════════════════════════════════");
+            Debug.Log("");
+        }
+
+        /// <summary>
+        ///     Prints comparison summary after running all 3 cache tests.
+        ///     Call this after running CacheTest 1, 2, and 3 to see if signatures differ.
+        /// </summary>
+        [ContextMenu("CacheTest - Print Summary")]
+        public void CacheTestPrintSummary()
+        {
+            Debug.Log("");
+            Debug.Log("╔══════════════════════════════════════════════════════════════════╗");
+            Debug.Log("║  SIGNATURE CACHING TEST SUMMARY                                  ║");
+            Debug.Log("╚══════════════════════════════════════════════════════════════════╝");
+            Debug.Log("");
+            Debug.Log("To verify if ThirdWeb SDK is caching signatures:");
+            Debug.Log("");
+            Debug.Log("1. Search logs for '[ThirdWeb] Full signature:' from each test");
+            Debug.Log("2. Compare the 3 signatures:");
+            Debug.Log("");
+            Debug.Log("   ✅ If ALL 3 signatures are DIFFERENT → No caching, working correctly");
+            Debug.Log("   ❌ If ANY 2 signatures are SAME → SDK is caching signatures!");
+            Debug.Log("");
+            Debug.Log("Also compare '[EIP712-Hash] ★ Final digest:' values:");
+            Debug.Log("   - Different digests = different typed data (expected)");
+            Debug.Log("   - Same digests = something wrong with our hash computation");
+            Debug.Log("");
+            Debug.Log("══════════════════════════════════════════════════════════════════");
         }
     }
 }
