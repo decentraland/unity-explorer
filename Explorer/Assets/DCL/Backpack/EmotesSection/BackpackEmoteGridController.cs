@@ -109,6 +109,7 @@ namespace DCL.Backpack.EmotesSection
             eventBus.FilterEvent += OnFilterEvent;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
+            RequestAndFillEmotes(1, true);
         }
 
         public void Deactivate()
