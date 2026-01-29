@@ -45,6 +45,10 @@ namespace ECS.Unity.AssetLoad.Systems
             World.Destroy(entity);
         }
 
+        /// <summary>
+        ///     Reflects removal of PBAssetLoad component by removing AssetPreLoadComponent so that
+        ///     we are in sync with the scene state
+        /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAssetLoad))]
         [All(typeof(AssetPreLoadComponent))]
