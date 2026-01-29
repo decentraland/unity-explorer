@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 
-namespace DCL.Communities
+namespace DCL.UI
 {
-    public static class CommunitiesUtility
+    public static class UIUtils
     {
         private static ReadOnlySpan<char> formatSpan => "0.#".AsSpan();
 
