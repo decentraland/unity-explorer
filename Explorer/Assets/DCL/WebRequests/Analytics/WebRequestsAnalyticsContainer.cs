@@ -38,7 +38,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
-            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+            if (!pendingRequests.TryGetValue(request.UnityWebRequest, out DateTime startTime))
                 return;
 
             DateTime now = DateTime.Now;
@@ -50,7 +50,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
         {
-            if (!pendingRequests.ContainsKey(request.UnityWebRequest))
+            if (!pendingRequests.Remove(request.UnityWebRequest))
                 return;
 
             foreach (IWebRequestAnalyticsHandler? handler in handlers)
