@@ -22,44 +22,48 @@ namespace DCL.WebRequests.Analytics
     {
         private DebugWidgetBuilder? widget;
 
+        private DebugMetricsAnalyticsHandler debugMetricsAnalyticsHandler;
+
         public IWebRequestController WebRequestController { get; private set; }
 
         public IWebRequestController SceneWebRequestController { get; private set; }
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; }
 
-        public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; private set; }
+        public ChromeDevToolHandler ChromeDevToolHandler { get; private set; }
 
         private WebRequestsContainer() { }
 
         public override void Dispose() =>
-            WebRequestsDumper.Instance.AnalyticsContainer = null;
+            WebRequestsDumper.Instance.AnalyticsHandler = null;
 
         public WebRequestsPlugin CreatePlugin(bool isLocalSceneDevelopment)
         {
-            AnalyticsContainer
-               .BuildUpDebugWidget(isLocalSceneDevelopment)
-               .AddTrackedMetric<ActiveCounter>()
-               .AddTrackedMetric<Total>()
-               .AddTrackedMetric<TotalFailed>()
-               .AddTrackedMetric<BandwidthDown>()
-               .AddTrackedMetric<BandwidthUp>()
-               .AddTrackedMetric<ServeTimeSmallFileAverage>()
-               .AddTrackedMetric<ServeTimePerMBAverage>()
-               .AddTrackedMetric<FillRateAverage>()
-               .AddTrackedMetric<TimeToFirstByteAverage>()
-               .Build();
-
-            widget?.AddSingleButton("Open Chrome DevTools", () =>
+            if (widget != null)
             {
-                BridgeStartResult result = ChromeDevtoolProtocolClient.StartAndOpen();
-                string? errorMessage = ErrorMessageFromBridgeResult(result);
+                debugMetricsAnalyticsHandler.BuildUpDebugWidget(isLocalSceneDevelopment)
+                                            .AddTrackedMetric<ActiveCounter>()
+                                            .AddTrackedMetric<Total>()
+                                            .AddTrackedMetric<TotalFailed>()
+                                            .AddTrackedMetric<BandwidthDown>()
+                                            .AddTrackedMetric<BandwidthUp>()
+                                            .AddTrackedMetric<ServeTimeSmallFileAverage>()
+                                            .AddTrackedMetric<ServeTimePerMBAverage>()
+                                            .AddTrackedMetric<FillRateAverage>()
+                                            .AddTrackedMetric<TimeToFirstByteAverage>()
+                                            .Build();
 
-                if (errorMessage != null)
-                    NotificationsBusController
-                       .Instance
-                       .AddNotification(new ServerErrorNotification(errorMessage));
-            });
+                widget.AddSingleButton("Open Chrome DevTools", () =>
+                {
+                    BridgeStartResult result = ChromeDevToolHandler.StartAndOpen();
+                    string? errorMessage = ErrorMessageFromBridgeResult(result);
+
+                    if (errorMessage != null)
+                        NotificationsBusController
+                           .Instance
+                           .AddNotification(new ServerErrorNotification(errorMessage));
+                });
+            }
 
             return new WebRequestsPlugin(AnalyticsContainer);
         }
@@ -85,7 +89,7 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
+            ChromeDevToolHandler chromeDevtoolProtocolHandler,
             SentrySampler? sentrySampler,
             CancellationToken ct
         )
@@ -111,9 +115,13 @@ namespace DCL.WebRequests.Analytics
                     sentryWebRequestHandler = new SentryWebRequestHandler(sentryWebRequestSampler);
                 }
 
-                var analyticsContainer = new WebRequestsAnalyticsContainer(widget, sentryWebRequestHandler);
+                var debugHandler = new DebugMetricsAnalyticsHandler(widget);
+                container.debugMetricsAnalyticsHandler = debugHandler;
+                var dumpHandler = new WebRequestDumpAnalyticsHandler();
 
-                WebRequestsDumper.Instance.AnalyticsContainer = analyticsContainer;
+                WebRequestsDumper.Instance.AnalyticsHandler = dumpHandler;
+
+                var analyticsContainer = new WebRequestsAnalyticsContainer(sentryWebRequestHandler, dumpHandler, debugHandler, chromeDevtoolProtocolHandler);
 
                 var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
@@ -124,13 +132,13 @@ namespace DCL.WebRequests.Analytics
 
                 var requestHub = new RequestHub(urlsSource);
 
-                IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(coreBudget, coreAvailableBudget))
-                                                                .WithDump(analyticsContainer)
+                IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget))
+                                                                .WithDump(debugHandler, dumpHandler)
                                                                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                 .WithArtificialDelay(options);
 
-                IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
-                                                                 .WithDump(analyticsContainer)
+                IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
+                                                                 .WithDump(debugHandler, dumpHandler)
                                                                  .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                  .WithArtificialDelay(options);
 
@@ -142,7 +150,7 @@ namespace DCL.WebRequests.Analytics
                 container.WebRequestController = coreWebRequestController;
                 container.SceneWebRequestController = sceneWebRequestController;
                 container.AnalyticsContainer = analyticsContainer;
-                container.ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
+                container.ChromeDevToolHandler = chromeDevtoolProtocolHandler;
 
                 return UniTask.CompletedTask;
 

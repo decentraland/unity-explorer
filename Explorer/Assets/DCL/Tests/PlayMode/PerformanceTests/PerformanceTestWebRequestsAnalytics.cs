@@ -35,6 +35,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public static double ToMs(long a, long b) =>
             (b - a) * (1_000_000.0 / Stopwatch.Frequency);
 
+        void IWebRequestsAnalyticsContainer.OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) { }
+
         void IWebRequestsAnalyticsContainer.OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
             if (WarmingUp) return;
@@ -56,13 +58,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             requests.Remove(request.UnityWebRequest);
         }
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request)
-        {
-            if (WarmingUp) return;
-
-            requests[request.UnityWebRequest] = new RequestState(Stopwatch.GetTimestamp());
-        }
-
         void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
         {
             if (WarmingUp) return;
@@ -75,6 +70,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception) { }
 
         void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception) { }
+
+        public void Update(float dt) { }
 
         private readonly struct RequestState
         {

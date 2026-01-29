@@ -85,7 +85,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), null, ct),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,

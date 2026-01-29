@@ -1,6 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics;
 using Sentry;
 using Sentry.Unity;
@@ -13,7 +12,7 @@ using static DCL.PerformanceAndDiagnostics.SentryTransactionMapping<UnityEngine.
 
 namespace DCL.WebRequests.Analytics
 {
-    public class SentryWebRequestHandler
+    public class SentryWebRequestHandler : IWebRequestAnalyticsHandler
     {
         private readonly SentryWebRequestSampler sampler;
 
@@ -29,12 +28,16 @@ namespace DCL.WebRequests.Analytics
 
             onRequestStarted = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnRequestStarted)}");
             onRequestFinished = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnRequestFinished)}");
-            onProcessDataStarted = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnProcessDataStarted)}");
+            onProcessDataStarted = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.OnProcessDataStarted");
             onProcessDataFinished = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnProcessDataFinished)}");
             onException = new ProfilerMarker($"{nameof(SentryWebRequestHandler)}.{nameof(OnException)}");
         }
 
-        internal void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct
+        public void Update(float dt) { }
+
+        public void OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct { }
+
+        public void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request, DateTime startedAt) where T: struct, ITypedWebRequest where TWebRequestArgs: struct
         {
             using ProfilerMarker.AutoScope __ = onRequestStarted.Auto();
 
@@ -77,7 +80,7 @@ namespace DCL.WebRequests.Analytics
             }
         }
 
-        internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest
+        public void OnRequestFinished<T>(T request, TimeSpan duration) where T: ITypedWebRequest
         {
             using ProfilerMarker.AutoScope _ = onRequestFinished.Auto();
 
@@ -88,10 +91,7 @@ namespace DCL.WebRequests.Analytics
                 transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpRequestContentLength, uwr.uploadedBytes);
                 transaction.SetExtra(OpenTelemetrySemantics.AttributeHttpResponseContentLength, uwr.downloadedBytes);
             }
-        }
 
-        internal void OnProcessDataStarted<T>(T request) where T: ITypedWebRequest
-        {
             const string OP_NAME = "process_data";
 
             using ProfilerMarker.AutoScope __ = onProcessDataStarted.Auto();
@@ -104,7 +104,7 @@ namespace DCL.WebRequests.Analytics
         /// <summary>
         ///     It will be called if the request has successfully finished along with all data processing
         /// </summary>
-        internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest
+        public void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest
         {
             using ProfilerMarker.AutoScope _ = onProcessDataFinished.Auto();
 
@@ -112,7 +112,7 @@ namespace DCL.WebRequests.Analytics
             Instance.EndTransaction(request.UnityWebRequest);
         }
 
-        internal void OnException(UnityWebRequestException unityWebRequestException)
+        public void OnException(UnityWebRequestException unityWebRequestException, TimeSpan duration)
         {
             using ProfilerMarker.AutoScope _ = onException.Auto();
 
@@ -125,13 +125,15 @@ namespace DCL.WebRequests.Analytics
             }
         }
 
-        internal void OnException<T>(T request, Exception exception) where T: ITypedWebRequest
+        public void OnException<T>(T request, Exception exception, TimeSpan duration) where T: ITypedWebRequest
         {
             using ProfilerMarker.AutoScope _ = onException.Auto();
 
             // The exception will be attached to the corresponding transaction automatically
             Instance.EndTransactionWithError(request.UnityWebRequest, $"{exception.GetType().Name}", exception: exception);
         }
+
+        public void OnException<T>(T request, UnityWebRequestException exception, TimeSpan duration) where T: ITypedWebRequest { }
 
         /// <summary>
         ///     Copied from the internal class SpanStatusConverter

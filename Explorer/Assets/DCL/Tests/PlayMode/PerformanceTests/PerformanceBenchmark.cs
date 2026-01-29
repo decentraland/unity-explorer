@@ -8,7 +8,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using NSubstitute;
 using NUnit.Framework;
@@ -47,8 +46,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             analytics = new PerformanceTestWebRequestsAnalytics();
 
             controller = new WebRequestController(analytics, identityCache,
-                new RequestHub(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
-                ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
+                new RequestHub(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
         protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,

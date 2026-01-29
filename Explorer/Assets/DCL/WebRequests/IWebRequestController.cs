@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using System.Collections.Generic;
 
@@ -30,7 +29,6 @@ namespace DCL.WebRequests
             new RequestHub(
                 DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
-            ChromeDevtoolProtocolClient.NewForTest(),
             new WebRequestBudget(TOTAL_BUDGET,
                 new ElementBinding<ulong>((ulong)TOTAL_BUDGET))
         );

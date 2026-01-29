@@ -1,13 +1,5 @@
-using CDPBridges;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.Pools;
-using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.ChromeDevtool;
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using UnityEngine.Networking;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -16,23 +8,21 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer(null, null);
+        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer();
 
-        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics();
-
-        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType);
+        protected internal void OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct;
 
         protected internal void OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request) where T: struct, ITypedWebRequest where TWebRequestArgs: struct;
 
         protected internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest;
-
-        protected internal void OnProcessDataStarted<T>(T request) where T: ITypedWebRequest;
 
         protected internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest;
 
         protected internal void OnException<T>(T request, Exception exception) where T: ITypedWebRequest;
 
         protected internal void OnException<T>(T request, UnityWebRequestException exception) where T: ITypedWebRequest;
+
+        public void Update(float dt);
 
         public readonly struct RequestType
         {
@@ -43,76 +33,6 @@ namespace DCL.WebRequests.Analytics
             {
                 Type = type;
                 MarkerName = markerName;
-            }
-        }
-    }
-
-    public static class WebRequestsAnalyticsExtensions
-    {
-        internal static async UniTask WithAnalyticsAsync<T, TWebRequestArgs>(this T request, RequestEnvelope<T, TWebRequestArgs> envelope, IWebRequestsAnalyticsContainer analyticsContainer, CancellationToken ct) where T: struct, ITypedWebRequest
-                                                                                                                                                                                                                    where TWebRequestArgs: struct
-        {
-            try
-            {
-                // Analytics should be allowed to modify request headers, so the request should not be launched yet
-                analyticsContainer.OnRequestStarted(envelope, request);
-                await request.SendRequest(ct);
-            }
-            finally
-            {
-                // Regardless of the exception at this moment request is not disposed of, and, thus, can be read from
-                analyticsContainer.OnRequestFinished(request);
-            }
-        }
-
-        internal static async UniTask WithChromeDevtoolsAsync<TWebRequest, TWebRequestArgs>(this UniTask innerTask, RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, UnityWebRequest uwr, ChromeDevtoolProtocolClient chromeDevtoolProtocolClient) where TWebRequestArgs: struct where TWebRequest: struct, ITypedWebRequest
-        {
-            NotifyWebRequestScope? notifyScope = null;
-
-            PooledObject<Dictionary<string, string>> pooledObject;
-
-            if (chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners)
-            {
-                pooledObject = envelope.Headers(out Dictionary<string, string> headers);
-                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers, envelope.GetPostData());
-            }
-            else
-
-                // Don't waste memory and CPU to rent a dictionary if dev tools are disabled
-                pooledObject = PoolExtensions.EmptyPooledObject<Dictionary<string, string>>();
-
-            using PooledObject<Dictionary<string, string>> _ = pooledObject;
-
-            try
-            {
-                await innerTask;
-
-                if (notifyScope != null)
-                {
-                    var statusCode = (int)uwr.responseCode;
-
-                    Dictionary<string, string>? responseHeaders = uwr.GetResponseHeaders();
-
-                    string mimeType = uwr.GetRequestHeader("Content-Type") ?? "application/octet-stream";
-                    var encodedDataLength = (int)uwr.downloadedBytes;
-
-                    notifyScope.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength, uwr.downloadHandler).Forget();
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                notifyScope?.NotifyFailed("Cancelled", true);
-                throw;
-            }
-            catch (UnityWebRequestException unityWebRequestException)
-            {
-                notifyScope?.NotifyFailed(unityWebRequestException.Error, false);
-                throw;
-            }
-            catch (Exception e)
-            {
-                notifyScope?.NotifyFailed($"Engine exception: {e.Message}", false);
-                throw;
             }
         }
     }
