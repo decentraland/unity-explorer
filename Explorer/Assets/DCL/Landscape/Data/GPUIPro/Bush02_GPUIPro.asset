@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Bush02_GPUIPro
   m_EditorClassIdentifier: 
-  asset: {fileID: 4548257113317227881, guid: 9515fa18911945b45948346424d9f80c, type: 3}
-  <Collider>k__BackingField: {fileID: 5833301951409387908, guid: c7873fe362e0c1e4ea036ace8cd58db1, type: 3}
+  asset: {fileID: 4758652354189796069, guid: 225d601eb28b45540bf0296c13ad8b50, type: 3}
   noiseData: {fileID: 11400000, guid: c838e028277040648b501f9e3efa444a, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -27,9 +26,12 @@ MonoBehaviour:
     positionOffsetX: {x: -0.5, y: 0.5}
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: -0.5, y: 0.5}
+  <Collider>k__BackingField: {fileID: 5833301951409387908, guid: c7873fe362e0c1e4ea036ace8cd58db1, type: 3}
   radius: 2
   secondaryRadius: 1
   TerrainDetailSettings:
+    <Mesh>k__BackingField: {fileID: 0}
+    <Material>k__BackingField: {fileID: 0}
     alignToGround: 100
     positionJitter: 50
     minWidth: 1

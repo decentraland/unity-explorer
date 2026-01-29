@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
   m_Name: Tree03_GPUIPro
   m_EditorClassIdentifier: 
-  asset: {fileID: 757561452486300604, guid: 7f5f743070d9fdb46b75747cc29d611e, type: 3}
-  <Collider>k__BackingField: {fileID: 2273080821184583089, guid: 7777deab9651bf543aea6ecea0e0cae9, type: 3}
+  asset: {fileID: 4028607707654453896, guid: 2451413b3d64bac4b8562d1687ebc1c6, type: 3}
   noiseData: {fileID: 11400000, guid: 4b5bbd9f44aa16040bbf02fd016b21cc, type: 2}
   randomization:
     randomRotationX: {x: -5, y: 5}
@@ -27,9 +26,12 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
+  <Collider>k__BackingField: {fileID: 2273080821184583089, guid: 7777deab9651bf543aea6ecea0e0cae9, type: 3}
   radius: 13
   secondaryRadius: 2
   TerrainDetailSettings:
+    <Mesh>k__BackingField: {fileID: 0}
+    <Material>k__BackingField: {fileID: 0}
     alignToGround: 100
     positionJitter: 50
     minWidth: 1
