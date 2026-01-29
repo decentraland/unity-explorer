@@ -12,6 +12,10 @@ namespace DCL.Events
 {
     public class EventsCalendarView : MonoBehaviour
     {
+        private const int EVENT_CARD_SMALL_PREFAB_INDEX = 0;
+        private const int EVENT_CARD_BIG_PREFAB_INDEX = 1;
+        private const int EVENT_CARD_EMPTY_PREFAB_INDEX = 2;
+
         public event Action<DateTime, int>? DaysRangeChanged;
 
         [Header("Days Selector")]
@@ -113,7 +117,7 @@ namespace DCL.Events
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
             var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][eventIndex]);
-            int itemPrefabIndex = eventInfo.live ? 1 : 0;
+            int itemPrefabIndex = eventInfo.live ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX;
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
 
             // Setup card data
