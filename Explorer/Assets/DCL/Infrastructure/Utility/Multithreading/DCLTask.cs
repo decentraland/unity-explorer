@@ -36,12 +36,8 @@ namespace Utility.Multithreading
                 bool configureAwait = true, 
                 CancellationToken cancellationToken = default)
         {
-        {
             return UniTask.RunOnThreadPool(action, configureAwait, cancellationToken);
         }
 #endif    
-
-
-
     }
 }

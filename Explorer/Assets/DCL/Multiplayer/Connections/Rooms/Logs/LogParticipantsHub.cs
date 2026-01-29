@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             origin.UpdatesFromParticipant += OriginOnUpdatesFromParticipant;
         }
 
-        private void OriginOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OriginOnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -26,27 +26,27 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             UpdatesFromParticipant?.Invoke(participant, update);
         }
 
-        public Participant LocalParticipant()
+        public LKParticipant LocalParticipant()
         {
-            Participant participant = origin.LocalParticipant();
+            LKParticipant participant = origin.LocalParticipant();
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} local {participant.ReadableString()}");
             return participant;
         }
 
-        public Participant? RemoteParticipant(string identity)
+        public LKParticipant? RemoteParticipant(string identity)
         {
-            Participant? participant = origin.RemoteParticipant(identity);
+            LKParticipant? participant = origin.RemoteParticipant(identity);
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} with sid {identity} remote {participant?.ReadableString() ?? "NONE"}");
             return participant;
         }
 
-        public IReadOnlyDictionary<string, Participant> RemoteParticipantIdentities()
+        public IReadOnlyDictionary<string, LKParticipant> RemoteParticipantIdentities()
         {
-            IReadOnlyDictionary<string, Participant> sids = origin.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, LKParticipant> sids = origin.RemoteParticipantIdentities();
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} remote sids {(sids.Count > 0 ? string.Join(", ", sids) : "empty")} ");

@@ -21,6 +21,7 @@ using System;
 using System.Threading;
 using UnityEngine.Pool;
 using RichTypes;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -74,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public void Assign(IRoom room, out IRoom? previous)
         {
-            if (assigned is { Info: { ConnectionState: ConnectionState.ConnConnected or ConnectionState.ConnReconnecting } })
+            if (assigned is { Info: { ConnectionState: LKConnectionState.ConnConnected or LKConnectionState.ConnReconnecting } })
                 ReportHub.LogError(ReportCategory.LIVEKIT, "Assigning a new room without disconnecting the previous one");
 
             previous = assigned;
@@ -147,13 +148,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         public void SimulateConnectionStateChanged()
         {
             // It's not clear why LiveKit has two different events for the same thing
-            ConnectionState currentState = assigned.Info.ConnectionState;
+            LKConnectionState currentState = assigned.Info.ConnectionState;
 
             ConnectionUpdate connectionUpdate = currentState switch
                                                 {
-                                                    ConnectionState.ConnConnected => ConnectionUpdate.Connected,
-                                                    ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
-                                                    ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
+                                                    LKConnectionState.ConnConnected => ConnectionUpdate.Connected,
+                                                    LKConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
+                                                    LKConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
                                                 };
 
@@ -214,17 +215,19 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, LKDisconnectReason? disconnectReason = null)
         {
             ConnectionUpdated?.Invoke(room, connectionupdate, disconnectReason);
         }
 
-        private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
+        private void RoomOnConnectionStateChanged(LKConnectionState connectionstate)
         {
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
-        private void RoomOnConnectionQualityChanged(ConnectionQuality quality, Participant participant)
+        private void RoomOnConnectionQualityChanged(
+                LKConnectionQuality quality, 
+                LKParticipant participant)
         {
             ConnectionQualityChanged?.Invoke(quality, participant);
         }

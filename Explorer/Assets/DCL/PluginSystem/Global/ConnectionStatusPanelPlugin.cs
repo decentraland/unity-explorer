@@ -14,6 +14,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
+using DCL.LiveKit.Public;
 
 namespace DCL.PluginSystem.Global
 {
@@ -84,10 +85,10 @@ namespace DCL.PluginSystem.Global
             connectionStatusPanelController.SetPanelEnabled(isVisible);
         }
 
-        private void OnIslandConnectionQualityUpdate(ConnectionQuality quality) =>
+        private void OnIslandConnectionQualityUpdate(LKConnectionQuality quality) =>
             connectionStatusPanelController.SetGlobalRoomStatus(GetConnectionStatus(quality));
 
-        private void OnSceneConnectionQualityUpdate(ConnectionQuality quality) =>
+        private void OnSceneConnectionQualityUpdate(LKConnectionQuality quality) =>
             connectionStatusPanelController.SetSceneRoomStatus(GetConnectionStatus(quality));
 
         private void OnSceneStatusUpdate(ICurrentSceneInfo.RunningStatus? status)
@@ -110,14 +111,14 @@ namespace DCL.PluginSystem.Global
         private void OnAssetBundleStatusUpdate(AssetBundleRegistryEnum? assetBundleStatus) =>
             connectionStatusPanelController.SetAssetBundleSceneStatus(assetBundleStatus);
 
-        private static ConnectionStatus GetConnectionStatus(ConnectionQuality quality)
+        private static ConnectionStatus GetConnectionStatus(LKConnectionQuality quality)
         {
             return quality switch
                    {
-                       ConnectionQuality.QualityPoor => ConnectionStatus.Poor,
-                       ConnectionQuality.QualityGood => ConnectionStatus.Good,
-                       ConnectionQuality.QualityExcellent => ConnectionStatus.Excellent,
-                       ConnectionQuality.QualityLost => ConnectionStatus.Lost,
+                       LKConnectionQuality.QualityPoor => ConnectionStatus.Poor,
+                       LKConnectionQuality.QualityGood => ConnectionStatus.Good,
+                       LKConnectionQuality.QualityExcellent => ConnectionStatus.Excellent,
+                       LKConnectionQuality.QualityLost => ConnectionStatus.Lost,
                        _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null)
                    };
         }

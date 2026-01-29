@@ -7,6 +7,7 @@ using DCL.Optimization.Multithreading;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using DCL.LiveKit.Public;
 
 using System.Collections.Generic;
 
@@ -30,22 +31,22 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         }
 
         // TODO how to remove boiler-plate methods and preserve RoomSource?
-        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdateFromIsland(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             OnConnectionUpdated(room, connectionUpdate, RoomSource.ISLAND);
         }
 
-        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdateFromScene(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             OnConnectionUpdated(room, connectionUpdate, RoomSource.GATEKEEPER);
         }
 
-        private void OnParticipantUpdateFromIsland(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdateFromIsland(LKParticipant participant, UpdateFromParticipant update)
         {
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.ISLAND);
         }
 
-        private void OnParticipantUpdateFromScene(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdateFromScene(LKParticipant participant, UpdateFromParticipant update)
         {
             ParticipantsOnUpdatesFromParticipant(participant, update, RoomSource.GATEKEEPER);
         }
@@ -59,13 +60,13 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (room.Participants)
                 {
-                    foreach (KeyValuePair<string, Participant> participant in room.Participants.RemoteParticipantIdentities())
+                    foreach (KeyValuePair<string, LKParticipant> participant in room.Participants.RemoteParticipantIdentities())
                         list.Add(new RemoveIntention(participant.Value.Identity, roomSource));
                 }
             }
         }
 
-        private void ParticipantsOnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, RoomSource roomSource)
+        private void ParticipantsOnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, RoomSource roomSource)
         {
             if (update is UpdateFromParticipant.Disconnected)
                 ThreadSafeAdd(new RemoveIntention(participant.Identity, roomSource));

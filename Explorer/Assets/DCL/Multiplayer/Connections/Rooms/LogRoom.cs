@@ -22,6 +22,7 @@ using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using RichTypes;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -115,7 +116,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             RoomMetadataChanged?.Invoke(metadata);
         }
 
-        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OriginOnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -124,7 +125,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionUpdated?.Invoke(room, connectionUpdate, disconnectReason);
         }
 
-        private void OriginOnConnectionStateChanged(ConnectionState connectionState)
+        private void OriginOnConnectionStateChanged(LKConnectionState connectionState)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -133,7 +134,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionStateChanged?.Invoke(connectionState);
         }
 
-        private void OriginOnConnectionQualityChanged(ConnectionQuality quality, Participant participant)
+        private void OriginOnConnectionQualityChanged(LKConnectionQuality quality, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -143,7 +144,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         }
 
 #if !UNITY_WEBGL
-        private void OriginOnTrackUnmuted(TrackPublication publication, Participant participant)
+        private void OriginOnTrackUnmuted(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -152,7 +153,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackUnmuted?.Invoke(publication, participant);
         }
 
-        private void OriginOnTrackMuted(TrackPublication publication, Participant participant)
+        private void OriginOnTrackMuted(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -161,7 +162,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackMuted?.Invoke(publication, participant);
         }
 
-        private void OriginOnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OriginOnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -170,7 +171,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackUnsubscribed?.Invoke(track, publication, participant);
         }
 
-        private void OriginOnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OriginOnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -179,7 +180,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackSubscribed?.Invoke(track, publication, participant);
         }
 
-        private void OriginOnLocalTrackPublished(TrackPublication publication, Participant participant)
+        private void OriginOnLocalTrackPublished(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -188,7 +189,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             LocalTrackPublished?.Invoke(publication, participant);
         }
 
-        private void OriginOnTrackUnpublished(TrackPublication publication, Participant participant)
+        private void OriginOnTrackUnpublished(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -197,7 +198,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             TrackUnpublished?.Invoke(publication, participant);
         }        
 
-        private void OriginOnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        private void OriginOnLocalTrackUnpublished(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -206,7 +207,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             LocalTrackUnpublished?.Invoke(publication, participant);
         }        
 
-        private void OriginOnTrackPublished(TrackPublication publication, Participant participant)
+        private void OriginOnTrackPublished(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)

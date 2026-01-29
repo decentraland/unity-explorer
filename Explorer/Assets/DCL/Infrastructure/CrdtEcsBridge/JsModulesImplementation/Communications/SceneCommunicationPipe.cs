@@ -10,6 +10,7 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LiveKit.Public;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -91,7 +92,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
-            sceneMessage.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
+            sceneMessage.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
         }
 
         private readonly struct SubscriberKey : IEquatable<SubscriberKey>

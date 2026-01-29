@@ -16,6 +16,7 @@ using LiveKit.Proto;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Chat.ChatServices
 {
@@ -112,7 +113,7 @@ namespace DCL.Chat.ChatServices
                 );
 
                 await UniTask.WaitUntil(() =>
-                    chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
+                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected &&
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
@@ -257,7 +258,7 @@ namespace DCL.Chat.ChatServices
             return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
         }
 
-        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             lock (onlineParticipants)
             {
@@ -283,7 +284,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
             string userId = participant.Identity;

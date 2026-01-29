@@ -6,20 +6,20 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 {
     public class NullParticipantsHub : IParticipantsHub
     {
-        private static readonly IReadOnlyDictionary<string, Participant> EMPTY_DICTIONARY = new Dictionary<string, Participant>();
+        private static readonly IReadOnlyDictionary<string, LKParticipant> EMPTY_DICTIONARY = new Dictionary<string, LKParticipant>();
 
         public static readonly NullParticipantsHub INSTANCE = new ();
-        private static readonly Participant NULL_PARTICIPANT = new ();
+        private static readonly LKParticipant NULL_PARTICIPANT = new ();
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 
-        public Participant LocalParticipant() =>
+        public LKParticipant LocalParticipant() =>
             NULL_PARTICIPANT;
 
-        public Participant? RemoteParticipant(string identity) =>
+        public LKParticipant? RemoteParticipant(string identity) =>
             null;
 
-        public IReadOnlyDictionary<string, Participant> RemoteParticipantIdentities() =>
+        public IReadOnlyDictionary<string, LKParticipant> RemoteParticipantIdentities() =>
             EMPTY_DICTIONARY;
     }
 }

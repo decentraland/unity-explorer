@@ -91,8 +91,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             identityHashCache.Clear();
 
-            IReadOnlyDictionary<string, Participant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
-            IReadOnlyDictionary<string, Participant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, LKParticipant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, LKParticipant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
 
             identityHashCache.EnsureCapacity(islandIdentities.Count + sceneIdentities.Count);
 
