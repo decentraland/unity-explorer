@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Browser.DecentralandUrls;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Landscape.Parcel;
 using DCL.Landscape.Settings;
@@ -45,6 +46,18 @@ namespace ECS.SceneLifeCycle.Tests
                 new HashSet<Vector2Int>(), realmData, landscapeParcelData, DecentralandUrlsSource.CreateForTest());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
+        }
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
         }
 
         [TearDown]
