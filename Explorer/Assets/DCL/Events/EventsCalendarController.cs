@@ -21,8 +21,6 @@ namespace DCL.Events
         private readonly HttpEventsApiService eventsApiService;
         private readonly EventsStateService eventsStateService;
 
-        private DateTime currentFromDate;
-
         private CancellationTokenSource? loadEventsCts;
 
         public EventsCalendarController(
@@ -55,17 +53,17 @@ namespace DCL.Events
             loadEventsCts?.SafeCancelAndDispose();
         }
 
-        private void OnSectionOpened() =>
-            view.SetupDaysSelector(DateTime.Today, 5);
+        private void OnSectionOpened()
+        {
+            DateTime todayAtTheBeginningOfTheDay = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0, DateTimeKind.Local);
+            view.SetupDaysSelector(todayAtTheBeginningOfTheDay, 5);
+        }
 
         private void OnSectionClosed() =>
             UnloadEvents();
 
-        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
-        {
-            currentFromDate = fromDate;
+        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays) =>
             LoadEvents(fromDate, numberOfDays);
-        }
 
         private void LoadEvents(DateTime fromDate, int numberOfDays)
         {
@@ -78,7 +76,9 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(currentFromDate, null, ct)
+            var fromDateUtc = fromDate.ToUniversalTime();
+            var toDateUtc = fromDate.AddDays(numberOfDays).ToUniversalTime();
+            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
@@ -93,7 +93,27 @@ namespace DCL.Events
             if (eventsResult.Value.Count > 0)
             {
                 eventsStateService.SetEvents(eventsResult.Value);
-                view.SetEvents(eventsResult.Value, 0, true);
+
+                List<List<EventDTO>> eventsGroupedByDay = new (numberOfDays);
+                for (var i = 0; i < numberOfDays; i++)
+                    eventsGroupedByDay.Add(new List<EventDTO>());
+
+                foreach (EventDTO eventInfo in eventsResult.Value)
+                {
+                    DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
+
+                    for (var i = 0; i < numberOfDays; i++)
+                    {
+                        if (eventLocalDate.Date == fromDate.AddDays(i))
+                        {
+                            eventsGroupedByDay[i].Add(eventInfo);
+                            break;
+                        }
+                    }
+                }
+
+                for (var i = 0; i < eventsGroupedByDay.Count; i++)
+                    view.SetEvents(eventsGroupedByDay[i], i, true);
             }
 
             view.SetAsLoading(false);

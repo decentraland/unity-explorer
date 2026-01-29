@@ -23,7 +23,7 @@ namespace DCL.EventsApi
         private const string PAGINATION_LIMIT_PARAMETER = "limit";
         private const string PAGINATION_OFFSET_PARAMETER = "offset";
         private const string FROM_DATE_PARAMETER = "from";
-        private const string TO_DATE_PARAMETER = "from";
+        private const string TO_DATE_PARAMETER = "to";
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();

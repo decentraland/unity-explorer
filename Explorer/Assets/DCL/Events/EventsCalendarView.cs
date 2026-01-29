@@ -60,6 +60,8 @@ namespace DCL.Events
 
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
         {
+            previousDateRangeButton.interactable = fromDate != DateTime.Today;
+
             for (var i = 0; i < daySelectorButtons.Count; i++)
             {
                 EventsDaySelectorButton daySelectorButton = daySelectorButtons[i];
@@ -92,8 +94,8 @@ namespace DCL.Events
 
         public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
-            currentEventsIds.Clear();
-            currentEventsIds[eventsListIndex] = new List<string>();
+            currentEventsIds.Remove(eventsListIndex);
+            currentEventsIds.Add(eventsListIndex, new List<string>());
             foreach (EventDTO eventInfo in events)
                 currentEventsIds[eventsListIndex].Add(eventInfo.id);
 
@@ -107,15 +109,15 @@ namespace DCL.Events
             eventsContainer.SetActive(!isLoading);
         }
 
-        private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int index)
+        private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
-            var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][index]);
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            listItem.GetComponentInChildren<TMP_Text>().text = eventInfo.name;
+            var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][eventIndex]);
+            int itemPrefabIndex = eventInfo.live ? 1 : 0;
+            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
 
             // Setup card data
-            // ...
+            listItem.GetComponentInChildren<TMP_Text>().text = $"{eventInfo.name}\n{DateTimeOffset.Parse(eventInfo.next_start_at).LocalDateTime.ToString("dd/MM/yyyy HH:mm")}"; // This is temporal until we implement the event card view.
 
             // Setup card events
             // ...
