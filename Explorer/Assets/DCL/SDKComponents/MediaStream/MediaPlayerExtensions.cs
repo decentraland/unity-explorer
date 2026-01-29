@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.MediaStream
                 control.Stop();
         }
 
-#if !NO_LIVEKIT_MODE
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
         public static void UpdatePlayback(this LivekitPlayer mediaPlayer, bool hasPlaying, bool playing)
         {
             if (!mediaPlayer.MediaOpened)

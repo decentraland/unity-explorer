@@ -1,7 +1,11 @@
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
+
+#if !UNITY_WEBGL
 using LiveKit.Rooms.TrackPublications;
+#endif
+
 #endif
 
 using Newtonsoft.Json;
@@ -51,7 +55,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         public string GetActiveVideoStreams()
         {
-#if NO_LIVEKIT_MODE
+#if NO_LIVEKIT_MODE || UNITY_WEBGL
             return EMPTY_RESPONSE;
 #else
            try

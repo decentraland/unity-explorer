@@ -10,8 +10,12 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+
+#if !UNITY_WEBGL
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
+#endif
+
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
@@ -32,6 +36,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IParticipantsHub Participants { get; }
         public IDataPipe DataPipe { get; }
         public IRoomInfo Info { get; }
+
+#if !UNITY_WEBGL
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
         public ILocalTracks LocalTracks { get; }
@@ -44,6 +50,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event SubscribeDelegate? TrackUnsubscribed;
         public event MuteDelegate? TrackMuted;
         public event MuteDelegate? TrackUnmuted;
+#endif 
+
         public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
@@ -64,10 +72,14 @@ namespace DCL.Multiplayer.Connections.Rooms
             Participants = new LogParticipantsHub(origin.Participants);
             DataPipe = new LogDataPipe(origin.DataPipe);
             Info = new LogRoomInfo(origin.Info);
+
+#if !UNITY_WEBGL
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
             LocalTracks = new LogLocalTracks(origin.LocalTracks);
+#endif
 
+#if !UNITY_WEBGL
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
             this.origin.TrackPublished += OriginOnTrackPublished;
@@ -76,6 +88,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             this.origin.TrackUnsubscribed += OriginOnTrackUnsubscribed;
             this.origin.TrackMuted += OriginOnTrackMuted;
             this.origin.TrackUnmuted += OriginOnTrackUnmuted;
+#endif
+
             this.origin.ConnectionQualityChanged += OriginOnConnectionQualityChanged;
             this.origin.ConnectionStateChanged += OriginOnConnectionStateChanged;
             this.origin.ConnectionUpdated += OriginOnConnectionUpdated;
@@ -128,6 +142,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
+#if !UNITY_WEBGL
         private void OriginOnTrackUnmuted(TrackPublication publication, Participant participant)
         {
             ReportHub
@@ -180,7 +195,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                .Log($"{prefix} track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             TrackUnpublished?.Invoke(publication, participant);
-        }
+        }        
 
         private void OriginOnLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
@@ -189,7 +204,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                .Log($"{prefix} local track unpublished {publication.Sid} {publication.Kind} by {participant.Sid} {participant.Name}");
 
             LocalTrackUnpublished?.Invoke(publication, participant);
-        }
+        }        
 
         private void OriginOnTrackPublished(TrackPublication publication, Participant participant)
         {
@@ -199,6 +214,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 
             TrackPublished?.Invoke(publication, participant);
         }
+#endif
 
         public void UpdateLocalMetadata(string metadata)
         {
