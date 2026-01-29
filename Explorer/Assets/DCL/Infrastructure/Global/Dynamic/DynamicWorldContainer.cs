@@ -1179,7 +1179,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    bootstrapContainer.Analytics!));
+                    bootstrapContainer.Analytics!,
+                    homePlaceEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
