@@ -89,11 +89,11 @@ MonoBehaviour:
         <CoreWebRequestsBudget>k__BackingField: 15
         <SceneWebRequestsBudget>k__BackingField: 5
         <UrlsToSample>k__BackingField:
-        - url: 47
+        - url: 50
           samplingRate: 0.01
-        - url: 48
+        - url: 51
           samplingRate: 0.01
-        - url: 66
+        - url: 73
           samplingRate: 0.005
     - rid: 745469515127586908
       type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}

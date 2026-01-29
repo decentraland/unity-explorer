@@ -1,121 +1,127 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace DCL.Multiplayer.Connections.DecentralandUrls
 {
+    /// <summary>
+    ///     Maintain the order as it's serialized
+    /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public enum DecentralandUrl
     {
-        Host,
-        Genesis,
+        Host = 0,
+        Genesis = 1,
 
-        ArchipelagoStatus,
-        GatekeeperStatus,
-        ArchipelagoHotScenes,
+        ArchipelagoStatus = 2,
+        GatekeeperStatus = 3,
+        ArchipelagoHotScenes = 4,
 
-        DiscordLink,
-        DiscordDirectLink,
-        TwitterLink,
-        TwitterNewPostLink,
-        NewsletterSubscriptionLink,
-        MarketplaceLink,
+        DiscordLink = 5,
+        DiscordDirectLink = 6,
+        TwitterLink = 7,
+        TwitterNewPostLink = 8,
+        NewsletterSubscriptionLink = 9,
+        MarketplaceLink = 10,
 
-        PrivacyPolicy,
-        TermsOfUse,
-        ContentPolicy,
-        CodeOfEthics,
+        PrivacyPolicy = 11,
+        TermsOfUse = 12,
+        ContentPolicy = 13,
+        CodeOfEthics = 14,
 
-        ApiChunks,
+        ApiChunks = 15,
 
-        ApiPlaces,
-        ApiWorlds,
-        ApiDestinations,
-        POI,
-        Map,
-        ContentModerationReport,
+        ApiPlaces = 16,
+        ApiWorlds = 17,
+        ApiDestinations = 18,
+        POI = 19,
+        Map = 20,
+        ContentModerationReport = 21,
 
-        ApiEvents,
-        EventsWebpage,
+        ApiEvents = 22,
+        EventsWebpage = 23,
 
-        ApiAuth,
-        AuthSignatureWebApp,
-        ApiRpc,
+        ApiAuth = 24,
+        AuthSignatureWebApp = 25,
+        ApiRpc = 26,
 
-        GateKeeperSceneAdapter,
-        LocalGateKeeperSceneAdapter,
-        ChatAdapter,
+        GateKeeperSceneAdapter = 27,
+        LocalGateKeeperSceneAdapter = 28,
+        ChatAdapter = 29,
 
-        OpenSea,
+        OpenSea = 30,
 
-        PeerAbout,
-        RemotePeers,
-        RemotePeersWorld,
+        PeerAbout = 31,
+        RemotePeers = 32,
+        RemotePeersWorld = 33,
 
-        DAO,
+        DAO = 34,
 
-        Help,
-        Account,
-        MinimumSpecs,
+        Help = 35,
+        Account = 36,
+        MinimumSpecs = 37,
 
-        FeatureFlags,
+        FeatureFlags = 38,
 
-        Market,
-        MarketplaceClaimName,
+        Market = 39,
+        MarketplaceClaimName = 40,
 
-        AssetBundlesCDN,
+        AssetBundlesCDN = 41,
 
-        Badges,
+        Badges = 42,
 
-        CameraReelUsers,
-        CameraReelImages,
-        CameraReelPlaces,
-        CameraReelLink,
+        CameraReelUsers = 43,
+        CameraReelImages = 44,
+        CameraReelPlaces = 45,
+        CameraReelLink = 46,
 
-        ApiFriends,
-        AssetBundleRegistry,
-        AssetBundleRegistryVersion,
-        Profiles,
-        ProfilesMetadata,
+        ApiFriends = 47,
+        AssetBundleRegistry = 48,
+        AssetBundleRegistryVersion = 49,
+        Profiles = 50,
+        ProfilesMetadata = 51,
 
-        BuilderApiDtos,
-        BuilderApiContent,
+        BuilderApiDtos = 52,
+        BuilderApiContent = 53,
 
-        Blocklist,
+        Blocklist = 54,
 
-        WorldContentServer,
+        WorldContentServer = 55,
 
-        Servers,
+        Servers = 56,
 
-        MediaConverter,
+        MediaConverter = 57,
 
-        MarketplaceCredits,
-        GoShoppingWithMarketplaceCredits,
-        Notifications,
+        MarketplaceCredits = 58,
+        GoShoppingWithMarketplaceCredits = 59,
+        Notifications = 60,
 
-        Communities,
-        CommunityThumbnail,
-        Members,
-        CommunityProfileLink,
+        Communities = 61,
+        CommunityThumbnail = 62,
+        Members = 63,
+        CommunityProfileLink = 64,
 
-        DecentralandWorlds,
+        DecentralandWorlds = 65,
 
-        ChatTranslate,
+        ChatTranslate = 66,
 
-        ActiveCommunityVoiceChats,
+        ActiveCommunityVoiceChats = 67,
 
-        Support,
+        Support = 68,
 
-        ManaUsdRateApiUrl,
+        ManaUsdRateApiUrl = 69,
 
-        CreatorHub,
+        CreatorHub = 70,
 
-        JumpInGenesisCityLink,
-        JumpInWorldLink,
+        JumpInGenesisCityLink = 71,
+        JumpInWorldLink = 72,
 
         /// <summary>
         ///     Normally Entities Active are served through Asset Bundle Registry, and not via a catalyst, it's transparent for consumers
         /// </summary>
-        EntitiesActive,
+        EntitiesActive = 73,
 
         // Catalyst Related
-        Lambdas,
-        Content,
-        EntitiesDeployment,
+        Lambdas = 74,
+        Content = 75,
+        EntitiesDeployment = 76,
     }
 }
