@@ -10,7 +10,7 @@ namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
-        public event Action? EventsOpen;
+        public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
 
         private readonly EventsView view;
@@ -21,6 +21,7 @@ namespace DCL.Events
 
         private bool isSectionActivated;
         private readonly EventsCalendarController eventsCalendarController;
+        private readonly EventsByDayController eventsByDayController;
 
         public EventsController(
             EventsView view,
@@ -35,7 +36,9 @@ namespace DCL.Events
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, new EventsStateService());
+            EventsStateService eventsStateService = new EventsStateService();
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, eventsStateService);
+            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, eventsStateService);
 
             view.CreateButtonClicked += OnCreateButtonClicked;
         }
@@ -43,6 +46,7 @@ namespace DCL.Events
         public void Dispose()
         {
             eventsCalendarController.Dispose();
+            eventsByDayController.Dispose();
 
             view.CreateButtonClicked -= OnCreateButtonClicked;
         }
@@ -55,7 +59,8 @@ namespace DCL.Events
             isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
-            EventsOpen?.Invoke();
+
+            OpenSection(EventsSection.CALENDAR);
         }
 
         public void Deactivate()
@@ -73,6 +78,14 @@ namespace DCL.Events
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void OpenSection(EventsSection section, DateTime? fromDate = null)
+        {
+            view.OpenSection(section);
+
+            DateTime todayAtTheBeginningOfTheDay = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0, DateTimeKind.Local);
+            SectionOpen?.Invoke(section, fromDate ?? todayAtTheBeginningOfTheDay);
+        }
 
         private void OnCreateButtonClicked() =>
             webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");

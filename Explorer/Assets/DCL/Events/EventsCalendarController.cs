@@ -37,26 +37,30 @@ namespace DCL.Events
             view.SetDependencies(eventsStateService);
             view.InitializeEventsLists();
 
-            eventsController.EventsOpen += OnSectionOpened;
+            eventsController.SectionOpen += OnSectionOpened;
             eventsController.EventsClosed += OnSectionClosed;
             view.DaysRangeChanged += OnDaysRangeChanged;
+            view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
         }
 
         public void Dispose()
         {
             eventsStateService.ClearEvents();
 
-            eventsController.EventsOpen -= OnSectionOpened;
+            eventsController.SectionOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
             view.DaysRangeChanged -= OnDaysRangeChanged;
+            view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
 
             loadEventsCts?.SafeCancelAndDispose();
         }
 
-        private void OnSectionOpened()
+        private void OnSectionOpened(EventsSection section, DateTime fromDate)
         {
-            DateTime todayAtTheBeginningOfTheDay = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0, DateTimeKind.Local);
-            view.SetupDaysSelector(todayAtTheBeginningOfTheDay, 5);
+            if (section != EventsSection.CALENDAR)
+                return;
+
+            view.SetupDaysSelector(fromDate, 5);
         }
 
         private void OnSectionClosed() =>
@@ -64,6 +68,9 @@ namespace DCL.Events
 
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays) =>
             LoadEvents(fromDate, numberOfDays);
+
+        private void OnDaySelectorButtonClicked(DateTime date) =>
+            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
 
         private void LoadEvents(DateTime fromDate, int numberOfDays)
         {
@@ -77,7 +84,7 @@ namespace DCL.Events
             view.SetAsLoading(true);
 
             var fromDateUtc = fromDate.ToUniversalTime();
-            var toDateUtc = fromDate.AddDays(numberOfDays).ToUniversalTime();
+            var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 

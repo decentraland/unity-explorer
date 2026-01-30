@@ -12,6 +12,8 @@ namespace DCL.Events
 {
     public class EventsCalendarView : MonoBehaviour
     {
+        public event Action<DateTime>? DaySelectorButtonClicked;
+
         private const int EVENT_CARD_SMALL_PREFAB_INDEX = 0;
         private const int EVENT_CARD_BIG_PREFAB_INDEX = 1;
         private const int EVENT_CARD_EMPTY_PREFAB_INDEX = 2;
@@ -129,9 +131,7 @@ namespace DCL.Events
             return listItem;
         }
 
-        private void OnDaySelectorButtonClicked(DateTime date)
-        {
-
-        }
+        private void OnDaySelectorButtonClicked(DateTime date) =>
+            DaySelectorButtonClicked?.Invoke(date);
     }
 }
