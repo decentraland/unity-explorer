@@ -292,7 +292,7 @@ namespace DCL.PluginSystem.Global
                 currentChannelService,
                 eventBus);
 
-            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
+            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache, currentChannelService);
 
             commandRegistry = new CommandRegistry(
                 chatConfig,
