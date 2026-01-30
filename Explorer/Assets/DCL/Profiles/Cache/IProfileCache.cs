@@ -1,5 +1,4 @@
 using DCL.Optimization.PerformanceBudgeting;
-using Decentraland.SocialService.V3;
 
 namespace DCL.Profiles
 {

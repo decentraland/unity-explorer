@@ -37,7 +37,9 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void SendBusMessage(InputModifierComponent inputModifier)
         {
-            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false }
+                ? SceneRestrictionsAction.REMOVED :
+                SceneRestrictionsAction.APPLIED;
 
             if (currentAction == lastBusMessageAction) return;
 
@@ -54,6 +56,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             inputModifier.DisableRun = false;
             inputModifier.DisableJump = false;
             inputModifier.DisableEmote = false;
+            inputModifier.DisableDoubleJump = false;
+            inputModifier.DisableGliding = false;
 
             SendBusMessage(inputModifier);
         }
@@ -62,8 +66,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
-
+            if (pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
             if (!pbInputModifier.IsDirty) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
@@ -79,20 +82,19 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableRun = pb.DisableRun;
                 inputModifier.DisableJump = pb.DisableJump;
                 inputModifier.DisableEmote = pb.DisableEmote;
+                inputModifier.DisableDoubleJump = pb.DisableDoubleJump;
+                inputModifier.DisableGliding = pb.DisableGliding;
             }
 
             SendBusMessage(inputModifier);
         }
 
-        public void OnSceneIsCurrentChanged(bool value)
+        public void OnSceneIsCurrentChanged(bool sceneIsCurrent)
         {
-            if (!value)
-                ResetModifiersOnLeave();
+            if (!sceneIsCurrent) ResetModifiersOnLeave();
         }
 
-        public void FinalizeComponents(in Query query)
-        {
+        public void FinalizeComponents(in Query query) =>
             ResetModifiersOnLeave();
-        }
     }
 }
