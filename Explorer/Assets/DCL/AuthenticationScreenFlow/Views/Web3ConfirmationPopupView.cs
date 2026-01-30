@@ -69,9 +69,13 @@ namespace DCL.AuthenticationScreenFlow
             isTransaction = string.Equals(method, "eth_sendTransaction", StringComparison.OrdinalIgnoreCase);
 
             UseConfig(isTransaction ? transactionConfig : signingConfig);
-            transactionInfoPanel.SetActive(isTransaction);
 
-            if (isTransaction)
+            // Hide description and details panel for internal features (Gifting, Donations)
+            // since they already display this information in their own UI
+            description.gameObject.SetActive(!request.HideDescription);
+            transactionInfoPanel.SetActive(isTransaction && !request.HideDetailsPanel);
+
+            if (isTransaction && !request.HideDetailsPanel)
             {
                 // string networkName = string.IsNullOrEmpty(request.NetworkName) ? "Ethereum Mainnet" : request.NetworkName!;
                 string feeEth = string.IsNullOrEmpty(request.EstimatedGasFeeEth) ? "0.0" : request.EstimatedGasFeeEth!;

@@ -307,11 +307,19 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
-            // Request user confirmation before proceeding, but only for SDKScene requests.
-            // Internal requests (Gifting, Donations, etc.) skip this UI since they have their own confirmation flow.
-            if (source == Web3RequestSource.SDKScene && transactionConfirmationCallback != null)
+            // Request user confirmation before proceeding
+            if (transactionConfirmationCallback != null)
             {
                 TransactionConfirmationRequest confirmationRequest = await CreateConfirmationRequestAsync(request);
+
+                // For Internal requests (Gifting, Donations, etc.), hide description and details panel
+                // since they are already displayed in the feature-specific UI
+                if (source == Web3RequestSource.Internal)
+                {
+                    confirmationRequest.HideDescription = true;
+                    confirmationRequest.HideDetailsPanel = true;
+                }
+
                 bool confirmed = await transactionConfirmationCallback(confirmationRequest);
 
                 if (!confirmed)

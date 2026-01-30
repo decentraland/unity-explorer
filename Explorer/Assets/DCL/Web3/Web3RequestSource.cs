@@ -14,7 +14,8 @@ namespace DCL.Web3
 
         /// <summary>
         ///     Request comes from internal Explorer features (Gifting, Donations, etc.).
-        ///     Skips confirmation UI for ThirdWeb provider since it's already handled by feature-specific UI.
+        ///     Shows confirmation UI with hidden description and details panel
+        ///     since they are already displayed in the feature-specific UI.
         /// </summary>
         Internal,
     }

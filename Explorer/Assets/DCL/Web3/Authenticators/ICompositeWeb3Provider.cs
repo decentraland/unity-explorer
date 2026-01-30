@@ -20,6 +20,18 @@ namespace DCL.Web3.Authenticators
         // Optional extra info (best-effort) for eth_sendTransaction UI
         public string? EstimatedGasFeeEth { get; set; }
         public string? BalanceEth { get; set; }
+
+        /// <summary>
+        ///     If true, hides the description text in the confirmation popup.
+        ///     Used for internal features (like Gifting) that have their own UI with description.
+        /// </summary>
+        public bool HideDescription { get; set; }
+
+        /// <summary>
+        ///     If true, hides the transaction details panel (balance, gas fee) in the confirmation popup.
+        ///     Used for internal features (like Gifting) that display this info in their own UI.
+        /// </summary>
+        public bool HideDetailsPanel { get; set; }
     }
 
     /// <summary>
