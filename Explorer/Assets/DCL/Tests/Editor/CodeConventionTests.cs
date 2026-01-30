@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 using UnityEditor;
 using System.Text.RegularExpressions;
 using static Utility.Tests.TestsCategories;
@@ -106,6 +107,60 @@ namespace DCL.Tests
         {
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseSystemTask(fileContent, filePath);
+        }
+
+        [Test]
+        public void VerifyShouldNotUseWaitForComplition()
+        {
+            // forbidden pattern
+            const string pattern = @"\.GetLocalizedString\(\)";
+            string projectRoot = Directory.GetCurrentDirectory();
+
+            // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
+            var psi = new ProcessStartInfo
+            {
+                FileName = "/opt/homebrew/bin/rg",
+                Arguments = string.Join(" ", new[]
+                        {
+                        "--line-number",
+                        "--no-heading",
+                        "--color", "never",
+                        $"\"{pattern}\"",
+                        $"\"{projectRoot}/Assets\"",
+                        "--glob", "\"*.cs\""
+                        }),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null)
+                Assert.Fail("Failed to start ripgrep (rg). Is it installed and on PATH?");
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            // rg exit codes:
+            // 0 = matches found
+            // 1 = no matches
+            // 2 = error
+            if (process.ExitCode == 2)
+            {
+                Assert.Fail($"ripgrep error:\n{stderr}");
+            }
+
+            if (process.ExitCode == 0)
+            {
+                Assert.Fail(
+                        "Detected forbidden API usage:\n\n" +
+                        stdout +
+                        "\nUse async version instead."
+                        );
+            }
         }
 
         [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
