@@ -3,7 +3,9 @@ using DCL.Profiling;
 using DCL.RealmNavigation;
 using Global.AppArgs;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -45,7 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
 
-                if (appArgs.TryGetValue(AppArgsFlags.PROFILER_LOG_FILE,
+                if (appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_RAW,
                         out string logFile))
                 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -60,6 +62,15 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 }
 
                 await StandAtSpawnTest();
+
+                if (csv != null &&
+                    appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY,
+                        out string summaryFile))
+                {
+                    await csv.DisposeAsync();
+                    csv = null;
+                    await WriteSummary(csvFile, summaryFile);
+                }
             }
             catch (Exception ex)
             {
@@ -94,5 +105,46 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         private Task WriteSample() =>
             csv.WriteLineAsync(
                 $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
+
+        private static async UniTask WriteSummary(string csvFile,
+            string summaryFile)
+        {
+            var cpuTimes = new List<float>();
+            var gpuTimes = new List<float>();
+
+            using (var csv = new StreamReader(csvFile))
+            {
+                await csv.ReadLineAsync(); // Discard the header line
+
+                while (!csv.EndOfStream)
+                {
+                    string line = await csv.ReadLineAsync();
+                    string[] columns = line.Split(',');
+                    cpuTimes.Add(float.Parse(columns[1]));
+                    gpuTimes.Add(float.Parse(columns[2]));
+                }
+            }
+
+            await using (var summary = new StreamWriter(summaryFile))
+            {
+                summary.WriteLine($"CPU average: {cpuTimes.Average()}");
+                summary.WriteLine($"CPU 1% worst: {PercentWorst(cpuTimes, 0.01f)}");
+                summary.WriteLine($"CPU 0.1% worst: {PercentWorst(cpuTimes, 0.001f)}");
+                summary.WriteLine($"CPU worst: {cpuTimes.Max()}");
+                summary.WriteLine($"GPU average: {gpuTimes.Average()}");
+                summary.WriteLine($"GPU 1% worst: {PercentWorst(gpuTimes, 0.01f)}");
+                summary.WriteLine($"GPU 0.1% worst: {PercentWorst(gpuTimes, 0.001f)}");
+                summary.WriteLine($"GPU worst: {gpuTimes.Max()}");
+            }
+        }
+
+        /// <remarks>
+        /// As done by GamersNexus:
+        /// https://www.youtube.com/watch?v=WcTxrzFqdyw#t=34m17s
+        /// </remarks>
+        private static float PercentWorst(List<float> times, float fraction) =>
+            times.OrderByDescending(i => i)
+               .Take((int)(times.Count * fraction))
+               .Average();
     }
 }
