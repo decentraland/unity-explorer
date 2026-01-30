@@ -16,6 +16,7 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -102,6 +103,7 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+            eventBus.EquipOutfitEvent += OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
@@ -112,6 +114,7 @@ namespace DCL.Backpack
 
             eventBus.EquipWearableEvent -= OnEquip;
             eventBus.UnEquipWearableEvent -= OnUnequip;
+            eventBus.EquipOutfitEvent -= OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
@@ -151,6 +154,42 @@ namespace DCL.Backpack
                 BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
                 return backpackItemView;
             }
+        }
+        
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            IWearable? newBodyShape = null;
+            foreach (var w in wearables)
+            {
+                if (w.GetCategory() == WearableCategories.Categories.BODY_SHAPE)
+                {
+                    newBodyShape = w;
+                    break;
+                }
+            }
+
+            if (newBodyShape != null)
+                currentBodyShape = newBodyShape;
+
+            foreach (var kvp in usedPoolItems)
+            {
+                var itemView = kvp.Value;
+                bool isEquipped = false;
+                foreach (var w in wearables)
+                {
+                    if (string.Equals(w.GetUrn(), itemView.ItemId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        isEquipped = true;
+                        break;
+                    }
+                }
+                
+                itemView.IsEquipped = isEquipped;
+                itemView.SetEquipButtonsState();
+            }
+
+            if (currentBodyShape != null && currentPageWearables != null)
+                UpdateBodyShapeCompatibility(currentPageWearables, currentBodyShape);
         }
 
         private void SetGridAsLoading()

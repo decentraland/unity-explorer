@@ -24,6 +24,7 @@ namespace DCL.PlacesAPIService
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
         private readonly string[] singlePositionBuffer = new string[1];
+        private readonly RecentlyVisitedPlacesController recentlyVisitedPlacesController;
 
         private UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
         private List<string>? pointsOfInterestCoords;
@@ -31,6 +32,7 @@ namespace DCL.PlacesAPIService
         public PlacesAPIService(IPlacesAPIClient client)
         {
             this.client = client;
+            recentlyVisitedPlacesController = new RecentlyVisitedPlacesController();
         }
 
         private static bool AreCoordinatesWithinBounds(Vector2Int coords) =>
@@ -55,6 +57,31 @@ namespace DCL.PlacesAPIService
             return await client.GetPlacesAsync(ct,
                 searchString: searchText, pagination: (pageNumber, pageSize),
                 sortByStr, sortDirectionStr, category, addRealmDetails: true);
+        }
+
+        public async UniTask<PlacesData.IPlacesAPIResponse> SearchDestinationsAsync(int pageNumber, int pageSize,
+            CancellationToken ct,
+            string? searchText = null,
+            IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.NONE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
+            string? category = null,
+            bool? withConnectedUsers = null,
+            bool? onlySdk7 = null)
+        {
+            string sortByStr = string.Empty;
+            string sortDirectionStr = string.Empty;
+
+            if (sortBy != IPlacesAPIService.SortBy.NONE)
+            {
+                sortByStr = sortBy.ToString().ToLower();
+                sortDirectionStr = sortDirection.ToString().ToLower();
+            }
+
+            return await client.GetDestinationsAsync(ct,
+                searchString: searchText, pagination: (pageNumber, pageSize),
+                sortByStr, sortDirectionStr, category, addRealmDetails: true,
+                withConnectedUsers: withConnectedUsers,
+                onlySdk7: onlySdk7);
         }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
@@ -144,14 +171,17 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
-            client.GetPlacesByIdsAsync(placeIds, ct);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
+            await client.GetPlacesByIdsAsync(placeIds, ct, withConnectedUsers);
 
-        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
-            client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
 
-        public UniTask<PlacesData.PlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
-            client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null) =>
+            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, onlySdk7: onlySdk7);
+
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
 
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
@@ -174,6 +204,30 @@ namespace DCL.PlacesAPIService
                 pagination: pageNumber == -1 && pageSize == -1 ? null : (pageNumber, pageSize),
                 sortBy: sortByStr, sortDirection: sortDirectionStr, addRealmDetails: true,
                 onlyFavorites: true);
+        }
+
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesDestinationsAsync(CancellationToken ct,
+            int pageNumber = -1, int pageSize = -1,
+            IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
+            IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
+            bool? withConnectedUsers = null,
+            bool? onlySdk7 = null)
+        {
+            string sortByStr = string.Empty;
+            string sortDirectionStr = string.Empty;
+
+            if (sortBy != IPlacesAPIService.SortBy.NONE)
+            {
+                sortByStr = sortBy.ToString().ToLower();
+                sortDirectionStr = sortDirection.ToString().ToLower();
+            }
+
+            return await client.GetDestinationsAsync(ct,
+                pagination: pageNumber == -1 && pageSize == -1 ? null : (pageNumber, pageSize),
+                sortBy: sortByStr, sortDirection: sortDirectionStr, addRealmDetails: true,
+                onlyFavorites: true,
+                withConnectedUsers: withConnectedUsers,
+                onlySdk7: onlySdk7);
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
@@ -220,6 +274,12 @@ namespace DCL.PlacesAPIService
 
         public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct) =>
             await client.ReportPlaceAsync(placeContentReportPayload, ct);
+
+        public void AddRecentlyVisitedPlace(string placeId) =>
+            recentlyVisitedPlacesController.AddRecentlyVisitedPlace(placeId);
+
+        public List<string> GetRecentlyVisitedPlaces() =>
+            recentlyVisitedPlacesController.GetRecentlyVisitedPlaces();
 
         public void Dispose()
         {

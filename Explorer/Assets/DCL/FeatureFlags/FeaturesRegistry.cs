@@ -41,6 +41,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
                 [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
+                [FeatureId.DONATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)),
                 [FeatureId.NAME_COLOR_CHANGE] = featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.NAME_COLOR_CHANGE)) || Application.isEditor,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
@@ -147,6 +148,7 @@ namespace DCL.FeatureFlags
         HEAD_SYNC,
         STOP_ON_DUPLICATE_IDENTITY,
         PRIVATE_CHAT_REQUIRES_TOPIC,
+        DONATIONS,
         NAME_COLOR_CHANGE
     }
 }
