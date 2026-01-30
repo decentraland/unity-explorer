@@ -301,7 +301,7 @@ namespace DCL.Places
                 case PlacesSection.BROWSE when currentFilters.CategoryId != null:
                 {
                     string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
                     break;
                 }
                 case PlacesSection.BROWSE:
