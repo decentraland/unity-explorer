@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.ControllerShowParams;
@@ -41,6 +41,7 @@ namespace DCL.UI.SharedSpaceManager
         private bool isTransitioning; // true whenever a view is being shown or hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
         private float lastQuickEmoteTime;
+        private bool ignoreNextEmoteWheelRelease;
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
         private bool isChatBlockerVisible { get; set; }
@@ -53,6 +54,7 @@ namespace DCL.UI.SharedSpaceManager
             mvcManager.OnViewShowed += OnMvcViewShowed;
             mvcManager.OnViewClosed += OnMvcViewClosed;
             emotesBus.QuickActionEmotePlayed += OnQuickActionEmotePlayed;
+            emotesBus.EmotePlayedFromShortcut += OnEmotePlayedFromShortcut;
 
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
@@ -69,6 +71,9 @@ namespace DCL.UI.SharedSpaceManager
             if (!registrations[PanelsSharingSpace.EmotesWheel].panel.IsVisibleInSharedSpace)
                 lastQuickEmoteTime = UnityEngine.Time.time;
         }
+
+        private void OnEmotePlayedFromShortcut() =>
+            ignoreNextEmoteWheelRelease = true;
 
         private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
         {
@@ -130,6 +135,7 @@ namespace DCL.UI.SharedSpaceManager
             mvcManager.OnViewShowed -= OnMvcViewShowed;
             mvcManager.OnViewClosed -= OnMvcViewClosed;
             emotesBus.QuickActionEmotePlayed -= OnQuickActionEmotePlayed;
+            emotesBus.EmotePlayedFromShortcut -= OnEmotePlayedFromShortcut;
 
             cts.SafeCancelAndDispose();
             configureShortcutsCts.SafeCancelAndDispose();
@@ -497,6 +503,12 @@ namespace DCL.UI.SharedSpaceManager
 
         private async void OnInputShortcutsEmoteWheelPerformedAsync(InputAction.CallbackContext obj)
         {
+            if (ignoreNextEmoteWheelRelease)
+            {
+                ignoreNextEmoteWheelRelease = false;
+                return;
+            }
+
             if (IsEmoteWheelLocked())
             {
                 // Reset time, we only want to stop one action.

@@ -31,8 +31,8 @@ namespace DCL.AvatarRendering.Emotes
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
-        
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus) 
+
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
@@ -55,6 +55,8 @@ namespace DCL.AvatarRendering.Emotes
             triggeredEmote = emoteIndex;
             isWheelBlocked = true;
             emotesBus.OnQuickActionEmotePlayed();
+            if (DCLInput.Instance.Shortcuts.EmoteWheel.IsPressed())
+                emotesBus.OnEmotePlayedFromShortcut();
         }
 
         protected override void Update(float t)
