@@ -74,6 +74,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiDtos,
         BuilderApiContent,
+        BuilderApiNewsletter,
 
         Blocklist,
 

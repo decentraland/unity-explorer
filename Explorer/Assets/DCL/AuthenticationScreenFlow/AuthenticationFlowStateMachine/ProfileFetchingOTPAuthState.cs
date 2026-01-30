@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics;
@@ -95,7 +95,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     view.Hide(OUT);
 
                     if (isNewUser)
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, bool, CancellationToken)>((profile, false, ct));
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
                     else
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool)>((profile, isCached));
                 }

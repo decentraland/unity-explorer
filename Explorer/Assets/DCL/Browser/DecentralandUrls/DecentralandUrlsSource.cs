@@ -93,6 +93,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AuthSignatureWebAppWithMethod => $"https://decentraland.{ENV}/auth/login",
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
+                DecentralandUrl.BuilderApiNewsletter => $"https://builder-api.decentraland.{ENV}/v1/newsletter",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",

@@ -5,12 +5,15 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -22,7 +25,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
+    public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isCached, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> fsm;
         private readonly AuthenticationScreenController controller;
@@ -33,6 +36,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebBrowser webBrowser;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly List<Avatar> avatarHistory = new ();
 
@@ -43,6 +48,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private bool baseWearablesLoaded;
 
         private Profile newUserProfile;
+        private string userEmail;
         private CancellationToken ct;
 
         private readonly CharacterPreviewView characterPreviewView;
@@ -55,7 +61,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser) : base(viewInstance)
+            IWebBrowser webBrowser,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -66,6 +74,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.selfProfile = selfProfile;
             this.wearablesProvider = wearablesProvider;
             this.webBrowser = webBrowser;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -79,9 +89,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
-        public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
+        public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
             ct = payload.ct;
+            userEmail = payload.email;
 
             InitializeAvatarAsync().Forget();
 
@@ -220,6 +231,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             JumpIntoWorld();
             PublishNewProfile(ct).Forget();
+
+            if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
+                SubscribeToNewsletterAsync(userEmail, ct).Forget();
+
             return;
 
             async UniTaskVoid PublishNewProfile(CancellationToken ct)
@@ -228,6 +243,26 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                 newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
             }
+        }
+
+        private async UniTaskVoid SubscribeToNewsletterAsync(string email, CancellationToken ct)
+        {
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.BuilderApiNewsletter);
+                var jsonBody = $"{{\"email\":\"{email}\",\"source\":\"auth\"}}";
+
+                await webRequestController.PostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               ct,
+                                               ReportCategory.AUTHENTICATION)
+                                          .WithNoOpAsync();
+            }
+            catch (OperationCanceledException)
+            { /* Ignore cancellation */
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
         }
 
         private void OnBackButtonClicked()

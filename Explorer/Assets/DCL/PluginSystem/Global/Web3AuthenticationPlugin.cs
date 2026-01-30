@@ -5,10 +5,12 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
@@ -46,6 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -69,7 +72,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
-            IWebRequestController webRequestController
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -91,6 +95,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public void Dispose() { }
@@ -100,7 +105,7 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, compositeWeb3Provider, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, wearablesProvider);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, compositeWeb3Provider, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, wearablesProvider, webRequestController, decentralandUrlsSource);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

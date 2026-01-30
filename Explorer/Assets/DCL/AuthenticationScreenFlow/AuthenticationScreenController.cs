@@ -4,6 +4,7 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.FeatureFlags;
 using DCL.Input;
@@ -19,6 +20,7 @@ using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using Global.AppArgs;
 using MVC;
 using System;
@@ -64,6 +66,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -100,7 +104,10 @@ namespace DCL.AuthenticationScreenFlow
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
             SentryTransactionManager sentryTransactionManager,
-            IAppArgs appArgs, IWearablesProvider wearablesProvider)
+            IAppArgs appArgs,
+            IWearablesProvider wearablesProvider,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -120,6 +127,8 @@ namespace DCL.AuthenticationScreenFlow
             this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -166,7 +175,7 @@ namespace DCL.AuthenticationScreenFlow
                 fsm.AddStates(
                     new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                     otpVerificationState,
-                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser)
+                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
                 );
             }
 
