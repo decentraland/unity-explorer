@@ -16,14 +16,36 @@ using System.Numerics;
 using System.Text;
 using System.Threading;
 using Thirdweb;
-using ThirdWebUnity;
 using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
     public class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
-        public static ThirdWebAuthenticator Instance;
+        // TODO: Move to environment variable injection via CI
+        private const string CLIENT_ID = "e1adce863fe287bb6cf0e3fd90bdb77f";
+        private const string BUNDLE_ID = "com.Decentraland.Explorer";
+        private const string SDK_VERSION = "6.0.5";
+
+        // Minimal ABI with a dummy function to create a base transaction that we'll customize
+        // This allows us to support ANY contract call by overriding the data field
+        private const string MINIMAL_ABI = @"[{""name"":""execute"",""type"":""function"",""inputs"":[],""outputs"":[]}]";
+
+        /// <summary>
+        ///     RPC overrides for different chains. Uses Decentraland RPC endpoints.
+        /// </summary>
+        private static readonly Dictionary<BigInteger, string> RPC_OVERRIDES = new ()
+        {
+            { 1, "https://rpc.decentraland.org/mainnet" }, // Ethereum Mainnet
+            { 11155111, "https://rpc.decentraland.org/sepolia" }, // Ethereum Sepolia
+            { 137, "https://rpc.decentraland.org/polygon" }, // Polygon Mainnet
+            { 80002, "https://rpc.decentraland.org/amoy" }, // Polygon Amoy
+            { 42161, "https://rpc.decentraland.org/arbitrum" }, // Arbitrum Mainnet
+            { 10, "https://rpc.decentraland.org/optimism" }, // Optimism Mainnet
+            { 43114, "https://rpc.decentraland.org/avalanche" }, // Avalanche Mainnet
+            { 56, "https://rpc.decentraland.org/binance" }, // BSC Mainnet
+            { 250, "https://rpc.decentraland.org/fantom" }, // Fantom Mainnet
+        };
 
         private readonly SemaphoreSlim mutex = new (1, 1);
 
@@ -38,23 +60,43 @@ namespace DCL.Web3.Authenticators
         private InAppWallet? pendingWallet;
         private UniTaskCompletionSource<bool>? loginCompletionSource;
 
-        // Minimal ABI with a dummy function to create a base transaction that we'll customize
-        // This allows us to support ANY contract call by overriding the data field
-        private const string MINIMAL_ABI = @"[{""name"":""execute"",""type"":""function"",""inputs"":[],""outputs"":[]}]";
+        /// <summary>
+        ///     ThirdWeb SDK client instance.
+        /// </summary>
+        public ThirdwebClient Client { get; }
 
-        public ThirdWebAuthenticator(DecentralandEnvironment environment, HashSet<string> whitelistMethods,
-            HashSet<string> readOnlyMethods, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
+        /// <summary>
+        ///     Currently active wallet. Can be null if not logged in.
+        /// </summary>
+        public IThirdwebWallet? ActiveWallet { get; internal set; }
+
+        internal ThirdWebAuthenticator(
+            DecentralandEnvironment environment,
+            HashSet<string> whitelistMethods,
+            HashSet<string> readOnlyMethods,
+            IWeb3AccountFactory web3AccountFactory,
+            int? identityExpirationDuration = null)
         {
-            Instance?.Dispose();
-            Instance = this;
-
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.web3AccountFactory = web3AccountFactory;
             this.identityExpirationDuration = identityExpirationDuration;
 
             chainId = EnvChainsUtils.GetChainIdAsInt(environment);
+            Client = CreateThirdWebClient();
         }
+
+        private static ThirdwebClient CreateThirdWebClient() =>
+            ThirdwebClient.Create(
+                CLIENT_ID,
+                bundleId: BUNDLE_ID,
+                httpClient: new ThirdwebHttpClient(),
+                sdkName: "UnitySDK",
+                sdkOs: Application.platform.ToString(),
+                sdkPlatform: "unity",
+                sdkVersion: SDK_VERSION,
+                rpcOverrides: RPC_OVERRIDES
+            );
 
         public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate callback)
         {
@@ -74,7 +116,7 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 InAppWallet? wallet = await InAppWallet.Create(
-                    ThirdWebManager.Instance.Client,
+                    Client,
                     email,
                     storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
@@ -84,7 +126,7 @@ namespace DCL.Web3.Authenticators
                     return false;
                 }
 
-                ThirdWebManager.Instance.ActiveWallet = wallet;
+                ActiveWallet = wallet;
                 Debug.Log("[ThirdWeb] Auto-connect successful");
                 return true;
             }
@@ -109,10 +151,9 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                ThirdWebManager.Instance.ActiveWallet
-                    = await LoginViaOTP(email, ct);
+                ActiveWallet = await LoginViaOTP(email, ct);
 
-                string? sender = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+                string? sender = await ActiveWallet.GetAddress();
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -124,7 +165,7 @@ namespace DCL.Web3.Authenticators
                 var ephemeralMessage =
                     $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-                string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(ephemeralMessage);
+                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage);
 
                 var authChain = AuthChain.Create();
                 authChain.SetSigner(sender.ToLower());
@@ -161,7 +202,7 @@ namespace DCL.Web3.Authenticators
             Debug.Log("Login via OTP");
 
             pendingWallet = await InAppWallet.Create(
-                ThirdWebManager.Instance.Client,
+                Client,
                 email,
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
@@ -181,7 +222,7 @@ namespace DCL.Web3.Authenticators
             // Store email for auto-login
             DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, email);
 
-            ThirdWebManager.Instance.ActiveWallet = pendingWallet;
+            ActiveWallet = pendingWallet;
             InAppWallet result = pendingWallet;
             pendingWallet = null;
             return result;
@@ -194,7 +235,13 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask LogoutAsync(CancellationToken ct)
         {
-            await ThirdWebManager.Instance?.DisconnectWallet();
+            if (ActiveWallet != null)
+            {
+                try { await ActiveWallet.Disconnect(); }
+                finally { ActiveWallet = null; }
+            }
+
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL);
         }
 
         public void SetSepoliaChain()
@@ -207,7 +254,7 @@ namespace DCL.Web3.Authenticators
             var targetChainId = new BigInteger(chainId);
 
             this.chainId = targetChainId;
-            await ThirdWebManager.Instance.ActiveWallet.SwitchNetwork(this.chainId);
+            await ActiveWallet!.SwitchNetwork(this.chainId);
 
             return await SendAsync(request, ct);
         }
@@ -229,7 +276,7 @@ namespace DCL.Web3.Authenticators
             // For SDK Scene requests, switch network as before
             var targetChainId = new BigInteger(chainId);
             this.chainId = targetChainId;
-            await ThirdWebManager.Instance.ActiveWallet.SwitchNetwork(this.chainId);
+            await ActiveWallet!.SwitchNetwork(this.chainId);
 
             return await SendAsync(request, source, ct);
         }
@@ -308,13 +355,13 @@ namespace DCL.Web3.Authenticators
             if (string.Equals(request.method, "eth_getBalance") && targetChainId == (int)chainId)
             {
                 var address = request.@params[0].ToString();
-                string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+                string walletAddress = await ActiveWallet!.GetAddress();
 
                 Debug.Log($"[ThirdWeb] eth_getBalance local handling: address={address}, walletAddress={walletAddress}");
 
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    BigInteger balance = await ThirdWebManager.Instance.ActiveWallet.GetBalance(chainId);
+                    BigInteger balance = await ActiveWallet!.GetBalance(chainId);
                     Debug.Log($"[ThirdWeb] Local wallet balance: {balance}");
 
                     return new EthApiResponse
@@ -393,7 +440,7 @@ namespace DCL.Web3.Authenticators
             {
                 // personal_sign params: [message, address]
                 var message = request.@params[0].ToString();
-                string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(message);
+                string signature = await ActiveWallet!.PersonalSign(message);
 
                 return new EthApiResponse
                 {
@@ -407,7 +454,7 @@ namespace DCL.Web3.Authenticators
             {
                 // eth_signTypedData_v4 params: [address, typedData]
                 var typedDataJson = request.@params[1].ToString();
-                string signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+                string signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
 
                 return new EthApiResponse
                 {
@@ -458,7 +505,7 @@ namespace DCL.Web3.Authenticators
                 // Best-effort: balance + estimated gas fee (should never block the tx flow if it fails)
                 try
                 {
-                    BigInteger balanceWei = await ThirdWebManager.Instance.ActiveWallet.GetBalance(chainId);
+                    BigInteger balanceWei = await ActiveWallet!.GetBalance(chainId);
                     confirmationRequest.BalanceEth = balanceWei.ToString().ToEth(decimalsToDisplay: 6, addCommas: false);
                 }
                 catch (Exception e)
@@ -475,7 +522,7 @@ namespace DCL.Web3.Authenticators
                     string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
                     string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
 
-                    string from = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+                    string from = await ActiveWallet!.GetAddress();
 
                     var txObject = new
                     {
@@ -534,7 +581,7 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log($"[ThirdWeb] HandleSendTransactionAsync called, useMetaTx={useMetaTx}");
 
-            if (ThirdWebManager.Instance.ActiveWallet == null)
+            if (ActiveWallet == null)
             {
                 Debug.LogError("[ThirdWeb] No active wallet connected!");
                 throw new Web3Exception("No active wallet connected");
@@ -583,7 +630,7 @@ namespace DCL.Web3.Authenticators
             // For simple ETH transfers (no data), use Transfer method
             if (string.IsNullOrEmpty(data) || data == "0x")
             {
-                ThirdwebTransactionReceipt? txReceipt = await ThirdWebManager.Instance.ActiveWallet.Transfer(
+                ThirdwebTransactionReceipt? txReceipt = await ActiveWallet!.Transfer(
                     chainId,
                     to,
                     weiValue
@@ -618,7 +665,7 @@ namespace DCL.Web3.Authenticators
         {
             // Create contract with minimal ABI containing a dummy function
             ThirdwebContract contract = await ThirdwebContract.Create(
-                ThirdWebManager.Instance.Client,
+                Client,
                 contractAddress,
                 chainId,
                 MINIMAL_ABI
@@ -626,7 +673,7 @@ namespace DCL.Web3.Authenticators
 
             // Create a base transaction using the dummy function
             ThirdwebTransaction transaction = await ThirdwebContract.Prepare(
-                ThirdWebManager.Instance.ActiveWallet,
+                ActiveWallet,
                 contract,
                 "execute",
                 weiValue
@@ -667,7 +714,7 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         private async UniTask<string> SendMetaTransactionAsync(string contractAddress, string functionSignature)
         {
-            string from = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string from = await ActiveWallet!.GetAddress();
 
             Debug.Log("[ThirdWeb] Sending meta-transaction via Decentraland relay");
             Debug.Log($"[ThirdWeb] From: {from}, Contract: {contractAddress}");
@@ -723,7 +770,7 @@ namespace DCL.Web3.Authenticators
                 Debug.Log($"[ThirdWeb] EIP-712 typed data:\n{typedDataJson}");
 
                 // 4. Sign with ThirdWeb wallet
-                signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+                signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
             }
 
             Debug.Log($"[ThirdWeb] Full signature: {signature}");
@@ -818,7 +865,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Standard approach: Sign via ThirdWeb SignTypedDataV4
                 Debug.Log("[EIP712-Manual] Signing via ThirdWeb SignTypedDataV4...");
-                signature = await ThirdWebManager.Instance.ActiveWallet.SignTypedDataV4(typedDataJson);
+                signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
             }
 
             Debug.Log($"[EIP712-Manual] Signature: {signature}");
@@ -863,7 +910,7 @@ namespace DCL.Web3.Authenticators
             // Try using PersonalSign with raw bytes
             // WARNING: PersonalSign adds "\x19Ethereum Signed Message:\n32" prefix!
             // This will NOT work directly with contract's ecrecover which expects EIP-712 format
-            string signature = await ThirdWebManager.Instance.ActiveWallet.PersonalSign(hashBytes);
+            string signature = await ActiveWallet!.PersonalSign(hashBytes);
 
             Debug.Log($"[EIP712-Manual] Raw hash signature (with personal_sign prefix): {signature}");
             Debug.LogWarning("[EIP712-Manual] NOTE: PersonalSign adds message prefix - contract may not accept this!");
@@ -1396,7 +1443,7 @@ namespace DCL.Web3.Authenticators
             string relayUrl = GetRelayServerUrl(chainId);
             Debug.Log($"[ThirdWeb] Posting to transactions-server ({relayUrl}):\n{payloadJson}");
 
-            IThirdwebHttpClient httpClient = ThirdWebManager.Instance.Client.HttpClient;
+            IThirdwebHttpClient httpClient = Client.HttpClient;
 
             var content = new System.Net.Http.StringContent(
                 payloadJson,
@@ -1538,7 +1585,7 @@ namespace DCL.Web3.Authenticators
             Debug.Log($"[ThirdWeb] RPC Request JSON: {requestJson}");
 
             // Send HTTP POST request to RPC endpoint using ThirdwebClient's HTTP client
-            IThirdwebHttpClient? httpClient = ThirdWebManager.Instance.Client.HttpClient;
+            IThirdwebHttpClient? httpClient = Client.HttpClient;
 
             var content = new System.Net.Http.StringContent(
                 requestJson,

@@ -6,12 +6,12 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using ThirdWebUnity;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
@@ -90,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    (Profile profile, bool isNewUser) = await FetchProfileAsync(email, identity, ct);
+                    (Profile profile, bool isNewUser) = await FetchProfileAsync(identity, ct);
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                     view.Hide(OUT);
 
@@ -121,11 +121,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private async UniTask<(Profile profile, bool isNewUser)> FetchProfileAsync(string email, IWeb3Identity identity, CancellationToken ct)
+        private async UniTask<(Profile profile, bool isNewUser)> FetchProfileAsync(IWeb3Identity identity, CancellationToken ct)
         {
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
-            bool isNewUser = profile == null && ThirdWebManager.Instance.ActiveWallet != null;
+            bool isNewUser = profile == null;
 
             if (isNewUser)
                 profile = Profile.NewRandomProfile(identity.Address.ToString());

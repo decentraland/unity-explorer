@@ -1,7 +1,7 @@
-﻿using DCL.Web3.Abstract;
+using DCL.Web3.Abstract;
+using DCL.Web3.Authenticators.ManualTest;
 using System.Numerics;
 using Thirdweb;
-using ThirdWebUnity;
 using UnityEngine;
 
 namespace DCL.Web3.Authenticators
@@ -11,7 +11,7 @@ namespace DCL.Web3.Authenticators
         [ContextMenu(nameof(GetAddress))]
         public async void GetAddress()
         {
-            string address = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string address = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             Debug.Log($"Wallet Address: {address}");
         }
 
@@ -25,7 +25,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"net_version: {response.result}");
         }
 
@@ -39,7 +39,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"web3_clientVersion: {response.result}");
         }
 
@@ -56,14 +56,14 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { txHash },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"eth_getTransactionReceipt: {response.result}");
         }
 
         [ContextMenu(nameof(TestEthEstimateGas))]
         public async void TestEthEstimateGas()
         {
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             var txObject = new
             {
@@ -80,7 +80,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { txObject },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
 
             var hex = response.result.ToString();
             BigInteger gasAmount = hex.HexToNumber();
@@ -98,7 +98,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { "0x0000000000000000000000000000000000000000", "0x0", "latest" },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"eth_getStorageAt: {response.result}");
         }
 
@@ -112,7 +112,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
 
             var hex = response.result.ToString();
             BigInteger blockNumber = hex.HexToNumber();
@@ -129,7 +129,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
 
             var hex = response.result.ToString();
             BigInteger weiPrice = hex.HexToNumber();
@@ -153,7 +153,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"eth_protocolVersion: {response.result}");
         }
 
@@ -168,14 +168,14 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { "0x48656c6c6f20576f726c64" }, // "Hello World" в hex
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"web3_sha3: {response.result}");
         }
 
         [ContextMenu(nameof(TestEthGetTransactionCount))]
         public async void TestEthGetTransactionCount()
         {
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             var request = new EthApiRequest
             {
@@ -184,7 +184,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { walletAddress, "latest" },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
 
             var hex = response.result.ToString();
             BigInteger nonce = hex.HexToNumber();
@@ -201,7 +201,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { "latest", false }, // false = без полных транзакций
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"eth_getBlockByNumber: {response.result}");
         }
 
@@ -218,7 +218,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { contractAddress, "latest" },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
 
             var code = response.result.ToString();
             byte[] codeBytes = code.HexToBytes();
@@ -235,7 +235,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(request, destroyCancellationToken);
             Debug.Log($"eth_requestAccounts: {response.result}");
         }
     }

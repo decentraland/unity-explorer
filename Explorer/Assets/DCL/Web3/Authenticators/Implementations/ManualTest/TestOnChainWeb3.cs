@@ -1,10 +1,10 @@
 using DCL.Backpack.Gifting.Utils;
+using DCL.Web3.Authenticators.ManualTest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Numerics;
 using Thirdweb;
-using ThirdWebUnity;
 using UnityEngine;
 
 namespace DCL.Web3.Authenticators
@@ -31,7 +31,7 @@ namespace DCL.Web3.Authenticators
         [ContextMenu(nameof(SetSepoliaChain))]
         private void SetSepoliaChain()
         {
-            ThirdWebAuthenticator.Instance.SetSepoliaChain();
+            ThirdWebTestHelper.GetAuthenticator()?.SetSepoliaChain();
         }
 
         private static string GetNativeCurrencyName(int chainId) =>
@@ -79,7 +79,7 @@ namespace DCL.Web3.Authenticators
         [ContextMenu(nameof(TestGetNativeBalance))]
         public async void TestGetNativeBalance()
         {
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             // Определяем название нативной валюты по выбранному chainId
             string currencyName = GetNativeCurrencyName(SelectedChainId);
@@ -92,7 +92,7 @@ namespace DCL.Web3.Authenticators
                 @params = new object[] { walletAddress, "latest" },
             };
 
-            EthApiResponse balanceResponse = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, balanceRequest, destroyCancellationToken);
+            EthApiResponse balanceResponse = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(SelectedChainId, balanceRequest, destroyCancellationToken);
 
             var hexBalance = balanceResponse.result.ToString();
 
@@ -111,7 +111,7 @@ namespace DCL.Web3.Authenticators
         [ContextMenu(nameof(TestGetERC20Balance))]
         public async void TestGetERC20Balance()
         {
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             // Выбираем адрес контракта MANA в зависимости от выбранной сети
             string? pocContractAddress = GetManaContractAddress(SelectedChainId);
@@ -146,7 +146,7 @@ namespace DCL.Web3.Authenticators
                 },
             };
 
-            EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, request, destroyCancellationToken);
+            EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(SelectedChainId, request, destroyCancellationToken);
 
             var hexBalance = response.result.ToString();
 
@@ -176,7 +176,7 @@ namespace DCL.Web3.Authenticators
                 return;
             }
 
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             string currencyName = GetNativeCurrencyName(SelectedChainId);
 
             // Сумма для отправки из Inspector
@@ -209,7 +209,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(SelectedChainId, request, destroyCancellationToken);
                 string txHash = response.result.ToString();
 
                 Debug.Log($"✅ Transaction sent successfully!");
@@ -239,7 +239,7 @@ namespace DCL.Web3.Authenticators
                 return;
             }
 
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             // Получаем адрес контракта MANA
             string? manaContractAddress = GetManaContractAddress(SelectedChainId);
@@ -287,7 +287,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(SelectedChainId, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(SelectedChainId, request, destroyCancellationToken);
                 string txHash = response.result.ToString();
 
                 Debug.Log($"✅ MANA transfer sent successfully!");
@@ -335,7 +335,7 @@ namespace DCL.Web3.Authenticators
                     },
                 };
 
-                EthApiResponse nameResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, nameRequest, destroyCancellationToken);
+                EthApiResponse nameResponse = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, nameRequest, destroyCancellationToken);
                 string nameHex = nameResponse.result?.ToString() ?? "0x";
 
                 // Decode string
@@ -376,7 +376,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, request, destroyCancellationToken);
                 contractDomainSep = response.result?.ToString() ?? "0x";
             }
             catch (System.Exception ex) { Debug.LogWarning($"domainSeparator() failed: {ex.Message}"); }
@@ -478,7 +478,7 @@ namespace DCL.Web3.Authenticators
                     },
                 };
 
-                EthApiResponse chainIdResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, chainIdRequest, destroyCancellationToken);
+                EthApiResponse chainIdResponse = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, chainIdRequest, destroyCancellationToken);
                 string chainIdHex = chainIdResponse.result?.ToString() ?? "0x0";
                 BigInteger contractChainId = chainIdHex.HexToNumber();
                 Debug.Log($"Contract's getChainId(): {contractChainId}");
@@ -524,7 +524,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, request, destroyCancellationToken);
                 contractDomainSep = response.result?.ToString() ?? "0x";
             }
             catch (System.Exception ex) { Debug.LogWarning($"domainSeparator() failed: {ex.Message}"); }
@@ -564,7 +564,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(137, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(137, request, destroyCancellationToken);
                 string gasPriceHex = response.result?.ToString() ?? "0x0";
                 BigInteger gasPriceWei = gasPriceHex.HexToNumber();
 
@@ -594,7 +594,7 @@ namespace DCL.Web3.Authenticators
             var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
             var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
 
-            string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string walletAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             Debug.Log("=== Checking NFT Owner ===");
             Debug.Log($"My wallet: {walletAddress}");
             Debug.Log($"Contract: {contractAddress}");
@@ -618,7 +618,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(137, request, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(137, request, destroyCancellationToken);
                 string ownerHex = response.result?.ToString() ?? "0x";
 
                 // Decode address from result (last 40 chars)
@@ -658,7 +658,7 @@ namespace DCL.Web3.Authenticators
         public async void TestGiftingViaRelay()
         {
             // Используем данные из Inspector - можно менять для тестов
-            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string senderAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             string recipientAddress = testRecipientAddress;
             string contractAddress = testContractAddress;
             string tokenId = testTokenId;
@@ -694,7 +694,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Gifting использует Polygon Mainnet (137)
                 // Используем Web3RequestSource.Internal для отправки через relay
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(
                     137, // Polygon Mainnet
                     request,
                     Web3RequestSource.Internal,
@@ -720,7 +720,7 @@ namespace DCL.Web3.Authenticators
         public async void TestGiftingViaRelay2()
         {
             // Используем данные Test Case 2 из Inspector
-            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string senderAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             string recipientAddress = testRecipientAddress2;
             string contractAddress = testContractAddress2;
             string tokenId = testTokenId2;
@@ -756,7 +756,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Gifting использует Polygon Mainnet (137)
                 // Используем Web3RequestSource.Internal для отправки через relay
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(
                     137, // Polygon Mainnet
                     request,
                     Web3RequestSource.Internal,
@@ -781,7 +781,7 @@ namespace DCL.Web3.Authenticators
         [ContextMenu(nameof(TestGiftingWithoutRelay))]
         public async void TestGiftingWithoutRelay()
         {
-            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string senderAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
             var recipientAddress = "0x3e22ff0ef25fce412f00ba0bf5a794611f77c9a1";
             var contractAddress = "0x167d6b63511a7b5062d1f7b07722fccbbffb5105";
             var tokenId = "210624583337114373395836055367340864637790190801098222508621978860";
@@ -809,7 +809,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Используем Web3RequestSource.SDKScene - НЕ relay, обычная транзакция
                 // Ожидается "insufficient funds for gas"
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(
                     137, // Polygon Mainnet
                     request,
                     Web3RequestSource.SDKScene,
@@ -886,7 +886,7 @@ namespace DCL.Web3.Authenticators
                 return;
             }
 
-            string senderAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
+            string senderAddress = await ThirdWebTestHelper.GetActiveWallet()!.GetAddress();
 
             Debug.Log($"[CacheTest{testNumber}] ▶ INPUT DATA:");
             Debug.Log($"[CacheTest{testNumber}]   Sender: {senderAddress}");
@@ -917,7 +917,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(
                     137, // Polygon Mainnet
                     request,
                     Web3RequestSource.Internal,
@@ -974,7 +974,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request1, destroyCancellationToken);
+                EthApiResponse response = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, request1, destroyCancellationToken);
                 contractDomainSep = response.result?.ToString() ?? "0x";
                 Debug.Log($"domainSeparator() returned: {contractDomainSep}");
             }
@@ -996,7 +996,7 @@ namespace DCL.Web3.Authenticators
 
                 try
                 {
-                    EthApiResponse response2 = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request2, destroyCancellationToken);
+                    EthApiResponse response2 = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, request2, destroyCancellationToken);
                     contractDomainSep = response2.result?.ToString() ?? "0x";
                     Debug.Log($"getDomainSeparator() returned: {contractDomainSep}");
                 }
@@ -1073,7 +1073,7 @@ namespace DCL.Web3.Authenticators
                     },
                 };
 
-                EthApiResponse nameResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, nameRequest, destroyCancellationToken);
+                EthApiResponse nameResponse = await ThirdWebTestHelper.GetAuthenticator()!.SendAsync(chainId, nameRequest, destroyCancellationToken);
                 string nameHex = nameResponse.result?.ToString() ?? "0x";
 
                 if (nameHex.Length > 130)
