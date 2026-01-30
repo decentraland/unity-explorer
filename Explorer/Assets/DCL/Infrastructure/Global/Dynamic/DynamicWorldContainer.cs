@@ -309,7 +309,6 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
-            NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
