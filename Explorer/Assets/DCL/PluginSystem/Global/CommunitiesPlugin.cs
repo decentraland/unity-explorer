@@ -14,6 +14,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -61,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -90,7 +92,8 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -114,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.analytics = analytics;
+            this.homePlaceEventBus = homePlaceEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(realmNavigator);
         }
@@ -158,7 +162,8 @@ namespace DCL.PluginSystem.Global
                 voiceChatOrchestrator,
                 inputBlock,
                 selfProfile,
-                analytics);
+                analytics,
+                homePlaceEventBus);
 
             mvcManager.RegisterController(communityCardController);
 

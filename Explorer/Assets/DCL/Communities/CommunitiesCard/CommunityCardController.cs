@@ -19,6 +19,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -86,6 +87,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IInputBlock inputBlock;
         private readonly ISelfProfile selfProfile;
         private readonly IAnalyticsController analytics;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -127,7 +129,8 @@ namespace DCL.Communities.CommunitiesCard
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            HomePlaceEventBus homePlaceEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -152,6 +155,7 @@ namespace DCL.Communities.CommunitiesCard
             this.thumbnailLoader = new ThumbnailLoader(null);
             this.selfProfile = selfProfile;
             this.analytics = analytics;
+            this.homePlaceEventBus = homePlaceEventBus;
 
             eventScope.Add(chatEventBus.Subscribe<ChatEvents.OpenPrivateConversationRequestedEvent>(evt => CloseCardOnConversationRequested(evt.UserId)));
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -381,7 +385,8 @@ namespace DCL.Communities.CommunitiesCard
                 clipboard,
                 webBrowser,
                 profileRepository,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                homePlaceEventBus);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

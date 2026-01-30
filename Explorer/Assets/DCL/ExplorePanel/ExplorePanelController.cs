@@ -3,6 +3,7 @@ using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.FeatureFlags;
+using DCL.Events;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -54,6 +55,7 @@ namespace DCL.ExplorePanel
         public SettingsController SettingsController { get; }
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
         public PlacesController PlacesController { get; }
+        public EventsController EventsController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
@@ -68,6 +70,7 @@ namespace DCL.ExplorePanel
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
             PlacesController placesController,
+            EventsController eventsController,
             IInputBlock inputBlock,
             IMVCManager mvcManager)
             : base(viewFactory)
@@ -89,6 +92,8 @@ namespace DCL.ExplorePanel
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
+
+            EventsController = eventsController;
         }
 
         public override void Dispose()
@@ -123,6 +128,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.CameraReel, CameraReelController },
                 { ExploreSections.Communities, CommunitiesBrowserController },
                 { ExploreSections.Places, PlacesController },
+                { ExploreSections.Events, EventsController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
@@ -142,7 +148,8 @@ namespace DCL.ExplorePanel
 
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
                     (section == ExploreSections.Communities && !includeCommunities) ||
-                    (section == ExploreSections.Places && !includeDiscover))
+                    (section == ExploreSections.Places && !includeDiscover) ||
+                    (section == ExploreSections.Events && !includeDiscover))
                 {
                     tabSelector.gameObject.SetActive(false);
                     continue;
@@ -211,6 +218,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed += OnEventsHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
@@ -285,6 +293,19 @@ namespace DCL.ExplorePanel
                 isControlClosing = true;
         }
 
+        private void OnEventsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeDiscover) return;
+
+            if (lastShownSection != ExploreSections.Events)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                ShowSection(ExploreSections.Events);
+            }
+            else
+                isControlClosing = true;
+        }
+
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Backpack)
@@ -323,6 +344,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed -= OnEventsHotkeyPressed;
             dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 

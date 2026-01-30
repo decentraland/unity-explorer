@@ -386,7 +386,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void UpdateMemberCount(GetCommunityResponse.CommunityData communityData) =>
-            communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
+            communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, UIUtils.NumberToCompactString(communityData.membersCount));
 
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
             ThumbnailLoader thumbnailLoader)

@@ -41,6 +41,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Donations;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -149,6 +150,8 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly bool isVoiceChatEnabled;
+        private readonly bool isTranslationChatEnabled;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -163,6 +166,8 @@ namespace DCL.PluginSystem.Global
         private CommunitiesBrowserController? communitiesBrowserController;
         private ExplorePanelController? explorePanelController;
         private PlacesController? placesController;
+        private PlaceDetailPanelController? placeDetailPanelController;
+        private EventsController? eventsController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -310,6 +315,9 @@ namespace DCL.PluginSystem.Global
             placesController?.Dispose();
             upscalingController.Dispose();
             explorePanelController?.Dispose();
+            eventsController?.Dispose();
+            upscalingController?.Dispose();
+            placeDetailPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -506,9 +514,20 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 loadingStatus);
 
+            var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
+            var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
-            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser, webRequestController, realmNavigator, clipboard, decentralandUrlsSource,
-                friendServiceProxy, profileRepositoryWrapper);
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+
+            PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
+            var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
+            placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
+            mvcManager.RegisterController(placeDetailPanelController);
+
+            EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
+            eventsController = new EventsController(eventsView, cursor);
 
             explorePanelController = new
                 ExplorePanelController(
@@ -530,6 +549,7 @@ namespace DCL.PluginSystem.Global
                         profileRepositoryWrapper),
                     communitiesBrowserController,
                     placesController,
+                    eventsController,
                     inputBlock,
                     mvcManager);
 
@@ -663,6 +683,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
+
+            [field: Header("Place Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
         }
     }
 }

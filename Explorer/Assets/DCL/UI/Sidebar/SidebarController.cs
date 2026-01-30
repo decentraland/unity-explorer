@@ -121,7 +121,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.NotificationsButton.onClick.RemoveListener(OpenNotificationsPanel);
                 viewInstance.skyboxButton.onClick.RemoveListener(OpenSkyboxSettingsPanel);
                 viewInstance.ProfileWidget.OpenProfileButton.onClick.RemoveListener(OnProfilePanelButtonClicked);
-                viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarSettingsButtonClicked);
+                viewInstance.sidebarConfigButton.onClick.RemoveListener(OnSidebarConfigButtonClicked);
                 viewInstance.unreadMessagesButton.onClick.RemoveListener(OnUnreadMessagesButtonClicked);
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
@@ -157,9 +157,8 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
             viewInstance.cameraReelButton.gameObject.SetActive(isCameraReelFeatureEnabled);
             viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
-
-            //The button doesn't exist ATM?
-            viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.placesButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
 
             SubscribeToEvents();
 
@@ -180,12 +179,6 @@ namespace DCL.UI.Sidebar
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
             mvcManager.OnViewClosed += OnMvcManagerViewClosed;
 
-            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
-            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
-
-            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
-            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-
             viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
             viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
             viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
@@ -199,7 +192,7 @@ namespace DCL.UI.Sidebar
             viewInstance.NotificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsPanel);
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OnProfilePanelButtonClicked);
-            viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarSettingsButtonClicked);
+            viewInstance.sidebarConfigButton.onClick.AddListener(OnSidebarConfigButtonClicked);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
@@ -212,7 +205,12 @@ namespace DCL.UI.Sidebar
 
             if (isCameraReelFeatureEnabled) viewInstance.cameraReelButton.onClick.AddListener(OnCameraReelButtonClicked);
             if (isFriendsFeatureEnabled) viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClicked);
-            if (isDiscoverFeatureEnabled) viewInstance.placesButton?.onClick.AddListener(OnPlacesButtonClicked);
+
+            if (isDiscoverFeatureEnabled)
+            {
+                viewInstance.placesButton?.onClick.AddListener(OnPlacesButtonClicked);
+                viewInstance.eventsButton.onClick.AddListener(OnEventsButtonClicked);
+            }
         }
 
         private void OnMvcManagerViewClosed(IController closedController)
@@ -334,6 +332,7 @@ namespace DCL.UI.Sidebar
         private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
         private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
         private void OnPlacesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Places);
+        private void OnEventsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Events);
 
         private void OnBackpackButtonClicked()
         {
@@ -356,7 +355,7 @@ namespace DCL.UI.Sidebar
         }
 
         private void OnControlsButtonClicked() => OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
-        private void OnSidebarSettingsButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
+        private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
         private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
         private void OpenSkyboxSettingsPanel() => OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();
         private void OpenNotificationsPanel() => OpenPanelAsync(viewInstance!.NotificationsButton, NotificationsPanelController.IssueCommand()).Forget();
