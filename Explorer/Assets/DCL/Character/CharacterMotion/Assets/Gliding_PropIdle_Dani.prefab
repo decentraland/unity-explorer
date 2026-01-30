@@ -50,7 +50,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -4917,9 +4917,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 631c99148e6e49adbba6aed1e6c17672, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.CharacterMotion.Components::DCL.CharacterMotion.Components.GliderPropController
-  trails:
-  - {fileID: 0}
-  - {fileID: 0}
+  particleSystems:
+  - {fileID: 4630188429874470580}
+  trails: []
 --- !u!4 &8843134732432445076 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: e4cec4727f2781843ab74afb2290ff16, type: 3}
