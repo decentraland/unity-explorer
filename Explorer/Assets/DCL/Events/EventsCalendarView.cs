@@ -21,6 +21,7 @@ namespace DCL.Events
         public event Action<DateTime, int>? DaysRangeChanged;
 
         [Header("Days Selector")]
+        [SerializeField] private GameObject daySelectorContainer = null!;
         [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
         [SerializeField] private Button previousDateRangeButton = null!;
         [SerializeField] private Button nextDateRangeButton = null!;
@@ -29,6 +30,10 @@ namespace DCL.Events
         [SerializeField] private GameObject loadingSpinner = null!;
         [SerializeField] private GameObject eventsContainer = null!;
         [SerializeField] private List<EventListConfiguration> eventsLists = null!;
+
+        [Header("Highlighted Banner")]
+        [SerializeField] private List<GameObject> objectsToHideWhenBanner = null!;
+        [SerializeField] private EventCardView highlightedBanner = null!;
 
         [Serializable]
         private struct EventListConfiguration
@@ -64,6 +69,9 @@ namespace DCL.Events
         public void SetDependencies(EventsStateService eventsStateService) =>
             this.eventsStateService = eventsStateService;
 
+        public void SetDaysSelectorActive(bool isActive) =>
+            daySelectorContainer.SetActive(isActive);
+
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
         {
             previousDateRangeButton.interactable = fromDate != DateTime.Today;
@@ -77,6 +85,17 @@ namespace DCL.Events
             currentFromDate = fromDate;
             currentNumberOfDaysShowed = numberOfDaysToShow;
             DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
+        }
+
+        public void SetHighlightedBanner(EventDTO? eventInfo)
+        {
+            foreach (GameObject go in objectsToHideWhenBanner)
+                go.SetActive(eventInfo == null);
+
+            highlightedBanner.gameObject.SetActive(eventInfo != null);
+
+            if (eventInfo != null)
+                highlightedBanner.Configure(eventInfo.Value);
         }
 
         public void InitializeEventsLists()
@@ -121,9 +140,10 @@ namespace DCL.Events
             var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][eventIndex]);
             int itemPrefabIndex = eventInfo.live ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX;
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
+            EventCardView cardView = listItem.GetComponent<EventCardView>();
 
             // Setup card data
-            listItem.GetComponentInChildren<TMP_Text>().text = $"{eventInfo.name}\n{DateTimeOffset.Parse(eventInfo.next_start_at).LocalDateTime.ToString("dd/MM/yyyy HH:mm")}"; // This is temporal until we implement the event card view.
+            cardView.Configure(eventInfo);
 
             // Setup card events
             // ...

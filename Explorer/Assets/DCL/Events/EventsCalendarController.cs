@@ -15,6 +15,7 @@ namespace DCL.Events
     public class EventsCalendarController : IDisposable
     {
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
+        private const string GET_HIGHLIGHTED_EVENTS_ERROR_MESSAGE = "There was an error loading highlighted events. Please try again.";
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -60,7 +61,28 @@ namespace DCL.Events
             if (section != EventsSection.CALENDAR)
                 return;
 
-            view.SetupDaysSelector(fromDate, 5);
+            loadEventsCts = loadEventsCts.SafeRestart();
+            CheckHighlightedBannerAsync(fromDate, loadEventsCts.Token).Forget();
+        }
+
+        private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
+        {
+            view.SetDaysSelectorActive(false);
+            view.SetAsLoading(true);
+
+            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, ct)
+                                                                                            .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!highlightedEventsResult.Success)
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_HIGHLIGHTED_EVENTS_ERROR_MESSAGE));
+
+            bool showHighlightedBanner = highlightedEventsResult is { Success: true, Value: { Count: > 0 } };
+            view.SetHighlightedBanner(showHighlightedBanner ? highlightedEventsResult.Value[0] : null);
+            view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
+            view.SetDaysSelectorActive(true);
         }
 
         private void OnSectionClosed() =>

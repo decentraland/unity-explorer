@@ -78,9 +78,10 @@ namespace DCL.Events
         {
             var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
+            EventCardView cardView = gridItem.GetComponent<EventCardView>();
 
             // Setup card data
-            gridItem.GetComponentInChildren<TMP_Text>().text = $"{eventInfo.name}\n{DateTimeOffset.Parse(eventInfo.next_start_at).LocalDateTime.ToString("dd/MM/yyyy HH:mm")}"; // This is temporal until we implement the event card view.
+            cardView.Configure(eventInfo);
 
             // Setup card events
             // ...
