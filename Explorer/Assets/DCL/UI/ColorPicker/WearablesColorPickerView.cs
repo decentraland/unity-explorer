@@ -27,9 +27,8 @@ namespace DCL.UI
         [field: SerializeField]
         public GameObject ArrowDownMark { get; private set; }
 
-        [field: Header("ColorPicker")]
         [field: SerializeField]
-        public ColorPickerView ColorPickerView { get; private set; }
+        public GameObject ColorPickerAnchor { get; private set; }
 
 #if UNITY_EDITOR
         private void OnValidate()

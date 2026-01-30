@@ -911,6 +911,30 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 17.9
       objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 507969708073161428, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 880750585469488452, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -962,6 +986,26 @@ PrefabInstance:
     - target: {fileID: 2144008582907153237, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300016647093229257, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300016647093229257, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300016647093229257, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300016647093229257, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 3517153233556744992, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4924813088040145196, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1072,9 +1116,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 951936997369523285, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7249781185832133664}
-    - targetCorrespondingSourceObject: {fileID: 5252716310507981872, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4706274704106568217}
   m_SourcePrefab: {fileID: 100100000, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
 --- !u!1 &426812466391711145 stripped
 GameObject:
@@ -1112,31 +1153,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a53b2845f7e40445fa9aaea91377fef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::DCL.UI.NameColorPickerView
---- !u!1 &4628794063234391500 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5252716310507981872, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}
-  m_PrefabInstance: {fileID: 637718988570186236}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &4706274704106568217
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4628794063234391500}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
-  m_IgnoreLayout: 1
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
 --- !u!224 &6250659765208597793 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6802528885745030365, guid: b3edaebea962c4296ad1ea2b0770deb4, type: 3}

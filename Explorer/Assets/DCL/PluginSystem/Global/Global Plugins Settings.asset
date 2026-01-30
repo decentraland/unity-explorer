@@ -60,6 +60,7 @@ MonoBehaviour:
   - rid: 745469515127586908
   - rid: 5190442831932031144
   - rid: 1221415613651484787
+  - rid: 7426570530121056350
   references:
     version: 2
     RefIds:
@@ -1096,6 +1097,21 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 7426570530121056350
+      type: {class: ColorPickerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ColorPickerPrefab:
+          m_AssetGUID: a64bc37fc09f340bd821a73ed1a9342a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ColorTogglePrefab:
+          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

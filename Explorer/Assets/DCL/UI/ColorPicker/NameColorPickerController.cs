@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -5,22 +7,22 @@ namespace DCL.UI
 {
     public class NameColorPickerController : IDisposable
     {
-        private readonly ColorPickerController controller;
+        private readonly IMVCManager mvcManager;
         private readonly NameColorPickerView view;
+        private readonly ColorPresetsSO colorPresets;
+        private Color currentColor;
 
         public event Action<Color> OnColorChanged;
         public event Action OnColorPickerClosed;
 
         public NameColorPickerController(
+            IMVCManager mvcManager,
             NameColorPickerView view,
-            ColorToggleView colorToggle,
             ColorPresetsSO colorPresets)
         {
+            this.mvcManager = mvcManager;
             this.view = view;
-
-            controller = new ColorPickerController(view.ColorPickerView, colorToggle);
-            controller.OnColorChanged += OnControllerColorChanged;
-            controller.SetPresets(colorPresets.colors);
+            this.colorPresets = colorPresets;
 
             view.ToggleButton.onClick.AddListener(TogglePanel);
         }
@@ -28,25 +30,38 @@ namespace DCL.UI
         public void Dispose()
         {
             view.ToggleButton.onClick.RemoveAllListeners();
-            controller.OnColorChanged -= OnControllerColorChanged;
-            controller.Dispose();
+            OnColorChanged = null;
         }
 
-        public void ResetPanel() =>
-            view.ColorPickerView.gameObject.SetActive(false);
-
         public void SetColor(Color color) =>
-            controller.SetColor(color);
+            currentColor = color;
 
-        private void OnControllerColorChanged(Color color) =>
-            OnColorChanged(color);
+        private void TogglePanel() =>
+            ShowColorPickerPopup();
 
-        private void TogglePanel()
+        private void ShowColorPickerPopup()
         {
-            bool isActive = view.ColorPickerView.gameObject.activeInHierarchy;
-            view.ColorPickerView.gameObject.SetActive(!isActive);
+            // Get anchor position in world space
+            Vector2 anchorPosition = view.ColorPickerAnchor != null ? view.ColorPickerAnchor.transform.position : Vector2.zero;
 
-            if (isActive) OnColorPickerClosed.Invoke();
+            var data = new ColorPickerPopupData
+            {
+                InitialColor = currentColor,
+                ColorPresets = colorPresets.colors,
+                Position = anchorPosition,
+                EnableSaturationSlider = false,
+                EnableValueSlider = false,
+                OnColorChanged = (color) =>
+                {
+                    currentColor = color;
+                    OnColorChanged.Invoke(color);
+                }
+            };
+
+            mvcManager.ShowAsync(ColorPickerController.IssueCommand(data)).ContinueWith(() =>
+            {
+                OnColorPickerClosed.Invoke();
+            }).Forget();
         }
     }
 }

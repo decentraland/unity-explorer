@@ -1,9 +1,10 @@
+using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ColorPickerView : MonoBehaviour
+    public class ColorPickerView : ViewBase, IView
     {
         [field: Header("Hue Slider")]
         [field: SerializeField]
@@ -46,6 +47,9 @@ namespace DCL.UI
 
         [field: SerializeField]
         public GameObject ColorSelectorObject { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform ColorControlsContainer { get; private set; }
 
 #if UNITY_EDITOR
         private void OnValidate()

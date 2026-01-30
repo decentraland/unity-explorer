@@ -1,5 +1,7 @@
-using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -7,81 +9,142 @@ using Object = UnityEngine.Object;
 
 namespace DCL.UI
 {
-    public class ColorPickerController : IDisposable
+    public class ColorPickerController : ControllerBase<ColorPickerView, ColorPickerPopupData>
     {
         private const float INCREMENT_AMOUNT = 0.1f;
 
-        private readonly ColorPickerView view;
-        private readonly IObjectPool<ColorToggleView> colorTogglesPool;
+        private readonly ColorToggleView colorTogglePrefab;
+        private IObjectPool<ColorToggleView> colorTogglesPool;
         private readonly List<ColorToggleView> usedColorToggles = new ();
+        private RectTransform viewRectTransform;
 
-        public event Action<Color> OnColorChanged;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public ColorPickerController(ColorPickerView view, ColorToggleView colorToggle)
+        public ColorPickerController(
+            ViewFactoryMethod viewFactory,
+            ColorToggleView colorTogglePrefab)
+            : base(viewFactory)
         {
-            this.view = view;
+            this.colorTogglePrefab = colorTogglePrefab;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewRectTransform = viewInstance!.GetComponent<RectTransform>();
 
             colorTogglesPool = new ObjectPool<ColorToggleView>(
-                () => Object.Instantiate(colorToggle, view.ColorPresetsParent),
+                () => Object.Instantiate(colorTogglePrefab, viewInstance!.ColorPresetsParent),
                 actionOnGet: (toggle) => toggle.gameObject.SetActive(true),
                 actionOnRelease: (toggle) => toggle.gameObject.SetActive(false));
 
             SetupSliderListeners();
         }
 
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            // Position the container (same approach as GenericContextMenu - done in OnBeforeViewShow)
+            if (inputData.Position.HasValue && viewInstance!.ColorControlsContainer != null && viewRectTransform != null)
+            {
+                // Convert world position to local space (same approach as GenericContextMenu)
+                Vector3 localPosition = viewRectTransform.InverseTransformPoint(inputData.Position.Value);
+                viewInstance.ColorControlsContainer.localPosition = localPosition;
+            }
+
+            // Set slider visibility if specified
+            if (inputData.EnableSaturationSlider.HasValue)
+            {
+                viewInstance!.EnableSaturationSlider = inputData.EnableSaturationSlider.Value;
+                if (viewInstance.SliderSaturation != null)
+                    viewInstance.SliderSaturation.gameObject.SetActive(inputData.EnableSaturationSlider.Value);
+            }
+
+            if (inputData.EnableValueSlider.HasValue)
+            {
+                viewInstance!.EnableValueSlider = inputData.EnableValueSlider.Value;
+                if (viewInstance.SliderValue != null)
+                    viewInstance.SliderValue.gameObject.SetActive(inputData.EnableValueSlider.Value);
+            }
+
+            SetPresets(inputData.ColorPresets);
+
+            if (inputData.InitialColor != default)
+                SetColor(inputData.InitialColor);
+        }
+
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            await UniTask.WhenAny(
+                inputData.CloseTask?.Task ?? UniTask.Never(ct)
+            );
+
+        public override void Dispose()
+        {
+            if (viewInstance != null)
+            {
+                if (viewInstance.SliderHue != null) {
+                    viewInstance.SliderHue.Slider.onValueChanged.RemoveAllListeners();
+                    viewInstance.SliderHue.IncreaseButton.onClick.RemoveAllListeners();
+                    viewInstance.SliderHue.DecreaseButton.onClick.RemoveAllListeners();
+                }
+
+                if (viewInstance.SliderSaturation != null) {
+                    viewInstance.SliderSaturation.Slider.onValueChanged.RemoveAllListeners();
+                    viewInstance.SliderSaturation.IncreaseButton.onClick.RemoveAllListeners();
+                    viewInstance.SliderSaturation.DecreaseButton.onClick.RemoveAllListeners();
+                }
+
+                if (viewInstance.SliderValue != null) {
+                    viewInstance.SliderValue.Slider.onValueChanged.RemoveAllListeners();
+                    viewInstance.SliderValue.IncreaseButton.onClick.RemoveAllListeners();
+                    viewInstance.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
+                }
+            }
+
+            ClearPresets();
+            base.Dispose();
+        }
+
         private void SetupSliderListeners()
         {
-            if (view.EnableHueSlider)
+            if (viewInstance!.EnableHueSlider)
             {
-                view.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
-                view.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSaturationColor());
-                view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, INCREMENT_AMOUNT));
-                view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, -INCREMENT_AMOUNT));
+                viewInstance.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
+                viewInstance.SliderHue.Slider.onValueChanged.AddListener(_ => UpdateSaturationColor());
+                viewInstance.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderHue, INCREMENT_AMOUNT));
+                viewInstance.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderHue, -INCREMENT_AMOUNT));
             }
 
-            if (view.EnableSaturationSlider)
+            if (viewInstance.EnableSaturationSlider)
             {
-                view.SliderSaturation.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
-                view.SliderSaturation.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, INCREMENT_AMOUNT));
-                view.SliderSaturation.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, -INCREMENT_AMOUNT));
+                viewInstance.SliderSaturation.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
+                viewInstance.SliderSaturation.IncreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderSaturation, INCREMENT_AMOUNT));
+                viewInstance.SliderSaturation.DecreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderSaturation, -INCREMENT_AMOUNT));
             }
 
-            if (view.EnableValueSlider)
+            if (viewInstance.EnableValueSlider)
             {
-                view.SliderValue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
-                view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, INCREMENT_AMOUNT));
-                view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
+                viewInstance.SliderValue.Slider.onValueChanged.AddListener(_ => UpdateSlidersColor());
+                viewInstance.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderValue, INCREMENT_AMOUNT));
+                viewInstance.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(viewInstance.SliderValue, -INCREMENT_AMOUNT));
             }
         }
 
-        public void Dispose()
-        {
-            view.SliderHue.Slider.onValueChanged.RemoveAllListeners();
-            view.SliderHue.IncreaseButton.onClick.RemoveAllListeners();
-            view.SliderHue.DecreaseButton.onClick.RemoveAllListeners();
-
-            view.SliderSaturation.Slider.onValueChanged.RemoveAllListeners();
-            view.SliderSaturation.IncreaseButton.onClick.RemoveAllListeners();
-            view.SliderSaturation.DecreaseButton.onClick.RemoveAllListeners();
-
-            view.SliderValue.Slider.onValueChanged.RemoveAllListeners();
-            view.SliderValue.IncreaseButton.onClick.RemoveAllListeners();
-            view.SliderValue.DecreaseButton.onClick.RemoveAllListeners();
-        }
-
-        public void SetColor(Color color)
+        private void SetColor(Color color)
         {
             UpdateSliderValues(color);
             PreselectMatchingPreset(color);
 
-            void PreselectMatchingPreset(Color color)
+            void PreselectMatchingPreset(Color colorToMatch)
             {
                 foreach (var toggle in usedColorToggles)
-                    toggle.SelectionHighlight.gameObject.SetActive(color.Equals(toggle.ColorPicker.color));
+                    toggle.SelectionHighlight.gameObject.SetActive(colorToMatch.Equals(toggle.ColorPicker.color));
             }
         }
 
-        public void SetPresets(List<Color> presetColors)
+        private void SetPresets(List<Color> presetColors)
         {
             ClearPresets();
 
@@ -89,7 +152,7 @@ namespace DCL.UI
             {
                 Color presetColor = presetColors[i];
                 ColorToggleView toggleView = colorTogglesPool.Get();
-                toggleView.transform.SetParent(view.ColorPresetsParent, false);
+                toggleView.transform.SetParent(viewInstance!.ColorPresetsParent, false);
                 toggleView.transform.SetSiblingIndex(i);
                 toggleView.SelectionHighlight.gameObject.SetActive(false);
                 toggleView.SetColor(presetColor, false);
@@ -97,7 +160,7 @@ namespace DCL.UI
                 usedColorToggles.Add(toggleView);
             }
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.ColorPresetsParent.GetComponent<RectTransform>());
+            LayoutRebuilder.ForceRebuildLayoutImmediate(viewInstance!.ColorPresetsParent.GetComponent<RectTransform>());
 
             void SelectPreset(Color color, ColorToggleView selectedToggleView)
             {
@@ -106,16 +169,16 @@ namespace DCL.UI
 
                 selectedToggleView.SelectionHighlight.gameObject.SetActive(true);
                 UpdateSliderValues(color);
-                OnColorChanged(color);
+                InvokeColorChanged(color);
             }
         }
 
-        public void ClearPresets()
+        private void ClearPresets()
         {
             foreach (ColorToggleView usedColorToggle in usedColorToggles)
             {
                 usedColorToggle.Button.onClick.RemoveAllListeners();
-                colorTogglesPool.Release(usedColorToggle);
+                colorTogglesPool?.Release(usedColorToggle);
             }
 
             usedColorToggles.Clear();
@@ -125,34 +188,34 @@ namespace DCL.UI
         {
             Color.RGBToHSV(currentColor, out float h, out float s, out float v);
 
-            if (view.EnableHueSlider && view.SliderHue != null)
-                view.SliderHue.Slider.SetValueWithoutNotify(h);
+            if (viewInstance!.EnableHueSlider && viewInstance.SliderHue != null)
+                viewInstance.SliderHue.Slider.SetValueWithoutNotify(h);
 
-            if (view.EnableSaturationSlider && view.SliderSaturation != null)
-                view.SliderSaturation.Slider.SetValueWithoutNotify(s);
+            if (viewInstance.EnableSaturationSlider && viewInstance.SliderSaturation != null)
+                viewInstance.SliderSaturation.Slider.SetValueWithoutNotify(s);
 
-            if (view.EnableValueSlider && view.SliderValue != null)
-                view.SliderValue.Slider.SetValueWithoutNotify(v);
+            if (viewInstance.EnableValueSlider && viewInstance.SliderValue != null)
+                viewInstance.SliderValue.Slider.SetValueWithoutNotify(v);
 
             UpdateSaturationColor();
         }
 
         private void UpdateSaturationColor()
         {
-            if (!view.EnableSaturationSlider || view.SliderSaturation == null)
+            if (!viewInstance!.EnableSaturationSlider || viewInstance.SliderSaturation == null)
                 return;
 
-            float hue = view.EnableHueSlider && view.SliderHue != null
-                ? view.SliderHue.Slider.value
-                : view.DefaultHue;
+            float hue = viewInstance.EnableHueSlider && viewInstance.SliderHue != null
+                ? viewInstance.SliderHue.Slider.value
+                : viewInstance.DefaultHue;
 
             Color newColor = Color.HSVToRGB(hue, 1, 1);
-            ColorBlock block = view.SliderSaturation.Slider.colors;
+            ColorBlock block = viewInstance.SliderSaturation.Slider.colors;
             block.normalColor = newColor;
             block.highlightedColor = newColor;
             block.pressedColor = newColor;
             block.selectedColor = newColor;
-            view.SliderSaturation.Slider.colors = block;
+            viewInstance.SliderSaturation.Slider.colors = block;
         }
 
         private void UpdateSlidersColor()
@@ -160,30 +223,35 @@ namespace DCL.UI
             foreach (var toggle in usedColorToggles)
                 toggle.SelectionHighlight.gameObject.SetActive(false);
 
-            float h = view.EnableHueSlider && view.SliderHue != null
-                ? view.SliderHue.Slider.value
-                : view.DefaultHue;
+            float h = viewInstance!.EnableHueSlider && viewInstance.SliderHue != null
+                ? viewInstance.SliderHue.Slider.value
+                : viewInstance.DefaultHue;
 
-            float s = view.EnableSaturationSlider && view.SliderSaturation != null
-                ? view.SliderSaturation.Slider.value
-                : view.DefaultSaturation;
+            float s = viewInstance.EnableSaturationSlider && viewInstance.SliderSaturation != null
+                ? viewInstance.SliderSaturation.Slider.value
+                : viewInstance.DefaultSaturation;
 
-            float v = view.EnableValueSlider && view.SliderValue != null
-                ? view.SliderValue.Slider.value
-                : view.DefaultValue;
+            float v = viewInstance.EnableValueSlider && viewInstance.SliderValue != null
+                ? viewInstance.SliderValue.Slider.value
+                : viewInstance.DefaultValue;
 
             Color newColor = Color.HSVToRGB(h, s, v);
 
-            if (view.EnableHueSlider && view.SliderHue != null)
-                CheckButtonInteractivity(view.SliderHue);
+            if (viewInstance.EnableHueSlider && viewInstance.SliderHue != null)
+                CheckButtonInteractivity(viewInstance.SliderHue);
 
-            if (view.EnableSaturationSlider && view.SliderSaturation != null)
-                CheckButtonInteractivity(view.SliderSaturation);
+            if (viewInstance.EnableSaturationSlider && viewInstance.SliderSaturation != null)
+                CheckButtonInteractivity(viewInstance.SliderSaturation);
 
-            if (view.EnableValueSlider && view.SliderValue != null)
-                CheckButtonInteractivity(view.SliderValue);
+            if (viewInstance.EnableValueSlider && viewInstance.SliderValue != null)
+                CheckButtonInteractivity(viewInstance.SliderValue);
 
-            OnColorChanged(newColor);
+            InvokeColorChanged(newColor);
+        }
+
+        private void InvokeColorChanged(Color color)
+        {
+            inputData.OnColorChanged?.Invoke(color);
         }
 
         private void ChangeProperty(SliderView slider, float amount)

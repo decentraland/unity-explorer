@@ -438,8 +438,8 @@ namespace DCL.Passport
             }
 
             colorPickerController = new NameColorPickerController(
+                mvcManager,
                 viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
-                colorToggle,
                 colorPresets);
 
             colorPickerController.OnColorChanged += SetNewUserNameColor;
@@ -496,7 +496,6 @@ namespace DCL.Passport
         protected override void OnBeforeViewShow()
         {
             viewInstance!.ContextMenuButton.gameObject.SetActive(false);
-            colorPickerController?.ResetPanel();
         }
 
         protected override void OnViewShow()

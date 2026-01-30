@@ -1,14 +1,16 @@
+using Cysharp.Threading.Tasks;
+using MVC;
 using Runtime.Wearables;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI
 {
     public class WearablesColorPickerController : IDisposable
     {
-        private readonly ColorPickerController controller;
+        private readonly IMVCManager mvcManager;
         private readonly WearablesColorPickerView view;
         private readonly ColorPresetsSO hairColors;
         private readonly ColorPresetsSO eyesColors;
@@ -22,29 +24,23 @@ namespace DCL.UI
         public event Action<Color, string> OnColorChanged;
 
         public WearablesColorPickerController(
+            IMVCManager mvcManager,
             WearablesColorPickerView view,
-            ColorToggleView colorToggle,
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
             ColorPresetsSO bodyshapeColors)
         {
+            this.mvcManager = mvcManager;
             this.view = view;
             this.hairColors = hairColors;
             this.eyesColors = eyesColors;
             this.bodyshapeColors = bodyshapeColors;
 
-            controller = new ColorPickerController(view.ColorPickerView, colorToggle);
-            controller.OnColorChanged += OnControllerColorChanged;
-
             view.ToggleButton.onClick.AddListener(TogglePanel);
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             view.ToggleButton.onClick.RemoveAllListeners();
-            controller.OnColorChanged -= OnControllerColorChanged;
-            controller.Dispose();
-        }
 
         public void SetCurrentColor(Color newColor, string category)
         {
@@ -65,60 +61,76 @@ namespace DCL.UI
         public void SetColorPickerStatus(string category)
         {
             view.gameObject.SetActive(WearableCategories.COLOR_PICKER_CATEGORIES.Contains(category));
-            controller.ClearPresets();
 
             switch (category)
             {
                 case WearableCategories.Categories.EYES:
-                    ApplyColorPreset(eyesColors, eyesColor, category);
+                    currentCategory = category;
+                    UpdateColorPreviewImage(eyesColor);
                     break;
                 case WearableCategories.Categories.HAIR:
                 case WearableCategories.Categories.EYEBROWS:
                 case WearableCategories.Categories.FACIAL_HAIR:
-                    ApplyColorPreset(hairColors, hairColor, WearableCategories.Categories.HAIR);
+                    currentCategory = WearableCategories.Categories.HAIR;
+                    UpdateColorPreviewImage(hairColor);
                     break;
                 case WearableCategories.Categories.BODY_SHAPE:
-                    ApplyColorPreset(bodyshapeColors, bodyShapeColor, category);
+                    currentCategory = category;
+                    UpdateColorPreviewImage(bodyShapeColor);
                     break;
             }
 
             ResetPanel();
-            return;
+        }
 
-            void ApplyColorPreset(
-                ColorPresetsSO presets,
-                Color color,
-                string wearableCategory)
+        private void TogglePanel() =>
+            ShowColorPickerPopup();
+
+        private void ShowColorPickerPopup()
+        {
+            Color initialColor;
+            List<Color> presets;
+
+            switch (currentCategory)
             {
-                SetPresets(presets);
-                controller.SetColor(color);
-                UpdateColorPreviewImage(color);
-                currentCategory = wearableCategory;
+                case WearableCategories.Categories.EYES:
+                    initialColor = eyesColor;
+                    presets = eyesColors.colors;
+                    break;
+                case WearableCategories.Categories.HAIR:
+                    initialColor = hairColor;
+                    presets = hairColors.colors;
+                    break;
+                case WearableCategories.Categories.BODY_SHAPE:
+                    initialColor = bodyShapeColor;
+                    presets = bodyshapeColors.colors;
+                    break;
+                default:
+                    return;
             }
-        }
 
-        private void OnControllerColorChanged(Color color)
-        {
-            UpdateColorPreviewImage(color);
-            OnColorChanged(color, currentCategory);
-        }
+            Vector2 anchorPosition = view.ColorPickerAnchor != null ? view.ColorPickerAnchor.transform.position : Vector2.zero;
 
-        private void TogglePanel()
-        {
-            view.ColorPickerView.gameObject.SetActive(!view.ColorPickerView.gameObject.activeInHierarchy);
-            view.ArrowDownMark.SetActive(!view.ArrowDownMark.activeInHierarchy);
-            view.ArrowUpMark.SetActive(!view.ArrowUpMark.activeInHierarchy);
+            var data = new ColorPickerPopupData
+            {
+                InitialColor = initialColor,
+                ColorPresets = presets,
+                Position = anchorPosition,
+                OnColorChanged = (color) =>
+                {
+                    UpdateColorPreviewImage(color);
+                    OnColorChanged.Invoke(color, currentCategory);
+                }
+            };
+
+            mvcManager.ShowAsync(ColorPickerController.IssueCommand(data)).Forget();
         }
 
         private void ResetPanel()
         {
-            view.ColorPickerView.gameObject.SetActive(false);
             view.ArrowDownMark.SetActive(true);
             view.ArrowUpMark.SetActive(false);
         }
-
-        private void SetPresets(ColorPresetsSO colorPreset) =>
-            controller.SetPresets(colorPreset.colors);
 
         private void UpdateColorPreviewImage(Color newColor) =>
             view.ColorPreviewImage.color = newColor;

@@ -10,6 +10,6 @@ namespace DCL.UI
         public Button ToggleButton { get; private set; }
 
         [field: SerializeField]
-        public ColorPickerView ColorPickerView { get; private set; }
+        public GameObject ColorPickerAnchor { get; private set; }
     }
 }
