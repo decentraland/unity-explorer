@@ -18,6 +18,12 @@ namespace ECS.Unity.SceneBoundsChecker
         private static Vector4 verticalClipping = new (-0.01f, 0.0f, 0.0f, 0.0f); // -0.01f for x to avoid z-fighting
 
         /// <summary>
+        ///     When enabled, forces backface culling on all scene materials.
+        ///     Set this from FeaturesRegistry.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING).
+        /// </summary>
+        public static bool forceBackfaceCullingEnabled { get; set; }
+
+        /// <summary>
         ///     We can use this shared instance as this API is single-threaded
         /// </summary>
         private static readonly List<Material> TEMP_MATERIALS = new (3);
@@ -53,7 +59,7 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             material.SetVector(PLANE_CLIPPING_ID, vector);
             material.SetVector(VERTICAL_CLIPPING_ID, verticalClipping);
-            if (material.HasProperty(CULL))
+            if (forceBackfaceCullingEnabled && material.HasProperty(CULL))
                 material.SetInt(CULL, (int)CullMode.Back);
         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace DCL.FeatureFlags
 {
@@ -58,6 +58,7 @@ namespace DCL.FeatureFlags
         public const string STOP_ON_DUPLICATE_IDENTITY = "alfa-stop-on-duplicate-identity";
         public const string DONATIONS = "alfa-donations";
         public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
+        public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
 
         public static class Endpoints
         {

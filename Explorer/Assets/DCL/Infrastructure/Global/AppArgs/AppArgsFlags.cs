@@ -1,4 +1,4 @@
-﻿namespace Global.AppArgs
+namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -60,6 +60,8 @@
         public const string HEAD_SYNC = "head-sync";
 
         public const string DISCOVER = "discover";
+
+        public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public static class Multiplayer
         {
