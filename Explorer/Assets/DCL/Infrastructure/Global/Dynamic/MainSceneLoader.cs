@@ -64,7 +64,7 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
-        private const string SINGLE_INSTANCE_MUTEX_IDENTIFIER = "Decentraland.Explorer.UniqueInstance";
+        private const string SINGLE_INSTANCE_MUTEX_IDENTIFIER = @"Local\Decentraland.Explorer.InstanceLock";
 
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
