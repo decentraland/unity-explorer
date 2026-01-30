@@ -13,7 +13,7 @@ namespace DCL.Places
 {
     public class PlaceDetailPanelController : ControllerBase<PlaceDetailPanelView, PlaceDetailPanelParameter>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly ThumbnailLoader thumbnailLoader;
         private readonly IProfileRepository profileRepository;

@@ -193,7 +193,7 @@ namespace DCL.Communities.CommunitiesBrowser
             communityMembersSeparator.SetActive(isMembersCounterEnabled);
             communityMembersCountText.gameObject.SetActive(isMembersCounterEnabled);
 
-            if (showMembers)
+            if (isMembersCounterEnabled)
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, UIUtils.NumberToCompactString(memberCount));
         }
 

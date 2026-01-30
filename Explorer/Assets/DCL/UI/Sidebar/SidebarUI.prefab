@@ -72,12 +72,13 @@ MonoBehaviour:
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
   <InWorldCameraButton>k__BackingField: {fileID: 1734187727223042766}
   <communitiesButton>k__BackingField: {fileID: 9067792495595083366}
-  <placesButton>k__BackingField: {fileID: 0}
+  <placesButton>k__BackingField: {fileID: 5369727375203069159}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
   <marketplaceButton>k__BackingField: {fileID: 4730184839101499880}
+  <eventsButton>k__BackingField: {fileID: 8640363549488957318}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
   <friendsButton>k__BackingField: {fileID: 920916011785825721}
@@ -662,6 +663,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5604293973387185170, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5369727375203069159 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5014922893928900700, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6705180925666095888 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5913254704669603755, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
@@ -732,6 +744,17 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 8768062667089581672, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8640363549488957318 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8715929325514621757, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &9067792495595083366 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8271646243773846237, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}

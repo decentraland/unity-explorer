@@ -12,6 +12,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
+using DCL.ExplorePanel;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -21,6 +22,7 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat;
@@ -33,6 +35,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -63,13 +66,13 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly DCLInput dclInput;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
         private EventInfoController? eventInfoController;
 
-        public CommunitiesPlugin(
-            IMVCManager mvcManager,
+        public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
@@ -118,8 +121,12 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.analytics = analytics;
             this.homePlaceEventBus = homePlaceEventBus;
+            dclInput = DCLInput.Instance;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
             notificationHandler = new NotificationHandler(realmNavigator);
+
+            dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformedAsync;
+            dclInput.Shortcuts.Events.performed += OnInputShortcutsEventsPerformedAsync;
         }
 
         public void Dispose()
@@ -129,6 +136,8 @@ namespace DCL.PluginSystem.Global
             eventInfoController?.Dispose();
             notificationHandler.Dispose();
             rpcCommunitiesService.Dispose();
+            dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformedAsync;
+            dclInput.Shortcuts.Events.performed -= OnInputShortcutsEventsPerformedAsync;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -195,6 +204,13 @@ namespace DCL.PluginSystem.Global
 
             rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
+
+        private void OnInputShortcutsEventsPerformedAsync(InputAction.CallbackContext _) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Events)));
+
+
+        private void OnInputShortcutsPlacesPerformedAsync(InputAction.CallbackContext _) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
     }
 
     [Serializable]
