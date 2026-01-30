@@ -11,7 +11,6 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading; 
@@ -21,7 +20,7 @@ namespace DCL.Multiplayer.Profiles.Poses
     public class RemoteMetadata : IRemoteMetadata
     {
         private readonly IRoomHub roomHub;
-        private readonly ConcurrentDictionary<string, IRemoteMetadata.ParticipantMetadata> metadata = new ();
+        private readonly DCLConcurrentDictionary<string, IRemoteMetadata.ParticipantMetadata> metadata = new ();
         private readonly IRealmData realmData;
 
         private string sceneRoomSId;

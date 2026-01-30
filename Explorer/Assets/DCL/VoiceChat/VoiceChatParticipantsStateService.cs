@@ -6,12 +6,12 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Pool;
 using DCL.LiveKit.Public;
+using Utility.Multithreading;
 
 namespace DCL.VoiceChat
 {
@@ -30,8 +30,8 @@ namespace DCL.VoiceChat
         private readonly IWeb3IdentityCache identityCache;
 
         private readonly HashSet<string> connectedParticipants = new ();
-        private readonly ConcurrentDictionary<string, VoiceChatParticipantState> participantStates = new ();
-        private readonly ConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
+        private readonly DCLConcurrentDictionary<string, VoiceChatParticipantState> participantStates = new ();
+        private readonly DCLConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
         private readonly HashSet<string> speakers = new ();
 
         private readonly List<LKParticipant> currentParticipants = new();

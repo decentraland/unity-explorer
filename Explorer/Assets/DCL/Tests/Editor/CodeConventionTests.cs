@@ -11,6 +11,7 @@ using System.Linq;
 using System.Diagnostics;
 using UnityEditor;
 using System.Text.RegularExpressions;
+using System.Linq;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -112,28 +113,69 @@ namespace DCL.Tests
         [Test]
         public void VerifyShouldNotUseWaitForComplition()
         {
-            // forbidden pattern
             const string pattern = @"\.GetLocalizedString\(\)";
+            ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
+        }
+        
+        [Test]
+        public void VerifyShouldNotUseConcurrentCollection()
+        {
+            const string pattern = @"System\.Collections\.Concurrent";
+            string[] ignorePaths = new []
+            {
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentBag.cs",
+            };
+            ValidateNoForbiddenApiUsed(pattern, "Use DCLConcurrent insteat version instead.", ignorePaths);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
+        public void VerifyShouldNotUseNativeWebSocket(string filePath)
+        {
+            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseNativeWebSocket(fileContent, filePath);
+        }
+
+        private static void ValidateNoForbiddenApiUsed(
+                string pattern,
+                string recommendation,
+                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+        {
             string projectRoot = Directory.GetCurrentDirectory();
+
 
             // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
             var psi = new ProcessStartInfo
             {
-                FileName = "/opt/homebrew/bin/rg",
-                Arguments = string.Join(" ", new[]
-                        {
-                        "--line-number",
-                        "--no-heading",
-                        "--color", "never",
-                        $"\"{pattern}\"",
-                        $"\"{projectRoot}/Assets\"",
-                        "--glob", "\"*.cs\""
-                        }),
+                FileName = "/opt/homebrew/bin/rg", // PATH envvar is not inherited into Unity Process, full path is used
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+
+            psi.ArgumentList.Add("--line-number");
+            psi.ArgumentList.Add("--no-heading");
+            psi.ArgumentList.Add("--color");
+            psi.ArgumentList.Add("never");
+
+            psi.ArgumentList.Add(pattern);
+            psi.ArgumentList.Add($"{projectRoot}/Assets");
+
+            psi.ArgumentList.Add("--glob");
+            psi.ArgumentList.Add("*.cs");
+
+            if (ignorePaths != null)
+            {
+                foreach (var p in ignorePaths)
+                {
+                    psi.ArgumentList.Add("--glob");
+                    psi.ArgumentList.Add($"!{p}");
+                }
+            }
 
             using var process = Process.Start(psi);
             if (process == null)
@@ -155,22 +197,8 @@ namespace DCL.Tests
 
             if (process.ExitCode == 0)
             {
-                Assert.Fail(
-                        "Detected forbidden API usage:\n\n" +
-                        stdout +
-                        "\nUse async version instead."
-                        );
+                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendation}\n\nArgs: {psi.Arguments}");
             }
-        }
-
-        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
-        public void VerifyShouldNotUseNativeWebSocket(string filePath)
-        {
-            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
-                return;
-
-            string fileContent = File.ReadAllText(filePath);
-            ShouldNotUseNativeWebSocket(fileContent, filePath);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
