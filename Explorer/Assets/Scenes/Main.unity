@@ -264,14 +264,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233166825}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -381,14 +381,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 5
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: yemel.dcl.eth
+    targetWorld: nickjam.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
