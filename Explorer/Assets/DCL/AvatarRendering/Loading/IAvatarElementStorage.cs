@@ -44,6 +44,12 @@ namespace DCL.AvatarRendering.Loading
         int GetOwnedNftCount(URN nftUrn);
 
         void ClearOwnedNftRegistry();
+
+        /// <summary>
+        /// Clears the owned NFT entries for a specific base URN.
+        /// Call this before repopulating with fresh data from the API.
+        /// </summary>
+        void ClearOwnedNftForUrn(URN nftUrn);
     }
 
     public static class AvatarElementCache

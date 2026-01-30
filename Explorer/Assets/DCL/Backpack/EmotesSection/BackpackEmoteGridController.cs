@@ -181,8 +181,8 @@ namespace DCL.Backpack.EmotesSection
                     customOwnedEmotes
                 );
 
-                // Prune stale pending transfers that have been confirmed by the indexer
-                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
+                // Prune stale pending emote transfers that have been confirmed by the indexer
+                pendingTransferService.PruneEmotes(emoteStorage.AllOwnedNftRegistry);
 
                 // TODO: request base emotes collection instead of pointers:
                 // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
@@ -404,6 +404,7 @@ namespace DCL.Backpack.EmotesSection
         private void OnEquip(int slot, IEmote emote, bool _)
         {
             if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
+            backpackItemView.EquippedIcon.SetActive(true);
             backpackItemView.IsEquipped = true;
             backpackItemView.SetEquipButtonsState();
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(true);

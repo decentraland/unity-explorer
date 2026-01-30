@@ -353,6 +353,17 @@ namespace Global.Dynamic
             
             var giftingDiagnosticToolGO = new GameObject("Gifting_Diagnostic_Tool");
             Object.DontDestroyOnLoad(giftingDiagnosticToolGO);
+
+            var diagnosticTool = giftingDiagnosticToolGO.AddComponent<DCL.Backpack.Gifting.Debug.GiftingDiagnosticTool>();
+
+            diagnosticTool.Initialize(
+                pendingTransferService,
+                wearableCatalog,
+                emotesCache,
+                wearablesProvider,
+                emoteProvider,
+                identityCache
+            );
             
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);

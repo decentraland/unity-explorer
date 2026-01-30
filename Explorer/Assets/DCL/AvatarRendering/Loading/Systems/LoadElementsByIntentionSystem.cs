@@ -115,6 +115,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, avatarElement.DTO, partition, ct);
 
             // Process individual data (this part needs to remain sequential per element for thread safety)
+            // Note: We use API's amount directly for display, registry is only for token ID tracking
             foreach (ElementIndividualDataDto individualData in element.IndividualData)
             {
                 // Probably a base wearable, wrongly return individual data. Skip it

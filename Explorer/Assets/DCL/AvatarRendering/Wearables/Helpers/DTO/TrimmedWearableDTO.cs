@@ -40,12 +40,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public class LambdaResponseElementDto : ILambdaResponseElement<TrimmedWearableDTO>
         {
             public TrimmedWearableDTO entity;
+            public int amount;
 
             [JsonIgnore]
             public TrimmedWearableDTO Entity => entity;
 
             [JsonIgnore]
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => entity.individualData;
+            
+            [JsonIgnore]
+            public int Amount => amount;
         }
     }
 

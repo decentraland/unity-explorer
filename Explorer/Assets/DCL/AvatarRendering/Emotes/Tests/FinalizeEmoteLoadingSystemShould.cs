@@ -575,6 +575,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 throw new NotImplementedException();
             }
 
+            public void ClearOwnedNftForUrn(URN nftUrn)
+            {
+                throw new NotImplementedException();
+            }
+
             public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
             {
                 throw new NotImplementedException();

@@ -93,6 +93,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             var url = BuildUrlFromIntention(in intention);
 
+            ReportHub.Log(ReportCategory.GIFTING, $"[LoadWearablesByParamSystem] Fetching wearables from: {url}");
+
             if (intention.NeedsBuilderAPISigning)
             {
                 var lambdaResponse =
@@ -114,6 +116,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             GetReportCategory()
                         )
                     );
+
+                ReportHub.Log(ReportCategory.GIFTING, $"[LoadWearablesByParamSystem] API returned {lambdaResponse.TotalAmount} total, {lambdaResponse.Page.Count} on this page");
 
                 var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, ct);
 
@@ -172,8 +176,17 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 
+            // Get amount directly from API response if available (more reliable than registry count)
+            int apiAmount = 0;
+            if (element is TrimmedWearableDTO.LambdaResponseElementDto trimmedElement)
+                apiAmount = trimmedElement.Amount;
+
+            ReportHub.Log(ReportCategory.GIFTING, $"[LoadWearablesByParamSystem] Processing: {elementDTO.Metadata.id}, API Amount: {apiAmount}, IndividualData count: {element.IndividualData?.Count ?? 0}");
+
             if (element.IndividualData != null)
+            {
                 // Process individual data (this part needs to remain sequential per element for thread safety)
+                // Note: We use API's amount directly for display, registry is only for token ID tracking
                 foreach (var individualData in element.IndividualData)
                 {
                     // Probably a base wearable, wrongly return individual data. Skip it
@@ -194,8 +207,11 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
                     ReportHub.Log(ReportCategory.OUTFITS, $"<color=green>[WEARABLE_STORAGE_POPULATED]</color> Key: '{elementDTO.Metadata.id}' now maps to Value: '{individualData.id}' (Token: {individualData.tokenId})");
                 }
+            }
 
-            int ownedAmount = avatarElementStorage.GetOwnedNftCount(elementDTO.Metadata.id);
+            // Use API amount directly - it's the source of truth from the indexer
+            // Fall back to registry count only if API amount not available
+            int ownedAmount = apiAmount > 0 ? apiAmount : avatarElementStorage.GetOwnedNftCount(elementDTO.Metadata.id);
             wearable.SetAmount(ownedAmount);
             return wearable;
         }

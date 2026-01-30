@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -100,6 +100,11 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected override GiftItemViewModel UpdateViewModelState(GiftItemViewModel vm, ThumbnailState state, Sprite? sprite)
         {
             return vm.WithState(state, sprite);
+        }
+
+        protected override void PrunePendingTransfers()
+        {
+            pendingTransferService.PruneEmotes(emoteStorage.AllOwnedNftRegistry);
         }
 
         public override bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style)

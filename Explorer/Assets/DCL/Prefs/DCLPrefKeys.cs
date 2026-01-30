@@ -70,7 +70,9 @@ namespace DCL.Prefs
 
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
 
-        public const string GIFTING_PENDING_GIFTS = "PendingGifts";
+        public const string GIFTING_PENDING_GIFTS = "PendingGifts"; // Legacy, kept for migration
+        public const string GIFTING_PENDING_WEARABLES_V2 = "PendingGifts_Wearables_v2";
+        public const string GIFTING_PENDING_EMOTES_V2 = "PendingGifts_Emotes_v2";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 

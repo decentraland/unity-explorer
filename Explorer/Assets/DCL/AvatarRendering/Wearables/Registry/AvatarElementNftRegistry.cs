@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
@@ -47,6 +47,21 @@ namespace  DCL.AvatarRendering.Wearables.Registry
             lock (lockObject)
             {
                 ownedNftRegistry.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Clears the owned NFT entries for a specific base URN.
+        /// Call this before repopulating with fresh data from the API.
+        /// </summary>
+        public void ClearOwnedNftForUrn(URN nftUrn)
+        {
+            lock (lockObject)
+            {
+                if (ownedNftRegistry.TryGetValue(nftUrn, out var registry))
+                {
+                    registry.Clear();
+                }
             }
         }
 

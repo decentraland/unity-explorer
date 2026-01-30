@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -163,8 +163,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 (var items, int total) =
                     await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
 
-                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry,
-                    emoteStorage.AllOwnedNftRegistry);
+                // Prune pending transfers for this item type
+                PrunePendingTransfers();
                 
                 totalCount = total;
 
@@ -319,6 +319,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected abstract int GetItemAmount(GiftableAvatarAttachment item);
         protected abstract void UpdateEmptyState(bool isEmpty);
         protected abstract TViewModel UpdateViewModelState(TViewModel vm, ThumbnailState state, Sprite? sprite);
+        protected abstract void PrunePendingTransfers();
         public abstract bool TryBuildStyleSnapshot(string urn, out GiftItemStyleSnapshot style);
     }
 }

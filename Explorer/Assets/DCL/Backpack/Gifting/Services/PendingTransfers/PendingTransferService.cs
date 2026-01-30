@@ -10,166 +10,251 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
     public class PendingTransferService : IPendingTransferService
     {
+        private const double TIMEOUT_HOURS = 1.0;
+
         private readonly IGiftingPersistence persistence;
-        private readonly HashSet<string> pendingFullUrns;
+        private readonly Dictionary<string, PendingTransferEntry> pendingWearables;
+        private readonly Dictionary<string, PendingTransferEntry> pendingEmotes;
 
         public PendingTransferService(IGiftingPersistence persistence)
         {
             this.persistence = persistence;
-            pendingFullUrns = persistence.LoadPendingUrns();
+            
+            var (wearables, emotes) = persistence.LoadPendingTransfers();
+            pendingWearables = wearables;
+            pendingEmotes = emotes;
 
-            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingFullUrns.Count} items from disk.");
-            foreach (string? urn in pendingFullUrns)
-                ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
+            ReportHub.Log(ReportCategory.GIFTING, 
+                $"[PendingTransferService] Loaded {pendingWearables.Count} wearables and {pendingEmotes.Count} emotes from disk.");
+            
+            foreach (var entry in pendingWearables.Values)
+                ReportHub.Log(ReportCategory.GIFTING, $"  - Wearable: {entry}");
+            foreach (var entry in pendingEmotes.Values)
+                ReportHub.Log(ReportCategory.GIFTING, $"  - Emote: {entry}");
         }
 
-        public void AddPending(string fullUrn)
+        public void AddPendingWearable(string fullUrn)
         {
-            if (pendingFullUrns.Add(fullUrn))
+            var entry = new PendingTransferEntry(fullUrn, DateTime.UtcNow);
+            
+            if (pendingWearables.TryAdd(fullUrn, entry))
             {
-                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Adding new pending item: {fullUrn}");
-                persistence.SavePendingUrns(pendingFullUrns);
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Added pending wearable: {entry}");
+                Save();
             }
             else
             {
-                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Item already exists in pending: {fullUrn}");
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Wearable already pending: {fullUrn}");
+            }
+        }
+
+        public void AddPendingEmote(string fullUrn)
+        {
+            var entry = new PendingTransferEntry(fullUrn, DateTime.UtcNow);
+            
+            if (pendingEmotes.TryAdd(fullUrn, entry))
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Added pending emote: {entry}");
+                Save();
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Emote already pending: {fullUrn}");
             }
         }
 
         public bool IsPending(string fullUrn)
         {
-            return pendingFullUrns.Contains(fullUrn);
+            return pendingWearables.ContainsKey(fullUrn) || pendingEmotes.ContainsKey(fullUrn);
         }
 
         public int GetPendingCount(string baseUrn)
         {
             int count = 0;
-            foreach (string pending in pendingFullUrns)
+            
+            count += CountMatchingBase(pendingWearables.Values, baseUrn);
+            count += CountMatchingBase(pendingEmotes.Values, baseUrn);
+
+            return count;
+        }
+
+        private static int CountMatchingBase(IEnumerable<PendingTransferEntry> entries, string baseUrn)
+        {
+            int count = 0;
+            foreach (var entry in entries)
             {
-                if (GiftingUrnParsingHelper.TryGetBaseUrn(pending, out string extractedBase) &&
+                if (GiftingUrnParsingHelper.TryGetBaseUrn(entry.FullUrn, out string extractedBase) &&
                     string.Equals(extractedBase, baseUrn, StringComparison.OrdinalIgnoreCase))
                 {
                     count++;
                 }
             }
-
-            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] GetPendingCount for {baseUrn}: {count}");
             return count;
         }
 
-        /// <summary>
-        /// Attempts to find a pending URN in the registry using primary URN lookup,
-        /// with a fallback to normalized string comparison if the primary lookup fails.
-        /// </summary>
-        private bool TryFindInRegistry(
-            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> instances,
-            string pendingUrn,
-            URN fullUrnKey)
+        public void PruneWearables(
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry)
         {
-            if (instances.ContainsKey(fullUrnKey))
-                return true;
-
-            // Fallback: Normalize strings and compare
-            // NOTE: verify if this is needed
-            string normalizedPending = pendingUrn.Trim().ToLowerInvariant();
-            foreach (var key in instances.Keys)
+            if (pendingWearables.Count == 0) return;
+            if (wearableRegistry.Count == 0)
             {
-                string normalizedKey = key.ToString().Trim().ToLowerInvariant();
-                if (normalizedKey == normalizedPending)
-                {
-                    ReportHub.Log(ReportCategory.GIFTING,
-                        $"[Prune] Fallback match found! Registry key '{key}' matches pending '{pendingUrn}' via normalized string comparison");
-                    return true;
-                }
+                ReportHub.Log(ReportCategory.GIFTING, "[Prune] Wearable registry empty, skipping prune.");
+                return;
             }
 
-            return false;
+            ReportHub.Log(ReportCategory.GIFTING, 
+                $"[Prune] Pruning wearables. Pending: {pendingWearables.Count}, Registry entries: {wearableRegistry.Count}");
+
+            int pruned = PruneFromRegistry(pendingWearables, wearableRegistry, "Wearable");
+            
+            if (pruned > 0)
+            {
+                Save();
+                ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Pruned {pruned} wearables.");
+            }
         }
 
-        public void Prune(
-            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
+        public void PruneEmotes(
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
         {
-            if (pendingFullUrns.Count == 0) return;
-
-            // We can only prune if at least one registry is loaded. 
-            // If both are empty, we can't make any decisions (user might just be loading).
-            if (wearableRegistry.Count == 0 && emoteRegistry.Count == 0) return;
-
-            ReportHub.Log(ReportCategory.GIFTING,
-                $"[Prune] Starting prune with {pendingFullUrns.Count} pending items. Registries loaded: Wearables={wearableRegistry.Count}, Emotes={emoteRegistry.Count}");
-
-            var toRemove = new List<string>();
-
-            foreach (string pendingUrn in pendingFullUrns)
+            if (pendingEmotes.Count == 0) return;
+            if (emoteRegistry.Count == 0)
             {
-                if (!GiftingUrnParsingHelper.TryGetBaseUrn(pendingUrn, out string baseUrnString))
+                ReportHub.Log(ReportCategory.GIFTING, "[Prune] Emote registry empty, skipping prune.");
+                return;
+            }
+
+            ReportHub.Log(ReportCategory.GIFTING, 
+                $"[Prune] Pruning emotes. Pending: {pendingEmotes.Count}, Registry entries: {emoteRegistry.Count}");
+
+            int pruned = PruneFromRegistry(pendingEmotes, emoteRegistry, "Emote");
+            
+            if (pruned > 0)
+            {
+                Save();
+                ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Pruned {pruned} emotes.");
+            }
+        }
+
+        private static int PruneFromRegistry(
+            Dictionary<string, PendingTransferEntry> pending,
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> registry,
+            string itemType)
+        {
+            var toRemove = new List<string>();
+            var now = DateTime.UtcNow;
+
+            foreach (var (fullUrn, entry) in pending)
+            {
+                // Rule 1: Safety timeout - prune if pending for more than 1 hour
+                double hoursPending = (now - entry.SentAtUtc).TotalHours;
+                if (hoursPending >= TIMEOUT_HOURS)
                 {
-                    ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Invalid URN format, removing: {pendingUrn}");
-                    toRemove.Add(pendingUrn);
+                    toRemove.Add(fullUrn);
+                    ReportHub.Log(ReportCategory.GIFTING, 
+                        $"[Prune] {itemType} pruned by timeout ({hoursPending:F1}h): {fullUrn}");
+                    continue;
+                }
+
+                // Parse base URN
+                if (!GiftingUrnParsingHelper.TryGetBaseUrn(fullUrn, out string baseUrnString))
+                {
+                    toRemove.Add(fullUrn);
+                    ReportHub.Log(ReportCategory.GIFTING, $"[Prune] {itemType} invalid URN format, removing: {fullUrn}");
                     continue;
                 }
 
                 var baseUrn = new URN(baseUrnString);
-                var fullUrnKey = new URN(pendingUrn);
+                var fullUrnKey = new URN(fullUrn);
 
-                if (wearableRegistry.TryGetValue(baseUrn, out var wearableValue))
+                // Rule 2: Check if base URN exists in registry
+                if (!registry.TryGetValue(baseUrn, out var instances))
                 {
-                    if (!TryFindInRegistry(wearableValue, pendingUrn, fullUrnKey))
-                    {
-                        toRemove.Add(pendingUrn);
-                        ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Wearable transfer confirmed (token gone): {pendingUrn}");
-                    }
-
+                    // Base URN gone = user transferred their last copy of this item
+                    toRemove.Add(fullUrn);
+                    ReportHub.Log(ReportCategory.GIFTING, 
+                        $"[Prune] {itemType} base URN gone from registry: {fullUrn}");
                     continue;
                 }
 
-                if (emoteRegistry.TryGetValue(baseUrn, out var emoteValue))
+                // Rule 3: Check if specific token exists in registry
+                if (!TryFindInRegistry(instances, fullUrn, fullUrnKey, out var nftEntry))
                 {
-                    if (!TryFindInRegistry(emoteValue, pendingUrn, fullUrnKey))
-                    {
-                        toRemove.Add(pendingUrn);
-                        ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Emote transfer confirmed (token gone): {pendingUrn}");
-                    }
-                    
+                    // Token gone = transfer confirmed
+                    toRemove.Add(fullUrn);
+                    ReportHub.Log(ReportCategory.GIFTING, 
+                        $"[Prune] {itemType} token gone from registry: {fullUrn}");
                     continue;
                 }
 
-                bool wearablesLoaded = wearableRegistry.Count > 0;
-                bool emotesLoaded = emoteRegistry.Count > 0;
+                // Rule 4: Token exists - check if it came back after we sent it (A→B→A scenario)
+                if (nftEntry.TransferredAt > entry.SentAtUtc)
+                {
+                    toRemove.Add(fullUrn);
+                    ReportHub.Log(ReportCategory.GIFTING, 
+                        $"[Prune] {itemType} returned after transfer (registry: {nftEntry.TransferredAt:O}, sent: {entry.SentAtUtc:O}): {fullUrn}");
+                    continue;
+                }
 
-                if (wearablesLoaded && emotesLoaded)
-                {
-                    // Both registries are active, and the item is in neither. 
-                    // It means the user transferred their LAST copy of this item.
-                    toRemove.Add(pendingUrn);
-                    ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Item no longer owned (base URN gone from both registries): {pendingUrn}");
-                }
-                else
-                {
-                    // One of the registries is empty. We can't be sure if this is a "Wearable awaiting WearableRegistry load"
-                    // or an "Emote awaiting EmoteRegistry load". Safe bet: Keep it pending until data arrives.
-                    ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Item not found, but waiting for all registries to load to confirm removal: {pendingUrn}");
-                }
+                // Keep pending - transfer not yet confirmed by indexer
+                ReportHub.Log(ReportCategory.GIFTING, 
+                    $"[Prune] {itemType} still pending (sent {hoursPending:F2}h ago): {fullUrn}");
             }
 
             // Apply removals
-            if (toRemove.Count > 0)
-            {
-                foreach (string item in toRemove)
-                    pendingFullUrns.Remove(item);
+            foreach (string urn in toRemove)
+                pending.Remove(urn);
 
-                persistence.SavePendingUrns(pendingFullUrns);
-                ReportHub.Log(ReportCategory.GIFTING, $"[Prune] Pruned {toRemove.Count} confirmed gifts.");
+            return toRemove.Count;
+        }
+
+        private static bool TryFindInRegistry(
+            IReadOnlyDictionary<URN, NftBlockchainOperationEntry> instances,
+            string pendingUrn,
+            URN fullUrnKey,
+            out NftBlockchainOperationEntry entry)
+        {
+            // Primary: URN-based lookup (O(1))
+            if (instances.TryGetValue(fullUrnKey, out entry))
+                return true;
+
+            // Fallback: Normalized string comparison (O(n) but handles case differences)
+            string normalizedPending = pendingUrn.Trim().ToLowerInvariant();
+            foreach (var kvp in instances)
+            {
+                string normalizedKey = kvp.Key.ToString().Trim().ToLowerInvariant();
+                if (normalizedKey == normalizedPending)
+                {
+                    entry = kvp.Value;
+                    ReportHub.Log(ReportCategory.GIFTING,
+                        $"[Prune] Fallback match found! Registry key '{kvp.Key}' matches pending '{pendingUrn}'");
+                    return true;
+                }
             }
+
+            entry = default;
+            return false;
         }
 
         public void LogPendingTransfers()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Pending Transfers:");
-            foreach (string? urn in pendingFullUrns) sb.AppendLine(urn);
+            sb.AppendLine("=== Pending Transfers ===");
+            
+            sb.AppendLine($"Wearables ({pendingWearables.Count}):");
+            foreach (var entry in pendingWearables.Values)
+                sb.AppendLine($"  - {entry}");
+            
+            sb.AppendLine($"Emotes ({pendingEmotes.Count}):");
+            foreach (var entry in pendingEmotes.Values)
+                sb.AppendLine($"  - {entry}");
+            
             ReportHub.Log(ReportCategory.GIFTING, sb.ToString());
+        }
+
+        private void Save()
+        {
+            persistence.SavePendingTransfers(pendingWearables.Values, pendingEmotes.Values);
         }
     }
 }

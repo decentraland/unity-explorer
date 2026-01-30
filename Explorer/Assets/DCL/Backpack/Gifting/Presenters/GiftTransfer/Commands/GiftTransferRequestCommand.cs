@@ -1,7 +1,8 @@
-﻿using System.Threading;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.GiftingInventory;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Views;
 using DCL.Web3.Identities;
@@ -68,7 +69,11 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
 
             if (result.IsSuccess)
             {
-                pendingTransferService.AddPending(data.instanceUrn);
+                // Add to appropriate pending list based on item type
+                if (data.itemType == GiftingItemTypes.Emote)
+                    pendingTransferService.AddPendingEmote(data.instanceUrn);
+                else
+                    pendingTransferService.AddPendingWearable(data.instanceUrn);
 
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
                 eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));

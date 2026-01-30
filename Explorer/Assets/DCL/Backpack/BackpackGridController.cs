@@ -193,6 +193,7 @@ namespace DCL.Backpack
                     }
                 }
                 
+                itemView.EquippedIcon.SetActive(isEquipped);
                 itemView.IsEquipped = isEquipped;
                 itemView.SetEquipButtonsState();
             }
@@ -391,8 +392,24 @@ namespace DCL.Backpack
                     currentSearch,
                     results);
 
-                // Prune stale pending transfers that have been confirmed by the indexer
-                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry, emoteStorage.AllOwnedNftRegistry);
+                // DEBUG: Log what the API returned
+                ReportHub.Log(ReportCategory.GIFTING, $"[BackpackGrid] API returned {wearables.Count} wearables on page {pageNumber}");
+                foreach (var w in wearables)
+                {
+                    var urn = w.GetUrn();
+                    int apiAmount = w.Amount;
+                    int registryCount = 0;
+                    if (wearableStorage.TryGetOwnedNftRegistry(urn, out var registry))
+                        registryCount = registry.Count;
+                    
+                    bool isPending = pendingTransferService.IsPending(urn);
+                    int pendingCount = pendingTransferService.GetPendingCount(urn);
+                    
+                    ReportHub.Log(ReportCategory.GIFTING, $"[BackpackGrid] Item: {urn} - Amount: {apiAmount}, RegistryCount: {registryCount}, IsPending: {isPending}, PendingCount: {pendingCount}");
+                }
+
+                // Prune stale pending wearable transfers that have been confirmed by the indexer
+                pendingTransferService.PruneWearables(wearableStorage.AllOwnedNftRegistry);
 
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
@@ -468,6 +485,7 @@ namespace DCL.Backpack
         {
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
+                backpackItemView.EquippedIcon.SetActive(true);
                 backpackItemView.IsEquipped = true;
                 backpackItemView.SetEquipButtonsState();
             }
