@@ -942,6 +942,174 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
+        ///     Проверяет domain separator для MANA контракта на Amoy.
+        ///     Это нужно для отладки donations meta-tx.
+        /// </summary>
+        [ContextMenu(nameof(CheckManaAmoyDomainSeparator))]
+        public async void CheckManaAmoyDomainSeparator()
+        {
+            var contractAddress = "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0"; // MANA on Amoy
+            const int chainId = 80002; // Amoy Testnet
+
+            Debug.Log("╔══════════════════════════════════════════════════════════════════╗");
+            Debug.Log("║  MANA AMOY DOMAIN SEPARATOR TEST                                  ║");
+            Debug.Log("╚══════════════════════════════════════════════════════════════════╝");
+            Debug.Log($"Contract: {contractAddress}");
+            Debug.Log($"Chain ID: {chainId} (Amoy)");
+
+            // Get contract's domain separator - try both function names
+            var contractDomainSep = "";
+
+            // Try domainSeparator() first (0xf698da25)
+            var request1 = new EthApiRequest
+            {
+                id = 1,
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0xf698da25" }, // domainSeparator()
+                    "latest",
+                },
+            };
+
+            try
+            {
+                EthApiResponse response = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request1, destroyCancellationToken);
+                contractDomainSep = response.result?.ToString() ?? "0x";
+                Debug.Log($"domainSeparator() returned: {contractDomainSep}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"domainSeparator() failed: {ex.Message}");
+
+                // Try getDomainSeparator() (0xed24911d)
+                var request2 = new EthApiRequest
+                {
+                    id = 1,
+                    method = "eth_call",
+                    @params = new object[]
+                    {
+                        new { to = contractAddress, data = "0xed24911d" }, // getDomainSeparator()
+                        "latest",
+                    },
+                };
+
+                try
+                {
+                    EthApiResponse response2 = await ThirdWebAuthenticator.Instance.SendAsync(chainId, request2, destroyCancellationToken);
+                    contractDomainSep = response2.result?.ToString() ?? "0x";
+                    Debug.Log($"getDomainSeparator() returned: {contractDomainSep}");
+                }
+                catch (System.Exception ex2) { Debug.LogWarning($"getDomainSeparator() also failed: {ex2.Message}"); }
+            }
+
+            if (string.IsNullOrEmpty(contractDomainSep) || contractDomainSep == "0x")
+            {
+                Debug.LogError("❌ Could not get domain separator from contract!");
+                return;
+            }
+
+            Debug.Log("");
+            Debug.Log($"★★★ CONTRACT DOMAIN SEPARATOR: {contractDomainSep}");
+            Debug.Log("");
+
+            // Test different name/version combinations
+            Debug.Log("Testing different EIP-712 domain configurations...");
+            Debug.Log("");
+
+            var found = false;
+            string[] names = { "Decentraland MANA", "MANA", "Decentraland", "(PoS) Decentraland MANA", "Dummy ERC20" };
+            string[] versions = { "1", "2" };
+
+            foreach (string name in names)
+            {
+                foreach (string version in versions)
+                {
+                    string sep = ThirdWebAuthenticator.ComputeDomainSeparator(name, version, contractAddress, chainId);
+                    bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+
+                    if (match)
+                    {
+                        Debug.Log($"✅ MATCH! name='{name}', version='{version}'");
+                        Debug.Log($"   {sep}");
+                        found = true;
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                Debug.Log("No match with common names. Testing all computed separators:");
+                Debug.Log("");
+
+                foreach (string name in names)
+                {
+                    foreach (string version in versions)
+                    {
+                        string sep = ThirdWebAuthenticator.ComputeDomainSeparator(name, version, contractAddress, chainId);
+                        Debug.Log($"['{name}', v='{version}'] {sep}");
+                    }
+                }
+
+                Debug.Log("");
+                Debug.LogError("❌ NO MATCH FOUND! Need to find correct EIP-712 parameters.");
+                Debug.Log("Try checking contract source on Amoy explorer.");
+            }
+
+            // Also get contract name
+            Debug.Log("");
+            Debug.Log("Getting contract name()...");
+
+            try
+            {
+                var nameRequest = new EthApiRequest
+                {
+                    id = 1,
+                    method = "eth_call",
+                    @params = new object[]
+                    {
+                        new { to = contractAddress, data = "0x06fdde03" }, // name()
+                        "latest",
+                    },
+                };
+
+                EthApiResponse nameResponse = await ThirdWebAuthenticator.Instance.SendAsync(chainId, nameRequest, destroyCancellationToken);
+                string nameHex = nameResponse.result?.ToString() ?? "0x";
+
+                if (nameHex.Length > 130)
+                {
+                    string clean = nameHex.StartsWith("0x") ? nameHex.Substring(2) : nameHex;
+                    var length = System.Convert.ToInt32(clean.Substring(64, 64), 16);
+                    string dataHex = clean.Substring(128, length * 2);
+                    var bytes = new byte[dataHex.Length / 2];
+
+                    for (var i = 0; i < bytes.Length; i++)
+                        bytes[i] = System.Convert.ToByte(dataHex.Substring(i * 2, 2), 16);
+
+                    string? contractName = System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+                    Debug.Log($"Contract name(): '{contractName}'");
+
+                    // Test with actual contract name
+                    foreach (string version in versions)
+                    {
+                        string sep = ThirdWebAuthenticator.ComputeDomainSeparator(contractName, version, contractAddress, chainId);
+                        bool match = contractDomainSep.Equals(sep, System.StringComparison.OrdinalIgnoreCase);
+
+                        if (match)
+                        {
+                            Debug.Log($"✅ MATCH with contract name! name='{contractName}', version='{version}'");
+                            found = true;
+                        }
+                        else { Debug.Log($"['{contractName}', v='{version}'] {sep}"); }
+                    }
+                }
+            }
+            catch (System.Exception ex) { Debug.LogWarning($"Failed to get contract name: {ex.Message}"); }
+
+            Debug.Log("══════════════════════════════════════════════════════════════════");
+        }
+
+        /// <summary>
         ///     Prints comparison summary after running all 3 cache tests.
         ///     Call this after running CacheTest 1, 2, and 3 to see if signatures differ.
         /// </summary>

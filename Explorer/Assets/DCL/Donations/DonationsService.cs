@@ -84,6 +84,8 @@ namespace DCL.Donations
                         break;
             }
 
+            Debug.Log($"[Donations] Initialized with environment={dclEnvironment}, networkName={networkName}, contractAddress={contractAddress}");
+
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
         }
 
@@ -171,7 +173,12 @@ namespace DCL.Donations
 
         public async UniTask<decimal> GetCurrentBalanceAsync(CancellationToken ct)
         {
-            string data = ManualTxEncoder.EncodeGetBalance(ViewDependencies.CurrentIdentity?.Address);
+            string walletAddress = ViewDependencies.CurrentIdentity?.Address;
+            Debug.Log($"[Donations] GetCurrentBalanceAsync called for wallet={walletAddress}");
+            Debug.Log($"[Donations] Using networkName={networkName}, contractAddress={contractAddress}");
+
+            string data = ManualTxEncoder.EncodeGetBalance(walletAddress);
+            Debug.Log($"[Donations] Encoded balanceOf call data={data}");
 
             var request = new EthApiRequest
             {
@@ -189,19 +196,36 @@ namespace DCL.Donations
                 }
             };
 
+            Debug.Log($"[Donations] Sending eth_call request: readonlyNetwork={request.readonlyNetwork}, to={contractAddress}");
+
             // This is an internal read-only operation
             EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
-            string weiString = response.result.ToString()[2..];
+            Debug.Log($"[Donations] eth_call response: result={response.result}");
+
+            string resultStr = response.result?.ToString() ?? "0x0";
+            Debug.Log($"[Donations] Result string: {resultStr}");
+
+            string weiString = resultStr.StartsWith("0x") ? resultStr[2..] : resultStr;
+            Debug.Log($"[Donations] Wei string (hex without 0x): {weiString}");
 
             BigInteger weiValue = BigInteger.Parse(string.IsNullOrEmpty(weiString) ? "0" : weiString, NumberStyles.HexNumber);
+            Debug.Log($"[Donations] Parsed wei value: {weiValue}");
 
-            return (decimal)weiValue / WEI_FACTOR;
+            decimal manaBalance = (decimal)weiValue / WEI_FACTOR;
+            Debug.Log($"[Donations] Final MANA balance: {manaBalance}");
+
+            return manaBalance;
         }
 
         public async UniTask<bool> SendDonationAsync(string toAddress, decimal amountInMana, CancellationToken ct)
         {
+            var fromAddress = ViewDependencies.CurrentIdentity?.Address.ToString();
+            Debug.Log($"[Donations] SendDonationAsync called: from={fromAddress}, to={toAddress}, amount={amountInMana} MANA");
+            Debug.Log($"[Donations] Using contractAddress={contractAddress}, networkName={networkName}");
+
             string data = ManualTxEncoder.EncodeSendDonation(toAddress, amountInMana);
+            Debug.Log($"[Donations] Encoded transfer data={data}");
 
             var request = new EthApiRequest
             {
@@ -211,7 +235,7 @@ namespace DCL.Donations
                 {
                     new JObject
                     {
-                        ["from"] = ViewDependencies.CurrentIdentity?.Address.ToString(),
+                        ["from"] = fromAddress,
                         ["to"] = contractAddress,
                         ["value"] = "0x0",
                         ["data"] = data
@@ -219,11 +243,19 @@ namespace DCL.Donations
                 }
             };
 
+            Debug.Log($"[Donations] Sending eth_sendTransaction request to contractAddress={contractAddress}");
+
             // This is an internal operation - skip ThirdWeb confirmation UI
             EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
+            Debug.Log($"[Donations] eth_sendTransaction response: result={response.result}");
+
             if (response.result != null)
+            {
                 ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {response.result}");
+                Debug.Log($"[Donations] ✅ Donation successful! TxHash: {response.result}");
+            }
+            else { Debug.LogWarning("[Donations] ❌ Donation failed - no txHash returned"); }
 
             return response.result != null;
         }

@@ -239,6 +239,9 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
+            Debug.Log("[ThirdWeb] ========== SendAsync START ==========");
+            Debug.Log($"[ThirdWeb] method={request.method}, source={source}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
+
             await mutex.WaitAsync(ct);
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 
@@ -247,11 +250,21 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 if (!whitelistMethods.Contains(request.method))
+                {
+                    Debug.LogError($"[ThirdWeb] Method not allowed: {request.method}");
                     throw new Web3Exception($"The method is not allowed: {request.method}");
+                }
 
-                if (IsReadOnly(request))
+                bool isReadOnly = IsReadOnly(request);
+                Debug.Log($"[ThirdWeb] IsReadOnly={isReadOnly}");
+
+                if (isReadOnly)
+                {
+                    Debug.Log("[ThirdWeb] Routing to SendWithoutConfirmationAsync");
                     return await SendWithoutConfirmationAsync(request, ct);
+                }
 
+                Debug.Log("[ThirdWeb] Routing to SendWithConfirmationAsync");
                 return await SendWithConfirmationAsync(request, source, ct);
             }
             finally
@@ -262,6 +275,7 @@ namespace DCL.Web3.Authenticators
                     await UniTask.SwitchToMainThread(CancellationToken.None);
 
                 mutex.Release();
+                Debug.Log("[ThirdWeb] ========== SendAsync END ==========");
             }
         }
 
@@ -279,15 +293,29 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            // eth_getBalance - can be handled locally for the active wallet
-            if (string.Equals(request.method, "eth_getBalance"))
+            Debug.Log("[ThirdWeb] SendWithoutConfirmationAsync called");
+            Debug.Log($"[ThirdWeb] Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
+            Debug.Log($"[ThirdWeb] Current wallet chainId={chainId}");
+
+            // Determine target chainId: use readonlyNetwork if specified, otherwise use wallet's current chainId
+            int? networkChainId = GetChainIdFromReadonlyNetwork(request.readonlyNetwork);
+            int targetChainId = networkChainId ?? (int)chainId;
+
+            Debug.Log($"[ThirdWeb] GetChainIdFromReadonlyNetwork('{request.readonlyNetwork}') returned {networkChainId?.ToString() ?? "null"}");
+            Debug.Log($"[ThirdWeb] Final targetChainId={targetChainId}");
+
+            // eth_getBalance - can be handled locally for the active wallet (only if same chain)
+            if (string.Equals(request.method, "eth_getBalance") && targetChainId == (int)chainId)
             {
                 var address = request.@params[0].ToString();
                 string walletAddress = await ThirdWebManager.Instance.ActiveWallet.GetAddress();
 
+                Debug.Log($"[ThirdWeb] eth_getBalance local handling: address={address}, walletAddress={walletAddress}");
+
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     BigInteger balance = await ThirdWebManager.Instance.ActiveWallet.GetBalance(chainId);
+                    Debug.Log($"[ThirdWeb] Local wallet balance: {balance}");
 
                     return new EthApiResponse
                     {
@@ -299,7 +327,41 @@ namespace DCL.Web3.Authenticators
             }
 
             // All other read-only RPC methods - delegate to low-level RPC calls
-            return await SendRpcRequestAsync(request);
+            // Use targetChainId which respects readonlyNetwork for cross-chain queries (e.g., Polygon balance check)
+            Debug.Log($"[ThirdWeb] Delegating to SendRpcRequestAsync with targetChainId={targetChainId}");
+            return await SendRpcRequestAsync(request, targetChainId);
+        }
+
+        /// <summary>
+        ///     Maps network name string to chainId for cross-chain RPC queries.
+        ///     Used for readonlyNetwork parameter to query balances on different chains (e.g., Polygon)
+        ///     while the wallet is connected to another chain (e.g., Ethereum).
+        /// </summary>
+        private static int? GetChainIdFromReadonlyNetwork(string? networkName)
+        {
+            Debug.Log($"[ThirdWeb] GetChainIdFromReadonlyNetwork called with networkName='{networkName ?? "null"}'");
+
+            if (string.IsNullOrEmpty(networkName))
+            {
+                Debug.Log("[ThirdWeb] networkName is null or empty, returning null");
+                return null;
+            }
+
+            string lowerName = networkName.ToLowerInvariant();
+            Debug.Log($"[ThirdWeb] Lowercased networkName: '{lowerName}'");
+
+            int? result = lowerName switch
+                          {
+                              "polygon" => 137, // Polygon Mainnet
+                              "amoy" => 80002, // Polygon Amoy Testnet
+                              "ethereum" => 1, // Ethereum Mainnet
+                              "sepolia" => 11155111, // Ethereum Sepolia Testnet
+                              "mainnet" => 1, // Alias for Ethereum Mainnet
+                              _ => null,
+                          };
+
+            Debug.Log($"[ThirdWeb] Mapped '{lowerName}' to chainId={result?.ToString() ?? "null"}");
+            return result;
         }
 
         /// <summary>
@@ -470,28 +532,45 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request, bool useMetaTx = false)
         {
+            Debug.Log($"[ThirdWeb] HandleSendTransactionAsync called, useMetaTx={useMetaTx}");
+
             if (ThirdWebManager.Instance.ActiveWallet == null)
+            {
+                Debug.LogError("[ThirdWeb] No active wallet connected!");
                 throw new Web3Exception("No active wallet connected");
+            }
 
             // eth_sendTransaction params: [transactionObject]
-            Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
+            var paramsJson = request.@params[0].ToString();
+            Debug.Log($"[ThirdWeb] Transaction params JSON: {paramsJson}");
+
+            Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(paramsJson);
 
             string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
             string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
             string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
 
+            Debug.Log($"[ThirdWeb] Parsed tx: to={to}, data={data?.Substring(0, Math.Min(50, data?.Length ?? 0))}..., value={value}");
+
             if (string.IsNullOrEmpty(to))
+            {
+                Debug.LogError("[ThirdWeb] eth_sendTransaction requires 'to' address!");
                 throw new Web3Exception("eth_sendTransaction requires 'to' address");
+            }
 
             // Parse value
             BigInteger weiValue = ParseHexToBigInteger(value);
+            Debug.Log($"[ThirdWeb] Parsed wei value: {weiValue}");
 
             // For meta-transactions (internal ops like gifting), use Decentraland relay
             // The user signs an EIP-712 message, and the relay pays for gas
             if (useMetaTx && !string.IsNullOrEmpty(data) && data != "0x")
             {
-                Debug.Log($"[ThirdWeb] Using meta-transaction for contract call to {to}");
+                Debug.Log($"[ThirdWeb] ★ Using meta-transaction for contract call to {to}");
+                Debug.Log($"[ThirdWeb] Full data length: {data.Length} chars");
                 string txHash = await SendMetaTransactionAsync(to, data);
+
+                Debug.Log($"[ThirdWeb] Meta-transaction completed with txHash={txHash}");
 
                 return new EthApiResponse
                 {
@@ -561,10 +640,26 @@ namespace DCL.Web3.Authenticators
         }
 
 #region Meta-Transactions (Decentraland Relay)
-        private const string TRANSACTIONS_SERVER_URL = "https://transactions-api.decentraland.org/v1/transactions";
+        // Mainnet relay server (Polygon chainId=137)
+        private const string TRANSACTIONS_SERVER_URL_MAINNET = "https://transactions-api.decentraland.org/v1/transactions";
+
+        // Testnet relay server (Amoy chainId=80002)
+        private const string TRANSACTIONS_SERVER_URL_TESTNET = "https://transactions-api.decentraland.zone/v1/transactions";
 
         // Toggle for using manual EIP-712 hash calculation instead of ThirdWeb SignTypedDataV4
         private const bool USE_MANUAL_EIP712_SIGNING = true;
+
+        /// <summary>
+        ///     Gets the appropriate relay server URL based on the contract's chainId.
+        /// </summary>
+        private static string GetRelayServerUrl(int chainId)
+        {
+            // Polygon mainnet uses .org, testnets use .zone
+            bool isMainnet = chainId == 137;
+            string url = isMainnet ? TRANSACTIONS_SERVER_URL_MAINNET : TRANSACTIONS_SERVER_URL_TESTNET;
+            Debug.Log($"[ThirdWeb] Using relay server for chainId={chainId}: {url}");
+            return url;
+        }
 
         /// <summary>
         ///     Sends a meta-transaction via Decentraland's transactions-server.
@@ -578,18 +673,24 @@ namespace DCL.Web3.Authenticators
             Debug.Log($"[ThirdWeb] From: {from}, Contract: {contractAddress}");
             Debug.Log($"[ThirdWeb] Function signature: {functionSignature}");
 
-            // DCL wearable/emote collections are on Polygon (chainId=137)
-            // The relay server (transactions-api.decentraland.org) only works with Polygon
-            const int POLYGON_CHAIN_ID = 137;
-            Debug.Log($"[ThirdWeb] Using Polygon chainId={POLYGON_CHAIN_ID} for meta-transaction (relay only supports Polygon)");
+            // Get contract data for EIP-712 domain (includes chainId for the contract's network)
+            ContractMetaTxInfo contractInfo = await GetContractMetaTxInfoAsync(contractAddress);
+            int targetChainId = contractInfo.ChainId;
 
-            // 1. Get meta-tx nonce from the contract (must query Polygon RPC)
-            BigInteger nonce = await GetMetaTxNonceAsync(contractAddress, from, POLYGON_CHAIN_ID);
+            Debug.Log($"[ThirdWeb] Contract info - Name: {contractInfo.Name}, Version: {contractInfo.Version}, ChainId: {targetChainId}");
+
+            // 1. Get meta-tx nonce from the contract (must query the contract's chain RPC)
+            BigInteger nonce = await GetMetaTxNonceAsync(contractAddress, from, targetChainId);
             Debug.Log($"[ThirdWeb] Meta-tx nonce: {nonce}");
 
-            // 2. Get contract data for EIP-712 domain
-            ContractMetaTxInfo contractInfo = await GetContractMetaTxInfoAsync(contractAddress, POLYGON_CHAIN_ID);
-            Debug.Log($"[ThirdWeb] Contract info - Name: {contractInfo.Name}, Version: {contractInfo.Version}");
+            // Debug: Get and compare domain separator from contract
+            string contractDomainSeparator = await GetContractDomainSeparatorAsync(contractAddress, targetChainId);
+            string ourDomainSeparator = ComputeDomainSeparator(contractInfo.Name, contractInfo.Version, contractAddress, targetChainId);
+            Debug.Log($"[ThirdWeb] Contract's domainSeparator: {contractDomainSeparator}");
+            Debug.Log($"[ThirdWeb] Our computed domainSeparator: {ourDomainSeparator}");
+
+            if (!string.Equals(contractDomainSeparator, ourDomainSeparator, StringComparison.OrdinalIgnoreCase))
+                Debug.LogError("[ThirdWeb] ❌ DOMAIN SEPARATOR MISMATCH! Contract uses different EIP-712 parameters.");
 
             string signature;
 
@@ -600,7 +701,7 @@ namespace DCL.Web3.Authenticators
                     contractInfo.Name,
                     contractInfo.Version,
                     contractAddress,
-                    POLYGON_CHAIN_ID,
+                    targetChainId,
                     nonce,
                     from,
                     functionSignature
@@ -613,7 +714,7 @@ namespace DCL.Web3.Authenticators
                     contractInfo.Name,
                     contractInfo.Version,
                     contractAddress,
-                    POLYGON_CHAIN_ID,
+                    targetChainId,
                     nonce,
                     from,
                     functionSignature
@@ -632,8 +733,8 @@ namespace DCL.Web3.Authenticators
             string txData = EncodeExecuteMetaTransaction(from, signature, functionSignature);
             Debug.Log($"[ThirdWeb] Encoded executeMetaTransaction: {txData[..50]}...");
 
-            // 6. POST to transactions-server
-            return await PostToTransactionsServerAsync(from, contractAddress, txData);
+            // 6. POST to transactions-server (use appropriate server based on chainId)
+            return await PostToTransactionsServerAsync(from, contractAddress, txData, targetChainId);
         }
 
         // Toggle to use raw hash signing instead of SignTypedDataV4
@@ -1007,6 +1108,58 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
+        ///     Gets the domain separator from the contract for verification.
+        ///     Tries both domainSeparator() and getDomainSeparator() selectors.
+        /// </summary>
+        private async UniTask<string> GetContractDomainSeparatorAsync(string contractAddress, int targetChainId)
+        {
+            // Try domainSeparator() first (0xf698da25)
+            var request1 = new EthApiRequest
+            {
+                id = Guid.NewGuid().GetHashCode(),
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0xf698da25" }, // domainSeparator()
+                    "latest",
+                },
+            };
+
+            try
+            {
+                EthApiResponse response = await SendRpcRequestAsync(request1, targetChainId);
+                string result = response.result?.ToString() ?? "0x";
+
+                if (!string.IsNullOrEmpty(result) && result != "0x" && result.Length > 2)
+                    return result;
+            }
+            catch (Exception e) { Debug.Log($"[ThirdWeb] domainSeparator() failed: {e.Message}, trying getDomainSeparator()..."); }
+
+            // Try getDomainSeparator() as fallback (0xed24911d)
+            var request2 = new EthApiRequest
+            {
+                id = Guid.NewGuid().GetHashCode(),
+                method = "eth_call",
+                @params = new object[]
+                {
+                    new { to = contractAddress, data = "0xed24911d" }, // getDomainSeparator()
+                    "latest",
+                },
+            };
+
+            try
+            {
+                EthApiResponse response = await SendRpcRequestAsync(request2, targetChainId);
+                return response.result?.ToString() ?? "0x";
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ThirdWeb] Failed to get domainSeparator from contract: {e.Message}");
+                return "0x";
+            }
+        }
+
+        /// <summary>
         ///     Gets the meta-transaction nonce for a user from the contract.
         ///     Calls getNonce(address) on the contract.
         /// </summary>
@@ -1038,13 +1191,24 @@ namespace DCL.Web3.Authenticators
         ///     Gets contract metadata needed for EIP-712 domain.
         ///     First tries known contracts (MANA, Marketplace, etc.), then uses DCL collection defaults.
         /// </summary>
-        private async UniTask<ContractMetaTxInfo> GetContractMetaTxInfoAsync(string contractAddress, int targetChainId)
+        private UniTask<ContractMetaTxInfo> GetContractMetaTxInfoAsync(string contractAddress)
         {
+            Debug.Log($"[ThirdWeb] GetContractMetaTxInfoAsync called for contract: {contractAddress}");
+
             string addressLower = contractAddress.ToLower();
+            Debug.Log($"[ThirdWeb] Looking up contract in KnownMetaTxContracts with key: {addressLower}");
 
             // Check known Decentraland contracts first (MANA, Marketplace, Bid, CollectionManager)
             if (KnownMetaTxContracts.TryGetValue(addressLower, out ContractMetaTxInfo? known))
-                return known;
+            {
+                Debug.Log($"[ThirdWeb] ★ FOUND in KnownMetaTxContracts: Name='{known.Name}', Version='{known.Version}', ChainId={known.ChainId}");
+                return UniTask.FromResult(known);
+            }
+
+            Debug.Log("[ThirdWeb] Contract NOT found in KnownMetaTxContracts, available keys:");
+
+            foreach (string? key in KnownMetaTxContracts.Keys)
+                Debug.Log($"[ThirdWeb]   - {key}");
 
             // For DCL wearable/emote collection contracts (ERC721BaseCollectionV2):
             // EIP-712 domain is HARDCODED in the contract, NOT from name() function!
@@ -1054,8 +1218,9 @@ namespace DCL.Web3.Authenticators
             // All DCL collection contracts use:
             //   - EIP712 name: "Decentraland Collection"
             //   - EIP712 version: "2"
-            Debug.Log("[ThirdWeb] Using DCL collection EIP-712 domain: name='Decentraland Collection', version='2'");
-            return new ContractMetaTxInfo("Decentraland Collection", "2");
+            //   - ChainId: 137 (Polygon mainnet - DCL collections are only on Polygon mainnet)
+            Debug.Log("[ThirdWeb] Using DEFAULT DCL collection EIP-712 domain: name='Decentraland Collection', version='2', chainId=137");
+            return UniTask.FromResult(new ContractMetaTxInfo("Decentraland Collection", "2"));
         }
 
         /// <summary>
@@ -1212,7 +1377,8 @@ namespace DCL.Web3.Authenticators
         private async UniTask<string> PostToTransactionsServerAsync(
             string from,
             string contractAddress,
-            string txData)
+            string txData,
+            int chainId)
         {
             // Use addresses as-is (like JS library does)
             // Format expected by transactions-server:
@@ -1227,7 +1393,8 @@ namespace DCL.Web3.Authenticators
             };
 
             string payloadJson = JsonConvert.SerializeObject(payload);
-            Debug.Log($"[ThirdWeb] Posting to transactions-server:\n{payloadJson}");
+            string relayUrl = GetRelayServerUrl(chainId);
+            Debug.Log($"[ThirdWeb] Posting to transactions-server ({relayUrl}):\n{payloadJson}");
 
             IThirdwebHttpClient httpClient = ThirdWebManager.Instance.Client.HttpClient;
 
@@ -1238,7 +1405,7 @@ namespace DCL.Web3.Authenticators
             );
 
             ThirdwebHttpResponseMessage response = await httpClient.PostAsync(
-                TRANSACTIONS_SERVER_URL,
+                relayUrl,
                 content,
                 CancellationToken.None
             );
@@ -1302,11 +1469,18 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Known Decentraland contracts that support meta-transactions.
         ///     Key = lowercase contract address, Value = (name, version) for EIP-712 domain.
+        ///     IMPORTANT: EIP-712 domain names must EXACTLY match what's in decentraland-transactions npm package!
+        ///     See: https://github.com/decentraland/decentraland-transactions/blob/master/src/contracts/manaToken.ts
         /// </summary>
         private static readonly Dictionary<string, ContractMetaTxInfo> KnownMetaTxContracts = new ()
         {
-            // MANA on Polygon
-            { "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4", new ContractMetaTxInfo("Decentraland MANA", "1") },
+            // MANA on Polygon Mainnet
+            // EIP-712 name from manaToken.ts: "(PoS) Decentraland MANA"
+            { "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4", new ContractMetaTxInfo("(PoS) Decentraland MANA", "1") },
+
+            // MANA on Polygon Amoy Testnet (for testing ThirdWeb donation flow)
+            // EIP-712 name from manaToken.ts: "Decentraland MANA(PoS)" (no space before parenthesis!)
+            { "0x7ad72b9f944ea9793cf4055d88f81138cc2c63a0", new ContractMetaTxInfo("Decentraland MANA(PoS)", "1", 80002) },
 
             // Marketplace V2 on Polygon
             { "0x480a0f4e360e8964e68858dd231c2922f1df45ef", new ContractMetaTxInfo("Decentraland Marketplace", "2") },
@@ -1318,7 +1492,11 @@ namespace DCL.Web3.Authenticators
             { "0x9d32aac179153a991e832550d9f96f6d1e05d4b4", new ContractMetaTxInfo("CollectionManager", "2") },
         };
 
-        private record ContractMetaTxInfo(string Name, string Version);
+        /// <summary>
+        ///     Contract metadata for EIP-712 domain.
+        ///     ChainId is the chain where the contract is deployed (used for EIP-712 salt and RPC queries).
+        /// </summary>
+        private record ContractMetaTxInfo(string Name, string Version, int ChainId = 137);
 
         private class TransactionsServerResponse
         {
@@ -1346,6 +1524,7 @@ namespace DCL.Web3.Authenticators
         private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId)
         {
             string rpcUrl = GetRpcUrl(targetChainId);
+            Debug.Log($"[ThirdWeb] SendRpcRequestAsync: targetChainId={targetChainId}, rpcUrl={rpcUrl}");
 
             var rpcRequest = new
             {
@@ -1356,6 +1535,7 @@ namespace DCL.Web3.Authenticators
             };
 
             string requestJson = JsonConvert.SerializeObject(rpcRequest);
+            Debug.Log($"[ThirdWeb] RPC Request JSON: {requestJson}");
 
             // Send HTTP POST request to RPC endpoint using ThirdwebClient's HTTP client
             IThirdwebHttpClient? httpClient = ThirdWebManager.Instance.Client.HttpClient;
@@ -1366,16 +1546,22 @@ namespace DCL.Web3.Authenticators
                 "application/json"
             );
 
+            Debug.Log($"[ThirdWeb] Sending POST to {rpcUrl}...");
             ThirdwebHttpResponseMessage? httpResponse = await httpClient.PostAsync(rpcUrl, content, CancellationToken.None);
+            Debug.Log($"[ThirdWeb] HTTP Response status: {httpResponse.StatusCode}, IsSuccess={httpResponse.IsSuccessStatusCode}");
 
             if (!httpResponse.IsSuccessStatusCode)
             {
                 string errorText = await httpResponse.Content.ReadAsStringAsync();
+                Debug.LogError($"[ThirdWeb] RPC request failed: {httpResponse.StatusCode} - {errorText}");
                 throw new Web3Exception($"RPC request failed: {httpResponse.StatusCode} - {errorText}");
             }
 
             string responseJson = await httpResponse.Content.ReadAsStringAsync();
+            Debug.Log($"[ThirdWeb] RPC Response JSON: {responseJson}");
+
             EthApiResponse rpcResponse = JsonConvert.DeserializeObject<EthApiResponse>(responseJson);
+            Debug.Log($"[ThirdWeb] Parsed response result: {rpcResponse.result}");
 
             return new EthApiResponse
             {
