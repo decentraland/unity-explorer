@@ -13,6 +13,8 @@ namespace DCL.Events
         public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
 
+        public  DateTime CurrentCalendarFromDate { get; set; }
+
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;

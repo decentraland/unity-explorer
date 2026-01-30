@@ -66,8 +66,11 @@ namespace DCL.Events
         private void OnSectionClosed() =>
             UnloadEvents();
 
-        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays) =>
+        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
+        {
+            eventsController.CurrentCalendarFromDate = fromDate;
             LoadEvents(fromDate, numberOfDays);
+        }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);

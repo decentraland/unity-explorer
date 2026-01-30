@@ -55,7 +55,7 @@ namespace DCL.Events
         }
 
         private void OnBackButtonClicked() =>
-            eventsController.OpenSection(EventsSection.CALENDAR);
+            eventsController.OpenSection(EventsSection.CALENDAR, eventsController.CurrentCalendarFromDate);
 
         private void OnSectionOpen(EventsSection section, DateTime date)
         {
