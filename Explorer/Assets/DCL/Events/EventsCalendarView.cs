@@ -4,7 +4,6 @@ using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +24,8 @@ namespace DCL.Events
         [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
         [SerializeField] private Button previousDateRangeButton = null!;
         [SerializeField] private Button nextDateRangeButton = null!;
+        [SerializeField] private Button goToTodayButtonLeftSide = null!;
+        [SerializeField] private Button goToTodayButtonRightSide = null!;
 
         [Header("Events")]
         [SerializeField] private GameObject loadingSpinner = null!;
@@ -46,12 +47,25 @@ namespace DCL.Events
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
-        private EventsStateService eventsStateService;
+        private EventsStateService eventsStateService = null!;
+        private bool showGoToTodayButtonOnTheRight;
 
         private void Awake()
         {
-            previousDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(-currentNumberOfDaysShowed), currentNumberOfDaysShowed));
-            nextDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(currentNumberOfDaysShowed), currentNumberOfDaysShowed));
+            previousDateRangeButton.onClick.AddListener(() =>
+            {
+                showGoToTodayButtonOnTheRight = false;
+                SetupDaysSelector(currentFromDate.AddDays(-currentNumberOfDaysShowed), currentNumberOfDaysShowed);
+            });
+            nextDateRangeButton.onClick.AddListener(() =>
+            {
+                showGoToTodayButtonOnTheRight = true;
+                SetupDaysSelector(currentFromDate.AddDays(currentNumberOfDaysShowed), currentNumberOfDaysShowed);
+            });
+
+            DateTime todayAtTheBeginningOfTheDay = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0, DateTimeKind.Local);
+            goToTodayButtonLeftSide.onClick.AddListener(() => SetupDaysSelector(todayAtTheBeginningOfTheDay, currentNumberOfDaysShowed));
+            goToTodayButtonRightSide.onClick.AddListener(() => SetupDaysSelector(todayAtTheBeginningOfTheDay, currentNumberOfDaysShowed));
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked += OnDaySelectorButtonClicked;
@@ -61,20 +75,25 @@ namespace DCL.Events
         {
             previousDateRangeButton.onClick.RemoveAllListeners();
             nextDateRangeButton.onClick.RemoveAllListeners();
+            goToTodayButtonLeftSide.onClick.RemoveAllListeners();
+            goToTodayButtonRightSide.onClick.RemoveAllListeners();
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
         }
 
-        public void SetDependencies(EventsStateService eventsStateService) =>
-            this.eventsStateService = eventsStateService;
+        public void SetDependencies(EventsStateService stateService) =>
+            this.eventsStateService = stateService;
 
         public void SetDaysSelectorActive(bool isActive) =>
             daySelectorContainer.SetActive(isActive);
 
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
         {
-            previousDateRangeButton.interactable = fromDate != DateTime.Today;
+            bool isToday = fromDate.Date == DateTime.Today;
+            previousDateRangeButton.interactable = !isToday;
+            goToTodayButtonLeftSide.gameObject.SetActive(!isToday && !showGoToTodayButtonOnTheRight);
+            goToTodayButtonRightSide.gameObject.SetActive(!isToday && showGoToTodayButtonOnTheRight);
 
             for (var i = 0; i < daySelectorButtons.Count; i++)
             {
