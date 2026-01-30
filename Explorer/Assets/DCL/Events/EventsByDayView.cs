@@ -13,6 +13,7 @@ namespace DCL.Events
     public class EventsByDayView : MonoBehaviour
     {
         public event Action? BackButtonClicked;
+        public event Action? GoToNextDayButtonClicked;
 
         [Header("Events Counter")]
         [SerializeField] private TMP_Text eventsCounter = null!;
@@ -22,15 +23,22 @@ namespace DCL.Events
         [SerializeField] private LoopGridView eventsLoopGrid = null!;
         [SerializeField] private GameObject emptyContainer = null!;
         [SerializeField] private SkeletonLoadingView skeletonLoading = null!;
+        [SerializeField] private Button goToNextDayButton = null!;
 
         private EventsStateService eventsStateService;
         private readonly List<string> currentEventsIds = new ();
 
-        private void Awake() =>
+        private void Awake()
+        {
             backButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
+            goToNextDayButton.onClick.AddListener(() => GoToNextDayButtonClicked?.Invoke());
+        }
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
             backButton.onClick.RemoveAllListeners();
+            goToNextDayButton.onClick.RemoveAllListeners();
+        }
 
         public void SetDependencies(EventsStateService stateService) =>
             this.eventsStateService = stateService;

@@ -24,6 +24,8 @@ namespace DCL.Events
         private readonly HttpEventsApiService eventsApiService;
         private readonly EventsStateService eventsStateService;
 
+        private DateTime currentDay;
+
         private CancellationTokenSource? loadEventsCts;
 
         public EventsByDayController(
@@ -38,6 +40,7 @@ namespace DCL.Events
             this.eventsStateService = eventsStateService;
 
             view.BackButtonClicked += OnBackButtonClicked;
+            view.GoToNextDayButtonClicked += OnGoToNextDayButtonClicked;
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.EventsClosed += UnloadEvents;
 
@@ -48,6 +51,7 @@ namespace DCL.Events
         public void Dispose()
         {
             view.BackButtonClicked -= OnBackButtonClicked;
+            view.GoToNextDayButtonClicked -= OnGoToNextDayButtonClicked;
             eventsController.SectionOpen -= OnSectionOpen;
             eventsController.EventsClosed -= UnloadEvents;
 
@@ -57,6 +61,9 @@ namespace DCL.Events
         private void OnBackButtonClicked() =>
             eventsController.OpenSection(EventsSection.CALENDAR, eventsController.CurrentCalendarFromDate);
 
+        private void OnGoToNextDayButtonClicked() =>
+            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, currentDay.AddDays(1));
+
         private void OnSectionOpen(EventsSection section, DateTime date)
         {
             if (section != EventsSection.EVENTS_BY_DAY)
@@ -64,6 +71,7 @@ namespace DCL.Events
 
             loadEventsCts = loadEventsCts.SafeRestart();
             LoadEventsAsync(date, loadEventsCts.Token).Forget();
+            currentDay = date;
         }
 
         private async UniTask LoadEventsAsync(DateTime fromDate, CancellationToken ct)
