@@ -65,6 +65,27 @@ namespace DCL.Events
             CheckHighlightedBannerAsync(fromDate, loadEventsCts.Token).Forget();
         }
 
+        private void OnSectionClosed() =>
+            UnloadEvents();
+
+        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
+        {
+            eventsController.CurrentCalendarFromDate = fromDate;
+            LoadEvents(fromDate, numberOfDays);
+        }
+
+        private void OnDaySelectorButtonClicked(DateTime date) =>
+            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
+
+        private void LoadEvents(DateTime fromDate, int numberOfDays)
+        {
+            loadEventsCts = loadEventsCts.SafeRestart();
+            LoadEventsAsync(fromDate, numberOfDays, loadEventsCts.Token).Forget();
+        }
+
+        private void UnloadEvents() =>
+            view.ClearAllEvents();
+
         private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
         {
             view.SetDaysSelectorActive(false);
@@ -83,24 +104,6 @@ namespace DCL.Events
             view.SetHighlightedBanner(showHighlightedBanner ? highlightedEventsResult.Value[0] : null);
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
             view.SetDaysSelectorActive(true);
-        }
-
-        private void OnSectionClosed() =>
-            UnloadEvents();
-
-        private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
-        {
-            eventsController.CurrentCalendarFromDate = fromDate;
-            LoadEvents(fromDate, numberOfDays);
-        }
-
-        private void OnDaySelectorButtonClicked(DateTime date) =>
-            eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
-
-        private void LoadEvents(DateTime fromDate, int numberOfDays)
-        {
-            loadEventsCts = loadEventsCts.SafeRestart();
-            LoadEventsAsync(fromDate, numberOfDays, loadEventsCts.Token).Forget();
         }
 
         private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)
@@ -150,8 +153,5 @@ namespace DCL.Events
 
             view.SetAsLoading(false);
         }
-
-        private void UnloadEvents() =>
-            view.ClearAllEvents();
     }
 }
