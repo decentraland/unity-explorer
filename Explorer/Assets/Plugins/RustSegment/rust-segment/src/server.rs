@@ -151,13 +151,11 @@ impl SegmentServer {
         error_fn: Option<FfiErrorCallbackFn>,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
-        // Create shutdown flag early so it can be captured by error_fn closure
         let shutdown = Arc::new(AtomicBool::new(false));
 
         // Create error_fn that checks shutdown flag before invoking FFI callback
         let shutdown_for_error = shutdown.clone();
         let error_fn = Box::new(move |message: &str| {
-            // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
             if shutdown_for_error.load(Ordering::Acquire) {
                 return;
             }
@@ -336,7 +334,6 @@ impl SegmentServer {
 
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
-        // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
         if self.shutdown.load(Ordering::Acquire) {
             return;
         }
@@ -344,7 +341,6 @@ impl AppContext {
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
-        // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
         if self.shutdown.load(Ordering::Acquire) {
             return;
         }
