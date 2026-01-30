@@ -22,6 +22,20 @@ namespace DCL.FeatureFlags
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
 
+        /// <summary>
+        ///     Initializes the registry with no features enabled (all <see cref="IsEnabled" /> checks return false).
+        ///     Use when no feature-flag configuration is available (e.g. WebGL minimal bootstrap).
+        /// </summary>
+        public static void InitializeEmpty()
+        {
+            Initialize(new FeaturesRegistry());
+        }
+
+        /// <summary>
+        ///     Empty constructor: no features enabled, no dependencies on FeatureFlagsConfiguration or IAppArgs.
+        /// </summary>
+        private FeaturesRegistry() { }
+
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)

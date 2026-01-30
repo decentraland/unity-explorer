@@ -189,6 +189,8 @@ ShaderVariantCollection:
         passType: 0
       - keywords: _SURFACE_TYPE_TRANSPARENT _EMISSION _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
         passType: 0
+      - keywords: _ADDITIONAL_LIGHTS _ALPHATEST_ON _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT _SURFACE_TYPE_TRANSPARENT
+        passType: 0
       - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT
         passType: 0
       - keywords: _ALPHAPREMULTIPLY_ON _SURFACE_TYPE_TRANSPARENT _MAIN_LIGHT_SHADOWS
@@ -233,6 +235,26 @@ ShaderVariantCollection:
         passType: 0
       - keywords: FOG_LINEAR _METALLICSPECGLOSSMAP _NORMALMAP _MAIN_LIGHT_SHADOWS
         passType: 0
+      - keywords: _ALPHATEST_ON
+        passType: 0
+      - keywords: 
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 0
+      - keywords: _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 0
+      - keywords: 
+        passType: 1
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 1
+      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 1
+      - keywords: _ALPHATEST_ON
+        passType: 1
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW _ALPHATEST_ON
+        passType: 1
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 1
       - keywords: 
         passType: 8
       - keywords: _ALPHATEST_ON
@@ -245,14 +267,8 @@ ShaderVariantCollection:
         passType: 8
       - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
         passType: 8
-      - keywords: 
-        passType: 1
-      - keywords: _ALPHATEST_ON
-        passType: 1
-      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
-        passType: 1
-      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
-        passType: 1
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW _ALPHATEST_ON
+        passType: 8
       - keywords: 
         passType: 10
       - keywords: _ALPHATEST_ON
@@ -269,3 +285,19 @@ ShaderVariantCollection:
         passType: 12
       - keywords: _ALPHATEST_ON _NORMALMAP
         passType: 12
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 13
+      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 13
+      - keywords: 
+        passType: 4
+      - keywords: _ALPHATEST_ON
+        passType: 4
+      - keywords: _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 4
+      - keywords: _ALPHATEST_ON _CASTING_PUNCTUAL_LIGHT_SHADOW
+        passType: 4
+      - keywords: _MAIN_LIGHT_SHADOWS _NORMALMAP
+        passType: 13
+      - keywords: _MAIN_LIGHT_SHADOWS
+        passType: 13

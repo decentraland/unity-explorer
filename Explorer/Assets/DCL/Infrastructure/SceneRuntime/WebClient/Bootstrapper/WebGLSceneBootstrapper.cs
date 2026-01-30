@@ -1,10 +1,15 @@
+using Arch.Core;
+using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.AssetsProvision.CodeResolver;
+using DCL.Character.Plugin;
 using DCL.CharacterCamera;
+using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
@@ -12,16 +17,22 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem;
+using DCL.FeatureFlags;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Time.Systems;
 using DCL.ResourcesUnloading;
 using DCL.SkyBox;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Groups;
 using ECS.Prioritization;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -40,14 +51,20 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using UnityEngine;
 using DCL.Clipboard;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.CommunicationData.URLHelpers;
 using DCL.DebugUtilities.UIBindings;
+using DCL.AvatarRendering.Emotes;
+using DCL.Input;
+using DCL.Input.Component;
+using DCL.CharacterCamera.Systems;
 using DCL.Utility;
 using DCL.Utility.Types;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Common.Components;
 using SceneRuntime.ScenePermissions;
@@ -59,7 +76,8 @@ namespace SceneRuntime.WebClient.Bootstrapper
 {
     public class WebGLSceneBootstrapper : MonoBehaviour
     {
-        public Camera MainCamera;
+        [SerializeField] private Camera MainCamera;
+        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
 
         private const string SCENE_URL_ARG = "sceneUrl";
         private const string WORLD_ARG = "world";
@@ -75,20 +93,34 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
         private ISceneFacade? sceneFacade;
 
+        // Held so global world and scene can read/update; initialized in InitializeAsync
+        private ExposedTransform? exposedPlayerTransform;
+        private ExposedCameraData? exposedCameraData;
+
+        // Initialized in InitializeAsync (after InitializePluginAsync); used for scene WorldPlugin and global world
+        private CharacterContainer? characterContainer;
+
+        // Minimal global world for WebGL: character motion + camera; run via player loop (registered), disposed in OnDestroy
+        private World? globalWorldEcs;
+        private SystemGroupWorld? globalWorldSystems;
+
         private void Start()
         {
-#if !UNITY_WEBGL
-            hasError = true;
-            errorMessage = "WebGLSceneBootstrapper only works in WebGL builds. WebClientJavaScriptEngine requires browser JavaScript runtime.";
-            Debug.LogError(errorMessage);
-            enabled = false;
-            return;
-#endif
-
             InitializeAsync().Forget();
         }
 
         private void Update()
+        {
+            // Manually update minimal global world (no SystemGroupSnapshot in WebGL)
+            if (globalWorldSystems != null)
+            {
+                try { UpdateGlobalWorldSystems(globalWorldSystems); }
+                catch (Exception e) { Debug.LogError($"[WebGLSceneBootstrapper] Global world update: {e.Message}\n{e.StackTrace}"); }
+            }
+        }
+
+        // Scene tick in LateUpdate so the minimal global world runs first (in Update)
+        private void LateUpdate()
         {
             if (hasError || !isInitialized || sceneFacade == null)
                 return;
@@ -97,9 +129,27 @@ namespace SceneRuntime.WebClient.Bootstrapper
             catch (Exception e) { Debug.LogError($"[WebGLSceneBootstrapper] Error in update loop: {e.Message}\n{e.StackTrace}"); }
         }
 
+        private static void UpdateGlobalWorldSystems(SystemGroupWorld worldSystems)
+        {
+            const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.NonPublic;
+            PropertyInfo? prop = typeof(SystemGroupWorld).GetProperty("SystemGroups", FLAGS);
+            if (prop?.GetValue(worldSystems) is not IReadOnlyList<Arch.SystemGroups.SystemGroup> groups)
+                return;
+            for (var i = 0; i < groups.Count; i++)
+                groups[i].Update();
+        }
+
         private void OnDestroy()
         {
             if (sceneFacade != null) { sceneFacade.DisposeAsync().Forget(); }
+
+            if (globalWorldSystems != null)
+            {
+                globalWorldSystems.Dispose();
+                globalWorldSystems = null;
+            }
+            globalWorldEcs?.Dispose();
+            globalWorldEcs = null;
         }
 
         private void OnGUI()
@@ -116,7 +166,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
             }
         }
 
-        private MockedDependencies CreateMockedDependencies(IRealmData realmData)
+        private MockedDependencies CreateMockedDependencies(IRealmData realmData, ExposedTransform exposedPlayerTransform, ExposedCameraData exposedCameraData, CharacterContainer? characterContainer)
         {
             // Create ComponentsContainer to register all SDK components and their pools
             var componentsContainer = ComponentsContainer.Create();
@@ -146,10 +196,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 memoryBudget,
                 new WebClientStubImplementations.StubSceneMapping()
             );
-
-            // Create exposed transform and camera data for plugins
-            var exposedPlayerTransform = new ExposedTransform();
-            var exposedCameraData = new ExposedCameraData();
 
             // Create web request controller
             IWebRequestController webRequestController = CreateWebRequestController();
@@ -182,7 +228,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 gltfContainerAssetsCache
             );
 
-#if UNITY_WEBGL
             // Create WebGL-specific GLTF Container plugin (Asset Bundle only, no raw GLTF)
             var gltfContainerPlugin = new GltfContainerPluginWebGL(
                 frameTimeBudget,
@@ -192,7 +237,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 loadingStatus,
                 gltfContainerAssetsCache
             );
-#endif
 
             // Create plugins for scene rendering
             var plugins = new List<IDCLWorldPlugin>
@@ -200,11 +244,12 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 new TransformsPlugin(singletonSharedDependencies, exposedPlayerTransform, exposedCameraData),
                 new PrimitivesRenderingPlugin(singletonSharedDependencies),
                 new VisibilityPlugin(),
-#if UNITY_WEBGL
                 assetBundlesPlugin,
                 gltfContainerPlugin
-#endif
             };
+
+            if (characterContainer != null)
+                plugins.Add(characterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry));
 
             // Create real ECSWorldFactory with plugins
             var ecsWorldFactory = new ECSWorldFactory(
@@ -295,7 +340,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
         private static string GetDefaultSceneUrl()
         {
-#if UNITY_WEBGL
             // In WebGL, Application.streamingAssetsPath already returns a full URL like "http://localhost:8800/StreamingAssets/"
             try
             {
@@ -324,16 +368,10 @@ namespace SceneRuntime.WebClient.Bootstrapper
             // Fallback: use localhost
             Debug.LogWarning($"[WebGLSceneBootstrapper] Using fallback localhost URL");
             return IRealmNavigator.LOCALHOST + "/index.js";
-#else
-
-            // Fallback for editor/other platforms
-            return IRealmNavigator.LOCALHOST + "/index.js";
-#endif
         }
 
         private static string? GetSceneUrlFromQueryString()
         {
-#if UNITY_WEBGL
             try
             {
                 // Get the current page URL
@@ -359,13 +397,11 @@ namespace SceneRuntime.WebClient.Bootstrapper
             {
                 Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to parse URL query parameters: {e.Message}");
             }
-#endif
             return null;
         }
 
         private static string? GetWorldFromQueryString()
         {
-#if UNITY_WEBGL
             try
             {
                 string currentUrl = Application.absoluteURL;
@@ -387,7 +423,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
             {
                 Debug.LogWarning($"[WebGLSceneBootstrapper] Failed to parse world query parameter: {e.Message}");
             }
-#endif
+
             return null;
         }
 
@@ -395,8 +431,8 @@ namespace SceneRuntime.WebClient.Bootstrapper
         {
             try
             {
-                // Preload shader bundles before loading any scenes
-                //await PreloadShaderBundlesAsync();
+                // No feature-flag config in WebGL; all features disabled
+                FeaturesRegistry.InitializeEmpty();
 
                 // Check for world parameter first (e.g., ?world=olavra.dcl.eth)
                 string? worldName = GetWorldFromQueryString();
@@ -458,8 +494,130 @@ namespace SceneRuntime.WebClient.Bootstrapper
                     );
                 }
 
+                // Create and hold ExposedTransform/ExposedCameraData so global world and scene can read/update
+                exposedPlayerTransform = new ExposedTransform
+                {
+                    Position = new CanBeDirty<Vector3>(Vector3.zero),
+                    Rotation = new CanBeDirty<Quaternion>(Quaternion.identity),
+                };
+                exposedCameraData = new ExposedCameraData
+                {
+                    WorldPosition = new CanBeDirty<Vector3>(Vector3.zero),
+                };
+
+                // CharacterContainer: same pattern as main app — provision CharacterObject via InitializePluginAsync
+                IAssetsProvisioner assetsProvisioner = new AddressablesProvisioner();
+                characterContainer = new CharacterContainer(assetsProvisioner, exposedCameraData, exposedPlayerTransform);
+                if (globalPluginSettingsContainer != null)
+                {
+                    (_, bool charInitSuccess) = await globalPluginSettingsContainer.InitializePluginAsync(characterContainer, destroyCancellationToken);
+                    if (!charInitSuccess)
+                    {
+                        hasError = true;
+                        errorMessage = "Failed to initialize CharacterContainer (CharacterObject provision). Assign globalPluginSettingsContainer in the WebGL scene.";
+                        Debug.LogError($"[WebGLSceneBootstrapper] {errorMessage}");
+                        enabled = false;
+                        return;
+                    }
+                }
+
+                // Minimal global world: character motion + camera + ExposePlayerTransform; runs via player loop (registered)
+                globalWorldEcs = World.Create();
+                Entity globalPlayerEntity = globalWorldEcs.Create();
+                Profile globalFakeProfile = Profile.NewRandomProfile("webgl-player");
+                if (globalWorldEcs.Has<Profile>(globalPlayerEntity))
+                    globalWorldEcs.Set(globalPlayerEntity, globalFakeProfile);
+                else
+                    globalWorldEcs.Add(globalPlayerEntity, globalFakeProfile);
+                characterContainer!.InitializePlayerEntity(globalWorldEcs, globalPlayerEntity);
+                Entity globalSkyboxEntity = globalWorldEcs.Create();
+                globalWorldEcs.Create(new SceneShortInfo(Vector2Int.zero, "global"));
+                // InputMapComponent created by InputPlugin with NONE; we UnblockInput(CAMERA|PLAYER) after plugins inject
+
+                var globalSceneStateProvider = new SceneStateProvider();
+                globalSceneStateProvider.State.Set(SceneState.Running);
+
+                var globalComponentsContainer = ComponentsContainer.Create();
+                var stubDebugBuilder = new WebClientStubImplementations.StubDebugContainerBuilder();
+                var stubSceneReadiness = new WebClientStubImplementations.StubSceneReadinessReportQueue();
+                var stubLandscape = new WebClientStubImplementations.StubLandscape();
+                var stubScenesCache = new WebClientStubImplementations.StubScenesCache();
+                var realmSamplingData = new RealmSamplingData();
+                var stubAppArgs = new ApplicationParametersParser(false);
+
+                var characterMotionPlugin = new CharacterMotionPlugin(
+                    characterContainer.CharacterObject,
+                    stubDebugBuilder,
+                    globalComponentsContainer.ComponentPoolsRegistry,
+                    stubSceneReadiness,
+                    stubLandscape,
+                    stubScenesCache);
+                (_, bool motionInitSuccess) = await globalPluginSettingsContainer!.InitializePluginAsync(characterMotionPlugin, destroyCancellationToken);
+                if (!motionInitSuccess)
+                {
+                    Debug.LogWarning("[WebGLSceneBootstrapper] CharacterMotionPlugin init failed; motion may not work.");
+                }
+
+                var characterCameraPlugin = new CharacterCameraPlugin(
+                    assetsProvisioner,
+                    realmSamplingData,
+                    exposedCameraData!,
+                    stubDebugBuilder,
+                    stubAppArgs);
+                (_, bool cameraInitSuccess) = await globalPluginSettingsContainer.InitializePluginAsync(characterCameraPlugin, destroyCancellationToken);
+                if (!cameraInitSuccess)
+                {
+                    hasError = true;
+                    errorMessage = "Failed to initialize CharacterCameraPlugin. Ensure CharacterCameraSettings is in globalPluginSettingsContainer.";
+                    Debug.LogError($"[WebGLSceneBootstrapper] {errorMessage}");
+                    enabled = false;
+                    return;
+                }
+
+                // Full InputPlugin: DCLInput.Enable, ApplyInputMapsSystem, UpdateCameraInputSystem, UpdateInputMovementSystem, etc.
+                var stubCursor = new WebClientStubImplementations.StubCursor();
+                var stubEventSystem = UnityEngine.EventSystems.EventSystem.current != null
+                    ? (IEventSystem)new UnityEventSystem(UnityEngine.EventSystems.EventSystem.current)
+                    : new WebClientStubImplementations.StubEventSystem();
+                var stubEmotesMessageBus = new WebClientStubImplementations.StubEmotesMessageBus();
+                var emotesBus = new EmotesBus();
+                var inputPlugin = new InputPlugin(stubCursor, stubEventSystem, assetsProvisioner, stubEmotesMessageBus, emotesBus, new WebClientStubImplementations.StubMVCManager());
+                (_, bool inputInitSuccess) = await globalPluginSettingsContainer.InitializePluginAsync(inputPlugin, destroyCancellationToken);
+                if (!inputInitSuccess)
+                {
+                    Debug.LogWarning("[WebGLSceneBootstrapper] InputPlugin init failed. Add InputSettings to globalPluginSettingsContainer for camera/movement. Camera/movement may not respond.");
+                }
+
+                var builder = new ArchSystemsWorldBuilder<World>(globalWorldEcs);
+                builder.InjectCustomGroup(new SyncedPresentationSystemGroup(globalSceneStateProvider));
+                builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(globalSceneStateProvider));
+                UpdateTimeSystem.InjectToWorld(ref builder);
+                UpdatePhysicsTickSystem.InjectToWorld(ref builder);
+                var pluginArgs = new GlobalPluginArguments(globalPlayerEntity, globalSkyboxEntity);
+                characterContainer.CreateGlobalPlugin().InjectToWorld(ref builder, pluginArgs);
+                characterMotionPlugin.InjectToWorld(ref builder, pluginArgs);
+                if (inputInitSuccess)
+                    inputPlugin.InjectToWorld(ref builder, pluginArgs);
+                characterCameraPlugin.InjectToWorld(ref builder, pluginArgs);
+                globalWorldSystems = builder.Finish();
+                globalWorldSystems.Initialize();
+
+                // Same as MainSceneLoader.RestoreInputs: enable all input maps except FreeCamera/EmoteWheel, and UI
+                if (inputInitSuccess)
+                {
+                    var inputBlock = new ECSInputBlock(globalWorldEcs);
+                    inputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA, InputMapComponent.Kind.EMOTE_WHEEL);
+                    DCLInput.Instance.UI.Enable();
+                }
+
+                // Use Cinemachine Brain's output camera as MainCamera (CharacterCameraPlugin set it up)
+                if (exposedCameraData.CameraEntityProxy.Object != default && globalWorldEcs.Has<CameraComponent>(exposedCameraData.CameraEntityProxy.Object))
+                {
+                    MainCamera = globalWorldEcs.Get<CameraComponent>(exposedCameraData.CameraEntityProxy.Object).Camera;
+                }
+
                 // Initialize mocked dependencies with proper realm data
-                MockedDependencies dependencies = CreateMockedDependencies(realmData);
+                MockedDependencies dependencies = CreateMockedDependencies(realmData, exposedPlayerTransform, exposedCameraData, characterContainer);
 
                 // Create scene factory
                 SceneFactory sceneFactory = CreateSceneFactory(dependencies);
@@ -510,6 +668,15 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 // Debug.Log($"[WebGLSceneBootstrapper] Initializing Scene Facade");
                 sceneFacade.Initialize();
 
+                // Set fake profile on the scene's player entity so scene logic/SDK can read profile (e.g. display name)
+                Entity scenePlayerEntity = sceneFacade.PersistentEntities.Player;
+                World sceneWorld = sceneFacade.EcsExecutor.World;
+                Profile fakeProfile = Profile.NewRandomProfile("webgl-player");
+                if (sceneWorld.Has<Profile>(scenePlayerEntity))
+                    sceneWorld.Set(scenePlayerEntity, fakeProfile);
+                else
+                    sceneWorld.Add(scenePlayerEntity, fakeProfile);
+
                 // Apply main.crdt (and other static CRDT) to ECS so entities (e.g. GltfContainers) exist before first tick
                 sceneFacade.ApplyStaticMessagesIfAny();
 
@@ -523,6 +690,9 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 isInitialized = true;
 
                 // Debug.Log($"[WebGLSceneBootstrapper] Scene loaded and started successfully");
+
+                // Set initial player/camera position from base parcel so first frame has correct pose
+                SetInitialPlayerAndCameraPosition(currentSceneBaseParcel);
 
                 // Position the camera at the scene origin (use base parcel if loaded from world)
                 PositionCameraAtSceneOrigin(currentSceneBaseParcel);
@@ -729,6 +899,24 @@ namespace SceneRuntime.WebClient.Bootstrapper
                     Debug.LogWarning($"[WebGLSceneBootstrapper] Exception loading shader bundle '{bundleName}': {e.Message}");
                 }
             }
+        }
+
+        private void SetInitialPlayerAndCameraPosition(Vector2Int? baseParcel)
+        {
+            if (exposedPlayerTransform == null || exposedCameraData == null)
+                return;
+
+            float centerX = baseParcel.HasValue ? (baseParcel.Value.x * 16) + 8 : 8f;
+            float centerZ = baseParcel.HasValue ? (baseParcel.Value.y * 16) + 8 : 8f;
+
+            var sceneCenter = new Vector3(centerX, 1f, centerZ);
+            var cameraPosition = new Vector3(centerX, 5f, centerZ - 13f);
+            Quaternion lookRotation = Quaternion.LookRotation(sceneCenter - cameraPosition);
+
+            exposedPlayerTransform.Position.Value = cameraPosition;
+            exposedPlayerTransform.Rotation.Value = lookRotation;
+            exposedCameraData.WorldPosition.Value = cameraPosition;
+            exposedCameraData.WorldRotation.Value = lookRotation;
         }
 
         private void PositionCameraAtSceneOrigin(Vector2Int? baseParcel = null)

@@ -34,7 +34,8 @@ GraphicsSettings:
   - {fileID: 4800000, guid: 9f3c26b521ac7c44ea7ce1b164cc3808, type: 3}
   - {fileID: 4800000, guid: e5b617d736d0466ea1f935a5a0d79b1b, type: 3}
   - {fileID: 4800000, guid: 71b22c46a39ba46498cb2d8fab22343f, type: 3}
-  m_PreloadedShaders: []
+  m_PreloadedShaders:
+  - {fileID: 20000000, guid: 622e919733c115b40bf276cf626d2211, type: 2}
   m_PreloadShadersBatchTimeLimit: -1
   m_SpritesDefaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_CustomRenderPipeline: {fileID: 11400000, guid: 362b7d6d8bc7d8a4caba9aa7515a5f6d, type: 2}
@@ -65,5 +66,5 @@ GraphicsSettings:
   m_LightsUseColorTemperature: 1
   m_LogWhenShaderIsCompiled: 1
   m_LightProbeOutsideHullStrategy: 0
-  m_CameraRelativeLightCulling: 0
-  m_CameraRelativeShadowCulling: 0
+  m_CameraRelativeLightCulling: 1
+  m_CameraRelativeShadowCulling: 1

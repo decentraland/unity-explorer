@@ -4,26 +4,37 @@ using CrdtEcsBridge.JsModulesImplementation.Communications;
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.Views;
+using DCL.Input;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.Multithreading;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using Global.Dynamic;
 using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.Mapping;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
@@ -49,6 +60,60 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
                 UniTask.FromResult(new EthApiResponse());
+        }
+
+        /// <summary>Stub IEventSystem for WebGL when no Unity EventSystem is in scene.</summary>
+        public class StubEventSystem : IEventSystem
+        {
+            private static readonly List<RaycastResult> EmptyList = new ();
+
+            public IReadOnlyList<RaycastResult> RaycastAll(Vector2 position) =>
+                EmptyList;
+
+            public bool IsPointerOverGameObject() => false;
+        }
+
+        /// <summary>Stub ICursor for WebGL when cursor assets are not loaded.</summary>
+        public class StubCursor : ICursor
+        {
+            public bool IsStyleForced { get; private set; }
+
+            public bool IsLocked() => Cursor.lockState != CursorLockMode.None;
+
+            public void Lock()
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+
+            public void Unlock()
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+
+            public void SetVisibility(bool visible) => Cursor.visible = visible;
+
+            public void SetStyle(CursorStyle style, bool force = false)
+            {
+                IsStyleForced = force;
+            }
+        }
+
+        /// <summary>Stub IEmotesMessageBus for WebGL (no multiplayer emotes).</summary>
+        public class StubEmotesMessageBus : IEmotesMessageBus
+        {
+            private readonly MutexSync mutexSync = new ();
+            private readonly HashSet<RemoteEmoteIntention> emptySet = new ();
+
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
+                new (mutexSync, emptySet);
+
+            public void Send(URN urn, bool loopCyclePassed) { }
+
+            public void OnPlayerRemoved(string walletId) { }
+
+            public void SaveForRetry(RemoteEmoteIntention intention) { }
         }
 
         public class StubMVCManager : IMVCManager
@@ -91,8 +156,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 UniTask.FromResult(new IPortableExperiencesController.SpawnResponse());
 
             public IPortableExperiencesController.ExitResponse UnloadPortableExperienceById(string id) =>
-                new()
-                    { status = false };
+                new();
 
             public List<IPortableExperiencesController.SpawnResponse> GetAllPortableExperiences() =>
                 new ();
@@ -304,6 +368,90 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
             public bool IsLoadingScreenOn() =>
                 false;
+        }
+
+        /// <summary>
+        ///     Stub implementation of IDebugContainerBuilder for WebGL minimal global world.
+        /// </summary>
+        public class StubDebugContainerBuilder : IDebugContainerBuilder
+        {
+            public bool IsVisible { get; set; }
+
+            public DebugContainer Container => throw new NotSupportedException("WebGL stub debug builder has no container.");
+
+            public Result<DebugWidgetBuilder> AddWidget(WidgetName name) =>
+                Result<DebugWidgetBuilder>.ErrorResult("WebGL stub");
+
+            public IReadOnlyDictionary<string, DebugWidget> Widgets { get; } = new Dictionary<string, DebugWidget>();
+
+            public void BuildWithFlex(UnityEngine.UIElements.UIDocument debugRootCanvas) { }
+        }
+
+        /// <summary>
+        ///     Stub implementation of ILandscape for WebGL minimal global world.
+        /// </summary>
+        public class StubLandscape : ILandscape
+        {
+            public UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct) =>
+                UniTask.FromResult(EnumResult<LandscapeError>.SuccessResult());
+
+            public float GetHeight(float x, float z) => 0f;
+
+            public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal) => Result.SuccessResult();
+        }
+
+        /// <summary>
+        ///     Stub implementation of IScenesCache for WebGL minimal global world.
+        /// </summary>
+        public class StubScenesCache : IScenesCache
+        {
+            private readonly ReactiveProperty<Vector2Int> currentParcel = new (Vector2Int.zero);
+            private readonly ReactiveProperty<ISceneFacade?> currentScene = new (null);
+
+            public IReadonlyReactiveProperty<Vector2Int> CurrentParcel => currentParcel;
+            public IReadonlyReactiveProperty<ISceneFacade?> CurrentScene => currentScene;
+            public IReadOnlyCollection<ISceneFacade> Scenes { get; } = Array.Empty<ISceneFacade>();
+            public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; } = Array.Empty<ISceneFacade>();
+
+            public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels) { }
+
+            public void AddNonRealScene(IReadOnlyList<Vector2Int> parcels) { }
+
+            public void AddNonRealScene(Vector2Int parcel) { }
+
+            public void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn) { }
+
+            public void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels) { }
+
+            public void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels) { }
+
+            public bool Contains(Vector2Int parcel) => false;
+
+            public bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade)
+            {
+                sceneFacade = null!;
+                return false;
+            }
+
+            public bool TryGetBySceneId(string sceneId, out ISceneFacade? sceneFacade)
+            {
+                sceneFacade = null;
+                return false;
+            }
+
+            public bool TryGetPortableExperienceBySceneUrn(string sceneUrn, out ISceneFacade sceneFacade)
+            {
+                sceneFacade = null!;
+                return false;
+            }
+
+            public void RemovePortableExperienceFacade(string sceneUrn) { }
+
+            public void ClearScenes(bool clearPortableExperiences = false) { }
+
+            public void SetCurrentScene(ISceneFacade? sceneFacade) { }
+
+            public void UpdateCurrentParcel(Vector2Int newParcel) { }
         }
     }
 }
