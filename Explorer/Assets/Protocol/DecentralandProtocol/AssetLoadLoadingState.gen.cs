@@ -44,6 +44,7 @@ namespace DCL.ECSComponents {
   /// <summary>
   /// AssetLoadLoadingState is set by the engine and provides information about
   /// the current state of the AssetLoad of an entity.
+  /// The renderer appends a new object of this in each command, there can be many commands per frames
   /// </summary>
   public sealed partial class PBAssetLoadLoadingState : pb::IMessage<PBAssetLoadLoadingState>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -94,6 +95,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "current_state" field.</summary>
     public const int CurrentStateFieldNumber = 1;
     private global::DCL.ECSComponents.LoadingState currentState_ = global::DCL.ECSComponents.LoadingState.Unknown;
+    /// <summary>
+    /// current loading state
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.LoadingState CurrentState {
@@ -106,6 +110,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "asset" field.</summary>
     public const int AssetFieldNumber = 2;
     private string asset_ = "";
+    /// <summary>
+    /// the asset being loaded (asset's scene path)
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string Asset {

@@ -38,6 +38,9 @@ namespace DCL.ECSComponents {
 
   }
   #region Messages
+  /// <summary>
+  /// AssetLoad component allows an entity to request the pre-loading of one or more assets by the renderer.
+  /// </summary>
   public sealed partial class PBAssetLoad : pb::IMessage<PBAssetLoad>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
