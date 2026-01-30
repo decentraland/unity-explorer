@@ -14,7 +14,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -300,6 +299,7 @@ namespace DCL.Passport
                 mvcManager,
                 nftNamesProvider,
                 decentralandUrlsSource,
+                colorPickerController,
                 isNameEditorEnabled);
 
             userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
@@ -611,12 +611,6 @@ namespace DCL.Passport
 
                 if (profile == null)
                     return;
-
-                // Setup claimed name color picker
-                colorPickerController?.SetColor(profile.UserNameColor);
-                viewInstance!.UserBasicInfoModuleView.NameColorPickerView.gameObject.SetActive(
-                    FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && profile.HasClaimedName
-                );
 
                 UpdateBackgroundColor(profile.UserNameColor);
 

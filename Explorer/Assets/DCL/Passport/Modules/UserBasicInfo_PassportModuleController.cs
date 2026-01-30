@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ProfileNames;
 using DCL.Web3;
@@ -29,6 +31,7 @@ namespace DCL.Passport.Modules
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
         private Profile? currentProfile;
+        private NameColorPickerController? colorPickerController;
 
         public event Action? NameClaimRequested;
 
@@ -39,6 +42,7 @@ namespace DCL.Passport.Modules
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
+            NameColorPickerController? colorPickerController,
             bool isNameEditorEnabled)
         {
             this.view = view;
@@ -47,6 +51,7 @@ namespace DCL.Passport.Modules
             this.mvcManager = mvcManager;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.colorPickerController = colorPickerController;
             this.isNameEditorEnabled = isNameEditorEnabled;
             nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
@@ -85,6 +90,7 @@ namespace DCL.Passport.Modules
             {
                 view.EditNameButton.gameObject.SetActive(false);
                 view.ClaimNameButton.gameObject.SetActive(false);
+                view.NameColorPickerView.gameObject.SetActive(false);
 
                 Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
@@ -94,6 +100,11 @@ namespace DCL.Passport.Modules
                 {
                     view.EditNameButton.gameObject.SetActive(isNameEditorEnabled);
                     view.ClaimNameButton.gameObject.SetActive(false);
+
+                    view.NameColorPickerView.gameObject.SetActive(
+                        FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && ownProfile.HasClaimedName
+                    );
+                    colorPickerController?.SetColor(ownProfile.UserNameColor);
 
                     if (isNameEditorEnabled)
                     {
