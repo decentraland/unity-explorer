@@ -28,14 +28,11 @@ using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.NotificationsBus;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 

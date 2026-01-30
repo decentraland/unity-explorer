@@ -292,6 +292,13 @@ namespace DCL.Passport
                 world,
                 characterPreviewEventBus);
 
+            colorPickerController = new NameColorPickerController(
+                mvcManager,
+                viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
+                colorPresets);
+            colorPickerController.OnColorChanged += SetNewUserNameColor;
+            colorPickerController.OnColorPickerClosed += SaveUserNameColor;
+
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
                 selfProfile,
@@ -437,14 +444,6 @@ namespace DCL.Passport
                     viewInstance.InviteToCommunityText,
                     viewInstance.InviteToCommunitySprite);
             }
-
-            colorPickerController = new NameColorPickerController(
-                mvcManager,
-                viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
-                colorPresets);
-
-            colorPickerController.OnColorChanged += SetNewUserNameColor;
-            colorPickerController.OnColorPickerClosed += SaveUserNameColor;
         }
 
         private void OnStartCallButtonClicked()

@@ -42,20 +42,11 @@ namespace DCL.UI
         public void Dispose() =>
             view.ToggleButton.onClick.RemoveAllListeners();
 
-        public void SetCurrentColor(Color newColor, string category)
+        public void UpdateCategoriesColors(Color newEyesColor, Color newHairColor, Color newBodyShapeColor)
         {
-            switch (category)
-            {
-                case WearableCategories.Categories.EYES:
-                    eyesColor = newColor;
-                    break;
-                case WearableCategories.Categories.HAIR:
-                    hairColor = newColor;
-                    break;
-                case WearableCategories.Categories.BODY_SHAPE:
-                    bodyShapeColor = newColor;
-                    break;
-            }
+            eyesColor = newEyesColor;
+            hairColor = newHairColor;
+            bodyShapeColor = newBodyShapeColor;
         }
 
         public void SetColorPickerStatus(string category)
@@ -81,6 +72,12 @@ namespace DCL.UI
             }
 
             ResetPanel();
+        }
+
+        private void ResetPanel()
+        {
+            view.ArrowDownMark.SetActive(true);
+            view.ArrowUpMark.SetActive(false);
         }
 
         private void TogglePanel() =>
@@ -119,6 +116,7 @@ namespace DCL.UI
                 OnColorChanged = (color) =>
                 {
                     UpdateColorPreviewImage(color);
+                    UpdateCategoryColor(color, currentCategory);
                     OnColorChanged.Invoke(color, currentCategory);
                 }
             };
@@ -126,13 +124,23 @@ namespace DCL.UI
             mvcManager.ShowAsync(ColorPickerController.IssueCommand(data)).Forget();
         }
 
-        private void ResetPanel()
-        {
-            view.ArrowDownMark.SetActive(true);
-            view.ArrowUpMark.SetActive(false);
-        }
-
         private void UpdateColorPreviewImage(Color newColor) =>
             view.ColorPreviewImage.color = newColor;
+
+        private void UpdateCategoryColor(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearableCategories.Categories.EYES:
+                    eyesColor = newColor;
+                    break;
+                case WearableCategories.Categories.HAIR:
+                    hairColor = newColor;
+                    break;
+                case WearableCategories.Categories.BODY_SHAPE:
+                    bodyShapeColor = newColor;
+                    break;
+            }
+        }
     }
 }

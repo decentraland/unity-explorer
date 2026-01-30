@@ -1,3 +1,5 @@
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -26,7 +28,7 @@ namespace DCL.Backpack.Breadcrumb
             colorPickerController = new WearablesColorPickerController(mvcManager, view.WearablesColorPickerView, hairColors, eyesColors, bodyshapeColors);
             colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterEvent += OnFilterEvent;
-            eventBus.ChangeColorEvent += UpdateColorPickerColors;
+            eventBus.EquipOutfitEvent += UpdateColorPickerColors;
 
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
             view.FilterButton.ExitButton.onClick.AddListener(OnExitFilter);
@@ -43,13 +45,11 @@ namespace DCL.Backpack.Breadcrumb
             view.AllButton.NavigateButton.onClick.RemoveAllListeners();
 
             eventBus.FilterEvent -= OnFilterEvent;
-            eventBus.ChangeColorEvent -= UpdateColorPickerColors;
+            eventBus.EquipOutfitEvent -= UpdateColorPickerColors;
         }
 
-        private void UpdateColorPickerColors(Color newColor, string category)
-        {
-            colorPickerController.SetCurrentColor(newColor, category);
-        }
+        private void UpdateColorPickerColors(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
+            colorPickerController.UpdateCategoriesColors(command.EyesColor, command.HairColor, command.SkinColor);
 
         private void OnAllFilter()
         {
