@@ -3,7 +3,7 @@ use core::str;
 use std::{
     ffi::CString,
     sync::{
-        atomic::{AtomicU64, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
         Arc,
     },
 };
@@ -29,11 +29,13 @@ pub struct AppContext {
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
     error_fn: Box<dyn Fn(&str) + Send + Sync>,
+    shutdown: Arc<AtomicBool>,
 }
 
 pub struct SegmentServer {
     context: Arc<Mutex<AppContext>>,
     next_id: AtomicU64,
+    shutdown: Arc<AtomicBool>,
 }
 
 pub enum ServerState {
@@ -101,9 +103,13 @@ impl Server {
 
         let mut state = state_lock.unwrap();
 
-        match *state {
+        match &*state {
             ServerState::Disposed => false,
-            ServerState::Ready(_) => {
+            ServerState::Ready(server) => {
+                // Set shutdown flag BEFORE changing state to prevent callbacks from firing
+                // This ensures any in-flight async tasks will skip FFI callbacks
+                server.shutdown.store(true, Ordering::Release);
+
                 *state = ServerState::Disposed;
                 true
             }
@@ -145,7 +151,16 @@ impl SegmentServer {
         error_fn: Option<FfiErrorCallbackFn>,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
+        // Create shutdown flag early so it can be captured by error_fn closure
+        let shutdown = Arc::new(AtomicBool::new(false));
+
+        // Create error_fn that checks shutdown flag before invoking FFI callback
+        let shutdown_for_error = shutdown.clone();
         let error_fn = Box::new(move |message: &str| {
+            // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
+            if shutdown_for_error.load(Ordering::Acquire) {
+                return;
+            }
             if let Some(cb) = error_fn {
                 if let Ok(cstr) = CString::new(message) {
                     unsafe {
@@ -193,11 +208,13 @@ impl SegmentServer {
                 callback_fn(id, response);
             }),
             error_fn,
+            shutdown: shutdown.clone(),
         };
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
             context: Arc::new(Mutex::new(context)),
+            shutdown,
         }
     }
 
@@ -319,10 +336,19 @@ impl SegmentServer {
 
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
+        // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
+        if self.shutdown.load(Ordering::Acquire) {
+            return;
+        }
         self.callback_fn.as_ref()(id, Response::Success);
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
+        // Check shutdown flag before invoking FFI callback to prevent crashes after disposal
+        if self.shutdown.load(Ordering::Acquire) {
+            return;
+        }
+
         let message = match id {
             Some(id) => {
                 format!("Operation {} failed: {}", id, message)
