@@ -32,8 +32,25 @@ namespace DCL.PlacesAPIService
             bool? showDisabled = null,
             string? ownerAddress = null);
 
+        UniTask<PlacesData.PlacesAPIResponse> GetDestinationsAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            bool? addRealmDetails = null,
+            IReadOnlyList<string>? positions = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            string? ownerAddress = null,
+            bool? withConnectedUsers = null,
+            IReadOnlyList<string>? names = null,
+            bool? onlyPlaces = null,
+            bool? onlyWorlds = null,
+            bool? onlyHighlighted = null,
+            bool? onlySdk7 = null);
+
         UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct);
-        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
 

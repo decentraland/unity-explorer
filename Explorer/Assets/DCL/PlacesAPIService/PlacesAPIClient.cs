@@ -21,6 +21,11 @@ namespace DCL.PlacesAPIService
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
         private static readonly URLParameter WITH_REALMS_DETAIL = new ("with_realms_detail", "true");
         private static readonly URLParameter ONLY_FAVORITES = new ("only_favorites", "true");
+        private static readonly URLParameter WITH_CONNECTED_USERS = new ("with_connected_users", "true");
+        private static readonly URLParameter ONLY_PLACES = new ("only_places", "true");
+        private static readonly URLParameter ONLY_WORLDS = new ("only_worlds", "true");
+        private static readonly URLParameter ONLY_HIGHLIGHTED = new ("only_highlighted", "true");
+        private static readonly URLParameter ONLY_SDK7 = new ("only_sdk7", "true");
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -29,6 +34,7 @@ namespace DCL.PlacesAPIService
 
         private string basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
         private string baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
+        private string baseDestinationsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiDestinations);
         private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
@@ -178,6 +184,100 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
+        public async UniTask<PlacesData.PlacesAPIResponse> GetDestinationsAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            bool? addRealmDetails = null,
+            IReadOnlyList<string>? positions = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            string? ownerAddress = null,
+            bool? withConnectedUsers = null,
+            IReadOnlyList<string>? names = null,
+            bool? onlyPlaces = null,
+            bool? onlyWorlds = null,
+            bool? onlyHighlighted = null,
+            bool? onlySdk7 = null)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseDestinationsURL));
+
+            if (!string.IsNullOrEmpty(searchString))
+                urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
+
+            if (pagination != null)
+            {
+                urlBuilder.AppendParameter(new URLParameter("offset", (pagination?.pageNumber * pagination?.pageSize).ToString()!));
+                urlBuilder.AppendParameter(new URLParameter("limit", pagination?.pageSize.ToString()!));
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+                urlBuilder.AppendParameter(new URLParameter("order_by", sortBy));
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
+
+            if (!string.IsNullOrEmpty(category))
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
+
+            if (onlyFavorites != null)
+                urlBuilder.AppendParameter(ONLY_FAVORITES);
+
+            if (addRealmDetails != null)
+                urlBuilder.AppendParameter(WITH_REALMS_DETAIL);
+
+            if (positions != null)
+                foreach (string xy in positions)
+                    urlBuilder.AppendParameter(new URLParameter("positions", xy));
+
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(WITH_CONNECTED_USERS);
+
+            if (names != null)
+                foreach (string name in names)
+                    urlBuilder.AppendParameter(new URLParameter("names", name));
+
+            if (onlyPlaces != null)
+                urlBuilder.AppendParameter(ONLY_PLACES);
+
+            if (onlyWorlds != null)
+                urlBuilder.AppendParameter(ONLY_WORLDS);
+
+            if (onlyHighlighted != null)
+                urlBuilder.AppendParameter(ONLY_HIGHLIGHTED);
+
+            if (onlySdk7 != null)
+                urlBuilder.AppendParameter(ONLY_SDK7);
+
+            URLAddress url = urlBuilder.Build();
+
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct,
+                ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
+
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+            if (response.data == null)
+                throw new PlacesAPIException($"No place info retrieved:\n{searchString}");
+
+            resultBuffer?.AddRange(response.data);
+
+            return response;
+        }
+
         public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
         {
             var url = $"{baseWorldsURL}?names={placeId}";
@@ -204,8 +304,14 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
         {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(WITH_CONNECTED_USERS);
+
             var placeIdsList = placeIds.ToList();
 
             if (placeIdsList.Count == 0)
@@ -228,7 +334,7 @@ namespace DCL.PlacesAPIService
             if (placeIdsList.Count == 0)
                 jsonBody.Clear();
 
-            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
 
             return response;

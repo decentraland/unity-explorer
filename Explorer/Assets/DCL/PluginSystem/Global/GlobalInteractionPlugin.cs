@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.Global
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
                 builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
-                builder.World);
+                builder.World, arguments.PlayerEntity);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
                 playerInteractionEntity, 100f);
