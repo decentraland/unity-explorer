@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Physics;
@@ -50,9 +50,11 @@ namespace ECS.Unity.GLTFContainer.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
 
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
             system = new FinalizeGltfContainerLoadingSystem(
                 world, sceneRoot, releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
-                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
+                sceneStateProvider, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -29,13 +29,15 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
-            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -121,7 +123,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
                 {
                     component.VisibleMeshesCollisionMask = visibleCollisionMask;
-                    ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
+                    ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset, sceneStateProvider.IsCurrent);
                 }
 
                 ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
@@ -129,7 +131,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
                 {
                     component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
-                    ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
+                    ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset, sceneStateProvider.IsCurrent);
                 }
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);

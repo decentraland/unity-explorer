@@ -49,8 +49,10 @@ namespace DCL.SDKComponents.Animator.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
 
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
             finalizeGltfContainerLoadingSystem = new FinalizeGltfContainerLoadingSystem(world, sceneRoot, releasablePerformanceBudget,
-                NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
+                NullEntityCollidersSceneCache.INSTANCE, sceneData, sceneStateProvider, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);

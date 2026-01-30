@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
@@ -8,6 +8,7 @@ using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,7 +48,9 @@ namespace ECS.Unity.PrimitiveColliders.Tests
                     { typeof(SphereCollider), new GameObjectPool<SphereCollider>(null) },
                 }, new GameObject().transform);
 
-            system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), setupColliders);
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+            system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), sceneStateProvider, setupColliders);
 
             entity = world.Create(new CRDTEntity(5));
             AddTransformToEntity(entity);

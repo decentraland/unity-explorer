@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.Physics;
+using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -11,39 +11,35 @@ namespace ECS.Unity.GLTFContainer.Systems
 {
     internal static class ConfigureGltfContainerColliders
     {
-        internal static void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset, bool isSceneCurrent)
         {
-            SetupVisibleColliders(ref component, asset);
-            SetupInvisibleColliders(ref component, asset);
+            SetupVisibleColliders(ref component, asset, isSceneCurrent);
+            SetupInvisibleColliders(ref component, asset, isSceneCurrent);
         }
 
-        internal static void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset, bool isSceneCurrent)
         {
             if (asset.InvisibleColliders.Count == 0) return;
 
             // Invisible colliders are contained in the asset by default (not instantiation on demand needed)
             if (component.InvisibleMeshesCollisionMask != ColliderLayer.ClNone)
-                EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask);
+                EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask, isSceneCurrent);
             else
                 DisableColliders(asset.InvisibleColliders);
-
-            component.NeedsColliderBoundsCheck = true;
         }
 
-        internal static void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset, bool isSceneCurrent)
         {
             if (component.VisibleMeshesCollisionMask != ColliderLayer.ClNone)
             {
                 TryInstantiateVisibleMeshesColliders(asset);
-                EnableColliders(asset.DecodedVisibleSDKColliders!, component.VisibleMeshesCollisionMask);
+                EnableColliders(asset.DecodedVisibleSDKColliders!, component.VisibleMeshesCollisionMask, isSceneCurrent);
             }
             else if (asset.DecodedVisibleSDKColliders != null)
                 DisableColliders(asset.DecodedVisibleSDKColliders);
-
-            component.NeedsColliderBoundsCheck = true;
         }
 
-        private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer)
+        private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer, bool isSceneCurrent)
         {
             bool hasUnityLayer = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
 
@@ -55,6 +51,9 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 if (hasUnityLayer)
                     collider.Collider.gameObject.layer = unityLayer;
+
+                // If the scene is current, immediately activate the collider by scene bounds
+                collider.ForceActiveBySceneBounds(isSceneCurrent);
 
                 // write the structure back
                 colliders[i] = collider;

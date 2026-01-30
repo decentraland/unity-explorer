@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -29,15 +29,18 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IPerformanceBudget capBudget;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneData sceneData;
+        private readonly ISceneStateProvider sceneStateProvider;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
 
         public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IPerformanceBudget capBudget,
-            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, ISceneStateProvider sceneStateProvider,
+            EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.capBudget = capBudget;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.sceneData = sceneData;
+            this.sceneStateProvider = sceneStateProvider;
             this.eventsBuffer = eventsBuffer;
         }
 
@@ -81,7 +84,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
                 }
 
-                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
+                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!, sceneStateProvider.IsCurrent);
                 ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);

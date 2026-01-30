@@ -18,7 +18,6 @@ namespace ECS.Unity.GLTFContainer.Components
         public ColliderLayer InvisibleMeshesCollisionMask;
         public AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> Promise;
         public LoadingState State;
-        public bool NeedsColliderBoundsCheck;
 
         /// <summary>
         ///     Reference to the root GameObject of the loaded GLTF asset
@@ -31,7 +30,6 @@ namespace ECS.Unity.GLTFContainer.Components
             InvisibleMeshesCollisionMask = invisibleMeshesCollisionMask;
             Promise = promise;
             State = LoadingState.Unknown;
-            NeedsColliderBoundsCheck = true;
             RootGameObject = null;
         }
 

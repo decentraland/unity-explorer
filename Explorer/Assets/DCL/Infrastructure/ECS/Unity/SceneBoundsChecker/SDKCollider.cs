@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.Physics;
+using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using UnityEngine;
 
@@ -10,7 +10,6 @@ namespace ECS.Unity.SceneBoundsChecker
     public struct SDKCollider
     {
         public readonly Collider? Collider;
-        private readonly Transform? Transform;
 
         private bool isActiveByEntity;
 
@@ -31,7 +30,7 @@ namespace ECS.Unity.SceneBoundsChecker
         public bool IsActiveBySceneBounds { get; private set; }
 
         /// <summary>
-        ///     When the structure is created Collider is disabled by default
+        ///     When the structure is created Collider is disabled by defaultc
         /// </summary>
         /// <param name="collider"></param>
         public SDKCollider(Collider? collider)
@@ -39,16 +38,6 @@ namespace ECS.Unity.SceneBoundsChecker
             Collider = collider;
             isActiveByEntity = false;
             IsActiveBySceneBounds = false;
-
-            if (collider != null)
-            {
-                Transform = collider.transform;
-                Transform.hasChanged = false;
-            }
-            else
-            {
-                Transform = null;
-            }
 
             ResolveColliderActivity();
         }
@@ -80,17 +69,5 @@ namespace ECS.Unity.SceneBoundsChecker
             if (Collider != null)
                 Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
         }
-
-        public bool HasMoved()
-        {
-            if (Transform != null && Transform.hasChanged)
-            {
-                Transform.hasChanged = false;
-                return true;
-            }
-
-            return false;
-        }
-
     }
 }

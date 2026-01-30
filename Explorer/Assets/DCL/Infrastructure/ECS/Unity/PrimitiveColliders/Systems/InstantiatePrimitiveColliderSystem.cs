@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -13,6 +13,7 @@ using ECS.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -35,13 +36,16 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases;
         private readonly IEntityCollidersSceneCache entityCollidersCache;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         internal InstantiatePrimitiveColliderSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IEntityCollidersSceneCache entityCollidersCache, Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases = null) : base(world)
+            IEntityCollidersSceneCache entityCollidersCache, ISceneStateProvider sceneStateProvider,
+            Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases = null) : base(world)
         {
             this.setupColliderCases = setupColliderCases ?? SETUP_COLLIDER_LOGIC;
             this.poolsRegistry = poolsRegistry;
             this.entityCollidersCache = entityCollidersCache;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -98,6 +102,10 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
             sdkCollider.SetColliderLayer(colliderLayer, out bool enabled);
             entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(entity, sdkEntity, colliderLayer));
+
+            // If the scene is current, immediately activate the collider by scene bounds
+            sdkCollider.ForceActiveBySceneBounds(sceneStateProvider.IsCurrent);
+
             return enabled;
         }
 
