@@ -28,8 +28,6 @@ namespace ECS.Unity.SceneBoundsChecker
             }
         }
 
-        public bool IsActiveBySceneBounds { get; private set; }
-
         /// <summary>
         ///     When the structure is created Collider is disabled by default
         /// </summary>
@@ -38,7 +36,6 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             Collider = collider;
             isActiveByEntity = false;
-            IsActiveBySceneBounds = false;
 
             if (collider != null)
             {
@@ -69,16 +66,10 @@ namespace ECS.Unity.SceneBoundsChecker
             Collider.enabled = enabled;
         }
 
-        public void ForceActiveBySceneBounds(bool value)
-        {
-            IsActiveBySceneBounds = value;
-            ResolveColliderActivity();
-        }
-
         private void ResolveColliderActivity()
         {
             if (Collider != null)
-                Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
+                Collider.enabled = isActiveByEntity;
         }
 
         public bool HasMoved()

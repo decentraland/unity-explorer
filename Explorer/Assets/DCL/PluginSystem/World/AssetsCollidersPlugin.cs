@@ -29,8 +29,6 @@ namespace DCL.PluginSystem.World
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
 
-            CheckColliderBoundsSystem.InjectToWorld(ref builder, sharedDependencies.ScenePartition, sharedDependencies.SceneData.Geometry);
-
             var releaseColliderSystem =
                 ReleasePoolableComponentSystem<Collider, PrimitiveColliderComponent>.InjectToWorld(ref builder,
                     componentPoolsRegistry);
