@@ -17,13 +17,10 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IPerformanceBudget memoryBudgetProvider;
-        private readonly IPerformanceBudget capFrameBudget;
 
-        public CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
+        public CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider)
+            : base(world, materialsPool, capFrameBudget, memoryBudgetProvider)
         {
-            this.capFrameBudget = capFrameBudget;
-            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -32,16 +29,13 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void Handle(ref MaterialComponent materialComponent)
-        {
-            if (materialComponent.Data.IsPbrMaterial)
-                return;
+       private void Handle(ref MaterialComponent materialComponent)
+       {
+           if (materialComponent.Data.IsPbrMaterial)
+               return;
 
-            if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
-                return;
-
-            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
-                ConstructMaterial(ref materialComponent);
+           if (CanConstructMaterial(materialComponent))
+               ConstructMaterial(ref materialComponent);
         }
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
