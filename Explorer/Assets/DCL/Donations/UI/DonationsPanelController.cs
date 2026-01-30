@@ -9,7 +9,6 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -38,7 +37,6 @@ namespace DCL.Donations.UI
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
-        private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
         private CancellationTokenSource panelLifecycleCts = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
@@ -53,7 +51,6 @@ namespace DCL.Donations.UI
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IInputBlock inputBlock,
-            ICompositeWeb3Provider compositeWeb3Provider,
             decimal[] recommendedDonationAmount)
             : base(viewFactory)
         {
@@ -64,7 +61,6 @@ namespace DCL.Donations.UI
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.inputBlock = inputBlock;
-            this.compositeWeb3Provider = compositeWeb3Provider;
             this.recommendedDonationAmount = recommendedDonationAmount;
         }
 
@@ -84,7 +80,6 @@ namespace DCL.Donations.UI
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.SetWeb3Provider(compositeWeb3Provider);
             viewInstance!.SendDonationRequested += OnSendDonationRequestedAsync;
             viewInstance!.BuyMoreRequested += OnBuyMoreRequested;
             viewInstance!.ContactSupportRequested += OnContactSupportRequested;

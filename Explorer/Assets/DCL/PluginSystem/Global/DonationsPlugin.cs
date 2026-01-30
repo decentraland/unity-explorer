@@ -12,7 +12,6 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Globalization;
@@ -36,7 +35,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
-        private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
         private DonationsPanelController? donationsPanelController;
 
@@ -48,8 +46,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IInputBlock inputBlock,
-            ICompositeWeb3Provider compositeWeb3Provider)
+            IInputBlock inputBlock)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -60,7 +57,6 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.inputBlock = inputBlock;
-            this.compositeWeb3Provider = compositeWeb3Provider;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.TIP_RECEIVED, OnTipReceivedNotificationClicked);
         }
@@ -101,7 +97,6 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 decentralandUrlsSource,
                 inputBlock,
-                compositeWeb3Provider,
                 recommendedAmountParseSuccess ? csv![0].Take(3)
                                                       .Select(s => decimal.Parse(s, CultureInfo.InvariantCulture))
                                                       .ToArray() : DEFAULT_RECOMMENDED_TIP_AMOUNTS);

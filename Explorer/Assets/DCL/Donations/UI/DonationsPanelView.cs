@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3.Authenticators;
 using MVC;
 using System;
 using System.Threading;
@@ -77,9 +76,6 @@ namespace DCL.Donations.UI
 
             await donationConfirmedView.ShowAsync(viewModel, ct);
         }
-
-        public void SetWeb3Provider(ICompositeWeb3Provider provider) =>
-            donationDefaultView.SetWeb3Provider(provider);
 
         public void ConfigureDefaultPanel(DonationPanelViewModel viewModel)
         {
