@@ -2237,6 +2237,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: <canvas>k__BackingField
+      value: 
+      objectReference: {fileID: 2814871423585080172}
+    - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: <raycaster>k__BackingField
+      value: 
+      objectReference: {fileID: 8454101078806804241}
+    - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: <CharacterPreviewSettingsSo>k__BackingField
       value: 
       objectReference: {fileID: 11400000, guid: f72622248e9201c45bae28303f6d713d, type: 2}
@@ -2411,8 +2419,8 @@ CanvasGroup:
   m_GameObject: {fileID: 963882486973799870}
   m_Enabled: 1
   m_Alpha: 1
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!114 &8185437588405162452 stripped
 MonoBehaviour:
