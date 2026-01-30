@@ -305,10 +305,10 @@ namespace DCL.Places
                     break;
                 }
                 case PlacesSection.BROWSE:
-                    view.SetPlacesCounter("Results for All");
+                    view.SetPlacesCounter("All");
                     break;
                 case PlacesSection.RECENTLY_VISITED:
-                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
                     break;
                 case PlacesSection.FAVORITES:
                     view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
