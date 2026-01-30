@@ -64,6 +64,8 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
+        private const string SINGLE_INSTANCE_MUTEX_IDENTIFIER = "Decentraland.Explorer.UniqueInstance";
+
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
@@ -88,6 +90,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private static Mutex? singleInstanceMutex;
 
         private void Awake()
         {
@@ -149,6 +152,10 @@ namespace Global.Dynamic
                 Environment.GetCommandLineArgs()
 #endif
             );
+
+#if !UNITY_EDITOR
+            ForceSingleRunningInstance(applicationParametersParser);
+#endif
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
@@ -337,6 +344,31 @@ namespace Global.Dynamic
                     else
                         ExitUtils.Exit();
                 }
+            }
+        }
+
+        private void ForceSingleRunningInstance(IAppArgs appArgs)
+        {
+            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return;
+
+            try
+            {
+                singleInstanceMutex = new Mutex(false, SINGLE_INSTANCE_MUTEX_IDENTIFIER);
+
+                bool acquiredHandle = singleInstanceMutex.WaitOne(0, false);
+
+                if (!acquiredHandle)
+                    Application.Quit();
+            }
+            catch (AbandonedMutexException)
+            {
+                // Previous instance died/crashed while holding it.
+                // We now effectively own it.
+                Debug.Log("Single instance mutex abandoned. This instance now owns it");
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
         }
 

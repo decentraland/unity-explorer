@@ -61,6 +61,8 @@
 
         public const string DISCOVER = "discover";
 
+        public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
