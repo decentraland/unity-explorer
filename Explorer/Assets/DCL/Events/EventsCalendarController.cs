@@ -125,13 +125,13 @@ namespace DCL.Events
                 return;
             }
 
+            List<List<EventDTO>> eventsGroupedByDay = new (numberOfDays);
+            for (var i = 0; i < numberOfDays; i++)
+                eventsGroupedByDay.Add(new List<EventDTO>());
+
             if (eventsResult.Value.Count > 0)
             {
                 eventsStateService.SetEvents(eventsResult.Value);
-
-                List<List<EventDTO>> eventsGroupedByDay = new (numberOfDays);
-                for (var i = 0; i < numberOfDays; i++)
-                    eventsGroupedByDay.Add(new List<EventDTO>());
 
                 foreach (EventDTO eventInfo in eventsResult.Value)
                 {
@@ -146,12 +146,22 @@ namespace DCL.Events
                         }
                     }
                 }
+            }
 
-                for (var i = 0; i < eventsGroupedByDay.Count; i++)
-                    view.SetEvents(eventsGroupedByDay[i], i, true);
+            for (var i = 0; i < eventsGroupedByDay.Count; i++)
+            {
+                AddEmptyEventCards(eventsGroupedByDay[i]);
+                view.SetEvents(eventsGroupedByDay[i], i, true);
             }
 
             view.SetAsLoading(false);
+        }
+
+        private static void AddEmptyEventCards(List<EventDTO> eventsList)
+        {
+            int amountOfEmptyEvents = eventsList.Count <= 1 ? 3 : 1;
+            for (var i = 0; i < amountOfEmptyEvents; i++)
+                eventsList.Add(new EventDTO { id = "EMPTY_EVENT" });
         }
     }
 }

@@ -89,7 +89,8 @@ namespace DCL.Events
             EventCardView cardView = gridItem.GetComponent<EventCardView>();
 
             // Setup card data
-            cardView.Configure(eventInfo);
+            if (eventInfo != null)
+                cardView.Configure(eventInfo.Value);
 
             // Setup card events
             // ...

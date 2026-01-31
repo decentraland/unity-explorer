@@ -8,8 +8,13 @@ namespace DCL.Events
     {
         private readonly Dictionary<string, EventDTO> currentEvents = new();
 
-        public EventDTO GetEventInfoById(string eventId) =>
-            currentEvents.GetValueOrDefault(eventId);
+        public EventDTO? GetEventInfoById(string eventId)
+        {
+            if (currentEvents.TryGetValue(eventId, out EventDTO eventInfo))
+                return eventInfo;
+
+            return null;
+        }
 
         public void SetEvents(IReadOnlyList<EventDTO> events)
         {
