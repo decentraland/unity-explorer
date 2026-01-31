@@ -446,7 +446,7 @@ namespace Global.Dynamic
             if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
-            // splashScreen.Hide();
+            splashScreen.Hide();
 
             var appVerRedirectionScreenPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.AppVerRedirectionScreenPrefab, ct);
 

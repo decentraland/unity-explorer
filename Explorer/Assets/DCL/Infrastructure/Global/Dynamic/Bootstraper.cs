@@ -320,7 +320,7 @@ namespace Global.Dynamic
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
 
-            // splashScreen.Hide();
+            splashScreen.Hide();
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)

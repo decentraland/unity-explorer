@@ -192,7 +192,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void RedirectToSection(bool ignoreHasUserStartedProgramFlag = false)
         {
-            subView.SetEmailLoginVisibility(false);
+            subView.SetEmailLoginVisibility(isVisible: false);
             totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(currentCreditsProgramProgress.credits.available));
             totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(currentCreditsProgramProgress.credits.expiresIn));
             totalCreditsWidgetView.SetDaysToExpireVisible(currentCreditsProgramProgress.credits.available > 0);
@@ -212,7 +212,7 @@ namespace DCL.MarketplaceCredits.Sections
             // NON-REGISTERED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailRegistered())
             {
-                subView.SetEmailLoginVisibility(true);
+                subView.SetEmailLoginVisibility(isVisible: true);
                 inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
                 totalCreditsWidgetView.gameObject.SetActive(false);
                 return;

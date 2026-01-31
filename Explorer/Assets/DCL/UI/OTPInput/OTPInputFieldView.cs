@@ -112,8 +112,6 @@ namespace DCL.UI.OTPInput
 
         private void UpdateSlotsWithText(string text)
         {
-            Debug.Log($"VVV InputChanged {text}");
-
             for (var i = 0; i < slots.Length; i++)
             {
                 slots[i].SetState(OTPSlotView.SlotState.UNSELECTED);
@@ -127,7 +125,6 @@ namespace DCL.UI.OTPInput
                 hiddenInput.DeactivateInputField(clearSelection: true);
                 hiddenInput.ReleaseSelection();
                 CodeEntered?.Invoke(hiddenInput.text);
-                Debug.Log($"VVV CodeEntered {hiddenInput.text}");
             }
             else
             {
