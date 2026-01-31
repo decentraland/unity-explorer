@@ -25,7 +25,7 @@ namespace DCL.Events
         [SerializeField] private SkeletonLoadingView skeletonLoading = null!;
         [SerializeField] private Button goToNextDayButton = null!;
 
-        private EventsStateService eventsStateService;
+        private EventsStateService eventsStateService = null!;
         private readonly List<string> currentEventsIds = new ();
 
         private void Awake()
