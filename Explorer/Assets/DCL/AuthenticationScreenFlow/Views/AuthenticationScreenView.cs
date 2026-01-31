@@ -15,9 +15,6 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
-        [field: SerializeField]
-        public Web3ConfirmationPopupView? TransactionFeeConfirmationView { get; private set; }
-
         [field: Header("SCREENS")]
         [field: SerializeField]
         public LoginSelectionAuthView LoginSelectionAuthView { get; private set; } = null!;

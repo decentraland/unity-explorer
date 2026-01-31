@@ -213,9 +213,6 @@ namespace DCL.AuthenticationScreenFlow
 
             BlockUnwantedInputs();
             audio.OnShow();
-
-            // Setup transaction confirmation callback for ThirdWeb (Instance is guaranteed to exist at this point)
-            SetupTransactionConfirmationCallback();
         }
 
         protected override void OnViewClose()
@@ -284,12 +281,5 @@ namespace DCL.AuthenticationScreenFlow
 
         private void UnblockUnwantedInputs() =>
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-
-        private void SetupTransactionConfirmationCallback()
-        {
-            viewInstance.TransactionFeeConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
-            viewInstance.TransactionFeeConfirmationView!.transform.parent = null;
-            compositeWeb3Provider.SetTransactionConfirmationCallback(viewInstance.TransactionFeeConfirmationView.ShowAsync);
-        }
     }
 }
