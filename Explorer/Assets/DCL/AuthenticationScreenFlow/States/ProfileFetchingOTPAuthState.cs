@@ -144,7 +144,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             profile.Hobbies = string.Empty;
             profile.TutorialStep = 0;
             profile.Version = 0;
-            profile.UserNameColor = NameColorHelper.GetNameColor(profile.DisplayName);
 
             profile.HasConnectedWeb3 = true;
             profile.IsDirty = true;
