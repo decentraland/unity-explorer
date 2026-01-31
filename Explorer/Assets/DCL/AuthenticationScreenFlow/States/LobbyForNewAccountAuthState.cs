@@ -105,6 +105,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
+            characterPreviewView.transform.SetAsFirstSibling();
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
             view.ProfileNameInputField.InputValueChanged += OnProfileNameChanged;

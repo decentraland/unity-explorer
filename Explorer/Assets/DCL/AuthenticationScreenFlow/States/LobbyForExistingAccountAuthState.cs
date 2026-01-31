@@ -66,6 +66,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
 
             characterPreviewView.transform.SetParent(view.transform);
+            characterPreviewView.transform.SetAsFirstSibling();
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
