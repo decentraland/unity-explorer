@@ -19,7 +19,7 @@ namespace DCL.Web3.Authenticators
         Amoy = 80002,
     }
 
-    public class TestOnChainWeb3 : MonoBehaviour
+    public class ThirdWebManulTests : MonoBehaviour
     {
         [SerializeField] private ChainNetwork selectedNetwork = ChainNetwork.Amoy;
         [SerializeField] private string cryptoReceiver = "0xb1a7fc4bbd9856bfa1f70f6b111444cd9d351592";
