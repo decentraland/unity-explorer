@@ -218,12 +218,16 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
             var dropdownField = dropdownToSetup.DropdownField;
+
+            dropdownField.parent.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
+            // dropdownField.parent.AddToClassList("dcl-dropdown-transform");
+
             dropdownField.style.fontSize = model.GetFontSize();
             dropdownField.style.color = model.GetColor();
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
             dropdownField.SetValueWithoutNotify(dropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
-            dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
+            // dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
             dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
 
