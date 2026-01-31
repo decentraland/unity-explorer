@@ -1,15 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.Gifting.Commands;
@@ -28,17 +24,13 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global;
-using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -72,7 +64,6 @@ namespace DCL.PluginSystem.Global
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
         private GiftReceivedPopupController? giftReceivedPopupController;
-        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -90,7 +81,6 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             IWebBrowser webBrowser,
             IEthereumApi ethereumApi,
-            ICompositeWeb3Provider compositeWeb3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
             IScreenModeController screenModeController,
@@ -112,7 +102,6 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
-            this.compositeWeb3Provider = compositeWeb3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
@@ -175,8 +164,6 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager
             );
 
-            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
-
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 emoteProvider,
@@ -190,8 +177,7 @@ namespace DCL.PluginSystem.Global
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 inputBlock,
-                gridFactory,
-                compositeWeb3Provider);
+                gridFactory);
 
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController

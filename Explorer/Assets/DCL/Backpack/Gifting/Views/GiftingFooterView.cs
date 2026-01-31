@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +17,5 @@ namespace DCL.Backpack.Gifting.Views
 
         [field: SerializeField]
         public Button SendGiftButton { get; private set; }
-
-        [field: Tooltip("Double Confirmation (ThirdWeb only), Tooltip shown on first click to warn user about irreversible action. Assign this in Unity.")]
-        [field: SerializeField]
-        public GameObject ConfirmationTooltip { get; private set; }
     }
 }

@@ -35,7 +35,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiAuth,
         AuthSignatureWebApp,
-        AuthSignatureWebAppWithMethod,
         ApiRpc,
 
         GateKeeperSceneAdapter,

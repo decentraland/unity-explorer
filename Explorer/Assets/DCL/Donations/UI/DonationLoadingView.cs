@@ -26,8 +26,7 @@ namespace DCL.Donations.UI
 
         public void SetWaitingMessage(bool isThirdWeb)
         {
-            if (waitingMessageText != null)
-                waitingMessageText.text = isThirdWeb ? WAITING_MESSAGE_THIRDWEB : WAITING_MESSAGE_BROWSER;
+            waitingMessageText.text = isThirdWeb ? WAITING_MESSAGE_THIRDWEB : WAITING_MESSAGE_BROWSER;
         }
 
         public void ConfigurePanel(DonationPanelViewModel viewModel,

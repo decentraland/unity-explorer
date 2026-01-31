@@ -82,7 +82,7 @@ namespace DCL.Backpack.Gifting.Services
                     }
                 };
 
-                // This is an internal operation - skip ThirdWeb confirmation UI
+                // This call automatically triggers web3 confirmation pop-up (in-browser for dappAuth, in-game for ThirdWeb)
                 EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
                 if (response.result == null ||

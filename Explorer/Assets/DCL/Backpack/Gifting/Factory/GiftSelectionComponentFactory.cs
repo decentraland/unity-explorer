@@ -15,18 +15,15 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IProfileRepository profileRepository;
         private readonly IInputBlock inputBlock;
         private readonly IGiftingGridPresenterFactory gridFactory;
-        private readonly ICompositeWeb3Provider web3Provider;
 
         public GiftSelectionComponentFactory(
             IProfileRepository profileRepository,
             IInputBlock inputBlock,
-            IGiftingGridPresenterFactory gridFactory,
-            ICompositeWeb3Provider web3Provider)
+            IGiftingGridPresenterFactory gridFactory)
         {
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
             this.gridFactory = gridFactory;
-            this.web3Provider = web3Provider;
         }
 
         public GiftingHeaderPresenter CreateHeader(GiftingHeaderView view)
@@ -35,7 +32,7 @@ namespace DCL.Backpack.Gifting.Factory
         }
 
         public GiftingFooterPresenter CreateFooter(GiftingFooterView view) =>
-            new (view, web3Provider);
+            new (view);
 
         public GiftingErrorsController CreateErrorController(GiftingView view)
         {
