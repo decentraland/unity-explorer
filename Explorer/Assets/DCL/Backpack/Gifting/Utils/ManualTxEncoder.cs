@@ -1,6 +1,5 @@
-using System;
+﻿using System;
 using System.Numerics;
-using UnityEngine;
 
 namespace DCL.Backpack.Gifting.Utils
 {
@@ -41,34 +40,18 @@ namespace DCL.Backpack.Gifting.Utils
 
         public static string EncodeGetBalance(string walletAddress)
         {
-            Debug.Log($"[ManualTxEncoder] EncodeGetBalance called with walletAddress={walletAddress}");
-            string normalizedAddress = NormalizeAddress(walletAddress);
-            Debug.Log($"[ManualTxEncoder] Normalized address: {normalizedAddress}");
-            string address = LeftPad64(normalizedAddress);
-            Debug.Log($"[ManualTxEncoder] Padded address: {address}");
+            string address = LeftPad64(NormalizeAddress(walletAddress));
 
-            var result = string.Concat(HEX_PREFIX, MANA_BALANCE_FUNCTION_SELECTOR, address);
-            Debug.Log($"[ManualTxEncoder] Final encoded data: {result}");
-            return result;
+            return string.Concat(HEX_PREFIX, MANA_BALANCE_FUNCTION_SELECTOR, address);
         }
 
         public static string EncodeSendDonation(string toAddress, decimal amountInMana)
         {
-            Debug.Log($"[ManualTxEncoder] EncodeSendDonation: toAddress={toAddress}, amountInMana={amountInMana}");
-
             BigInteger value = new BigInteger(decimal.Round(amountInMana * WEI_FACTOR, 0, MidpointRounding.AwayFromZero));
-            Debug.Log($"[ManualTxEncoder] Wei value: {value}");
-
             string to = LeftPad64(NormalizeAddress(toAddress));
-            Debug.Log($"[ManualTxEncoder] Normalized and padded to address: {to}");
-
             string weiAmountString = LeftPad64(value.ToString("x"));
-            Debug.Log($"[ManualTxEncoder] Padded wei amount (hex): {weiAmountString}");
 
-            var result = string.Concat(HEX_PREFIX, TRANSFER_FUNCTION_SELECTOR, to, weiAmountString);
-            Debug.Log($"[ManualTxEncoder] Final transfer encoded data: {result}");
-
-            return result;
+            return string.Concat(HEX_PREFIX, TRANSFER_FUNCTION_SELECTOR, to, weiAmountString);
         }
 
         private static string NormalizeAddress(string addr)
