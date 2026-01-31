@@ -120,7 +120,6 @@ namespace DCL.UserInAppInitializationFlow
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
 
-                // shouldShowAuthentication = true;
                 if (shouldShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
@@ -212,6 +211,7 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
+
                 if (result.Success == false)
                 {
                     //Fail straight away
@@ -276,8 +276,8 @@ namespace DCL.UserInAppInitializationFlow
                    {
                        TaskError.MessageError => $"Error: {error.Message}",
                        TaskError.Timeout => "Load timeout. Verify yor connection.",
-                       TaskError.Cancelled => "Operation cancelled",
-                       TaskError.UnexpectedException => "Critical error occured",
+                       TaskError.Cancelled => "Operation cancelled.",
+                       TaskError.UnexpectedException => "Critical error occured.",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
