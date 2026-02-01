@@ -15,6 +15,18 @@ using Color = UnityEngine.Color;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 {
+    /*
+     * As defined in the SDK, UiDropdown entities composition breakdown:
+     * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Dropdown/index.tsx#L41-L53
+     *  - UiDropdown (all of its props are optional...)
+     * - (optional, but Explorer queries require it) uiTransform
+     * - (optional) uiBackground
+     * - (optional) onMouseDown
+     * - (optional) onMouseUp
+     * - (optional) onMouseEnter
+     * - (optional) onMouseLeave
+     */
+
     [UpdateInGroup(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIDropdownInstantiationSystem : BaseUnityLoopSystem
@@ -46,8 +58,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
-            ApplyDefaultUiTransformValues(entity, in newDropdown.DropdownField);
-            ApplyDefaultUiBackgroundValues(entity, in newDropdown.DropdownField);
+            ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
+            ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
 
             World.Add(entity, newDropdown);
         }
@@ -71,7 +83,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             uiDropdownComponent.IsOnValueChangedTriggered = false;
         }
 
-        private void ApplyDefaultUiTransformValues(Entity entity, in DropdownField dropdownUiElement)
+        private void ApplyDefaultUiTransformValues(Entity entity, in VisualElement uiTransform)
         {
             var pbUiTransform = World.Get<PBUiTransform>(entity);
 
@@ -83,10 +95,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
                     HasBorderTopRightRadius: false
                 })
             {
-                dropdownUiElement.parent.style.borderBottomLeftRadius = new StyleLength(25);
-                dropdownUiElement.parent.style.borderBottomRightRadius = new StyleLength(25);
-                dropdownUiElement.parent.style.borderTopLeftRadius = new StyleLength(25);
-                dropdownUiElement.parent.style.borderTopRightRadius = new StyleLength(25);
+                uiTransform.style.borderBottomLeftRadius = new StyleLength(25);
+                uiTransform.style.borderBottomRightRadius = new StyleLength(25);
+                uiTransform.style.borderTopLeftRadius = new StyleLength(25);
+                uiTransform.style.borderTopRightRadius = new StyleLength(25);
             }
 
             if (pbUiTransform is
@@ -97,10 +109,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
                     HasBorderLeftWidth: false
                 })
             {
-                dropdownUiElement.parent.style.borderTopWidth = new StyleFloat(1);
-                dropdownUiElement.parent.style.borderRightWidth = new StyleFloat(1);
-                dropdownUiElement.parent.style.borderBottomWidth = new StyleFloat(1);
-                dropdownUiElement.parent.style.borderLeftWidth = new StyleFloat(1);
+                uiTransform.style.borderTopWidth = new StyleFloat(1);
+                uiTransform.style.borderRightWidth = new StyleFloat(1);
+                uiTransform.style.borderBottomWidth = new StyleFloat(1);
+                uiTransform.style.borderLeftWidth = new StyleFloat(1);
             }
 
             if (pbUiTransform is
@@ -111,18 +123,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
                     BorderLeftColor: null
                 })
             {
-                dropdownUiElement.parent.style.borderTopColor = new StyleColor(Color.gray);
-                dropdownUiElement.parent.style.borderRightColor = new StyleColor(Color.gray);
-                dropdownUiElement.parent.style.borderBottomColor = new StyleColor(Color.gray);
-                dropdownUiElement.parent.style.borderLeftColor = new StyleColor(Color.gray);
+                uiTransform.style.borderTopColor = new StyleColor(Color.gray);
+                uiTransform.style.borderRightColor = new StyleColor(Color.gray);
+                uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
+                uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
             }
         }
 
-        private void ApplyDefaultUiBackgroundValues(Entity entity, in DropdownField dropdownUiElement)
+        private void ApplyDefaultUiBackgroundValues(Entity entity, in VisualElement uiTransform)
         {
             if (World.Has<PBUiBackground>(entity)) return;
 
-            dropdownUiElement.parent.style.backgroundColor = new StyleColor(Color.white);
+            uiTransform.style.backgroundColor = new StyleColor(Color.white);
         }
 
         private void PutMessage(ref CRDTEntity sdkEntity, int index)
