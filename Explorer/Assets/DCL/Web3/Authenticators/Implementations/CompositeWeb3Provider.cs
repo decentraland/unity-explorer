@@ -83,9 +83,6 @@ namespace DCL.Web3.Authenticators
             return CurrentAuthenticator.TryAutoLoginAsync(ct);
         }
 
-        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
-            CurrentEthereumApi.SendAsync(request, ct);
-
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
             CurrentEthereumApi.SendAsync(request, source, ct);
 
