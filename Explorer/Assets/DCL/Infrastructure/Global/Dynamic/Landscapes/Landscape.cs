@@ -1,3 +1,6 @@
+    // Terrain is not supported on WebGL
+#if WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Landscape;
@@ -136,3 +139,5 @@ namespace Global.Dynamic.Landscapes
         }
     }
 }
+
+#endif

@@ -1,15 +1,15 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 
 namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly ConcurrentDictionary<string, Profile> profiles = new (StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
+        private readonly DCLConcurrentDictionary<string, Profile> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, string> userNameToIdMap = new ();
 
         public Profile? Get(string id) =>
             profiles.ContainsKey(id) ? profiles[id] : null;

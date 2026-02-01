@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.UI;
@@ -24,7 +28,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IRealmNavigator realmNavigator;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
@@ -45,7 +53,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             ISharedSpaceManager sharedSpaceManager)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
@@ -53,7 +65,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.sharedSpaceManager = sharedSpaceManager;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
@@ -142,8 +158,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+#else
+            Debug.LogError("Not supported");
+#endif
         }
     }
 }

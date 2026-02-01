@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
@@ -55,3 +57,5 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
         }
     }
 }
+
+#endif

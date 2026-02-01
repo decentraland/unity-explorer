@@ -84,7 +84,11 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
@@ -93,8 +97,13 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            ProfileRepositoryWrapper profileDataProvider
+
+#if !NO_LIVEKIT_MODE
+            , IVoiceChatOrchestrator voiceChatOrchestrator
+#endif
+
+            )
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -138,7 +147,11 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
+
+#if !NO_LIVEKIT_MODE
                 chatEventBus,
+#endif
+
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,

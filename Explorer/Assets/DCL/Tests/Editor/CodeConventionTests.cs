@@ -8,8 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 using UnityEditor;
 using System.Text.RegularExpressions;
+using System.Linq;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -19,9 +21,8 @@ namespace DCL.Tests
     {
         public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
         public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
-
         public const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
-        
+
         public static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
         {
             "UniTask.SwitchToThreadPool",
@@ -48,7 +49,7 @@ namespace DCL.Tests
         [SetUp]
         public void Init()
         {
-            THREADING_FORBIDDEN_CLASSES = 
+            THREADING_FORBIDDEN_CLASSES =
                 File.ReadLines(THREADING_CLASSES_API_LIST_PATH)
                 .Select(e => e.Trim())
                 .Where(e => !string.IsNullOrEmpty(e))
@@ -90,6 +91,97 @@ namespace DCL.Tests
         {
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseSystemTask(fileContent, filePath);
+        }
+
+        [Test]
+        public void VerifyShouldNotUseWaitForComplition()
+        {
+            const string pattern = @"\.GetLocalizedString\(\)";
+            ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
+        }
+
+        [Test]
+        public void VerifyShouldNotUseConcurrentCollection()
+        {
+            const string pattern = @"System\.Collections\.Concurrent";
+            string[] ignorePaths = new []
+            {
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentBag.cs",
+            };
+            ValidateNoForbiddenApiUsed(pattern, "Use DCLConcurrent insteat version instead.", ignorePaths);
+        }
+
+        [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
+        public void VerifyShouldNotUseNativeWebSocket(string filePath)
+        {
+            if (WEB_SOCKETS_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
+            string fileContent = File.ReadAllText(filePath);
+            ShouldNotUseNativeWebSocket(fileContent, filePath);
+        }
+
+        private static void ValidateNoForbiddenApiUsed(
+                string pattern,
+                string recommendation,
+                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+        {
+            string projectRoot = Directory.GetCurrentDirectory();
+
+
+            // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
+            var psi = new ProcessStartInfo
+            {
+                FileName = "/opt/homebrew/bin/rg", // PATH envvar is not inherited into Unity Process, full path is used
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            psi.ArgumentList.Add("--line-number");
+            psi.ArgumentList.Add("--no-heading");
+            psi.ArgumentList.Add("--color");
+            psi.ArgumentList.Add("never");
+
+            psi.ArgumentList.Add(pattern);
+            psi.ArgumentList.Add($"{projectRoot}/Assets");
+
+            psi.ArgumentList.Add("--glob");
+            psi.ArgumentList.Add("*.cs");
+
+            if (ignorePaths != null)
+            {
+                foreach (var p in ignorePaths)
+                {
+                    psi.ArgumentList.Add("--glob");
+                    psi.ArgumentList.Add($"!{p}");
+                }
+            }
+
+            using var process = Process.Start(psi);
+            if (process == null)
+                Assert.Fail("Failed to start ripgrep (rg). Is it installed and on PATH?");
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            // rg exit codes:
+            // 0 = matches found
+            // 1 = no matches
+            // 2 = error
+            if (process.ExitCode == 2)
+            {
+                Assert.Fail($"ripgrep error:\n{stderr}");
+            }
+
+            if (process.ExitCode == 0)
+            {
+                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendation}\n\nArgs: {psi.Arguments}");
+            }
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -201,7 +293,7 @@ namespace DCL.Tests
                     continue;
 
                 // Ignore namespace keyword
-                if (line.StartsWith("namespace")) 
+                if (line.StartsWith("namespace"))
                     continue;
 
                 foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)

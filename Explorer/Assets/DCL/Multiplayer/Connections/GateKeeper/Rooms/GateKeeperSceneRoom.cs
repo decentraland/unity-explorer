@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
@@ -134,11 +135,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 }
                 else
                 {
-                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState == ConnectionState.ConnDisconnected)
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
                     {
                         string connectionString = await ConnectionStringAsync(meta, token);
 
-                        if (Room().Info.ConnectionState == ConnectionState.ConnDisconnected)
+                        if (Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
                             currentMetaData = null;
 
                         // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
@@ -161,7 +162,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
-                               && Room().Info.ConnectionState == ConnectionState.ConnConnected
+                               && Room().Info.ConnectionState == LKConnectionState.ConnConnected
                                && !options.SceneRoomMetaDataSource.MetadataIsDirty)
                             await UniTask.Yield(token);
                     }

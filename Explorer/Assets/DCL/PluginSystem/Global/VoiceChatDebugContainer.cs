@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.VoiceChat;
@@ -262,3 +264,5 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
+
+#endif

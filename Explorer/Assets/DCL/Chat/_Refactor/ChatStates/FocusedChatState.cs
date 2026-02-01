@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatStates
+﻿#if !NO_LIVEKIT_MODE
+
+namespace DCL.Chat.ChatStates
 {
     public class FocusedChatState : ChatState
     {
@@ -27,3 +29,5 @@
             ChangeState<MembersChatState>();
     }
 }
+
+#endif

@@ -1,4 +1,6 @@
-﻿using DCL.Chat.History;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Chat.History;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
@@ -7,6 +9,7 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Chat.ChatServices
 {
@@ -71,17 +74,17 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnSceneRoomUpdatesFromParticipants(Participant participant, UpdateFromParticipant update)
+        private void OnSceneRoomUpdatesFromParticipants(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.IslandRoom());
         }
 
-        private void OnIslandUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnIslandUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.SceneRoom().Room());
         }
 
-        private void OnRoomUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, IRoom otherRoom)
+        private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
             lock (onlineParticipants)
             {
@@ -105,14 +108,14 @@ namespace DCL.Chat.ChatServices
         ///     </list>
         /// </summary>
         /// <param name="connectionState"></param>
-        private void OnRoomConnectionStateChange(ConnectionState connectionState)
+        private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
             lock (onlineParticipants)
             {
                 switch (connectionState)
                 {
-                    case ConnectionState.ConnDisconnected:
-                    case ConnectionState.ConnConnected:
+                    case LKConnectionState.ConnDisconnected:
+                    case LKConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
                         eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
                         break;
@@ -133,3 +136,5 @@ namespace DCL.Chat.ChatServices
         }
     }
 }
+
+#endif

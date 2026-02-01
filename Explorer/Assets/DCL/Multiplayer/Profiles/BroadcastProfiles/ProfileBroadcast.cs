@@ -7,6 +7,7 @@ using DCL.Profiles.Self;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System.Threading;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
@@ -43,7 +44,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                 Profile? profile = await selfProfile.ProfileAsync(ct);
                 MessageWrap<AnnounceProfileVersion> message = messagePipe.NewMessage<AnnounceProfileVersion>();
                 message.Payload.ProfileVersion = (uint)(profile?.Version ?? CURRENT_PROFILE_VERSION);
-                message.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
+                message.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
             }
 
             GetProfileVersionThenSendAsync(cancellationTokenSource.Token).Forget();

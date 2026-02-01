@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using DCL.Diagnostics;
 using LiveKit;
 using LiveKit.Rooms;
@@ -38,3 +40,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         }
     }
 }
+
+#endif

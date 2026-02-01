@@ -13,6 +13,7 @@ using Result = RichTypes.Result;
 namespace DCL.VoiceChat
 {
     public class VoiceChatMicrophoneHandler : IDisposable
+    #if !UNITY_WEBGL
     {
         private readonly VoiceChatConfiguration voiceChatConfiguration;
         private readonly ICommunityCallOrchestrator? orchestrator;
@@ -200,4 +201,21 @@ namespace DCL.VoiceChat
             }
         }
     }
+    #else // WebGL empty impl
+    {
+        private readonly ReactiveProperty<bool> isMicrophoneEnabledProperty = new (false);
+
+        public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
+
+        public void Dispose()
+        {
+        // ignore
+        }
+        
+        public void ToggleMicrophone()
+        {
+        // ignore since no microphone possible. TODO BTW the method should be renamed with TRY prefix
+        }
+    }
+    #endif
 }

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.UI;
 using DCL.UI.Utilities;
 using DCL.VoiceChat;
@@ -130,3 +132,5 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
+
+#endif

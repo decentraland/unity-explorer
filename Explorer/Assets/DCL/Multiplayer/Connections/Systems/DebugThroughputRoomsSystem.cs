@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !NO_LIVEKIT_MODE
+
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -120,7 +122,11 @@ namespace DCL.Multiplayer.Connections.Systems
 
             foreach ((string sid, _) in participants)
             {
+#if UNITY_WEBGL
+                var participant = participantsHub.RemoteParticipant(sid).Value;
+#else
                 var participant = participantsHub.RemoteParticipant(sid);
+#endif
                 if (participant == null) continue;
                 mutableList.Add((sid, participant.ConnectionQuality.ToString()));
             }
@@ -179,3 +185,5 @@ namespace DCL.Multiplayer.Connections.Systems
         }
     }
 }
+
+#endif

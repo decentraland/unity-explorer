@@ -1,9 +1,12 @@
-﻿using CodeLess.Attributes;
+﻿#if !NO_LIVEKIT_MODE
+
+using CodeLess.Attributes;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using Newtonsoft.Json;
 using System;
 using System.Threading;
+using DCL.LiveKit.Public;
 
 namespace DCL.SceneBannedUsers
 {
@@ -45,7 +48,7 @@ namespace DCL.SceneBannedUsers
             if (!includeBannedUsersFromScene)
                 return false;
 
-            if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
+            if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return false;
 
             if (string.IsNullOrEmpty(roomMetadata))
@@ -64,3 +67,5 @@ namespace DCL.SceneBannedUsers
         }
     }
 }
+
+#endif

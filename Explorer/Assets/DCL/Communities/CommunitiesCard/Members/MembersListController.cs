@@ -1,6 +1,12 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -50,7 +56,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
@@ -84,7 +94,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ISharedSpaceManager sharedSpaceManager,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             IWeb3IdentityCache web3IdentityCache,
             ISelfProfile selfProfile) : base(view, PAGE_SIZE)
         {
@@ -93,7 +107,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.web3IdentityCache = web3IdentityCache;
 
             this.view.InitGrid();
@@ -619,3 +637,5 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
     }
 }
+
+#endif

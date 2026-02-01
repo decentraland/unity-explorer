@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX && !UNITY_WEBGL
+
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -81,3 +83,5 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
+
+#endif

@@ -2,8 +2,10 @@
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Systems;
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
+#endif
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
@@ -35,10 +37,21 @@ namespace DCL.RealmNavigation
             BootstrapContainer bootstrapContainer,
             LODContainer lodContainer,
             RealmContainer realmContainer,
+
+#if !NO_LIVEKIT_MODE
             RemoteEntities remoteEntities,
+#endif
+
             World globalWorld,
+
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
+
+#if !UNITY_WEBGL
             ILandscape landscape,
+#endif
+
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen)
         {
@@ -49,16 +62,28 @@ namespace DCL.RealmNavigation
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
+
+#if !NO_LIVEKIT_MODE
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
+#endif
+
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
+
+#if !UNITY_WEBGL
                 new LoadLandscapeTeleportOperation(landscape),
+#endif
+
                 new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
+
+#if !NO_LIVEKIT_MODE
                 new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
+#endif
+
             },
             ReportCategory.SCENE_LOADING,
             analytics,
@@ -79,8 +104,23 @@ namespace DCL.RealmNavigation
 
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, bootstrapContainer.Analytics!,
-                    realmChangeOperations, teleportInSameRealmOperation),
+                RealmNavigator = new RealmNavigator(
+                        loadingScreen, 
+                        realmContainer.RealmController, 
+                        bootstrapContainer.DecentralandUrlsSource, 
+                        globalWorld, 
+                        exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, 
+                        exposedGlobalDataContainer.CameraSamplingData, 
+                        staticContainer.LoadingStatus, 
+
+#if !UNITY_WEBGL
+                        landscape, 
+#endif
+
+                        bootstrapContainer.Analytics!,
+                        realmChangeOperations, 
+                        teleportInSameRealmOperation
+                        ),
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
             };
         }

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunityCreation;
 using DCL.Profiles;
@@ -52,3 +54,5 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
     }
 }
+
+#endif

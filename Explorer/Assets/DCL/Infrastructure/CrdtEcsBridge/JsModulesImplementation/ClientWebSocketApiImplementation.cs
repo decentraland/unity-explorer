@@ -4,8 +4,6 @@ using SceneRuntime.ScenePermissions;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System;
-using System.Collections.Concurrent;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
@@ -24,7 +22,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly IJsOperations jsOperations;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
-        private readonly ConcurrentDictionary<int, WebSocketRental> webSockets = new ();
+        private readonly DCLConcurrentDictionary<int, WebSocketRental> webSockets = new ();
 
         private int nextId;
 

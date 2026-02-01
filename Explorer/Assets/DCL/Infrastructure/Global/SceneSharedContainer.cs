@@ -3,8 +3,12 @@ using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+#endif
+
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Clipboard;
 using MVC;
@@ -45,10 +49,18 @@ namespace Global
             IWebRequestController webRequestController,
             IRealmData realmData,
             IProfileRepository profileRepository,
+
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
+
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
+
+#if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
+#endif
+
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard)
@@ -84,12 +96,27 @@ namespace Global
                     web3IdentityCache,
                     decentralandUrlsSource,
                     webRequestController,
+
+#if !NO_LIVEKIT_MODE
                     roomHub,
+#endif
+
                     realmData,
                     staticContainer.PortableExperiencesController,
                     staticContainer.StaticSettings.SkyboxSettings,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
+                    new SceneCommunicationPipe(
+                            messagePipesHub
+
+#if !NO_LIVEKIT_MODE
+                            , roomHub.SceneRoom()
+#endif
+
+                            ),
+
+#if !NO_LIVEKIT_MODE
                     remoteMetadata,
+#endif
+
                     dclEnvironment,
                     systemClipboard),
             };

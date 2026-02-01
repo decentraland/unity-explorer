@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -61,7 +65,11 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -95,7 +103,11 @@ namespace DCL.UI
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -108,7 +120,11 @@ namespace DCL.UI
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator)
         {
             this.friendServiceProxy = friendServiceProxy;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.includeUserBlocking = includeUserBlocking;
@@ -323,24 +339,36 @@ namespace DCL.UI
 
         private void OnMentionUserClicked(string userName)
         {
+#if !NO_LIVEKIT_MODE
             closeContextMenuTask.TrySetResult();
 
             ShowChatAsync(() =>
             {
                 chatEventBus.InsertText(userName + " ");
             }).Forget();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
+#if !NO_LIVEKIT_MODE
             closeContextMenuTask.TrySetResult();
             ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
             onChatShown?.Invoke();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnStartCallButtonClicked(string userId)
@@ -351,8 +379,12 @@ namespace DCL.UI
 
         private async UniTaskVoid StartCallAsync(string userId)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnBlockUserClicked(string userId)

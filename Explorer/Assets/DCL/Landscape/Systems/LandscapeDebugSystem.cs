@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !UNITY_WEBGL
+
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -93,3 +95,5 @@ namespace DCL.Landscape.Systems
         }
     }
 }
+
+#endif

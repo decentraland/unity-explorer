@@ -1,4 +1,7 @@
-﻿using Arch.Core;
+﻿// MediaPlayerComponent is not supported on WebGL
+#if !UNITY_WEBGL
+
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
@@ -31,7 +34,11 @@ namespace DCL.SDKComponents.MediaStream
         private const string CONTENT_SERVER_PREFIX = "/content/contents";
 
         private readonly ISceneData sceneData;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRoom streamingRoom;
+#endif
+
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
@@ -42,11 +49,28 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
-        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
-            IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget)
+        public MediaFactory(
+                ISceneData sceneData, 
+
+#if !NO_LIVEKIT_MODE
+                IRoom streamingRoom, 
+#endif
+
+                MediaPlayerCustomPool mediaPlayerPool, 
+                ISceneStateProvider sceneStateProvider, 
+                MediaVolume mediaVolume,
+                IObjectPool<RenderTexture> videoTexturesPool, 
+                IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
+                World world, 
+                IWebRequestController webRequestController,
+                IPerformanceBudget frameBudget)
         {
             this.sceneData = sceneData;
+
+#if !NO_LIVEKIT_MODE
             this.streamingRoom = streamingRoom;
+#endif
+
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
@@ -189,3 +213,5 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
+
+#endif

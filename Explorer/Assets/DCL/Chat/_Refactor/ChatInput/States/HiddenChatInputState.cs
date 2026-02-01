@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatInput
+﻿#if !NO_LIVEKIT_MODE
+
+namespace DCL.Chat.ChatInput
 {
     public class HiddenChatInputState : ChatInputState
     {
@@ -8,3 +10,5 @@
         }
     }
 }
+
+#endif

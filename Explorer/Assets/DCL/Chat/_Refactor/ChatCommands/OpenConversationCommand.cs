@@ -1,4 +1,6 @@
-﻿using DCL.Chat.History;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Chat.History;
 using DCL.Prefs;
 using System.Threading;
 using DCL.Web3.Identities;
@@ -74,3 +76,5 @@ namespace DCL.Chat.ChatCommands
         }
     }
 }
+
+#endif

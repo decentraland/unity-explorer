@@ -1,6 +1,12 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunitiesBrowser.Commands;
@@ -59,8 +65,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly EventSubscriptionScope scope = new ();
         private readonly CommunitiesBrowserCommandsLibrary commandsLibrary;
         private readonly ISharedSpaceManager sharedSpaceManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
         private readonly ICommunityCallOrchestrator orchestrator;
+#endif
+
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
@@ -95,9 +105,13 @@ namespace DCL.Communities.CommunitiesBrowser
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
+#if !NO_LIVEKIT_MODE
             ICommunityCallOrchestrator orchestrator,
+#endif
             ISharedSpaceManager sharedSpaceManager,
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
             ILoadingStatus loadingStatus)
@@ -110,15 +124,19 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.sharedSpaceManager = sharedSpaceManager;
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
             this.orchestrator = orchestrator;
+#endif
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
+
             browserStateService = new CommunitiesBrowserStateService(browserEventBus, orchestrator);
+
             var thumbnailLoader = new ThumbnailLoader(spriteCache);
             commandsLibrary = new CommunitiesBrowserCommandsLibrary(orchestrator, sharedSpaceManager, chatEventBus, selfProfile, nftNamesProvider, mvcManager, spriteCache, dataProvider);
 
@@ -947,3 +965,5 @@ namespace DCL.Communities.CommunitiesBrowser
         FILTERED_COMMUNITIES,
     }
 }
+
+#endif
