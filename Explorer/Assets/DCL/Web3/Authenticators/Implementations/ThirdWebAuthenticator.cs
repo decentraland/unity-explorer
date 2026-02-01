@@ -130,13 +130,13 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
-            throw new NotImplementedException();
-
-        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(payload.Email))
+                throw new ArgumentException("Email is required for OTP authentication", nameof(payload));
+
             await mutex.WaitAsync(ct);
-            var email = payload as string;
+            string email = payload.Email;
 
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 

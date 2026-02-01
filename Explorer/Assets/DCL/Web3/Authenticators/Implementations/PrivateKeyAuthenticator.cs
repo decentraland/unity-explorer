@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
 using DCL.Web3.Chains;
@@ -62,10 +62,7 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose() { }
 
-        public UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken __) =>
-            UniTask.FromResult(Login(privateKey));
-
-        public UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod _, TPayload __, CancellationToken ___) =>
+        public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
             UniTask.FromResult(Login(privateKey));
 
         public static IWeb3Identity Login(string privateKey)

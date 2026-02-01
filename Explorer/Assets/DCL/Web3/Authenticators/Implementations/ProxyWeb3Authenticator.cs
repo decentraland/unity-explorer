@@ -24,16 +24,9 @@ namespace DCL.Web3.Authenticators
             identityCache.Dispose();
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            IWeb3Identity identity = await authenticator.LoginAsync(loginMethod, ct);
-            identityCache.Identity = identity;
-            return identity;
-        }
-
-        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct)
-        {
-            IWeb3Identity identity = await authenticator.LoginPayloadedAsync(method, payload, ct);
+            IWeb3Identity identity = await authenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
             return identity;
         }

@@ -51,13 +51,10 @@ namespace DCL.Web3.Authenticators
         {
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct) =>
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload _, CancellationToken ct) =>
             await LoginAsync(ct);
 
-        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
-            await LoginAsync(method, ct);
-
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        private async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
             if (!File.Exists(TOKEN_PATH))
                 throw new AutoLoginTokenNotFoundException();

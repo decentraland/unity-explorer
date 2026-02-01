@@ -5,6 +5,13 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
+    public interface IWeb3Authenticator : IDisposable
+    {
+        public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct);
+
+        UniTask LogoutAsync(CancellationToken ct);
+    }
+
     public enum LoginMethod
     {
         ANY = 0,
@@ -21,12 +28,21 @@ namespace DCL.Web3.Authenticators
         WALLETCONNECT = 9,
     }
 
-    public interface IWeb3Authenticator : IDisposable
+    public readonly struct LoginPayload
     {
-        UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct);
+        public LoginMethod Method { get; }
+        public string? Email { get; }
 
-        UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct);
+        private LoginPayload(LoginMethod method, string? email = null)
+        {
+            Method = method;
+            Email = email;
+        }
 
-        UniTask LogoutAsync(CancellationToken ct);
+        public static LoginPayload ForOtpFlow(string email) =>
+            new (LoginMethod.EMAIL_OTP, email);
+
+        public static LoginPayload ForDappFlow(LoginMethod method) =>
+            new (method);
     }
 }

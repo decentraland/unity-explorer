@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics;
 using DCL.Utilities;
@@ -97,7 +97,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
                 // awaits OTP code being entered
-                IWeb3Identity identity = await web3Authenticator.LoginPayloadedAsync(LoginMethod.EMAIL_OTP, email, ct);
+                IWeb3Identity identity = await web3Authenticator.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
 
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));

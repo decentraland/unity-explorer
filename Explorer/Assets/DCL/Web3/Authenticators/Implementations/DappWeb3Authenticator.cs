@@ -142,18 +142,14 @@ namespace DCL.Web3.Authenticators
             return await SendWithConfirmationAsync(request, ct);
         }
 
-        public async UniTask<IWeb3Identity> LoginPayloadedAsync<TPayload>(LoginMethod method, TPayload payload, CancellationToken ct) =>
-            await LoginAsync(method, ct);
-
         /// <summary>
         ///     1. An authentication request is sent to the server
         ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
         ///     3. Use the signature information to generate the identity
         /// </summary>
-        /// <param name="ct"></param>
-        /// <returns></returns>
+        /// <param name="payload">Login payload containing the authentication method</param>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(LoginMethod loginMethod, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -192,7 +188,7 @@ namespace DCL.Web3.Authenticators
                 else
                     VerificationRequired?.Invoke((authenticationResponse.code, signatureExpiration, authenticationResponse.requestId));
 
-                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId, loginMethod,
+                LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId, payload.Method,
                     signatureExpiration, ct);
 
                 await DisconnectFromAuthApiAsync();
