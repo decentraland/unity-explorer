@@ -114,7 +114,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "eth_chainId"))
             {
-                string chainId = EnvChainsUtils.GetChainId(environment);
+                string chainId = ChainUtils.GetChainId(environment);
 
                 return new EthApiResponse
                 {
@@ -126,7 +126,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "net_version"))
             {
-                string netVersion = EnvChainsUtils.GetNetVersion(environment);
+                string netVersion = ChainUtils.GetNetVersion(environment);
 
                 return new EthApiResponse
                 {
@@ -247,7 +247,7 @@ namespace DCL.Web3.Authenticators
             // Not used in Dapp flow - OTP is handled via browser, not in-app UI
             UniTask.CompletedTask;
 
-        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
+        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
             UniTask.FromResult(false);
 
         private async UniTask DisconnectFromAuthApiAsync()
@@ -271,7 +271,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(request.readonlyNetwork ?? EnvChainsUtils.GetNetworkId(environment), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? ChainUtils.GetNetworkId(environment), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));

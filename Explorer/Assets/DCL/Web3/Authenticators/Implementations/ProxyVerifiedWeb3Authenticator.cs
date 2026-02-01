@@ -34,7 +34,7 @@ namespace DCL.Web3.Authenticators
         public UniTask ResendOtp() =>
             authenticator.ResendOtp();
 
-        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
-            authenticator.TryAutoConnectAsync(ct);
+        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
+            authenticator.TryAutoLoginAsync(ct);
     }
 }

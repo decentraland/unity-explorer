@@ -27,6 +27,6 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         UniTask ResendOtp();
 
-        UniTask<bool> TryAutoConnectAsync(CancellationToken ct);
+        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct);
     }
 }

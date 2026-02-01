@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using DCL.Web3.Abstract;
@@ -22,7 +23,6 @@ namespace DCL.Web3.Authenticators
 {
     public class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IEthereumApi
     {
-        // TODO: Move to environment variable injection via CI
         private const string CLIENT_ID = "e1adce863fe287bb6cf0e3fd90bdb77f";
         private const string BUNDLE_ID = "com.Decentraland.Explorer";
         private const string SDK_VERSION = "6.0.5";
@@ -46,6 +46,7 @@ namespace DCL.Web3.Authenticators
             { 56, "https://rpc.decentraland.org/binance" }, // BSC Mainnet
             { 250, "https://rpc.decentraland.org/fantom" }, // Fantom Mainnet
         };
+        private readonly ThirdwebClient client;
 
         private readonly SemaphoreSlim mutex = new (1, 1);
 
@@ -60,15 +61,7 @@ namespace DCL.Web3.Authenticators
         private InAppWallet? pendingWallet;
         private UniTaskCompletionSource<bool>? loginCompletionSource;
 
-        /// <summary>
-        ///     ThirdWeb SDK client instance.
-        /// </summary>
-        public ThirdwebClient Client { get; }
-
-        /// <summary>
-        ///     Currently active wallet. Can be null if not logged in.
-        /// </summary>
-        public IThirdwebWallet? ActiveWallet { get; internal set; }
+        internal IThirdwebWallet? ActiveWallet { get; private set; }
 
         internal ThirdWebAuthenticator(
             DecentralandEnvironment environment,
@@ -82,12 +75,9 @@ namespace DCL.Web3.Authenticators
             this.web3AccountFactory = web3AccountFactory;
             this.identityExpirationDuration = identityExpirationDuration;
 
-            chainId = EnvChainsUtils.GetChainIdAsInt(environment);
-            Client = CreateThirdWebClient();
-        }
+            chainId = ChainUtils.GetChainIdAsInt(environment);
 
-        private static ThirdwebClient CreateThirdWebClient() =>
-            ThirdwebClient.Create(
+            client = ThirdwebClient.Create(
                 CLIENT_ID,
                 bundleId: BUNDLE_ID,
                 httpClient: new ThirdwebHttpClient(),
@@ -97,16 +87,22 @@ namespace DCL.Web3.Authenticators
                 sdkVersion: SDK_VERSION,
                 rpcOverrides: RPC_OVERRIDES
             );
+        }
+
+        public void Dispose()
+        {
+            // Logout on Dispose will close ThirdWeb session and break ThirdWeb auto-login.
+            // So we need to keep session open for auto-login to work.
+        }
 
         public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate callback)
         {
             transactionConfirmationCallback = callback;
         }
 
-        public async UniTask<bool> TryAutoConnectAsync(CancellationToken ct)
+        public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
             string? email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, null);
-            Debug.Log("[ThirdWeb] Session expired, auto-connect failed");
 
             if (string.IsNullOrEmpty(email))
                 return false;
@@ -116,23 +112,20 @@ namespace DCL.Web3.Authenticators
                 await UniTask.SwitchToMainThread(ct);
 
                 InAppWallet? wallet = await InAppWallet.Create(
-                    Client,
+                    client,
                     email,
                     storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
                 if (!await wallet.IsConnected())
-                {
-                    Debug.Log("[ThirdWeb] Session expired, auto-connect failed");
                     return false;
-                }
 
                 ActiveWallet = wallet;
-                Debug.Log("[ThirdWeb] Auto-connect successful");
+                ReportHub.Log(ReportCategory.AUTHENTICATION, "✅ ThirdWeb auto-login successful");
                 return true;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[ThirdWeb] Auto-connect failed: {e.Message}");
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login failed with exception: {e.Message}");
                 return false;
             }
         }
@@ -151,13 +144,12 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                ActiveWallet = await LoginViaOTP(email, ct);
+                ActiveWallet = await OTPLoginFlow(email, ct);
 
                 string? sender = await ActiveWallet.GetAddress();
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
-                // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = identityExpirationDuration != null
                     ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
                     : DateTime.UtcNow.AddDays(7);
@@ -197,12 +189,12 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<InAppWallet> LoginViaOTP(string? email, CancellationToken ct)
+        private async UniTask<InAppWallet> OTPLoginFlow(string? email, CancellationToken ct)
         {
             Debug.Log("Login via OTP");
 
             pendingWallet = await InAppWallet.Create(
-                Client,
+                client,
                 email,
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
@@ -228,11 +220,6 @@ namespace DCL.Web3.Authenticators
             return result;
         }
 
-        public void Dispose()
-        {
-            // Logout on Dispose will close session and break ThirdWeb auto-login. So we need to keep session open for auto-login.
-        }
-
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             if (ActiveWallet != null)
@@ -242,11 +229,6 @@ namespace DCL.Web3.Authenticators
             }
 
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL);
-        }
-
-        public void SetSepoliaChain()
-        {
-            chainId = new BigInteger(11155111);
         }
 
         public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
@@ -485,7 +467,7 @@ namespace DCL.Web3.Authenticators
                 Method = request.method,
                 Params = request.@params,
                 ChainId = (int)chainId,
-                NetworkName = GetNetworkName((int)chainId),
+                NetworkName = ChainUtils.GetNetworkNameById((int)chainId),
             };
 
             // Extract additional details for eth_sendTransaction
@@ -568,14 +550,6 @@ namespace DCL.Web3.Authenticators
 
             return confirmationRequest;
         }
-
-        private static string GetNetworkName(int chainId) =>
-            chainId switch
-            {
-                1 => "Ethereum Mainnet",
-                11155111 => "Sepolia",
-                _ => $"Chain {chainId}",
-            };
 
         private async UniTask<EthApiResponse> HandleSendTransactionAsync(EthApiRequest request, bool useMetaTx = false)
         {
@@ -665,7 +639,7 @@ namespace DCL.Web3.Authenticators
         {
             // Create contract with minimal ABI containing a dummy function
             ThirdwebContract contract = await ThirdwebContract.Create(
-                Client,
+                client,
                 contractAddress,
                 chainId,
                 MINIMAL_ABI
@@ -1443,7 +1417,7 @@ namespace DCL.Web3.Authenticators
             string relayUrl = GetRelayServerUrl(chainId);
             Debug.Log($"[ThirdWeb] Posting to transactions-server ({relayUrl}):\n{payloadJson}");
 
-            IThirdwebHttpClient httpClient = Client.HttpClient;
+            IThirdwebHttpClient httpClient = client.HttpClient;
 
             var content = new System.Net.Http.StringContent(
                 payloadJson,
@@ -1585,7 +1559,7 @@ namespace DCL.Web3.Authenticators
             Debug.Log($"[ThirdWeb] RPC Request JSON: {requestJson}");
 
             // Send HTTP POST request to RPC endpoint using ThirdwebClient's HTTP client
-            IThirdwebHttpClient? httpClient = Client.HttpClient;
+            IThirdwebHttpClient? httpClient = client.HttpClient;
 
             var content = new System.Net.Http.StringContent(
                 requestJson,
@@ -1624,10 +1598,7 @@ namespace DCL.Web3.Authenticators
 
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
 
-        public void CancelCurrentWeb3Operation()
-        {
-            throw new NotImplementedException();
-        }
+        public void CancelCurrentWeb3Operation() { }
 
         public async UniTask SubmitOtp(string otp)
         {

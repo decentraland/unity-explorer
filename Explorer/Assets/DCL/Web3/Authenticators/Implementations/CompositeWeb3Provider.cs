@@ -74,13 +74,13 @@ namespace DCL.Web3.Authenticators
         public UniTask ResendOtp() =>
             thirdWebAuth.ResendOtp();
 
-        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct)
+        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
             // Temporary heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
             string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
             CurrentProvider = string.IsNullOrEmpty(email) ? AuthProvider.Dapp : AuthProvider.ThirdWeb;
 
-            return CurrentAuthenticator.TryAutoConnectAsync(ct);
+            return CurrentAuthenticator.TryAutoLoginAsync(ct);
         }
 
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>

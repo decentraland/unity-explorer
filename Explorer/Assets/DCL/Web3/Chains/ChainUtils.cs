@@ -4,7 +4,7 @@ using System.Numerics;
 namespace DCL.Web3.Authenticators
 {
     // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-    public static class EnvChainsUtils
+    public static class ChainUtils
     {
         private const string NETWORK_MAINNET = "mainnet";
         private const string NETWORK_SEPOLIA = "sepolia";
@@ -14,19 +14,9 @@ namespace DCL.Web3.Authenticators
 
         private const int MAINNET_NET_VERSION_INT = 1;
         private const int SEPOLIA_NET_VERSION_INT = 11155111;
-        private const int GOERLI_NET_VERSION_INT = 5;
-        private const int POLYGON_AMOY_NET_VERSION_INT = 80002;
-        private const int POLYGON_MUMBAI_NET_VERSION_INT = 80001;
-        private const int POLYGON_MATIC_NET_VERSION_INT = 137;
 
         private const string MAINNET_CHAIN_ID = "0x1";
         private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
-
-        public static BigInteger Sepolia => new (SEPOLIA_NET_VERSION_INT);
-        public static BigInteger Goerli => new (GOERLI_NET_VERSION_INT);
-        public static BigInteger Amoy => new (POLYGON_AMOY_NET_VERSION_INT);
-        public static BigInteger Mumbai => new (POLYGON_MUMBAI_NET_VERSION_INT);
-        public static BigInteger Matic => new (POLYGON_MATIC_NET_VERSION_INT);
 
         public static string GetNetVersion(DecentralandEnvironment env) =>
             env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
@@ -39,5 +29,13 @@ namespace DCL.Web3.Authenticators
 
         public static string GetNetworkId(DecentralandEnvironment env) =>
             env is DecentralandEnvironment.Org or DecentralandEnvironment.Today ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+
+        public static string GetNetworkNameById(int chainId) =>
+            chainId switch
+            {
+                1 => "Ethereum Mainnet",
+                11155111 => "Sepolia",
+                _ => $"Chain {chainId}",
+            };
     }
 }

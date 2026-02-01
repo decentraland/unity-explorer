@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public UniTask ResendOtp() =>
             core.ResendOtp();
 
-        public UniTask<bool> TryAutoConnectAsync(CancellationToken ct) =>
-            core.TryAutoConnectAsync(ct);
+        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
+            core.TryAutoLoginAsync(ct);
     }
 }
