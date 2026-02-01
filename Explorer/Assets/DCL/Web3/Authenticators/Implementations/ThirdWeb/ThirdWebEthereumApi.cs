@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using Newtonsoft.Json;
@@ -37,7 +37,7 @@ namespace DCL.Web3.Authenticators
 
             chainId = ChainUtils.GetChainIdAsInt(environment);
 
-            metaTxService = new ThirdWebMetaTxService(client);
+            metaTxService = new ThirdWebMetaTxService(client, SendRpcRequestAsync);
         }
 
         private static string GetRpcUrl(int chainId) =>
@@ -87,7 +87,7 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(IThirdwebWallet wallet, EthApiRequest request, CancellationToken ct)
         {
-            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
 
             // Determine target chainId: use readonlyNetwork if specified, otherwise use wallet's current chainId
             int? networkChainId = ChainUtils.GetChainIdFromReadonlyNetwork(request.readonlyNetwork);

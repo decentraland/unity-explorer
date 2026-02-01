@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Nethereum.Signer.EIP712;
 using Nethereum.Util;
 using Newtonsoft.Json;
@@ -47,10 +47,12 @@ namespace DCL.Web3.Authenticators
         };
 
         private readonly ThirdwebClient client;
+        private readonly Func<EthApiRequest, int, UniTask<EthApiResponse>> sendRpcRequest;
 
-        public ThirdWebMetaTxService(ThirdwebClient client)
+        public ThirdWebMetaTxService(ThirdwebClient client, Func<EthApiRequest, int, UniTask<EthApiResponse>> sendRpcRequest)
         {
             this.client = client;
+            this.sendRpcRequest = sendRpcRequest;
         }
 
         /// <summary>
@@ -293,7 +295,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await SendRpcRequestAsync(request1, targetChainId);
+                EthApiResponse response = await sendRpcRequest(request1, targetChainId);
                 string result = response.result?.ToString() ?? "0x";
 
                 if (!string.IsNullOrEmpty(result) && result != "0x" && result.Length > 2)
@@ -315,7 +317,7 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                EthApiResponse response = await SendRpcRequestAsync(request2, targetChainId);
+                EthApiResponse response = await sendRpcRequest(request2, targetChainId);
                 return response.result?.ToString() ?? "0x";
             }
             catch (Exception e)
@@ -349,7 +351,7 @@ namespace DCL.Web3.Authenticators
                 },
             };
 
-            EthApiResponse response = await SendRpcRequestAsync(request, targetChainId);
+            EthApiResponse response = await sendRpcRequest(request, targetChainId);
             return Web3Utils.ParseHexToBigInteger(response.result?.ToString() ?? "0x0");
         }
 
@@ -406,7 +408,7 @@ namespace DCL.Web3.Authenticators
                 },
             };
 
-            EthApiResponse response = await SendRpcRequestAsync(request, targetChainId);
+            EthApiResponse response = await sendRpcRequest(request, targetChainId);
             var hex = response.result?.ToString();
 
             if (string.IsNullOrEmpty(hex) || hex == "0x")
