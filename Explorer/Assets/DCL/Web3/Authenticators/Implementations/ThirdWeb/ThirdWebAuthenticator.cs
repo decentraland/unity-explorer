@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
