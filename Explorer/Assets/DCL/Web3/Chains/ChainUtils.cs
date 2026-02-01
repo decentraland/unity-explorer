@@ -37,5 +37,25 @@ namespace DCL.Web3.Authenticators
                 11155111 => "Sepolia",
                 _ => $"Chain {chainId}",
             };
+
+        public static int? GetChainIdFromReadonlyNetwork(string? networkName)
+        {
+            if (string.IsNullOrEmpty(networkName))
+                return null;
+
+            string lowerName = networkName.ToLowerInvariant();
+
+            int? result = lowerName switch
+                          {
+                              "polygon" => 137, // Polygon Mainnet
+                              "amoy" => 80002, // Polygon Amoy Testnet
+                              "ethereum" => 1, // Ethereum Mainnet
+                              "sepolia" => 11155111, // Ethereum Sepolia Testnet
+                              "mainnet" => 1, // Alias for Ethereum Mainnet
+                              _ => null,
+                          };
+
+            return result;
+        }
     }
 }

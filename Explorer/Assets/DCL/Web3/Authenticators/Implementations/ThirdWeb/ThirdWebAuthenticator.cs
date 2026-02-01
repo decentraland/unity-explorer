@@ -5,8 +5,6 @@ using DCL.Prefs;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using Nethereum.ABI.EIP712;
-using Nethereum.Signer;
 using Nethereum.Signer.EIP712;
 using Nethereum.Util;
 using Newtonsoft.Json;
@@ -46,7 +44,6 @@ namespace DCL.Web3.Authenticators
             { 56, "https://rpc.decentraland.org/binance" }, // BSC Mainnet
             { 250, "https://rpc.decentraland.org/fantom" }, // Fantom Mainnet
         };
-        private readonly ThirdwebClient client;
 
         private readonly SemaphoreSlim mutex = new (1, 1);
 
@@ -54,14 +51,16 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> readOnlyMethods;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
+        private readonly BigInteger chainId;
+
+        private readonly ThirdwebClient client;
 
         private TransactionConfirmationDelegate? transactionConfirmationCallback;
 
-        private BigInteger chainId;
         private InAppWallet? pendingWallet;
         private UniTaskCompletionSource<bool>? loginCompletionSource;
 
-        internal IThirdwebWallet? ActiveWallet { get; private set; }
+        private IThirdwebWallet? activeWallet;
 
         internal ThirdWebAuthenticator(
             DecentralandEnvironment environment,
@@ -119,7 +118,7 @@ namespace DCL.Web3.Authenticators
                 if (!await wallet.IsConnected())
                     return false;
 
-                ActiveWallet = wallet;
+                activeWallet = wallet;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, "✅ ThirdWeb auto-login successful");
                 return true;
             }
@@ -144,9 +143,9 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                ActiveWallet = await OTPLoginFlow(email, ct);
+                activeWallet = await OTPLoginFlow(email, ct);
 
-                string? sender = await ActiveWallet.GetAddress();
+                string? sender = await activeWallet.GetAddress();
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -157,7 +156,7 @@ namespace DCL.Web3.Authenticators
                 var ephemeralMessage =
                     $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage);
+                string signature = await activeWallet!.PersonalSign(ephemeralMessage);
 
                 var authChain = AuthChain.Create();
                 authChain.SetSigner(sender.ToLower());
@@ -191,16 +190,13 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<InAppWallet> OTPLoginFlow(string? email, CancellationToken ct)
         {
-            Debug.Log("Login via OTP");
-
             pendingWallet = await InAppWallet.Create(
                 client,
                 email,
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
 
             await pendingWallet.SendOTP();
-
-            Debug.Log("OTP sent to email");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
 
             // Wait for successful login via SubmitOtp
             loginCompletionSource = new UniTaskCompletionSource<bool>();
@@ -208,13 +204,12 @@ namespace DCL.Web3.Authenticators
 
             await loginCompletionSource.Task;
             loginCompletionSource = null;
-
-            Debug.Log($"ThirdWeb logged in as wallet {pendingWallet.WalletId}");
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb login: logged in as wallet {pendingWallet.WalletId}");
 
             // Store email for auto-login
             DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, email);
 
-            ActiveWallet = pendingWallet;
+            activeWallet = pendingWallet;
             InAppWallet result = pendingWallet;
             pendingWallet = null;
             return result;
@@ -222,55 +217,45 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask LogoutAsync(CancellationToken ct)
         {
-            if (ActiveWallet != null)
+            if (activeWallet != null)
             {
-                try { await ActiveWallet.Disconnect(); }
-                finally { ActiveWallet = null; }
+                try { await activeWallet.Disconnect(); }
+                finally { activeWallet = null; }
             }
 
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL);
         }
 
-        public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, CancellationToken ct)
+        // Thirdweb's RPC endpoints
+        private static string GetRpcUrl(int chainId) =>
+            $"https://{chainId}.rpc.thirdweb.com";
+
+        public async UniTask SubmitOtp(string otp)
         {
-            var targetChainId = new BigInteger(chainId);
+            if (pendingWallet == null)
+                throw new InvalidOperationException("SubmitOtp called but no pending wallet");
 
-            this.chainId = targetChainId;
-            await ActiveWallet!.SwitchNetwork(this.chainId);
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb login: validating OTP: {otp}");
 
-            return await SendAsync(request, ct);
-        }
-
-        public async UniTask<EthApiResponse> SendAsync(int chainId, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
-        {
-            // For Internal requests (meta-transactions like gifting):
-            // - DO NOT switch wallet network! Wallet stays on Ethereum Mainnet.
-            // - Meta-tx uses Polygon RPC for nonce/contract queries (hardcoded in SendMetaTransactionAsync)
-            // - EIP-712 salt uses Polygon chainId (137)
-            // - This matches how decentraland-connect ThirdwebConnector works in dApp
-            // See: https://github.com/decentraland/decentraland-connect/blob/master/src/connectors/ThirdwebConnector.ts
-            if (source == Web3RequestSource.Internal)
+            try
             {
-                Debug.Log("[ThirdWeb] Internal request - NOT switching wallet network (staying on current network for meta-tx signing)");
-                return await SendAsync(request, source, ct);
+                await pendingWallet.LoginWithOtp(otp);
+                loginCompletionSource?.TrySetResult(true);
             }
-
-            // For SDK Scene requests, switch network as before
-            var targetChainId = new BigInteger(chainId);
-            this.chainId = targetChainId;
-            await ActiveWallet!.SwitchNetwork(this.chainId);
-
-            return await SendAsync(request, source, ct);
+            catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
         }
 
-        public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
-            SendAsync(request, Web3RequestSource.SDKScene, ct);
+        public async UniTask ResendOtp()
+        {
+            if (pendingWallet == null)
+                throw new InvalidOperationException("ResendOtp called but no pending wallet");
 
+            await pendingWallet.SendOTP();
+        }
+
+        // Ethereum API
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
-            Debug.Log("[ThirdWeb] ========== SendAsync START ==========");
-            Debug.Log($"[ThirdWeb] method={request.method}, source={source}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
-
             await mutex.WaitAsync(ct);
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 
@@ -280,20 +265,14 @@ namespace DCL.Web3.Authenticators
 
                 if (!whitelistMethods.Contains(request.method))
                 {
-                    Debug.LogError($"[ThirdWeb] Method not allowed: {request.method}");
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
                     throw new Web3Exception($"The method is not allowed: {request.method}");
                 }
 
                 bool isReadOnly = IsReadOnly(request);
-                Debug.Log($"[ThirdWeb] IsReadOnly={isReadOnly}");
-
                 if (isReadOnly)
-                {
-                    Debug.Log("[ThirdWeb] Routing to SendWithoutConfirmationAsync");
                     return await SendWithoutConfirmationAsync(request, ct);
-                }
 
-                Debug.Log("[ThirdWeb] Routing to SendWithConfirmationAsync");
                 return await SendWithConfirmationAsync(request, source, ct);
             }
             finally
@@ -304,7 +283,6 @@ namespace DCL.Web3.Authenticators
                     await UniTask.SwitchToMainThread(CancellationToken.None);
 
                 mutex.Release();
-                Debug.Log("[ThirdWeb] ========== SendAsync END ==========");
             }
         }
 
@@ -317,34 +295,23 @@ namespace DCL.Web3.Authenticators
             return false;
         }
 
-        /// <summary>
-        ///     Handles read-only RPC methods that don't require user confirmation
-        /// </summary>
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            Debug.Log("[ThirdWeb] SendWithoutConfirmationAsync called");
-            Debug.Log($"[ThirdWeb] Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
-            Debug.Log($"[ThirdWeb] Current wallet chainId={chainId}");
+            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
 
             // Determine target chainId: use readonlyNetwork if specified, otherwise use wallet's current chainId
-            int? networkChainId = GetChainIdFromReadonlyNetwork(request.readonlyNetwork);
+            int? networkChainId = ChainUtils.GetChainIdFromReadonlyNetwork(request.readonlyNetwork);
             int targetChainId = networkChainId ?? (int)chainId;
-
-            Debug.Log($"[ThirdWeb] GetChainIdFromReadonlyNetwork('{request.readonlyNetwork}') returned {networkChainId?.ToString() ?? "null"}");
-            Debug.Log($"[ThirdWeb] Final targetChainId={targetChainId}");
 
             // eth_getBalance - can be handled locally for the active wallet (only if same chain)
             if (string.Equals(request.method, "eth_getBalance") && targetChainId == (int)chainId)
             {
                 var address = request.@params[0].ToString();
-                string walletAddress = await ActiveWallet!.GetAddress();
-
-                Debug.Log($"[ThirdWeb] eth_getBalance local handling: address={address}, walletAddress={walletAddress}");
+                string walletAddress = await activeWallet!.GetAddress();
 
                 if (string.Equals(address, walletAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    BigInteger balance = await ActiveWallet!.GetBalance(chainId);
-                    Debug.Log($"[ThirdWeb] Local wallet balance: {balance}");
+                    BigInteger balance = await activeWallet!.GetBalance(chainId);
 
                     return new EthApiResponse
                     {
@@ -355,42 +322,54 @@ namespace DCL.Web3.Authenticators
                 }
             }
 
-            // All other read-only RPC methods - delegate to low-level RPC calls
             // Use targetChainId which respects readonlyNetwork for cross-chain queries (e.g., Polygon balance check)
-            Debug.Log($"[ThirdWeb] Delegating to SendRpcRequestAsync with targetChainId={targetChainId}");
             return await SendRpcRequestAsync(request, targetChainId);
         }
 
-        /// <summary>
-        ///     Maps network name string to chainId for cross-chain RPC queries.
-        ///     Used for readonlyNetwork parameter to query balances on different chains (e.g., Polygon)
-        ///     while the wallet is connected to another chain (e.g., Ethereum).
-        /// </summary>
-        private static int? GetChainIdFromReadonlyNetwork(string? networkName)
-        {
-            Debug.Log($"[ThirdWeb] GetChainIdFromReadonlyNetwork called with networkName='{networkName ?? "null"}'");
+        // low-level calls
+        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request) =>
+            await SendRpcRequestAsync(request, (int)chainId);
 
-            if (string.IsNullOrEmpty(networkName))
+        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId)
+        {
+            string rpcUrl = GetRpcUrl(targetChainId);
+
+            var rpcRequest = new
             {
-                Debug.Log("[ThirdWeb] networkName is null or empty, returning null");
-                return null;
+                jsonrpc = "2.0",
+                request.id,
+                request.method,
+                request.@params,
+            };
+
+            string requestJson = JsonConvert.SerializeObject(rpcRequest);
+
+            IThirdwebHttpClient? httpClient = client.HttpClient;
+
+            var content = new System.Net.Http.StringContent(
+                requestJson,
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            ThirdwebHttpResponseMessage? httpResponse = await httpClient.PostAsync(rpcUrl, content, CancellationToken.None);
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb HTTP Response status: {httpResponse.StatusCode}, IsSuccess={httpResponse.IsSuccessStatusCode}");
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                string errorText = await httpResponse.Content.ReadAsStringAsync();
+                throw new Web3Exception($"RPC request failed: {httpResponse.StatusCode} - {errorText}");
             }
 
-            string lowerName = networkName.ToLowerInvariant();
-            Debug.Log($"[ThirdWeb] Lowercased networkName: '{lowerName}'");
+            string responseJson = await httpResponse.Content.ReadAsStringAsync();
+            EthApiResponse rpcResponse = JsonConvert.DeserializeObject<EthApiResponse>(responseJson);
 
-            int? result = lowerName switch
-                          {
-                              "polygon" => 137, // Polygon Mainnet
-                              "amoy" => 80002, // Polygon Amoy Testnet
-                              "ethereum" => 1, // Ethereum Mainnet
-                              "sepolia" => 11155111, // Ethereum Sepolia Testnet
-                              "mainnet" => 1, // Alias for Ethereum Mainnet
-                              _ => null,
-                          };
-
-            Debug.Log($"[ThirdWeb] Mapped '{lowerName}' to chainId={result?.ToString() ?? "null"}");
-            return result;
+            return new EthApiResponse
+            {
+                id = request.id,
+                jsonrpc = "2.0",
+                result = rpcResponse.result,
+            };
         }
 
         /// <summary>
@@ -422,7 +401,7 @@ namespace DCL.Web3.Authenticators
             {
                 // personal_sign params: [message, address]
                 var message = request.@params[0].ToString();
-                string signature = await ActiveWallet!.PersonalSign(message);
+                string signature = await activeWallet!.PersonalSign(message);
 
                 return new EthApiResponse
                 {
@@ -436,7 +415,7 @@ namespace DCL.Web3.Authenticators
             {
                 // eth_signTypedData_v4 params: [address, typedData]
                 var typedDataJson = request.@params[1].ToString();
-                string signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
+                string signature = await activeWallet!.SignTypedDataV4(typedDataJson);
 
                 return new EthApiResponse
                 {
@@ -487,7 +466,7 @@ namespace DCL.Web3.Authenticators
                 // Best-effort: balance + estimated gas fee (should never block the tx flow if it fails)
                 try
                 {
-                    BigInteger balanceWei = await ActiveWallet!.GetBalance(chainId);
+                    BigInteger balanceWei = await activeWallet!.GetBalance(chainId);
                     confirmationRequest.BalanceEth = balanceWei.ToString().ToEth(decimalsToDisplay: 6, addCommas: false);
                 }
                 catch (Exception e)
@@ -504,7 +483,7 @@ namespace DCL.Web3.Authenticators
                     string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
                     string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
 
-                    string from = await ActiveWallet!.GetAddress();
+                    string from = await activeWallet!.GetAddress();
 
                     var txObject = new
                     {
@@ -555,7 +534,7 @@ namespace DCL.Web3.Authenticators
         {
             Debug.Log($"[ThirdWeb] HandleSendTransactionAsync called, useMetaTx={useMetaTx}");
 
-            if (ActiveWallet == null)
+            if (activeWallet == null)
             {
                 Debug.LogError("[ThirdWeb] No active wallet connected!");
                 throw new Web3Exception("No active wallet connected");
@@ -604,7 +583,7 @@ namespace DCL.Web3.Authenticators
             // For simple ETH transfers (no data), use Transfer method
             if (string.IsNullOrEmpty(data) || data == "0x")
             {
-                ThirdwebTransactionReceipt? txReceipt = await ActiveWallet!.Transfer(
+                ThirdwebTransactionReceipt? txReceipt = await activeWallet!.Transfer(
                     chainId,
                     to,
                     weiValue
@@ -647,7 +626,7 @@ namespace DCL.Web3.Authenticators
 
             // Create a base transaction using the dummy function
             ThirdwebTransaction transaction = await ThirdwebContract.Prepare(
-                ActiveWallet,
+                activeWallet,
                 contract,
                 "execute",
                 weiValue
@@ -688,7 +667,7 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         private async UniTask<string> SendMetaTransactionAsync(string contractAddress, string functionSignature)
         {
-            string from = await ActiveWallet!.GetAddress();
+            string from = await activeWallet!.GetAddress();
 
             Debug.Log("[ThirdWeb] Sending meta-transaction via Decentraland relay");
             Debug.Log($"[ThirdWeb] From: {from}, Contract: {contractAddress}");
@@ -744,7 +723,7 @@ namespace DCL.Web3.Authenticators
                 Debug.Log($"[ThirdWeb] EIP-712 typed data:\n{typedDataJson}");
 
                 // 4. Sign with ThirdWeb wallet
-                signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
+                signature = await activeWallet!.SignTypedDataV4(typedDataJson);
             }
 
             Debug.Log($"[ThirdWeb] Full signature: {signature}");
@@ -839,7 +818,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Standard approach: Sign via ThirdWeb SignTypedDataV4
                 Debug.Log("[EIP712-Manual] Signing via ThirdWeb SignTypedDataV4...");
-                signature = await ActiveWallet!.SignTypedDataV4(typedDataJson);
+                signature = await activeWallet!.SignTypedDataV4(typedDataJson);
             }
 
             Debug.Log($"[EIP712-Manual] Signature: {signature}");
@@ -884,7 +863,7 @@ namespace DCL.Web3.Authenticators
             // Try using PersonalSign with raw bytes
             // WARNING: PersonalSign adds "\x19Ethereum Signed Message:\n32" prefix!
             // This will NOT work directly with contract's ecrecover which expects EIP-712 format
-            string signature = await ActiveWallet!.PersonalSign(hashBytes);
+            string signature = await activeWallet!.PersonalSign(hashBytes);
 
             Debug.Log($"[EIP712-Manual] Raw hash signature (with personal_sign prefix): {signature}");
             Debug.LogWarning("[EIP712-Manual] NOTE: PersonalSign adds message prefix - contract may not accept this!");
@@ -1538,87 +1517,6 @@ namespace DCL.Web3.Authenticators
             return BigInteger.Parse(hex, System.Globalization.NumberStyles.HexNumber);
         }
 
-        // low-level calls
-        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request) =>
-            await SendRpcRequestAsync(request, (int)chainId);
 
-        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId)
-        {
-            string rpcUrl = GetRpcUrl(targetChainId);
-            Debug.Log($"[ThirdWeb] SendRpcRequestAsync: targetChainId={targetChainId}, rpcUrl={rpcUrl}");
-
-            var rpcRequest = new
-            {
-                jsonrpc = "2.0",
-                request.id,
-                request.method,
-                request.@params,
-            };
-
-            string requestJson = JsonConvert.SerializeObject(rpcRequest);
-            Debug.Log($"[ThirdWeb] RPC Request JSON: {requestJson}");
-
-            // Send HTTP POST request to RPC endpoint using ThirdwebClient's HTTP client
-            IThirdwebHttpClient? httpClient = client.HttpClient;
-
-            var content = new System.Net.Http.StringContent(
-                requestJson,
-                System.Text.Encoding.UTF8,
-                "application/json"
-            );
-
-            Debug.Log($"[ThirdWeb] Sending POST to {rpcUrl}...");
-            ThirdwebHttpResponseMessage? httpResponse = await httpClient.PostAsync(rpcUrl, content, CancellationToken.None);
-            Debug.Log($"[ThirdWeb] HTTP Response status: {httpResponse.StatusCode}, IsSuccess={httpResponse.IsSuccessStatusCode}");
-
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                string errorText = await httpResponse.Content.ReadAsStringAsync();
-                Debug.LogError($"[ThirdWeb] RPC request failed: {httpResponse.StatusCode} - {errorText}");
-                throw new Web3Exception($"RPC request failed: {httpResponse.StatusCode} - {errorText}");
-            }
-
-            string responseJson = await httpResponse.Content.ReadAsStringAsync();
-            Debug.Log($"[ThirdWeb] RPC Response JSON: {responseJson}");
-
-            EthApiResponse rpcResponse = JsonConvert.DeserializeObject<EthApiResponse>(responseJson);
-            Debug.Log($"[ThirdWeb] Parsed response result: {rpcResponse.result}");
-
-            return new EthApiResponse
-            {
-                id = request.id,
-                jsonrpc = "2.0",
-                result = rpcResponse.result,
-            };
-        }
-
-        // Thirdweb's RPC endpoints
-        private static string GetRpcUrl(int chainId) =>
-            $"https://{chainId}.rpc.thirdweb.com";
-
-        public async UniTask SubmitOtp(string otp)
-        {
-            if (pendingWallet == null)
-                throw new InvalidOperationException("SubmitOtp called but no pending wallet");
-
-            Debug.Log($"Validating OTP: {otp}");
-
-            try
-            {
-                await pendingWallet.LoginWithOtp(otp);
-                loginCompletionSource?.TrySetResult(true);
-            }
-            catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
-        }
-
-        public async UniTask ResendOtp()
-        {
-            if (pendingWallet == null)
-                throw new InvalidOperationException("ResendOtp called but no pending wallet");
-
-            Debug.Log("Resending OTP");
-            await pendingWallet.SendOTP();
-            Debug.Log("OTP resent to email");
-        }
     }
 }
