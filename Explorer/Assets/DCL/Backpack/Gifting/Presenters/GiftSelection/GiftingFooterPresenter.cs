@@ -9,7 +9,7 @@ namespace DCL.Backpack.Gifting.Presenters
         public event Action OnSendGift;
 
         private readonly GiftingFooterView view;
-
+        
         public GiftingFooterPresenter(GiftingFooterView view)
         {
             this.view = view;

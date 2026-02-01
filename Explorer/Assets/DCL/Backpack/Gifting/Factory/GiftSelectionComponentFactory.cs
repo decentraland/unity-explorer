@@ -1,4 +1,4 @@
-using DCL.Backpack.Gifting.Models;
+﻿using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
 using DCL.Backpack.Gifting.Views;
@@ -6,7 +6,6 @@ using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.Web3.Authenticators;
 
 namespace DCL.Backpack.Gifting.Factory
 {
