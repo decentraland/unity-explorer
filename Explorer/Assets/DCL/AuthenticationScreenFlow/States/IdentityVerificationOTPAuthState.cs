@@ -17,7 +17,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
@@ -28,7 +28,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
         {
             view = viewInstance.VerificationOTPAuthView;
@@ -36,7 +36,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
-            this.web3Authenticator = web3Authenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.sentryTransactionManager = sentryTransactionManager;
         }
 
@@ -72,7 +72,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 try
                 {
-                    await web3Authenticator.ResendOtp();
+                    await compositeWeb3Provider.ResendOtp();
                     view.InputField.Clear();
                 }
                 catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
@@ -97,7 +97,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
                 // awaits OTP code being entered
-                IWeb3Identity identity = await web3Authenticator.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
+                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
 
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
@@ -152,7 +152,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 try
                 {
-                    await web3Authenticator.SubmitOtp(otp);
+                    await compositeWeb3Provider.SubmitOtp(otp);
                     ShowOtpResult(true);
                 }
                 catch (CodeVerificationException)

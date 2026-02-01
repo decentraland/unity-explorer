@@ -12,15 +12,14 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3Authenticator
     {
-        public class Default : IWeb3VerifiedAuthenticator, IEthereumApi
+        public class Default : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
         {
-            private readonly IWeb3VerifiedAuthenticator originAuth;
-            private readonly IEthereumApi originApi;
+            private readonly DappWeb3Authenticator origin;
 
             public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
             {
-                add => originAuth.VerificationRequired += value;
-                remove => originAuth.VerificationRequired -= value;
+                add => origin.VerificationRequired += value;
+                remove => origin.VerificationRequired -= value;
             }
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
@@ -29,7 +28,7 @@ namespace DCL.Web3.Authenticators
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
                 URLDomain rpcServerUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc));
 
-                var origin = new DappWeb3Authenticator(
+                origin = new DappWeb3Authenticator(
                     new UnityAppWebBrowser(decentralandUrlsSource),
                     authApiUrl,
                     signatureUrl,
@@ -62,38 +61,25 @@ namespace DCL.Web3.Authenticators
                     environment,
                     new InvalidAuthCodeVerificationFeatureFlag()
                 );
-
-                originApi = origin;
-                originAuth = origin;
             }
 
-            public void Dispose()
-            {
-                originAuth.Dispose(); // Disposes both
-            }
+            public void Dispose() =>
+                origin.Dispose();
 
+            // IEthereumApi
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
-                originApi.SendAsync(request, source, ct);
+                origin.SendAsync(request, source, ct);
 
+            // IWeb3Authenticator
             public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
-                originAuth.LoginAsync(payload, ct);
+                origin.LoginAsync(payload, ct);
 
             public UniTask LogoutAsync(CancellationToken ct) =>
-                originAuth.LogoutAsync(ct);
+                origin.LogoutAsync(ct);
 
-            public void CancelCurrentWeb3Operation()
-            {
-                originAuth.CancelCurrentWeb3Operation();
-            }
-
-            public UniTask SubmitOtp(string otp) =>
-                originAuth.SubmitOtp(otp);
-
-            public UniTask ResendOtp() =>
-                originAuth.ResendOtp();
-
-            public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
-                originAuth.TryAutoLoginAsync(ct);
+            // IDappVerificationHandler
+            public void CancelCurrentWeb3Operation() =>
+                origin.CancelCurrentWeb3Operation();
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
             {

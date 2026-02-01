@@ -19,7 +19,7 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IEthereumApi
+    public partial class DappWeb3Authenticator : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
     {
         private const double IDENTITY_EXPIRATION_PERIOD = 30;
 
@@ -90,9 +90,6 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
-            // Note: DappWeb3Authenticator doesn't show in-app confirmation UI - it uses browser for signing.
-            // The source parameter is accepted for interface compatibility but not used here.
-
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
 
@@ -233,18 +230,6 @@ namespace DCL.Web3.Authenticators
             // Also cancel code verification if that's what was hanging (during Login)
             codeVerificationTask?.TrySetCanceled();
         }
-
-        public UniTask SubmitOtp(string otp) =>
-
-            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
-            UniTask.CompletedTask;
-
-        public UniTask ResendOtp() =>
-            // Not used in Dapp flow - OTP is handled via browser, not in-app UI
-            UniTask.CompletedTask;
-
-        public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
-            UniTask.FromResult(false);
 
         private async UniTask DisconnectFromAuthApiAsync()
         {
@@ -535,7 +520,6 @@ namespace DCL.Web3.Authenticators
 
             return false;
         }
-
 
         /// <summary>
         /// Waits until we receive the verification status from the server

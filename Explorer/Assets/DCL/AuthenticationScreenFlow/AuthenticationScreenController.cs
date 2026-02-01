@@ -49,8 +49,7 @@ namespace DCL.AuthenticationScreenFlow
         internal const int ANIMATION_DELAY = 300;
         internal const string LOADING_TRANSACTION_NAME = "loading_process";
 
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
-        private readonly ICompositeWeb3Provider compositeWeb3Provider;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
@@ -79,7 +78,7 @@ namespace DCL.AuthenticationScreenFlow
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.Init);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
-        public AuthProvider CurrentProvider => compositeWeb3Provider.CurrentProvider;
+        public AuthProvider CurrentProvider => web3Authenticator.CurrentProvider;
 
         public event Action DiscordButtonClicked;
         public event Action<bool> OTPVerified;
@@ -89,8 +88,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
-            IWeb3VerifiedAuthenticator web3Authenticator,
-            ICompositeWeb3Provider compositeWeb3Provider,
+            ICompositeWeb3Provider web3Authenticator,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
@@ -111,7 +109,6 @@ namespace DCL.AuthenticationScreenFlow
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
-            this.compositeWeb3Provider = compositeWeb3Provider;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
@@ -161,7 +158,7 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, buildData.InstallSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, compositeWeb3Provider, webBrowser),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)

@@ -44,8 +44,6 @@ namespace Global.Dynamic
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
-        public IEthereumApi? EthereumApi { get; private set; }
-        public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
@@ -111,7 +109,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.EthereumApi, container.Web3Authenticator, container.CompositeWeb3Provider) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
                 if (container.EnableAnalytics)
                 {
@@ -203,16 +201,15 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (IEthereumApi ethereumApi, IWeb3VerifiedAuthenticator web3Authenticator, ICompositeWeb3Provider compositeProvider)
-            CreateWeb3Dependencies(
-                DynamicSceneLoaderSettings sceneLoaderSettings,
-                IWeb3AccountFactory web3AccountFactory,
-                IWeb3IdentityCache identityCache,
-                IWebBrowser webBrowser,
-                BootstrapContainer container,
-                IDecentralandUrlsSource decentralandUrlsSource,
-                DecentralandEnvironment dclEnvironment,
-                IAppArgs appArgs)
+        private static ICompositeWeb3Provider CreateWeb3Dependencies(
+            DynamicSceneLoaderSettings sceneLoaderSettings,
+            IWeb3AccountFactory web3AccountFactory,
+            IWeb3IdentityCache identityCache,
+            IWebBrowser webBrowser,
+            BootstrapContainer container,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment dclEnvironment,
+            IAppArgs appArgs)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)
@@ -242,15 +239,17 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            // Create composite provider that wraps both
+            // Create composite provider that wraps both authenticators
             var compositeProvider = new CompositeWeb3Provider(thirdWebAuth, dappAuth);
 
-            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(compositeProvider, identityCache);
+            // Wrap with proxy to cache identity after login
+            ICompositeWeb3Provider result = new ProxyCompositeWeb3Provider(compositeProvider, identityCache);
 
+            // Add analytics decorator if enabled
             if (container.EnableAnalytics)
-                coreWeb3Authenticator = new AnalyticsDecoratorVerifiedAuthenticator(coreWeb3Authenticator, container.Analytics!);
+                result = new AnalyticsDecoratorCompositeProvider(result, container.Analytics!);
 
-            return (compositeProvider, coreWeb3Authenticator, compositeProvider);
+            return result;
         }
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)

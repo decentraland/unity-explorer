@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3;
 using System;
 
 namespace DCL.Web3.Authenticators
@@ -41,11 +40,11 @@ namespace DCL.Web3.Authenticators
     public delegate UniTask<bool> TransactionConfirmationDelegate(TransactionConfirmationRequest request);
 
     /// <summary>
-    /// Interface for composite authentication provider that supports multiple authentication methods.
-    /// Extends IWeb3VerifiedAuthenticator to provide authentication and adds method switching capability.
-    /// Also implements IEthereumApi to ensure Web3 API calls use the correct provider.
+    ///     Interface for composite authentication provider that supports multiple authentication methods.
+    ///     Combines base authentication, Ethereum API, Dapp verification, and OTP flows.
+    ///     This is the single entry point for all Web3 authentication needs.
     /// </summary>
-    public interface ICompositeWeb3Provider : IWeb3VerifiedAuthenticator, IEthereumApi
+    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler, IOtpAuthenticator
     {
         /// <summary>
         /// Currently selected authentication method

@@ -23,7 +23,6 @@ namespace Global.Dynamic
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
         public readonly DynamicSettings DynamicSettings;
-        public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
         public readonly ICompositeWeb3Provider CompositeWeb3Provider;
         public readonly IWeb3IdentityCache Web3IdentityCache;
         public readonly SplashScreen SplashScreen;
@@ -36,7 +35,6 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             DynamicSettings dynamicSettings,
-            IWeb3VerifiedAuthenticator web3Authenticator,
             ICompositeWeb3Provider compositeWeb3Provider,
             IWeb3IdentityCache web3IdentityCache,
             SplashScreen splashScreen,
@@ -49,7 +47,6 @@ namespace Global.Dynamic
             StaticContainer = staticContainer;
             SettingsContainer = settingsContainer;
             DynamicSettings = dynamicSettings;
-            Web3Authenticator = web3Authenticator;
             CompositeWeb3Provider = compositeWeb3Provider;
             Web3IdentityCache = web3IdentityCache;
             SplashScreen = splashScreen;

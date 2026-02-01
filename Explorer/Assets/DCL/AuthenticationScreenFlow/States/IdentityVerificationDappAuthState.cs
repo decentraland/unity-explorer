@@ -23,7 +23,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly VerificationDappAuthView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
         private readonly SentryTransactionManager sentryTransactionManager;
@@ -33,7 +33,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider compositeWeb3Provider,
             IAppArgs appArgs,
             List<Resolution> possibleResolutions,
             SentryTransactionManager sentryTransactionManager) : base(viewInstance)
@@ -42,7 +42,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view = viewInstance.VerificationDappAuthView;
             this.controller = controller;
             this.currentState = currentState;
-            this.web3Authenticator = web3Authenticator;
+            this.compositeWeb3Provider = compositeWeb3Provider;
             this.appArgs = appArgs;
             this.possibleResolutions = possibleResolutions;
             this.sentryTransactionManager = sentryTransactionManager;
@@ -79,8 +79,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 sentryTransactionManager.StartSpan(web3AuthSpan);
 
-                web3Authenticator.VerificationRequired += ShowVerification;
-                IWeb3Identity identity = await web3Authenticator.LoginAsync(LoginPayload.ForDappFlow(method), ct);
+                compositeWeb3Provider.VerificationRequired += ShowVerification;
+                IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
 
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
@@ -146,13 +146,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
             finally
             {
-               web3Authenticator.VerificationRequired -= ShowVerification;
+                compositeWeb3Provider.VerificationRequired -= ShowVerification;
             }
         }
 
         private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
-            web3Authenticator.VerificationRequired -= ShowVerification;
+            compositeWeb3Provider.VerificationRequired -= ShowVerification;
             currentState.Value = AuthStatus.VerificationInProgress;
 
             controller.CurrentRequestID = data.requestId;

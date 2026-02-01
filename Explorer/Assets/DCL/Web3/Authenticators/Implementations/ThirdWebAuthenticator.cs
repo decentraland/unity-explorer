@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
-    public class ThirdWebAuthenticator : IWeb3VerifiedAuthenticator, IEthereumApi
+    public class ThirdWebAuthenticator : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
     {
         private const string CLIENT_ID = "e1adce863fe287bb6cf0e3fd90bdb77f";
         private const string BUNDLE_ID = "com.Decentraland.Explorer";
@@ -1595,10 +1595,6 @@ namespace DCL.Web3.Authenticators
         // Thirdweb's RPC endpoints
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
-
-        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
-
-        public void CancelCurrentWeb3Operation() { }
 
         public async UniTask SubmitOtp(string otp)
         {
