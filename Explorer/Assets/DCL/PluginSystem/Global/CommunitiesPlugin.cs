@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
-        private EventInfoController? eventInfoController;
+        private EventDetailPanelController? eventDetailPanelController;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -130,7 +130,7 @@ namespace DCL.PluginSystem.Global
         {
             communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
-            eventInfoController?.Dispose();
+            eventDetailPanelController?.Dispose();
             notificationHandler.Dispose();
             rpcCommunitiesService.Dispose();
         }
@@ -188,15 +188,15 @@ namespace DCL.PluginSystem.Global
                 profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
-            EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
-            var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
-            eventInfoController = new EventInfoController(eventInfoViewFactory,
+            EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
+            var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
+            eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
                 webRequestController,
                 clipboard,
                 webBrowser,
                 eventsApiService,
                 realmNavigator);
-            mvcManager.RegisterController(eventInfoController);
+            mvcManager.RegisterController(eventDetailPanelController);
 
             rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }

@@ -14,13 +14,13 @@ using UnityEngine.UI;
 
 namespace DCL.Communities.EventInfo
 {
-    public class EventInfoView: ViewBase, IView
+    public class EventDetailPanelView: ViewBase, IView
     {
         private const string HOST_FORMAT = "Hosted by <b>{0}</b>";
 
         [SerializeField] private Button backgroundCloseButton = null!;
         [SerializeField] private Button closeButton = null!;
-        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] private EventDetailContextMenuConfiguration contextMenuSettings = null!;
         [SerializeField] private ScrollRect scrollRect = null!;
 
         [Header("Event Info")]

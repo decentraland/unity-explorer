@@ -18,7 +18,7 @@ using Utility;
 
 namespace DCL.Communities.EventInfo
 {
-    public class EventInfoController : ControllerBase<EventInfoView, EventInfoParameter>
+    public class EventDetailPanelController : ControllerBase<EventDetailPanelView, EventDetailPanelParameter>
     {
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
@@ -34,7 +34,7 @@ namespace DCL.Communities.EventInfo
         private CancellationTokenSource eventCardOperationsCts = new ();
         private readonly ThumbnailLoader thumbnailLoader;
 
-        public EventInfoController(ViewFactoryMethod viewFactory,
+        public EventDetailPanelController(ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
