@@ -42,6 +42,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.EventInfo;
 using DCL.Donations;
 using DCL.Events;
 using DCL.EventsApi;
@@ -159,6 +160,7 @@ namespace DCL.PluginSystem.Global
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
+        private EventDetailPanelController? eventDetailPanelController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -321,6 +323,7 @@ namespace DCL.PluginSystem.Global
             communitiesBrowserController?.Dispose();
             placesController?.Dispose();
             eventsController?.Dispose();
+            eventDetailPanelController?.Dispose();
             upscalingController?.Dispose();
             placeDetailPanelController?.Dispose();
         }
@@ -527,6 +530,16 @@ namespace DCL.PluginSystem.Global
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
             eventsController = new EventsController(eventsView, cursor, eventsApiService, webBrowser, decentralandUrlsSource);
 
+            EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
+            var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
+            eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
+                webRequestController,
+                clipboard,
+                webBrowser,
+                eventsApiService,
+                realmNavigator);
+            mvcManager.RegisterController(eventDetailPanelController);
+
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
                     navmapController,
@@ -697,6 +710,9 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Place Detail Panel")]
             [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
+
+            [field: Header("Event Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
         }
     }
 }
