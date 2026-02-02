@@ -20,7 +20,7 @@ namespace DCL.Communities.EventInfo
 
         [SerializeField] private Button backgroundCloseButton = null!;
         [SerializeField] private Button closeButton = null!;
-        [SerializeField] private EventDetailContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] private EventContextMenuConfiguration contextMenuSettings = null!;
         [SerializeField] private ScrollRect scrollRect = null!;
 
         [Header("Event Info")]
