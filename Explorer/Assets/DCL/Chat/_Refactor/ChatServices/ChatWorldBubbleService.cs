@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Multiplayer.Profiles.Tables;
@@ -145,5 +143,3 @@ namespace DCL.Chat.ChatServices
         }
     }
 }
-
-#endif

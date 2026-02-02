@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
@@ -89,5 +87,3 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         }
     }
 }
-
-#endif

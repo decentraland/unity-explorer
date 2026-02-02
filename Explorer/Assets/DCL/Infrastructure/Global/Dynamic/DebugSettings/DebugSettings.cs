@@ -1,4 +1,4 @@
-﻿using DCL.LiveKit.Public;
+﻿using LiveKit.Proto;
 using System;
 using UnityEngine;
 
@@ -32,7 +32,7 @@ namespace Global.Dynamic.DebugSettings
         [SerializeField]
         private bool overrideConnectionQuality;
         [SerializeField]
-        private LKConnectionQuality connectionQuality;
+        private ConnectionQuality connectionQuality;
         [SerializeField]
         private string[] appParameters;
 
@@ -48,8 +48,8 @@ namespace Global.Dynamic.DebugSettings
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
-                connectionQuality = LKConnectionQuality.QualityExcellent,
-                enableRemotePortableExperiences = true,
+                connectionQuality = ConnectionQuality.QualityExcellent,
+                enableRemotePortableExperiences = false,
                 emotesToAddToUserProfile = null,
                 appParameters = new []{"--realm olavra.dlc.eth", "--debug"},
             };
@@ -66,7 +66,7 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableVersionUpdateGuard => Application.isEditor ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
-        public LKConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
+        public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
         public string[] AppParameters => appParameters;
     }
 }

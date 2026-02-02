@@ -14,7 +14,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Storage;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -79,24 +78,7 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
-            UpdateLocalizedTextAsync().Forget();
-        }
-
-        private async UniTaskVoid UpdateLocalizedTextAsync()
-        {
-            AsyncOperationHandle<string> handle =
-                viewInstance.ProgressLabel.StringReference!.GetLocalizedStringAsync();
-
-            await handle;
-
-            if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
-            {
-                progressLocalizationString = handle.Result.EnsureNotNull();
-            }
-            else
-            {
-                UnityEngine.Debug.LogError("SceneLoadingScreenController cannot load localized text");
-            }
+            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
         }
 
         protected override void OnBeforeViewShow()
@@ -120,7 +102,7 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
 
             // Fetch fresh localization string on loading screen show event
-            UpdateLocalizedTextAsync().Forget();
+            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
         }
 
         protected override void OnViewClose()

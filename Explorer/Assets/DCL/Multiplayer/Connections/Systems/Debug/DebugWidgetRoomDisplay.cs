@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Systems.Debug
 {

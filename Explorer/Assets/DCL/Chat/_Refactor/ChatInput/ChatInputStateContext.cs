@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using DCL.Chat.ChatCommands;
+﻿using DCL.Chat.ChatCommands;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
 using Utility;
@@ -35,5 +33,3 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
-
-#endif

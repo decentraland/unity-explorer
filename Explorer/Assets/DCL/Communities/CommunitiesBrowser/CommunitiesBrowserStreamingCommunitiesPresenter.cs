@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
@@ -59,14 +57,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void JoinStreamClicked(string communityId, bool isMember)
         {
-#if !NO_LIVEKIT_MODE
             if (browserStateService.CurrentCommunityId.Value == communityId)
                 commandsLibrary.GoToStreamCommand.Execute(communityId);
 
             commandsLibrary.JoinStreamCommand.Execute(communityId, isMember);
-#else
-            throw new Exception("not supported");
-#endif
         }
 
         private void ViewAllStreamingCommunitiesButtonClicked()
@@ -125,5 +119,3 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
-
-#endif

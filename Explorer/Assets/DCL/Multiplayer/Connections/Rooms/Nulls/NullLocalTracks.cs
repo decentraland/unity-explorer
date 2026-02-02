@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using LiveKit;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Tracks;
@@ -31,5 +29,3 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public ITrack CreateVideoTrack(string name, RtcVideoSource source) => null!;
     }
 }
-
-#endif

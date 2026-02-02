@@ -18,11 +18,7 @@ using DCL.Landscape.Parcel;
 using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
-#endif
-
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -79,13 +75,7 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
-
-
-#if !NO_LIVEKIT_MODE
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
-#endif
-
-
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
@@ -97,11 +87,7 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
-
-#if !UNITY_WEBGL
         public MediaPlayerContainer MediaContainer { get; private set; }
-#endif
-
         public ProfilesContainer ProfilesContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
@@ -217,11 +203,7 @@ namespace Global
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
 
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-
-#if !UNITY_WEBGL
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
-#endif
-
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -288,32 +270,9 @@ namespace Global
 
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-
-#if !UNITY_WEBGL
-                new NFTShapePlugin(
-                        decentralandUrlsSource, 
-                        container.assetsProvisioner, 
-                        sharedDependencies.FrameTimeBudget, 
-                        componentsContainer.ComponentPoolsRegistry, 
-                        container.WebRequestsContainer.WebRequestController, 
-                        container.CacheCleaner
-
-#if !NO_LIVEKIT_MODE
-                        , container.MediaContainer.mediaFactoryBuilder
-#endif
-
-                        ),
-#endif
-
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.MediaContainer.mediaFactoryBuilder),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
-                new MaterialsPlugin(
-                        sharedDependencies
-
-#if !UNITY_WEBGL
-                        , container.MediaContainer.mediaFactoryBuilder
-#endif
-
-                        ),
+                new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
@@ -328,21 +287,12 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-
-#if !UNITY_WEBGL
                 container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
-#endif
-
                 new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(),
-
-#if !NO_LIVEKIT_MODE
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
-#endif
-
-
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),
@@ -376,7 +326,6 @@ namespace Global
         }
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
-#if !UNITY_WEBGL
         {
             ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
@@ -386,16 +335,5 @@ namespace Global
 
             return results.Item1.success && results.Item2.success && results.Item3.success;
         }
-#else
-        {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
-                settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct)
-            );
-
-            return results.Item1.success && results.Item2.success;
-        }
-#endif
-
     }
 }

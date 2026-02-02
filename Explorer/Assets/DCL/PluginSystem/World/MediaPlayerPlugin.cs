@@ -1,6 +1,4 @@
-﻿#if !UNITY_WEBGL
-
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.FeatureFlags;
@@ -69,5 +67,3 @@ namespace DCL.PluginSystem.World
         }
     }
 }
-
-#endif

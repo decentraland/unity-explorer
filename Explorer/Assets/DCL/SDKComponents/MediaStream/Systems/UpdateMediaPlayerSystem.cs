@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -309,5 +307,3 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
-
-#endif

@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
@@ -115,5 +113,3 @@ namespace DCL.SDKComponents.RealmInfo
         }
     }
 }
-
-#endif

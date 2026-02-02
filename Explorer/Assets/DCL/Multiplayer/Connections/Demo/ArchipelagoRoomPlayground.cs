@@ -5,6 +5,7 @@ using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.RealmNavigation;
 using DCL.Web3.Accounts.Factory;
@@ -33,7 +34,7 @@ namespace DCL.Multiplayer.Connections.Demo
         private async UniTaskVoid LaunchAsync()
         {
 #if !UNITY_WEBGL
-            DCL.Multiplayer.Connections.FfiClients.IFFIClient.Default.EnsureInitialize();
+            IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));

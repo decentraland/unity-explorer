@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-namespace DCL.Chat.ChatStates
+﻿namespace DCL.Chat.ChatStates
 {
     public class HiddenChatState : ChatState
     {
@@ -15,5 +13,3 @@ namespace DCL.Chat.ChatStates
         }
     }
 }
-
-#endif

@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using DCL.Diagnostics;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
@@ -71,5 +69,3 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         public LogAudioStreams(IStreams<AudioStream, AudioStreamInfo> origin) : base(origin, nameof(LogVideoStreams)) { }
     }
 }
-
-#endif

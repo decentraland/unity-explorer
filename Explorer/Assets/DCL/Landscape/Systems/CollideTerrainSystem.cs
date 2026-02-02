@@ -1,6 +1,4 @@
-﻿#if !UNITY_WEBGL
-
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.Components;
@@ -386,5 +384,3 @@ namespace DCL.Landscape.Systems
         }
     }
 }
-
-#endif

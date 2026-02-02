@@ -1,22 +1,16 @@
-#if !UNITY_WEBGL
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
-using Utility.Multithreading; 
-
-#if !UNITY_WEBGL
-using LiveKit.Rooms.Streaming.Audio;
-#endif
-
 
 namespace DCL.VoiceChat
 {
@@ -25,7 +19,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {
-        private readonly DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
+        private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
         private readonly AudioMixerGroup audioMixerGroup;
 
         private readonly Transform parent;
@@ -125,5 +119,3 @@ namespace DCL.VoiceChat
         }
     }
 }
-
-#endif

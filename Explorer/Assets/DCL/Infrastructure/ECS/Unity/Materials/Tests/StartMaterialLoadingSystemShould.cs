@@ -45,19 +45,9 @@ namespace ECS.Unity.Materials.Tests
             IReleasablePerformanceBudget releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
 
-            system = new StartMaterialsLoadingSystem(
-                    world,
-                    destroyMaterial = Substitute.For<DestroyMaterial>(),
-                    sceneData = Substitute.For<ISceneData>(), 
-                    ATTEMPTS_COUNT, 
-                    releasablePerformanceBudget
-
-#if !UNITY_WEBGL
-                    , 
-                    new MockMediaFactory()
-#endif
-
-                    );
+            system = new StartMaterialsLoadingSystem(world,
+                destroyMaterial = Substitute.For<DestroyMaterial>(),
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, new MockMediaFactory());
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>

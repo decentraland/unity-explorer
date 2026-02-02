@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -12,7 +10,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using DCL.LiveKit.Public;
 
 namespace DCL.PluginSystem.Global
 {
@@ -55,9 +52,9 @@ namespace DCL.PluginSystem.Global
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
                 ShowDuplicateIdentityWindowAsync().Forget();
 
             return;
@@ -82,4 +79,3 @@ namespace DCL.PluginSystem.Global
     }
 }
 
-#endif

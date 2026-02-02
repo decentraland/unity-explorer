@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
@@ -8,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -39,10 +38,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
-
-#if !UNITY_WEBGL
-using DCL.Multiplayer.Connections.FfiClients;
-#endif
 
 namespace DCL.PluginSystem.Global
 {
@@ -136,11 +131,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
         {
 #if !NO_LIVEKIT_MODE
-
-// TODO initialize on WebGL
-#if !UNITY_WEBGL
             IFFIClient.Default.EnsureInitialize();
-#endif
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
@@ -175,5 +166,3 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
-
-#endif

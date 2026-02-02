@@ -1,5 +1,3 @@
-#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX && !UNITY_WEBGL
-
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
@@ -36,12 +34,16 @@ namespace DCL.SDKComponents.MediaStream
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.mediaFactory = mediaFactory;
             this.flipMaterial = flipMaterial;
+
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.frameTimeBudget = frameTimeBudget;
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sceneDeps, List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, mediaFactory);
@@ -53,8 +55,7 @@ namespace DCL.SDKComponents.MediaStream
             VideoEventsSystem.InjectToWorld(ref builder, sceneDeps.EcsToCRDTWriter, sceneDeps.SceneStateProvider, frameTimeBudget);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
+#endif
         }
     }
 }
-
-#endif

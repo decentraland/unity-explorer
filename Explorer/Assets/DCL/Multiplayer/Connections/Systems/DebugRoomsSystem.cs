@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -123,5 +121,3 @@ namespace DCL.Multiplayer.Connections.Systems
         partial void UpdateRoomIndicators();
     }
 }
-
-#endif

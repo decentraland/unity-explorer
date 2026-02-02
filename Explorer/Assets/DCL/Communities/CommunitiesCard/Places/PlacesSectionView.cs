@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
@@ -183,5 +181,3 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
     }
 }
-
-#endif

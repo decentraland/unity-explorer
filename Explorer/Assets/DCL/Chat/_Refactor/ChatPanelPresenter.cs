@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatFriends;
@@ -271,5 +269,3 @@ namespace DCL.Chat
         }
     }
 }
-
-#endif

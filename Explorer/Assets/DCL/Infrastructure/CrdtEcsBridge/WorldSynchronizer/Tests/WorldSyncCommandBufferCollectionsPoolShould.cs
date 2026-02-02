@@ -1,10 +1,10 @@
 ﻿using CRDT;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Utility.Multithreading;
 
 namespace CrdtEcsBridge.WorldSynchronizer.Tests
 {
@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         [Test]
         public async Task BeMultiThreaded([Values(1, 2, 4, 8, 16, 32, 64, 128, 256)] int threadsCount)
         {
-            var pools = new DCLConcurrentBag<WorldSyncCommandBufferCollectionsPool>();
+            var pools = new ConcurrentBag<WorldSyncCommandBufferCollectionsPool>();
 
             var tasks = new UniTaskCompletionSource[threadsCount];
 

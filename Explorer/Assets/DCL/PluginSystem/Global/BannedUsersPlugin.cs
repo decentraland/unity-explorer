@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
@@ -47,5 +45,3 @@ namespace DCL.PluginSystem.Global
             playerBannedScenesController?.Dispose();
     }
 }
-
-#endif

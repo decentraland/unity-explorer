@@ -2,12 +2,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Chat.ChatStates;
 using DCL.Chat.ControllerShowParams;
-#endif
-
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
@@ -102,9 +98,7 @@ namespace DCL.UI.Sidebar
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
-#if !NO_LIVEKIT_MODE
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
-#endif
         }
 
         public override void Dispose()
@@ -117,10 +111,8 @@ namespace DCL.UI.Sidebar
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
-#if !NO_LIVEKIT_MODE
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
             OnChatViewFoldingChanged(eventData.CurrentState is not HiddenChatState && eventData.CurrentState is not MinimizedChatState);
-#endif
 
         protected override void OnViewInstantiated()
         {
@@ -149,11 +141,7 @@ namespace DCL.UI.Sidebar
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
-
-#if !NO_LIVEKIT_MODE
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
-#endif
-
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
@@ -319,14 +307,11 @@ namespace DCL.UI.Sidebar
         }
 
 #region Sidebar button handlers
-
-#if !NO_LIVEKIT_MODE
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
             sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true)).Forget();
         }
-#endif
 
         private async void OnEmotesWheelButtonClickedAsync()
         {

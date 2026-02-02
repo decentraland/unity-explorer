@@ -4,11 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Chat.ChatStates;
-#endif
-
 using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;

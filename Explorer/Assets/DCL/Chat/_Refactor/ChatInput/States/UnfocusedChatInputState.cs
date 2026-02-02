@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using UnityEngine.EventSystems;
+﻿using UnityEngine.EventSystems;
 
 namespace DCL.Chat.ChatInput
 {
@@ -36,5 +34,3 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
-
-#endif

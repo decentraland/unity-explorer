@@ -4,7 +4,6 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
@@ -24,10 +23,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             previous = previous is NullDataPipe ? null : previous;
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, LKParticipant participant, string topic, LKDataPacketKind kind) =>
+        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind) =>
             DataReceived?.Invoke(data, participant, topic, kind);
 
-        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, LKDataPacketKind kind = LKDataPacketKind.KindLossy) =>
+        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy) =>
             assigned.EnsureAssigned().PublishData(data, topic, destinationSids, kind);
     }
 }

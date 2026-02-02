@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using DCL.Audio;
+﻿using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
@@ -214,5 +212,3 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
-
-#endif

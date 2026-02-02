@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -229,5 +227,3 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
     }
 }
-
-#endif

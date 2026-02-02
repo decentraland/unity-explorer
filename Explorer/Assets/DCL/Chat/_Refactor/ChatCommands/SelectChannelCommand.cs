@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using DCL.Chat.ChatServices;
+﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using System.Threading;
 using DCL.Chat.EventBus;
@@ -100,5 +98,3 @@ namespace DCL.Chat.ChatCommands
         }
     }
 }
-
-#endif

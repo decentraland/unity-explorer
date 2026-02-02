@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using CommunicationData.URLHelpers;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,5 +32,3 @@ namespace DCL.Multiplayer.Profiles.Poses
         }
     }
 }
-
-#endif

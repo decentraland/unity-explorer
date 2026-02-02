@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -170,5 +168,3 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
     }
 }
-
-#endif

@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
@@ -61,5 +59,3 @@ namespace DCL.Chat.MessageBus
 
     }
 }
-
-#endif

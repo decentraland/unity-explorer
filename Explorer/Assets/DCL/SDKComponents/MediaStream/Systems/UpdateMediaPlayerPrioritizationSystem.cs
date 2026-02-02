@@ -1,6 +1,4 @@
-﻿#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX && !UNITY_WEBGL
-
-//#define DEBUG_VIDEO_PRIORITIES
+﻿//#define DEBUG_VIDEO_PRIORITIES
 // When the definition is enabled, a colored cube will be created next to each video's mesh renderer. Its color corresponds to the current priority of the video.
 // Green means higher priority, red means lower priority. Blue means that it was prioritized but it is not allowed to play due to the maximum limit.
 // Black means it has been discarded from prioritization.
@@ -328,5 +326,3 @@ namespace DCL.SDKComponents.MediaStream
 #endif
     }
 }
-
-#endif

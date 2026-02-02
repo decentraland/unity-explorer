@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using System;
@@ -28,5 +26,3 @@ namespace DCL.RealmNavigation.TeleportOperations
         }
     }
 }
-
-#endif

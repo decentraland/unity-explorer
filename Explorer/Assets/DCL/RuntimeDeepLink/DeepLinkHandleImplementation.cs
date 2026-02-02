@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
@@ -94,5 +92,3 @@ namespace DCL.RuntimeDeepLink
         }
     }
 }
-
-#endif

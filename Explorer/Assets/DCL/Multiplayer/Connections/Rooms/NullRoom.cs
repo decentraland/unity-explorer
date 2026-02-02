@@ -1,19 +1,19 @@
+// TODO remove tasks to support WebGL
+// Currently Livekit is not supposed to be called on WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-
-#if !UNITY_WEBGL
 using LiveKit.Rooms.Streaming.Audio;
-#endif
-
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using RichTypes;
 
 namespace DCL.Multiplayer.Connections.Rooms
@@ -26,8 +26,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IParticipantsHub Participants => NullParticipantsHub.INSTANCE;
         public IDataPipe DataPipe => NullDataPipe.INSTANCE;
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
-
-#if !UNITY_WEBGL
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
         public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;
@@ -40,8 +38,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event SubscribeDelegate? TrackUnsubscribed;
         public event MuteDelegate? TrackMuted;
         public event MuteDelegate? TrackUnmuted;
-#endif
-
         public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
@@ -55,10 +51,10 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public void SetLocalName(string name) { }
 
-        public UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
-            UniTask.FromResult(Result.SuccessResult());
+        public Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            Task.FromResult(Result.SuccessResult());
 
-        public UniTask DisconnectAsync(CancellationToken cancellationToken) =>
-            UniTask.CompletedTask;
+        public Task DisconnectAsync(CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 }

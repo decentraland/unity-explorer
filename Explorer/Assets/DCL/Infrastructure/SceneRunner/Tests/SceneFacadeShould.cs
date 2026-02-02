@@ -51,6 +51,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.V8;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -136,7 +137,7 @@ namespace SceneRunner.Tests
         private ISDKComponentsRegistry componentsRegistry = null!;
         private SceneFactory sceneFactory = null!;
 
-        private readonly DCLConcurrentBag<ISceneFacade> sceneFacades = new ();
+        private readonly ConcurrentBag<ISceneFacade> sceneFacades = new ();
 
         private string path;
 
@@ -222,7 +223,7 @@ namespace SceneRunner.Tests
         {
             int waitTime = lifeTimeMs.Max() + 100;
 
-            var list = new DCLConcurrentBag<int>();
+            var list = new ConcurrentBag<int>();
 
             await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
 

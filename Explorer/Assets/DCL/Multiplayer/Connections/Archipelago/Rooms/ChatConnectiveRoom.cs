@@ -12,14 +12,10 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-
-#if !UNITY_WEBGL
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
-#endif
-
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
@@ -56,16 +52,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-
-#if !UNITY_WEBGL
             var hub = new ParticipantsHub();
-#endif
 
             // Pass null for AudioTracks - Room constructor will create it automatically
             roomInstance = new LogRoom(
                 new Room(
-
-#if !UNITY_WEBGL
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
                     hub,
@@ -78,8 +69,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     new VideoStreams(hub),
                     new AudioStreams(hub),
                     null
-#endif
-
                 ),
                 "Chat"
             );

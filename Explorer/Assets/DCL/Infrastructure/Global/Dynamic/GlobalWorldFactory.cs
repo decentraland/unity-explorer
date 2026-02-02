@@ -174,12 +174,10 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
-#if !UNITY_WEBGL
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
-            // LoadPointersByIncreasingRadiusSystem depends on TerrainSystem/Plugin, thus it's disabled the system cannot operate properly // TODO
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, roadCoordinates, realmData, landscapeParcelData);
 

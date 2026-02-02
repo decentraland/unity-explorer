@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -48,5 +46,3 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public static readonly NullAudioStreams INSTANCE = new ();
     }
 }
-
-#endif

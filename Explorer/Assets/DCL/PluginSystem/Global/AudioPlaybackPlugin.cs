@@ -16,12 +16,8 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly bool enableLandscape;
-
-#if !UNITY_WEBGL
         private readonly TerrainGenerator terrainGenerator;
         private readonly WorldTerrainGenerator worldTerrainGenerator;
-#endif
-
         private readonly AudioMixerVolumesController mixerVolumesController;
         private readonly IRealmData realmData;
 
@@ -29,25 +25,15 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<WorldAudioPlaybackController> worldAudioPlaybackController;
         private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettings;
 
-        public AudioPlaybackPlugin(
-
-#if !UNITY_WEBGL
-                TerrainGenerator terrainGenerator,
-                WorldTerrainGenerator worldTerrainGenerator,
-#endif
-
-                IAssetsProvisioner assetsProvisioner,
-                bool enableLandscape,
-                AudioMixerVolumesController mixerVolumesController,
-                IRealmData realmData
-                )
+        public AudioPlaybackPlugin(TerrainGenerator terrainGenerator,
+            WorldTerrainGenerator worldTerrainGenerator,
+            IAssetsProvisioner assetsProvisioner,
+            bool enableLandscape,
+            AudioMixerVolumesController mixerVolumesController,
+            IRealmData realmData)
         {
-
-#if !UNITY_WEBGL
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
-#endif
-
             this.assetsProvisioner = assetsProvisioner;
             this.enableLandscape = enableLandscape;
             this.mixerVolumesController = mixerVolumesController;
@@ -63,12 +49,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-
-#if !UNITY_WEBGL
             if (enableLandscape)
                 LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, worldTerrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value, realmData);
-#endif
-
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)

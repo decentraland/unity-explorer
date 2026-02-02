@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
@@ -77,5 +75,3 @@ namespace DCL.Multiplayer.Connections.Systems
         }
     }
 }
-
-#endif

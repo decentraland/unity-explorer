@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
@@ -242,5 +240,3 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
     }
 }
-
-#endif

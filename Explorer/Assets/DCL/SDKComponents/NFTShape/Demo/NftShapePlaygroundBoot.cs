@@ -1,4 +1,4 @@
-#if UNITY_EDITOR && !UNITY_WEBGL
+#if UNITY_EDITOR
 
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;

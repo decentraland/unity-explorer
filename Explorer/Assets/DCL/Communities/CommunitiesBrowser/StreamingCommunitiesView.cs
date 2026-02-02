@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.UI;
 using DCL.UI.Utilities;
@@ -127,5 +125,3 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
-
-#endif

@@ -1,9 +1,6 @@
+
 using Cysharp.Threading.Tasks;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
-#endif
-
 using DCL.Profiles;
 using DCL.WebRequests;
 using System.Threading;
@@ -26,28 +23,13 @@ namespace DCL.UI.Profiles.Helpers
 
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
-
-#if !NO_LIVEKIT_MODE
         private readonly IRemoteMetadata remoteMetadata;
-#endif
 
-        public ProfileRepositoryWrapper(
-                IProfileRepository profileRepository,
-                ISpriteCache thumbnailCache
-
-#if !NO_LIVEKIT_MODE
-                , IRemoteMetadata remoteMetadata
-#endif
-
-                )
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache, IRemoteMetadata remoteMetadata)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
-
-#if !NO_LIVEKIT_MODE
             this.remoteMetadata = remoteMetadata;
-#endif
-
         }
 
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
@@ -57,11 +39,7 @@ namespace DCL.UI.Profiles.Helpers
             thumbnailCache.GetCachedSprite(thumbnailUrl);
 
         public async UniTask<Profile?> GetProfileAsync(string userId, CancellationToken ct) =>
-#if !NO_LIVEKIT_MODE
             await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
-#else
-            await profileRepository.GetAsync(userId, 0, null, ct);
-#endif
 
     }
 }
