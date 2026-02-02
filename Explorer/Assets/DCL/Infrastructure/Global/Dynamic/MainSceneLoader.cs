@@ -362,9 +362,6 @@ namespace Global.Dynamic
                 // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 singleInstanceLock.Lock(0,0 );
-                using var writer = new StreamWriter(singleInstanceLock, Encoding.UTF8, 256, leaveOpen: true);
-                writer.WriteLine(System.Diagnostics.Process.GetCurrentProcess().Id);
-                writer.Flush();
             }
             catch (IOException)
             {
