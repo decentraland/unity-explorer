@@ -130,6 +130,7 @@ namespace Global.Dynamic
 
         private void OnApplicationQuit()
         {
+            // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
             try { singleInstanceLock?.Dispose(); } catch { }
             DisableAllSelectableTransitions();
         }
@@ -357,7 +358,10 @@ namespace Global.Dynamic
             try
             {
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+                // Note that FileShare.None should lock the file to other processes, and it does,
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                singleInstanceLock.Lock(0,0 );
                 using var writer = new StreamWriter(singleInstanceLock, Encoding.UTF8, 256, leaveOpen: true);
                 writer.WriteLine(System.Diagnostics.Process.GetCurrentProcess().Id);
                 writer.Flush();
