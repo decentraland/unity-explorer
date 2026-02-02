@@ -1,11 +1,11 @@
 ﻿using Arch.SystemGroups;
+using DCL.ECS.Unity.SceneBoundsChecker;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
-using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,6 +34,9 @@ namespace DCL.PluginSystem.World
                     componentPoolsRegistry);
 
             finalizeWorldSystems.Add(releaseColliderSystem);
+
+            sceneIsCurrentListeners.Add(new SceneBoundsChecker(builder.World,
+                sharedDependencies.SceneStateProvider));
         }
     }
 }
