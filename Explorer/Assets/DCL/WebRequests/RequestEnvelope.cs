@@ -97,7 +97,7 @@ namespace DCL.WebRequests
 
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
         {
-            TWebRequest request = initializeRequest(CommonArguments, ref args);
+            TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
             AssignTimeout(unityWebRequest);

@@ -78,6 +78,9 @@ namespace DCL.Browser.DecentralandUrls
             return urlData.Url!;
         }
 
+        public virtual string TransformUrl(string originalUrl) =>
+            originalUrl;
+
         public string GetHostnameForFeatureFlag() =>
             launchMode.CurrentMode switch
             {

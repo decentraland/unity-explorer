@@ -8,9 +8,9 @@ namespace DCL.WebRequests
 
         public bool Idempotent => false;
 
-        internal static GenericPatchRequest Initialize(in CommonArguments commonArguments, ref GenericPostArguments arguments)
+        internal static GenericPatchRequest Initialize(string url, ref GenericPostArguments arguments)
         {
-            UnityWebRequest unityWebRequest = GenericPostRequest.CreateWebRequest(in commonArguments, ref arguments);
+            UnityWebRequest unityWebRequest = GenericPostRequest.CreateWebRequest(url, ref arguments);
 
             unityWebRequest.method = "PATCH";
 
