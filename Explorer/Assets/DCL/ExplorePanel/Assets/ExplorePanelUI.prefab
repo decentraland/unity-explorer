@@ -577,8 +577,7 @@ GameObject:
   - component: {fileID: 7456081708529551540}
   - component: {fileID: 1597317153076255549}
   - component: {fileID: 4259832855745683082}
-  - component: {fileID: 2450803359716305501}
-  - component: {fileID: 1266772999966129376}
+  - component: {fileID: 6046331795749496778}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -688,29 +687,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!95 &2450803359716305501
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1077088683674621340}
-  m_Enabled: 0
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 50d5ac4d52eb89f42ab70f4c41acea40, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1266772999966129376
+--- !u!114 &6046331795749496778
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -719,13 +696,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1077088683674621340}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 4259832855745683082}
-  <ButtonAnimator>k__BackingField: {fileID: 2450803359716305501}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+  <images>k__BackingField:
+  - {fileID: 0}
+  <text>k__BackingField: {fileID: 0}
+  interactableColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
 --- !u!1 &1278638162264345116
 GameObject:
   m_ObjectHideFlags: 0
@@ -12437,7 +12418,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5130970582219771910, guid: a3814bfe2ead6e84f8771fe1d77b714f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.00004196167
+      value: 0.000034332275
       objectReference: {fileID: 0}
     - target: {fileID: 5272893643700456325, guid: a3814bfe2ead6e84f8771fe1d77b714f, type: 3}
       propertyPath: m_SizeDelta.x
