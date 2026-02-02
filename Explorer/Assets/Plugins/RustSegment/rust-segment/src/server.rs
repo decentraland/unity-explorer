@@ -2,10 +2,9 @@ use anyhow::{anyhow, Context};
 use core::str;
 use std::{
     ffi::CString,
-    panic::catch_unwind,
     sync::{
-        atomic::{AtomicBool, AtomicU64, Ordering},
-        Arc,
+        atomic::{AtomicU64, Ordering},
+        Arc, RwLock,
     },
 };
 use tokio::sync::Mutex;
@@ -22,21 +21,69 @@ use segment::{
 use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
 use segment::queue::queued_batcher::QueuedBatcher;
 
+pub struct SafeCallback {
+    callback_fn: RwLock<Option<Box<dyn Fn(OperationHandleId, Response) + Send + Sync>>>,
+    error_fn: RwLock<Option<Box<dyn Fn(&str) + Send + Sync>>>,
+}
+
+impl SafeCallback {
+    fn new(
+        callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
+        error_fn: Box<dyn Fn(&str) + Send + Sync>,
+    ) -> Self {
+        Self {
+            callback_fn: RwLock::new(Some(callback_fn)),
+            error_fn: RwLock::new(Some(error_fn)),
+        }
+    }
+
+    pub fn call_success(&self, id: OperationHandleId) {
+        if let Ok(guard) = self.callback_fn.read() {
+            if let Some(ref cb) = *guard {
+                cb(id, Response::Success);
+            }
+        }
+    }
+
+    pub fn call_error(&self, message: &str) {
+        if let Ok(guard) = self.error_fn.read() {
+            if let Some(ref cb) = *guard {
+                cb(message);
+            }
+        }
+    }
+
+    pub fn call_error_response(&self, id: OperationHandleId) {
+        if let Ok(guard) = self.callback_fn.read() {
+            if let Some(ref cb) = *guard {
+                cb(id, Response::Error);
+            }
+        }
+    }
+
+    pub fn disable(&self) {
+        if let Ok(mut guard) = self.callback_fn.write() {
+            *guard = None;
+        }
+        if let Ok(mut guard) = self.error_fn.write() {
+            *guard = None;
+        }
+    }
+}
+
 pub struct AppContext {
     pub batcher: QueuedBatcher,
     pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
     pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
-    callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
-    error_fn: Box<dyn Fn(&str) + Send + Sync>,
-    shutdown: Arc<AtomicBool>,
+    safe_callback: Arc<SafeCallback>,
 }
 
 pub struct SegmentServer {
     context: Arc<Mutex<AppContext>>,
     next_id: AtomicU64,
-    shutdown: Arc<AtomicBool>,
+    safe_callback: Arc<SafeCallback>,
 }
 
 pub enum ServerState {
@@ -118,15 +165,13 @@ impl Server {
         match &*state {
             ServerState::Disposed => false,
             ServerState::Ready(server) => {
-                // Set shutdown flag before changing state to prevent callbacks from firing
-                // This ensures any in-flight async tasks will skip FFI callbacks
-                server.shutdown.store(true, Ordering::SeqCst);
+                //Disable callbacks before anything else.
+                //acquires write locks and waits for any in-flight callbacks to complete.
+                // After this returns, no callbacks can ever be called again.
+                server.safe_callback.disable();
 
                 *state = ServerState::Disposed;
 
-                // Take and shutdown the runtime
-                // Use shutdown_background() to signal shutdown and return immediately without waiting for tasks to complete. This prevents blocking while
-                // tasks try to wind down which could cause deadlocks or crashes if tasks try to call back into Unity during its shutdown sequence.
                 if let Ok(mut rt_lock) = self.async_runtime.lock() {
                     if let Some(runtime) = rt_lock.take() {
                         runtime.shutdown_background();
@@ -184,24 +229,24 @@ impl SegmentServer {
         error_fn: Option<FfiErrorCallbackFn>,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
-        let shutdown = Arc::new(AtomicBool::new(false));
-
-        let shutdown_for_error = shutdown.clone();
-        let error_fn = Box::new(move |message: &str| {
-            if shutdown_for_error.load(Ordering::SeqCst) {
-                return;
-            }
-            if let Some(cb) = error_fn {
-                if let Ok(cstr) = CString::new(message) {
-                    let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        if !shutdown_for_error.load(Ordering::SeqCst) {
-                            unsafe {
-                                cb(cstr.as_ptr());
-                            }
+        let safe_callback = Arc::new(SafeCallback::new(
+            Box::new(move |id, response| unsafe {
+                callback_fn(id, response);
+            }),
+            Box::new(move |message: &str| {
+                if let Some(cb) = error_fn {
+                    if let Ok(cstr) = CString::new(message) {
+                        unsafe {
+                            cb(cstr.as_ptr());
                         }
-                    }));
-                };
-            };
+                    }
+                }
+            }),
+        ));
+
+        let daemon_safe_callback = safe_callback.clone();
+        let daemon_error_fn = Box::new(move |message: &str| {
+            daemon_safe_callback.call_error(message);
         });
 
         let event_queue: CombinedAnalyticsEventQueueNewResult =
@@ -211,7 +256,7 @@ impl SegmentServer {
             CombinedAnalyticsEventQueueNewResult::FallbackToInMemory(e, err) => {
                 let error_message =
                     format!("Cannot create persistent queue, fallback to in memory queue: {err}");
-                error_fn(&error_message);
+                safe_callback.call_error(&error_message);
                 e
             }
         };
@@ -224,11 +269,10 @@ impl SegmentServer {
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
         let send_daemon = Arc::new(Mutex::new(send_daemon));
 
-        let moved_error_fn = error_fn.clone();
         let moved_send_daemon = send_daemon.clone();
         async_runtime.spawn(async move {
             let mut guard = moved_send_daemon.lock().await;
-            guard.start(moved_error_fn);
+            guard.start(daemon_error_fn);
         });
         let direct_client = HttpClient::default();
 
@@ -238,17 +282,13 @@ impl SegmentServer {
             daemon: send_daemon,
             segment_client: direct_client,
             write_key: writer_key,
-            callback_fn: Box::new(move |id, response| unsafe {
-                callback_fn(id, response);
-            }),
-            error_fn,
-            shutdown: shutdown.clone(),
+            safe_callback: safe_callback.clone(),
         };
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
             context: Arc::new(Mutex::new(context)),
-            shutdown,
+            safe_callback,
         }
     }
 
@@ -370,22 +410,10 @@ impl SegmentServer {
 
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
-        if self.shutdown.load(Ordering::SeqCst) {
-            return;
-        }
-        let callback = self.callback_fn.as_ref();
-        let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-            if !self.shutdown.load(Ordering::SeqCst) {
-                callback(id, Response::Success);
-            }
-        }));
+        self.safe_callback.call_success(id);
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
-        if self.shutdown.load(Ordering::SeqCst) {
-            return;
-        }
-
         let message = match id {
             Some(id) => {
                 format!("Operation {} failed: {}", id, message)
@@ -393,22 +421,10 @@ impl AppContext {
             None => message,
         };
 
-        let error_fn = self.error_fn.as_ref();
-        let callback_fn = self.callback_fn.as_ref();
-        let shutdown = &self.shutdown;
-
-        let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-            if !shutdown.load(Ordering::SeqCst) {
-                error_fn(message.as_str());
-            }
-        }));
+        self.safe_callback.call_error(&message);
 
         if let Some(id) = id {
-            let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-                if !shutdown.load(Ordering::SeqCst) {
-                    callback_fn(id, Response::Error);
-                }
-            }));
-        };
+            self.safe_callback.call_error_response(id);
+        }
     }
 }
