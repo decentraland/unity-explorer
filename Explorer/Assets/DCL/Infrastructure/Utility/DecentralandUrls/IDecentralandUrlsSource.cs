@@ -6,6 +6,12 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         const string LAUNCHER_DOWNLOAD_URL = "https://explorer-artifacts.decentraland.org/launcher-rust";
         const string LEGACY_LAUNCHER_DOWNLOAD_URL = "https://explorer-artifacts.decentraland.org/launcher/dcl";
 
+        /// <summary>
+        ///     Get a raw url without caching at any moment (without dependency on FF)
+        /// </summary>
+        /// <param name="decentralandUrl"></param>
+        public string? Probe(DecentralandUrl decentralandUrl);
+
         string Url(DecentralandUrl decentralandUrl);
 
         public string TransformUrl(string originalUrl);

@@ -17,8 +17,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         private static readonly object[] TEST_CASES_SOURCE =
         {
-            new object[] { 10, 3, 0, 100 },
-            new object[] { 50, 2, 0, 100 },
+            new object[] { 10, 3, 0, 1 },
+            new object[] { 50, 2, 0, 1 },
         };
 
         private readonly DecentralandEnvironment env;
@@ -31,7 +31,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             this.env = env;
         }
 
-        [OneTimeSetUp]
+        [SetUp]
         public void ReadDump()
         {
             loadingMutex = new AssetBundleLoadingMutex();

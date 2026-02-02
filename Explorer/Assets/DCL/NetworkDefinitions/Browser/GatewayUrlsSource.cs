@@ -29,10 +29,10 @@ namespace DCL.Browser
             DecentralandUrl.ApiAuth,
             DecentralandUrl.ApiChunks,
 
-            // LiveKit rooms providers
-            DecentralandUrl.GateKeeperSceneAdapter,
-            DecentralandUrl.LocalGateKeeperSceneAdapter,
-            DecentralandUrl.ChatAdapter,
+            // LiveKit rooms providers require signed fetch
+            // DecentralandUrl.GateKeeperSceneAdapter,
+            // DecentralandUrl.LocalGateKeeperSceneAdapter,
+            // DecentralandUrl.ChatAdapter,
             DecentralandUrl.GatekeeperStatus,
             DecentralandUrl.RemotePeers,
             DecentralandUrl.RemotePeersWorld,
@@ -45,23 +45,28 @@ namespace DCL.Browser
 
             DecentralandUrl.Genesis,
             DecentralandUrl.Badges,
-            DecentralandUrl.CameraReelImages,
-            DecentralandUrl.CameraReelLink,
-            DecentralandUrl.CameraReelPlaces,
-            DecentralandUrl.CameraReelUsers,
+
+            // Requires signed fetch
+            //DecentralandUrl.CameraReelImages,
+            //DecentralandUrl.CameraReelLink,
+            //DecentralandUrl.CameraReelPlaces,
+            //DecentralandUrl.CameraReelUsers,
 
             DecentralandUrl.AssetBundleRegistry,
             DecentralandUrl.AssetBundleRegistryVersion,
 
             DecentralandUrl.MediaConverter,
-            DecentralandUrl.MarketplaceCredits,
-            DecentralandUrl.Notifications,
+
+            // DecentralandUrl.MarketplaceCredits,
+            // DecentralandUrl.Notifications, Notification partially required signed fetch
 
             // Social
-            DecentralandUrl.Communities,
             DecentralandUrl.CommunityThumbnail,
-            DecentralandUrl.Members,
-            DecentralandUrl.ActiveCommunityVoiceChats,
+
+            // The following requires signed fetch
+            //DecentralandUrl.Communities,
+            //DecentralandUrl.Members,
+            //DecentralandUrl.ActiveCommunityVoiceChats,
         };
 
         /// <summary>

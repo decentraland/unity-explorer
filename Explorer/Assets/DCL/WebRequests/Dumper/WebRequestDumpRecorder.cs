@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/*
+using Cysharp.Threading.Tasks;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.RequestsHub;
 using System;
@@ -39,7 +40,7 @@ namespace DCL.WebRequests.Dumper
                     // Make sure the analytics are created at this point
                     // They will be re-created in case of the domain reload
                     RecreateMetricsIfNeeded();
-                    instance.Add(dumpEnvelope = new WebRequestDump.Envelope(typeof(TWebRequest), envelope.CommonArguments, typeof(TWebRequestArgs), envelope.args, envelope.headersInfo, DateTime.Now));
+                    instance.Add(dumpEnvelope = new WebRequestDump.Envelope(typeof(TWebRequest), envelope.CommonArguments, typeof(TWebRequestArgs), PrepareArgsForSerialization(envelope.args), envelope.headersInfo, DateTime.Now));
                 }
 
                 TResult? result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
@@ -52,6 +53,19 @@ namespace DCL.WebRequests.Dumper
                 dumpEnvelope?.Conclude(WebRequestDump.Envelope.StatusKind.FAILURE, DateTime.Now);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Args can be become unavailable after WR execution so pre-processing required
+        /// </summary>
+        private static object PrepareArgsForSerialization<TWebRequestArgs>(TWebRequestArgs args) where TWebRequestArgs: struct
+        {
+            if (args is GenericPostArguments { UploadHandler: not null } postArguments)
+                // BufferedStringUploadHandler is disposed of after the request
+                return GenericPostArguments.Create(postArguments.UploadHandler.Value.ToString(), postArguments.ContentType!);
+
+
+            return args;
         }
 
         private void RecreateMetricsIfNeeded()
@@ -73,3 +87,4 @@ namespace DCL.WebRequests.Dumper
         }
     }
 }
+*/

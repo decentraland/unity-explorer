@@ -1,5 +1,6 @@
 ﻿using DCL.Multiplayer.Connections.DecentralandUrls;
 using Sentry;
+using Sentry.Unity;
 using System;
 using System.Linq;
 using System.Net.WebSockets;
@@ -69,7 +70,7 @@ namespace DCL.Diagnostics
             var environmentUrls = Enum.GetValues(typeof(DecentralandUrl)).Cast<DecentralandUrl>();
             foreach (var decentralandUrl in environmentUrls)
             {
-                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Url(decentralandUrl));
+                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Probe(decentralandUrl) ?? "<DYNAMICALLY RESOLVED>");
             }
             AppendFooter(stringBuilder);
 
@@ -81,8 +82,8 @@ namespace DCL.Diagnostics
             // InnerException is wrapped by the RPC tool (InvalidOperationException)
             if (exception.InnerException is WebSocketException webSocketException)
             {
-                global::Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
-                                            + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
+                SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {webSocketException.WebSocketErrorCode.ToString()} "
+                                        + $"ErrorCode: {webSocketException.ErrorCode.ToString()}", category, level: BreadcrumbLevel.Info);
             }
 
             ReportHub.LogException(exception, new ReportData(category));

@@ -40,12 +40,12 @@ namespace DCL.WebRequests.Analytics.Metrics
                 pendingRequests.Remove(key);
         }
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
             pendingRequests.Add(request, DateTime.Now);
         }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public override void OnRequestEnded<T>(T request, TimeSpan duration)
         {
             pendingRequests.Remove(request);
         }

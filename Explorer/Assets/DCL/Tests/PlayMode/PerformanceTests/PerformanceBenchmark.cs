@@ -17,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
@@ -58,6 +60,13 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         [TearDown]
         public void TearDown() =>
             reportScope?.Dispose();
+
+        protected void EnableErrors()
+        {
+            reportScope!.Mock.When(x => x.LogException(Arg.Any<Exception>(),
+                             Arg.Is<ReportData>(data => data.Category == ReportCategory.GENERIC_WEB_REQUEST), Arg.Any<Object?>()))
+                        .Do(x => Debug.LogException(x.Arg<Exception>()));
+        }
 
         protected void CreateController(int concurrency, bool disableABCache = false, DecentralandEnvironment env = DecentralandEnvironment.Zone, bool ktxEnabled = true, bool useGateway = false)
         {
