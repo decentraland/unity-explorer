@@ -52,6 +52,12 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
+                if (wallet == null)
+                {
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, "No active wallet connected");
+                    throw new Web3Exception("No active wallet connected");
+                }
+
                 if (!whitelistMethods.Contains(request.method))
                 {
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
@@ -60,12 +66,6 @@ namespace DCL.Web3.Authenticators
 
                 if (IsReadOnly(request))
                     return await SendWithoutConfirmationAsync(wallet, request, ct);
-
-                if (wallet == null)
-                {
-                    ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
-                    throw new Web3Exception("No active wallet connected");
-                }
 
                 return await SendWithConfirmationAsync(wallet, request, source, ct);
             }

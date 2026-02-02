@@ -68,7 +68,7 @@ namespace DCL.Web3.Authenticators
                 functionSignature
             );
 
-            string txData = Web3Utils.EncodeExecuteMetaTransaction(from, signature, functionSignature);
+            string txData = EncodeExecuteMetaTransaction(from, signature, functionSignature);
             return await PostToTransactionsServerAsync(from, contractAddress, txData);
         }
 
@@ -88,7 +88,7 @@ namespace DCL.Web3.Authenticators
         {
             // Create TypedData using Nethereum EIP712
             // Note: DCL uses 'salt' instead of 'chainId' in domain (bytes32 vs uint256)
-            string typedDataJson = Web3Utils.CreateMetaTxTypedData(
+            string typedDataJson = CreateMetaTxTypedData(
                 contractName,
                 contractVersion,
                 contractAddress,
@@ -204,6 +204,122 @@ namespace DCL.Web3.Authenticators
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb Meta-transaction successful! TxHash: {result.txHash}");
             return result.txHash;
+        }
+
+        /// <summary>
+        ///     Encodes the executeMetaTransaction(address,bytes,bytes32,bytes32,uint8) call.
+        ///     This is what gets sent to the transactions-server as the second param.
+        ///     Based on: https://github.com/decentraland/decentraland-transactions/blob/master/src/utils.ts
+        /// </summary>
+        public string EncodeExecuteMetaTransaction(string userAddress, string signature, string functionSignature)
+        {
+            // executeMetaTransaction selector = 0x0c53c51c
+            const string EXECUTE_META_TX_SELECTOR = "0c53c51c";
+
+            string sig = signature.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? signature[2..]
+                : signature;
+
+            string r = sig[..64];
+            string s = sig.Substring(64, 64);
+            var vInt = Convert.ToInt32(sig.Substring(128, 2), 16);
+
+            // Normalize v value (some wallets return 0/1 instead of 27/28)
+            if (vInt < 27)
+                vInt += 27;
+
+            string v = vInt.ToString("x").PadLeft(64, '0');
+
+            string method = functionSignature.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? functionSignature[2..]
+                : functionSignature;
+
+            string signatureLength = (method.Length / 2).ToString("x").PadLeft(64, '0');
+            var signaturePadding = (int)Math.Ceiling(method.Length / 64.0);
+
+            // JS library does NOT toLowerCase here - just strips 0x and pads
+            string address = userAddress.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? userAddress[2..]
+                : userAddress;
+
+            // Build the encoded call:
+            // selector + address(32) + offset(32) + r(32) + s(32) + v(32) + length(32) + data(padded)
+            return string.Concat(
+                "0x",
+                EXECUTE_META_TX_SELECTOR,
+                address.PadLeft(64, '0'), // userAddress - NO toLowerCase, just like JS!
+                "a0".PadLeft(64, '0'), // offset to functionSignature (160 = 0xa0)
+                r, // r
+                s, // s
+                v, // v
+                signatureLength, // length of functionSignature
+                method.PadRight(64 * signaturePadding, '0') // functionSignature padded
+            );
+        }
+
+        /// <summary>
+        ///     Creates EIP-712 typed data JSON for meta-transaction signing.
+        ///     NOTE: JS library (decentraland-transactions) does NOT lowercase addresses.
+        ///     It uses account/contractAddress as-is from the wallet (usually checksum format).
+        ///     EIP-712 'address' type is encoded as bytes, so case shouldn't matter for the hash.
+        ///     IMPORTANT: We use explicit JSON construction to ensure exact key ordering
+        ///     matches the JS library. JsonConvert with anonymous types may reorder keys.
+        /// </summary>
+        public string CreateMetaTxTypedData(
+            string contractName,
+            string contractVersion,
+            string contractAddress,
+            int chainIdValue,
+            BigInteger nonce,
+            string from,
+            string functionSignature)
+        {
+            // Salt is chainId padded to bytes32
+            string salt = "0x" + chainIdValue.ToString("x").PadLeft(64, '0');
+
+            // Build JSON manually to ensure exact key order matches JS library
+            // JS object key order: types, domain, primaryType, message
+            // (Note: EIP-712 shouldn't care about JSON key order, but SDK implementations might)
+            var sb = new StringBuilder();
+            sb.Append('{');
+
+            // types
+            sb.Append("\"types\":{");
+            sb.Append("\"EIP712Domain\":[");
+            sb.Append("{\"name\":\"name\",\"type\":\"string\"},");
+            sb.Append("{\"name\":\"version\",\"type\":\"string\"},");
+            sb.Append("{\"name\":\"verifyingContract\",\"type\":\"address\"},");
+            sb.Append("{\"name\":\"salt\",\"type\":\"bytes32\"}");
+            sb.Append("],");
+            sb.Append("\"MetaTransaction\":[");
+            sb.Append("{\"name\":\"nonce\",\"type\":\"uint256\"},");
+            sb.Append("{\"name\":\"from\",\"type\":\"address\"},");
+            sb.Append("{\"name\":\"functionSignature\",\"type\":\"bytes\"}");
+            sb.Append("]},");
+
+            // domain - use JsonConvert for proper escaping of contract name
+            sb.Append("\"domain\":{");
+            sb.Append($"\"name\":{JsonConvert.SerializeObject(contractName)},");
+            sb.Append($"\"version\":{JsonConvert.SerializeObject(contractVersion)},");
+            sb.Append($"\"verifyingContract\":\"{contractAddress}\",");
+            sb.Append($"\"salt\":\"{salt}\"");
+            sb.Append("},");
+
+            // primaryType
+            sb.Append("\"primaryType\":\"MetaTransaction\",");
+
+            // message
+            sb.Append("\"message\":{");
+            sb.Append($"\"nonce\":{(long)nonce},"); // Must be a number, not string!
+            sb.Append($"\"from\":\"{from}\",");
+            sb.Append($"\"functionSignature\":\"{functionSignature}\"");
+            sb.Append('}');
+
+            sb.Append('}');
+
+            var result = sb.ToString();
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb Created typed data JSON (length={result.Length}):\n{result}");
+            return result;
         }
 
         /// <summary>
