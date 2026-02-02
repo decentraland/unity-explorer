@@ -69,6 +69,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
             ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
+            ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
 
             World!.Add(entity, newUIInputComponent);
         }
@@ -143,6 +144,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
                 uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
             }
+        }
+
+        private void ApplyDefaultUiBackgroundValues(Entity entity, in VisualElement uiTransform)
+        {
+            if (World.Has<PBUiBackground>(entity)) return;
+
+            uiTransform.style.backgroundColor = new StyleColor(Color.white);
         }
 
         private void PutMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)
