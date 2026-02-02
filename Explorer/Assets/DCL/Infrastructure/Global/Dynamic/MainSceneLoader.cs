@@ -349,13 +349,17 @@ namespace Global.Dynamic
 
         private void ForceSingleRunningInstance(IAppArgs appArgs)
         {
+            Debug.Log("ForceSingleInstance.CheckFlag");
             if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return;
 
             try
             {
+                Debug.Log("ForceSingleInstance.CreateMutex");
                 singleInstanceMutex = new Mutex(false, SINGLE_INSTANCE_MUTEX_IDENTIFIER);
 
+                Debug.Log("ForceSingleInstance.WaitMutex");
                 bool acquiredHandle = singleInstanceMutex.WaitOne(0, false);
+                Debug.Log($"ForceSingleInstance.AcquiredHandle: {acquiredHandle}");
 
                 if (!acquiredHandle)
                     Application.Quit();
