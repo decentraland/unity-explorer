@@ -10,14 +10,10 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-
-#if !UNITY_WEBGL
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
-#endif
-
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
@@ -25,7 +21,6 @@ using System.Threading;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
-using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -83,7 +78,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 ParticipantsHub hub = new ();
 
                 // Pass null for AudioTracks - Room constructor will create it automatically
-#if !UNITY_WEBGL
                 Room origin = new Room(
                     new ArrayMemoryPool(),
                     new DefaultActiveSpeakers(),
@@ -98,9 +92,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     new AudioStreams(hub),
                     null
                 );
-#else
-                Room origin = new Room();
-#endif
 
                 return new LogRoom(origin, logPrefix);
             });
@@ -302,9 +293,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             return (connectResult, roomSelection);
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.DuplicateIdentity)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();

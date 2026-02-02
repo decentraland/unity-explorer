@@ -22,10 +22,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly MemoryBudget memoryBudgetProvider;
-
-#if !UNITY_WEBGL
         private readonly MediaFactoryBuilder mediaFactory;
-#endif
 
         private IObjectPool<Material> basicMatPool = null!;
         private IObjectPool<Material> pbrMatPool = null!;
@@ -34,21 +31,11 @@ namespace DCL.PluginSystem.World
 
         private int loadingAttemptsCount;
 
-        public MaterialsPlugin(
-                ECSWorldSingletonSharedDependencies sharedDependencies
-
-#if !UNITY_WEBGL
-                , MediaFactoryBuilder mediaFactory
-#endif
-
-                )
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, MediaFactoryBuilder mediaFactory)
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
-
-#if !UNITY_WEBGL
             this.mediaFactory = mediaFactory;
-#endif
         }
 
         public void Dispose() { }
@@ -78,19 +65,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(
-                    ref builder, 
-                    destroyMaterial, 
-                    sharedDependencies.SceneData, 
-                    loadingAttemptsCount, 
-                    capFrameTimeBudget
-
-#if !UNITY_WEBGL
-                    , 
-                    mediaFactory.CreateForScene(builder.World, sharedDependencies)
-#endif
-
-                    );
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget, mediaFactory.CreateForScene(builder.World, sharedDependencies));
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear. Consider revising it when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);

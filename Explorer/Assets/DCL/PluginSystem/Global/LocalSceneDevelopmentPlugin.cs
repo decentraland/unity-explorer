@@ -7,9 +7,9 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using Global.Dynamic.RealmUrl;
 using System;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading;
 using Utility;
-using Utility.Networking;
 
 namespace DCL.PluginSystem.Global
 {

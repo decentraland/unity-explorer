@@ -1,4 +1,4 @@
-using DCL.LiveKit.Public;
+using LiveKit.Proto;
 
 namespace DCL.VoiceChat
 {
@@ -8,28 +8,28 @@ namespace DCL.VoiceChat
     /// </summary>
     public static class VoiceChatDisconnectReasonHelper
     {
-        public static bool IsValidDisconnectReason(LKDisconnectReason? disconnectReason)
+        public static bool IsValidDisconnectReason(DisconnectReason? disconnectReason)
         {
             if (!disconnectReason.HasValue)
                 return false;
 
             return disconnectReason.Value switch
                    {
-                       LKDisconnectReason.RoomDeleted => true,
-                       LKDisconnectReason.RoomClosed => true,
-                       LKDisconnectReason.ParticipantRemoved => true,
-                       LKDisconnectReason.DuplicateIdentity => true,
-                       LKDisconnectReason.ServerShutdown => true,
-                       LKDisconnectReason.ClientInitiated => true,
-                       LKDisconnectReason.JoinFailure => true,
-                       LKDisconnectReason.UserRejected => true,
-                       LKDisconnectReason.SignalClose => true,
-                       LKDisconnectReason.ConnectionTimeout => true,
-                       LKDisconnectReason.StateMismatch => true,
-                       LKDisconnectReason.Migration => true,
-                       LKDisconnectReason.UnknownReason => true,
-                       LKDisconnectReason.UserUnavailable => true,
-                       LKDisconnectReason.SipTrunkFailure => true,
+                       DisconnectReason.RoomDeleted => true,
+                       DisconnectReason.RoomClosed => true,
+                       DisconnectReason.ParticipantRemoved => true,
+                       DisconnectReason.DuplicateIdentity => true,
+                       DisconnectReason.ServerShutdown => true,
+                       DisconnectReason.ClientInitiated => true,
+                       DisconnectReason.JoinFailure => true,
+                       DisconnectReason.UserRejected => true,
+                       DisconnectReason.SignalClose => true,
+                       DisconnectReason.ConnectionTimeout => true,
+                       DisconnectReason.StateMismatch => true,
+                       DisconnectReason.Migration => true,
+                       DisconnectReason.UnknownReason => true,
+                       DisconnectReason.UserUnavailable => true,
+                       DisconnectReason.SipTrunkFailure => true,
                        _ => false,
                    };
         }

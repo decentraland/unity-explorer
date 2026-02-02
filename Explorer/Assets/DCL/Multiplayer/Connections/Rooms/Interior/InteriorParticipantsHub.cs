@@ -21,16 +21,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             previous = previous is NullParticipantsHub ? null : previous;
         }
 
-        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update) =>
+        private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update) =>
             UpdatesFromParticipant?.Invoke(participant, update);
 
-        public LKParticipant LocalParticipant() =>
+        public Participant LocalParticipant() =>
             assigned.EnsureAssigned().LocalParticipant();
 
-        public LKParticipant? RemoteParticipant(string identity) =>
+        public Participant? RemoteParticipant(string identity) =>
             assigned.EnsureAssigned().RemoteParticipant(identity);
 
-        public IReadOnlyDictionary<string, LKParticipant> RemoteParticipantIdentities() =>
+        public IReadOnlyDictionary<string, Participant> RemoteParticipantIdentities() =>
             assigned.EnsureAssigned().RemoteParticipantIdentities();
     }
 }

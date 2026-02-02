@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using System.Collections.Generic;
@@ -20,5 +18,3 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         }
     }
 }
-
-#endif

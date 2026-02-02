@@ -1,5 +1,4 @@
-using System;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 #if !UNITY_WEBGL
 using Microsoft.ClearScript.JavaScript;
 #endif
@@ -8,21 +7,21 @@ namespace SceneRuntime.Apis
 {
     public static class JSPromiseConverter
     {
-        public static object ToPromise<T>(Task<T> task, IJavaScriptEngine engine)
+        public static object ToPromise<T>(UniTask<T> uniTask, IJavaScriptEngine engine)
         {
 #if UNITY_WEBGL
-            return engine.CreatePromiseFromTask(task);
+            return engine.CreatePromise(uniTask);
 #else
-            return task.ToPromise()!;
+            return uniTask.AsTask().ToPromise()!;
 #endif
         }
 
-        public static object ToPromise(Task task, IJavaScriptEngine engine)
+        public static object ToPromise(UniTask uniTask, IJavaScriptEngine engine)
         {
 #if UNITY_WEBGL
-            return engine.CreatePromiseFromTask(task);
+            return engine.CreatePromise(uniTask);
 #else
-            return task.ToPromise()!;
+            return uniTask.AsTask().ToPromise()!;
 #endif
         }
     }

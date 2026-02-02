@@ -1,10 +1,6 @@
 using Cysharp.Threading.Tasks;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-#endif
-
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -44,11 +40,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly bool includeUserBlocking;
-
-#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
-#endif
-
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
@@ -73,11 +65,7 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-
-#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
-#endif
-
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
@@ -85,9 +73,7 @@ namespace DCL.Friends.UI.FriendPanel
             IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
-#endif
             this.includeUserBlocking = includeUserBlocking;
             this.sharedSpaceManager = sharedSpaceManager;
 
@@ -102,13 +88,8 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-
-#if !NO_LIVEKIT_MODE
                     chatEventBus,
-#endif
-
-                    sharedSpaceManager
-                    );
+                    sharedSpaceManager);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -120,11 +101,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-
-#if !NO_LIVEKIT_MODE
                     chatEventBus,
-#endif
-
                     sharedSpaceManager,
                     voiceChatOrchestrator);
 
@@ -201,12 +178,8 @@ namespace DCL.Friends.UI.FriendPanel
 
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
-#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
-#else
-            throw new NotSupportedException();
-#endif
         }
 
         private void CloseFriendsPanel(InputAction.CallbackContext obj) =>

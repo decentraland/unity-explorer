@@ -24,12 +24,8 @@ namespace DCL.PluginSystem
             if (type == typeof(NoExposedPluginSettings))
                 return NoExposedPluginSettings.Instance;
 
-            try { return settings.Find(x => x?.GetType() == type).EnsureNotNull(); }
-            catch (Exception e) 
-            { 
-                string availables = string.Join('\n', settings.Select(x => x?.GetType()?.FullName ?? "unknown"));
-                throw new NullReferenceException($"Settings not found for type {type.FullName} at {GetType().FullName}, only has: {availables}", e); 
-            }
+            try { return settings.Find(x => x.GetType() == type).EnsureNotNull(); }
+            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {type.Name} at {GetType().FullName}", e); }
         }
 
         public async UniTask EnsureValidAsync()

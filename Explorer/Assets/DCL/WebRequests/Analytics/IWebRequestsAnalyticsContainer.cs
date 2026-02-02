@@ -53,7 +53,6 @@ namespace DCL.WebRequests.Analytics
             }
         }
 
-#if !UNITY_WEBGL
         internal static async UniTask WithChromeDevtoolsAsync<TWebRequest, TWebRequestArgs>(this UniTask innerTask, RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, UnityWebRequest uwr, Option<ChromeDevtoolProtocolClient> chromeDevtoolProtocolClient) where TWebRequestArgs: struct where TWebRequest: struct, ITypedWebRequest
         {
             NotifyWebRequestScope? notifyScope = null;
@@ -104,6 +103,5 @@ namespace DCL.WebRequests.Analytics
                 throw;
             }
         }
-#endif
     }
 }

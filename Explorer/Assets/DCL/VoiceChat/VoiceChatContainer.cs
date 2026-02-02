@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Chat.EventBus;
 using DCL.Chat.ChatServices;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -70,5 +68,3 @@ namespace DCL.VoiceChat
         }
     }
 }
-
-#endif

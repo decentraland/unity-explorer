@@ -32,7 +32,7 @@ namespace DCL.Landscape
         }
 
         public static void ExtractEmptyParcels(int2 minParcel, int2 maxParcel,
-            ref NativeList<int2> emptyParcels, in NativeHashSet<int2>.ReadOnly ownedParcels)
+            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels)
         {
             if (!emptyParcels.IsCreated)
                 emptyParcels = new NativeList<int2>(Allocator.Persistent);
@@ -50,15 +50,15 @@ namespace DCL.Landscape
         public static JobHandle SetupEmptyParcelsJobs(
             ref NativeParallelHashMap<int2, int> emptyParcelsData,
             ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,
-            in NativeArray<int2>.ReadOnly emptyParcels,
-            ref NativeHashSet<int2>.ReadOnly ownedParcels,
+            in NativeArray<int2> emptyParcels,
+            ref NativeHashSet<int2> ownedParcels,
             int2 minParcel, int2 maxParcel,
             float heightScaleNerf)
         {
             emptyParcelsData = new NativeParallelHashMap<int2, int>(emptyParcels.Length, Allocator.Persistent);
             emptyParcelsNeighborData = new NativeParallelHashMap<int2, EmptyParcelNeighborData>(emptyParcels.Length, Allocator.Persistent);
 
-            var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels, emptyParcelsData.AsParallelWriter(),
+            var job = new CalculateEmptyParcelBaseHeightJob(in emptyParcels, ownedParcels.AsReadOnly(), emptyParcelsData.AsParallelWriter(),
                 heightScaleNerf, minParcel, maxParcel);
 
             JobHandle handle = job.Schedule(emptyParcels.Length, 32);

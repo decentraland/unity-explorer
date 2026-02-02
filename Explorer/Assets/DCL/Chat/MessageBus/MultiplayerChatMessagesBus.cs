@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 #nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
@@ -18,7 +16,6 @@ using LiveKit.Proto;
 using System;
 using System.Threading;
 using Utility;
-using DCL.LiveKit.Public;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat.MessageBus
@@ -179,9 +176,7 @@ namespace DCL.Chat.MessageBus
             chat.Payload.ClearForwardedFrom(); // It has to be reset in every use. To be filled by the server.
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
-            chat.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
+            chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
     }
 }
-
-#endif

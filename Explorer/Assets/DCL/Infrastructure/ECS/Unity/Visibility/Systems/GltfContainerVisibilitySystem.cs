@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -25,7 +25,14 @@ namespace ECS.Unity.Visibility.Systems
             List<Renderer> renderers = component.Promise.Result!.Value.Asset!.Renderers;
 
             for (var i = 0; i < renderers.Count; i++)
-                renderers[i].enabled = visible;
+            {
+                if (renderers[i] != null)
+                    renderers[i].enabled = visible;
+                else
+                {
+                    UnityEngine.Debug.LogWarning($"[Visibility] GltfContainerVisibilitySystem: Renderer[{i}] is null!");
+                }
+            }
         }
     }
 }

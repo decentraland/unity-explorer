@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
@@ -322,5 +320,3 @@ namespace DCL.VoiceChat
         }
     }
 }
-
-#endif

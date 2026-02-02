@@ -1,5 +1,3 @@
-#if !UNITY_WEBGL
-
 using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients;
 
@@ -21,6 +19,3 @@ namespace DCL.Multiplayer.Connections.FfiClients
         }
     }
 }
-
-// TODO initialize webGL bridge
-#endif

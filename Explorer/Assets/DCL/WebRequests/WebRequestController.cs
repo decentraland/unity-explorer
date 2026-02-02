@@ -74,10 +74,7 @@ namespace DCL.WebRequests
                         attemptNumber++;
 
                         await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
-#if !UNITY_WEBGL
-                                     .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient)
-#endif
-                                     ;
+                                     .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
                     }
 
                     analyticsContainer.OnProcessDataStarted(request);

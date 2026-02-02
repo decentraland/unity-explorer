@@ -16,6 +16,7 @@ using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -54,7 +55,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
         // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
         // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
-        public async UniTask<IDownload> RequestAsync(Uri uri)
+        public async Task<IDownload> RequestAsync(Uri uri)
         {
             var downloadUri = GetDownloadUri(uri);
             var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(downloadUri)));
@@ -91,7 +92,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             return new GltfDownloadResult(data, text, error, success);
         }
 
-        public async UniTask<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
+        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
             var downloadUri = GetDownloadUri(uri);
             var texturePromise = Promise.Create(world, new GetTextureIntention

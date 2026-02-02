@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -40,5 +38,3 @@ namespace Global.Dynamic.ChatCommands
         }
     }
 }
-
-#endif

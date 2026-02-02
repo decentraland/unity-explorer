@@ -1,7 +1,7 @@
+using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using System;
-using System.Threading.Tasks;
 
 namespace SceneRuntime.V8
 {
@@ -51,10 +51,10 @@ namespace SceneRuntime.V8
         public string GetStackTrace() =>
             V8Engine.GetStackTrace();
 
-        public object CreatePromiseFromTask<T>(Task<T> task) =>
-            task.ToPromise()!;
+        public object CreatePromise<T>(UniTask<T> uniTask) =>
+            uniTask.AsTask().ToPromise()!;
 
-        public object CreatePromiseFromTask(Task task) =>
-            task.ToPromise()!;
+        public object CreatePromise(UniTask uniTask) =>
+            uniTask.AsTask().ToPromise()!;
     }
 }

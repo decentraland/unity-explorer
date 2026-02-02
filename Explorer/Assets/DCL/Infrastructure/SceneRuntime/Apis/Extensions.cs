@@ -44,7 +44,7 @@ namespace SceneRuntime.Apis
                     })
                    .Forget();
 
-            return JSPromiseConverter.ToPromise(completionSource.Task.AsTask(), api.engine);
+            return JSPromiseConverter.ToPromise(completionSource.Task, api.engine);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace SceneRuntime.Apis
                     })
                    .Forget();
 
-            return JSPromiseConverter.ToPromise(completionSource.Task.AsTask(), api.engine);
+            return JSPromiseConverter.ToPromise(completionSource.Task, api.engine);
         }
     }
 }

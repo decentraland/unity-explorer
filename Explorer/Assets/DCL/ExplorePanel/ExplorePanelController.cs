@@ -50,10 +50,7 @@ namespace DCL.ExplorePanel
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
-
-#if !NO_LIVEKIT_MODE
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
-#endif
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -68,9 +65,7 @@ namespace DCL.ExplorePanel
             CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
-#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController communitiesBrowserController,
-#endif
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
@@ -88,9 +83,7 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
-#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController = communitiesBrowserController;
-#endif
         }
 
         public override void Dispose()
@@ -131,11 +124,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, SettingsController },
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
-#if !NO_LIVEKIT_MODE
                 { ExploreSections.Communities, CommunitiesBrowserController },
-#else
-                { ExploreSections.Communities, CameraReelController }, // MOCK to avoid NRE
-#endif
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);

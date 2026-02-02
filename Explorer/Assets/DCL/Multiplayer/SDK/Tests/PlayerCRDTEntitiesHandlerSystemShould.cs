@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.Core;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
@@ -255,5 +253,3 @@ namespace DCL.Multiplayer.SDK.Tests
         }
     }
 }
-
-#endif

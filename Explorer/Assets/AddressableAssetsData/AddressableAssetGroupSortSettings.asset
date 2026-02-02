@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: AddressableAssetGroupSortSettings
   m_EditorClassIdentifier: 
   sortOrder:
+  - de7c603705e385d42bb91efd7bb71f47
   - bbf196456d6041d4e9cb25f216e21f0c
   - 08d9776e0234ee84d85625da0bd57c97
   - 8a4a1b7362f524e55a31f86b70c20d13

@@ -123,6 +123,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         return CRDTReconciliationEffect.NoChanges;
                     }
 
+                    if (message.ComponentId == 1081)
+                        UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
+
                     // Store the first and the last result
                     bool componentBatchExists;
 
@@ -229,14 +232,22 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (componentsBatch.Count == 0) continue;
 
-                    if (!entitiesMap.TryGetValue(entity, out Entity realEntity))
+                    bool isNewEntity = !entitiesMap.TryGetValue(entity, out Entity realEntity);
+                    if (isNewEntity)
+                    {
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
+                        UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
+                    }
 
                     foreach (BatchState batchState in componentsBatch.Values)
                     {
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
 
+                        // Skip logging for Transform (componentId=1) to reduce spam
+                        if (batchState.crdtMessage.ComponentId != 1)
+                            UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
+                        
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
                     }

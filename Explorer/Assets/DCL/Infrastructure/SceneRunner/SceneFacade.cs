@@ -16,12 +16,13 @@ namespace SceneRunner
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
+        private readonly InterlockedFlag sceneCodeIsRunning = new ();
+
+        private int intervalMS;
+
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
         public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
-
-        internal ISceneRuntime runtimeInstance => deps.Runtime;
-        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public ISceneData SceneData { get; }
 
@@ -29,9 +30,8 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        private int intervalMS;
-
-        private readonly InterlockedFlag sceneCodeIsRunning = new ();
+        internal ISceneRuntime runtimeInstance => deps.Runtime;
+        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public SceneFacade(
             ISceneData sceneData,
@@ -47,10 +47,10 @@ namespace SceneRunner
         }
 
         /// <remarks>
-        /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
-        /// shall be the chain of Dispose calls.
+        ///     <see cref="SceneFacade" /> is a component in the global scene as an
+        ///     <see cref="ISceneFacade" />. It owns its <see cref="ISceneRuntime" /> through its
+        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
+        ///     shall be the chain of Dispose calls.
         /// </remarks>
         public void Dispose()
         {
@@ -62,6 +62,12 @@ namespace SceneRunner
             DisposeInternal();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
+        }
+
+        public void ApplyStaticMessagesIfAny()
+        {
+            if (SceneData.StaticSceneMessages.Data.Length > 0)
+                runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
         }
 
         public void SetTargetFPS(int fps)
@@ -86,7 +92,8 @@ namespace SceneRunner
             return false;
         }
 
-        public bool IsSceneReady() => SceneData.SceneLoadingConcluded;
+        public bool IsSceneReady() =>
+            SceneData.SceneLoadingConcluded;
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
@@ -104,6 +111,7 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
+
             try
             {
                 // Start the scene
@@ -135,6 +143,7 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -187,7 +196,7 @@ namespace SceneRunner
 
                 // Just idle, don't do anything, need to wait for an actual value
                 // WebGL-friendly
-                await UniTask.Delay(10, cancellationToken: ct); 
+                await UniTask.Delay(10, cancellationToken: ct);
             }
 
             return true;
@@ -201,10 +210,10 @@ namespace SceneRunner
         }
 
         /// <remarks>
-        /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
-        /// shall be the chain of Dispose calls.
+        ///     <see cref="SceneFacade" /> is a component in the global scene as an
+        ///     <see cref="ISceneFacade" />. It owns its <see cref="ISceneRuntime" /> through its
+        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
+        ///     shall be the chain of Dispose calls.
         /// </remarks>
         public async UniTask DisposeAsync()
         {

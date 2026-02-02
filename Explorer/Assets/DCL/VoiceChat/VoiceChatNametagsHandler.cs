@@ -74,7 +74,7 @@ namespace DCL.VoiceChat
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
         }
 
-        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
         {
             switch (update)
             {

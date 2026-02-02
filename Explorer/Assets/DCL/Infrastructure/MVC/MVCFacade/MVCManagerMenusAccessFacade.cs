@@ -144,25 +144,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(
-                    friendServiceProxy,
-
-#if !NO_LIVEKIT_MODE
-                    chatEventBus, 
-#endif
-
-                    mvcManager,
-                    contextMenuSettings,
-                    analytics, 
-                    includeUserBlocking, 
-                    onlineUsersProvider, 
-                    realmNavigator, 
-                    friendOnlineStatusCacheProxy, 
-                    sharedSpaceManager, 
-                    includeCommunities, 
-                    communitiesDataProvider, 
-                    voiceChatOrchestrator
-                    );
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 
@@ -170,22 +152,10 @@ namespace MVC
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
-                friendServiceProxy, 
-
-#if !NO_LIVEKIT_MODE
-                chatEventBus, 
-#endif
-
-                mvcManager,
-                contextMenuSettings, 
-                analytics, 
-                onlineUsersProvider,
-                realmNavigator, 
-                friendOnlineStatusCacheProxy, 
-                sharedSpaceManager,
-                voiceChatContextMenuSettings, 
-                voiceChatOrchestrator, 
-                communitiesDataProvider);
+                friendServiceProxy, chatEventBus, mvcManager,
+                contextMenuSettings, analytics, onlineUsersProvider,
+                realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager,
+                voiceChatContextMenuSettings, voiceChatOrchestrator, communitiesDataProvider);
 
             await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);
         }

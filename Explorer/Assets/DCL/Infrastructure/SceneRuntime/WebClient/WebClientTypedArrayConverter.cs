@@ -1,0 +1,17 @@
+using System;
+using Utility;
+
+namespace SceneRuntime.WebClient
+{
+    public class WebClientTypedArrayConverter : ITypedArrayConverter
+    {
+        public IDCLTypedArray<byte> Convert(object typedArray)
+        {
+            if (typedArray is IDCLTypedArray<byte> dclTypedArray)
+                return dclTypedArray;
+
+            // WebGL should only receive IDCLTypedArray, not ITypedArray
+            throw new ArgumentException($"WebGL expects IDCLTypedArray<byte>, but got {typedArray?.GetType()}", nameof(typedArray));
+        }
+    }
+}

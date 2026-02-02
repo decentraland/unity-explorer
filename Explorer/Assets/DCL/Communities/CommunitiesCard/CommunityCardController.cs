@@ -1,13 +1,7 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-#endif
-
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
@@ -85,11 +79,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
-
-#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
-#endif
-
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -131,11 +121,7 @@ namespace DCL.Communities.CommunitiesCard
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
-
-#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
-#endif
-
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
@@ -159,11 +145,7 @@ namespace DCL.Communities.CommunitiesCard
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
-
-#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
-#endif
-
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
@@ -853,5 +835,3 @@ namespace DCL.Communities.CommunitiesCard
             UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));
     }
 }
-
-#endif

@@ -49,10 +49,8 @@ namespace Utility.Multithreading
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Increment(ref int location)
-        {
+        public static int Increment(ref int location) =>
             Interlocked.Increment(ref location);
-        }
 #endif
 
 #if UNITY_WEBGL
@@ -64,10 +62,8 @@ namespace Utility.Multithreading
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ulong Increment(ref ulong location)
-        {
+        public static long Increment(ref long location) =>
             Interlocked.Increment(ref location);
-        }
 #endif
 
 #if UNITY_WEBGL

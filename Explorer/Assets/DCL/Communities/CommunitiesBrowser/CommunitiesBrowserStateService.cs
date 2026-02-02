@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Utilities;
 using DCL.VoiceChat;
@@ -19,10 +17,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly EventSubscriptionScope scope = new ();
         public IReadonlyReactiveProperty<string> CurrentCommunityId { get; }
 
-        public CommunitiesBrowserStateService(
-                CommunitiesBrowserEventBus browserEventBus,
-                ICommunityCallOrchestrator communityCallOrchestrator
-                )
+        public CommunitiesBrowserStateService(CommunitiesBrowserEventBus browserEventBus, ICommunityCallOrchestrator communityCallOrchestrator)
         {
             CurrentCommunityId = communityCallOrchestrator.CurrentCommunityId;
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.UpdateJoinedCommunityEvent>(UpdateJoinedCommunity));
@@ -129,5 +124,3 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
-
-#endif

@@ -6,12 +6,11 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using UnityEngine.Pool;
-using DCL.LiveKit.Public;
-using Utility.Multithreading;
 
 namespace DCL.VoiceChat
 {
@@ -30,11 +29,11 @@ namespace DCL.VoiceChat
         private readonly IWeb3IdentityCache identityCache;
 
         private readonly HashSet<string> connectedParticipants = new ();
-        private readonly DCLConcurrentDictionary<string, VoiceChatParticipantState> participantStates = new ();
-        private readonly DCLConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
+        private readonly ConcurrentDictionary<string, VoiceChatParticipantState> participantStates = new ();
+        private readonly ConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
         private readonly HashSet<string> speakers = new ();
 
-        private readonly List<LKParticipant> currentParticipants = new();
+        private readonly List<Participant> currentParticipants = new();
         private readonly List<string> participantsToRemove = new();
         private readonly List<(string participantId, VoiceChatParticipantState state)> joinedParticipants = new();
 
@@ -124,7 +123,7 @@ namespace DCL.VoiceChat
             return participantStates.TryGetValue(participantId, out participantState);
         }
 
-        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -248,7 +247,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -293,7 +292,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void HandleDisconnection(LKDisconnectReason? disconnectReason)
+        private void HandleDisconnection(DisconnectReason? disconnectReason)
         {
             bool shouldClearData = VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason);
 
@@ -351,7 +350,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity cleared, reset LocalParticipantId and state");
         }
 
-        private VoiceChatParticipantState CreateParticipantState(LKParticipant participant)
+        private VoiceChatParticipantState CreateParticipantState(Participant participant)
         {
             var state = VoiceChatParticipantState.CreateDefault(participant.Identity);
 
@@ -410,7 +409,7 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
             }
 
-            foreach (LKParticipant participant in currentParticipants)
+            foreach (Participant participant in currentParticipants)
             {
                 if (participantStates.TryGetValue(participant.Identity, out VoiceChatParticipantState existingState))
                 {
@@ -425,7 +424,7 @@ namespace DCL.VoiceChat
                 }
             }
 
-            LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+            Participant localParticipant = voiceChatRoom.Participants.LocalParticipant();
             RefreshParticipantStateFromMetadata(localParticipant, LocalParticipantState);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
 
@@ -433,21 +432,15 @@ namespace DCL.VoiceChat
             SpeakersUpdated?.Invoke(speakers.Count);
         }
 
-        private void RefreshParticipantStateFromMetadata(LKParticipant? participant, VoiceChatParticipantState? existingState)
+        private void RefreshParticipantStateFromMetadata(Participant? participant, VoiceChatParticipantState? existingState)
         {
             if (participant == null || existingState == null) return;
 
-            string identity = participant.Value.Identity;
-
-#if !UNITY_WEBGL
             ParticipantCallMetadata? metadata = ParseParticipantMetadata(participant.Identity, participant.Metadata);
-#else
-            ParticipantCallMetadata? metadata = ParseParticipantMetadata(identity, participant.Value.Metadata);
-#endif
 
             if (!metadata.HasValue) return;
 
-            UpdateParticipantStateFromMetadata(identity, metadata.Value, existingState);
+            UpdateParticipantStateFromMetadata(participant.Identity, metadata.Value, existingState);
         }
 
         private void UpdateParticipantStateFromMetadata(string participantId, ParticipantCallMetadata metadata, VoiceChatParticipantState participantState)

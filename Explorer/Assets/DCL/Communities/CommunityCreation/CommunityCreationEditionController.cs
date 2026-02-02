@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
@@ -666,5 +664,3 @@ namespace DCL.Communities.CommunityCreation
         }
     }
 }
-
-#endif

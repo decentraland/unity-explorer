@@ -1,5 +1,5 @@
 ﻿using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace SocketIOClient.Extensions
 {
@@ -20,7 +20,7 @@ namespace SocketIOClient.Extensions
             action?.Invoke(arg1);
         }
 
-        public static async UniTask TryInvokeAsync<T>(this Func<T, UniTask> func, T arg1)
+        public static async Task TryInvokeAsync<T>(this Func<T, Task> func, T arg1)
         {
             if (func is null) { return; }
 

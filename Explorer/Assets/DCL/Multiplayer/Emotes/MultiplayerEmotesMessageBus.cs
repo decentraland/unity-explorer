@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -82,7 +81,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Urn = emoteId;
             emote.Payload.Timestamp = timestamp;
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)

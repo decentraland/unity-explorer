@@ -47,7 +47,7 @@ namespace DCL.Landscape
         private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
-        private NativeHashSet<int2>.ReadOnly ownedParcels;
+        private NativeHashSet<int2> ownedParcels;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
@@ -78,7 +78,7 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2>.ReadOnly ownedParcels,
+            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels,
             LandscapeData landscapeData)
         {
             this.ownedParcels = ownedParcels;
@@ -154,7 +154,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
                         TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel.MinParcel,
-                            TerrainModel.MaxParcel, ref emptyParcels, in ownedParcels);
+                            TerrainModel.MaxParcel, ref emptyParcels, ref ownedParcels);
 
                         await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
                     }
@@ -221,6 +221,7 @@ namespace DCL.Landscape
                 IsTerrainGenerated = true;
 
                 emptyParcels.Dispose();
+                ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -236,7 +237,7 @@ namespace DCL.Landscape
         {
             JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
                 ref emptyParcelsData, ref emptyParcelsNeighborData,
-                emptyParcels.AsArray().AsReadOnly(), ref ownedParcels,
+                emptyParcels.AsArray(), ref ownedParcels,
                 terrainModel.MinParcel, terrainModel.MaxParcel,
                 terrainGenData.heightScaleNerf);
 
@@ -250,7 +251,7 @@ namespace DCL.Landscape
             emptyParcelsData.Dispose();
         }
 
-        internal static Texture2D CreateOccupancyMap(NativeHashSet<int2>.ReadOnly ownedParcels, int2 minParcel,
+        internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             int absMax = cmax(abs(int4(minParcel, maxParcel)));

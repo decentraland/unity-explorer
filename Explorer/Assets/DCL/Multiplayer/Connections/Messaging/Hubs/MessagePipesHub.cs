@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.Messaging.Throughput;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -57,5 +55,3 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
         }
     }
 }
-
-#endif

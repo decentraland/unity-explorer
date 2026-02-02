@@ -4,10 +4,11 @@ using SceneRuntime.ScenePermissions;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System;
+using System.Collections.Concurrent;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Networking;
 using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation
@@ -23,7 +24,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly IJsOperations jsOperations;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
-        private readonly DCLConcurrentDictionary<int, WebSocketRental> webSockets = new ();
+        private readonly ConcurrentDictionary<int, WebSocketRental> webSockets = new ();
 
         private int nextId;
 
@@ -222,13 +223,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                         ReadOnlyMemory<byte> subBuffer = data.Slice(offset, length);
                         bool endOfMessage = pages - 1 == i;
-                        await rental.WebSocket.SendAsync(subBuffer, messageType, endOfMessage, ct);
+                        await rental.WebSocket.SendAsync(subBuffer, messageType, endOfMessage, ct).ConfigureAwait(false);
                     }
                 }
                 finally { rental.SendLock.Release(); }
             }
 
-            public async UniTask<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(DCLWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
+            public async UniTask<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(ClientWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
             {
                 PoolableByteArray finalBuffer = PoolableByteArray.EMPTY;
 
@@ -240,7 +241,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     while (true)
                     {
-                        WebSocketReceiveResult? chunkResult = await webSocket.ReceiveAsync(chunkBuffer.Array, ct);
+                        WebSocketReceiveResult? chunkResult = await webSocket.ReceiveAsync(chunkBuffer.Array, ct).ConfigureAwait(false);
 
                         if (chunkResult.CloseStatus != null && chunkResult.CloseStatus != WebSocketCloseStatus.Empty)
                             return (finalBuffer, WebSocketMessageType.Close, chunkResult.CloseStatus!.Value);
@@ -272,7 +273,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private class WebSocketRental : IDisposable
         {
             public readonly DCLSemaphoreSlim SendLock = new (1, 1);
-            public readonly DCLWebSocket WebSocket = new ();
+            public readonly ClientWebSocket WebSocket = new ();
 
             public void Dispose()
             {

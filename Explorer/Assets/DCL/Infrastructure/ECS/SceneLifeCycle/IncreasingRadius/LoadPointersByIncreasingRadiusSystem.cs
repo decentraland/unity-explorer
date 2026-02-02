@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -38,8 +37,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
             HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData) : base(world, roadCoordinates, realmData)
         {
-            Assert.IsNotNull(landscapeParcelData);
-
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;

@@ -3,10 +3,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
-using Utility.Multithreading;
 
 namespace SocketIOClient.Transport.Http
 {
@@ -17,12 +16,12 @@ namespace SocketIOClient.Transport.Http
             _pollingHandler = pollingHandler ?? throw new ArgumentNullException(nameof(pollingHandler));
             _pollingHandler.OnTextReceived = OnTextReceived;
             _pollingHandler.OnBytesReceived = OnBinaryReceived;
-            _sendLock = new DCLSemaphoreSlim(1, 1);
+            _sendLock = new SemaphoreSlim(1, 1);
         }
 
         private bool _dirty;
         private string _httpUri;
-        private readonly DCLSemaphoreSlim _sendLock;
+        private readonly SemaphoreSlim _sendLock;
         private CancellationTokenSource _pollingTokenSource;
 
         private readonly IHttpPollingHandler _pollingHandler;
@@ -31,7 +30,7 @@ namespace SocketIOClient.Transport.Http
 
         private void StartPolling(CancellationToken cancellationToken)
         {
-            DCLTask.RunOnThreadPool(async () =>
+            Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -40,14 +39,14 @@ namespace SocketIOClient.Transport.Http
                     //     await Task.Delay(20, cancellationToken);
                     //     continue;
                     // }
-                    try { await _pollingHandler.GetAsync(_httpUri, CancellationToken.None); }
+                    try { await _pollingHandler.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false); }
                     catch (Exception e)
                     {
                         OnError(e);
                         break;
                     }
                 }
-            });
+            }, TaskCreationOptions.LongRunning);
         }
 
         /// <summary>
@@ -55,7 +54,7 @@ namespace SocketIOClient.Transport.Http
         /// <param name="uri"></param>
         /// <param name="cancellationToken"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        public override async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
             if (_dirty)
                 throw new InvalidOperationException(DirtyMessage);
@@ -63,19 +62,31 @@ namespace SocketIOClient.Transport.Http
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             _httpUri = uri.ToString();
 
-            try { await _pollingHandler.SendAsync(req, cancellationToken); }
+            try { await _pollingHandler.SendAsync(req, cancellationToken).ConfigureAwait(false); }
             catch (Exception e) { throw new TransportException($"Could not connect to '{uri}'", e); }
 
             _dirty = true;
         }
 
-        public override UniTask DisconnectAsync(CancellationToken cancellationToken)
+        public override Task DisconnectAsync(CancellationToken cancellationToken)
         {
             _pollingTokenSource.Cancel();
 
             if (PingTokenSource != null) { PingTokenSource.Cancel(); }
 
-            return UniTask.CompletedTask;
+            return Task.CompletedTask;
+        }
+
+        public override void AddHeader(string key, string val)
+        {
+            _pollingHandler.AddHeader(key, val);
+        }
+
+        public override void SetProxy(IWebProxy proxy)
+        {
+            if (_dirty) { throw new InvalidOperationException("Unable to set proxy after connecting"); }
+
+            _pollingHandler.SetProxy(proxy);
         }
 
         public override void Dispose()
@@ -85,11 +96,11 @@ namespace SocketIOClient.Transport.Http
             _pollingTokenSource.TryDispose();
         }
 
-        public override async UniTask SendAsync(Payload payload, CancellationToken cancellationToken)
+        public override async Task SendAsync(Payload payload, CancellationToken cancellationToken)
         {
             try
             {
-                await _sendLock.WaitAsync(cancellationToken);
+                await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                 if (!string.IsNullOrEmpty(payload.Text))
                 {
@@ -110,7 +121,7 @@ namespace SocketIOClient.Transport.Http
             finally { _sendLock.Release(); }
         }
 
-        protected override async UniTask OpenAsync(OpenedMessage msg)
+        protected override async Task OpenAsync(OpenedMessage msg)
         {
             _httpUri += "&sid=" + msg.Sid;
             _pollingTokenSource = new CancellationTokenSource();

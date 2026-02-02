@@ -1,8 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
-// Currently media-streams are not supported for webgl
-#if !UNITY_WEBGL
-
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Proto;
@@ -231,7 +226,3 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
-
-#endif // !UNITY_WEBGL
-
-#endif // !NO_LIVEKIT_MODE

@@ -2,8 +2,8 @@
 using DCL.Diagnostics;
 using Sentry;
 using System;
+using System.Net.WebSockets;
 using System.Threading;
-using Utility.Networking;
 
 namespace DCL.SocialService
 {

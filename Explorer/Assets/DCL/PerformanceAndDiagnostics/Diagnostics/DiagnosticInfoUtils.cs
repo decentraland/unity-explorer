@@ -2,9 +2,9 @@
 using Sentry;
 using System;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using UnityEngine.Device;
-using Utility.Networking;
 
 namespace DCL.Diagnostics
 {

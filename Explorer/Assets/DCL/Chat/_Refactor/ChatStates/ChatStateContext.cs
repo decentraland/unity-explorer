@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using DCL.Chat.ChatServices;
+﻿using DCL.Chat.ChatServices;
 
 namespace DCL.Chat.ChatStates
 {
@@ -16,5 +14,3 @@ namespace DCL.Chat.ChatStates
         }
     }
 }
-
-#endif

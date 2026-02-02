@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using System;
+﻿using System;
 using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
@@ -273,5 +271,3 @@ namespace DCL.Communities
         }
     }
 }
-
-#endif

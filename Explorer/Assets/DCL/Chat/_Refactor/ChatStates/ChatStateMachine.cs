@@ -1,6 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
-
-using DCL.Chat.ChatServices;
+﻿using DCL.Chat.ChatServices;
 using MVC;
 using System;
 using Utility;
@@ -162,5 +160,3 @@ namespace DCL.Chat.ChatStates
         }
     }
 }
-
-#endif

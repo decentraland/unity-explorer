@@ -16,7 +16,6 @@ using LiveKit.Proto;
 using System.Linq;
 using UnityEngine;
 using Utility;
-using DCL.LiveKit.Public;
 
 namespace DCL.Chat.ChatServices
 {
@@ -113,7 +112,7 @@ namespace DCL.Chat.ChatServices
                 );
 
                 await UniTask.WaitUntil(() =>
-                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected &&
+                    chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
@@ -250,7 +249,7 @@ namespace DCL.Chat.ChatServices
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
 
             //If we allow ALL messages, we need to know their settings.
-            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)?.Metadata);
+            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)!.Metadata);
 
             if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
@@ -258,7 +257,7 @@ namespace DCL.Chat.ChatServices
             return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
         }
 
-        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
             lock (onlineParticipants)
             {
@@ -284,7 +283,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
             string userId = participant.Identity;

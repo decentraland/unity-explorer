@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
 using System;
@@ -19,6 +19,11 @@ namespace SceneRunner.Scene
         void Initialize();
 
         /// <summary>
+        ///     Applies static CRDT (e.g. main.crdt) to the ECS if present. Call after Initialize and before SetRunning/StartScene.
+        /// </summary>
+        void ApplyStaticMessagesIfAny();
+
+        /// <summary>
         ///     Start an update loop with a given FPS
         /// </summary>
         UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct);
@@ -32,9 +37,9 @@ namespace SceneRunner.Scene
 
         void SetIsCurrent(bool isCurrent);
 
-        internal UniTask StartScene();
+        public UniTask StartScene();
 
-        internal UniTask Tick(float dt);
+        public UniTask Tick(float dt);
 
         bool Contains(Vector2Int parcel);
 

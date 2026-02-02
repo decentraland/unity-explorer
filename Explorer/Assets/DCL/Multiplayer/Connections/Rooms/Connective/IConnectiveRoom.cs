@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
-using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -103,22 +102,22 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 _ => UNDEFINED,
             };
 
-        public static string ToStringNonAlloc(this LKConnectionQuality quality) =>
+        public static string ToStringNonAlloc(this ConnectionQuality quality) =>
             quality switch
             {
-                LKConnectionQuality.QualityPoor => "QualityPoor",
-                LKConnectionQuality.QualityGood => "QualityGood",
-                LKConnectionQuality.QualityExcellent => "QualityExcellent",
-                LKConnectionQuality.QualityLost => "QualityLost",
+                ConnectionQuality.QualityPoor => "QualityPoor",
+                ConnectionQuality.QualityGood => "QualityGood",
+                ConnectionQuality.QualityExcellent => "QualityExcellent",
+                ConnectionQuality.QualityLost => "QualityLost",
                 _ => UNDEFINED,
             };
 
-        public static string ToStringNonAlloc(this LKConnectionState state) =>
+        public static string ToStringNonAlloc(this ConnectionState state) =>
             state switch
             {
-                LKConnectionState.ConnDisconnected => "ConnDisconnected",
-                LKConnectionState.ConnConnected => "ConnConnected",
-                LKConnectionState.ConnReconnecting => "ConnReconnecting",
+                ConnectionState.ConnDisconnected => "ConnDisconnected",
+                ConnectionState.ConnConnected => "ConnConnected",
+                ConnectionState.ConnReconnecting => "ConnReconnecting",
                 _ => UNDEFINED,
             };
 

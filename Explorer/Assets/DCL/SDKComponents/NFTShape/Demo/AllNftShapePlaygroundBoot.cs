@@ -1,4 +1,4 @@
-#if UNITY_EDITOR && !UNITY_WEBGL
+#if UNITY_EDITOR
 
 using Arch.Core;
 using Cysharp.Threading.Tasks;

@@ -8,9 +8,9 @@ namespace DCL.Landscape
         public readonly int2 SizeInParcels;
         public readonly int2 CenterInParcels;
 
-        public readonly NativeHashSet<int2>.ReadOnly OwnedParcels;
+        public readonly NativeHashSet<int2> OwnedParcels;
 
-        public WorldModel(NativeHashSet<int2>.ReadOnly parcels)
+        public WorldModel(NativeHashSet<int2> parcels)
         {
             OwnedParcels = parcels;
 
@@ -21,7 +21,7 @@ namespace DCL.Landscape
             CenterInParcels = minParcel + (SizeInParcels / 2);
         }
 
-        private static (int2 min,int2 max) CalculateMinMaxParcels(NativeHashSet<int2>.ReadOnly ownedParcels)
+        private static (int2 min,int2 max) CalculateMinMaxParcels(NativeHashSet<int2> ownedParcels)
         {
             var minParcel = new int2(int.MaxValue, int.MaxValue);
             var maxParcel = new int2(int.MinValue, int.MinValue);

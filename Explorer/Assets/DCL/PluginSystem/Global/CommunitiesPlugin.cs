@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -212,5 +210,3 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
     }
 }
-
-#endif

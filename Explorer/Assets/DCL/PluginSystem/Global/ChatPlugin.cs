@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using System;
 using Arch.Core;
 using Arch.SystemGroups;
@@ -445,5 +443,3 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
     }
 }
-
-#endif

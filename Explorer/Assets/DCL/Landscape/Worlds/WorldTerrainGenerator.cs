@@ -67,7 +67,7 @@ namespace DCL.Landscape
                 rootGo.gameObject.SetActive(isVisible);
         }
 
-        public void GenerateTerrain(NativeHashSet<int2>.ReadOnly ownedParcels,
+        public void GenerateTerrain(NativeHashSet<int2> ownedParcels,
             AsyncLoadProcessReport? processReport = null)
         {
             if (!IsInitialized) return;

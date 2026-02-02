@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -91,8 +89,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             identityHashCache.Clear();
 
-            IReadOnlyDictionary<string, LKParticipant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
-            IReadOnlyDictionary<string, LKParticipant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, Participant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, Participant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
 
             identityHashCache.EnsureCapacity(islandIdentities.Count + sceneIdentities.Count);
 
@@ -108,5 +106,3 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         }
     }
 }
-
-#endif

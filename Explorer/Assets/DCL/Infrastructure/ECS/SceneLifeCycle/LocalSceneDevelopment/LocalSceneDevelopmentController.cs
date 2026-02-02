@@ -7,9 +7,9 @@ using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;
 using System;
+using System.Net.WebSockets;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Networking;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         private readonly Entity playerEntity;
         private readonly Entity skyboxEntity;
         private readonly World globalWorld;
-        private DCLWebSocket? webSocket;
+        private ClientWebSocket? webSocket;
 
         public LocalSceneDevelopmentController(ECSReloadScene reloadScene,
             Entity playerEntity,
@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Trying to connect to: {localSceneWebsocketServer}");
 
-            webSocket = new DCLWebSocket();
+            webSocket = new ClientWebSocket();
             await webSocket.ConnectAsync(new Uri(localSceneWebsocketServer), ct);
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection state: {webSocket.State}");

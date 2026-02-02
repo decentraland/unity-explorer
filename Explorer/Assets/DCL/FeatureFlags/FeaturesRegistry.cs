@@ -22,6 +22,20 @@ namespace DCL.FeatureFlags
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
 
+        /// <summary>
+        ///     Initializes the registry with no features enabled (all <see cref="IsEnabled" /> checks return false).
+        ///     Use when no feature-flag configuration is available (e.g. WebGL minimal bootstrap).
+        /// </summary>
+        public static void InitializeEmpty()
+        {
+            Initialize(new FeaturesRegistry());
+        }
+
+        /// <summary>
+        ///     Empty constructor: no features enabled, no dependencies on FeatureFlagsConfiguration or IAppArgs.
+        /// </summary>
+        private FeaturesRegistry() { }
+
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)
@@ -37,6 +51,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
                 [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
+                [FeatureId.WEB_VERSION] = Application.platform == RuntimePlatform.WebGLPlayer,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -138,5 +153,6 @@ namespace DCL.FeatureFlags
         GPUI_ENABLED,
         GIFTING_ENABLED,
         HEAD_SYNC,
+        WEB_VERSION
     }
 }
