@@ -1,4 +1,5 @@
 ﻿using DCL.SDKComponents.SceneUI.Utils;
+using System;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
@@ -8,7 +9,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public readonly DropdownField DropdownField = new ();
         public TextElement TextElement;
         public bool IsOnValueChangedTriggered;
-        public bool AppliedInitialSelectedValue;
+        public int LastSceneEnforcedIndex;
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
 
@@ -20,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             TextElement = DropdownField.Q<TextElement>(className: textElementStyleClass);
 
             IsOnValueChangedTriggered = false;
-            AppliedInitialSelectedValue = false;
+            LastSceneEnforcedIndex = int.MinValue; // -1 is used for the case of 'accept Empty value'
 
             this.RegisterDropdownCallbacks();
         }

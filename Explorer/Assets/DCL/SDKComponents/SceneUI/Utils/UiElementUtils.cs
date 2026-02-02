@@ -227,10 +227,16 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
 
-            if (!dropdownToSetup.AppliedInitialSelectedValue)
+            int selectedIndex = model.GetSelectedIndex();
+            if (selectedIndex != dropdownToSetup.LastSceneEnforcedIndex)
             {
-                dropdownField.SetValueWithoutNotify(dropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
-                dropdownToSetup.AppliedInitialSelectedValue = true;
+                var newValue = dropdownField.choices.ElementAtOrDefault(selectedIndex) ?? model.EmptyLabel;
+                if (dropdownToSetup.LastSceneEnforcedIndex < -1) // -1 is used for the case of 'accept Empty value'
+                    dropdownField.SetValueWithoutNotify(newValue);
+                else
+                    dropdownField.value = newValue;
+
+                dropdownToSetup.LastSceneEnforcedIndex = selectedIndex;
             }
 
             // dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
