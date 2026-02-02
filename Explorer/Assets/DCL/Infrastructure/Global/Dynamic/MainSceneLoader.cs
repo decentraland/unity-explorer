@@ -54,6 +54,8 @@ using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
+using System.IO;
+using System.Text;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -90,7 +92,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
-        private static Mutex? singleInstanceMutex;
+        private FileStream? singleInstanceLock;
 
         private void Awake()
         {
@@ -128,6 +130,7 @@ namespace Global.Dynamic
 
         private void OnApplicationQuit()
         {
+            try { singleInstanceLock?.Dispose(); } catch { }
             DisableAllSelectableTransitions();
         }
 
@@ -349,35 +352,22 @@ namespace Global.Dynamic
 
         private void ForceSingleRunningInstance(IAppArgs appArgs)
         {
-            Debug.Log("ForceSingleInstance.CheckFlag");
             if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return;
-
-            bool hasHandle = false;
 
             try
             {
-                Debug.Log("ForceSingleInstance.CreateMutex");
-                singleInstanceMutex = new Mutex(false, SINGLE_INSTANCE_MUTEX_IDENTIFIER);
-
-                hasHandle = singleInstanceMutex.WaitOne(1000, false);
-                Debug.Log($"ForceSingleInstance.hasHandle: {hasHandle}");
-
-                if (!hasHandle)
-                    Application.Quit();
+                string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+                singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                using var writer = new StreamWriter(singleInstanceLock, Encoding.UTF8, 256, leaveOpen: true);
+                writer.WriteLine(System.Diagnostics.Process.GetCurrentProcess().Id);
+                writer.Flush();
             }
-            catch (AbandonedMutexException)
+            catch (IOException)
             {
-                // Previous instance died/crashed while holding it.
-                // We now effectively own it.
-                Debug.Log("Single instance mutex abandoned. This instance now owns it");
-                hasHandle = true;
+                // Another instance is holding the lock
+                Application.Quit();
             }
             catch (Exception e) { Debug.LogException(e); }
-            finally
-            {
-                if (hasHandle)
-                    singleInstanceMutex?.ReleaseMutex();
-            }
         }
 
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
