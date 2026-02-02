@@ -188,9 +188,9 @@ PlayerSettings:
   ForceSDCardPermission: 0
   CreateWallpaper: 0
   androidSplitApplicationBinary: 0
-  keepLoadedShadersAlive: 0
+  keepLoadedShadersAlive: 1
   StripUnusedMeshComponents: 0
-  strictShaderVariantMatching: 0
+  strictShaderVariantMatching: 1
   VertexChannelCompressionMask: 4054
   iPhoneSdkVersion: 988
   iOSSimulatorArchitecture: 0
@@ -550,7 +550,7 @@ PlayerSettings:
     m_StaticBatching: 1
     m_DynamicBatching: 0
   - m_BuildTarget: WebGL
-    m_StaticBatching: 0
+    m_StaticBatching: 1
     m_DynamicBatching: 1
   m_BuildTargetShaderSettings: []
   m_BuildTargetGraphicsJobs:
@@ -579,7 +579,7 @@ PlayerSettings:
   - m_BuildTarget: AndroidPlayer
     m_GraphicsJobs: 0
   - m_BuildTarget: WebGLSupport
-    m_GraphicsJobs: 0
+    m_GraphicsJobs: 1
   m_BuildTargetGraphicsJobMode:
   - m_BuildTarget: PS4Player
     m_GraphicsJobMode: 0
@@ -596,7 +596,7 @@ PlayerSettings:
     m_APIs: 10000000
     m_Automatic: 1
   - m_BuildTarget: WebGLSupport
-    m_APIs: 1c000000
+    m_APIs: 0b000000
     m_Automatic: 0
   - m_BuildTarget: WindowsStandaloneSupport
     m_APIs: 02000000
@@ -898,10 +898,10 @@ PlayerSettings:
   blurSplashScreenBackground: 1
   spritePackerPolicy: 
   webGLMemorySize: 16
-  webGLExceptionSupport: 3
+  webGLExceptionSupport: 2
   webGLNameFilesAsHashes: 0
-  webGLShowDiagnostics: 0
-  webGLDataCaching: 0
+  webGLShowDiagnostics: 1
+  webGLDataCaching: 1
   webGLDebugSymbols: 1
   webGLEmscriptenArgs: -g
   webGLModulesDirectory: 
@@ -912,7 +912,7 @@ PlayerSettings:
   webGLWasmArithmeticExceptions: 0
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
-  webGLDecompressionFallback: 0
+  webGLDecompressionFallback: 1
   webGLInitialMemorySize: 512
   webGLMaximumMemorySize: 4096
   webGLMemoryGrowthMode: 2
@@ -920,8 +920,8 @@ PlayerSettings:
   webGLMemoryGeometricGrowthStep: 0.2
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
-  webGLWebAssemblyTable: 0
-  webGLWebAssemblyBigInt: 0
+  webGLWebAssemblyTable: 1
+  webGLWebAssemblyBigInt: 1
   webGLCloseOnQuit: 0
   webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 0
@@ -940,7 +940,7 @@ PlayerSettings:
     ReservedCFE: CT_FB
     Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE
     VisionOS: CT_FB
-    WebGL: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE
+    WebGL: UNITASK_DOTWEEN_SUPPORT;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE
     Windows Store Apps: CT_FB
     XboxOne: CT_FB
     iPhone: CT_FB

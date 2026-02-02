@@ -362,7 +362,7 @@ MonoBehaviour:
       data:
         m_version: 0
         m_EnableCompilationCaching: 1
-        m_EnableValidityChecks: 0
+        m_EnableValidityChecks: 1
     - rid: 5720272519283605518
       type: {class: ProbeVolumeRuntimeResources, ns: UnityEngine.Rendering, asm: Unity.RenderPipelines.Core.Runtime}
       data:
