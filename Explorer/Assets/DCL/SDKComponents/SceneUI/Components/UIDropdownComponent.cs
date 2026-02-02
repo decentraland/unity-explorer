@@ -8,6 +8,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public readonly DropdownField DropdownField = new ();
         public TextElement TextElement;
         public bool IsOnValueChangedTriggered;
+        public bool AppliedInitialSelectedValue;
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
 
@@ -19,6 +20,8 @@ namespace DCL.SDKComponents.SceneUI.Components
             TextElement = DropdownField.Q<TextElement>(className: textElementStyleClass);
 
             IsOnValueChangedTriggered = false;
+            AppliedInitialSelectedValue = false;
+
             this.RegisterDropdownCallbacks();
         }
 

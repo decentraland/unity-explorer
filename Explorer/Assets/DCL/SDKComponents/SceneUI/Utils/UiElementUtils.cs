@@ -226,7 +226,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.style.color = model.GetColor();
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
-            dropdownField.SetValueWithoutNotify(dropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
+
+            if (!dropdownToSetup.AppliedInitialSelectedValue)
+            {
+                dropdownField.SetValueWithoutNotify(dropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
+                dropdownToSetup.AppliedInitialSelectedValue = true;
+            }
+
             // dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
             dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
