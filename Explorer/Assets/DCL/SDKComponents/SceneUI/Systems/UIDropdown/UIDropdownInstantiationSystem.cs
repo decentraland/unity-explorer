@@ -58,8 +58,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
-            ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
-            ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
+            // ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
+            // ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
 
             World.Add(entity, newDropdown);
         }
