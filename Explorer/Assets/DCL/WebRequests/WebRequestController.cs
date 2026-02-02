@@ -1,4 +1,4 @@
-﻿using CDPBridges;
+using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
@@ -57,6 +57,10 @@ namespace DCL.WebRequests
 
             while (true)
             {
+                // If signed request is required but identity is not available (e.g., during sign-out), return default
+                if (envelope.signInfo.HasValue && web3IdentityCache.Identity == null)
+                    return default(TResult?);
+
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
                 bool idempotent = request.IsIdempotent(envelope.signInfo);
 
