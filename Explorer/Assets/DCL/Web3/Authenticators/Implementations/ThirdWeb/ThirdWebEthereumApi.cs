@@ -43,7 +43,7 @@ namespace DCL.Web3.Authenticators
         private static string GetRpcUrl(int chainId) =>
             $"https://{chainId}.rpc.thirdweb.com";
 
-        public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
+        public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet? wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
@@ -58,10 +58,14 @@ namespace DCL.Web3.Authenticators
                     throw new Web3Exception($"The method is not allowed: {request.method}");
                 }
 
-                bool isReadOnly = IsReadOnly(request);
-
-                if (isReadOnly)
+                if (IsReadOnly(request))
                     return await SendWithoutConfirmationAsync(wallet, request, ct);
+
+                if (wallet == null)
+                {
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Method not allowed : {request.method}");
+                    throw new Web3Exception("No active wallet connected");
+                }
 
                 return await SendWithConfirmationAsync(wallet, request, source, ct);
             }
@@ -214,8 +218,7 @@ namespace DCL.Web3.Authenticators
             if (string.Equals(request.method, "eth_sendTransaction"))
             {
                 // Internal transactions (gifting, donations) use meta-transactions via Decentraland relay
-                bool useMetaTx = source == Web3RequestSource.Internal;
-                return await HandleSendTransactionAsync(wallet, request, useMetaTx);
+                return await HandleSendTransactionAsync(wallet, request, useMetaTx: source == Web3RequestSource.Internal);
             }
 
             // Fallback for any other non-read-only methods
@@ -238,18 +241,12 @@ namespace DCL.Web3.Authenticators
             // Extract additional details for eth_sendTransaction
             if (string.Equals(request.method, "eth_sendTransaction") && request.@params?.Length > 0)
             {
-                try
-                {
-                    Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
-                    confirmationRequest.To = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
-                    confirmationRequest.Value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() : null;
-                    confirmationRequest.Data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() : null;
-                }
-                catch
-                { /* Ignore parsing errors, UI will show what it can */
-                }
+                (string? to, string? value, string? data) = Web3Utils.ParseSendTxRequestParams(request);
 
-                // Best-effort: balance + estimated gas fee (should never block the tx flow if it fails)
+                confirmationRequest.To = to;
+                confirmationRequest.Value = value != "0x0" ? value : null;
+                confirmationRequest.Data = data != "0x" ? value : null;
+
                 try
                 {
                     BigInteger balanceWei = await wallet!.GetBalance(chainId);
@@ -257,29 +254,16 @@ namespace DCL.Web3.Authenticators
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[ThirdWeb] Failed to fetch balance for confirmation popup: {e.Message}");
+                    ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb Failed to fetch balance for confirmation popup: {e.Message}");
                     confirmationRequest.BalanceEth = "0.0";
                 }
 
                 try
                 {
                     // Re-parse to build txObject for estimateGas
-                    Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(request.@params[0].ToString());
-                    string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
-                    string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
-                    string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
-
                     string from = await wallet!.GetAddress();
+                    var txObject = new { from, to, value, data };
 
-                    var txObject = new
-                    {
-                        from,
-                        to,
-                        value,
-                        data,
-                    };
-
-                    // eth_estimateGas
                     var estimateGasRequest = new EthApiRequest
                     {
                         id = request.id,
@@ -308,7 +292,7 @@ namespace DCL.Web3.Authenticators
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[ThirdWeb] Failed to estimate gas fee for confirmation popup: {e.Message}");
+                    ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb Failed to estimate gas fee for confirmation popup: {e.Message}");
                     confirmationRequest.EstimatedGasFeeEth = "0.0";
                 }
             }
@@ -318,45 +302,18 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> HandleSendTransactionAsync(IThirdwebWallet wallet, EthApiRequest request, bool useMetaTx = false)
         {
-            Debug.Log($"[ThirdWeb] HandleSendTransactionAsync called, useMetaTx={useMetaTx}");
-
-            if (wallet == null)
-            {
-                Debug.LogError("[ThirdWeb] No active wallet connected!");
-                throw new Web3Exception("No active wallet connected");
-            }
-
-            // eth_sendTransaction params: [transactionObject]
-            var paramsJson = request.@params[0].ToString();
-            Debug.Log($"[ThirdWeb] Transaction params JSON: {paramsJson}");
-
-            Dictionary<string, object>? txParams = JsonConvert.DeserializeObject<Dictionary<string, object>>(paramsJson);
-
-            string? to = txParams?.TryGetValue("to", out object? toValue) == true ? toValue?.ToString() : null;
-            string data = txParams?.TryGetValue("data", out object? dataValue) == true ? dataValue?.ToString() ?? "0x" : "0x";
-            string value = txParams?.TryGetValue("value", out object? valueValue) == true ? valueValue?.ToString() ?? "0x0" : "0x0";
-
-            Debug.Log($"[ThirdWeb] Parsed tx: to={to}, data={data?.Substring(0, Math.Min(50, data?.Length ?? 0))}..., value={value}");
+            (string? to, string? value, string? data) = Web3Utils.ParseSendTxRequestParams(request);
 
             if (string.IsNullOrEmpty(to))
-            {
-                Debug.LogError("[ThirdWeb] eth_sendTransaction requires 'to' address!");
                 throw new Web3Exception("eth_sendTransaction requires 'to' address");
-            }
 
-            // Parse value
             BigInteger weiValue = Web3Utils.ParseHexToBigInteger(value);
-            Debug.Log($"[ThirdWeb] Parsed wei value: {weiValue}");
 
             // For meta-transactions (internal ops like gifting), use Decentraland relay
             // The user signs an EIP-712 message, and the relay pays for gas
             if (useMetaTx && !string.IsNullOrEmpty(data) && data != "0x")
             {
-                Debug.Log($"[ThirdWeb] ★ Using meta-transaction for contract call to {to}");
-                Debug.Log($"[ThirdWeb] Full data length: {data.Length} chars");
                 string txHash = await metaTxService.SendMetaTransactionAsync(wallet, to, data);
-
-                Debug.Log($"[ThirdWeb] Meta-transaction completed with txHash={txHash}");
 
                 return new EthApiResponse
                 {
