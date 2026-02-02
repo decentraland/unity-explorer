@@ -54,8 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
-        private readonly IEthereumApi ethereumApi;
-        private readonly ICompositeWeb3Provider compositeWeb3Provider;
+        private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
@@ -80,7 +79,7 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
             IWebBrowser webBrowser,
-            IEthereumApi ethereumApi,
+            ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
             IScreenModeController screenModeController,
@@ -101,7 +100,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus = eventBus;
             this.webBrowser = webBrowser;
-            this.ethereumApi = ethereumApi;
+            this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
@@ -134,7 +133,7 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            var giftTransferService = new Web3GiftTransferService(ethereumApi);
+            var giftTransferService = new Web3GiftTransferService(web3Provider);
             var giftItemLoaderService = new GiftItemLoaderService(webRequestController);
 
             var giftInventoryService = new GiftInventoryService(wearableStorage,
@@ -150,7 +149,7 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 giftTransferService,
                 pendingTransferService,
-                compositeWeb3Provider);
+                web3Provider);
 
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);

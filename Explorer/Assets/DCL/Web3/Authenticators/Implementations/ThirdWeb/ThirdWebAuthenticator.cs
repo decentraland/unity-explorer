@@ -13,7 +13,7 @@ namespace DCL.Web3.Authenticators
     public class ThirdWebAuthenticator : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
     {
         private const string CLIENT_ID = "e1adce863fe287bb6cf0e3fd90bdb77f";
-        private const string BUNDLE_ID = "com.Decentraland.Explorer";
+        private const string BUNDLE_ID = "com.Decentraland";
         private const string SDK_VERSION = "6.0.5";
 
         /// <summary>

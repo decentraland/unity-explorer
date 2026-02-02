@@ -89,7 +89,6 @@ namespace DCL.Web3.Authenticators
         {
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb web3 operation: Request method={request.method}, readonlyNetwork={request.readonlyNetwork ?? "null"}");
 
-            // Determine target chainId: use readonlyNetwork if specified, otherwise use wallet's current chainId
             int? networkChainId = ChainUtils.GetChainIdFromReadonlyNetwork(request.readonlyNetwork);
             int targetChainId = networkChainId ?? (int)chainId;
 
@@ -117,9 +116,6 @@ namespace DCL.Web3.Authenticators
         }
 
         // low-level calls
-        private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request) =>
-            await SendRpcRequestAsync(request, (int)chainId);
-
         private async UniTask<EthApiResponse> SendRpcRequestAsync(EthApiRequest request, int targetChainId)
         {
             string rpcUrl = GetRpcUrl(targetChainId);
@@ -291,7 +287,7 @@ namespace DCL.Web3.Authenticators
                         @params = new object[] { txObject },
                     };
 
-                    EthApiResponse estimateGasResponse = await SendRpcRequestAsync(estimateGasRequest);
+                    EthApiResponse estimateGasResponse = await SendRpcRequestAsync(estimateGasRequest, (int)chainId);
                     string gasLimitHex = estimateGasResponse.result?.ToString() ?? "0x0";
                     BigInteger gasLimit = gasLimitHex.HexToNumber();
 
@@ -303,7 +299,7 @@ namespace DCL.Web3.Authenticators
                         @params = Array.Empty<object>(),
                     };
 
-                    EthApiResponse gasPriceResponse = await SendRpcRequestAsync(gasPriceRequest);
+                    EthApiResponse gasPriceResponse = await SendRpcRequestAsync(gasPriceRequest, (int)chainId);
                     string gasPriceHex = gasPriceResponse.result?.ToString() ?? "0x0";
                     BigInteger gasPriceWei = gasPriceHex.HexToNumber();
 

@@ -108,16 +108,16 @@ namespace DCL.PluginSystem.Global
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, wearablesProvider, webRequestController, decentralandUrlsSource);
             mvcManager.RegisterController(authenticationScreenController);
 
-            // Load and initialize transaction confirmation popup
-            if (settings.TransactionConfirmationPopupPrefab != null)
-            {
-                Web3ConfirmationPopupView popupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TransactionConfirmationPopupPrefab, ct: ct)).Value;
-                transactionConfirmationView = Object.Instantiate(popupPrefab);
-                transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
-                transactionConfirmationView.gameObject.SetActive(false);
+            Web3ConfirmationPopupView txConfPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TransactionConfirmationPopupPrefab, ct: ct)).Value;
+            InitializeTransactionConfirmationPopup(txConfPopupPrefab);
+        }
 
-                web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
-            }
+        private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
+        {
+            transactionConfirmationView = Object.Instantiate(popupPrefab);
+            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            transactionConfirmationView.gameObject.SetActive(false);
+            web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -131,7 +131,7 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
         [field: Space]
         [field: SerializeField] public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
-        [field: SerializeField] public TransactionConfirmationPopupRef? TransactionConfirmationPopupPrefab { get; private set; }
+        [field: SerializeField] public TransactionConfirmationPopupRef TransactionConfirmationPopupPrefab { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
 
         [field: Space]

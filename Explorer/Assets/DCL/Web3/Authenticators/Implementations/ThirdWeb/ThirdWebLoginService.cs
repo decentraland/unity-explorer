@@ -179,7 +179,11 @@ namespace DCL.Web3.Authenticators
                 throw new InvalidOperationException("ResendOtp called but no pending wallet");
 
             try { await pendingWallet.SendOTP(); }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+                throw;
+            }
         }
     }
 }
