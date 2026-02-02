@@ -217,6 +217,7 @@ namespace Global.Dynamic
 
             // Create ThirdWeb authenticator (Email + OTP)
             var thirdWebAuth = new ThirdWebAuthenticator(
+                decentralandUrlsSource,
                 dclEnvironment,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),

@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -28,7 +29,7 @@ namespace DCL.Web3.Authenticators
         private readonly SemaphoreSlim mutex = new (1, 1);
         private readonly ThirdWebMetaTxService metaTxService;
 
-        public ThirdWebEthereumApi(ThirdwebClient client, HashSet<string> whitelistMethods, HashSet<string> readOnlyMethods, DecentralandEnvironment environment)
+        public ThirdWebEthereumApi(ThirdwebClient client, HashSet<string> whitelistMethods, HashSet<string> readOnlyMethods, IDecentralandUrlsSource decentralandUrlsSource, DecentralandEnvironment environment)
         {
             this.client = client;
             this.whitelistMethods = whitelistMethods;
@@ -36,7 +37,7 @@ namespace DCL.Web3.Authenticators
 
             chainId = ChainUtils.GetChainIdAsInt(environment);
 
-            metaTxService = new ThirdWebMetaTxService(client, SendRpcRequestAsync);
+            metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), SendRpcRequestAsync);
         }
 
         private static string GetRpcUrl(int chainId) =>

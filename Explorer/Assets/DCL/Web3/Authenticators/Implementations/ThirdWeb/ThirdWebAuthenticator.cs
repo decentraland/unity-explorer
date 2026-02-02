@@ -32,21 +32,20 @@ namespace DCL.Web3.Authenticators
             { 250, "https://rpc.decentraland.org/fantom" }, // Fantom Mainnet
         };
 
-        private readonly ThirdwebClient client;
         private readonly ThirdWebLoginService loginService;
         private readonly ThirdWebEthereumApi ethereumApi;
 
         private IThirdwebWallet? activeWallet => loginService.ActiveWallet;
 
         internal ThirdWebAuthenticator(
+            IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
             int? identityExpirationDuration = null)
         {
-
-            client = ThirdwebClient.Create(
+            var thirdwebClient = ThirdwebClient.Create(
                 CLIENT_ID,
                 bundleId: BUNDLE_ID,
                 httpClient: new ThirdwebHttpClient(),
@@ -57,8 +56,8 @@ namespace DCL.Web3.Authenticators
                 rpcOverrides: RPC_OVERRIDES
             );
 
-            loginService = new ThirdWebLoginService(client, web3AccountFactory, identityExpirationDuration);
-            ethereumApi = new ThirdWebEthereumApi(client, whitelistMethods, readOnlyMethods, environment);
+            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
+            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment);
         }
 
         public void Dispose()
