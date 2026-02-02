@@ -88,7 +88,9 @@
             public const string LOGGED_IN = "logged_in";
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
-            public const string OTP_VERIFIED = "otp_verified";
+            public const string OTP_VERIFICATION_SUCCESS = "OTP Verification Success";
+            public const string OTP_VERIFICATION_FAILURE = "OTP Verification Failure";
+            public const string OTP_RESEND = "OTP Resend";
             public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
         }
 

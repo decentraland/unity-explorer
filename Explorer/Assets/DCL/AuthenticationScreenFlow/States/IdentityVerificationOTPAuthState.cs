@@ -21,7 +21,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
-        public event Action<bool> OTPVerified;
+        public event Action<string, bool> OTPVerified;
+        public event Action OTPResend;
+
+        private string email;
 
         public IdentityVerificationOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -43,6 +46,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public void Enter((string email, CancellationToken ct) payload)
         {
             currentState.Value = AuthStatus.VerificationInProgress;
+            email = payload.email;
 
             view.Show(payload.email);
             AuthenticateAsync(payload.email, payload.ct).Forget();
@@ -59,6 +63,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();
             view.InputField.CodeEntered -= OnEntered;
+
+            email = string.Empty;
         }
 
         private void ResendOtp()
@@ -73,6 +79,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 try
                 {
                     await compositeWeb3Provider.ResendOtpAsync();
+                    OTPResend.Invoke();
                     view.InputField.Clear();
                 }
                 catch (Exception e)
@@ -182,7 +189,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void ShowOtpResult(bool isSuccess)
         {
-            OTPVerified?.Invoke(isSuccess);
+            OTPVerified?.Invoke(email, isSuccess);
 
             if (isSuccess)
                 view.InputField.SetSuccess();

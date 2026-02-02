@@ -18,6 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             controller.CurrentState.OnUpdate += OnAuthenticationScreenStateChanged;
             controller.DiscordButtonClicked += OnDiscordButtonClicked;
             controller.OTPVerified += OnOTPVerified;
+            controller.OTPResend += OnOTPResend;
         }
 
         public void Dispose()
@@ -25,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             controller.CurrentState.OnUpdate -= OnAuthenticationScreenStateChanged;
             controller.DiscordButtonClicked -= OnDiscordButtonClicked;
             controller.OTPVerified -= OnOTPVerified;
+            controller.OTPResend -= OnOTPResend;
         }
 
         private void OnAuthenticationScreenStateChanged(AuthStatus state)
@@ -40,7 +42,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 case AuthStatus.LoginRequested:
                     analytics.Track(Authentication.LOGIN_REQUESTED, new JObject
                     {
-                        { "provider", controller.CurrentProvider.ToString() },
                         { "method", controller.CurrentLoginMethod.ToString() },
                     });
 
@@ -59,7 +60,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 case AuthStatus.LoggedIn:
                     analytics.Track(Authentication.LOGGED_IN, new JObject
                     {
-                        { "provider", controller.CurrentProvider.ToString() },
                         { "method", controller.CurrentLoginMethod.ToString() },
                     }, isInstant: true);
 
@@ -67,13 +67,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             }
         }
 
+        private void OnOTPVerified(string email, bool success)
+        {
+            analytics.Track(success ? Authentication.OTP_VERIFICATION_SUCCESS : Authentication.OTP_VERIFICATION_FAILURE, new JObject
+            {
+                { "email", email },
+            });
+        }
+
+        private void OnOTPResend() =>
+            analytics.Track(Authentication.OTP_RESEND);
+
         private void OnDiscordButtonClicked() =>
             analytics.Track(Authentication.CLICK_COMMUNITY_GUIDANCE);
-
-        private void OnOTPVerified(bool success) =>
-            analytics.Track(Authentication.OTP_VERIFIED, new JObject
-            {
-                { "success", success },
-            });
     }
 }
