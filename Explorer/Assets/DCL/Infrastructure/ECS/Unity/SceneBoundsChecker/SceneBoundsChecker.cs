@@ -4,11 +4,10 @@ using ECS.LifeCycle;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveColliders.Components;
-using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 
-namespace DCL.ECS.Unity.SceneBoundsChecker
+namespace ECS.Unity.SceneBoundsChecker
 {
     public partial class SceneBoundsChecker : ISceneIsCurrentListener
     {

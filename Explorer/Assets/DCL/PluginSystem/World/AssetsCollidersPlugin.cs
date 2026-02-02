@@ -5,7 +5,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
-using DCL.ECS.Unity.SceneBoundsChecker;
+using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 using UnityEngine;
 
