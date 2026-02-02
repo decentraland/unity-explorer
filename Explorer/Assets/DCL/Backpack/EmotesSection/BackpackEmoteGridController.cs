@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -98,6 +99,7 @@ namespace DCL.Backpack.EmotesSection
             eventBus.EquipEmoteEvent += OnEquip;
             eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
+            eventBus.EquipOutfitEvent += OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked += OpenMarketplaceLink;
         }
@@ -107,6 +109,7 @@ namespace DCL.Backpack.EmotesSection
             eventBus.FilterEvent += OnFilterEvent;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
+            RequestAndFillEmotes(1, true);
         }
 
         public void Deactivate()
@@ -119,6 +122,7 @@ namespace DCL.Backpack.EmotesSection
         public void Dispose()
         {
             loadElementsCancellationToken.SafeCancelAndDispose();
+            eventBus.EquipOutfitEvent -= OnEquipOutfit;
             view.NoSearchResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
             view.NoCategoryResultsMarketplaceTextLink.OnLinkClicked -= OpenMarketplaceLink;
         }
@@ -134,6 +138,12 @@ namespace DCL.Backpack.EmotesSection
             );
         }
 
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            if (!string.IsNullOrEmpty(command.BodyShape))
+                currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);
+        }
+        
         private void RequestAndFillEmotes(int pageNumber)
         {
             RequestAndFillEmotes(pageNumber, false);

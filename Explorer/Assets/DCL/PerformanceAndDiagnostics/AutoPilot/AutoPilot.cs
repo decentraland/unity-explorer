@@ -5,9 +5,7 @@ using Global.AppArgs;
 using System;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.PerformanceAndDiagnostics.AutoPilot
 {
@@ -16,7 +14,6 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         private readonly IAppArgs appArgs;
         private readonly ILoadingStatus loadingStatus;
         private readonly IProfiler profiler;
-        private StreamWriter csv;
 
         public AutoPilot(IAppArgs appArgs, ILoadingStatus loadingStatus, IProfiler profiler)
         {
@@ -27,6 +24,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         public async UniTask RunAsync()
         {
+            StreamWriter csv = null;
             var exitCode = 0;
 
             try

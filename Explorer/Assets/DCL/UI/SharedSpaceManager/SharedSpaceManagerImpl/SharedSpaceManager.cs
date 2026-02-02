@@ -95,7 +95,10 @@ namespace DCL.UI.SharedSpaceManager
             }
 
             if (isDiscoverFeatureEnabled)
+            {
                 dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformedAsync;
+                dclInput.Shortcuts.Events.performed += OnInputShortcutsEventsPerformedAsync;
+            }
         }
 
         public void Dispose()
@@ -119,7 +122,10 @@ namespace DCL.UI.SharedSpaceManager
                 dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
 
             if (isDiscoverFeatureEnabled)
+            {
                 dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformedAsync;
+                dclInput.Shortcuts.Events.performed -= OnInputShortcutsEventsPerformedAsync;
+            }
 
             mvcManager.OnViewShowed -= OnMvcViewShowed;
             mvcManager.OnViewClosed -= OnMvcViewClosed;
@@ -550,6 +556,12 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (!isExplorePanelVisible && isDiscoverFeatureEnabled)
                 await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Places));
+        }
+
+        private async void OnInputShortcutsEventsPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (!isExplorePanelVisible && isDiscoverFeatureEnabled)
+                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Events));
         }
 #endregion
 

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Donations;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Minimap;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IDonationsService donationsService;
 
         private MinimapController? minimapController;
 
@@ -67,7 +69,8 @@ namespace DCL.PluginSystem.Global
             IRoomHub roomHub,
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IDonationsService donationsService)
         {
             this.minimapView = minimapView;
             this.mapRenderer = mapRenderer;
@@ -88,6 +91,7 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.donationsService = donationsService;
         }
 
         public void Dispose() =>
@@ -121,7 +125,8 @@ namespace DCL.PluginSystem.Global
                 loadingStatus,
                 includeBannedUsersFromScene,
                 homePlaceEventBus,
-                settings.MinimapContextMenuSettings
+                settings.MinimapContextMenuSettings,
+                donationsService
             );
 
             mvcManager.RegisterController(minimapController);

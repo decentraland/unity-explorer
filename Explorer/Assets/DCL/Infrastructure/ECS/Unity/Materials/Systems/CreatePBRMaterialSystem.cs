@@ -17,14 +17,11 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IPerformanceBudget memoryBudgetProvider;
-        private readonly IPerformanceBudget capFrameBudget;
 
         public CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
-            IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
+            IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool, capFrameBudget, memoryBudgetProvider)
         {
-            this.capFrameBudget = capFrameBudget;
-            this.memoryBudgetProvider = memoryBudgetProvider;
+
         }
 
         protected override void Update(float t)
@@ -39,13 +36,8 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (materialComponent.Status is not StreamableLoading.LifeCycle.LoadingInProgress)
-                return;
-
-            if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
-                return;
-
-            ConstructMaterial(entity, ref materialComponent);
+            if (CanConstructMaterial(materialComponent))
+                ConstructMaterial(entity, ref materialComponent);
         }
 
         private void ConstructMaterial(Entity entity, ref MaterialComponent materialComponent)
