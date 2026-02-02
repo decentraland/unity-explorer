@@ -133,6 +133,68 @@ void InitializeBakedGIData(Varyings input, inout InputData inputData)
 #endif
 }
 
+void WindFlutter(inout float4 positionOS, inout float3 normalOS, float2 uv_Coords)
+{
+    float3 worldPos = mul(unity_ObjectToWorld, positionOS).xyz;
+
+    // Create unique offset per vertex/quad using position
+    float3 seed = worldPos * 0.1;
+    float uniqueOffset = hash(seed) * 6.28318; // Random phase offset
+
+    // Main wind wave (large scale movement)
+    float windTime = _Time.y * _WindSpeed;
+    float3 windDir = normalize(_WindDirection.xyz);
+
+    // Calculate wind influence based on position along wind direction
+    float windPhase = dot(worldPos, windDir) * _WindFrequency + windTime;
+
+    // Primary wind sway
+    float primaryWave = sin(windPhase) * 0.5 + 0.5;
+    primaryWave = pow(primaryWave, 1.5); // Make wind gusts more pronounced
+
+    // Secondary turbulence layer
+    float turbulence = fbm(worldPos * 0.5 + windTime * 0.3, 3) * _WindTurbulence;
+
+    // Combine wind forces
+    float windForce = (primaryWave + turbulence) * _WindStrength;
+
+    // Flutter (high frequency individual leaf movement)
+    float flutterTime = _Time.y * _FlutterSpeed;
+    float flutter = sin(flutterTime * _FlutterFrequency + uniqueOffset) * 
+    cos(flutterTime * _FlutterFrequency * 0.7 + uniqueOffset * 1.3);
+    flutter *= _FlutterStrength;
+
+    // Apply vertex displacement
+    // Movement is stronger at the edges of the quad (using UV to determine edge)
+    float edgeFactor = saturate(length(uv_Coords.xy - 0.5) * 2.0);
+
+    // Vertical gradient - top of tree moves more
+    float heightFactor = saturate(positionOS.y * 0.5 + 0.5);
+
+    float3 displacement = float3(0, 0, 0);
+
+    // Wind displacement (mainly horizontal)
+    displacement.x += windDir.x * windForce * heightFactor;
+    displacement.z += windDir.z * windForce * heightFactor;
+    displacement.y += windForce * 0.2 * heightFactor; // Slight vertical bob
+
+    // Flutter displacement (all directions for natural look)
+    float3 flutterDir = float3(
+    sin(uniqueOffset),
+    cos(uniqueOffset * 1.3),
+    sin(uniqueOffset * 0.7)
+    );
+    displacement += flutterDir * flutter * edgeFactor;
+
+    // Apply displacement in world space, then convert back
+    float3 newWorldPos = worldPos + displacement;
+    positionOS.xyz = mul(unity_WorldToObject, float4(newWorldPos, 1.0)).xyz;
+
+    // Slightly adjust normals based on wind for better lighting
+    float3 windNormalOffset = windDir * windForce * 0.3;
+    normalOS = normalize(normalOS + windNormalOffset);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                  Vertex and Fragment functions                            //
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,9 +207,14 @@ Varyings LitPassVertexSimple(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    
+    float4 vPos = input.positionOS;
+    float3 vNorm = input.normalOS;
+    
+    WindFlutter(vPos, vNorm, input.texcoord);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(vPos);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(vNorm, input.tangentOS);
 
 #if defined(_FOG_FRAGMENT)
         half fogFactor = 0;

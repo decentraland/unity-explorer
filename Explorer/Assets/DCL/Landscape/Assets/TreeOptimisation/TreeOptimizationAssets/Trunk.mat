@@ -176,7 +176,8 @@ Material:
     - _Parallax: 0.02
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _ReceiveShadows: 1
+    - _ReceiveShadows: 0
+    - _RequiresWind: 0
     - _Shininess: 0
     - _Smoothness: 0.33
     - _SmoothnessSource: 0

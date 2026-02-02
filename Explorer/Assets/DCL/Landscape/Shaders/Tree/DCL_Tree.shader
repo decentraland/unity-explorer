@@ -14,6 +14,19 @@ Shader "DCL/Tree"
         _SpecGlossMap("Specular Map", 2D) = "white" {}
         _SmoothnessSource("Smoothness Source", Float) = 0.0
         _SpecularHighlights("Specular Highlights", Float) = 1.0
+        
+        _RequiresWind("Requires Wind", Float) = 0.0
+        // Wind settings
+        _WindSpeed ("Wind Speed", Range(0, 5)) = 0.1
+        _WindStrength ("Wind Strength", Range(0, 1)) = 0.1
+        _WindFrequency ("Wind Frequency", Range(0, 10)) = 0.1
+        _WindTurbulence ("Wind Turbulence", Range(0, 2)) = 0.2
+        _WindDirection ("Wind Direction", Vector) = (1, 0, 0.5, 0)
+        
+        // Flutter settings (individual leaf movement)
+        _FlutterSpeed ("Flutter Speed", Range(0, 20)) = 1.0
+        _FlutterStrength ("Flutter Strength", Range(0, 0.5)) = 0.05
+        _FlutterFrequency ("Flutter Frequency", Range(0, 50)) = 1.0
 
         [HideInInspector] _BumpScale("Scale", Float) = 1.0
         [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
@@ -348,5 +361,5 @@ Shader "DCL/Tree"
     }
 
     Fallback  "Hidden/Universal Render Pipeline/FallbackError"
-    CustomEditor "UnityEditor.Rendering.Universal.ShaderGUI.SimpleLitShader"
+    CustomEditor "TreeShaderGUI"
 }

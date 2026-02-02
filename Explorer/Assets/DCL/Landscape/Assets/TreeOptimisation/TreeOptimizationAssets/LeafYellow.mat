@@ -26,6 +26,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALPHATEST_ON
+  - _SPECULAR_COLOR
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -156,6 +157,7 @@ Material:
     - _ClearCoatSmoothness: 0
     - _ColorMapHeight: 1
     - _ColorMapStrength: 0
+    - _ColorVariation: 0.15
     - _Cull: 0
     - _CutOff_GPUI: 0.5
     - _Cutoff: 0.8
@@ -166,6 +168,9 @@ Material:
     - _EnvironmentReflections: 1
     - _FadeAngleThreshold: 15
     - _FadingOn: 0
+    - _FlutterFrequency: 5
+    - _FlutterSpeed: 1
+    - _FlutterStrength: 0.1
     - _FrameCount_GPUI: 8
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -191,6 +196,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _RequiresWind: 1
     - _Scalemap: 0
     - _Shininess: 0.7
     - _Smoothness: 0.05
@@ -207,6 +213,8 @@ Material:
     - _TranslucencyFalloff: 4
     - _TranslucencyIndirect: 0
     - _TranslucencyOffset: 0
+    - _TranslucencyPower: 3
+    - _TranslucencyStrength: 0.8
     - _UVSec: 0
     - _VertexColorBendingChannel: 0
     - _VertexColorShadingChannel: 0
@@ -214,6 +222,7 @@ Material:
     - _VertexDarkening: 0.1
     - _WINDQUALITY: 4
     - _WindAmbientStrength: 0.2
+    - _WindFrequency: 3
     - _WindGustFreq: 4
     - _WindGustSpeed: 4
     - _WindGustStrength: 0.2
@@ -222,8 +231,10 @@ Material:
     - _WindObjectRand: 0.5
     - _WindQuality: 1
     - _WindRandStrength: 0.5
-    - _WindSpeed: 3
+    - _WindSpeed: 1
+    - _WindStrength: 0.5
     - _WindSwinging: 0.15
+    - _WindTurbulence: 1.3
     - _WindVertexRand: 0.6
     - _WindWaveSize: 0.8
     - _WindWaveSway: 0.5
@@ -249,6 +260,7 @@ Material:
     - _ScalemapInfluence: {r: 0, g: 1, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SubsurfaceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TranslucencyColor: {r: 0.6, g: 0.8, b: 0.29999998, a: 1}
     - _VerticalClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: 0, a: 0}
     - _WindDirection: {r: 1, g: 0, b: 0, a: 0}
     - _WindVector: {r: 0.4, g: 0.8, b: 0, a: 0}
