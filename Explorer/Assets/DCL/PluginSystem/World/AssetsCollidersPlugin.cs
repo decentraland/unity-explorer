@@ -1,11 +1,11 @@
 ﻿using Arch.SystemGroups;
-using DCL.ECS.Unity.SceneBoundsChecker;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
+using DCL.ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,14 +29,14 @@ namespace DCL.PluginSystem.World
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
 
+            sceneIsCurrentListeners.Add(new SceneBoundsChecker(builder.World,
+                sharedDependencies.SceneStateProvider));
+
             var releaseColliderSystem =
                 ReleasePoolableComponentSystem<Collider, PrimitiveColliderComponent>.InjectToWorld(ref builder,
                     componentPoolsRegistry);
 
             finalizeWorldSystems.Add(releaseColliderSystem);
-
-            sceneIsCurrentListeners.Add(new SceneBoundsChecker(builder.World,
-                sharedDependencies.SceneStateProvider));
         }
     }
 }
