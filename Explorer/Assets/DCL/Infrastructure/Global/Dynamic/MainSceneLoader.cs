@@ -352,13 +352,17 @@ namespace Global.Dynamic
             Debug.Log("ForceSingleInstance.CheckFlag");
             if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return;
 
+            bool hasHandle = false;
+
             try
             {
                 Debug.Log("ForceSingleInstance.CreateMutex");
-                singleInstanceMutex = new Mutex(true, SINGLE_INSTANCE_MUTEX_IDENTIFIER, out bool createdNewMutex);
-                Debug.Log($"ForceSingleInstance.IsRunning: {!createdNewMutex}");
+                singleInstanceMutex = new Mutex(false, SINGLE_INSTANCE_MUTEX_IDENTIFIER);
 
-                if (!createdNewMutex)
+                hasHandle = singleInstanceMutex.WaitOne(1000, false);
+                Debug.Log($"ForceSingleInstance.hasHandle: {hasHandle}");
+
+                if (!hasHandle)
                     Application.Quit();
             }
             catch (AbandonedMutexException)
@@ -366,10 +370,13 @@ namespace Global.Dynamic
                 // Previous instance died/crashed while holding it.
                 // We now effectively own it.
                 Debug.Log("Single instance mutex abandoned. This instance now owns it");
+                hasHandle = true;
             }
-            catch (Exception e)
+            catch (Exception e) { Debug.LogException(e); }
+            finally
             {
-                Debug.LogException(e);
+                if (hasHandle)
+                    singleInstanceMutex?.ReleaseMutex();
             }
         }
 
