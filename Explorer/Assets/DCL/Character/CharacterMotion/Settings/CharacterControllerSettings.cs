@@ -42,6 +42,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; set; }
 
         [field: SerializeField] [field: Header("Gliding")] public float GlideSpeed { get; private set; } = 6;
+        [field: SerializeField] public float GlideMinGroundDistance { get; private set; } = 2;
         [field: SerializeField] public float GlideMaxGravity { get; private set; } = 1;
         [field: SerializeField] public float GlideAnimMaxAngle { get; private set; } = 30;
         [field: SerializeField] public float GlideAnimBlendSpeed { get; private set; } = 10;

@@ -950,7 +950,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <GroundCheckRadius>k__BackingField: 0.1
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
@@ -1043,6 +1042,7 @@ MonoBehaviour:
       data:
         <ControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
         <Gliding>k__BackingField:
+          <MinGroundDistance>k__BackingField: 0
           <PropPrefab>k__BackingField:
             m_AssetGUID: a7a4ab5039f63fb43b40798062be0153
             m_SubObjectName: 
@@ -1052,6 +1052,7 @@ MonoBehaviour:
           <AnimationSpeed>k__BackingField: 3
           <StartingRotation>k__BackingField: -60
           <CompleteRotationT>k__BackingField: 0.5
+          <TrailVelocityThreshold>k__BackingField: 1
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

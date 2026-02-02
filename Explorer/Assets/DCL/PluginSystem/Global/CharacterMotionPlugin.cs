@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CalculateSpeedLimitSystem.InjectToWorld(ref builder);
-            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, settings.Gliding, debugContainerBuilder);
+            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
             CharacterPlatformUpdateSceneTickSystem.InjectToWorld(ref builder, scenesCache);

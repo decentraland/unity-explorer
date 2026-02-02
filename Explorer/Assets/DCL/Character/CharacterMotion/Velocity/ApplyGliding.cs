@@ -14,10 +14,9 @@ namespace DCL.CharacterMotion
             in JumpState jumpState,
             in JumpInputComponent jump,
             ref GlideState glideState,
-            float minGroundDistance,
             int physicsTick)
         {
-            bool canGlide = jumpState.JumpCount > settings.AirJumpCount && !rigidTransform.IsGrounded && rigidTransform.GroundDistance > minGroundDistance;
+            bool canGlide = jumpState.JumpCount > jumpState.MaxAirJumpCount && !rigidTransform.IsGrounded && rigidTransform.GroundDistance > settings.GlideMinGroundDistance;
             bool wantsToGlide = jump.Trigger.IsAvailable(physicsTick, 0);
 
             // Start gliding if can and want

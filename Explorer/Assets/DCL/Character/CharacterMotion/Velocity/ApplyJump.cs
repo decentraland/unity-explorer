@@ -48,7 +48,7 @@ namespace DCL.CharacterMotion
             bool wantsToJump = jumpInput.Trigger.IsAvailable(physicsTick, bonusFrames);
             if (canJump && wantsToJump) StartJump(settings, rigidTransform, ref jumpState, ref jumpInput, movementInput, physicsTick);
         }
-        
+
         private static int ComputeBonusFrames(ICharacterControllerSettings settings, CharacterRigidTransform rigidTransform, int physicsTick)
         {
             int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
@@ -73,7 +73,7 @@ namespace DCL.CharacterMotion
 
             // Ensure the player is grounded if it's the 1st jump, otherwise just don't exceed max number of jumps
             // For air jumps we use a min value of 1 for jump count, that way falling down is considered as having jumped once
-            bool canJump = (isFirstJump && isGroundedOrCoyote) || Mathf.Max(jumpState.JumpCount, 1) <= settings.AirJumpCount;
+            bool canJump = (isFirstJump && isGroundedOrCoyote) || Mathf.Max(jumpState.JumpCount, 1) <= jumpState.MaxAirJumpCount;
 
             // Enforce the cooldown period between jumps
             if (!isFirstJump)

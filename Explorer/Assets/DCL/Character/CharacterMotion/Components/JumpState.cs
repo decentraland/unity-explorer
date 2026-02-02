@@ -20,6 +20,11 @@
         public int JumpCount;
 
         /// <summary>
+        ///     Maximum number of air jumps the avatar can perform.
+        /// </summary>
+        public int MaxAirJumpCount;
+
+        /// <summary>
         ///     When positive indicates that we are awaiting the air jump delay period.
         ///     When the timer expires, the air jump is actually performed.
         /// </summary>

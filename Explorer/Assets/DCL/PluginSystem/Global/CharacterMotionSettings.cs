@@ -20,9 +20,6 @@ namespace DCL.PluginSystem.Global
         public class GlidingSettings
         {
             [field: SerializeField]
-            public float MinGroundDistance { get; private set; } = 2;
-
-            [field: SerializeField]
             public AssetReferenceT<GameObject> PropPrefab { get; private set; }
 
             [field: SerializeField]
