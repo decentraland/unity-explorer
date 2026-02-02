@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using ECS.Unity.AssetLoad.Cache;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
@@ -13,15 +14,18 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaPlayer mediaPlayerPrefab;
         private readonly Dictionary<string, Queue<MediaPlayerInfo>> offlineMediaPlayers;
         private readonly Transform rootContainerTransform;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly List<string> keysToRemove = new ();
 
         private readonly int tryCleanOfflineMediaPlayersDelayInMinutes = 2;
         private readonly float maxOfflineTimePossibleInSeconds = 300f;
 
-        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
+        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab,
+            AssetPreLoadCache assetPreLoadCache)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
+            this.assetPreLoadCache = assetPreLoadCache;
             rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
             offlineMediaPlayers = new Dictionary<string, Queue<MediaPlayerInfo>>();
             TryUnloadAsync().Forget();
@@ -90,6 +94,9 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayer.AudioVolume = 0f;
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
+
+            // If the MediaPlayer is cached in the asset load, avoid queuing it in the pool
+            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent _)) return;
 
             var info = new MediaPlayerInfo(mediaPlayer, UnityEngine.Time.realtimeSinceStartup);
 
