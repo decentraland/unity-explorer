@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     /*
      * As defined in the SDK, UiInput entities composition breakdown:
      * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Input/index.tsx#L43-L55
-     * - UiInput (all of its props are optional...)
+     * - UiInput
      * - (optional, but Explorer queries require it) uiTransform
      * - (optional) uiBackground
      * - (optional) onMouseDown
@@ -102,6 +102,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private void ApplyDefaultUiTransformValues(Entity entity, in VisualElement uiTransform)
         {
             var pbUiTransform = World.Get<PBUiTransform>(entity);
+
+            uiTransform.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
 
             if (pbUiTransform is
                 {

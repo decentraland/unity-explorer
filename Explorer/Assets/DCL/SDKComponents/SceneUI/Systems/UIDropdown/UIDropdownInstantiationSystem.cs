@@ -18,7 +18,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     /*
      * As defined in the SDK, UiDropdown entities composition breakdown:
      * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Dropdown/index.tsx#L41-L53
-     *  - UiDropdown (all of its props are optional...)
+     *  - UiDropdown
      * - (optional, but Explorer queries require it) uiTransform
      * - (optional) uiBackground
      * - (optional) onMouseDown
