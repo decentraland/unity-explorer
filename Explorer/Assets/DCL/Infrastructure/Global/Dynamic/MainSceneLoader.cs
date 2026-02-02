@@ -28,6 +28,7 @@ using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Utils;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -83,6 +84,7 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private SingleInstanceRunningPopupRef singleInstanceRunningPopupPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -128,7 +130,9 @@ namespace Global.Dynamic
         private void OnApplicationQuit()
         {
             // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
-            try { singleInstanceLock?.Dispose(); } catch { }
+            try { singleInstanceLock?.Dispose(); }
+            catch { }
+
             DisableAllSelectableTransitions();
         }
 
@@ -153,10 +157,6 @@ namespace Global.Dynamic
                 Environment.GetCommandLineArgs()
 #endif
             );
-
-#if !UNITY_EDITOR
-            ForceSingleRunningInstance(applicationParametersParser);
-#endif
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
@@ -221,6 +221,12 @@ namespace Global.Dynamic
             try
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
+
+                if (ShouldForceSingleRunningInstance(applicationParametersParser))
+                {
+                    await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
+                    return;
+                }
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
@@ -348,24 +354,33 @@ namespace Global.Dynamic
             }
         }
 
-        private void ForceSingleRunningInstance(IAppArgs appArgs)
+        private async UniTask ShowSingleRunningInstancePopupAsync(AddressablesProvisioner assetsProvisioner, CancellationToken ct)
         {
-            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return;
+            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value;
+            ErrorPopupView popup = Instantiate(prefab);
+            popup.OkButton.onClick.AddListener(ExitUtils.Exit);
+        }
+
+        private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
+        {
+#if UNITY_EDITOR
+            return false;
+#endif
+            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
 
             try
             {
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+
                 // Note that FileShare.None should lock the file to other processes, and it does,
                 // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0,0 );
+                singleInstanceLock.Lock(0, 0);
             }
-            catch (IOException)
-            {
-                // Another instance is holding the lock
-                Application.Quit();
-            }
+            catch (IOException) { return true; }
             catch (Exception e) { Debug.LogException(e); }
+
+            return false;
         }
 
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
@@ -697,5 +712,12 @@ namespace Global.Dynamic
         {
             public SplashScreenRef(string guid) : base(guid) { }
         }
+
+        [Serializable]
+        public class SingleInstanceRunningPopupRef : ComponentReference<ErrorPopupView>
+        {
+            public SingleInstanceRunningPopupRef(string guid) : base(guid) { }
+        }
     }
 }
+
