@@ -70,13 +70,16 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingOTPAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 view.Hide(SLIDE);
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
             else
             {
                 currentState.Value = isCached ? AuthStatus.FetchingProfileCached : AuthStatus.FetchingProfile;
+
+                // Close IdentityValidation span before starting profile fetch
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                 try
                 {
@@ -107,13 +110,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 }
                 catch (ProfileNotFoundException e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingOTPAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     view.Hide(SLIDE);
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (Exception e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingOTPAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     view.Hide(SLIDE);
                     machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);

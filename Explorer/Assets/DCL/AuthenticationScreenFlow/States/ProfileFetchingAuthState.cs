@@ -77,6 +77,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 currentState.Value = isCached ? AuthStatus.FetchingProfileCached : AuthStatus.FetchingProfile;
 
+                // Close IdentityValidation span before starting profile fetch
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
                 try
                 {
                     var profileFetchSpan = new SpanData

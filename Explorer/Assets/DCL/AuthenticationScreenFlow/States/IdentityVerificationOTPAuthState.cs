@@ -106,6 +106,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
 
+                // Close Web3Authentication span before transitioning to profile fetching
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
