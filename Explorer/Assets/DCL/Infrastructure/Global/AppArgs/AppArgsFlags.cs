@@ -1,4 +1,4 @@
-﻿namespace Global.AppArgs
+namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -11,6 +11,7 @@
 
         public const string SCENE_CONSOLE = "scene-console";
 
+        public const string AUTOPILOT = "autopilot";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
@@ -60,6 +61,8 @@
         public const string HEAD_SYNC = "head-sync";
 
         public const string DISCOVER = "discover";
+
+        public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
 

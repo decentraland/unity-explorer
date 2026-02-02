@@ -477,7 +477,9 @@ namespace Global.Dynamic
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (!Application.isEditor)
-                runVersionControl = !applicationParametersParser.HasDebugFlag() && !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK);
+                runVersionControl = !applicationParametersParser.HasDebugFlag() &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK) &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.AUTOPILOT);
 
             if (!runVersionControl)
                 return false;
