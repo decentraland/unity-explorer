@@ -2,11 +2,11 @@ use anyhow::{anyhow, Context};
 use core::str;
 use std::{
     ffi::CString,
+    panic::catch_unwind,
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         Arc,
     },
-    time::Duration,
 };
 use tokio::sync::Mutex;
 
@@ -118,17 +118,18 @@ impl Server {
         match &*state {
             ServerState::Disposed => false,
             ServerState::Ready(server) => {
-                // Set shutdown flag BEFORE changing state to prevent callbacks from firing
+                // Set shutdown flag before changing state to prevent callbacks from firing
                 // This ensures any in-flight async tasks will skip FFI callbacks
-                server.shutdown.store(true, Ordering::Release);
+                server.shutdown.store(true, Ordering::SeqCst);
 
                 *state = ServerState::Disposed;
 
-                // Take and shutdown the runtime to stop all tokio worker threads
-                // This prevents crashes when the process terminates
+                // Take and shutdown the runtime
+                // Use shutdown_background() to signal shutdown and return immediately without waiting for tasks to complete. This prevents blocking while
+                // tasks try to wind down which could cause deadlocks or crashes if tasks try to call back into Unity during its shutdown sequence.
                 if let Ok(mut rt_lock) = self.async_runtime.lock() {
                     if let Some(runtime) = rt_lock.take() {
-                        runtime.shutdown_timeout(Duration::from_millis(100));
+                        runtime.shutdown_background();
                     }
                 }
 
@@ -185,17 +186,20 @@ impl SegmentServer {
     ) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
 
-        // Create error_fn that checks shutdown flag before invoking FFI callback
         let shutdown_for_error = shutdown.clone();
         let error_fn = Box::new(move |message: &str| {
-            if shutdown_for_error.load(Ordering::Acquire) {
+            if shutdown_for_error.load(Ordering::SeqCst) {
                 return;
             }
             if let Some(cb) = error_fn {
                 if let Ok(cstr) = CString::new(message) {
-                    unsafe {
-                        cb(cstr.as_ptr());
-                    }
+                    let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        if !shutdown_for_error.load(Ordering::SeqCst) {
+                            unsafe {
+                                cb(cstr.as_ptr());
+                            }
+                        }
+                    }));
                 };
             };
         });
@@ -366,14 +370,19 @@ impl SegmentServer {
 
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
-        if self.shutdown.load(Ordering::Acquire) {
+        if self.shutdown.load(Ordering::SeqCst) {
             return;
         }
-        self.callback_fn.as_ref()(id, Response::Success);
+        let callback = self.callback_fn.as_ref();
+        let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
+            if !self.shutdown.load(Ordering::SeqCst) {
+                callback(id, Response::Success);
+            }
+        }));
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
-        if self.shutdown.load(Ordering::Acquire) {
+        if self.shutdown.load(Ordering::SeqCst) {
             return;
         }
 
@@ -383,10 +392,23 @@ impl AppContext {
             }
             None => message,
         };
-        self.error_fn.as_ref()(message.as_str());
+
+        let error_fn = self.error_fn.as_ref();
+        let callback_fn = self.callback_fn.as_ref();
+        let shutdown = &self.shutdown;
+
+        let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
+            if !shutdown.load(Ordering::SeqCst) {
+                error_fn(message.as_str());
+            }
+        }));
 
         if let Some(id) = id {
-            self.callback_fn.as_ref()(id, Response::Error);
+            let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
+                if !shutdown.load(Ordering::SeqCst) {
+                    callback_fn(id, Response::Error);
+                }
+            }));
         };
     }
 }
