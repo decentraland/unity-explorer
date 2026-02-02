@@ -40,7 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
 
-                await StandAtSpawnTest(csv);
+                await StandAtSpawnAsync(csv);
             }
             catch (Exception ex)
             {
@@ -63,7 +63,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         /// <summary>
         /// The minimal performance test: stand at spawn for 1000 frames.
         /// </summary>
-        private async UniTask StandAtSpawnTest(StreamWriter csv)
+        private async UniTask StandAtSpawnAsync(StreamWriter csv)
         {
             for (var i = 0; i < 1000; i++)
             {
