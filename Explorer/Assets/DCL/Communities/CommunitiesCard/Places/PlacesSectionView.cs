@@ -37,7 +37,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
-        [field: SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration { get; set; } = null!;
+        [field: SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
