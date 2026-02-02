@@ -6,6 +6,7 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         Arc,
     },
+    time::Duration,
 };
 use tokio::sync::Mutex;
 
@@ -45,20 +46,24 @@ pub enum ServerState {
 
 pub struct Server {
     state: std::sync::Mutex<ServerState>,
-    pub async_runtime: tokio::runtime::Runtime,
+    async_runtime: std::sync::Mutex<Option<tokio::runtime::Runtime>>,
 }
 
 impl Default for Server {
     fn default() -> Self {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
         Self {
-            async_runtime: runtime,
+            async_runtime: std::sync::Mutex::new(None),
             state: std::sync::Mutex::new(ServerState::Disposed),
         }
+    }
+}
+
+impl Server {
+    fn create_runtime() -> tokio::runtime::Runtime {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap()
     }
 }
 
@@ -81,14 +86,21 @@ impl Server {
         match *state {
             ServerState::Ready(_) => false,
             ServerState::Disposed => {
+                let runtime = Self::create_runtime();
+
                 let server = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
                     callback_fn,
                     error_fn,
-                    &self.async_runtime,
+                    &runtime,
                 );
+
+                if let Ok(mut rt_lock) = self.async_runtime.lock() {
+                    *rt_lock = Some(runtime);
+                }
+
                 *state = ServerState::Ready(Arc::new(server));
                 true
             }
@@ -111,6 +123,15 @@ impl Server {
                 server.shutdown.store(true, Ordering::Release);
 
                 *state = ServerState::Disposed;
+
+                // Take and shutdown the runtime to stop all tokio worker threads
+                // This prevents crashes when the process terminates
+                if let Ok(mut rt_lock) = self.async_runtime.lock() {
+                    if let Some(runtime) = rt_lock.take() {
+                        runtime.shutdown_timeout(Duration::from_millis(100));
+                    }
+                }
+
                 true
             }
         }
@@ -133,6 +154,17 @@ impl Server {
                 let id = server.next_id();
                 func(server.clone(), id);
                 id
+            }
+        }
+    }
+
+    pub fn spawn<F>(&self, future: F)
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        if let Ok(rt_lock) = self.async_runtime.lock() {
+            if let Some(ref runtime) = *rt_lock {
+                runtime.spawn(future);
             }
         }
     }

@@ -81,7 +81,7 @@ pub unsafe extern "C" fn segment_server_identify(
 
         let operation =
             SegmentServer::enqueue_identify(segment, id, user, traits_json, context_json);
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SEGMENT_SERVER.spawn(operation);
     })
 }
 
@@ -119,7 +119,7 @@ pub unsafe extern "C" fn segment_server_track(
             properties_json,
             context_json,
         );
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SEGMENT_SERVER.spawn(operation);
     })
 }
 
@@ -157,7 +157,7 @@ pub unsafe extern "C" fn segment_server_instant_track_and_flush(
             properties_json,
             context_json,
         );
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SEGMENT_SERVER.spawn(operation);
     })
 }
 
@@ -166,7 +166,7 @@ pub extern "C" fn segment_server_flush() -> OperationHandleId {
     SEGMENT_SERVER.try_execute(&|segment, id| {
         let segment = segment.clone();
         let operation = SegmentServer::flush(segment, id);
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SEGMENT_SERVER.spawn(operation);
     })
 }
 
