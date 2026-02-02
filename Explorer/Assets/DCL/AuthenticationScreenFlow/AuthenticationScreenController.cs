@@ -4,8 +4,8 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
-using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
@@ -194,11 +194,35 @@ namespace DCL.AuthenticationScreenFlow
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
-                web3Authenticator.TryAutoLoginAsync(loginCancellationTokenSource.Token).Forget();
-                fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, loginCancellationTokenSource.Token));
+                TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
             else
             {
+                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+            }
+        }
+
+        private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
+        {
+            try
+            {
+                bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
+
+                if (autoLoginSuccess)
+                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
+                else
+                {
+                    sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                    fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                }
+            }
+            catch (OperationCanceledException)
+            { /* Expected on cancellation */
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }

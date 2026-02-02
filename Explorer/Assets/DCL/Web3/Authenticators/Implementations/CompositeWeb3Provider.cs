@@ -79,7 +79,9 @@ namespace DCL.Web3.Authenticators
             CurrentProvider = string.IsNullOrEmpty(email) ? AuthProvider.Dapp : AuthProvider.ThirdWeb;
 
             // Only ThirdWeb supports auto-login
-            return thirdWebAuth.TryAutoLoginAsync(ct);
+            return CurrentProvider == AuthProvider.ThirdWeb
+                ? thirdWebAuth.TryAutoLoginAsync(ct)
+                : UniTask.FromResult(true);
         }
 
         // IEthereumApi

@@ -37,7 +37,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.IsNullOrEmpty(email))
                 return false;
-
+            
             try
             {
                 await UniTask.SwitchToMainThread(ct);
