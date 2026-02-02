@@ -211,7 +211,8 @@ Varyings LitPassVertexSimple(Attributes input)
     float4 vPos = input.positionOS;
     float3 vNorm = input.normalOS;
     
-    WindFlutter(vPos, vNorm, input.texcoord);
+    if (_RequiresWind)
+        WindFlutter(vPos, vNorm, input.texcoord);
 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(vPos);
     VertexNormalInputs normalInput = GetVertexNormalInputs(vNorm, input.tangentOS);
