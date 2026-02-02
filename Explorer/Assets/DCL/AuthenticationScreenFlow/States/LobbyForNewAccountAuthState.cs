@@ -49,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private Profile newUserProfile;
         private string userEmail;
-        private CancellationToken ct;
+        private CancellationToken stateEnterCt;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
-            ct = payload.ct;
+            stateEnterCt = payload.ct;
             userEmail = payload.email;
 
             InitializeAvatarAsync().Forget();
@@ -158,7 +158,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTask InitializeAvatarAsync()
         {
-            await LoadBaseWearablesAsync(ct);
+            await LoadBaseWearablesAsync(stateEnterCt);
             UpdateCharacterPreview(RandomizeAvatar());
             UpdateAvatarNavigationButtons();
             InitializeAvatarHistory(newUserProfile.Avatar);
@@ -226,44 +226,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             avatarHistory.Add(initialAvatar);
             currentAvatarIndex = 0;
             UpdateAvatarNavigationButtons();
-        }
-
-        private void FinalizeNewUser()
-        {
-            JumpIntoWorld();
-            PublishNewProfile(ct).Forget();
-
-            if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
-                SubscribeToNewsletterAsync(userEmail, ct).Forget();
-
-            return;
-
-            async UniTaskVoid PublishNewProfile(CancellationToken ct)
-            {
-                newUserProfile.Name = view.ProfileNameInputField.Text;
-                Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
-                newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
-            }
-        }
-
-        private async UniTaskVoid SubscribeToNewsletterAsync(string email, CancellationToken ct)
-        {
-            try
-            {
-                string url = decentralandUrlsSource.Url(DecentralandUrl.BuilderApiNewsletter);
-                var jsonBody = $"{{\"email\":\"{email}\",\"source\":\"auth\"}}";
-
-                await webRequestController.PostAsync(
-                                               new CommonArguments(URLAddress.FromString(url)),
-                                               GenericPostArguments.CreateJson(jsonBody),
-                                               ct,
-                                               ReportCategory.AUTHENTICATION)
-                                          .WithNoOpAsync();
-            }
-            catch (OperationCanceledException)
-            { /* Ignore cancellation */
-            }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
         }
 
         private void OnBackButtonClicked()
@@ -383,15 +345,23 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             return result;
         }
 
-        private void JumpIntoWorld()
+        private void FinalizeNewUser()
         {
             view.FinalizeNewUserButton.interactable = false;
 
-            AnimateAndAwaitAsync().Forget();
+            if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
+                SubscribeToNewsletterAsync(userEmail, stateEnterCt).Forget();
+
+            PublishNewProfile(stateEnterCt).Forget();
+
             return;
 
-            async UniTaskVoid AnimateAndAwaitAsync()
+            async UniTaskVoid PublishNewProfile(CancellationToken ct)
             {
+                newUserProfile.Name = view.ProfileNameInputField.Text;
+                Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct);
+                newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+
                 await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
 
                 view.Hide(UIAnimationHashes.OUT);
@@ -401,6 +371,26 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 fsm.Enter<InitAuthState>();
                 controller.TrySetLifeCycle();
             }
+        }
+
+        private async UniTaskVoid SubscribeToNewsletterAsync(string email, CancellationToken ct)
+        {
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.BuilderApiNewsletter);
+                var jsonBody = $"{{\"email\":\"{email}\",\"source\":\"auth\"}}";
+
+                await webRequestController.PostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               ct,
+                                               ReportCategory.AUTHENTICATION)
+                                          .WithNoOpAsync();
+            }
+            catch (OperationCanceledException)
+            { /* Ignore cancellation */
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
         }
     }
 }
