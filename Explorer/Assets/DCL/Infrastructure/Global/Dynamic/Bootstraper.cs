@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
@@ -170,7 +170,13 @@ namespace Global.Dynamic
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
+                    EnableLOD =
+#if UNITY_WEBGL
+                        false
+#else
+                        debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play
+#endif
+                    ,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,

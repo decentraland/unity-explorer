@@ -153,7 +153,7 @@ var dcl_ws_library = {
     if (it.t === 0) {
       bytes = it.b;
     } else {
-      const s = it.s ?? "";
+      const s = it.s != null ? it.s : "";
       const n = lengthBytesUTF8(s);
       if (n > bufferLen) return -1;
       bytes = new Uint8Array(n);
