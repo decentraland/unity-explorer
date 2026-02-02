@@ -75,7 +75,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     await compositeWeb3Provider.ResendOtp();
                     view.InputField.Clear();
                 }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION)); }
+                catch (Exception e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                    view.Hide(SLIDE);
+                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                }
                 finally { view.ResendCodeButton.interactable = true; }
             }
         }
@@ -158,6 +165,14 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 catch (CodeVerificationException)
                 {
                     ShowOtpResult(false);
+                }
+                catch (Exception e)
+                {
+                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                    view.Hide(SLIDE);
+                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
                 }
             }
         }
