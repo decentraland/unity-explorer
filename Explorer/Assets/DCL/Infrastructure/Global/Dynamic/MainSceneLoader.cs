@@ -55,7 +55,6 @@ using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using System.IO;
-using System.Text;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -66,8 +65,6 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
-        private const string SINGLE_INSTANCE_MUTEX_IDENTIFIER = @"Global\Decentraland.Explorer.InstanceLock";
-
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
