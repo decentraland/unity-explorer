@@ -15,7 +15,6 @@ namespace DCL.Events
     public class EventsCalendarController : IDisposable
     {
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
-        private const string GET_HIGHLIGHTED_EVENTS_ERROR_MESSAGE = "There was an error loading highlighted events. Please try again.";
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -96,9 +95,6 @@ namespace DCL.Events
 
             if (ct.IsCancellationRequested)
                 return;
-
-            if (!highlightedEventsResult.Success)
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_HIGHLIGHTED_EVENTS_ERROR_MESSAGE));
 
             bool showHighlightedBanner = highlightedEventsResult is { Success: true, Value: { Count: > 0 } };
             view.SetHighlightedBanner(showHighlightedBanner ? highlightedEventsResult.Value[0] : null);
