@@ -136,7 +136,12 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
                             .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false)
                             .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false)
-                            .AddToggleField("Pause Video Players", OnVideoPlayersPausedChange, false);
+                            .AddToggleField("Pause Video Players", OnVideoPlayersPausedChange, false)
+                            .AddFloatFieldWithConfirmation(QualitySettings.meshLodThreshold, "Mesh LOD Threshold", newValue =>
+                             {
+                                 QualitySettings.meshLodThreshold = newValue;
+                             });
+
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
                            ?.SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
