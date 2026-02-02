@@ -55,7 +55,10 @@ namespace DCL.UserInAppInitializationFlow
             IRoomHub roomHub,
 #endif
 
+#if !UNITY_WEBGL
             bool localSceneDevelopment,
+#endif
+
             CharacterContainer characterContainer)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
@@ -65,7 +68,11 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+
+            // TODO Avatar is temporaly unsupported
+#if !UNITY_WEBGL
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+#endif
 
 #if !UNITY_WEBGL
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
@@ -79,8 +86,11 @@ namespace DCL.UserInAppInitializationFlow
 
             var loadingOperations = new List<IStartupOperation>()
             {
-                blocklistCheckStartupOperation,
-                loadPlayerAvatarStartupOperation
+                blocklistCheckStartupOperation
+
+#if !UNITY_WEBGL
+                , loadPlayerAvatarStartupOperation
+#endif
 
 #if !UNITY_WEBGL
                 , loadLandscapeStartupOperation
@@ -89,6 +99,7 @@ namespace DCL.UserInAppInitializationFlow
                 //teleportStartupOperation
             };
 
+#if !UNITY_WEBGL
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
             // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
             if (!localSceneDevelopment)
@@ -96,6 +107,7 @@ namespace DCL.UserInAppInitializationFlow
                 // TODO review why loadGlobalPxOperation is invoked on recovery
                 loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
             }
+#endif
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,

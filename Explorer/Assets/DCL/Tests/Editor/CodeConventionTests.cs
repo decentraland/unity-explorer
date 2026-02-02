@@ -116,6 +116,21 @@ namespace DCL.Tests
             const string pattern = @"\.GetLocalizedString\(\)";
             ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
         }
+
+        [Test]
+        public void VerifyShouldNotUseDirectFileIO()
+        {
+            const string pattern = @"System\.IO";
+            string[] ignorePaths = new []
+            {
+                "*Test*/*Should.cs", // Ignore any test with should suffix
+            };
+            ValidateNoForbiddenApiUsed(
+                    pattern,
+                    "Guard File IO operations under #if !UNITY_WEBGL and update the test.",
+                    ignorePaths
+                    );
+        }
         
         [Test]
         public void VerifyShouldNotUseConcurrentCollection()

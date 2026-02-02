@@ -546,7 +546,11 @@ namespace Global.Dynamic
                 appArgs,
                 backgroundMusic,
                 roomHub,
+
+#if !UNITY_WEBGL
                 localSceneDevelopment,
+#endif
+                
                 staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
