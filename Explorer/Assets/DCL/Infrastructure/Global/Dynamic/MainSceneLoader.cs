@@ -355,13 +355,10 @@ namespace Global.Dynamic
             try
             {
                 Debug.Log("ForceSingleInstance.CreateMutex");
-                singleInstanceMutex = new Mutex(false, SINGLE_INSTANCE_MUTEX_IDENTIFIER);
+                singleInstanceMutex = new Mutex(true, SINGLE_INSTANCE_MUTEX_IDENTIFIER, out bool createdNewMutex);
+                Debug.Log($"ForceSingleInstance.IsRunning: {!createdNewMutex}");
 
-                Debug.Log("ForceSingleInstance.WaitMutex");
-                bool acquiredHandle = singleInstanceMutex.WaitOne(0, false);
-                Debug.Log($"ForceSingleInstance.AcquiredHandle: {acquiredHandle}");
-
-                if (!acquiredHandle)
+                if (!createdNewMutex)
                     Application.Quit();
             }
             catch (AbandonedMutexException)
