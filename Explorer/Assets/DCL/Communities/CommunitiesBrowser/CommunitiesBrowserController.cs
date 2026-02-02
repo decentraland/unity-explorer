@@ -81,6 +81,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? manageRequestReceivedCts;
 
         private bool isSectionActivated;
+        private bool inputWasBlocked;
         private string currentSearchText = string.Empty;
         private CommunitiesRightSideSections currentSection = CommunitiesRightSideSections.MAIN_SECTION;
         private bool isInvitesAndRequestsSectionActive => currentSection == CommunitiesRightSideSections.INVITES_AND_REQUESTS_SECTION;
@@ -139,7 +140,7 @@ namespace DCL.Communities.CommunitiesBrowser
             scope.Add(browserEventBus.Subscribe<CommunitiesBrowserEvents.RequestToJoinCommunityCancelledEvent>(CancelRequestToJoinCommunity));
 
             view.SearchBarSelected += DisableShortcutsInput;
-            view.SearchBarDeselected += RestoreInput;
+            view.SearchBarDeselected += TryRestoreInput;
             view.SearchBarValueChanged += SearchBarValueChanged;
             view.SearchBarSubmit += SearchBarSubmit;
             view.SearchBarClearButtonClicked += SearchBarCleared;
@@ -167,7 +168,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public void Dispose()
         {
             view.SearchBarSelected -= DisableShortcutsInput;
-            view.SearchBarDeselected -= RestoreInput;
+            view.SearchBarDeselected -= TryRestoreInput;
             view.SearchBarValueChanged -= SearchBarValueChanged;
             view.SearchBarSubmit -= SearchBarSubmit;
             view.SearchBarClearButtonClicked -= SearchBarCleared;
@@ -239,6 +240,7 @@ namespace DCL.Communities.CommunitiesBrowser
             spriteCache.Clear();
             myCommunitiesPresenter.Deactivate();
             mainRightSectionPresenter.Deactivate();
+            TryRestoreInput(string.Empty);
 
             UnsubscribeDataProviderEvents();
         }
@@ -449,11 +451,19 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private void DisableShortcutsInput(string text) =>
+        private void DisableShortcutsInput(string text)
+        {
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputWasBlocked = true;
+        }
 
-        private void RestoreInput(string text) =>
+        private void TryRestoreInput(string text)
+        {
+            if (!inputWasBlocked) return;
+
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputWasBlocked = false;
+        }
 
         private void SearchBarValueChanged(string searchText)
         {
