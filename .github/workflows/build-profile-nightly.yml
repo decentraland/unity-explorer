@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'  # Runs at 2 AM UTC every day
+
 jobs:
   check-commits:
     name: Check for New Commits
@@ -20,6 +21,13 @@ jobs:
       - name: Check for commits since last nightly build
         id: check
         run: |
+          # Always build on manual runs
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run detected (workflow_dispatch), forcing build"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # Get the timestamp of the last successful nightly build
           LAST_BUILD_TIME=$(gh run list \
             --workflow="Nightly Profile Build" \
@@ -63,6 +71,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: dev
+
       - name: Get version
         id: get_version
         uses: ./.github/actions/version
