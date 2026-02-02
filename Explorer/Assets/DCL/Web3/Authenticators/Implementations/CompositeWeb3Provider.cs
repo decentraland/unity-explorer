@@ -66,11 +66,11 @@ namespace DCL.Web3.Authenticators
             dappAuth.CancelCurrentWeb3Operation();
 
         // IOtpAuthenticator - only thirdWebAuth supports these
-        public UniTask SubmitOtp(string otp) =>
-            thirdWebAuth.SubmitOtp(otp);
+        public UniTask SubmitOtpAsync(string otp) =>
+            thirdWebAuth.SubmitOtpAsync(otp);
 
-        public UniTask ResendOtp() =>
-            thirdWebAuth.ResendOtp();
+        public UniTask ResendOtpAsync() =>
+            thirdWebAuth.ResendOtpAsync();
 
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {

@@ -76,11 +76,11 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken ct) =>
             await loginService.LogoutAsync(ct);
 
-        public async UniTask SubmitOtp(string otp) =>
-            await loginService.SubmitOtp(otp);
+        public async UniTask SubmitOtpAsync(string otp) =>
+            await loginService.SubmitOtpAsync(otp);
 
-        public async UniTask ResendOtp() =>
-            await loginService.ResendOtp();
+        public async UniTask ResendOtpAsync() =>
+            await loginService.ResendOtpAsync();
 
         // Ethereum API
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>

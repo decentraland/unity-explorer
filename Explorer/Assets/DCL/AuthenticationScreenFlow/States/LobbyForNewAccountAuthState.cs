@@ -49,7 +49,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private Profile newUserProfile;
         private string userEmail;
-        private CancellationToken stateEnterCt;
+        private CancellationToken loginCt;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
-            stateEnterCt = payload.ct;
+            loginCt = payload.ct;
             userEmail = payload.email;
 
             InitializeAvatarAsync().Forget();
@@ -158,7 +158,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTask InitializeAvatarAsync()
         {
-            await LoadBaseWearablesAsync(stateEnterCt);
+            await LoadBaseWearablesAsync(loginCt);
             UpdateCharacterPreview(RandomizeAvatar());
             UpdateAvatarNavigationButtons();
             InitializeAvatarHistory(newUserProfile.Avatar);
@@ -350,13 +350,13 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.FinalizeNewUserButton.interactable = false;
 
             if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
-                SubscribeToNewsletterAsync(userEmail, stateEnterCt).Forget();
+                SubscribeToNewsletterAsync(userEmail, loginCt).Forget();
 
-            PublishNewProfile(stateEnterCt).Forget();
+            PublishNewProfileAsync(loginCt).Forget();
 
             return;
 
-            async UniTaskVoid PublishNewProfile(CancellationToken ct)
+            async UniTaskVoid PublishNewProfileAsync(CancellationToken ct)
             {
                 newUserProfile.Name = view.ProfileNameInputField.Text;
                 Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct);

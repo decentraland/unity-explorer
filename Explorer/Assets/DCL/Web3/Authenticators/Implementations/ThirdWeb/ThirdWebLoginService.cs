@@ -37,7 +37,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.IsNullOrEmpty(email))
                 return false;
-            
+
             try
             {
                 await UniTask.SwitchToMainThread(ct);
@@ -86,7 +86,7 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                ActiveWallet = await OTPLoginFlow(email, ct);
+                ActiveWallet = await OTPLoginFlowAsync(email, ct);
 
                 string? sender = await ActiveWallet.GetAddress();
 
@@ -131,7 +131,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<InAppWallet> OTPLoginFlow(string? email, CancellationToken ct)
+        private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
         {
             pendingWallet = await InAppWallet.Create(
                 client,
@@ -158,7 +158,7 @@ namespace DCL.Web3.Authenticators
             return result;
         }
 
-        public async UniTask SubmitOtp(string otp)
+        public async UniTask SubmitOtpAsync(string otp)
         {
             if (pendingWallet == null)
                 throw new InvalidOperationException("SubmitOtp called but no pending wallet");
@@ -173,7 +173,7 @@ namespace DCL.Web3.Authenticators
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
         }
 
-        public async UniTask ResendOtp()
+        public async UniTask ResendOtpAsync()
         {
             if (pendingWallet == null)
                 throw new InvalidOperationException("ResendOtp called but no pending wallet");

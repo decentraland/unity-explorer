@@ -13,13 +13,13 @@ namespace DCL.Web3.Authenticators
         ///     Submit OTP code entered by user.
         ///     Throws <see cref="CodeVerificationException" /> if code is invalid/expired.
         /// </summary>
-        public UniTask SubmitOtp(string otp);
+        public UniTask SubmitOtpAsync(string otp);
 
         /// <summary>
         ///     Resend OTP code to the same email.
         ///     Can only be called during active login session.
         /// </summary>
-        public UniTask ResendOtp();
+        public UniTask ResendOtpAsync();
 
         /// <summary>
         ///     Attempts to auto-login using stored session.

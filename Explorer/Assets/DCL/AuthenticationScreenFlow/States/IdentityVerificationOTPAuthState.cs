@@ -72,7 +72,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 try
                 {
-                    await compositeWeb3Provider.ResendOtp();
+                    await compositeWeb3Provider.ResendOtpAsync();
                     view.InputField.Clear();
                 }
                 catch (Exception e)
@@ -159,7 +159,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             {
                 try
                 {
-                    await compositeWeb3Provider.SubmitOtp(otp);
+                    await compositeWeb3Provider.SubmitOtpAsync(otp);
                     ShowOtpResult(true);
                 }
                 catch (CodeVerificationException)
