@@ -12,7 +12,6 @@
     --dcl-color-silver: #A09BA8;
     --dcl-color-shadow: #161518;
     --dcl-color-green: #12E34D;
-    --dcl-border-radius: 25px;
     
     --dcl-font-azeretmono-medium: url('/Assets/DCL/UIToolkit/Fonts/AzeretMono-Medium SDF.asset');
     --dcl-font-inter-regular: url('/Assets/DCL/UIToolkit/Fonts/Inter_18pt-Regular SDF.asset');

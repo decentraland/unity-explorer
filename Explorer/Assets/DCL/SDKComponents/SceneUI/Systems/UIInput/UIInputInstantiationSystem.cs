@@ -68,10 +68,56 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
-            // ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
-            // ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
+            ConfigureHoverBehaviour(entity, newUIInputComponent.TextField);
 
             World!.Add(entity, newUIInputComponent);
+        }
+
+        private void ConfigureHoverBehaviour(Entity entity, VisualElement uiInputTextField)
+        {
+            uiInputTextField.RegisterCallback<PointerEnterEvent>((_) =>
+            {
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent)) return;
+
+                float hoverMultiplier = 0.85f;
+                Color borderColor = new Color(
+                    uiComponent!.Transform.style.borderTopColor.value.r,
+                    uiComponent.Transform.style.borderTopColor.value.g,
+                    uiComponent.Transform.style.borderTopColor.value.b,
+                    hoverMultiplier * uiComponent.Transform.style.borderTopColor.value.a);
+                uiComponent.Transform.style.borderTopColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderRightColor.value.r,
+                    uiComponent.Transform.style.borderRightColor.value.g,
+                    uiComponent.Transform.style.borderRightColor.value.b,
+                    hoverMultiplier * uiComponent.Transform.style.borderRightColor.value.a);
+                uiComponent.Transform.style.borderRightColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderBottomColor.value.r,
+                    uiComponent.Transform.style.borderBottomColor.value.g,
+                    uiComponent.Transform.style.borderBottomColor.value.b,
+                    hoverMultiplier * uiComponent.Transform.style.borderBottomColor.value.a);
+                uiComponent.Transform.style.borderBottomColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderLeftColor.value.r,
+                    uiComponent.Transform.style.borderLeftColor.value.g,
+                    uiComponent.Transform.style.borderLeftColor.value.b,
+                    hoverMultiplier * uiComponent.Transform.style.borderLeftColor.value.a);
+                uiComponent.Transform.style.borderLeftColor = new StyleColor(borderColor);
+            });
+
+            uiInputTextField.RegisterCallback<PointerLeaveEvent>((_) =>
+            {
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform )) return;
+
+                uiComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
+                uiComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
+                uiComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
+                uiComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
+            });
         }
 
         [Query]
@@ -97,62 +143,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             uiInputComponent.IsOnValueChangedTriggered = false;
             uiInputComponent.IsOnSubmitTriggered = false;
-        }
-
-        private void ApplyDefaultUiTransformValues(Entity entity, in VisualElement uiTransform)
-        {
-            var pbUiTransform = World.Get<PBUiTransform>(entity);
-
-            uiTransform.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
-
-            if (pbUiTransform is
-                {
-                    HasBorderBottomLeftRadius: false,
-                    HasBorderBottomRightRadius: false,
-                    HasBorderTopLeftRadius: false,
-                    HasBorderTopRightRadius: false
-                })
-            {
-                uiTransform.style.borderBottomLeftRadius = new StyleLength(25);
-                uiTransform.style.borderBottomRightRadius = new StyleLength(25);
-                uiTransform.style.borderTopLeftRadius = new StyleLength(25);
-                uiTransform.style.borderTopRightRadius = new StyleLength(25);
-            }
-
-            if (pbUiTransform is
-                {
-                    HasBorderTopWidth: false,
-                    HasBorderRightWidth: false,
-                    HasBorderBottomWidth: false,
-                    HasBorderLeftWidth: false
-                })
-            {
-                uiTransform.style.borderTopWidth = new StyleFloat(1);
-                uiTransform.style.borderRightWidth = new StyleFloat(1);
-                uiTransform.style.borderBottomWidth = new StyleFloat(1);
-                uiTransform.style.borderLeftWidth = new StyleFloat(1);
-            }
-
-            if (pbUiTransform is
-                {
-                    BorderTopColor: null,
-                    BorderRightColor: null,
-                    BorderBottomColor: null,
-                    BorderLeftColor: null
-                })
-            {
-                uiTransform.style.borderTopColor = new StyleColor(Color.gray);
-                uiTransform.style.borderRightColor = new StyleColor(Color.gray);
-                uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
-                uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
-            }
-        }
-
-        private void ApplyDefaultUiBackgroundValues(Entity entity, in VisualElement uiTransform)
-        {
-            if (World.Has<PBUiBackground>(entity)) return;
-
-            uiTransform.style.backgroundColor = new StyleColor(Color.white);
         }
 
         private void PutMessage(ref CRDTEntity sdkEntity, bool isSubmit, string value)

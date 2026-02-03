@@ -1,3 +1,6 @@
+:root {
+    --default-border-radius: 25px; 
+}
 
 /* MAIN CANVAS STYLES */
 .sceneUIMainCanvas {
@@ -25,10 +28,6 @@
     margin: 0;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
-}
-
-.dcl-input:hover > .unity-base-text-field__input {
-    border-color: #808080;
 }
 
 /* DROPDOWN STYLES */
@@ -65,7 +64,7 @@
 
 .unity-base-dropdown__container-outer {
     background-color: rgb(255, 255, 255);
-    border-radius: var(--dcl-border-radius);
+    border-radius: var(--default-border-radius);
     color: rgb(0, 0, 0);
     overflow: hidden
 }
