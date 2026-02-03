@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,6 +31,8 @@ namespace DCL.Communities
     {
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
         bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData);
+
+        public void Clear();
         event Action<CommunityMetadataUpdatedEvent> CommunityMetadataUpdated;
     }
 
@@ -219,6 +221,13 @@ namespace DCL.Communities
             {
                 communities[ChatChannel.NewCommunityChannelId(community.id)] = community;
             }
+        }
+
+        public void Clear()
+        {
+            communities.Clear();
+            communitiesServiceCts.SafeCancelAndDispose();
+            communitiesServiceCts = new CancellationTokenSource();
         }
 
         public bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData)
