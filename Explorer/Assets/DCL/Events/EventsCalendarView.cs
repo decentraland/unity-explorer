@@ -1,4 +1,5 @@
-﻿using DCL.EventsApi;
+﻿using DCL.Communities;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI.Utilities;
 using DG.Tweening;
@@ -51,6 +52,7 @@ namespace DCL.Events
         private int currentNumberOfDaysShowed;
         private EventsStateService eventsStateService = null!;
         private bool showGoToTodayButtonOnTheRight;
+        private ThumbnailLoader? eventCardsThumbnailLoader;
 
         private void Awake()
         {
@@ -84,8 +86,11 @@ namespace DCL.Events
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
         }
 
-        public void SetDependencies(EventsStateService stateService) =>
+        public void SetDependencies(EventsStateService stateService, ThumbnailLoader thumbnailLoader)
+        {
             this.eventsStateService = stateService;
+            this.eventCardsThumbnailLoader = thumbnailLoader;
+        }
 
         public void SetDaysSelectorActive(bool isActive) =>
             daySelectorContainer.SetActive(isActive);
@@ -118,7 +123,7 @@ namespace DCL.Events
             if (eventInfo != null)
             {
                 // Setup card data
-                highlightedBanner.Configure(eventInfo.Value, placeInfo);
+                highlightedBanner.Configure(eventInfo.Value, eventCardsThumbnailLoader!, placeInfo);
 
                 // Setup card events
                 highlightedBanner.MainButtonClicked -= OnEventCardClicked;
@@ -172,7 +177,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventData.PlaceInfo);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;

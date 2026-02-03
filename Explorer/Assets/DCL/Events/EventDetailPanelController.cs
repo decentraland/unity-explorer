@@ -30,23 +30,24 @@ namespace DCL.Communities.EventInfo
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
+        private ThumbnailLoader? eventCardThumbnailLoader;
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();
-        private readonly ThumbnailLoader thumbnailLoader;
 
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ThumbnailLoader thumbnailLoader)
             : base(viewFactory)
         {
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
-            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+            eventCardThumbnailLoader = thumbnailLoader;
         }
 
         public override void Dispose()
@@ -78,7 +79,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, thumbnailLoader, panelCts.Token);
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, eventCardThumbnailLoader!, panelCts.Token);
         }
 
         protected override void OnViewClose()

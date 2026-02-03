@@ -1,5 +1,6 @@
 ﻿using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 
@@ -41,7 +42,7 @@ namespace DCL.Events
                 ClearEvents();
 
             foreach (EventDTO eventInfo in events)
-                currentEvents.TryAdd(eventInfo.id, eventInfo);
+                currentEvents.AddOrReplace(eventInfo.id, eventInfo);
         }
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places, bool clearCurrentPlaces = false)
@@ -50,7 +51,7 @@ namespace DCL.Events
                 ClearPlaces();
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
-                currentPlaces.TryAdd(placeInfo.id, placeInfo);
+                currentPlaces.AddOrReplace(placeInfo.id, placeInfo);
         }
 
         public void ClearEvents() =>

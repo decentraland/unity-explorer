@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -39,7 +40,8 @@ namespace DCL.Events
             HttpEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
             EventsStateService eventsStateService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -54,7 +56,7 @@ namespace DCL.Events
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.EventsClosed += UnloadEvents;
 
-            view.SetDependencies(eventsStateService);
+            view.SetDependencies(eventsStateService, thumbnailLoader);
             view.InitializeEventsGrid();
         }
 

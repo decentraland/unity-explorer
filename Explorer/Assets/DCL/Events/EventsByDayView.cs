@@ -1,4 +1,5 @@
-﻿using DCL.EventsApi;
+﻿using DCL.Communities;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
@@ -29,6 +30,7 @@ namespace DCL.Events
 
         private EventsStateService eventsStateService = null!;
         private readonly List<string> currentEventsIds = new ();
+        private ThumbnailLoader? eventCardsThumbnailLoader;
 
         private void Awake()
         {
@@ -42,8 +44,11 @@ namespace DCL.Events
             goToNextDayButton.onClick.RemoveAllListeners();
         }
 
-        public void SetDependencies(EventsStateService stateService) =>
+        public void SetDependencies(EventsStateService stateService, ThumbnailLoader thumbnailLoader)
+        {
             this.eventsStateService = stateService;
+            this.eventCardsThumbnailLoader = thumbnailLoader;
+        }
 
         public void SetEventsCounter(string text) =>
             eventsCounter.text = text;
@@ -92,7 +97,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventData.PlaceInfo);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;

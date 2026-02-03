@@ -1,4 +1,5 @@
 ﻿using DCL.Browser;
+using DCL.Communities;
 using DCL.EventsApi;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -34,7 +35,8 @@ namespace DCL.Events
             IPlacesAPIService placesAPIService,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -43,8 +45,8 @@ namespace DCL.Events
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             EventsStateService eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
-            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader);
+            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader);
 
             view.CreateButtonClicked += OnCreateButtonClicked;
         }
