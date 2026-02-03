@@ -25,6 +25,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         public event Action OTPResend;
 
         private string email;
+        private CancellationToken loginCt;
 
         public IdentityVerificationOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -47,6 +48,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             currentState.Value = AuthStatus.VerificationInProgress;
             email = payload.email;
+            loginCt = payload.ct;
 
             view.Show(payload.email);
             AuthenticateAsync(payload.email, payload.ct).Forget();
@@ -65,22 +67,26 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.InputField.CodeEntered -= OnEntered;
 
             email = string.Empty;
+            loginCt = default(CancellationToken);
         }
 
         private void ResendOtp()
         {
-            ResendOtpAsync().Forget();
+            ResendOtpAsync(loginCt).Forget();
             return;
 
-            async UniTaskVoid ResendOtpAsync()
+            async UniTaskVoid ResendOtpAsync(CancellationToken ct)
             {
                 view.ResendCodeButton.interactable = false;
 
                 try
                 {
-                    await compositeWeb3Provider.ResendOtpAsync();
-                    OTPResend.Invoke();
+                    await compositeWeb3Provider.ResendOtpAsync(ct);
+                    OTPResend?.Invoke();
                     view.InputField.Clear();
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
                 }
                 catch (Exception e)
                 {
@@ -162,15 +168,18 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private void OnEntered(string otp)
         {
-            OnOtpEnteredAsync().Forget();
+            OnOtpEnteredAsync(loginCt).Forget();
             return;
 
-            async UniTask OnOtpEnteredAsync()
+            async UniTask OnOtpEnteredAsync(CancellationToken ct)
             {
                 try
                 {
-                    await compositeWeb3Provider.SubmitOtpAsync(otp);
+                    await compositeWeb3Provider.SubmitOtpAsync(otp, ct);
                     ShowOtpResult(true);
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
                 }
                 catch (CodeVerificationException)
                 {

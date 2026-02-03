@@ -5,13 +5,15 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
 using MVC;
+using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached)>
+    public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {
         private readonly CharacterPreviewView characterPreviewView;
         private readonly MVCStateMachine<AuthStateBase> fsm;
@@ -23,6 +25,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SplashScreen splashScreen;
 
         private readonly Vector3 characterPreviewOrigPosition;
+        private CancellationToken loginCt;
 
         public LobbyForExistingAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
@@ -51,9 +54,11 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        public void Enter((Profile profile, bool isCached) payload)
+        public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
+            loginCt = payload.ct;
             view.JumpIntoWorldButton.interactable = true;
+            view!.DiffAccountButton.interactable = true;
 
             // splashScreen is destroyed after the first login
             if (splashScreen != null)
@@ -88,6 +93,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();
+
+            loginCt = CancellationToken.None;
         }
 
         private void OnDiffAccountButtonClicked()
@@ -99,20 +106,27 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void OnJumpIntoWorld()
         {
             view!.JumpIntoWorldButton.interactable = false;
+            view!.DiffAccountButton.interactable = false;
 
-            AnimateAndAwaitAsync().Forget();
+            AnimateAndAwaitAsync(loginCt).Forget();
             return;
 
-            async UniTaskVoid AnimateAndAwaitAsync()
+            async UniTaskVoid AnimateAndAwaitAsync(CancellationToken ct)
             {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+                try
+                {
+                    await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
 
-                view.Hide(UIAnimationHashes.OUT);
-                await UniTask.Delay(ANIMATION_DELAY);
-                characterPreviewController?.OnHide();
+                    view.Hide(UIAnimationHashes.OUT);
+                    await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                    characterPreviewController?.OnHide();
 
-                fsm.Enter<InitAuthState>();
-                controller.TrySetLifeCycle();
+                    fsm.Enter<InitAuthState>();
+                    controller.TrySetLifeCycle();
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
             }
         }
     }

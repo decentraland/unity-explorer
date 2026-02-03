@@ -100,7 +100,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     if (isNewUser)
                         machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
                     else
-                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool)>((profile, isCached));
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                 }
                 catch (OperationCanceledException)
                 {

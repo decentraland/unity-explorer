@@ -52,11 +52,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.CancelCurrentWeb3Operation();
 
         // IOtpAuthenticator
-        public UniTask SubmitOtpAsync(string otp) =>
-            core.SubmitOtpAsync(otp);
+        public UniTask SubmitOtpAsync(string otp, CancellationToken ct = default) =>
+            core.SubmitOtpAsync(otp, ct);
 
-        public UniTask ResendOtpAsync() =>
-            core.ResendOtpAsync();
+        public UniTask ResendOtpAsync(CancellationToken ct = default) =>
+            core.ResendOtpAsync(ct);
 
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
             core.TryAutoLoginAsync(ct);

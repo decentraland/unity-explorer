@@ -96,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     view.Hide(OUT);
-                    machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool)>((profile, isCached));
+                    machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                 }
                 catch (OperationCanceledException)
                 {

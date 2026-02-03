@@ -52,11 +52,11 @@ namespace DCL.Web3.Authenticators
             provider.CancelCurrentWeb3Operation();
 
         // IOtpAuthenticator
-        public UniTask SubmitOtpAsync(string otp) =>
-            provider.SubmitOtpAsync(otp);
+        public UniTask SubmitOtpAsync(string otp, CancellationToken ct = default) =>
+            provider.SubmitOtpAsync(otp, ct);
 
-        public UniTask ResendOtpAsync() =>
-            provider.ResendOtpAsync();
+        public UniTask ResendOtpAsync(CancellationToken ct = default) =>
+            provider.ResendOtpAsync(ct);
 
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct) =>
             await provider.TryAutoLoginAsync(ct);

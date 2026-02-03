@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Prefs;
 using DCL.Web3.Abstract;
@@ -158,8 +158,10 @@ namespace DCL.Web3.Authenticators
             return result;
         }
 
-        public async UniTask SubmitOtpAsync(string otp)
+        public async UniTask SubmitOtpAsync(string otp, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
+
             if (pendingWallet == null)
                 throw new InvalidOperationException("SubmitOtp called but no pending wallet");
 
@@ -173,8 +175,10 @@ namespace DCL.Web3.Authenticators
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
         }
 
-        public async UniTask ResendOtpAsync()
+        public async UniTask ResendOtpAsync(CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
+
             if (pendingWallet == null)
                 throw new InvalidOperationException("ResendOtp called but no pending wallet");
 

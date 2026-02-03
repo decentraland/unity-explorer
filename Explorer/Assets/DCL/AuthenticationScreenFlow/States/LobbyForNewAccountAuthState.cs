@@ -158,10 +158,16 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private async UniTask InitializeAvatarAsync()
         {
-            await LoadBaseWearablesAsync(loginCt);
-            UpdateCharacterPreview(RandomizeAvatar());
-            UpdateAvatarNavigationButtons();
-            InitializeAvatarHistory(newUserProfile.Avatar);
+            try
+            {
+                await LoadBaseWearablesAsync(loginCt);
+                UpdateCharacterPreview(RandomizeAvatar());
+                UpdateAvatarNavigationButtons();
+                InitializeAvatarHistory(newUserProfile.Avatar);
+            }
+            catch (OperationCanceledException)
+            { /* Expected on cancellation */
+            }
         }
 
         private async UniTask LoadBaseWearablesAsync(CancellationToken ct)
@@ -210,6 +216,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 baseWearablesLoaded = true;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items, male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw to be handled by caller
             }
             catch (Exception e)
             {
@@ -348,6 +358,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private void FinalizeNewUser()
         {
             view.FinalizeNewUserButton.interactable = false;
+            view.BackButton.interactable = false;
 
             if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
                 SubscribeToNewsletterAsync(userEmail, loginCt).Forget();
@@ -358,18 +369,31 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             async UniTaskVoid PublishNewProfileAsync(CancellationToken ct)
             {
-                newUserProfile.Name = view.ProfileNameInputField.Text;
-                Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct);
-                newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+                try
+                {
+                    newUserProfile.Name = view.ProfileNameInputField.Text;
+                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct);
+                    newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+                    await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
 
-                view.Hide(UIAnimationHashes.OUT);
-                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
-                characterPreviewController?.OnHide();
+                    view.Hide(UIAnimationHashes.OUT);
+                    await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+                    characterPreviewController?.OnHide();
 
-                fsm.Enter<InitAuthState>();
-                controller.TrySetLifeCycle();
+                    fsm.Enter<InitAuthState>();
+                    controller.TrySetLifeCycle();
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+
+                    view.Hide(UIAnimationHashes.SLIDE);
+                    fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                }
             }
         }
 

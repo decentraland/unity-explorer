@@ -44,6 +44,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             profileNameLabel.Value = profileName;
             JumpIntoWorldButton.interactable = true;
+            DiffAccountButton.interactable = true;
 
             ShowAsync(CancellationToken.None).Forget();
         }
