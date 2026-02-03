@@ -73,13 +73,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             World!.Add(entity, newUIInputComponent);
         }
 
-        private void ConfigureHoverBehaviour(Entity entity, VisualElement uiInputTextField)
+        private void ConfigureHoverBehaviour(Entity entity, VisualElement targetVisualElement)
         {
-            uiInputTextField.RegisterCallback<PointerEnterEvent>((_) =>
+            targetVisualElement.RegisterCallback<PointerEnterEvent>((_) =>
             {
                 if (!World.TryGet(entity, out UITransformComponent? uiComponent)) return;
 
-                float hoverMultiplier = 0.85f;
+                float hoverMultiplier = 0.75f;
                 Color borderColor = new Color(
                     uiComponent!.Transform.style.borderTopColor.value.r,
                     uiComponent.Transform.style.borderTopColor.value.g,
@@ -109,9 +109,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 uiComponent.Transform.style.borderLeftColor = new StyleColor(borderColor);
             });
 
-            uiInputTextField.RegisterCallback<PointerLeaveEvent>((_) =>
+            targetVisualElement.RegisterCallback<PointerLeaveEvent>((_) =>
             {
-                if (!World.TryGet(entity, out UITransformComponent? uiComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform )) return;
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform ))
+                    return;
 
                 uiComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
                 uiComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();

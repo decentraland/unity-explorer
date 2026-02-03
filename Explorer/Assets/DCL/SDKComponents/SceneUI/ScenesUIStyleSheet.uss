@@ -44,21 +44,28 @@
     margin: 0;
     background-color: rgba(0,0,0,0);
     border-color: rgba(0,0,0,0);
+    border-width: 0;
 }
 
-.unity-base-popup-field:hover:enabled > .unity-base-popup-field__input {
+.unity-base-popup-field:hover:enabled > .unity-base-popup-field__input,
+.unity-base-popup-field:active:enabled > .unity-base-popup-field__input,
+.unity-base-popup-field:focus:enabled > .unity-base-popup-field__input {
     border-color: rgba(0,0,0,0);
+    background-color: rgba(0,0,0,0);
+    border-width: 0;
 }
 
 .dcl-dropdown:hover:enabled > .unity-popup-field__input
 {
     background-color: #ECEBED;
     border-color: rgba(0,0,0,0);
+    background-color: rgba(0,0,0,0);
+    border-width: 0;
 }
 
 .dcl-dropdown:active:enabled > .unity-base-popup-field__input
 {
-    background-color: #D9D9D9;
+    /*background-color: #D9D9D9;*/
     border-color: rgba(0,0,0,0);
 }
 

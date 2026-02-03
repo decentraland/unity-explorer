@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
@@ -58,10 +59,75 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
-            // ApplyDefaultUiTransformValues(entity, uiTransformComponent.Transform);
-            // ApplyDefaultUiBackgroundValues(entity, uiTransformComponent.Transform);
+            ConfigureHoverBehaviour(entity, newDropdown.DropdownField);
 
             World.Add(entity, newDropdown);
+        }
+
+        private void ConfigureHoverBehaviour(Entity entity, VisualElement targetVisualElement)
+        {
+            targetVisualElement.RegisterCallback<PointerEnterEvent>((_) =>
+            {
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent)) return;
+
+                float hoverBorderAlphaMultiplier = 0.75f;
+                Color borderColor = new Color(
+                    uiComponent!.Transform.style.borderTopColor.value.r,
+                    uiComponent.Transform.style.borderTopColor.value.g,
+                    uiComponent.Transform.style.borderTopColor.value.b,
+                    hoverBorderAlphaMultiplier * uiComponent.Transform.style.borderTopColor.value.a);
+                uiComponent.Transform.style.borderTopColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderRightColor.value.r,
+                    uiComponent.Transform.style.borderRightColor.value.g,
+                    uiComponent.Transform.style.borderRightColor.value.b,
+                    hoverBorderAlphaMultiplier * uiComponent.Transform.style.borderRightColor.value.a);
+                uiComponent.Transform.style.borderRightColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderBottomColor.value.r,
+                    uiComponent.Transform.style.borderBottomColor.value.g,
+                    uiComponent.Transform.style.borderBottomColor.value.b,
+                    hoverBorderAlphaMultiplier * uiComponent.Transform.style.borderBottomColor.value.a);
+                uiComponent.Transform.style.borderBottomColor = new StyleColor(borderColor);
+
+                borderColor = new Color(
+                    uiComponent.Transform.style.borderLeftColor.value.r,
+                    uiComponent.Transform.style.borderLeftColor.value.g,
+                    uiComponent.Transform.style.borderLeftColor.value.b,
+                    hoverBorderAlphaMultiplier * uiComponent.Transform.style.borderLeftColor.value.a);
+                uiComponent.Transform.style.borderLeftColor = new StyleColor(borderColor);
+
+                if (!World.TryGet(entity, out PBUiBackground? pbUiBackground))
+                    return;
+                float darkenFactor = 0.1f;
+                uiComponent.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, darkenFactor);
+            });
+
+            // targetVisualElement.RegisterCallback<PointerCaptureEvent>((_) =>
+            /*targetVisualElement.RegisterCallback<PointerDownEvent>((_) =>
+            {
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent) || !World.TryGet(entity, out PBUiBackground? pbUiBackground))
+                    return;
+                float darkenFactor = 0.15f;
+                uiComponent!.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, darkenFactor);
+            });*/
+
+            targetVisualElement.RegisterCallback<PointerLeaveEvent>((_) =>
+            {
+                if (!World.TryGet(entity, out UITransformComponent? uiComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform ))
+                    return;
+
+                uiComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
+                uiComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
+                uiComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
+                uiComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
+
+                if (!World.TryGet(entity, out PBUiBackground? pbUiBackground))
+                    return;
+                uiComponent.Transform.style.backgroundColor = pbUiBackground!.GetColor();
+            });
         }
 
         [Query]
@@ -81,60 +147,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             PutMessage(ref sdkEntity, uiDropdownComponent.DropdownField.index);
             uiDropdownComponent.IsOnValueChangedTriggered = false;
-        }
-
-        private void ApplyDefaultUiTransformValues(Entity entity, in VisualElement uiTransform)
-        {
-            var pbUiTransform = World.Get<PBUiTransform>(entity);
-
-            if (pbUiTransform is
-                {
-                    HasBorderBottomLeftRadius: false,
-                    HasBorderBottomRightRadius: false,
-                    HasBorderTopLeftRadius: false,
-                    HasBorderTopRightRadius: false
-                })
-            {
-                uiTransform.style.borderBottomLeftRadius = new StyleLength(25);
-                uiTransform.style.borderBottomRightRadius = new StyleLength(25);
-                uiTransform.style.borderTopLeftRadius = new StyleLength(25);
-                uiTransform.style.borderTopRightRadius = new StyleLength(25);
-            }
-
-            if (pbUiTransform is
-                {
-                    HasBorderTopWidth: false,
-                    HasBorderRightWidth: false,
-                    HasBorderBottomWidth: false,
-                    HasBorderLeftWidth: false
-                })
-            {
-                uiTransform.style.borderTopWidth = new StyleFloat(1);
-                uiTransform.style.borderRightWidth = new StyleFloat(1);
-                uiTransform.style.borderBottomWidth = new StyleFloat(1);
-                uiTransform.style.borderLeftWidth = new StyleFloat(1);
-            }
-
-            if (pbUiTransform is
-                {
-                    BorderTopColor: null,
-                    BorderRightColor: null,
-                    BorderBottomColor: null,
-                    BorderLeftColor: null
-                })
-            {
-                uiTransform.style.borderTopColor = new StyleColor(Color.gray);
-                uiTransform.style.borderRightColor = new StyleColor(Color.gray);
-                uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
-                uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
-            }
-        }
-
-        private void ApplyDefaultUiBackgroundValues(Entity entity, in VisualElement uiTransform)
-        {
-            if (World.Has<PBUiBackground>(entity)) return;
-
-            uiTransform.style.backgroundColor = new StyleColor(Color.white);
         }
 
         private void PutMessage(ref CRDTEntity sdkEntity, int index)
