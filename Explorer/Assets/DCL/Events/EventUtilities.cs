@@ -56,12 +56,12 @@ namespace DCL.Communities.EventInfo
 
             TimeSpan offset = localZone.GetUtcOffset(localStart);
 
-            var day = localStart.ToString("dddd");
+            var day = localStart.ToString("dddd", CultureInfo.InvariantCulture);
             sb.Append(char.ToUpper(day[0]));
             sb.Append(day, 1, day.Length - 1);
             sb.Append(", ");
 
-            var month = localStart.ToString("MMM");
+            var month = localStart.ToString("MMM", CultureInfo.InvariantCulture);
             sb.Append(char.ToUpper(month[0]));
             sb.Append(month, 1, month.Length - 1);
             sb.Append(' ');
