@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
@@ -137,6 +138,7 @@ namespace DCL.Profiling.ECS
                             .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false)
                             .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false)
                             .AddToggleField("Pause Video Players", OnVideoPlayersPausedChange, false)
+                            .AddToggleField("Avatar Ghost Renderer", OnShowAvatarGhostRendererChange, false)
                             .AddFloatFieldWithConfirmation(QualitySettings.meshLodThreshold, "Mesh LOD Threshold", newValue =>
                              {
                                  QualitySettings.meshLodThreshold = newValue;
@@ -455,6 +457,36 @@ namespace DCL.Profiling.ECS
         private void OnVideoPlayersPausedChange(ChangeEvent<bool> evt)
         {
             VisualDebugSettings.VideoPlayersPaused = evt.newValue;
+        }
+
+        private void OnShowAvatarGhostRendererChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.ShowAvatarGhostRenderer = evt.newValue;
+            ToggleAvatarGhostRenderers(evt.newValue);
+        }
+
+        private static void ToggleAvatarGhostRenderers(bool showGhostOnly)
+        {
+            AvatarBase[] avatarBases = UnityEngine.Object.FindObjectsOfType<AvatarBase>();
+
+            foreach (AvatarBase avatarBase in avatarBases)
+            {
+                // Toggle GhostRenderer visibility
+                if (avatarBase.GhostRenderer != null)
+                    avatarBase.GhostRenderer.SetActive(showGhostOnly);
+
+                // Toggle all other renderers (body + wearables)
+                Renderer[] renderers = avatarBase.GetComponentsInChildren<Renderer>();
+
+                foreach (Renderer renderer in renderers)
+                {
+                    // Skip renderers that are part of the GhostRenderer
+                    if (avatarBase.GhostRenderer != null && renderer.transform.IsChildOf(avatarBase.GhostRenderer.transform))
+                        continue;
+
+                    renderer.enabled = !showGhostOnly;
+                }
+            }
         }
     }
 }

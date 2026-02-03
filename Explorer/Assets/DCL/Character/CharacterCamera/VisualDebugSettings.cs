@@ -228,5 +228,19 @@ namespace DCL.CharacterCamera
                 OnVideoPlayersPausedChanged?.Invoke(value);
             }
         }
+
+        // Avatar - Show Ghost Renderer Only (hides normal avatar renderers, shows ghost effect)
+        public static event Action<bool>? OnShowAvatarGhostRendererChanged;
+        private static bool showAvatarGhostRenderer;
+        public static bool ShowAvatarGhostRenderer
+        {
+            get => showAvatarGhostRenderer;
+            set
+            {
+                if (showAvatarGhostRenderer == value) return;
+                showAvatarGhostRenderer = value;
+                OnShowAvatarGhostRendererChanged?.Invoke(value);
+            }
+        }
     }
 }
