@@ -49,6 +49,7 @@
     "org.decentraland.clearscript": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package",
     "superscrollview": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
     "com.unity.modules.accessibility": "1.0.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
