@@ -95,7 +95,13 @@ namespace DCL.Events
             view.SetEventsGridAsLoading(true);
 
             var today = DateTime.Today;
-            string dayText = fromDate.Date == today ? TODAY_TEXT : fromDate.Date == today.AddDays(1) ? TOMORROW_TEXT : fromDate.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
+
+            string dayText = fromDate.Date == today ? 
+                TODAY_TEXT :
+                fromDate.Date == today.AddDays(1) ?
+                    TOMORROW_TEXT :
+                    fromDate.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
+
             view.SetEventsCounter(dayText);
 
             var fromDateUtc = fromDate.ToUniversalTime();

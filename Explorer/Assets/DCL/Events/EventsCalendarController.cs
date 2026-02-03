@@ -5,6 +5,7 @@ using DCL.EventsApi;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -27,6 +28,8 @@ namespace DCL.Events
         private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource? loadEventsCts;
+
+        private static readonly ListObjectPool<List<EventDTO>> EVENTS_GROUPED_BY_DAY_POOL = new (defaultCapacity: 5);
 
         public EventsCalendarController(
             EventsCalendarView view,
@@ -161,9 +164,10 @@ namespace DCL.Events
                 return;
             }
 
-            List<List<EventDTO>> eventsGroupedByDay = new (numberOfDays);
+
+            using PoolExtensions.Scope<List<List<EventDTO>>> eventsGroupedByDay = EVENTS_GROUPED_BY_DAY_POOL.AutoScope();
             for (var i = 0; i < numberOfDays; i++)
-                eventsGroupedByDay.Add(new List<EventDTO>());
+                eventsGroupedByDay.Value.Add(new List<EventDTO>());
 
             if (eventsResult.Value.Count > 0)
             {
@@ -178,7 +182,7 @@ namespace DCL.Events
                     {
                         if (eventLocalDate.Date == fromDate.AddDays(i))
                         {
-                            eventsGroupedByDay[i].Add(eventInfo);
+                            eventsGroupedByDay.Value[i].Add(eventInfo);
                             break;
                         }
                     }
@@ -194,10 +198,10 @@ namespace DCL.Events
                     eventsStateService.AddPlaces(placesResponse.Value.Data);
             }
 
-            for (var i = 0; i < eventsGroupedByDay.Count; i++)
+            for (var i = 0; i < eventsGroupedByDay.Value.Count; i++)
             {
-                AddEmptyEventCards(eventsGroupedByDay[i]);
-                view.SetEvents(eventsGroupedByDay[i], i, true);
+                AddEmptyEventCards(eventsGroupedByDay.Value[i]);
+                view.SetEvents(eventsGroupedByDay.Value[i], i, true);
             }
 
             view.SetAsLoading(false);
