@@ -79,11 +79,13 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         }
 
         /// <summary>
-        /// The minimal performance test: stand at spawn for 1000 frames.
+        /// The minimal performance test: stand at spawn for one minute.
         /// </summary>
         private async UniTask StandAtSpawnAsync()
         {
-            for (var i = 0; i < 1000; i++)
+            float startTime = Time.realtimeSinceStartup;
+
+            while (Time.realtimeSinceStartup - startTime < 60f)
             {
                 await WriteSampleAsync();
                 await UniTask.Yield();
@@ -93,7 +95,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         private Task WriteSampleAsync() =>
             csv != null
                 ? csv.WriteLineAsync(
-                    $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}")
+                    $"{Time.frameCount},{profiler.LastFrameTimeValueNs * 0.000001f},{profiler.LastGpuFrameTimeValueNs * 0.000001f}")
                 : Task.CompletedTask;
 
         private static async UniTask WriteSummaryAsync(string csvFile,
