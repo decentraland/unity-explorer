@@ -5,7 +5,7 @@ use std::{
     panic::catch_unwind,
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
-        Arc, Mutex as StdMutex,
+        Arc,
     },
 };
 use tokio::sync::Mutex;
@@ -31,14 +31,12 @@ pub struct AppContext {
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
     error_fn: Box<dyn Fn(&str) + Send + Sync>,
     shutdown: Arc<AtomicBool>,
-    callback_guard: Arc<StdMutex<()>>,
 }
 
 pub struct SegmentServer {
     context: Arc<Mutex<AppContext>>,
     next_id: AtomicU64,
     shutdown: Arc<AtomicBool>,
-    callback_guard: Arc<StdMutex<()>>,
 }
 
 pub enum ServerState {
@@ -117,28 +115,27 @@ impl Server {
 
         let mut state = state_lock.unwrap();
 
-        let server = match &*state {
-            ServerState::Disposed => return false,
-            ServerState::Ready(server) => server.clone(),
-        };
+        match &*state {
+            ServerState::Disposed => false,
+            ServerState::Ready(server) => {
+                // Set shutdown flag before changing state to prevent callbacks from firing
+                // This ensures any in-flight async tasks will skip FFI callbacks
+                server.shutdown.store(true, Ordering::SeqCst);
 
-        let _callback_lock = server.callback_guard.lock();
+                *state = ServerState::Disposed;
 
-        server.shutdown.store(true, Ordering::SeqCst);
+                // Take and shutdown the runtime
+                // Use shutdown_background() to signal shutdown and return immediately without waiting for tasks to complete. This prevents blocking while
+                // tasks try to wind down which could cause deadlocks or crashes if tasks try to call back into Unity during its shutdown sequence.
+                if let Ok(mut rt_lock) = self.async_runtime.lock() {
+                    if let Some(runtime) = rt_lock.take() {
+                        runtime.shutdown_background();
+                    }
+                }
 
-        *state = ServerState::Disposed;
-
-        // Take and shutdown the runtime
-        // Use shutdown_timeout() to block until all tasks complete (or timeout).
-        // Tasks will check shutdown flag and skip callbacks.
-        // The timeout prevents indefinite blocking if tasks are stuck.
-        if let Ok(mut rt_lock) = self.async_runtime.lock() {
-            if let Some(runtime) = rt_lock.take() {
-                runtime.shutdown_timeout(std::time::Duration::from_secs(5));
+                true
             }
         }
-
-        true
     }
 
     pub fn try_execute(
@@ -188,25 +185,19 @@ impl SegmentServer {
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
-        let callback_guard = Arc::new(StdMutex::new(()));
 
         let shutdown_for_error = shutdown.clone();
-        let callback_guard_for_error = callback_guard.clone();
         let error_fn = Box::new(move |message: &str| {
-            let _guard = match callback_guard_for_error.lock() {
-                Ok(g) => g,
-                Err(_) => return,
-            };
-
             if shutdown_for_error.load(Ordering::SeqCst) {
                 return;
             }
-
             if let Some(cb) = error_fn {
                 if let Ok(cstr) = CString::new(message) {
                     let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        unsafe {
-                            cb(cstr.as_ptr());
+                        if !shutdown_for_error.load(Ordering::SeqCst) {
+                            unsafe {
+                                cb(cstr.as_ptr());
+                            }
                         }
                     }));
                 };
@@ -252,14 +243,12 @@ impl SegmentServer {
             }),
             error_fn,
             shutdown: shutdown.clone(),
-            callback_guard: callback_guard.clone(),
         };
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
             context: Arc::new(Mutex::new(context)),
             shutdown,
-            callback_guard,
         }
     }
 
@@ -381,30 +370,18 @@ impl SegmentServer {
 
 impl AppContext {
     pub fn report_success(&self, id: OperationHandleId) {
-        // This ensures either that we acquire the lock before dispose, complete the callback, then dispose proceeds
-        // or dispose acquires the lock first, sets shutdown, and we skip the callback
-        let _guard = match self.callback_guard.lock() {
-            Ok(g) => g,
-            Err(_) => return,
-        };
-
-        // Check shutdown flag while holding the lock
         if self.shutdown.load(Ordering::SeqCst) {
             return;
         }
-
         let callback = self.callback_fn.as_ref();
         let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-            callback(id, Response::Success);
+            if !self.shutdown.load(Ordering::SeqCst) {
+                callback(id, Response::Success);
+            }
         }));
     }
 
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
-        let _guard = match self.callback_guard.lock() {
-            Ok(g) => g,
-            Err(_) => return,
-        };
-
         if self.shutdown.load(Ordering::SeqCst) {
             return;
         }
@@ -418,14 +395,19 @@ impl AppContext {
 
         let error_fn = self.error_fn.as_ref();
         let callback_fn = self.callback_fn.as_ref();
+        let shutdown = &self.shutdown;
 
         let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-            error_fn(message.as_str());
+            if !shutdown.load(Ordering::SeqCst) {
+                error_fn(message.as_str());
+            }
         }));
 
         if let Some(id) = id {
             let _ = catch_unwind(std::panic::AssertUnwindSafe(|| {
-                callback_fn(id, Response::Error);
+                if !shutdown.load(Ordering::SeqCst) {
+                    callback_fn(id, Response::Error);
+                }
             }));
         };
     }
