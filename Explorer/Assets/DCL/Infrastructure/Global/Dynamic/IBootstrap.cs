@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -56,7 +56,7 @@ namespace Global.Dynamic
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 
         GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot, Entity playerEntity);
+            UIDocument? debugUiRoot, Entity playerEntity);
 
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, BootstrapContainer bootstrapContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 

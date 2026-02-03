@@ -33,6 +33,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.LOD;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
 using DCL.Minimap;
@@ -234,7 +235,11 @@ namespace Global.Dynamic
             NotificationsBusController.Initialize(new NotificationsBusController());
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
-            LODContainer lodContainer = null!;
+            LODContainer? lodContainer = null;
+            ILODCache lodCache = null!;
+            HashSet<Vector2Int> roadCoordinates = null!;
+            ILODSettingsAsset lodSettings = null!;
+            RoadAssetsPool roadAssetsPool = null!;
 
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
@@ -259,20 +264,30 @@ namespace Global.Dynamic
                           )
                          .ThrowOnFail();
 
-                lodContainer =
-                    await LODContainer
-                         .CreateAsync(
-                              assetsProvisioner,
-                              staticContainer,
-                              settingsContainer,
-                              staticContainer.RealmData,
-                              defaultTexturesContainer.TextureArrayContainerFactory,
-                              debugBuilder,
-                              dynamicWorldParams.EnableLOD,
-                              staticContainer.GPUInstancingService,
-                              ct
-                          )
-                         .ThrowOnFail();
+#if UNITY_WEBGL
+                lodCache = new NoOpLODCache();
+                roadCoordinates = new HashSet<Vector2Int>();
+                lodSettings = new LODSettingsStub();
+                roadAssetsPool = new RoadAssetsPool(staticContainer.RealmData, new List<GameObject>(), null);
+#else
+                lodContainer = await LODContainer
+                    .CreateAsync(
+                        assetsProvisioner,
+                        staticContainer,
+                        settingsContainer,
+                        staticContainer.RealmData,
+                        defaultTexturesContainer.TextureArrayContainerFactory,
+                        debugBuilder,
+                        dynamicWorldParams.EnableLOD,
+                        staticContainer.GPUInstancingService,
+                        ct
+                    )
+                    .ThrowOnFail();
+                lodCache = lodContainer.LodCache;
+                roadCoordinates = lodContainer.RoadCoordinates;
+                lodSettings = lodContainer.LODSettings;
+                roadAssetsPool = lodContainer.RoadAssetsPool;
+#endif
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -369,12 +384,12 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment);
 
             var terrainContainer = TerrainContainer.Create(
-                staticContainer, 
-                realmContainer, 
+                staticContainer,
+                realmContainer,
 #if UNITY_WEBGL
                 false,
 #else
-                dynamicWorldParams.EnableLandscape, 
+                dynamicWorldParams.EnableLandscape,
 #endif
                 localSceneDevelopment
             );
@@ -443,8 +458,12 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
+#if UNITY_WEBGL
+            RealmNavigationContainer? realmNavigatorContainer = null;
+#else
             var realmNavigatorContainer = RealmNavigationContainer.Create
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
+#endif
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails()
@@ -471,10 +490,11 @@ namespace Global.Dynamic
             var emotesBus = new EmotesBus();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesBus);
 
+            IRealmNavigator realmNavigatorForInit = realmNavigatorContainer != null ? realmNavigatorContainer.RealmNavigator : new NoOpRealmNavigator();
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
-                realmNavigatorContainer,
+                realmNavigatorForInit,
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
@@ -489,13 +509,16 @@ namespace Global.Dynamic
 #if !UNITY_WEBGL
                 localSceneDevelopment,
 #endif
-                
+
                 staticContainer.CharacterContainer);
 
-            IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
+            IRealmNavigator realmNavigator = realmNavigatorContainer != null ? realmNavigatorContainer.RealmNavigator : realmNavigatorForInit;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
 
+#if UNITY_WEBGL
+            MapRendererContainer? mapRendererContainer = null;
+#else
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -516,6 +539,7 @@ namespace Global.Dynamic
                         eventBus,
                         ct
                     );
+#endif
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
@@ -564,27 +588,31 @@ namespace Global.Dynamic
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
-            var minimap = new MinimapController(
-                mainUIView.MinimapView.EnsureNotNull(),
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                staticContainer.RealmData,
-                realmNavigator,
-                staticContainer.ScenesCache,
-                mapPathEventBus,
-                staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel.Peek(),
-                sharedSpaceManager,
-                clipboard,
-                bootstrapContainer.DecentralandUrlsSource,
-                chatMessagesBus,
-                reloadSceneChatCommand,
-                roomHub,
-                staticContainer.LoadingStatus,
-                includeBannedUsersFromScene,
-                homePlaceEventBus
-            );
+            MinimapController? minimap = null;
+            if (mapRendererContainer != null)
+            {
+                minimap = new MinimapController(
+                    mainUIView.MinimapView.EnsureNotNull(),
+                    mapRendererContainer.MapRenderer,
+                    mvcManager,
+                    placesAPIService,
+                    staticContainer.RealmData,
+                    realmNavigator,
+                    staticContainer.ScenesCache,
+                    mapPathEventBus,
+                    staticContainer.SceneRestrictionBusController,
+                    dynamicWorldParams.StartParcel.Peek(),
+                    sharedSpaceManager,
+                    clipboard,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    chatMessagesBus,
+                    reloadSceneChatCommand,
+                    roomHub,
+                    staticContainer.LoadingStatus,
+                    includeBannedUsersFromScene,
+                    homePlaceEventBus
+                );
+            }
 
             var coreBackpackEventBus = new BackpackEventBus();
 
@@ -714,9 +742,11 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
+#if !UNITY_WEBGL
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
+#endif
                 new MultiplayerPlugin(
                     assetsProvisioner,
                     archipelagoIslandRoom,
@@ -769,7 +799,6 @@ namespace Global.Dynamic
                     includeBannedUsersFromScene),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
-                new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
                     assetsProvisioner, mvcManager, mainUIView,
                     notificationsRequestController, identityCache, profilesRepository,
@@ -783,7 +812,6 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
-                new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(
                     mvcManager,
                     menusAccessFacade,
@@ -991,8 +1019,9 @@ namespace Global.Dynamic
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                realmNavigatorContainer.CreatePlugin(),
+#if !UNITY_WEBGL
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
+#endif
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
                 new SmartWearablesGlobalPlugin(wearableCatalog,
@@ -1008,6 +1037,14 @@ namespace Global.Dynamic
                 new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner),
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
+
+            if (mapRendererContainer != null)
+            {
+                globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
+                globalPlugins.Add(new MinimapPlugin(mvcManager, minimap!));
+            }
+            if (realmNavigatorContainer != null)
+                globalPlugins.Add(realmNavigatorContainer.CreatePlugin());
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
@@ -1036,8 +1073,10 @@ namespace Global.Dynamic
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
             else
             {
-                globalPlugins.Add(lodContainer.LODPlugin);
-                globalPlugins.Add(lodContainer.RoadPlugin);
+#if !UNITY_WEBGL
+                globalPlugins.Add(lodContainer!.LODPlugin);
+                globalPlugins.Add(lodContainer!.RoadPlugin);
+#endif
             }
 
 #if !UNITY_WEBGL
@@ -1082,6 +1121,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(friendsContainer);
             }
 
+#if !UNITY_WEBGL
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(
                     selfProfile,
@@ -1129,6 +1169,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter));
             }
+#endif
 
             if (includeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(
@@ -1157,7 +1198,7 @@ namespace Global.Dynamic
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.Analytics!));
-
+#if !UNITY_WEBGL
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
@@ -1171,8 +1212,7 @@ namespace Global.Dynamic
                         entityParticipantTable,
                         staticContainer.ScenesCache,
                         eventBus, translationSettings
-                    )
-                );
+                    ));
 
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
                 globalPlugins.Add(new DebugMenuPlugin(
@@ -1184,6 +1224,7 @@ namespace Global.Dynamic
 
             if (!localSceneDevelopment)
                 globalPlugins.Add(new ConnectionStatusPanelPlugin(roomsStatus, currentSceneInfo, assetsProvisioner, appArgs));
+#endif
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
@@ -1196,16 +1237,16 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
                 currentSceneInfo,
-                lodContainer.LodCache,
-                lodContainer.RoadCoordinates,
-                lodContainer.LODSettings,
+                lodCache,
+                roadCoordinates,
+                lodSettings,
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
                 profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
-                lodContainer.RoadAssetsPool,
+                roadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData,

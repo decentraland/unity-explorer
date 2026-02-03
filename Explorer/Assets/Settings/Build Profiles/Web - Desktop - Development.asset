@@ -1,5 +1,48 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8267396541616044638
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 15009, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: Graphics Settings
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfileGraphicsSettings
+  m_LightmapStripping: 0
+  m_LightmapKeepPlain: 1
+  m_LightmapKeepDirCombined: 1
+  m_LightmapKeepDynamicPlain: 1
+  m_LightmapKeepDynamicDirCombined: 1
+  m_LightmapKeepShadowMask: 1
+  m_LightmapKeepSubtractive: 1
+  m_FogStripping: 1
+  m_FogKeepLinear: 0
+  m_FogKeepExp: 1
+  m_FogKeepExp2: 0
+  m_InstancingStripping: 0
+  m_BrgStripping: 0
+  m_LogWhenShaderIsCompiled: 1
+  m_CameraRelativeLightCulling: 1
+  m_CameraRelativeShadowCulling: 1
+  m_VideoShadersIncludeMode: 2
+  m_AlwaysIncludedShaders:
+  - {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 4800000, guid: fe03ddacbd7a41e2950c4035119e10c4, type: 3}
+  - {fileID: 4800000, guid: 9f3c26b521ac7c44ea7ce1b164cc3808, type: 3}
+  - {fileID: 4800000, guid: e5b617d736d0466ea1f935a5a0d79b1b, type: 3}
+  - {fileID: 4800000, guid: 71b22c46a39ba46498cb2d8fab22343f, type: 3}
+  m_LightProbeOutsideHullStrategy: 0
+  m_PreloadedShaders:
+  - {fileID: 20000000, guid: 622e919733c115b40bf276cf626d2211, type: 2}
+  m_PreloadShadersBatchTimeLimit: -1
+  m_ShaderBuildSettings:
+    keywordDeclarationOverrides: []
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18,8 +61,10 @@ MonoBehaviour:
   m_PlatformId: 84a3bb9e7420477f885e98145999eb20
   m_PlatformBuildProfile:
     rid: 3479811636494336001
-  m_OverrideGlobalSceneList: 0
-  m_Scenes: []
+  m_OverrideGlobalSceneList: 1
+  m_Scenes:
+  - m_enabled: 1
+    m_path: Assets/Scenes/Main.unity
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:
@@ -215,7 +260,7 @@ MonoBehaviour:
     - line: '|   androidSplitApplicationBinary: 0'
     - line: '|   keepLoadedShadersAlive: 1'
     - line: '|   StripUnusedMeshComponents: 1'
-    - line: '|   strictShaderVariantMatching: 1'
+    - line: '|   strictShaderVariantMatching: 0'
     - line: '|   VertexChannelCompressionMask: 4054'
     - line: '|   iPhoneSdkVersion: 988'
     - line: '|   iOSSimulatorArchitecture: 0'
@@ -685,7 +730,7 @@ MonoBehaviour:
     - line: '|     m_Formats: 03000000'
     - line: '|   - serializedVersion: 3'
     - line: '|     m_BuildTarget: WebGL'
-    - line: '|     m_Formats: 02000000'
+    - line: '|     m_Formats: 05000000'
     - line: '|   playModeTestRunnerEnabled: 0'
     - line: '|   runPlayModeTestAsEditModeTest: 0'
     - line: '|   actionOnDotNetUnhandledException: 1'
@@ -968,7 +1013,7 @@ MonoBehaviour:
     - line: '|     ReservedCFE: CT_FB'
     - line: '|     Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE'
     - line: '|     VisionOS: CT_FB'
-    - line: '|     WebGL: CT_FB;UNITASK_DOTWEEN_SUPPORT;URP_COMPATIBILITY_MODE;DOTWEEN_ENABLED;CDP_EXCLUDE_PROCESS_BROWSER;NO_LIVEKIT_MODE;UNITY_PIPELINE_URP;VERBOSE_LOGS'
+    - line: '|     WebGL: CT_FB;UNITASK_DOTWEEN_SUPPORT;URP_COMPATIBILITY_MODE;DOTWEEN_ENABLED;CDP_EXCLUDE_PROCESS_BROWSER;UNITY_PIPELINE_URP;VERBOSE_LOGS'
     - line: '|     Windows Store Apps: CT_FB'
     - line: '|     XboxOne: CT_FB'
     - line: '|     iPhone: CT_FB'

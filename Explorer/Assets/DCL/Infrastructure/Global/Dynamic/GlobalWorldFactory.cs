@@ -139,12 +139,14 @@ namespace Global.Dynamic
 
         public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
         {
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: start");
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
             globalSceneStateProvider.State.Set(SceneState.Running);
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after builder ctor");
 
             AddShortInfo(world);
 
@@ -186,7 +188,9 @@ namespace Global.Dynamic
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: before partition pool");
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after partition pool");
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
@@ -210,10 +214,21 @@ namespace Global.Dynamic
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController);
 
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: before pluginArgs");
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
-
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: before foreach plugins");
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
+            {
+                if (plugin == null)
+                {
+                    UnityEngine.Debug.LogError("[agent] GlobalWorldFactory: null plugin in globalPlugins list");
+                    continue;
+                }
+                string pluginName = plugin.GetType().Name;
+                UnityEngine.Debug.Log($"[agent] GlobalWorldFactory.InjectToWorld: {pluginName}");
                 plugin.InjectToWorld(ref builder, pluginArgs);
+            }
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: before finalizeWorldSystems");
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
@@ -223,15 +238,20 @@ namespace Global.Dynamic
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after finalizeWorldSystems array");
 
             SystemGroupWorld worldSystems = builder.Finish();
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after builder.Finish");
             worldSystems.Initialize();
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after worldSystems.Initialize");
 
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: after new GlobalWorld");
 
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
+            UnityEngine.Debug.Log("[agent] GlobalWorldFactory.Create: done");
 
             return globalWorld;
         }

@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
@@ -89,6 +89,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
+#if UNITY_WEBGL
+            // Skip loading landscape_assets_all on WebGL (no terrain/satellite floor download)
+            await landscapeParcelController.InitializeAsync(settings.parsedParcels, ct);
+            return;
+#endif
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
             floor = new SatelliteFloor(realmData, landscapeData.Value);
@@ -119,6 +124,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+#if UNITY_WEBGL
+            if (floor == null) return;
+#endif
             LandscapeSatelliteSystem.InjectToWorld(ref builder, textureContainer, floor);
 
             if (!enableLandscape) return;

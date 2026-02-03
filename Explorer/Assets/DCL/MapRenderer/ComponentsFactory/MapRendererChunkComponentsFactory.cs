@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapPins.Bus;
 using DCL.EventsApi;
@@ -136,7 +136,11 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             await UniTask.WhenAll(
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
+#if UNITY_WEBGL
+                CreateSatelliteAtlasStubAsync(layers, configuration, coordsUtils, cullingController),
+#else
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
+#endif
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, web3IdentityCache, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
@@ -244,6 +248,15 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
+#if UNITY_WEBGL
+        private static UniTask CreateSatelliteAtlasStubAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController)
+        {
+            // Stub can accept null SatelliteAtlasRoot; Enable/Disable no-op when parent is null
+            var stub = new WebGLSatelliteAtlasStub(configuration?.SatelliteAtlasRoot, coordsUtils, cullingController);
+            layers.Add(MapLayer.SatelliteAtlas, stub);
+            return UniTask.CompletedTask;
+        }
+#else
         private UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
@@ -266,6 +279,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 return chunk;
             }
         }
+#endif
 
         private static IParcelHighlightMarker CreateHighlightMarker(ParcelHighlightMarkerObject highlightMarkerPrefab,
             MapRendererConfiguration configuration, ICoordsUtils coordsUtils)

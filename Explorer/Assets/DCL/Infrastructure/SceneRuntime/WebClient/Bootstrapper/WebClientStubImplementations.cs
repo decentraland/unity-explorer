@@ -295,41 +295,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
         }
 
         /// <summary>
-        ///     IIpfsRealm implementation for Decentraland worlds.
-        ///     Uses the worlds-content-server for content resolution.
-        /// </summary>
-        public class WorldIpfsRealm : IIpfsRealm
-        {
-            private const string WORLDS_CONTENT_URL = "https://worlds-content-server.decentraland.org/contents/";
-
-            private readonly List<string> sceneUrns;
-
-            public URLDomain CatalystBaseUrl { get; }
-            public URLDomain ContentBaseUrl { get; }
-            public URLDomain LambdasBaseUrl { get; }
-            public URLDomain EntitiesActiveEndpoint { get; }
-            public URLDomain AssetBundleRegistry { get; }
-            public IReadOnlyList<string> SceneUrns => sceneUrns;
-
-            public WorldIpfsRealm(string worldName, ServerAbout serverAbout)
-            {
-                // Worlds use the worlds-content-server for content, not the publicUrl from about
-                CatalystBaseUrl = URLDomain.FromString($"https://worlds-content-server.decentraland.org/world/{worldName}");
-                ContentBaseUrl = URLDomain.FromString(WORLDS_CONTENT_URL);
-                LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas?.publicUrl ?? "https://peer.decentraland.org/lambdas/");
-                EntitiesActiveEndpoint = URLDomain.EMPTY;
-                AssetBundleRegistry = URLDomain.EMPTY;
-                sceneUrns = serverAbout.configurations?.scenesUrn ?? new List<string>();
-            }
-
-            public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
-                throw new NotSupportedException("Publishing is not supported for worlds in WebGL");
-
-            public string GetFileHash(byte[] file) =>
-                file.IpfsHashV1();
-        }
-
-        /// <summary>
         ///     Stub implementation of ISceneReadinessReportQueue for WebGL.
         /// </summary>
         public class StubSceneReadinessReportQueue : ISceneReadinessReportQueue

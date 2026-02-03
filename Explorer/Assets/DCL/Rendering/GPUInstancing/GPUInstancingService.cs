@@ -1,4 +1,4 @@
-﻿using DCL.Diagnostics;
+using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
@@ -97,7 +97,7 @@ namespace DCL.Rendering.GPUInstancing
 
         private Camera renderCamera;
 
-        public LandscapeData LandscapeData { private get; set; }
+        public LandscapeData? LandscapeData { private get; set; }
 
         public bool IsEnabled { get; set; } = true;
 
@@ -140,7 +140,7 @@ namespace DCL.Rendering.GPUInstancing
 
         public void RenderIndirect()
         {
-            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
+            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender || LandscapeData == null)
                 return;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)

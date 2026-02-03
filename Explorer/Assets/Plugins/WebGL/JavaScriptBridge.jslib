@@ -2,7 +2,7 @@ mergeInto(LibraryManager.library, {
     // Global storage for the host object callback function pointers
     $hostObjectCallback: null,
     $hostObjectCallbackWithReturn: null,
-    
+
     // Register the callback function that will be used to invoke host object methods (void return)
     JSContext_RegisterHostObjectCallback: function(callback) {
         hostObjectCallback = callback;
@@ -1173,5 +1173,13 @@ mergeInto(LibraryManager.library, {
             console.error('JSContext_InvokeObjectAsFunction error:', e);
             return 0;
         }
+    },
+
+    OpenUrlInNewTab: function(url) {
+        if (typeof window !== 'undefined' && window.open) {
+            var urlStr = url ? UTF8ToString(url) : '';
+            if (urlStr) window.open(urlStr, '_blank', 'noopener,noreferrer');
+        }
     }
+
 });

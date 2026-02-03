@@ -129,13 +129,20 @@ namespace DCL.Backpack.EmotesSection
         public static async UniTask<ObjectPool<BackpackEmoteGridItemView>> InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner,
             BackpackGridView view, CancellationToken ct)
         {
-            BackpackEmoteGridItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.EmoteGridItem, ct: ct)).Value;
-
+            if (view?.EmoteGridItem == null)
+                return CreateStubPool();
+            var provided = await assetsProvisioner.ProvideMainAssetAsync(view.EmoteGridItem, ct: ct);
+            BackpackEmoteGridItemView? backpackItem = provided.Value;
+            if (backpackItem == null)
+                return CreateStubPool();
             return new ObjectPool<BackpackEmoteGridItemView>(
                 () => Object.Instantiate(backpackItem, view.gameObject.transform),
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
         }
+
+        private static ObjectPool<BackpackEmoteGridItemView> CreateStubPool() =>
+            new ObjectPool<BackpackEmoteGridItemView>(() => throw new InvalidOperationException("Backpack emote grid item asset not available"), defaultCapacity: 0);
 
         private void RequestAndFillEmotes(int pageNumber)
         {

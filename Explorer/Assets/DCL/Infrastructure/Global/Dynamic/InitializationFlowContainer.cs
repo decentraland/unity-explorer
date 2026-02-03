@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.Chat.History;
@@ -13,6 +13,7 @@ using DCL.Multiplayer.HealthChecks;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
+using ECS.SceneLifeCycle.Realm;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities.Extensions;
@@ -32,18 +33,12 @@ namespace DCL.UserInAppInitializationFlow
             StaticContainer staticContainer,
             BootstrapContainer bootstrapContainer,
             RealmContainer realmContainer,
-            RealmNavigationContainer realmNavigationContainer,
-
-#if !UNITY_WEBGL
+            IRealmNavigator realmNavigator,
             TerrainContainer terrainContainer,
-#endif
-
             ILoadingScreen loadingScreen,
-
 #if !NO_LIVEKIT_MODE
             IHealthCheck liveKitHealthCheck,
 #endif
-
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -67,12 +62,11 @@ namespace DCL.UserInAppInitializationFlow
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
 #endif
 
-            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
-
-            // TODO Avatar is temporaly unsupported
 #if !UNITY_WEBGL
-            var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
 #endif
+
+            var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
 
 #if !UNITY_WEBGL
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
@@ -86,11 +80,11 @@ namespace DCL.UserInAppInitializationFlow
 
             var loadingOperations = new List<IStartupOperation>()
             {
-                blocklistCheckStartupOperation
 
 #if !UNITY_WEBGL
-                , loadPlayerAvatarStartupOperation
+                blocklistCheckStartupOperation,
 #endif
+              loadPlayerAvatarStartupOperation
 
 #if !UNITY_WEBGL
                 , loadLandscapeStartupOperation
@@ -134,7 +128,7 @@ namespace DCL.UserInAppInitializationFlow
                         decentralandUrlsSource: bootstrapContainer.DecentralandUrlsSource,
                         mvcManager: mvcManager,
                         backgroundMusic: backgroundMusic,
-                        realmNavigator: realmNavigationContainer.RealmNavigator,
+                        realmNavigator: realmNavigator,
                         loadingScreen: loadingScreen,
                         realmController: realmContainer.RealmController,
                         portableExperiencesController: staticContainer.PortableExperiencesController,

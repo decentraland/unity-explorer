@@ -53,13 +53,16 @@ namespace Global
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard)
         {
+            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: start");
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
+            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: before ECSWorldFactory");
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
+            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: after ECSWorldFactory");
 
 #if UNITY_WEBGL
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
@@ -67,9 +70,8 @@ namespace Global
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
 #endif
 
-            return new SceneSharedContainer
-            {
-                SceneFactory = new SceneFactory(
+            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: before SceneFactory ctor");
+            var sceneFactory = new SceneFactory(
                     ecsWorldFactory,
                     new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
                         webJsSources),
@@ -91,8 +93,9 @@ namespace Global
                     new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
                     remoteMetadata,
                     dclEnvironment,
-                    systemClipboard),
-            };
+                    systemClipboard);
+            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: after SceneFactory ctor");
+            return new SceneSharedContainer { SceneFactory = sceneFactory };
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -28,6 +28,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
+using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -131,55 +132,114 @@ namespace Global.Dynamic
             await UniTask.SwitchToMainThread();
 
             URLAddress url = realm.Append(new URLPath("/about"));
+            bool isWorldRealm = IsWorldRealmUrl(realm);
 
             try
             {
-                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                ServerAbout result;
+                IIpfsRealm ipfsRealm;
+                string realmName;
+                int networkId;
+                string hostname;
 
-                //The today environment requires a hardcoded content and lambda
-                if (environment.Equals(DecentralandEnvironment.Today))
+                if (isWorldRealm)
                 {
-                    result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
-                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);
+                    try
+                    {
+                        // WebGL: JsonUtility can NRE in main-app bootstrap context; use Newtonsoft. Other platforms: keep Unity.
+                        result = await webRequestController
+                            .GetAsync(new CommonArguments(url), ct, ReportCategory.REALM)
+#if UNITY_WEBGL && !UNITY_EDITOR
+                            .CreateFromJson<ServerAbout>(WRJsonParser.Newtonsoft);
+#else
+                            .CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+#endif
+                        if (result == null)
+                            throw new RealmChangeException("Failed to parse world about (empty or invalid response).", new InvalidOperationException("CreateFromJson returned null"));
+                        try { EnsureWorldRealmAboutFilled(realm, result); }
+                        catch (Exception ex) { LogRealmStepError("1_EnsureWorldRealmAboutFilled", ex); throw; }
+                        string worldName;
+                        try
+                        {
+                            worldName = ExtractWorldNameFromRealm(realm);
+                            ipfsRealm = new WorldIpfsRealm(worldName, result);
+                            realmName = result.configurations?.realmName ?? worldName;
+                            networkId = result.configurations?.networkId ?? 1;
+                            hostname = $"worlds-content-server.decentraland.org/world/{worldName}";
+                        }
+                        catch (Exception ex) { LogRealmStepError("2_WorldIpfsRealm_and_names", ex); throw; }
+                    }
+                    catch (NullReferenceException nre)
+                    {
+                        throw new RealmChangeException("Failed to parse world about (empty or invalid response).", nre);
+                    }
+                }
+                else
+                {
+                    GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+                    result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                    EnsureWorldRealmAboutFilled(realm, result);
+                    if (environment.Equals(DecentralandEnvironment.Today))
+                    {
+                        result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
+                        result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);
+                    }
+                    hostname = ResolveHostname(realm, result);
+                    ipfsRealm = new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result);
+                    realmName = result.configurations.realmName.EnsureNotNull("Realm name not found");
+                    networkId = result.configurations.networkId;
                 }
 
-                string hostname = ResolveHostname(realm, result);
+                try
+                {
+                    realmData.Reconfigure(
+                        ipfsRealm,
+                        realmName,
+                        networkId,
+                        ResolveCommsAdapter(result),
+                        result.comms?.protocol ?? "v3",
+                        hostname,
+                        isLocalSceneDevelopment
+                    );
+                }
+                catch (Exception ex) { LogRealmStepError("3_RealmData_Reconfigure", ex); throw; }
 
-                realmData.Reconfigure(
-                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
-                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                    result.configurations.networkId,
-                    ResolveCommsAdapter(result),
-                    result.comms?.protocol ?? "v3",
-                    hostname,
-                    isLocalSceneDevelopment
-                );
+                RealmComponent realmComp;
+                try
+                {
+                    realmComp = new RealmComponent(realmData);
+                    realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
+                }
+                catch (Exception ex) { LogRealmStepError("4_RealmComponent_and_Create_entity", ex); throw; }
 
-                // Add the realm component
-                var realmComp = new RealmComponent(realmData);
-
-                realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
-
-                if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
-                    ComplimentWithVolatilePointers(world, realmEntity);
-
-                IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
-                sceneProviderStrategy.World = globalWorld.EcsWorld;
-
-                teleportController.SceneProviderStrategy = sceneProviderStrategy;
-                partitionDataContainer.Restart();
-
-                CurrentDomain = realm;
-
-                realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
-                    result.content.publicUrl);
+                try
+                {
+                    if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
+                        ComplimentWithVolatilePointers(world, realmEntity);
+                    IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
+                    sceneProviderStrategy.World = globalWorld.EcsWorld;
+                    teleportController.SceneProviderStrategy = sceneProviderStrategy;
+                    partitionDataContainer.Restart();
+                    CurrentDomain = realm;
+                    if (realmNavigatorDebugView.DebugWidgetBuilder != null)
+                        realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas?.publicUrl ?? "", result.content?.publicUrl ?? "");
+                }
+                catch (Exception ex) { LogRealmStepError("5_ComplimentPointers_through_UpdateRealmName", ex); throw; }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
-                throw new RealmChangeException($"Failed to connect to '{url}'", e);
+                try
+                {
+                    string realmUrl = url.Value;
+                    string msg = string.IsNullOrEmpty(realmUrl) ? "Failed to connect to realm: " + e.Message : $"Failed to connect to '{realmUrl}': {e.Message}";
+                    Debug.LogError($"[Realm] {msg}");
+                }
+                catch
+                {
+                    /* avoid secondary throw when building log message */
+                }
+                throw new RealmChangeException("Failed to connect to realm.", e);
             }
         }
 
@@ -366,14 +426,65 @@ namespace Global.Dynamic
             return allScenes;
         }
 
+        private static bool IsWorldRealmUrl(URLDomain realm) =>
+            realm.Value.IndexOf("worlds-content-server.decentraland.org/world/", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        /// <summary>
+        /// Worlds /about from worlds-content-server can have null content, lambdas, or configurations.
+        /// Fill defaults so IpfsRealm and Reconfigure don't NRE.
+        /// </summary>
+        private static void EnsureWorldRealmAboutFilled(URLDomain realm, ServerAbout result)
+        {
+            bool isWorldRealm = IsWorldRealmUrl(realm);
+
+            if (result.configurations == null)
+            {
+                result.configurations = new ServerConfiguration
+                {
+                    networkId = 1,
+                    realmName = isWorldRealm ? ExtractWorldNameFromRealm(realm) : string.Empty,
+                    scenesUrn = new List<string>()
+                };
+            }
+            else if (string.IsNullOrEmpty(result.configurations.realmName) && isWorldRealm)
+                result.configurations.realmName = ExtractWorldNameFromRealm(realm);
+
+            if (result.configurations.scenesUrn == null)
+                result.configurations.scenesUrn = new List<string>();
+
+            if (result.content == null)
+                result.content = new ContentEndpoint(isWorldRealm ? "https://worlds-content-server.decentraland.org/contents/" : string.Empty);
+            else if (string.IsNullOrEmpty(result.content.publicUrl) && isWorldRealm)
+                result.content.publicUrl = "https://worlds-content-server.decentraland.org/contents/";
+
+            if (result.lambdas == null)
+                result.lambdas = new ContentEndpoint("https://peer.decentraland.org/lambdas/");
+            else if (string.IsNullOrEmpty(result.lambdas.publicUrl))
+                result.lambdas.publicUrl = "https://peer.decentraland.org/lambdas/";
+        }
+
+        private static string ExtractWorldNameFromRealm(URLDomain realm)
+        {
+            string path = new Uri(realm.Value).AbsolutePath.TrimEnd('/');
+            int lastSlash = path.LastIndexOf('/');
+            return lastSlash >= 0 ? path.Substring(lastSlash + 1).ToLowerInvariant() : path.ToLowerInvariant();
+        }
+
+        private static void LogRealmStepError(string step, Exception ex)
+        {
+            Debug.LogError($"[Realm] NRE at step {step}: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
+        }
+
         private string ResolveHostname(URLDomain realm, ServerAbout about)
         {
             string hostname;
 
-            if (about.configurations.realmName.IsEns())
+            if (about?.configurations != null
+                && !string.IsNullOrEmpty(about.configurations.realmName)
+                && about.configurations.realmName.IsEns())
                 hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
             else
-                hostname = about.comms == null
+                hostname = about?.comms == null
 
                     // Consider it as the "main" realm which shares the comms with many catalysts
                     // TODO: take in consideration the web3-network. If its sepolia then it should be .zone

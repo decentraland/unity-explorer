@@ -147,6 +147,16 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
+        // #region agent log
+        private static void LogInit(string location, string message, bool? splashNull, bool? globalPluginNull, bool? staticSettingsNull)
+        {
+            string splash = splashNull == null ? "-" : (splashNull.Value ? "null" : "ok");
+            string gp = globalPluginNull == null ? "-" : (globalPluginNull.Value ? "null" : "ok");
+            string ss = staticSettingsNull == null ? "-" : (staticSettingsNull.Value ? "null" : "ok");
+            Debug.Log($"[agent] {location} {message} splash={splash} globalPlugin={gp} staticSettings={ss}");
+        }
+        // #endregion
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             Debug.Log("applicationParametersParser");
@@ -196,18 +206,33 @@ namespace Global.Dynamic
 
             Debug.Log("splashScreen");
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+            // #region agent log
+            LogInit("MainSceneLoader:after_splash_await", "after ProvideInstanceAsync", splashScreen.Value == null, null, null);
+            // #endregion
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
-            var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
 
-            Debug.Log("DebugUtilitiesContainer");
+#if UNITY_WEBGL
+            var debugContainer = DebugUtilitiesContainer.CreateStubForWebGL();
+#else
+            var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+#endif
+            // #region agent log
+            LogInit("MainSceneLoader:before_GetSettings", "before GetSettings", null, globalPluginSettingsContainer == null, null);
+            // #endregion
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
+            // #region agent log
+            LogInit("MainSceneLoader:after_GetSettings", "after GetSettings", null, null, staticSettings == null);
+            // #endregion
 
 Debug.Log("MainSceneLoader.cs:205");
             Option<ChromeDevtoolProtocolClient> cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
 
+            // #region agent log
+            LogInit("MainSceneLoader:before_WebRequestsCreate", "before WebRequestsContainer.Create", null, null, staticSettings == null);
+            // #endregion
 Debug.Log("MainSceneLoader.cs:208");
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
@@ -237,6 +262,9 @@ Debug.Log("MainSceneLoader.cs:212");
                 dclVersion,
                 destroyCancellationToken
             );
+            // #region agent log
+            LogInit("MainSceneLoader:after_BootstrapCreateAsync", "after BootstrapContainer.CreateAsync", null, null, null);
+            // #endregion
 
 Debug.Log("MainSceneLoader.cs:238");
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
@@ -326,14 +354,16 @@ Debug.Log("MainSceneLoader.cs:319");
 Debug.Log("MainSceneLoader.cs:323");
                 DisableInputs();
 
-Debug.Log("MainSceneLoader.cs:326");
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
+                Debug.Log("[agent] MainSceneLoader: before InitializePluginsAsync");
+                bool pluginInitFailed = await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct);
+                Debug.Log($"[agent] MainSceneLoader: after InitializePluginsAsync failed={pluginInitFailed}");
+                if (pluginInitFailed)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-Debug.Log("MainSceneLoader.cs:333");
+                Debug.Log("[agent] MainSceneLoader: before CreateGlobalWorld");
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
 Debug.Log("MainSceneLoader.cs:336");

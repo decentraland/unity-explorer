@@ -13,6 +13,8 @@ namespace Global.AppArgs
     [AutoInterface]
     public class ApplicationParametersParser : IAppArgs
     {
+        private const string WORLD_QUERY_PARAM = "world";
+
         private readonly Dictionary<string, string> appParameters = new ();
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
@@ -28,11 +30,56 @@ namespace Global.AppArgs
         {
             ParseApplicationParameters(args);
 
+#if UNITY_WEBGL
+            ParseWebGLUrlQuery();
+#endif
+
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
 
             LogArguments();
         }
+
+#if UNITY_WEBGL
+        /// <summary>
+        /// On WebGL, read ?world=... from the page URL and set realm so we connect to
+        /// https://worlds-content-server.decentraland.org/world/{world}/about
+        /// </summary>
+        private void ParseWebGLUrlQuery()
+        {
+            if (appParameters.ContainsKey(AppArgsFlags.REALM))
+                return;
+
+            try
+            {
+                string? currentUrl = Application.absoluteURL;
+                if (string.IsNullOrEmpty(currentUrl))
+                    return;
+
+                if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
+                    return;
+
+                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+                string? world = query[WORLD_QUERY_PARAM];
+                if (string.IsNullOrEmpty(world))
+                    return;
+
+                world = HttpUtility.UrlDecode(world);
+                if (string.IsNullOrEmpty(world))
+                    return;
+
+                if (!world.EndsWith(".eth", StringComparison.OrdinalIgnoreCase))
+                    world += ".dcl.eth";
+                world = world.ToLowerInvariant();
+
+                appParameters[AppArgsFlags.REALM] = world;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
+            }
+        }
+#endif
 
         public bool HasFlag(string flagName) =>
             appParameters.ContainsKey(flagName);

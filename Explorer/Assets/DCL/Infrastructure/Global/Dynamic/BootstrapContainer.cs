@@ -108,20 +108,26 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
+                Debug.Log("[agent] BootstrapContainer createDependencies START");
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
+                Debug.Log("[agent] BootstrapContainer before CreateBootstrapperAsync");
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                Debug.Log("[agent] BootstrapContainer after CreateBootstrapperAsync");
                 (container.VerifiedEthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
 
                 if (container.enableAnalytics)
                 {
+                    Debug.Log("[agent] BootstrapContainer before Analytics.Initialize");
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
-
                     CrashDetector.Initialize(container.Analytics);
+                    Debug.Log("[agent] BootstrapContainer after Analytics.Initialize");
                 }
 
+                Debug.Log("[agent] BootstrapContainer before DiagnosticsContainer.Create");
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
+                Debug.Log("[agent] BootstrapContainer createDependencies END");
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -130,6 +136,7 @@ namespace Global.Dynamic
                 }
             });
 
+            Debug.Log("[agent] BootstrapContainer.CreateAsync returning");
             return bootstrapContainer;
         }
 

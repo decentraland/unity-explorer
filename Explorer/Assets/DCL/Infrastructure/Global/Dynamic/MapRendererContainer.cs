@@ -55,6 +55,7 @@ namespace Global.Dynamic
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
 
+#if !UNITY_WEBGL || UNITY_EDITOR
             await mapRendererContainer.InitializeContainerAsync<MapRendererContainer, Settings>(settingsContainer, ct, async c =>
             {
                 var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(
@@ -78,8 +79,11 @@ namespace Global.Dynamic
                 c.MapRenderer = mapRenderer;
             });
 
-            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
-
+            realmData.RealmType.OnUpdate += kind =>
+                mapRendererContainer.MapRenderer!.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
+#else
+            await UniTask.CompletedTask;
+#endif
             return mapRendererContainer;
         }
 

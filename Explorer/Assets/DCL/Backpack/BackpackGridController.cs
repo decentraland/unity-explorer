@@ -135,19 +135,26 @@ namespace DCL.Backpack
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
         {
-            BackpackItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.BackpackItem, ct: ct)).Value;
-
+            if (view?.BackpackItem == null)
+                return CreateStubPool();
+            var provided = await assetsProvisioner.ProvideMainAssetAsync(view.BackpackItem, ct: ct);
+            BackpackItemView? backpackItem = provided.Value;
+            if (backpackItem == null)
+                return CreateStubPool();
             return new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
 
-            BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
+            BackpackItemView CreateBackpackItem(BackpackItemView prefab)
             {
-                BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
+                BackpackItemView backpackItemView = Object.Instantiate(prefab, view!.gameObject.transform);
                 return backpackItemView;
             }
         }
+
+        private static ObjectPool<BackpackItemView> CreateStubPool() =>
+            new ObjectPool<BackpackItemView>(() => throw new InvalidOperationException("Backpack item asset not available"), defaultCapacity: 0);
 
         private void SetGridAsLoading()
         {

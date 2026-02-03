@@ -1,4 +1,4 @@
-﻿using DCL.ExplorePanel;
+using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.Settings;
@@ -12,7 +12,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     public class ExplorePanelAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly NavmapController navmapController;
+        private readonly NavmapController? navmapController;
         private readonly CameraReelController cameraReelController;
         private readonly CameraReelGalleryController cameraReelGalleryController;
         private readonly SettingsController settingsController;

@@ -31,6 +31,17 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
         {
+#if UNITY_WEBGL
+            // WebGL: skip replacing Unity log handler and ReportHub init — can hang on single-threaded WebGL.
+            // Keep default ReportHub.Instance and do not touch Debug.unityLogger.
+            return new DiagnosticsContainer
+            {
+                ReportHubLogger = ReportHub.Instance,
+                defaultLogHandler = Debug.unityLogger.logHandler,
+                Sentry = null,
+                Settings = settings
+            };
+#else
             settings.NotifyErrorDebugLogDisabled();
 
             int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length;
@@ -56,6 +67,7 @@ namespace DCL.Diagnostics
             ReportHub.Initialize(logger);
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings };
+#endif
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)

@@ -1,4 +1,4 @@
-﻿using ECS;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -7,13 +7,16 @@ namespace DCL.LOD
 {
     public class VisualSceneStateResolver
     {
+        private const int DEFAULT_UNLOAD_TOLERANCE = 1;
+        private const int DEFAULT_SDK7_LOD_THRESHOLD = 2;
+
         private readonly int unloadTolerance;
         private readonly int sdk7LodThreshold;
 
-        public VisualSceneStateResolver(ILODSettingsAsset lodSettingsAsset)
+        public VisualSceneStateResolver(ILODSettingsAsset? lodSettingsAsset)
         {
-            unloadTolerance = lodSettingsAsset.UnloadTolerance;
-            sdk7LodThreshold = lodSettingsAsset.SDK7LodThreshold;
+            unloadTolerance = lodSettingsAsset?.UnloadTolerance ?? DEFAULT_UNLOAD_TOLERANCE;
+            sdk7LodThreshold = lodSettingsAsset?.SDK7LodThreshold ?? DEFAULT_SDK7_LOD_THRESHOLD;
         }
 
         public VisualSceneState ResolveVisualSceneState(PartitionComponent partition, SceneDefinitionComponent sceneDefinitionComponent,

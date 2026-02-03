@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -150,7 +150,7 @@ Debug.Log("BootstrapAnalyticsDecorator.cs:126");
         public GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot,
+            UIDocument? debugUiRoot,
             Entity playerEntity)
         {
             GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);

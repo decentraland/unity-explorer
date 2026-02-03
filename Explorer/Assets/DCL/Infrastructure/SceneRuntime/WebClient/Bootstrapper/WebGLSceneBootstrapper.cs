@@ -464,7 +464,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
                     // Debug.Log($"[WebGLSceneBootstrapper] About fetched. Realm: {serverAbout.configurations.realmName}");
 
                     // Create proper RealmData for the world
-                    var worldIpfsRealm = new WebClientStubImplementations.WorldIpfsRealm(worldName, serverAbout);
+                    var worldIpfsRealm = new WorldIpfsRealm(worldName, serverAbout);
                     var worldRealmData = new RealmData();
 
                     worldRealmData.Reconfigure(
