@@ -84,7 +84,7 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
-        [SerializeField] private SingleInstanceRunningPopupRef singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -356,7 +356,7 @@ namespace Global.Dynamic
 
         private async UniTask ShowSingleRunningInstancePopupAsync(AddressablesProvisioner assetsProvisioner, CancellationToken ct)
         {
-            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value;
+            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value.GetComponent<ErrorPopupView>();
             ErrorPopupView popup = Instantiate(prefab);
             popup.OkButton.onClick.AddListener(ExitUtils.Exit);
         }
@@ -713,12 +713,6 @@ namespace Global.Dynamic
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
             public SplashScreenRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class SingleInstanceRunningPopupRef : ComponentReference<ErrorPopupView>
-        {
-            public SingleInstanceRunningPopupRef(string guid) : base(guid) { }
         }
     }
 }
