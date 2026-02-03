@@ -183,37 +183,59 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
-            string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+            // CRITICAL: This callback is invoked from Rust via FFI. Any unhandled exception
+            // will propagate back to Rust as a "foreign exception" which Rust cannot handle,
+            // causing an abort/crash. We MUST catch all exceptions here.
+            try
+            {
+                string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
-            // Required to avoid polluting Sentry with retry messages
-            string reportCategory = marshaled.Contains("(will retry)")
-                ? ReportCategory.ANALYTICS_INTERNAL
-                : ReportCategory.ANALYTICS;
+                // Required to avoid polluting Sentry with retry messages
+                string reportCategory = marshaled.Contains("(will retry)")
+                    ? ReportCategory.ANALYTICS_INTERNAL
+                    : ReportCategory.ANALYTICS;
 
-            ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+            }
+            catch
+            {
+                // Silently swallow all exceptions to prevent them from propagating to Rust.
+                // This callback may be invoked during shutdown when Unity APIs are unavailable.
+            }
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
-            var service = current;
-            if (service == null) return;
-
-            lock (service.afterClean)
+            // CRITICAL: This callback is invoked from Rust via FFI. Any unhandled exception
+            // will propagate back to Rust as a "foreign exception" which Rust cannot handle,
+            // causing an abort/crash. We MUST catch all exceptions here.
+            try
             {
-                if (current != service) return;
+                var service = current;
+                if (service == null) return;
 
-                if (!service.afterClean.TryGetValue(operationId, out var operationData))
-                    return;
+                lock (service.afterClean)
+                {
+                    if (current != service) return;
 
-                var type = operationData.Item1;
+                    if (!service.afterClean.TryGetValue(operationId, out var operationData))
+                        return;
 
-                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+                    var type = operationData.Item1;
 
-                if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+                    ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
-                service.CleanMemory(operationId);
+                    if (response is not NativeMethods.Response.Success)
+                        ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+
+                    service.CleanMemory(operationId);
+                }
+            }
+            catch
+            {
+                // Silently swallow all exceptions to prevent them from propagating to Rust.
+                // This callback may be invoked during shutdown when Unity APIs are unavailable.
             }
         }
 
