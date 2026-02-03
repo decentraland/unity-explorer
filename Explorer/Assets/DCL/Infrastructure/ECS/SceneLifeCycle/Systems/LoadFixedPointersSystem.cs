@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
@@ -52,7 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 // can't prioritize scenes definition - they are always top priority
                 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)))), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
             }

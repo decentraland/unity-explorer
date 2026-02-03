@@ -55,8 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleURL, out URLBuilder urlBuilder);
 
-            urlBuilder.AppendDomain(assetBundleURL)
-                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
+            urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("manifest"))
                       .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             URLAddress url = urlBuilder.Build();

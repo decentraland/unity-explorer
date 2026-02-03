@@ -4,6 +4,8 @@ using DCL.Utility;
 using ECS;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Pool;
 
 namespace DCL.Browser.DecentralandUrls
 {
@@ -12,7 +14,7 @@ namespace DCL.Browser.DecentralandUrls
     {
         private const string ENV = "{ENV}";
 
-        private readonly Dictionary<DecentralandUrl, string> cache = new ();
+        private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
         private readonly DecentralandEnvironment environment;
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
@@ -44,6 +46,8 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.RemotePeers);
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
+
+            realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
 
         /// <summary>
@@ -57,19 +61,21 @@ namespace DCL.Browser.DecentralandUrls
 
         public string Url(DecentralandUrl decentralandUrl)
         {
-            if (!cache.TryGetValue(decentralandUrl, out string? url))
+            const string REALM_DEPENDENT = "<REALM_DEPENDENT>";
+
+            if (!cache.TryGetValue(decentralandUrl, out UrlData urlData))
             {
-                // TODO it's a hack, it's needed because all urls are logged at start-up
-                string? rawUrl = RawUrl(decentralandUrl);
+                urlData = RawUrl(decentralandUrl);
 
-                if (rawUrl == null)
-                    return string.Empty;
+                if (urlData.Caching == CacheBehaviour.REALM_DEPENDENT && !realmData.Configured)
+                    return REALM_DEPENDENT;
 
-                url = rawUrl.Replace(ENV, decentralandDomain);
-                cache[decentralandUrl] = url;
+                urlData = new UrlData(urlData.Caching, urlData.Url!.Replace(ENV, decentralandDomain));
+
+                cache[decentralandUrl] = urlData;
             }
 
-            return url!;
+            return urlData.Url!;
         }
 
         public string GetHostnameForFeatureFlag() =>
@@ -80,7 +86,17 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
-        private string? RawUrl(DecentralandUrl decentralandUrl) =>
+        private void ResetRealmDependentUrls(RealmKind __)
+        {
+            using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? realmDependentCachedUrls);
+
+            realmDependentCachedUrls.AddRange(cache.Where(kvp => kvp.Value.Caching == CacheBehaviour.REALM_DEPENDENT).Select(kvp => kvp.Key));
+
+            foreach (DecentralandUrl url in realmDependentCachedUrls)
+                cache.Remove(url);
+        }
+
+        private UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
@@ -158,15 +174,49 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
 
-                DecentralandUrl.EntitiesActive => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
-                    realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null,
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                DecentralandUrl.EntitiesDeployment => realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null,
-                DecentralandUrl.Lambdas => environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
-                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null,
-                DecentralandUrl.Content => environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/content/" :
-                    realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null,
+                DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
+                DecentralandUrl.Lambdas => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
+                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                DecentralandUrl.Content => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/content/" :
+                    realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
+
+        private readonly struct UrlData
+        {
+            public readonly CacheBehaviour Caching;
+            public readonly string? Url;
+
+            public UrlData(CacheBehaviour caching, string? url)
+            {
+                Caching = caching;
+                Url = url;
+            }
+
+            public static UrlData RealmDependent(string? url) =>
+                new (CacheBehaviour.REALM_DEPENDENT, url);
+
+            public static implicit operator UrlData(string rawUrl) =>
+                new (CacheBehaviour.STATIC, rawUrl);
+
+            public override string ToString() =>
+                Url ?? "<NOT_CONFIGURED>";
+        }
+
+        private enum CacheBehaviour
+        {
+            /// <summary>
+            ///     URL is static and can be safely cached
+            /// </summary>
+            STATIC = 0,
+
+            /// <summary>
+            ///     URL should be invalidated upon realm change
+            /// </summary>
+            REALM_DEPENDENT = 1,
+        }
     }
 }
