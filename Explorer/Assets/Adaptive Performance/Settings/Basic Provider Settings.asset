@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 21008, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: Basic Provider Settings
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.AdaptivePerformance.Basic.BasicProviderSettings
-  m_Logging: 0
+  m_Logging: 1
   m_AutomaticPerformanceModeEnabled: 1
   m_AutomaticGameModeEnabled: 0
   m_EnableBoostOnStartup: 1
-  m_StatsLoggingFrequencyInFrames: 50
+  m_StatsLoggingFrequencyInFrames: 10
   m_IndexerSettings:
     m_Active: 1
     m_ThermalActionDelay: 10
@@ -214,7 +214,7 @@ MonoBehaviour:
       m_MaxBound: 1
     m_AdaptiveMSAA:
       m_Name: Adaptive MSAA
-      m_Enabled: 0
+      m_Enabled: 1
       m_Scale: 1
       m_VisualImpact: 1
       m_Target: 6
@@ -223,7 +223,7 @@ MonoBehaviour:
       m_MaxBound: 1
     m_AdaptiveShadowCascade:
       m_Name: Adaptive Shadow Cascade
-      m_Enabled: 0
+      m_Enabled: 1
       m_Scale: 1
       m_VisualImpact: 1
       m_Target: 3
@@ -232,7 +232,7 @@ MonoBehaviour:
       m_MaxBound: 1
     m_AdaptiveShadowDistance:
       m_Name: Adaptive Shadow Distance
-      m_Enabled: 0
+      m_Enabled: 1
       m_Scale: 1
       m_VisualImpact: 0
       m_Target: 2
@@ -241,7 +241,7 @@ MonoBehaviour:
       m_MaxBound: 1
     m_AdaptiveShadowmapResolution:
       m_Name: Adaptive Shadowmap Resolution
-      m_Enabled: 0
+      m_Enabled: 1
       m_Scale: 1
       m_VisualImpact: 0
       m_Target: 2
@@ -250,7 +250,7 @@ MonoBehaviour:
       m_MaxBound: 1
     m_AdaptiveShadowQuality:
       m_Name: Adaptive Shadow Quality
-      m_Enabled: 0
+      m_Enabled: 1
       m_Scale: 1
       m_VisualImpact: 2
       m_Target: 3

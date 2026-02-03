@@ -7,6 +7,7 @@ using DCL.Profiling;
 using DCL.RealmNavigation;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AdaptivePerformance;
 
 namespace DCL.Optimization.AdaptivePerformance.Systems
 {
@@ -17,6 +18,8 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 
         private AdaptivePhysicsSettings physicsSettings;
 
+        private IAdaptivePerformance adaptivePerformance;
+
         public AdaptivePerformancePlugin(Profiler profiler, ILoadingStatus loadingStatus)
         {
             this.profiler = profiler;
@@ -25,8 +28,14 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
 
         public UniTask InitializeAsync(AdaptivePerformanceSettings settings, CancellationToken ct)
         {
-            physicsSettings = settings.phyiscsSettings;
+            // Adaptive Performance
+            // TODO mihak: Start manually here instead of automatically
+            // adaptivePerformance = Holder.Instance;
+            // adaptivePerformance.InitializeAdaptivePerformance();
+            // adaptivePerformance.StartAdaptivePerformance();
 
+            // Physics
+            physicsSettings = settings.phyiscsSettings;
             Physics.simulationMode = physicsSettings.Mode == PhysSimulationMode.MANUAL ? SimulationMode.Script : SimulationMode.FixedUpdate;
 
             return UniTask.CompletedTask;
@@ -38,8 +47,6 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
             AdaptPhysicsSystem.InjectToWorld(ref builder, profiler, physicsSettings, loadingStatus);
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 }
