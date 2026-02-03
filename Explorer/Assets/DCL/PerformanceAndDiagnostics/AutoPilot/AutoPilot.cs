@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.PerformanceAndDiagnostics.AutoPilot
 {
@@ -29,7 +28,6 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         public async UniTask RunAsync()
         {
-            StreamWriter csv = null;
             var exitCode = 0;
 
             try
@@ -45,32 +43,21 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                     await csv.WriteLineAsync("\"Frame\",\"CPU Time\",\"GPU Time\"");
                 }
 
+                if (appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY, out string summaryFile)
+                    && csv == null)
+                    throw new Exception(
+                        $"--{AppArgsFlags.AUTOPILOT_SUMMARY} requires --{AppArgsFlags.AUTOPILOT_CSV}");
+
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
 
-                if (appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_RAW,
-                        out string logFile))
-                {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                    Profiler.logFile = logFile;
-                    Profiler.enableBinaryLog = true;
-                    Profiler.enabled = true;
-#else
-                    DCL.Diagnostics.ReportHub.LogWarning(
-                        DCL.Diagnostics.ReportCategory.ALWAYS,
-                        $"You set the --{AppArgsFlags.PROFILER_LOG_FILE} argument, but the profiler is only available in development builds.");
-#endif
-                }
-
                 await StandAtSpawnAsync();
 
-                if (csv != null &&
-                    appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY,
-                        out string summaryFile))
+                if (summaryFile != null)
                 {
                     await csv.DisposeAsync();
                     csv = null;
-                    await WriteSummary(csvFile, summaryFile);
+                    await WriteSummaryAsync(csvFile, summaryFile);
                 }
             }
             catch (Exception ex)
@@ -94,7 +81,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         /// <summary>
         /// The minimal performance test: stand at spawn for 1000 frames.
         /// </summary>
-        private async UniTask StandAtSpawnAsync(StreamWriter csv)
+        private async UniTask StandAtSpawnAsync()
         {
             for (var i = 0; i < 1000; i++)
             {
@@ -104,10 +91,12 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         }
 
         private Task WriteSampleAsync() =>
-            csv.WriteLineAsync(
-                $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
+            csv != null
+                ? csv.WriteLineAsync(
+                    $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}")
+                : Task.CompletedTask;
 
-        private static async UniTask WriteSummary(string csvFile,
+        private static async UniTask WriteSummaryAsync(string csvFile,
             string summaryFile)
         {
             var cpuTimes = new List<float>();
@@ -128,14 +117,14 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
             await using (var summary = new StreamWriter(summaryFile))
             {
-                summary.WriteLine($"CPU average: {cpuTimes.Average()}");
-                summary.WriteLine($"CPU 1% worst: {PercentWorst(cpuTimes, 0.01f)}");
-                summary.WriteLine($"CPU 0.1% worst: {PercentWorst(cpuTimes, 0.001f)}");
-                summary.WriteLine($"CPU worst: {cpuTimes.Max()}");
-                summary.WriteLine($"GPU average: {gpuTimes.Average()}");
-                summary.WriteLine($"GPU 1% worst: {PercentWorst(gpuTimes, 0.01f)}");
-                summary.WriteLine($"GPU 0.1% worst: {PercentWorst(gpuTimes, 0.001f)}");
-                summary.WriteLine($"GPU worst: {gpuTimes.Max()}");
+                await summary.WriteLineAsync($"CPU average: {cpuTimes.Average()}");
+                await summary.WriteLineAsync($"CPU 1% worst: {PercentWorst(cpuTimes, 0.01f)}");
+                await summary.WriteLineAsync($"CPU 0.1% worst: {PercentWorst(cpuTimes, 0.001f)}");
+                await summary.WriteLineAsync($"CPU worst: {cpuTimes.Max()}");
+                await summary.WriteLineAsync($"GPU average: {gpuTimes.Average()}");
+                await summary.WriteLineAsync($"GPU 1% worst: {PercentWorst(gpuTimes, 0.01f)}");
+                await summary.WriteLineAsync($"GPU 0.1% worst: {PercentWorst(gpuTimes, 0.001f)}");
+                await summary.WriteLineAsync($"GPU worst: {gpuTimes.Max()}");
             }
         }
 
