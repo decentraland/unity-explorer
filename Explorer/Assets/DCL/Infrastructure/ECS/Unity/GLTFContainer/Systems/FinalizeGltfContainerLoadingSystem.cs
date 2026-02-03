@@ -82,7 +82,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
-                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
+                ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
 
