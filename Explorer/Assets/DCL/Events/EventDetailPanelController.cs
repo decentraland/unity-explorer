@@ -58,6 +58,7 @@ namespace DCL.Communities.EventInfo
 
             viewInstance.InterestedButtonClicked -= OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
+            viewInstance.AddToCalendarButtonClicked -= AddToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked -= OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
@@ -69,6 +70,7 @@ namespace DCL.Communities.EventInfo
         {
             viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
+            viewInstance.AddToCalendarButtonClicked += AddToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
@@ -90,6 +92,9 @@ namespace DCL.Communities.EventInfo
 
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
+
+        private void AddToCalendarButtonClicked(IEventDTO eventData) =>
+            webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData));
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
             webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData));

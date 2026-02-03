@@ -1,10 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,7 +22,9 @@ namespace DCL.Events
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly IPlacesAPIService placesAPIService;
         private readonly EventsStateService eventsStateService;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource? loadEventsCts;
 
@@ -27,12 +32,16 @@ namespace DCL.Events
             EventsCalendarView view,
             EventsController eventsController,
             HttpEventsApiService eventsApiService,
-            EventsStateService eventsStateService)
+            IPlacesAPIService placesAPIService,
+            EventsStateService eventsStateService,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.eventsController = eventsController;
             this.eventsApiService = eventsApiService;
+            this.placesAPIService = placesAPIService;
             this.eventsStateService = eventsStateService;
+            this.mvcManager = mvcManager;
 
             view.SetDependencies(eventsStateService);
             view.InitializeEventsLists();
@@ -41,16 +50,19 @@ namespace DCL.Events
             eventsController.EventsClosed += OnSectionClosed;
             view.DaysRangeChanged += OnDaysRangeChanged;
             view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
+            view.EventCardClicked += OnEventCardClicked;
         }
 
         public void Dispose()
         {
             eventsStateService.ClearEvents();
+            eventsStateService.ClearPlaces();
 
             eventsController.SectionOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
             view.DaysRangeChanged -= OnDaysRangeChanged;
             view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
+            view.EventCardClicked -= OnEventCardClicked;
 
             loadEventsCts?.SafeCancelAndDispose();
         }
@@ -76,6 +88,9 @@ namespace DCL.Events
         private void OnDaySelectorButtonClicked(DateTime date) =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
 
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
+            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo))).Forget();
+
         private void LoadEvents(DateTime fromDate, int numberOfDays)
         {
             loadEventsCts = loadEventsCts.SafeRestart();
@@ -96,8 +111,33 @@ namespace DCL.Events
             if (ct.IsCancellationRequested)
                 return;
 
-            bool showHighlightedBanner = highlightedEventsResult is { Success: true, Value: { Count: > 0 } };
-            view.SetHighlightedBanner(showHighlightedBanner ? highlightedEventsResult.Value[0] : null);
+            if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
+            {
+                eventsStateService.AddEvents(highlightedEventsResult.Value, clearCurrentEvents: true);
+
+                List<string> placesIds = new ();
+                foreach (EventDTO eventInfo in highlightedEventsResult.Value)
+                {
+                    if (!string.IsNullOrEmpty(eventInfo.place_id))
+                        placesIds.Add(eventInfo.place_id);
+                }
+
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (placesResponse.Success)
+                    eventsStateService.AddPlaces(placesResponse.Value.Data, clearCurrentPlaces: true);
+            }
+
+            var showHighlightedBanner = false;
+            view.SetHighlightedBanner(null, null);
+            if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
+            {
+                showHighlightedBanner = true;
+                var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
+                view.SetHighlightedBanner(eventData!.EventInfo, eventData.PlaceInfo);
+            }
+
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
             view.SetDaysSelectorActive(true);
         }
@@ -127,8 +167,9 @@ namespace DCL.Events
 
             if (eventsResult.Value.Count > 0)
             {
-                eventsStateService.SetEvents(eventsResult.Value);
+                eventsStateService.AddEvents(eventsResult.Value);
 
+                List<string> placesIds = new ();
                 foreach (EventDTO eventInfo in eventsResult.Value)
                 {
                     DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
@@ -141,7 +182,16 @@ namespace DCL.Events
                             break;
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(eventInfo.place_id))
+                        placesIds.Add(eventInfo.place_id);
                 }
+
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (placesResponse.Success)
+                    eventsStateService.AddPlaces(placesResponse.Value.Data);
             }
 
             for (var i = 0; i < eventsGroupedByDay.Count; i++)

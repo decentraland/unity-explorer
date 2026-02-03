@@ -1,4 +1,5 @@
 ﻿using DCL.EventsApi;
+using DCL.PlacesAPIService;
 using DCL.UI.Utilities;
 using DG.Tweening;
 using SuperScrollView;
@@ -12,6 +13,7 @@ namespace DCL.Events
     public class EventsCalendarView : MonoBehaviour
     {
         public event Action<DateTime>? DaySelectorButtonClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?>? EventCardClicked;
 
         private const int EVENT_CARD_SMALL_PREFAB_INDEX = 0;
         private const int EVENT_CARD_BIG_PREFAB_INDEX = 1;
@@ -106,7 +108,7 @@ namespace DCL.Events
             DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
         }
 
-        public void SetHighlightedBanner(EventDTO? eventInfo)
+        public void SetHighlightedBanner(EventDTO? eventInfo, PlacesData.PlaceInfo? placeInfo)
         {
             foreach (GameObject go in objectsToHideWhenBanner)
                 go.SetActive(eventInfo == null);
@@ -114,7 +116,14 @@ namespace DCL.Events
             highlightedBanner.gameObject.SetActive(eventInfo != null);
 
             if (eventInfo != null)
-                highlightedBanner.Configure(eventInfo.Value);
+            {
+                // Setup card data
+                highlightedBanner.Configure(eventInfo.Value, placeInfo);
+
+                // Setup card events
+                highlightedBanner.MainButtonClicked -= OnEventCardClicked;
+                highlightedBanner.MainButtonClicked += OnEventCardClicked;
+            }
         }
 
         public void InitializeEventsLists()
@@ -156,22 +165,26 @@ namespace DCL.Events
         private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
-            var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[eventsListIndex][eventIndex]);
-            int itemPrefabIndex = eventInfo != null ? EVENT_CARD_SMALL_PREFAB_INDEX : EVENT_CARD_EMPTY_PREFAB_INDEX;
+            var eventData = eventsStateService.GetEventDataById(currentEventsIds[eventsListIndex][eventIndex]);
+            int itemPrefabIndex = eventData != null ? EVENT_CARD_SMALL_PREFAB_INDEX : EVENT_CARD_EMPTY_PREFAB_INDEX;
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
             EventCardView cardView = listItem.GetComponent<EventCardView>();
 
             // Setup card data
-            if (eventInfo != null)
-                cardView.Configure(eventInfo.Value);
+            if (eventData != null)
+                cardView.Configure(eventData.EventInfo, eventData.PlaceInfo);
 
             // Setup card events
-            // ...
+            cardView.MainButtonClicked -= OnEventCardClicked;
+            cardView.MainButtonClicked += OnEventCardClicked;
 
             return listItem;
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>
             DaySelectorButtonClicked?.Invoke(date);
+
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
+            EventCardClicked?.Invoke(eventInfo, placeInfo);
     }
 }

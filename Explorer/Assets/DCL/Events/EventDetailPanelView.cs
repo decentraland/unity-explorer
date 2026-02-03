@@ -29,6 +29,7 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private TMP_Text eventName = null!;
         [SerializeField] private TMP_Text hostName = null!;
         [SerializeField] private ButtonWithSelectableStateView interestedButton = null!;
+        [SerializeField] private Button addToCalendarButton = null!;
         [SerializeField] private Button shareButton = null!;
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private Button permanentJumpInButton = null!;
@@ -39,6 +40,7 @@ namespace DCL.Communities.EventInfo
 
         public event Action<IEventDTO>? InterestedButtonClicked;
         public event Action<IEventDTO>? JumpInButtonClicked;
+        public event Action<IEventDTO>? AddToCalendarButtonClicked;
         public event Action<IEventDTO>? EventShareButtonClicked;
         public event Action<IEventDTO>? EventCopyLinkButtonClicked;
 
@@ -56,6 +58,7 @@ namespace DCL.Communities.EventInfo
             interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
             permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
+            addToCalendarButton.onClick.AddListener(() => AddToCalendarButtonClicked?.Invoke(eventDTO!));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding,
@@ -75,7 +78,7 @@ namespace DCL.Communities.EventInfo
             return closeTasks;
         }
 
-        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData, ThumbnailLoader thumbnailLoader, CancellationToken cancellationToken)
+        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo? placeData, ThumbnailLoader thumbnailLoader, CancellationToken cancellationToken)
         {
             eventDTO = eventData;
             ct = cancellationToken;
@@ -92,7 +95,10 @@ namespace DCL.Communities.EventInfo
             interestedButton.gameObject.SetActive(!eventData.Live);
             liveBadge.SetActive(eventData.Live);
 
-            placeNameText.text = eventData.World ? $"{placeData.title} ({placeData.world_name})" : $"{placeData.title} ({eventData.X},{eventData.Y})";
+            if (placeData != null)
+                placeNameText.text = eventData.World ? $"{placeData.title} ({placeData.world_name})" : $"{placeData.title} ({eventData.X},{eventData.Y})";
+            else
+                placeNameText.text = $"{eventData.Scene_name} ({eventData.X},{eventData.Y})";
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
         }

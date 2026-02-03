@@ -528,7 +528,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
-            eventsController = new EventsController(eventsView, cursor, eventsApiService, webBrowser, decentralandUrlsSource);
+            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager);
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
