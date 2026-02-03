@@ -22,6 +22,9 @@ namespace DCL.EventsApi
         private const string COMMUNITY_ID_PARAMETER = "community_id";
         private const string PAGINATION_LIMIT_PARAMETER = "limit";
         private const string PAGINATION_OFFSET_PARAMETER = "offset";
+        private const string FROM_DATE_PARAMETER = "from";
+        private const string TO_DATE_PARAMETER = "to";
+        private const string HIGHLIGHT_PARAMETER_VALUE = "highlight";
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
@@ -70,6 +73,31 @@ namespace DCL.EventsApi
 
             if (onlyLiveEvents)
                 urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
+
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByDateRangeAsync(DateTime fromDate, DateTime? toDate, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            urlBuilder.AppendParameter(new URLParameter(FROM_DATE_PARAMETER, fromDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
+
+            if (toDate != null)
+                urlBuilder.AppendParameter(new URLParameter(TO_DATE_PARAMETER, toDate.Value.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
+
+            return await FetchEventListAsync(urlBuilder.Build(), ct);
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetHighlightedEventsAsync(int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            urlBuilder.AppendParameter(new URLParameter(PAGINATION_LIMIT_PARAMETER, elementsPerPage.ToString()));
+            urlBuilder.AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));
+            urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, HIGHLIGHT_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }

@@ -241,7 +241,8 @@ namespace DCL.Places
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
                                                               withConnectedUsers: true,
-                                                              onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY)
+                                                              onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY,
+                                                              withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
@@ -249,7 +250,8 @@ namespace DCL.Places
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
                                                               sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
                                                               withConnectedUsers: true,
-                                                              onlySdk7: false)
+                                                              onlySdk7: false,
+                                                              withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
@@ -257,7 +259,8 @@ namespace DCL.Places
                                                               ownerAddress: ownProfile.UserId,
                                                               ct: ct,
                                                               withConnectedUsers: true,
-                                                              onlySdk7: false)
+                                                              onlySdk7: false,
+                                                              withLiveEvents: true)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
