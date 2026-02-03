@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace DCL.CharacterMotion.Settings
@@ -93,5 +93,9 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKRemotePlayersDistance { get; set; } = 10;
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
+        
+        [field: SerializeField] [field: Header("Impulse (Prototype)")] public float ImpulseForce { get; set; } = 10f;
+        [field: SerializeField] public Vector3 ImpulseDirection { get; set; } = Vector3.forward;
+        [field: SerializeField] public float CharacterMass { get; set; } = 1f;
     }
 }

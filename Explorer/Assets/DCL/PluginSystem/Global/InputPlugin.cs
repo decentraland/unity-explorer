@@ -87,6 +87,7 @@ namespace DCL.PluginSystem.Global
 
             ApplyInputMapsSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, DCLInput.Instance.Player.Jump);
+            UpdateInputImpulseSystem.InjectToWorld(ref builder, DCLInput.Instance.Player.Impulse);
             UpdateInputMovementSystem.InjectToWorld(ref builder);
             UpdateCameraInputSystem.InjectToWorld(ref builder);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);

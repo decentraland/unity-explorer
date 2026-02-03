@@ -1,5 +1,6 @@
-﻿using DCL.SDKComponents.AvatarLocomotion.Components;
+using DCL.SDKComponents.AvatarLocomotion.Components;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
+using UnityEditor;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Settings
@@ -314,6 +315,24 @@ namespace DCL.CharacterMotion.Settings
         {
             get => impl.StepOffset;
             set => impl.StepOffset = value;
+        }
+
+        public float ImpulseForce
+        {
+            get => impl.ImpulseForce;
+            set => impl.ImpulseForce = value;
+        }
+
+        public Vector3 ImpulseDirection
+        {
+            get => impl.ImpulseDirection;
+            set => impl.ImpulseDirection = value;
+        }
+
+        public float CharacterMass
+        {
+            get => impl.CharacterMass;
+            set => impl.CharacterMass = value;
         }
 
         public float HeadIKWeightChangeSpeed

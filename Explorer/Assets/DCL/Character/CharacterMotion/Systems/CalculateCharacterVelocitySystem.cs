@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -14,6 +14,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using DCL.AvatarRendering.DemoScripts.Components;
+using DCL.CharacterMotion;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -116,9 +117,10 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
+            ref ImpulseInputComponent impulse,
             in MovementInputComponent movementInput)
         {
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, cameraComponent.Camera.transform);
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, in movementInput, cameraComponent.Camera.transform);
         }
 
         [Query]
@@ -133,10 +135,11 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
+            ref ImpulseInputComponent impulse,
             in MovementInputComponent movementInput)
         {
             // Random avatars are not affected by the player's camera
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, characterController.transform);
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, in movementInput, characterController.transform);
         }
 
         private void ResolveAvatarVelocity(
@@ -147,6 +150,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref JumpInputComponent jump,
+            ref ImpulseInputComponent impulse,
             in MovementInputComponent movementInput,
             Transform viewerTransform)
         {
@@ -163,6 +167,9 @@ namespace DCL.CharacterMotion.Systems
             ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
+            
+            // Apply impulse (prototype)
+            ApplyImpulse.Execute(settings, ref rigidTransform, ref impulse);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);

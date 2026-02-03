@@ -6,7 +6,6 @@ using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -16,7 +15,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
-using Utility;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
@@ -121,19 +119,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
-        }
-
-        private void ShowLoadingSpinner()
-        {
-            viewInstance.LoginContainer.SetActive(true);
-
-            viewInstance.LoginAnimator.ResetAnimator();
-            viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-
-            viewInstance.LoginButton.gameObject.SetActive(false);
-            viewInstance.LoginButton.interactable = false;
-
-            viewInstance.LoadingSpinner.SetActive(true);
         }
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
