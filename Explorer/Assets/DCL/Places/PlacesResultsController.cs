@@ -304,14 +304,14 @@ namespace DCL.Places
                 case PlacesSection.BROWSE when currentFilters.CategoryId != null:
                 {
                     string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
                     break;
                 }
                 case PlacesSection.BROWSE:
-                    view.SetPlacesCounter("Results for All");
+                    view.SetPlacesCounter("All");
                     break;
                 case PlacesSection.RECENTLY_VISITED:
-                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
                     break;
                 case PlacesSection.FAVORITES:
                     view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
