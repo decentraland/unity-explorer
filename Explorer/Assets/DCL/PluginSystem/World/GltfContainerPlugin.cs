@@ -106,7 +106,9 @@ namespace DCL.PluginSystem.World
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
-                sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
+                sharedDependencies.EntityCollidersSceneCache,
+                sharedDependencies.SceneData, buffer,
+                sharedDependencies.SceneStateProvider);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);

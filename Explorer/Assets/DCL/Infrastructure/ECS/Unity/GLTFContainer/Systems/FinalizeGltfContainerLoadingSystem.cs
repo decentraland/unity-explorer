@@ -30,15 +30,21 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneData sceneData;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IPerformanceBudget capBudget,
-            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache,
+            ISceneData sceneData,
+            EntityEventBuffer<GltfContainerComponent> eventsBuffer,
+            ISceneStateProvider sceneStateProvider)
+            : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.capBudget = capBudget;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -81,7 +87,9 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
                 }
 
-                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
+                ConfigureGltfContainerColliders.SetupColliders(ref component,
+                    result.Asset!, sceneStateProvider.IsCurrent);
+
                 ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);

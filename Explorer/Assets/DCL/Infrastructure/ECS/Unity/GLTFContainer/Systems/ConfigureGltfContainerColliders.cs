@@ -11,10 +11,28 @@ namespace ECS.Unity.GLTFContainer.Systems
 {
     internal static class ConfigureGltfContainerColliders
     {
-        internal static void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupColliders(
+            ref GltfContainerComponent component, GltfContainerAsset asset,
+            bool sceneIsCurrent)
         {
             SetupVisibleColliders(ref component, asset);
             SetupInvisibleColliders(ref component, asset);
+
+            if (asset.DecodedVisibleSDKColliders != null)
+                ForceActiveBySceneBounds(asset.DecodedVisibleSDKColliders,
+                    sceneIsCurrent);
+
+            ForceActiveBySceneBounds(asset.InvisibleColliders, sceneIsCurrent);
+        }
+
+        private static void ForceActiveBySceneBounds(List<SDKCollider> colliders, bool value)
+        {
+            for (var i = 0; i < colliders.Count; i++)
+            {
+                SDKCollider collider = colliders[i];
+                collider.ForceActiveBySceneBounds(value);
+                colliders[i] = collider;
+            }
         }
 
         internal static void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)

@@ -129,7 +129,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             }, PartitionComponent.TOP_PRIORITY, new CRDTEntity());
             var transformComponent = AddTransformToEntity(e);
 
-            ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
+            ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset, true);
 
             // Reparent to the current transform
             result.Asset.Root.transform.SetParent(transformComponent.Transform);

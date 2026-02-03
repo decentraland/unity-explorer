@@ -49,10 +49,13 @@ namespace ECS.Unity.GLTFContainer.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
+            var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
 
             system = new FinalizeGltfContainerLoadingSystem(
                 world, sceneRoot, releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
-                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
+                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
+                sceneStateProvider);
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);

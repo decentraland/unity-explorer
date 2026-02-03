@@ -13,6 +13,7 @@ using ECS.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -35,13 +36,18 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases;
         private readonly IEntityCollidersSceneCache entityCollidersCache;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         internal InstantiatePrimitiveColliderSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IEntityCollidersSceneCache entityCollidersCache, Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases = null) : base(world)
+            IEntityCollidersSceneCache entityCollidersCache,
+            ISceneStateProvider sceneStateProvider,
+            Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider>? setupColliderCases = null)
+            : base(world)
         {
             this.setupColliderCases = setupColliderCases ?? SETUP_COLLIDER_LOGIC;
             this.poolsRegistry = poolsRegistry;
             this.entityCollidersCache = entityCollidersCache;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -91,6 +97,8 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             // Setup collider only if it's gonna be enabled, otherwise there is no reason to [re]generate a shape
             if (SetColliderLayer(entity, sdkEntity, ref collider, sdkComponent))
                 setupCollider.Execute(collider.Collider, sdkComponent);
+
+            collider.ForceActiveBySceneBounds(sceneStateProvider.IsCurrent);
         }
 
         private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, ref SDKCollider sdkCollider, in PBMeshCollider sdkComponent)

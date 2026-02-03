@@ -1,7 +1,7 @@
 using Arch.Core;
 using Arch.System;
+using DCL.ECSComponents;
 using ECS.LifeCycle;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveColliders.Components;
 using SceneRunner.Scene;
@@ -39,28 +39,32 @@ namespace ECS.Unity.SceneBoundsChecker
         }
 
         [Query]
-        private void DisableGltfColliders(GltfContainerComponent component) =>
-            ForceActiveBySceneBounds(component, false);
+        private void DisableGltfColliders(ref GltfContainerComponent component) =>
+            ForceActiveBySceneBounds(ref component, false);
 
         [Query]
-        private void DisablePrimitiveColliders(PrimitiveColliderComponent collider) =>
-            collider.SDKCollider.ForceActiveBySceneBounds(false);
+        private void DisablePrimitiveColliders(ref PrimitiveColliderComponent component) =>
+            ForceActiveBySceneBounds(ref component, false);
 
         [Query]
-        private void EnableGltfColliders(GltfContainerComponent component) =>
-            ForceActiveBySceneBounds(component, true);
+        private void EnableGltfColliders(ref GltfContainerComponent component) =>
+            ForceActiveBySceneBounds(ref component, true);
 
         [Query]
-        private void EnablePrimitiveColliders(PrimitiveColliderComponent collider) =>
-            collider.SDKCollider.ForceActiveBySceneBounds(true);
+        private void EnablePrimitiveColliders(ref PrimitiveColliderComponent component) =>
+            ForceActiveBySceneBounds(ref component, true);
 
-        private void ForceActiveBySceneBounds(GltfContainerComponent component,
+        private static void ForceActiveBySceneBounds(
+            ref PrimitiveColliderComponent component, bool value) =>
+            component.SDKCollider.ForceActiveBySceneBounds(value);
+
+        private void ForceActiveBySceneBounds(ref GltfContainerComponent component,
             bool value)
         {
-            if (!component.Promise.TryGetResult(sceneWorld, out var result))
+            if (component.State != LoadingState.Finished)
                 return;
 
-            GltfContainerAsset? asset = result.Asset;
+            var asset = component.Promise.Result?.Asset;
 
             if (asset == null)
                 return;
@@ -75,9 +79,9 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             for (var i = 0; i < colliders.Count; i++)
             {
-                SDKCollider sdkCollider = colliders[i];
-                sdkCollider.ForceActiveBySceneBounds(value);
-                colliders[i] = sdkCollider;
+                SDKCollider collider = colliders[i];
+                collider.ForceActiveBySceneBounds(value);
+                colliders[i] = collider;
             }
         }
     }
