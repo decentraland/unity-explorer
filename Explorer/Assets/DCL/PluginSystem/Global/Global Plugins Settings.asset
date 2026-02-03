@@ -381,6 +381,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <PlaceDetailPanelPrefab>k__BackingField:
+          m_AssetGUID: 4f3a6cf0dfd5cc94cbd5225c88c7aa8b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
