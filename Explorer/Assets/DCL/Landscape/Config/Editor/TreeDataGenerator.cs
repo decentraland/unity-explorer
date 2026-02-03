@@ -41,14 +41,21 @@ namespace DCL.Landscape.Config.Editor
                 int terrainSize = AdjustTerrainSize();
                 ownedParcels = new NativeHashSet<int2>(0, Allocator.TempJob);
 
-                TerrainGenerationUtils.ExtractEmptyParcels(minParcel, maxParcel, ref emptyParcels,
-                    ref ownedParcels);
+                NativeHashSet<int2>.ReadOnly ownedParcelsReadOnly = ownedParcels.AsReadOnly(); 
 
-                TerrainGenerationUtils.SetupEmptyParcelsJobs(ref emptyParcelsData,
-                                           ref emptyParcelsNeighborData, emptyParcels.AsArray(),
-                                           ref ownedParcels, minParcel, maxParcel,
-                                           terrainData.heightScaleNerf)
-                                      .Complete();
+                TerrainGenerationUtils.ExtractEmptyParcels(minParcel, maxParcel, ref emptyParcels,
+                    in ownedParcelsReadOnly);
+
+                TerrainGenerationUtils.SetupEmptyParcelsJobs(
+                        ref emptyParcelsData,
+                        ref emptyParcelsNeighborData, 
+                        emptyParcels.AsArray().AsReadOnly(),
+                        ref ownedParcelsReadOnly, 
+                        minParcel, 
+                        maxParcel,
+                        terrainData.heightScaleNerf
+                        )
+                    .Complete();
 
                 var terrainChunkDataGenerator = new TerrainChunkDataGenerator(null,
                     new TimeProfiler(false), terrainData, ReportCategory.LANDSCAPE);
