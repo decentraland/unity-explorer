@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -5,6 +7,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System.Collections.Generic;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
 {
@@ -25,8 +28,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
     public static class RoomHubExtensions
     {
         public static bool HasAnyRoomConnected(this IRoomHub roomHub) =>
-            roomHub.IslandRoom().Info.ConnectionState == ConnectionState.ConnConnected ||
-            roomHub.SceneRoom().Room().Info.ConnectionState == ConnectionState.ConnConnected;
+            roomHub.IslandRoom().Info.ConnectionState == LKConnectionState.ConnConnected ||
+            roomHub.SceneRoom().Room().Info.ConnectionState == LKConnectionState.ConnConnected;
 
         public static int ParticipantsCount(this IRoomHub roomHub) =>
             roomHub.AllLocalRoomsRemoteParticipantIdentities().Count;
@@ -38,3 +41,5 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             roomHub.SceneRoom().Room();
     }
 }
+
+#endif

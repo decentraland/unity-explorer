@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.UI.SharedSpaceManager;
@@ -21,7 +25,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IRealmNavigator realmNavigator;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly string[] getUserPositionBuffer = new string[1];
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
@@ -33,14 +41,22 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             ISharedSpaceManager sharedSpaceManager,
             IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
 
@@ -85,8 +101,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+#else
+            Debug.LogError("Conversations are not supported without livekit");
+#endif
         }
     }
 }

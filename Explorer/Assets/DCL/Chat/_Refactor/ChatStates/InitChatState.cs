@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 namespace DCL.Chat.ChatStates
 {
     public class InitChatState : ChatState
@@ -7,3 +9,5 @@ namespace DCL.Chat.ChatStates
         public override void End() { }
     }
 }
+
+#endif

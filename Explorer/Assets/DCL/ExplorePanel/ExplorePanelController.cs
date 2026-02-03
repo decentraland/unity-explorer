@@ -50,7 +50,10 @@ namespace DCL.ExplorePanel
         public NavmapController? NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
+
+#if !NO_LIVEKIT_MODE
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
+#endif
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -65,7 +68,9 @@ namespace DCL.ExplorePanel
             CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
+#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController communitiesBrowserController,
+#endif
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
@@ -83,7 +88,9 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
+#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController = communitiesBrowserController;
+#endif
         }
 
         public override void Dispose()
@@ -120,10 +127,13 @@ namespace DCL.ExplorePanel
         {
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
+                { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, SettingsController },
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
+#if !NO_LIVEKIT_MODE
                 { ExploreSections.Communities, CommunitiesBrowserController },
+#endif
             };
             if (NavmapController != null)
                 exploreSections.Add(ExploreSections.Navmap, NavmapController);

@@ -1,3 +1,5 @@
+﻿#if !UNITY_WEBGL
+
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.MapRenderer.ComponentsFactory;
@@ -42,3 +44,5 @@ namespace Global.Dynamic
         }
     }
 }
+
+#endif

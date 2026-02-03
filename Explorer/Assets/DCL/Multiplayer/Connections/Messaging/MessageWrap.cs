@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading; 
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
@@ -44,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             sent = false;
         }
 
-        public async UniTaskVoid SendAndDisposeAsync(CancellationToken cancellationToken, DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
+        public async UniTaskVoid SendAndDisposeAsync(CancellationToken cancellationToken, LKDataPacketKind dataPacketKind = LKDataPacketKind.KindLossy)
         {
             if (sent)
                 throw new Exception("Request already sent");

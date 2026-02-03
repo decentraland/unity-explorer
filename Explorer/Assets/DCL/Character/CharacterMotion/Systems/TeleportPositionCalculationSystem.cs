@@ -22,14 +22,22 @@ namespace DCL.Character.CharacterMotion.Systems
     {
 
 
+#if !UNITY_WEBGL
         private readonly ILandscape landscape;
+#endif
 
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
-        public TeleportPositionCalculationSystem(World world, ILandscape landscape) : base(world)
+        public TeleportPositionCalculationSystem(World world
+#if !UNITY_WEBGL
+                , ILandscape landscape
+#endif
+                ) : base(world)
         {
+#if !UNITY_WEBGL
             this.landscape = landscape;
+#endif
         }
 
         protected override void Update(float t)
@@ -48,9 +56,31 @@ namespace DCL.Character.CharacterMotion.Systems
             if (sceneDef == null)
             {
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-                teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
+
+#if !UNITY_WEBGL
+                teleportIntent.Position = targetWorldPosition
+                    .WithTerrainOffset(
+                            landscape
+                            .GetHeight(
+                                targetWorldPosition.x, 
+                                targetWorldPosition.z
+                                )
+                            );
+#else
+                teleportIntent.Position = targetWorldPosition;
+#endif
+
             }
-            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) { teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation(); }
+
+#if !UNITY_WEBGL
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) 
+            { 
+                teleportIntent.Position = ParcelMathHelper
+                    .GetPositionByParcelPosition(parcel)
+                    .WithErrorCompensation(); 
+            }
+#endif
+
             else
             {
                 (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);

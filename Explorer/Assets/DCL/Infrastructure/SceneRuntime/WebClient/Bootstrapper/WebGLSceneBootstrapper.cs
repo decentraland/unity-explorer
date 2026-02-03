@@ -545,19 +545,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 var realmSamplingData = new RealmSamplingData();
                 var stubAppArgs = new ApplicationParametersParser(false);
 
-                var characterMotionPlugin = new CharacterMotionPlugin(
-                    characterContainer.CharacterObject,
-                    stubDebugBuilder,
-                    globalComponentsContainer.ComponentPoolsRegistry,
-                    stubSceneReadiness,
-                    stubLandscape,
-                    stubScenesCache);
-                (_, bool motionInitSuccess) = await globalPluginSettingsContainer!.InitializePluginAsync(characterMotionPlugin, destroyCancellationToken);
-                if (!motionInitSuccess)
-                {
-                    Debug.LogWarning("[WebGLSceneBootstrapper] CharacterMotionPlugin init failed; motion may not work.");
-                }
-
                 var characterCameraPlugin = new CharacterCameraPlugin(
                     assetsProvisioner,
                     realmSamplingData,
@@ -595,7 +582,6 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 UpdatePhysicsTickSystem.InjectToWorld(ref builder);
                 var pluginArgs = new GlobalPluginArguments(globalPlayerEntity, globalSkyboxEntity);
                 characterContainer.CreateGlobalPlugin().InjectToWorld(ref builder, pluginArgs);
-                characterMotionPlugin.InjectToWorld(ref builder, pluginArgs);
                 if (inputInitSuccess)
                     inputPlugin.InjectToWorld(ref builder, pluginArgs);
                 characterCameraPlugin.InjectToWorld(ref builder, pluginArgs);

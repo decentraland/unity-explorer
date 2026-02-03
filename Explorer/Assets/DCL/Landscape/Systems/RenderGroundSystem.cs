@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !UNITY_WEBGL
+
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
@@ -193,3 +195,5 @@ namespace DCL.Landscape.Systems
         }
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -40,13 +42,16 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
+
+#if !UNITY_WEBGL
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private VoiceChatTrackManager? trackManager;
+#endif
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -99,16 +104,29 @@ namespace DCL.PluginSystem.Global
             VoiceChatPluginSettings pluginSettings = voiceChatPluginSettingsAsset.Value;
             VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
-            voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
+            voiceChatHandler = new VoiceChatMicrophoneHandler(
+
+#if !UNITY_WEBGL
+            voiceChatConfiguration, 
+            voiceChatOrchestrator
+#endif
+
+            );
             pluginScope.Add(voiceChatHandler);
 
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
+#if !UNITY_WEBGL
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
             pluginScope.Add(trackManager);
+#endif
 
-            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
+            roomManager = new VoiceChatRoomManager(
+#if !UNITY_WEBGL
+            trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager
+#endif
+            );
             pluginScope.Add(roomManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
@@ -148,3 +166,5 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
+
+#endif

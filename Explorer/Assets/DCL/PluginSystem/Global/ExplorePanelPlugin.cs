@@ -1,3 +1,4 @@
+#if !NO_LIVEKIT_MODE
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -85,7 +86,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly FeatureFlagsConfiguration featureFlags;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly MapRendererContainer? mapRendererContainer;
+        private readonly MapRendererContainer mapRendererContainer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IProfileRepository profileRepository;
@@ -165,7 +166,7 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsConfiguration featureFlags,
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            MapRendererContainer? mapRendererContainer,
+            MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
@@ -357,6 +358,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
+            categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
             NavmapZoomController zoomController = new (navmapView.zoomView, navmapBus);
 
@@ -394,6 +396,11 @@ namespace DCL.PluginSystem.Global
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
                 zoomController);
 
+            IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
+
+            SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
+                navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
+
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
@@ -423,28 +430,21 @@ namespace DCL.PluginSystem.Global
 
             await settingsController.InitializeAsync();
 
-            if (mapRendererContainer != null)
-            {
-                categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
-                IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
-                SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
-                    navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
-                navmapController = new NavmapController(
-                    navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
-                    mapRendererContainer.MapRenderer,
-                    realmData,
-                    mapPathEventBus,
-                    world,
-                    playerEntity,
-                    navmapBus,
-                    UIAudioEventsBus.Instance,
-                    placesAndEventsPanelController,
-                    searchBarController,
-                    zoomController,
-                    satelliteController,
-                    placesAPIService,
-                    homePlaceEventBus);
-            }
+            navmapController = new NavmapController(
+                navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
+                mapRendererContainer.MapRenderer,
+                realmData,
+                mapPathEventBus,
+                world,
+                playerEntity,
+                navmapBus,
+                UIAudioEventsBus.Instance,
+                placesAndEventsPanelController,
+                searchBarController,
+                zoomController,
+                satelliteController,
+                placesAPIService,
+                homePlaceEventBus);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -656,3 +656,5 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
+
+#endif

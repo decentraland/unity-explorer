@@ -4,6 +4,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
 {
@@ -21,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             origin.DataReceived += OriginOnDataReceived;
         }
 
-        private void OriginOnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
+        private void OriginOnDataReceived(ReadOnlySpan<byte> data, LKParticipant participant, string topic, LKDataPacketKind kind)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
@@ -29,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             DataReceived?.Invoke(data, participant, topic, kind);
         }
 
-        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy)
+        public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, LKDataPacketKind kind = LKDataPacketKind.KindLossy)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)

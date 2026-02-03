@@ -25,7 +25,9 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+#if !UNITY_WEBGL
         private readonly ILandscape landscape;
+#endif
         private readonly IScenesCache scenesCache;
 
         private CharacterControllerSettings settings;
@@ -35,14 +37,18 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
+#if !UNITY_WEBGL
             ILandscape landscape,
+#endif
             IScenesCache scenesCache)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+#if !UNITY_WEBGL
             this.landscape = landscape;
+#endif
             this.scenesCache = scenesCache;
         }
 
@@ -61,21 +67,28 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world = builder.World;
 
             // Add Motion components
-            world.Add(arguments.PlayerEntity,
-                new CharacterRigidTransform(),
-                (ICharacterControllerSettings)settings,
-                characterObject,
-                characterObject.Controller,
-                new CharacterAnimationComponent(),
-                new CharacterEmoteComponent(),
-                new CharacterPlatformComponent(),
-                new StunComponent(),
-                new FeetIKComponent(),
-                new HandsIKComponent(),
-                new HeadIKComponent());
+            world.Add(
+                    arguments.PlayerEntity,
+                    new CharacterRigidTransform(),
+                    (ICharacterControllerSettings)settings,
+                    characterObject,
+                    characterObject.Controller,
+                    new CharacterAnimationComponent(),
+                    new CharacterEmoteComponent(),
+                    new CharacterPlatformComponent(),
+                    new StunComponent(),
+                    new FeetIKComponent(),
+                    new HandsIKComponent(),
+                    new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
-            TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
+
+            TeleportPositionCalculationSystem.InjectToWorld(ref builder
+#if !UNITY_WEBGL
+                    , landscape
+#endif
+                    );
+
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);

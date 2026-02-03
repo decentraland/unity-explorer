@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿#if !NO_LIVEKIT_MODE
+
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
@@ -74,3 +76,5 @@ namespace DCL.SceneBannedUsers
         }
     }
 }
+
+#endif

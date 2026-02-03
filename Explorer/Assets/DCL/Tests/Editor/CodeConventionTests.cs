@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -19,15 +17,13 @@ namespace DCL.Tests
     [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
-        private const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
-        private const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
-
-        private const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
         private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
-
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
+        public const string TRUST_WEBGL_THREAD_SAFETY_FLAG = nameof(TRUST_WEBGL_THREAD_SAFETY_FLAG);
+        public const string IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG);
+        public const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
 
-        private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
+        public static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
         {
             "UniTask.SwitchToThreadPool",
             "UniTask.RunOnThreadPool"

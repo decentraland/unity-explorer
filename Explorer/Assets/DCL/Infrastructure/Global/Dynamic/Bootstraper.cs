@@ -269,10 +269,18 @@ Debug.Log("Bootstraper.cs:216");
                 staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
+
+#if !NO_LIVEKIT_MODE
                 dynamicWorldContainer.RoomHub,
+#endif
+
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
+
+#if !NO_LIVEKIT_MODE
                 dynamicWorldContainer.RemoteMetadata,
+#endif
+
                 webJsSources,
                 bootstrapContainer.Environment,
                 dynamicWorldContainer.SystemClipboard

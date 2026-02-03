@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.VoiceChat
 {
@@ -58,7 +59,7 @@ namespace DCL.VoiceChat
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             if (connectionUpdate == ConnectionUpdate.Connected)
                 view.SetInCallSection();
@@ -88,7 +89,7 @@ namespace DCL.VoiceChat
             view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, userName);
         }
 
-        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
 
         }

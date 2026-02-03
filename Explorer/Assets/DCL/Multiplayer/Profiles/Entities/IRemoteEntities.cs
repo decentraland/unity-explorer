@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -37,3 +39,5 @@ namespace DCL.Multiplayer.Profiles.Entities
         }
     }
 }
+
+#endif

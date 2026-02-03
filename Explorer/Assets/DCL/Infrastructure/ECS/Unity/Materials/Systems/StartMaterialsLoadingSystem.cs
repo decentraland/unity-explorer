@@ -36,16 +36,33 @@ namespace ECS.Unity.Materials.Systems
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
-        private readonly IMediaFactory mediaFactory;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
-            IMediaFactory mediaFactory) : base(world)
+#if !UNITY_WEBGL
+        private readonly IMediaFactory mediaFactory;
+#endif
+
+        public StartMaterialsLoadingSystem(
+                World world, 
+                DestroyMaterial destroyMaterial, 
+                ISceneData sceneData, 
+                int attemptsCount, 
+                IPerformanceBudget capFrameTimeBudget
+
+#if !UNITY_WEBGL
+                , IMediaFactory mediaFactory
+#endif
+
+                ) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
+
+#if !UNITY_WEBGL
             this.mediaFactory = mediaFactory;
+#endif
+
         }
 
         protected override void Update(float t)
@@ -214,6 +231,7 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponentValue.IsVideoTexture)
             {
+#if !UNITY_WEBGL
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
                 if (!mediaFactory.TryAddConsumer(entity, textureComponentValue.VideoPlayerEntity, out TextureData? textureData))
@@ -222,6 +240,9 @@ namespace ECS.Unity.Materials.Systems
                 var result = new StreamableLoadingResult<TextureData>(textureData);
 
                 promise = Promise.CreateFinalized(intention, result);
+#else
+                return false; // VideoTexture is not supported on WebGL
+#endif
             }
             else if (textureComponentValue.IsAvatarTexture)
             {

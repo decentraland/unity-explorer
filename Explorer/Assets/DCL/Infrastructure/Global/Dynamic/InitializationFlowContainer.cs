@@ -34,7 +34,12 @@ namespace DCL.UserInAppInitializationFlow
             BootstrapContainer bootstrapContainer,
             RealmContainer realmContainer,
             IRealmNavigator realmNavigator,
+            RealmNavigationContainer realmNavigationContainer,
+
+#if !UNITY_WEBGL
             TerrainContainer terrainContainer,
+#endif
+
             ILoadingScreen loadingScreen,
 #if !NO_LIVEKIT_MODE
             IHealthCheck liveKitHealthCheck,
@@ -49,11 +54,9 @@ namespace DCL.UserInAppInitializationFlow
 #if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
 #endif
-
 #if !UNITY_WEBGL
             bool localSceneDevelopment,
 #endif
-
             CharacterContainer characterContainer)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
@@ -64,20 +67,13 @@ namespace DCL.UserInAppInitializationFlow
 
 #if !UNITY_WEBGL
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
+            // TODO teleportation is broken at the moment, fix required
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 #endif
 
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
-
-#if !UNITY_WEBGL
-            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-#endif
-
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
-
-
-            // TODO teleportation is broken at the moment, fix required
-            //var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
-
             var loadingOperations = new List<IStartupOperation>()
             {
 
@@ -85,16 +81,15 @@ namespace DCL.UserInAppInitializationFlow
                 blocklistCheckStartupOperation,
 #endif
               loadPlayerAvatarStartupOperation
-
 #if !UNITY_WEBGL
                 , loadLandscapeStartupOperation
+                ,teleportStartupOperation
 #endif
 
-                //teleportStartupOperation
             };
 
 #if !UNITY_WEBGL
-            // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
+            // The Global PX operation is the 3rd most time-consuming loading stage, and it's currently not needed in Local Scene Development
             // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
             if (!localSceneDevelopment)
             {
@@ -128,15 +123,13 @@ namespace DCL.UserInAppInitializationFlow
                         decentralandUrlsSource: bootstrapContainer.DecentralandUrlsSource,
                         mvcManager: mvcManager,
                         backgroundMusic: backgroundMusic,
-                        realmNavigator: realmNavigator,
+                        realmNavigator: realmNavigationContainer.RealmNavigator,
                         loadingScreen: loadingScreen,
                         realmController: realmContainer.RealmController,
                         portableExperiencesController: staticContainer.PortableExperiencesController,
-
 #if !NO_LIVEKIT_MODE
                         roomHub,
 #endif
-
                         initOps: startUpOps,
                         reloginOps: reLoginOps,
                         checkOnboardingStartupOperation: checkOnboardingStartupOperation,
@@ -153,7 +146,6 @@ namespace DCL.UserInAppInitializationFlow
 #if !UNITY_WEBGL
                             , localSceneDevelopment
 #endif
-
                             ),
             };
         }

@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.RealmNavigation;
 using DCL.Utilities;
@@ -26,3 +28,5 @@ namespace DCL.UserInAppInitializationFlow
         }
     }
 }
+
+#endif

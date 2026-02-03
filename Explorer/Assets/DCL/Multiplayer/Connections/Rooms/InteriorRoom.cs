@@ -1,7 +1,3 @@
-// TODO remove tasks to support WebGL
-// Currently Livekit is not supposed to be called on WebGL
-// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -12,16 +8,20 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+
+#if !UNITY_WEBGL
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
+#endif
+
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine.Pool;
 using RichTypes;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -30,9 +30,12 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorActiveSpeakers activeSpeakers = new ();
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
+
+#if !UNITY_WEBGL
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
         private readonly InteriorLocalTracks localTracks = new ();
+#endif
 
         private const int RESET_ROOM_TIMEOUT_SECONDS = 5;
 
@@ -40,14 +43,19 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
+
+#if !UNITY_WEBGL
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
         public ILocalTracks LocalTracks => localTracks;
+#endif
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
         public event Room.MetaDelegate? RoomMetadataChanged;
         public event Room.SidDelegate? RoomSidChanged;
+
+#if !UNITY_WEBGL
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -56,6 +64,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event SubscribeDelegate? TrackUnsubscribed;
         public event MuteDelegate? TrackMuted;
         public event MuteDelegate? TrackUnmuted;
+#endif
+
         public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
@@ -65,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public void Assign(IRoom room, out IRoom? previous)
         {
-            if (assigned is { Info: { ConnectionState: ConnectionState.ConnConnected or ConnectionState.ConnReconnecting } })
+            if (assigned is { Info: { ConnectionState: LKConnectionState.ConnConnected or LKConnectionState.ConnReconnecting } })
                 ReportHub.LogError(ReportCategory.LIVEKIT, "Assigning a new room without disconnecting the previous one");
 
             previous = assigned;
@@ -90,7 +100,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            var disconnectTask = assigned.DisconnectAsync(ct).AsUniTask();
+            var disconnectTask = assigned.DisconnectAsync(ct);
             var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
             var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
             if (winIndex != 0)
@@ -138,13 +148,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         public void SimulateConnectionStateChanged()
         {
             // It's not clear why LiveKit has two different events for the same thing
-            ConnectionState currentState = assigned.Info.ConnectionState;
+            LKConnectionState currentState = assigned.Info.ConnectionState;
 
             ConnectionUpdate connectionUpdate = currentState switch
                                                 {
-                                                    ConnectionState.ConnConnected => ConnectionUpdate.Connected,
-                                                    ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
-                                                    ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
+                                                    LKConnectionState.ConnConnected => ConnectionUpdate.Connected,
+                                                    LKConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
+                                                    LKConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
                                                 };
 
@@ -158,12 +168,17 @@ namespace DCL.Multiplayer.Connections.Rooms
             activeSpeakers.Assign(room.ActiveSpeakers);
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
+
+#if !UNITY_WEBGL
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
             localTracks.Assign(room.LocalTracks);
+#endif
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
+
+#if !UNITY_WEBGL
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -172,6 +187,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.TrackUnsubscribed += RoomOnTrackUnsubscribed;
             room.TrackMuted += RoomOnTrackMuted;
             room.TrackUnmuted += RoomOnTrackUnmuted;
+#endif
+
             room.ConnectionQualityChanged += RoomOnConnectionQualityChanged;
             room.ConnectionStateChanged += RoomOnConnectionStateChanged;
             room.ConnectionUpdated += RoomOnConnectionUpdated;
@@ -181,6 +198,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
+
+#if !UNITY_WEBGL
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
@@ -189,26 +208,31 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
             previous.TrackMuted -= RoomOnTrackMuted;
             previous.TrackUnmuted -= RoomOnTrackUnmuted;
+#endif
+
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, LKDisconnectReason? disconnectReason = null)
         {
             ConnectionUpdated?.Invoke(room, connectionupdate, disconnectReason);
         }
 
-        private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
+        private void RoomOnConnectionStateChanged(LKConnectionState connectionstate)
         {
             ConnectionStateChanged?.Invoke(connectionstate);
         }
 
-        private void RoomOnConnectionQualityChanged(ConnectionQuality quality, Participant participant)
+        private void RoomOnConnectionQualityChanged(
+                LKConnectionQuality quality, 
+                LKParticipant participant)
         {
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
+#if !UNITY_WEBGL
         private void RoomOnTrackUnmuted(TrackPublication publication, Participant participant)
         {
             TrackUnmuted?.Invoke(publication, participant);
@@ -248,6 +272,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             LocalTrackPublished?.Invoke(publication, participant);
         }
+#endif
 
         private void RoomOnRoomMetadataChanged(string metadata)
         {
@@ -265,10 +290,10 @@ namespace DCL.Multiplayer.Connections.Rooms
         public void SetLocalName(string name) =>
             assigned.SetLocalName(name);
 
-        public Task<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+        public UniTask<Result> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             assigned.EnsureAssigned().ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
-        public Task DisconnectAsync(CancellationToken token) =>
+        public UniTask DisconnectAsync(CancellationToken token) =>
             assigned.EnsureAssigned().DisconnectAsync(token);
     }
 }

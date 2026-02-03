@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
@@ -130,3 +132,5 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
+
+#endif

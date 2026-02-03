@@ -1,4 +1,6 @@
-﻿using DCL.Chat.ChatFriends;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
 using DCL.VoiceChat;
@@ -127,3 +129,5 @@ namespace DCL.Chat
         }
     }
 }
+
+#endif

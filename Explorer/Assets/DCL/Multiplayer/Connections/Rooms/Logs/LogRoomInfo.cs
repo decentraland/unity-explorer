@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using LiveKit.Proto;
 using LiveKit.Rooms.Info;
 using System;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
 {
@@ -9,11 +10,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
     {
         private readonly IRoomInfo origin;
 
-        public ConnectionState ConnectionState
+        public LKConnectionState ConnectionState
         {
             get
             {
-                ConnectionState connectionState = origin.ConnectionState;
+                LKConnectionState connectionState = origin.ConnectionState;
                 ReportHub
                    .WithReport(ReportCategory.LIVEKIT)
                    .Log($"LogRoomInfo: ConnectionState: {connectionState}");
