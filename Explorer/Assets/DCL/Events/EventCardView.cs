@@ -31,14 +31,14 @@ namespace DCL.Events
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private List<GameObject> liveMarks = null!;
 
-        private EventDTO currenEventInfo;
+        private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private CancellationTokenSource loadingThumbnailCts = null!;
 
         private void Awake()
         {
             if (mainButton != null)
-                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currenEventInfo, currentPlaceInfo));
+                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentEventInfo, currentPlaceInfo));
         }
 
         private void OnDisable() =>
@@ -52,7 +52,7 @@ namespace DCL.Events
 
         public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null)
         {
-            currenEventInfo = eventInfo;
+            currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
 
             if (backgroundNormal != null)
