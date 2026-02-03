@@ -148,7 +148,7 @@ namespace DCL.Web3.Authenticators
             if (KnownMetaTxContracts.TryGetValue(addressLower, out ContractMetaTxInfo? known))
                 return UniTask.FromResult(known);
 
-            ReportHub.LogError(ReportCategory.AUTHENTICATION, $"Contract NOT found in {nameof(KnownMetaTxContracts)}. Using DEFAULT DCL collection EIP-712 domain");
+            ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Contract NOT found in {nameof(KnownMetaTxContracts)}. Using DEFAULT DCL collection EIP-712 domain");
             return UniTask.FromResult(new ContractMetaTxInfo("Decentraland Collection", "2"));
         }
 
