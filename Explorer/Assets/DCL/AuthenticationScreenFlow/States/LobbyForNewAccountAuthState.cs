@@ -361,7 +361,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.BackButton.interactable = false;
 
             if (view.SubscribeToggle.isOn && !string.IsNullOrEmpty(userEmail))
-                SubscribeToNewsletterAsync(userEmail, loginCt).Forget();
+                SubscribeToNewsletterAsync(userEmail).Forget();
 
             PublishNewProfileAsync(loginCt).Forget();
 
@@ -397,7 +397,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private async UniTaskVoid SubscribeToNewsletterAsync(string email, CancellationToken ct)
+        private async UniTaskVoid SubscribeToNewsletterAsync(string email)
         {
             try
             {
@@ -407,7 +407,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 await webRequestController.PostAsync(
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.CreateJson(jsonBody),
-                                               ct,
+                                               CancellationToken.None, // no cancellation for newsletter subscription
                                                ReportCategory.AUTHENTICATION)
                                           .WithNoOpAsync();
             }
