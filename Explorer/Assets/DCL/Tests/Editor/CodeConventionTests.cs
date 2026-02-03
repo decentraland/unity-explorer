@@ -26,7 +26,7 @@ namespace DCL.Tests
         private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
 
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
-        
+
         private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
         {
             "UniTask.SwitchToThreadPool",
@@ -66,7 +66,7 @@ namespace DCL.Tests
         [SetUp]
         public void Init()
         {
-            THREADING_FORBIDDEN_CLASSES = 
+            THREADING_FORBIDDEN_CLASSES =
                 File.ReadLines(THREADING_CLASSES_API_LIST_PATH)
                 .Select(e => e.Trim())
                 .Where(e => !string.IsNullOrEmpty(e))
@@ -131,7 +131,7 @@ namespace DCL.Tests
                     ignorePaths
                     );
         }
-        
+
         [Test]
         public void VerifyShouldNotUseConcurrentCollection()
         {
@@ -284,8 +284,8 @@ namespace DCL.Tests
 
             Assert.IsTrue(
                     violations.Count == 0,
-                    violations.Count == 0 
-                    ? string.Empty 
+                    violations.Count == 0
+                    ? string.Empty
                     : $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLWebSocket instead"
                     );
         }
@@ -355,7 +355,7 @@ namespace DCL.Tests
                     continue;
 
                 // Ignore namespace keyword
-                if (line.StartsWith("namespace")) 
+                if (line.StartsWith("namespace"))
                     continue;
 
                 foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)

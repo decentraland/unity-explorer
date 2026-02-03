@@ -77,16 +77,16 @@ namespace DCL.ResourcesUnloading
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
-            audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
-            wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
-            wearableStorage!.Unload(budgetToUse);
-            trimmedWearableStorage!.Unload(budgetToUse);
-            emoteCache!.Unload(budgetToUse);
-            gltfContainerAssetsCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
-            lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
-            assetBundleCache!.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
-            profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
-            roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            audioClipsCache?.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
+            wearableAssetsCache?.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
+            wearableStorage?.Unload(budgetToUse);
+            trimmedWearableStorage?.Unload(budgetToUse);
+            emoteCache?.Unload(budgetToUse);
+            gltfContainerAssetsCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            lodCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            assetBundleCache?.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
+            profileCache?.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
+            roadCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             jsSourcesCache?.Unload(budgetToUse);
 
             ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);

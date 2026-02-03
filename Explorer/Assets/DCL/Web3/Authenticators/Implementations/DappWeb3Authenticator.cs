@@ -17,10 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
@@ -57,7 +57,7 @@ namespace DCL.Web3.Authenticators
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
-        private ClientWebSocket? rpcWebSocket;
+        private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
         private VerificationWeb3Delegate? signatureVerificationCallback;
@@ -344,7 +344,7 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:248"); // SPECIAL_DEBUG_LINE_STA
             urlBuilder.AppendDomain(rpcServerUrl);
             urlBuilder.AppendPath(new URLPath(network));
 
-            rpcWebSocket = new ClientWebSocket();
+            rpcWebSocket = new DCLWebSocket();
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
@@ -551,7 +551,6 @@ UnityEngine.Debug.Log("DappWeb3Authenticator.cs:545"); // SPECIAL_DEBUG_LINE_STA
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:548"); // SPECIAL_DEBUG_LINE_STATEMENT
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 UnityEngine.Debug.Log("DappWeb3Authenticator.cs:553"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
