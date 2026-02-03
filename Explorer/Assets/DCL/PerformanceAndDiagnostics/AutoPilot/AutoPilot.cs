@@ -29,6 +29,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         public async UniTask RunAsync()
         {
+            StreamWriter csv = null;
             var exitCode = 0;
 
             try
@@ -61,7 +62,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 #endif
                 }
 
-                await StandAtSpawnTest();
+                await StandAtSpawnAsync();
 
                 if (csv != null &&
                     appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY,
@@ -93,16 +94,16 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         /// <summary>
         /// The minimal performance test: stand at spawn for 1000 frames.
         /// </summary>
-        private async UniTask StandAtSpawnTest()
+        private async UniTask StandAtSpawnAsync(StreamWriter csv)
         {
             for (var i = 0; i < 1000; i++)
             {
-                await WriteSample();
+                await WriteSampleAsync();
                 await UniTask.Yield();
             }
         }
 
-        private Task WriteSample() =>
+        private Task WriteSampleAsync() =>
             csv.WriteLineAsync(
                 $"{Time.frameCount},{profiler.LastFrameTimeValueNs},{profiler.LastGpuFrameTimeValueNs}");
 

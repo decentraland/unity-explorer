@@ -1,4 +1,4 @@
-﻿namespace Global.AppArgs
+namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -13,7 +13,6 @@
 
         public const string AUTOPILOT = "autopilot";
         public const string AUTOPILOT_CSV = "csv";
-        public const string AUTOPILOT_RAW = "raw";
         public const string AUTOPILOT_SUMMARY = "summary";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
@@ -42,6 +41,7 @@
         public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
         public const string VOICE_CHAT = "voice-chat";
+        public const string DONATIONS_UI = "donations-ui";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -63,6 +63,8 @@
         public const string HEAD_SYNC = "head-sync";
 
         public const string DISCOVER = "discover";
+
+        public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
         public static class Multiplayer
         {

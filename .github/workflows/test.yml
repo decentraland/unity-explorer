@@ -34,7 +34,14 @@ concurrency:
 
 jobs:
   test:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
+    # Skip when PR has 'perf_test' label (performance tests run in separate workflow)
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event.pull_request.draft == false) ||
+        (github.event.label.name == 'force-build') ||
+        (github.event.label.name == 'clean-build')
+      )
     name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
     strategy:

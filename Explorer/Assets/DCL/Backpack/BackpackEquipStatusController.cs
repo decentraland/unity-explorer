@@ -15,10 +15,8 @@ using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -79,6 +77,7 @@ namespace DCL.Backpack
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
             backpackEventBus.UnEquipAllWearablesEvent += UnEquipAllWearables;
+            backpackEventBus.EquipOutfitEvent += EquipOutfit;
             // Avoid publishing an invalid profile
             // For example: logout while the update operation is being processed
             // See: https://github.com/decentraland/unity-explorer/issues/4413
@@ -105,9 +104,23 @@ namespace DCL.Backpack
             backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAllWearables;
             web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
             web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
+            backpackEventBus.EquipOutfitEvent -= EquipOutfit;
             publishProfileCts?.SafeCancelAndDispose();
         }
 
+        private void EquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            equippedWearables.UnEquipAll();
+
+            foreach (var w in wearables)
+                equippedWearables.Equip(w);
+
+            equippedWearables.SetEyesColor(command.EyesColor);
+            equippedWearables.SetHairColor(command.HairColor);
+            equippedWearables.SetBodyshapeColor(command.SkinColor);
+            equippedWearables.SetForceRender(command.ForceRender);
+        }
+        
         private void UnEquipAll()
         {
             equippedEmotes.UnEquipAll();
@@ -180,45 +193,48 @@ namespace DCL.Backpack
 
         private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
         {
-            bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
-                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
-
-            Profile? oldProfile = await selfProfile.ProfileAsync(ct);
-
-            if (oldProfile == null)
+            try
             {
-                ShowErrorNotificationAsync(ct).Forget();
-                return;
-            }
+                bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+                                            && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
-            if (!publishProfileChange)
-            {
-                var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-                
-                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                    forceRenderList, emoteStorage, wearableStorage);
-
-                // Skip publishing the same profile
-                if (newProfile.IsSameProfile(oldProfile))
+                if (!publishProfileChange)
                 {
-                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    Profile? oldProfile = await selfProfile.ProfileAsync(ct);
+
+                    if (oldProfile == null)
+                    {
+                        ShowErrorNotificationAsync(ct).Forget();
+                        return;
+                    }
+
+                    var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
+                    
+                    Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
+                        equippedWearables,
+                        forceRenderList,
+                        emoteStorage,
+                        wearableStorage);
+
+                    // Skip publishing the same profile
+                    if (newProfile.IsSameProfile(oldProfile))
+                    {
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                        return;
+                    }
+
+                    profileCache.Set(newProfile.UserId, newProfile);
+                    UpdateAvatarInWorld(newProfile);
+                    profileChangesBus.PushUpdate(newProfile);
+                    
                     return;
                 }
 
-                profileCache.Set(newProfile.UserId, newProfile);
-                UpdateAvatarInWorld(newProfile);
-                profileChangesBus.PushUpdate(newProfile);
-                
-                return;
-            }
-
-            try
-            {
-                Profile? newProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                Profile? updatedProfile = await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
 
-                if (newProfile != null)
-                    profileChangesBus.PushUpdate(newProfile);
+                if (updatedProfile != null)
+                    profileChangesBus.PushUpdate(updatedProfile);
             }
             catch (OperationCanceledException) { }
             catch (IdenticalProfileUpdateException)

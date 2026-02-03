@@ -17,9 +17,10 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api,
             ISceneData sceneData,
             ISDKMessageBusCommsControllerAPI commsApi,
+            IInstancePoolsProvider instancePoolsProvider,
             ISceneExceptionsHandler exceptionsHandler,
             CancellationTokenSource disposeCts)
-            : base(api, sceneData, exceptionsHandler, disposeCts)
+            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;
