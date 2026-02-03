@@ -56,6 +56,11 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcel;
 
+        //Debug only
+        private readonly Dictionary<Material, Color> originalColors = new ();
+        private bool backfaceCulling;
+        private bool isPaintedBackface;
+
         internal UpdateCurrentSceneSystem(
             World world,
             IRealmData realmData,
@@ -89,7 +94,8 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling)
                          .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnLimitShadowCasters)
                          .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters)
-                         .AddToggleField("Disable Shadows:", OnDisableShadowsToggle, shadowsDisabled);
+                         .AddToggleField("Disable Shadows:", OnDisableShadowsToggle, shadowsDisabled)
+                         .AddSingleButton("Backface debugger", PaintBackFaceMaterials);
             this.debugBuilder = debugBuilder;
 
             // Subscribe to centralized visual debug settings
@@ -206,6 +212,8 @@ namespace ECS.SceneLifeCycle.Systems
                     originalCullValues.Clear();
             }
         }
+
+
 
         protected override void Update(float t)
         {
@@ -466,6 +474,65 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneHeightBinding.Value = NO_DATA_STRING;
                 sceneRelativePositionBinding.Value = NO_DATA_STRING;
                 sceneBoundsCube?.SetActive(false);
+            }
+        }
+
+        //Debug only
+        private void PaintBackFaceMaterials()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (!sceneWorld.Has<TransformComponent>(sceneContainer))
+                return;
+
+            ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+            Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+            if (isPaintedBackface)
+            {
+                // Restore original colors
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        if (originalColors.TryGetValue(material, out Color originalColor))
+                            material.color = originalColor;
+                    }
+                }
+
+                originalColors.Clear();
+                isPaintedBackface = false;
+            }
+            else
+            {
+                // Paint based on backface culling setting
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        // Store original color
+                        if (!originalColors.ContainsKey(material))
+                            originalColors[material] = material.color;
+
+                        // Check if material has backface culling enabled (CullMode.Back = 2)
+                        bool hasBackfaceCulling = material.HasProperty(CULL) && material.GetInt(CULL) == (int)CullMode.Back;
+
+                        // Green if has backface culling, Red otherwise
+                        material.color = hasBackfaceCulling ? Color.green : Color.red;
+                    }
+                }
+
+                isPaintedBackface = true;
             }
         }
 

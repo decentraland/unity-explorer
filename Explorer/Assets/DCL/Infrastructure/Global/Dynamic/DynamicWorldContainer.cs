@@ -693,6 +693,8 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            var entitiesAnalytics = new EntitiesAnalytics(bootstrapContainer.Analytics);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -729,10 +731,13 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics),
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
+                    staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
+                    staticContainer.SceneLoadingLimit, appArgs, staticContainer.LoadingStatus),
                 #if UNITY_EDITOR
                     new RenderingSystemPlugin(debugBuilder),
                 #endif
@@ -893,7 +898,8 @@ namespace Global.Dynamic
                     communitiesDataService,
                     staticContainer.LoadingStatus,
                     donationsService,
-                    realmNavigator
+                    realmNavigator,
+                    friendServiceProxy
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1178,7 +1184,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    bootstrapContainer.Analytics!));
+                    bootstrapContainer.Analytics!,
+                    homePlaceEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -1231,7 +1238,8 @@ namespace Global.Dynamic
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
                 staticContainer.LandscapeParcelData,
-                builderCollectionsPreview
+                builderCollectionsPreview,
+                entitiesAnalytics
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);
