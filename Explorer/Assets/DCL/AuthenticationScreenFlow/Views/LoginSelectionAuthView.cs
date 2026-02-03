@@ -103,12 +103,12 @@ namespace DCL.AuthenticationScreenFlow
             moreOptionsPanel.SetActive(isExpanded);
         }
 
-        public void Show(int animHash)
+        public void Show(int animHash, bool moreOptionsExpanded)
         {
             showAnimHash = animHash;
             ShowAsync(CancellationToken.None).Forget();
 
-            areOptionsExpanded = false;
+            areOptionsExpanded = moreOptionsExpanded;
             SetOptionsPanelVisibility(isExpanded: false);
 
             SetLoadingSpinnerVisibility(false);

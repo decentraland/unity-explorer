@@ -1,8 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using Nethereum.Signer.EIP712;
-using Nethereum.Util;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,7 +8,6 @@ using System.Numerics;
 using System.Text;
 using System.Threading;
 using Thirdweb;
-using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
