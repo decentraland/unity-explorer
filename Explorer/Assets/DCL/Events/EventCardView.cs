@@ -14,13 +14,13 @@ namespace DCL.Events
         [SerializeField] private Button mainButton = null!;
         [SerializeField] private TMP_Text eventText = null!;
 
-        private EventDTO currenEventInfo;
+        private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
 
         private void Awake()
         {
             if (mainButton != null)
-                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currenEventInfo, currentPlaceInfo));
+                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentEventInfo, currentPlaceInfo));
         }
 
         private void OnDestroy()
@@ -31,7 +31,7 @@ namespace DCL.Events
 
         public void Configure(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo = null)
         {
-            currenEventInfo = eventInfo;
+            currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
 
             // This is temporal until we fully implement the event card view.
