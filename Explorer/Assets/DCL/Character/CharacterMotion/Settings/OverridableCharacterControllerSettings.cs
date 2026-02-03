@@ -152,7 +152,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float GlideMinGroundDistance => impl.GlideMinGroundDistance;
 
-        public float GlideMaxGravity => impl.GlideMaxGravity;
+        public float GlideMaxGravity => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY, impl.GlideMaxGravity);
 
         public float GlideAnimMaxAngle => impl.GlideAnimMaxAngle;
 

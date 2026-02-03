@@ -26,20 +26,22 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjxkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX2xvY29tb3Rp",
             "b25fc2V0dGluZ3MucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
-            "cyKQAwoaUEJBdmF0YXJMb2NvbW90aW9uU2V0dGluZ3MSFwoKd2Fsa19zcGVl",
+            "cyLOAwoaUEJBdmF0YXJMb2NvbW90aW9uU2V0dGluZ3MSFwoKd2Fsa19zcGVl",
             "ZBgBIAEoAkgAiAEBEhYKCWpvZ19zcGVlZBgCIAEoAkgBiAEBEhYKCXJ1bl9z",
             "cGVlZBgDIAEoAkgCiAEBEhgKC2p1bXBfaGVpZ2h0GAQgASgCSAOIAQESHAoP",
             "cnVuX2p1bXBfaGVpZ2h0GAUgASgCSASIAQESIgoVaGFyZF9sYW5kaW5nX2Nv",
             "b2xkb3duGAYgASgCSAWIAQESHwoSZG91YmxlX2p1bXBfaGVpZ2h0GAcgASgC",
-            "SAaIAQESGgoNZ2xpZGluZ19zcGVlZBgIIAEoAkgHiAEBQg0KC193YWxrX3Nw",
-            "ZWVkQgwKCl9qb2dfc3BlZWRCDAoKX3J1bl9zcGVlZEIOCgxfanVtcF9oZWln",
-            "aHRCEgoQX3J1bl9qdW1wX2hlaWdodEIYChZfaGFyZF9sYW5kaW5nX2Nvb2xk",
-            "b3duQhUKE19kb3VibGVfanVtcF9oZWlnaHRCEAoOX2dsaWRpbmdfc3BlZWRC",
-            "FKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "SAaIAQESGgoNZ2xpZGluZ19zcGVlZBgIIAEoAkgHiAEBEiIKFWdsaWRpbmdf",
+            "ZmFsbGluZ19zcGVlZBgJIAEoAkgIiAEBQg0KC193YWxrX3NwZWVkQgwKCl9q",
+            "b2dfc3BlZWRCDAoKX3J1bl9zcGVlZEIOCgxfanVtcF9oZWlnaHRCEgoQX3J1",
+            "bl9qdW1wX2hlaWdodEIYChZfaGFyZF9sYW5kaW5nX2Nvb2xkb3duQhUKE19k",
+            "b3VibGVfanVtcF9oZWlnaHRCEAoOX2dsaWRpbmdfc3BlZWRCGAoWX2dsaWRp",
+            "bmdfZmFsbGluZ19zcGVlZEIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarLocomotionSettings), global::DCL.ECSComponents.PBAvatarLocomotionSettings.Parser, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed" }, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarLocomotionSettings), global::DCL.ECSComponents.PBAvatarLocomotionSettings.Parser, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed", "GlidingFallingSpeed" }, new[]{ "WalkSpeed", "JogSpeed", "RunSpeed", "JumpHeight", "RunJumpHeight", "HardLandingCooldown", "DoubleJumpHeight", "GlidingSpeed", "GlidingFallingSpeed" }, null, null, null)
           }));
     }
     #endregion
@@ -94,6 +96,7 @@ namespace DCL.ECSComponents {
       hardLandingCooldown_ = other.hardLandingCooldown_;
       doubleJumpHeight_ = other.doubleJumpHeight_;
       glidingSpeed_ = other.glidingSpeed_;
+      glidingFallingSpeed_ = other.glidingFallingSpeed_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -327,6 +330,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~128;
     }
 
+    /// <summary>Field number for the "gliding_falling_speed" field.</summary>
+    public const int GlidingFallingSpeedFieldNumber = 9;
+    private float glidingFallingSpeed_;
+    /// <summary>
+    /// Maximum falling speed when gliding (in meters per second)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float GlidingFallingSpeed {
+      get { if ((_hasBits0 & 256) != 0) { return glidingFallingSpeed_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 256;
+        glidingFallingSpeed_ = value;
+      }
+    }
+    /// <summary>Gets whether the "gliding_falling_speed" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasGlidingFallingSpeed {
+      get { return (_hasBits0 & 256) != 0; }
+    }
+    /// <summary>Clears the value of the "gliding_falling_speed" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearGlidingFallingSpeed() {
+      _hasBits0 &= ~256;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -350,6 +381,7 @@ namespace DCL.ECSComponents {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HardLandingCooldown, other.HardLandingCooldown)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(DoubleJumpHeight, other.DoubleJumpHeight)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(GlidingSpeed, other.GlidingSpeed)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(GlidingFallingSpeed, other.GlidingFallingSpeed)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -365,6 +397,7 @@ namespace DCL.ECSComponents {
       if (HasHardLandingCooldown) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HardLandingCooldown);
       if (HasDoubleJumpHeight) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(DoubleJumpHeight);
       if (HasGlidingSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(GlidingSpeed);
+      if (HasGlidingFallingSpeed) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(GlidingFallingSpeed);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -415,6 +448,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(69);
         output.WriteFloat(GlidingSpeed);
       }
+      if (HasGlidingFallingSpeed) {
+        output.WriteRawTag(77);
+        output.WriteFloat(GlidingFallingSpeed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -457,6 +494,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(69);
         output.WriteFloat(GlidingSpeed);
       }
+      if (HasGlidingFallingSpeed) {
+        output.WriteRawTag(77);
+        output.WriteFloat(GlidingFallingSpeed);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -489,6 +530,9 @@ namespace DCL.ECSComponents {
         size += 1 + 4;
       }
       if (HasGlidingSpeed) {
+        size += 1 + 4;
+      }
+      if (HasGlidingFallingSpeed) {
         size += 1 + 4;
       }
       if (_unknownFields != null) {
@@ -526,6 +570,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasGlidingSpeed) {
         GlidingSpeed = other.GlidingSpeed;
+      }
+      if (other.HasGlidingFallingSpeed) {
+        GlidingFallingSpeed = other.GlidingFallingSpeed;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -574,6 +621,10 @@ namespace DCL.ECSComponents {
             GlidingSpeed = input.ReadFloat();
             break;
           }
+          case 77: {
+            GlidingFallingSpeed = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -619,6 +670,10 @@ namespace DCL.ECSComponents {
           }
           case 69: {
             GlidingSpeed = input.ReadFloat();
+            break;
+          }
+          case 77: {
+            GlidingFallingSpeed = input.ReadFloat();
             break;
           }
         }

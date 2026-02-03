@@ -7,7 +7,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Components
         public static readonly AvatarLocomotionOverrides NO_OVERRIDES = new ();
 
         [Flags]
-        public enum OverrideID : byte
+        public enum OverrideID
         {
             WALK_SPEED = 1,
             JOG_SPEED = 1 << 1,
@@ -17,6 +17,7 @@ namespace DCL.SDKComponents.AvatarLocomotion.Components
             HARD_LANDING_COOLDOWN = 1 << 5,
             DOUBLE_JUMP_HEIGHT = 1 << 6,
             GLIDE_SPEED = 1 << 7,
+            GLIDE_MAX_GRAVITY = 1 << 8,
         }
 
         public OverrideID WriteMask;
@@ -28,5 +29,6 @@ namespace DCL.SDKComponents.AvatarLocomotion.Components
         public float HardLandingCooldown;
         public float DoubleJumpHeight;
         public float GlidingSpeed;
+        public float GlidingMaxGravity;
     }
 }
