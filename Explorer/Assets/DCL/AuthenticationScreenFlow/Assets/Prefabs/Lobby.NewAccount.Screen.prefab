@@ -1690,7 +1690,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_Pivot.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1698,7 +1698,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1706,7 +1706,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1746,11 +1746,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 197.4
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -543.6
+      value: -40
       objectReference: {fileID: 0}
     - target: {fileID: 982401329615251688, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1810,7 +1810,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4738172613790741526, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 7.8
+      value: 7.799988
       objectReference: {fileID: 0}
     - target: {fileID: 7473772731439625651, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: m_Name
