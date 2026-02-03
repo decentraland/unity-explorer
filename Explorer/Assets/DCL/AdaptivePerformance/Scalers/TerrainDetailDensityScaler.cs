@@ -2,7 +2,7 @@
 // using UnityEngine;
 // using UnityEngine.AdaptivePerformance;
 //
-// namespace DCL.Optimization.AdaptivePerformance.Scalers
+// namespace DCL.AdaptivePerformance.Scalers
 // {
 //     /// <summary>
 //     /// Custom scaler that adjusts terrain detail density based on performance.
@@ -10,17 +10,12 @@
 //     /// Level 0 = 0% (disabled), Level 4 = 100% (full density).
 //     /// </summary>
 //     [CreateAssetMenu(fileName = "TerrainDetailScaler", menuName = "DCL/Adaptive Performance/Terrain Detail Scaler")]
-//     public class TerrainDetailScaler : AdaptivePerformanceScaler
+//     public class TerrainDetailDensityScaler : AdaptivePerformanceScaler
 //     {
 //         private readonly float[] levels = { 0f, 0.25f, 0.5f, 0.7f, 1.0f }; // 5 levels (0-4)
 //
-//         /// <summary>
-//         /// Called by Unity Adaptive Performance Indexer when performance level changes.
-//         /// Updates Unity's global terrain detail density scale.
-//         /// </summary>
 //         protected override void OnLevel()
 //         {
-//             // Only apply changes if the scale has actually changed
 //             if (!ScaleChanged())
 //                 return;
 //

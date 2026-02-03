@@ -3,7 +3,7 @@
 // using UnityEngine;
 // using UnityEngine.AdaptivePerformance;
 //
-// namespace DCL.Optimization.AdaptivePerformance.Scalers
+// namespace DCL.AdaptivePerformance.Scalers
 // {
 //     /// <summary>
 //     /// Custom scaler that adjusts the maximum number of dynamic lights and shadow-casting lights based on performance.
@@ -22,13 +22,8 @@
 //             lightSettings = settings;
 //         }
 //
-//         /// <summary>
-//         /// Called by Unity Adaptive Performance Indexer when performance level changes.
-//         /// Updates the light source settings with new limits for active lights and shadows.
-//         /// </summary>
 //         protected override void OnLevel()
 //         {
-//             // Only apply changes if the scale has actually changed
 //             if (!ScaleChanged())
 //                 return;
 //
@@ -41,11 +36,10 @@
 //             {
 //                 LightsPerParcel = 1f, // Keep existing per-parcel multiplier
 //                 HardMaxLightCount = maxLights,
-//                 MaxPointLightShadows = maxShadows / 2, // Split shadows between point and spot
+//                 MaxPointLightShadows = maxShadows / 2, // Split shadows between point and spot TODO mihak: Maybe we need a better way
 //                 MaxSpotLightShadows = maxShadows / 2
 //             };
 //
-//             // Apply settings (keeps existing LOD configurations)
 //             lightSettings.ApplyQualitySettings(sceneLimitations, lightSettings.SpotLightsLods, lightSettings.PointLightsLods);
 //
 //             ReportHub.Log(ReportCategory.ADAPTIVE_PERFORMANCE, $"[DynamicLightCountScaler] Level {CurrentLevel}: {maxLights} lights, {maxShadows} shadows");
