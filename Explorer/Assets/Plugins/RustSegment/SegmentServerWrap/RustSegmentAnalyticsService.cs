@@ -62,8 +62,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void Dispose()
         {
-            current = null;
             bool result = NativeMethods.SegmentServerDispose();
+
+            current = null;
 
             if (result == false)
                 throw new Exception("Rust Segment dispose failed");
@@ -195,18 +196,24 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
-            if (current == null) return;
+            var service = current;
+            if (service == null) return;
 
-            lock (current.afterClean)
+            lock (service.afterClean)
             {
-                var type = current.afterClean[operationId].Item1;
+                if (current != service) return;
+
+                if (!service.afterClean.TryGetValue(operationId, out var operationData))
+                    return;
+
+                var type = operationData.Item1;
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
                 if (response is not NativeMethods.Response.Success)
                     ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
 
-                current.CleanMemory(operationId);
+                service.CleanMemory(operationId);
             }
         }
 
