@@ -171,6 +171,7 @@ PrefabInstance:
     - {fileID: 4742473837712756890, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
     m_RemovedGameObjects:
     - {fileID: 8985667497027683985, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
+    - {fileID: 8131548781110731430, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
@@ -187,11 +188,6 @@ MeshRenderer:
 --- !u!23 &2760176068224657140 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3518569021760305784, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
-  m_PrefabInstance: {fileID: 1628731178006076556}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &5312873341691023674 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 6854887957460225462, guid: dd434ac5690d6f24c86d3e471fe2d82e, type: 3}
   m_PrefabInstance: {fileID: 1628731178006076556}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4149722736296174482
@@ -599,7 +595,7 @@ PrefabInstance:
     - target: {fileID: 4742473837712756890, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
       propertyPath: m_LODs.Array.data[2].renderers.Array.data[0].renderer
       value: 
-      objectReference: {fileID: 5312873341691023674}
+      objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
       propertyPath: m_LODs.Array.data[2].renderers.Array.data[1].renderer
       value: 
@@ -768,7 +764,7 @@ Mesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PotTree_RoadAssets
-  serializedVersion: 11
+  serializedVersion: 12
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
@@ -946,6 +942,29 @@ Mesh:
     offset: 0
     size: 0
     path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!43 &9935786426378375
 Mesh:
   m_ObjectHideFlags: 0
@@ -953,7 +972,7 @@ Mesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PotTree_HedgeFlowers
-  serializedVersion: 11
+  serializedVersion: 12
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
@@ -1121,6 +1140,24 @@ Mesh:
     offset: 0
     size: 0
     path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!43 &6573366741555696511
 Mesh:
   m_ObjectHideFlags: 0
@@ -1128,7 +1165,7 @@ Mesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: HedgeFountain_HedgeLeafGreen
-  serializedVersion: 11
+  serializedVersion: 12
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
@@ -1306,3 +1343,26 @@ Mesh:
     offset: 0
     size: 0
     path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
