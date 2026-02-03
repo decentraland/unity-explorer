@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
@@ -22,6 +23,9 @@ namespace DCL.Events
         private readonly EventsStateService eventsStateService;
 
         private CancellationTokenSource? loadEventsCts;
+
+        private static readonly ListObjectPool<List<EventDTO>> EVENTS_GROUPED_BY_DAY_POOL = new (defaultCapacity: 5);
+        private static readonly ListObjectPool<EventDTO> EVENT_INFO_POOL = new ();
 
         public EventsCalendarController(
             EventsCalendarView view,
@@ -121,9 +125,13 @@ namespace DCL.Events
                 return;
             }
 
-            List<List<EventDTO>> eventsGroupedByDay = new (numberOfDays);
+
+            using PoolExtensions.Scope<List<List<EventDTO>>> eventsGroupedByDay = EVENTS_GROUPED_BY_DAY_POOL.AutoScope();
             for (var i = 0; i < numberOfDays; i++)
-                eventsGroupedByDay.Add(new List<EventDTO>());
+            {
+                using PoolExtensions.Scope<List<EventDTO>> dayEvents = EVENT_INFO_POOL.AutoScope();
+                eventsGroupedByDay.Value.Add(dayEvents.Value);
+            }
 
             if (eventsResult.Value.Count > 0)
             {
@@ -137,17 +145,17 @@ namespace DCL.Events
                     {
                         if (eventLocalDate.Date == fromDate.AddDays(i))
                         {
-                            eventsGroupedByDay[i].Add(eventInfo);
+                            eventsGroupedByDay.Value[i].Add(eventInfo);
                             break;
                         }
                     }
                 }
             }
 
-            for (var i = 0; i < eventsGroupedByDay.Count; i++)
+            for (var i = 0; i < eventsGroupedByDay.Value.Count; i++)
             {
-                AddEmptyEventCards(eventsGroupedByDay[i]);
-                view.SetEvents(eventsGroupedByDay[i], i, true);
+                AddEmptyEventCards(eventsGroupedByDay.Value[i]);
+                view.SetEvents(eventsGroupedByDay.Value[i], i, true);
             }
 
             view.SetAsLoading(false);
