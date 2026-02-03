@@ -23,25 +23,38 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
         private readonly BigInteger chainId;
+        private readonly Dictionary<BigInteger, string> rpcOverrides;
 
         public TransactionConfirmationDelegate? TransactionConfirmationCallback { private get; set; }
 
         private readonly SemaphoreSlim mutex = new (1, 1);
         private readonly ThirdWebMetaTxService metaTxService;
 
-        public ThirdWebEthereumApi(ThirdwebClient client, HashSet<string> whitelistMethods, HashSet<string> readOnlyMethods, IDecentralandUrlsSource decentralandUrlsSource, DecentralandEnvironment environment)
+        public ThirdWebEthereumApi(
+            ThirdwebClient client,
+            HashSet<string> whitelistMethods,
+            HashSet<string> readOnlyMethods,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            DecentralandEnvironment environment,
+            Dictionary<BigInteger, string> rpcOverrides)
         {
             this.client = client;
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
+            this.rpcOverrides = rpcOverrides;
 
             chainId = ChainUtils.GetChainIdAsInt(environment);
 
             metaTxService = new ThirdWebMetaTxService(client, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.MetaTransactionServer)), SendRpcRequestAsync);
         }
 
-        private static string GetRpcUrl(int chainId) =>
-            $"https://{chainId}.rpc.thirdweb.com";
+        private string GetRpcUrl(int chainId)
+        {
+            if (rpcOverrides.TryGetValue(chainId, out string? rpcUrl))
+                return rpcUrl;
+
+            throw new Web3Exception($"No RPC endpoint configured for chain {chainId}. Add it to RPC_OVERRIDES in ThirdWebAuthenticator.");
+        }
 
         public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet? wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {

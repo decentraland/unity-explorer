@@ -57,7 +57,7 @@ namespace DCL.Web3.Authenticators
             );
 
             loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
-            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment);
+            ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment, RPC_OVERRIDES);
         }
 
         public void Dispose()
