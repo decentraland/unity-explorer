@@ -25,6 +25,8 @@ namespace DCL.SDKComponents.InputModifier.Components
 
         private ModifierId disabledMask;
 
+        public bool EverythingEnabled => disabledMask == ModifierId.NONE;
+
         /// <summary>
         ///     When set to true, disables all related properties (Walk, Jog, Run, Jump, Emote).
         ///     When set to false, only this property is affected.
@@ -114,5 +116,8 @@ namespace DCL.SDKComponents.InputModifier.Components
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsDisabled(ModifierId modifier) => (disabledMask & (ModifierId.ALL | modifier)) != 0;
+
+        public void Clear() =>
+            disabledMask = ModifierId.NONE;
     }
 }

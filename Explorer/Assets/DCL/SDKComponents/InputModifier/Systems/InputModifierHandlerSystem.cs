@@ -30,71 +30,80 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
-        protected override void Update(float t)
-        {
+        protected override void Update(float t) =>
             ApplyModifiersQuery(World);
-        }
-
-        private void SendBusMessage(InputModifierComponent inputModifier)
-        {
-            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false }
-                ? SceneRestrictionsAction.REMOVED :
-                SceneRestrictionsAction.APPLIED;
-
-            if (currentAction == lastBusMessageAction) return;
-
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarMovementsBlocked(currentAction));
-            lastBusMessageAction = currentAction;
-        }
-
-        private void ResetModifiersOnLeave()
-        {
-            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-            inputModifier.DisableAll = false;
-            inputModifier.DisableWalk = false;
-            inputModifier.DisableJog = false;
-            inputModifier.DisableRun = false;
-            inputModifier.DisableJump = false;
-            inputModifier.DisableEmote = false;
-            inputModifier.DisableDoubleJump = false;
-            inputModifier.DisableGliding = false;
-
-            SendBusMessage(inputModifier);
-        }
 
         [Query]
         private void ApplyModifiers(in PBInputModifier pbInputModifier)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if (pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
             if (!pbInputModifier.IsDirty) return;
 
-            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-            PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
+            DoApplyModifiers(pbInputModifier);
+        }
 
-            bool disableAll = pb.DisableAll;
+        [Query]
+        private void ForceApplyModifiers(ref PBInputModifier pbInputModifier) =>
+            DoApplyModifiers(pbInputModifier);
+
+        private void DoApplyModifiers(PBInputModifier pbInputModifier)
+        {
+            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
+
+            if (pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None)
+            {
+                inputModifier.Clear();
+                SendBusMessage(inputModifier);
+                return;
+            }
+
+            PBInputModifier.Types.StandardInput? standardInput = pbInputModifier.Standard;
+
+            bool disableAll = standardInput.DisableAll;
             inputModifier.DisableAll = disableAll;
 
             if (!disableAll)
             {
-                inputModifier.DisableWalk = pb.DisableWalk;
-                inputModifier.DisableJog = pb.DisableJog;
-                inputModifier.DisableRun = pb.DisableRun;
-                inputModifier.DisableJump = pb.DisableJump;
-                inputModifier.DisableEmote = pb.DisableEmote;
-                inputModifier.DisableDoubleJump = pb.DisableDoubleJump;
-                inputModifier.DisableGliding = pb.DisableGliding;
+                inputModifier.DisableWalk = standardInput.DisableWalk;
+                inputModifier.DisableJog = standardInput.DisableJog;
+                inputModifier.DisableRun = standardInput.DisableRun;
+                inputModifier.DisableJump = standardInput.DisableJump;
+                inputModifier.DisableEmote = standardInput.DisableEmote;
+                inputModifier.DisableDoubleJump = standardInput.DisableDoubleJump;
+                inputModifier.DisableGliding = standardInput.DisableGliding;
             }
+        }
 
-            SendBusMessage(inputModifier);
+        private void SendBusMessage(InputModifierComponent inputModifier)
+        {
+            SceneRestrictionsAction currentAction = inputModifier.EverythingEnabled ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+
+            if (currentAction == lastBusMessageAction) return;
+
+            lastBusMessageAction = currentAction;
+
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarMovementsBlocked(currentAction));
         }
 
         public void OnSceneIsCurrentChanged(bool sceneIsCurrent)
         {
-            if (!sceneIsCurrent) ResetModifiersOnLeave();
+            if (sceneIsCurrent)
+                // If the scene became current, make sure the modifier is applied again by forcing it
+                ForceApplyModifiersQuery(World);
+            else
+                // Otherwise reset it
+                ClearModifierComponent();
+        }
+
+        private void ClearModifierComponent()
+        {
+            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
+            inputModifier.Clear();
+
+            SendBusMessage(inputModifier);
         }
 
         public void FinalizeComponents(in Query query) =>
-            ResetModifiersOnLeave();
+            ClearModifierComponent();
     }
 }
