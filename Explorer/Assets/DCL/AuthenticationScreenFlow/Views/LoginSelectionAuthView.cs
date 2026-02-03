@@ -109,7 +109,7 @@ namespace DCL.AuthenticationScreenFlow
             ShowAsync(CancellationToken.None).Forget();
 
             areOptionsExpanded = moreOptionsExpanded;
-            SetOptionsPanelVisibility(isExpanded: false);
+            SetOptionsPanelVisibility(areOptionsExpanded);
 
             SetLoadingSpinnerVisibility(false);
         }

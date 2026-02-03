@@ -158,7 +158,7 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, buildData.InstallSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, otpFlowIsDisabled: !enableEmailOTP),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
