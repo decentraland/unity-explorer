@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
         /// <summary>
         ///     Tracks the last reported media state to avoid sending duplicate CRDT messages
         /// </summary>
-        public MediaState LastReportedMediaState;
+        public MediaState LastPropagatedAudioState;
 
         /// <summary>
         ///     The final audio source ready for consumption
@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.AudioSources
 
             AudioSource = null;
             AudioSourceAssigned = false;
-            LastReportedMediaState = MediaState.MsNone;
+            LastPropagatedAudioState = MediaState.MsNone;
 
             lastAudioFrameReadFilter = new ();
         }

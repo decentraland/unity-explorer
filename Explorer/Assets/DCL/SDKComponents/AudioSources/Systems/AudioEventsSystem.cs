@@ -64,7 +64,7 @@ namespace DCL.SDKComponents.AudioSources
             MediaState state = GetAudioSourceState(in audioSourceComponent);
 
             // Only propagate if state has changed to avoid CRDT message spam
-            if (state == audioSourceComponent.LastReportedMediaState)
+            if (state == audioSourceComponent.LastPropagatedAudioState)
             {
 #if AUDIO_EVENTS_DEBUG
                 messagesSkipped++;
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.AudioSources
                 return;
             }
 
-            audioSourceComponent.LastReportedMediaState = state;
+            audioSourceComponent.LastPropagatedAudioState = state;
 #if AUDIO_EVENTS_DEBUG
             messagesSent++;
 #endif

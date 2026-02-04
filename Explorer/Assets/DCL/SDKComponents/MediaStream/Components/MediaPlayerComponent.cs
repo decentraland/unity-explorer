@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.MediaStream
         public MediaAddress MediaAddress;
         public VideoState State { get; private set; }
         public bool HasFailed { get; private set; }
-        public VideoState LastPropagatedState;
+        public VideoState LastPropagatedVideoState;
         public float LastPropagatedVideoTime;
 
         /// <summary>
