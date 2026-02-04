@@ -48,7 +48,8 @@ namespace DCL.CharacterMotion.Animation
             float cos = velocity.sqrMagnitude > BLEND_MIN_VEL_SQ ? Vector3.Dot(velocity.normalized, view.GetTransform().right) : 0;
             cos = Mathf.Clamp(cos / Mathf.Cos(maxAngle), -1, 1);
 
-            return Mathf.MoveTowards(glideBlend, cos, settings.GlideAnimBlendSpeed * dt);
+            float alpha = 1 - Mathf.Exp(-settings.GlideAnimBlendSpeed * dt);
+            return Mathf.Lerp(glideBlend, cos, alpha);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

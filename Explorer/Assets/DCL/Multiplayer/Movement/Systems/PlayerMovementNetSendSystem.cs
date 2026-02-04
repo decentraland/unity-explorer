@@ -156,12 +156,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocityTier = velocityTier,
 
                 isStunned = playerStunComponent.IsStunned,
-                isSliding = animation.IsSliding,
+                isSliding = animation.States.IsSliding,
                 isInstant = isInstant,
                 isEmoting = isEmoting,
 
                 animState = new AnimationStates
                 {
+                    IsSliding = animation.States.IsSliding,
                     IsGrounded = animation.States.IsGrounded,
                     JumpCount = animation.States.JumpCount,
                     IsLongJump = animation.States.IsLongJump,

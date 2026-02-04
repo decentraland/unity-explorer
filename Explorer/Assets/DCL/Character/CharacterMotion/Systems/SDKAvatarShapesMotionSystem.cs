@@ -136,7 +136,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private static void SetGroundedMovement(ref CharacterAnimationComponent animationComponent, float movementBlendValue)
         {
-            animationComponent.IsSliding = false;
+            animationComponent.States.IsSliding = false;
             animationComponent.States.MovementBlendValue = movementBlendValue;
             animationComponent.States.SlideBlendValue = 0;
             animationComponent.States.IsGrounded = true;

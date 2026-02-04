@@ -4,7 +4,6 @@ namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
-        public bool IsSliding;
         public AnimationStates States;
     }
 
@@ -15,6 +14,7 @@ namespace DCL.CharacterMotion.Components
         private const float EPSILON = 0.001f;
 
         public float MovementBlendValue;
+        public bool IsSliding;
         public float SlideBlendValue;
         public bool IsGrounded;
         public int JumpCount;
@@ -30,6 +30,7 @@ namespace DCL.CharacterMotion.Components
 
         public bool Equals(AnimationStates other) =>
             Math.Abs(MovementBlendValue - other.MovementBlendValue) < EPSILON &&
+            IsSliding == other.IsSliding &&
             Math.Abs(SlideBlendValue - other.SlideBlendValue) < EPSILON &&
             IsGrounded == other.IsGrounded &&
             JumpCount == other.JumpCount &&
@@ -45,6 +46,7 @@ namespace DCL.CharacterMotion.Components
             unchecked // Overflow is fine, just wrap
             {
                 var hash = 17;
+                hash = (hash * 23) + IsSliding.GetHashCode();
                 hash = (hash * 23) + MovementBlendValue.GetHashCode();
                 hash = (hash * 23) + SlideBlendValue.GetHashCode();
                 hash = (hash * 23) + IsGrounded.GetHashCode();
@@ -59,10 +61,8 @@ namespace DCL.CharacterMotion.Components
             }
         }
 
-        public override string ToString()
-        {
-            return $"gr:{IsGrounded}: jc:{JumpCount} lj:{IsLongJump} f:{IsFalling} lf:{IsLongFall} gl:{IsGliding} mb:{MovementBlendValue} sb:{SlideBlendValue}";
-        }
+        public override string ToString() =>
+            $"gr:{IsGrounded}: sl:{IsSliding} jc:{JumpCount} lj:{IsLongJump} f:{IsFalling} lf:{IsLongFall} gl:{IsGliding} mb:{MovementBlendValue} sb:{SlideBlendValue}";
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>
             left.Equals(right);

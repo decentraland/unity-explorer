@@ -2082,15 +2082,15 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: e9a2ff6f41a40814daee736c876200a0, type: 2}
+    m_Motion: {fileID: 7400000, guid: 125afd1ae21de204aa9728a2e9f15dca, type: 2}
     m_Threshold: -1
-    m_Position: {x: 0, y: 0}
+    m_Position: {x: -1, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: MovementBlend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 3f356b1fce2b4334d9c1fa3df250ca6c, type: 2}
+    m_Motion: {fileID: 7400000, guid: 551f3e5619a54c24f84ecaa165337b33, type: 2}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -2098,9 +2098,33 @@ BlendTree:
     m_DirectBlendParameter: MovementBlend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 67b09c9b1be7b8646afc66efc30d1da5, type: 2}
+    m_Motion: {fileID: 7400000, guid: 4d7c4a4bd50110949b1296f4429c9fb0, type: 2}
     m_Threshold: 1
-    m_Position: {x: 0, y: 0}
+    m_Position: {x: 1, y: 0}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: MovementBlend
+    m_Mirror: 0
+  - serializedVersion: 2
+    m_Motion: {fileID: 7400000, guid: 125afd1ae21de204aa9728a2e9f15dca, type: 2}
+    m_Threshold: 3
+    m_Position: {x: -0.3, y: 2}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: MovementBlend
+    m_Mirror: 0
+  - serializedVersion: 2
+    m_Motion: {fileID: 7400000, guid: 7da899e1c4435324297c7643c740acd1, type: 2}
+    m_Threshold: 5
+    m_Position: {x: 0, y: 2}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: MovementBlend
+    m_Mirror: 0
+  - serializedVersion: 2
+    m_Motion: {fileID: 7400000, guid: 67b09c9b1be7b8646afc66efc30d1da5, type: 2}
+    m_Threshold: 7
+    m_Position: {x: 0.3, y: 2}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: MovementBlend
@@ -2108,10 +2132,10 @@ BlendTree:
   m_BlendParameter: GlideBlend
   m_BlendParameterY: MovementBlend
   m_MinThreshold: -1
-  m_MaxThreshold: 1
+  m_MaxThreshold: 7
   m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
-  m_BlendType: 0
+  m_BlendType: 2
 --- !u!206 &6289439487926101618
 BlendTree:
   m_ObjectHideFlags: 1

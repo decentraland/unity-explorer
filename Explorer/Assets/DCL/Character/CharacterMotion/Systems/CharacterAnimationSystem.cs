@@ -40,8 +40,8 @@ namespace DCL.CharacterMotion.Systems
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, rigidTransform.IsGrounded, (int)movementInput.Kind);
 
             // Update slide blend value, ranges from 0 to 1
-            animationComponent.IsSliding = AnimationSlideBlendLogic.IsSliding(rigidTransform, settings);
-            animationComponent.States.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(dt, animationComponent.States.SlideBlendValue, animationComponent.IsSliding, settings);
+            animationComponent.States.IsSliding = AnimationSlideBlendLogic.IsSliding(rigidTransform, settings);
+            animationComponent.States.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(dt, animationComponent.States.SlideBlendValue, animationComponent.States.IsSliding, settings);
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // Apply other states

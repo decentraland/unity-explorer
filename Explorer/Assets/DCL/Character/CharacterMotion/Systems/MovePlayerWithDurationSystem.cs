@@ -159,8 +159,8 @@ namespace DCL.CharacterMotion.Systems
             float movementBlendValue = speed > 0.01f ? RemotePlayerUtils.GetBlendValueFromSpeed(speed) : 0f;
 
             // Set animation state as grounded movement
-            animationComponent.IsSliding = false;
             animationComponent.States.MovementBlendValue = movementBlendValue;
+            animationComponent.States.IsSliding = false;
             animationComponent.States.SlideBlendValue = 0;
             animationComponent.States.IsGrounded = true;
             animationComponent.States.JumpCount = 0;
