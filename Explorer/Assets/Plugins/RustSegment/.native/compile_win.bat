@@ -6,6 +6,3 @@ cargo build --release
 
 REM Copy the compiled DLL to the desired location
 copy /Y target\release\rust_segment.dll ..\SegmentServerWrap\Libraries\Windows\segment-server.dll
-
-REM Cleanup target folder to avoid confusion from Unity
-rmdir /S /Q target
