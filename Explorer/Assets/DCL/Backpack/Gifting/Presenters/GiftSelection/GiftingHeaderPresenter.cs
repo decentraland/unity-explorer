@@ -37,6 +37,7 @@ namespace DCL.Backpack.Gifting.Presenters
             new (ProfileThumbnailViewModel.Default());
 
         private CancellationTokenSource? searchCts;
+        private bool inputWasBlocked;
 
         public Sprite? CurrentRecipientAvatarSprite
         {
@@ -55,20 +56,27 @@ namespace DCL.Backpack.Gifting.Presenters
             walletAddressController = new UserWalletAddressElementController(view.UserProfileWallet);
 
             view.UserProfileImage.Bind(profileThumbnail);
-            view.SearchBar.inputField.onSelect.AddListener(OnSearchSelected);
-            view.SearchBar.inputField.onDeselect.AddListener(OnSearchDeselected);
+            view.SearchBar.inputField.onSelect.AddListener(DisableInputs);
+            view.SearchBar.inputField.onDeselect.AddListener(TryEnableInputs);
             view.SearchBar.inputField.onValueChanged.AddListener(DebounceSearch);
             view.SearchBar.clearSearchButton.onClick.AddListener(ClearSearch);
         }
 
-        private void OnSearchSelected(string text)
+        public void Clear() =>
+            TryEnableInputs(string.Empty);
+
+        private void DisableInputs(string text)
         {
             inputBlock.Disable(BLOCKED_INPUTS);
+            inputWasBlocked = true;
         }
 
-        private void OnSearchDeselected(string text)
+        private void TryEnableInputs(string text)
         {
+            if (!inputWasBlocked) return;
+
             inputBlock.Enable(BLOCKED_INPUTS);
+            inputWasBlocked = false;
         }
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
