@@ -1,5 +1,6 @@
 using DCL.EventsApi;
 using System;
+using System.Globalization;
 using System.Text;
 
 namespace DCL.Communities.EventInfo
@@ -16,6 +17,7 @@ namespace DCL.Communities.EventInfo
         private const string EVENT_WEBSITE_LINK = "https://decentraland.org/events/event/?id={0}";
         private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
         private const string TWITTER_HASHTAG = "DCLPlace";
+        private const string ADD_TO_CALENDAR_LINK = "https://calendar.google.com/calendar/r/eventedit?text={0}&details={1}\n\n{2}&dates={3}/{4}";
 
         public static string GetEventTimeText(IEventDTO eventDTO)
         {
@@ -54,12 +56,12 @@ namespace DCL.Communities.EventInfo
 
             TimeSpan offset = localZone.GetUtcOffset(localStart);
 
-            var day = localStart.ToString("dddd");
+            var day = localStart.ToString("dddd", CultureInfo.InvariantCulture);
             sb.Append(char.ToUpper(day[0]));
             sb.Append(day, 1, day.Length - 1);
             sb.Append(", ");
 
-            var month = localStart.ToString("MMM");
+            var month = localStart.ToString("MMM", CultureInfo.InvariantCulture);
             sb.Append(char.ToUpper(month[0]));
             sb.Append(month, 1, month.Length - 1);
             sb.Append(' ');
@@ -91,5 +93,27 @@ namespace DCL.Communities.EventInfo
 
         public static string GetEventShareLink(IEventDTO eventData) =>
             string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData));
+
+        public static string GetEventAddToCalendarLink(IEventDTO eventData)
+        {
+            DateTime nextStartAtDate = DateTime.Parse(
+                eventData.Next_start_at,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
+            );
+
+            DateTime nextFinishAtDate = DateTime.Parse(
+                eventData.Next_finish_at,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal
+            );
+
+            return string.Format(ADD_TO_CALENDAR_LINK,
+                eventData.Name,
+                eventData.Description,
+                $"jump in: {GetPlaceJumpInLink(eventData)}",
+                nextStartAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"),
+                nextFinishAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"));
+        }
     }
 }

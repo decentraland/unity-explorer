@@ -2,7 +2,9 @@
 using DCL.EventsApi;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
 using DCL.UI;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -29,8 +31,10 @@ namespace DCL.Events
             EventsView view,
             ICursor cursor,
             HttpEventsApiService eventsApiService,
+            IPlacesAPIService placesAPIService,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IMVCManager mvcManager)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -39,8 +43,8 @@ namespace DCL.Events
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             EventsStateService eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, eventsStateService);
-            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, eventsStateService);
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
+            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
 
             view.CreateButtonClicked += OnCreateButtonClicked;
         }

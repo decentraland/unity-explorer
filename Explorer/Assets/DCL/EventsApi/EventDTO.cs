@@ -61,6 +61,7 @@ namespace DCL.EventsApi
         public bool world;
         public int x;
         public int y;
+        public string place_id;
 
         public string Id
         {

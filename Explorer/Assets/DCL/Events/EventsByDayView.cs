@@ -1,4 +1,5 @@
 ﻿using DCL.EventsApi;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -14,6 +15,7 @@ namespace DCL.Events
     {
         public event Action? BackButtonClicked;
         public event Action? GoToNextDayButtonClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?>? EventCardClicked;
 
         [Header("Events Counter")]
         [SerializeField] private TMP_Text eventsCounter = null!;
@@ -84,16 +86,17 @@ namespace DCL.Events
 
         private LoopGridViewItem SetupEventCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
-            var eventInfo = eventsStateService.GetEventInfoById(currentEventsIds[index]);
+            var eventData = eventsStateService.GetEventDataById(currentEventsIds[index]);
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             EventCardView cardView = gridItem.GetComponent<EventCardView>();
 
             // Setup card data
-            if (eventInfo != null)
-                cardView.Configure(eventInfo.Value);
+            if (eventData != null)
+                cardView.Configure(eventData.EventInfo, eventData.PlaceInfo);
 
             // Setup card events
-            // ...
+            cardView.MainButtonClicked -= OnEventCardClicked;
+            cardView.MainButtonClicked += OnEventCardClicked;
 
             return gridItem;
         }
@@ -103,5 +106,8 @@ namespace DCL.Events
             emptyContainer.SetActive(isEmpty);
             eventsLoopGrid.gameObject.SetActive(!isEmpty);
         }
+
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
+            EventCardClicked?.Invoke(eventInfo, placeInfo);
     }
 }

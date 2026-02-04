@@ -87,7 +87,11 @@ namespace DCL.EventsApi
             if (toDate != null)
                 urlBuilder.AppendParameter(new URLParameter(TO_DATE_PARAMETER, toDate.Value.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
 
-            return await FetchEventListAsync(urlBuilder.Build(), ct);
+            EventDTOListResponse result = await webRequestController
+                                               .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
+                                               .CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity);
+
+            return result.data ?? Array.Empty<EventDTO>();
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetHighlightedEventsAsync(int pageNumber, int elementsPerPage, CancellationToken ct)
@@ -99,7 +103,11 @@ namespace DCL.EventsApi
             urlBuilder.AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));
             urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, HIGHLIGHT_PARAMETER_VALUE));
 
-            return await FetchEventListAsync(urlBuilder.Build(), ct);
+            EventDTOListResponse result = await webRequestController
+                                               .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
+                                               .CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity);
+
+            return result.data ?? Array.Empty<EventDTO>();
         }
 
         public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEventsByPlaceIdsAsync(string communityId, string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
