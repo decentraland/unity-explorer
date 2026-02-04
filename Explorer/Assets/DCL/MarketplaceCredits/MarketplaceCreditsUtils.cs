@@ -185,9 +185,8 @@ namespace DCL.MarketplaceCredits
 
             if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS)) return false;
 
-            return FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string? walletsForTestingMarketplaceCredits)
-                   && !string.IsNullOrEmpty(walletsForTestingMarketplaceCredits)
-                   && walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase);
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string? walletsForTestingMarketplaceCredits);
+            return string.IsNullOrEmpty(walletsForTestingMarketplaceCredits) || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
