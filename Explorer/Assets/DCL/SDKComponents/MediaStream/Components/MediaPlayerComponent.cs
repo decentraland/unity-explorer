@@ -1,4 +1,4 @@
-﻿using DCL.ECSComponents;
+using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Threading;
@@ -31,6 +31,11 @@ namespace DCL.SDKComponents.MediaStream
         public bool HasFailed { get; private set; }
         public VideoState LastPropagatedState;
         public float LastPropagatedVideoTime;
+
+        /// <summary>
+        ///     Tracks the last reported media state for audio events to avoid sending duplicate CRDT messages
+        /// </summary>
+        public MediaState LastReportedMediaState;
         public CancellationTokenSource? Cts;
         public OpenMediaPromise? OpenMediaPromise;
 
@@ -54,6 +59,7 @@ namespace DCL.SDKComponents.MediaStream
             IsFromContentServer = isFromContentServer;
             HasFailed = false;
             State = VideoState.VsNone;
+            LastReportedMediaState = MediaState.MsNone;
             isFrozen = false;
             lastAudioFrameReadFilter = new ();
         }
