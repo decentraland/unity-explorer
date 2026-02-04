@@ -42,6 +42,8 @@ namespace DCL.Events
         [SerializeField] private TMP_Text hostName = null!;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private List<GameObject> liveMarks = null!;
+        [SerializeField] private TMP_Text onlineMembersText = null!;
+        [SerializeField] private GameObject onlineMembersContainer = null!;
 
         private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
@@ -116,6 +118,10 @@ namespace DCL.Events
 
             foreach (GameObject liveMark in liveMarks)
                 liveMark.SetActive(eventInfo.live);
+
+            int onlineMembers = eventInfo.connected_addresses?.Length ?? 0;
+            if (onlineMembersText != null) onlineMembersText.text = $"{onlineMembers}";
+            if (onlineMembersContainer != null) onlineMembersContainer.SetActive(onlineMembers > 0 && eventInfo.live);
 
             UpdateInterestedButtonState(currentEventInfo.Attending);
             UpdateVisuals();

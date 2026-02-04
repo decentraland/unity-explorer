@@ -146,7 +146,7 @@ namespace DCL.Events
             view.SetDaysSelectorActive(false);
             view.SetAsLoading(true);
 
-            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, ct)
+            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
@@ -190,7 +190,7 @@ namespace DCL.Events
 
             var fromDateUtc = fromDate.ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
-            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
+            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)

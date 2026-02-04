@@ -62,6 +62,7 @@ namespace DCL.EventsApi
         public int x;
         public int y;
         public string place_id;
+        public string[] connected_addresses;
 
         public string Id
         {

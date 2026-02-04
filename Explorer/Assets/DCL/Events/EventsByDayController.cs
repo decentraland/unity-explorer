@@ -108,7 +108,7 @@ namespace DCL.Events
 
             var fromDateUtc = fromDate.ToUniversalTime();
             var toDateUtc = fromDate.AddDays(1).AddSeconds(-1).ToUniversalTime();
-            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
+            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
