@@ -163,7 +163,7 @@ namespace DCL.CharacterMotion.Systems
             animationComponent.States.MovementBlendValue = movementBlendValue;
             animationComponent.States.SlideBlendValue = 0;
             animationComponent.States.IsGrounded = true;
-            animationComponent.States.IsJumping = false;
+            animationComponent.States.JumpCount = 0;
             animationComponent.States.IsLongJump = false;
             animationComponent.States.IsLongFall = false;
             animationComponent.States.IsFalling = false;
@@ -171,7 +171,7 @@ namespace DCL.CharacterMotion.Systems
             // Apply animator parameters
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView, isGrounded: true, movementBlendId: 0);
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView);
-            AnimationStatesLogic.SetAnimatorParameters(avatarView, ref animationComponent.States, isJumping: false, jumpTriggered: false, isStunned: false);
+            AnimationStatesLogic.SetAnimatorParameters(avatarView, animationComponent.States, jumpTriggered: false);
         }
 
         private static void ResetAnimationToIdle(

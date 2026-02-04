@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.InputModifier.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsDisabled(ModifierId modifier) => (disabledMask & (ModifierId.ALL | modifier)) != 0;
 
-        public void Clear() =>
+        public void RemoveAllModifiers() =>
             disabledMask = ModifierId.NONE;
     }
 }
