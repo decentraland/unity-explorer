@@ -33,11 +33,12 @@ namespace DCL.ECSComponents {
             "EAoSDwoLSUFfQUNUSU9OXzQQCxIPCgtJQV9BQ1RJT05fNRAMEg8KC0lBX0FD",
             "VElPTl82EA0SDwoLSUFfTU9ESUZJRVIQDipWChBQb2ludGVyRXZlbnRUeXBl",
             "EgoKBlBFVF9VUBAAEgwKCFBFVF9ET1dOEAESEwoPUEVUX0hPVkVSX0VOVEVS",
-            "EAISEwoPUEVUX0hPVkVSX0xFQVZFEANCFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "EAISEwoPUEVUX0hPVkVSX0xFQVZFEAMqLAoPSW50ZXJhY3Rpb25UeXBlEgoK",
+            "BkNVUlNPUhAAEg0KCVBST1hJTUlUWRABQhSqAhFEQ0wuRUNTQ29tcG9uZW50",
+            "c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), }, null, null));
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), typeof(global::DCL.ECSComponents.InteractionType), }, null, null));
     }
     #endregion
 
@@ -69,6 +70,11 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("PET_DOWN")] PetDown = 1,
     [pbr::OriginalName("PET_HOVER_ENTER")] PetHoverEnter = 2,
     [pbr::OriginalName("PET_HOVER_LEAVE")] PetHoverLeave = 3,
+  }
+
+  public enum InteractionType {
+    [pbr::OriginalName("CURSOR")] Cursor = 0,
+    [pbr::OriginalName("PROXIMITY")] Proximity = 1,
   }
 
   #endregion

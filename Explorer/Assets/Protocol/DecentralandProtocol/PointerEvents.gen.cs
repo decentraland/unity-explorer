@@ -27,25 +27,28 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcG9pbnRlcl9ldmVudHMu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo1ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9pbnB1dF9hY3Rpb24ucHJvdG8i",
-            "vgQKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
+            "sQUKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
             "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBvaW50ZXJFdmVudHMu",
-            "RW50cnkawwIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
+            "RW50cnka5wIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
             "LnNkay5jb21wb25lbnRzLmNvbW1vbi5JbnB1dEFjdGlvbkgAiAEBEhcKCmhv",
             "dmVyX3RleHQYAiABKAlIAYgBARIZCgxtYXhfZGlzdGFuY2UYAyABKAJIAogB",
             "ARIaCg1zaG93X2ZlZWRiYWNrGAQgASgISAOIAQESGwoOc2hvd19oaWdobGln",
             "aHQYBSABKAhIBIgBARIgChNtYXhfcGxheWVyX2Rpc3RhbmNlGAYgASgCSAWI",
-            "AQFCCQoHX2J1dHRvbkINCgtfaG92ZXJfdGV4dEIPCg1fbWF4X2Rpc3RhbmNl",
-            "QhAKDl9zaG93X2ZlZWRiYWNrQhEKD19zaG93X2hpZ2hsaWdodEIWChRfbWF4",
-            "X3BsYXllcl9kaXN0YW5jZRqYAQoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEo",
-            "DjI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uUG9pbnRl",
-            "ckV2ZW50VHlwZRJFCgpldmVudF9pbmZvGAIgASgLMjEuZGVjZW50cmFsYW5k",
-            "LnNkay5jb21wb25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvQhSqAhFEQ0wu",
-            "RUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "AQESFQoIcHJpb3JpdHkYByABKA1IBogBAUIJCgdfYnV0dG9uQg0KC19ob3Zl",
+            "cl90ZXh0Qg8KDV9tYXhfZGlzdGFuY2VCEAoOX3Nob3dfZmVlZGJhY2tCEQoP",
+            "X3Nob3dfaGlnaGxpZ2h0QhYKFF9tYXhfcGxheWVyX2Rpc3RhbmNlQgsKCV9w",
+            "cmlvcml0eRrnAQoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEoDjI0LmRlY2Vu",
+            "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uUG9pbnRlckV2ZW50VHlw",
+            "ZRJFCgpldmVudF9pbmZvGAIgASgLMjEuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvEk0KEGludGVyYWN0aW9uX3R5",
+            "cGUYAyABKA4yMy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9u",
+            "LkludGVyYWN0aW9uVHlwZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.InputActionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo", "InteractionType" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -316,6 +319,7 @@ namespace DCL.ECSComponents {
           showFeedback_ = other.showFeedback_;
           showHighlight_ = other.showHighlight_;
           maxPlayerDistance_ = other.maxPlayerDistance_;
+          priority_ = other.priority_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -492,6 +496,34 @@ namespace DCL.ECSComponents {
           _hasBits0 &= ~16;
         }
 
+        /// <summary>Field number for the "priority" field.</summary>
+        public const int PriorityFieldNumber = 7;
+        private uint priority_;
+        /// <summary>
+        /// resolution order when multiple events overlap, higher wins (default 0)
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public uint Priority {
+          get { if ((_hasBits0 & 32) != 0) { return priority_; } else { return 0; } }
+          set {
+            _hasBits0 |= 32;
+            priority_ = value;
+          }
+        }
+        /// <summary>Gets whether the "priority" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasPriority {
+          get { return (_hasBits0 & 32) != 0; }
+        }
+        /// <summary>Clears the value of the "priority" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearPriority() {
+          _hasBits0 &= ~32;
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -513,6 +545,7 @@ namespace DCL.ECSComponents {
           if (ShowFeedback != other.ShowFeedback) return false;
           if (ShowHighlight != other.ShowHighlight) return false;
           if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MaxPlayerDistance, other.MaxPlayerDistance)) return false;
+          if (Priority != other.Priority) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -526,6 +559,7 @@ namespace DCL.ECSComponents {
           if (HasShowFeedback) hash ^= ShowFeedback.GetHashCode();
           if (HasShowHighlight) hash ^= ShowHighlight.GetHashCode();
           if (HasMaxPlayerDistance) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MaxPlayerDistance);
+          if (HasPriority) hash ^= Priority.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -568,6 +602,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(53);
             output.WriteFloat(MaxPlayerDistance);
           }
+          if (HasPriority) {
+            output.WriteRawTag(56);
+            output.WriteUInt32(Priority);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -602,6 +640,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(53);
             output.WriteFloat(MaxPlayerDistance);
           }
+          if (HasPriority) {
+            output.WriteRawTag(56);
+            output.WriteUInt32(Priority);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -629,6 +671,9 @@ namespace DCL.ECSComponents {
           }
           if (HasMaxPlayerDistance) {
             size += 1 + 4;
+          }
+          if (HasPriority) {
+            size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Priority);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -659,6 +704,9 @@ namespace DCL.ECSComponents {
           }
           if (other.HasMaxPlayerDistance) {
             MaxPlayerDistance = other.MaxPlayerDistance;
+          }
+          if (other.HasPriority) {
+            Priority = other.Priority;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -699,6 +747,10 @@ namespace DCL.ECSComponents {
                 MaxPlayerDistance = input.ReadFloat();
                 break;
               }
+              case 56: {
+                Priority = input.ReadUInt32();
+                break;
+              }
             }
           }
         #endif
@@ -736,6 +788,10 @@ namespace DCL.ECSComponents {
               }
               case 53: {
                 MaxPlayerDistance = input.ReadFloat();
+                break;
+              }
+              case 56: {
+                Priority = input.ReadUInt32();
                 break;
               }
             }
@@ -781,6 +837,7 @@ namespace DCL.ECSComponents {
         public Entry(Entry other) : this() {
           eventType_ = other.eventType_;
           eventInfo_ = other.eventInfo_ != null ? other.eventInfo_.Clone() : null;
+          interactionType_ = other.interactionType_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -820,6 +877,21 @@ namespace DCL.ECSComponents {
           }
         }
 
+        /// <summary>Field number for the "interaction_type" field.</summary>
+        public const int InteractionTypeFieldNumber = 3;
+        private global::DCL.ECSComponents.InteractionType interactionType_ = global::DCL.ECSComponents.InteractionType.Cursor;
+        /// <summary>
+        /// the type of interaction source
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::DCL.ECSComponents.InteractionType InteractionType {
+          get { return interactionType_; }
+          set {
+            interactionType_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -837,6 +909,7 @@ namespace DCL.ECSComponents {
           }
           if (EventType != other.EventType) return false;
           if (!object.Equals(EventInfo, other.EventInfo)) return false;
+          if (InteractionType != other.InteractionType) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -846,6 +919,7 @@ namespace DCL.ECSComponents {
           int hash = 1;
           if (EventType != global::DCL.ECSComponents.PointerEventType.PetUp) hash ^= EventType.GetHashCode();
           if (eventInfo_ != null) hash ^= EventInfo.GetHashCode();
+          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) hash ^= InteractionType.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -872,6 +946,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(18);
             output.WriteMessage(EventInfo);
           }
+          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+            output.WriteRawTag(24);
+            output.WriteEnum((int) InteractionType);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -890,6 +968,10 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(18);
             output.WriteMessage(EventInfo);
           }
+          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+            output.WriteRawTag(24);
+            output.WriteEnum((int) InteractionType);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -905,6 +987,9 @@ namespace DCL.ECSComponents {
           }
           if (eventInfo_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(EventInfo);
+          }
+          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) InteractionType);
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -926,6 +1011,9 @@ namespace DCL.ECSComponents {
               EventInfo = new global::DCL.ECSComponents.PBPointerEvents.Types.Info();
             }
             EventInfo.MergeFrom(other.EventInfo);
+          }
+          if (other.InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+            InteractionType = other.InteractionType;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -953,6 +1041,10 @@ namespace DCL.ECSComponents {
                 input.ReadMessage(EventInfo);
                 break;
               }
+              case 24: {
+                InteractionType = (global::DCL.ECSComponents.InteractionType) input.ReadEnum();
+                break;
+              }
             }
           }
         #endif
@@ -977,6 +1069,10 @@ namespace DCL.ECSComponents {
                   EventInfo = new global::DCL.ECSComponents.PBPointerEvents.Types.Info();
                 }
                 input.ReadMessage(EventInfo);
+                break;
+              }
+              case 24: {
+                InteractionType = (global::DCL.ECSComponents.InteractionType) input.ReadEnum();
                 break;
               }
             }
