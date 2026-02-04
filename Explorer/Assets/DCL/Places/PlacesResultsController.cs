@@ -1,21 +1,23 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.Friends;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Utility;
 
@@ -25,6 +27,7 @@ namespace DCL.Places
     {
         private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
         private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
+        private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
@@ -36,12 +39,15 @@ namespace DCL.Places
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IMVCManager mvcManager;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
         private int currentPlacesTotalAmount;
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
+        private bool allFriendsLoaded;
 
         private CancellationTokenSource? loadPlacesCts;
         private CancellationTokenSource? placeCardOperationsCts;
@@ -54,10 +60,12 @@ namespace DCL.Places
             PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            PlacesCardSocialActionsController placesCardSocialActionsController,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.view = view;
             this.placesController = placesController;
@@ -66,7 +74,9 @@ namespace DCL.Places
             this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
-            this.placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, dclUrlSource);
+            this.friendServiceProxy = friendServiceProxy;
+            this.mvcManager = mvcManager;
+            this.placesCardSocialActionsController = placesCardSocialActionsController;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
@@ -74,13 +84,16 @@ namespace DCL.Places
             view.PlaceLikeToggleChanged += OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged += OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged += OnPlaceFavoriteToggleChanged;
+            view.PlaceHomeToggleChanged += OnPlaceHomeToggleChanged;
             view.PlaceJumpInButtonClicked += OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked += OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked += OnPlaceCopyLinkButtonClicked;
+            view.MainButtonClicked += OnMainButtonClicked;
             placesController.FiltersChanged += OnFiltersChanged;
             placesController.PlacesClosed += UnloadPlaces;
+            placesCardSocialActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
 
-            view.SetDependencies(placesStateService, new ThumbnailLoader(new SpriteCache(webRequestController)));
+            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper, homePlaceEventBus);
             view.InitializePlacesGrid();
         }
 
@@ -92,11 +105,14 @@ namespace DCL.Places
             view.PlaceLikeToggleChanged -= OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged -= OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged -= OnPlaceFavoriteToggleChanged;
+            view.PlaceHomeToggleChanged -= OnPlaceHomeToggleChanged;
             view.PlaceJumpInButtonClicked -= OnPlaceJumpInButtonClicked;
             view.PlaceShareButtonClicked -= OnPlaceShareButtonClicked;
             view.PlaceCopyLinkButtonClicked -= OnPlaceCopyLinkButtonClicked;
+            view.MainButtonClicked -= OnMainButtonClicked;
             placesController.FiltersChanged -= OnFiltersChanged;
             placesController.PlacesClosed -= UnloadPlaces;
+            placesCardSocialActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
 
             loadPlacesCts?.SafeCancelAndDispose();
             placeCardOperationsCts.SafeCancelAndDispose();
@@ -131,20 +147,23 @@ namespace DCL.Places
         private void OnPlaceLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.LikePlaceAsync(placeInfo, likeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnPlaceDislikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.DislikePlaceAsync(placeInfo, dislikeValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
 
         private void OnPlaceFavoriteToggleChanged(PlacesData.PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, placeCardOperationsCts.Token).Forget();
+            placesCardSocialActionsController.UpdateFavoritePlaceAsync(placeInfo, favoriteValue, placeCardView, null, placeCardOperationsCts.Token).Forget();
         }
+
+        private void OnPlaceHomeToggleChanged(PlacesData.PlaceInfo placeInfo, bool homeValue, PlaceCardView placeCardView) =>
+            placesCardSocialActionsController.SetPlaceAsHome(placeInfo, homeValue, placeCardView, null);
 
         private void OnPlaceJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
         {
@@ -157,6 +176,12 @@ namespace DCL.Places
 
         private void OnPlaceCopyLinkButtonClicked(PlacesData.PlaceInfo placeInfo) =>
             placesCardSocialActionsController.CopyPlaceLink(placeInfo);
+
+        private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
+        {
+            var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends))).Forget();
+        }
 
         private void OnFiltersChanged(PlacesFilters filters)
         {
@@ -183,6 +208,13 @@ namespace DCL.Places
         {
             isPlacesGridLoadingItems = true;
 
+            if (!allFriendsLoaded)
+            {
+                List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
+                placesStateService.SetAllFriends(allFriends);
+                allFriendsLoaded = true;
+            }
+
             if (pageNumber == 0)
             {
                 placesStateService.ClearPlaces();
@@ -202,27 +234,35 @@ namespace DCL.Places
             switch (section)
             {
                 case PlacesSection.BROWSE:
-                    placesResult = await placesAPIService.SearchPlacesAsync(
+                    placesResult = await placesAPIService.SearchDestinationsAsync(
                                                               pageNumber: pageNumber, pageSize: PLACES_PER_PAGE, ct: ct,
                                                               searchText: currentFilters.SearchText,
                                                               sortBy: currentFilters.Section == PlacesSection.BROWSE ? currentFilters.SortBy : IPlacesAPIService.SortBy.NONE,
                                                               sortDirection: IPlacesAPIService.SortDirection.DESC,
-                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId)
+                                                              category: !string.IsNullOrEmpty(currentFilters.SearchText) ? null : currentFilters.CategoryId,
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: currentFilters.SDKVersion == IPlacesAPIService.SDKVersion.SDK7_ONLY)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.FAVORITES:
-                    placesResult = await placesAPIService.GetFavoritesAsync(
+                    placesResult = await placesAPIService.GetFavoritesDestinationsAsync(
                                                               ct: ct, pageNumber: pageNumber, pageSize: PLACES_PER_PAGE,
-                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC)
+                                                              sortByBy: currentFilters.SortBy, sortDirection: IPlacesAPIService.SortDirection.DESC,
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: false)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
-                    placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownerAddress: ownProfile.UserId, ct: ct)
+                    placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
+                                                              ownerAddress: ownProfile.UserId,
+                                                              ct: ct,
+                                                              withConnectedUsers: true,
+                                                              onlySdk7: false)
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct)
+                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
@@ -261,14 +301,14 @@ namespace DCL.Places
                 case PlacesSection.BROWSE when currentFilters.CategoryId != null:
                 {
                     string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                    view.SetPlacesCounter($"Results for {(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
                     break;
                 }
                 case PlacesSection.BROWSE:
-                    view.SetPlacesCounter("Results for All");
+                    view.SetPlacesCounter("All");
                     break;
                 case PlacesSection.RECENTLY_VISITED:
-                    view.SetPlacesCounter($"Recently Visited ({placesResult.Value.Total})");
+                    view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
                     break;
                 case PlacesSection.FAVORITES:
                     view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
@@ -318,6 +358,34 @@ namespace DCL.Places
             loadPlacesCts?.SafeCancelAndDispose();
             view.ClearPlacesResults(null);
             placesStateService.ClearPlaces();
+            placesStateService.ClearAllFriends();
+            allFriendsLoaded = false;
+        }
+
+        private void OnPlaceSetAsHome(string newPlaceAsHomeId) =>
+            view.RefreshOldPlaceAsHome(newPlaceAsHomeId);
+
+        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
+        {
+            var emptyResult = new List<Profile.CompactInfo>();
+
+            if (!friendServiceProxy.Configured)
+                return emptyResult;
+
+            var result = await friendServiceProxy.StrictObject
+                                                 .GetFriendsAsync(0, 1000, ct)
+                                                 .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested)
+                return emptyResult;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_FRIENDS_ERROR_MESSAGE));
+                return emptyResult;
+            }
+
+            return result.Value.Friends.ToList();
         }
     }
 }

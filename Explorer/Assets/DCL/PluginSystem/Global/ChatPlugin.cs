@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly CancellationTokenSource pluginCts;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
-        private FallbackFontsProvider fallbackFontsProvider;
+        private FallbackFontsProvider? fallbackFontsProvider;
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -187,7 +187,7 @@ namespace DCL.PluginSystem.Global
             chatStorage?.Dispose();
             pluginScope.Dispose();
             pluginCts.SafeCancelAndDispose();
-            fallbackFontsProvider.Dispose();
+            fallbackFontsProvider?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -292,7 +292,7 @@ namespace DCL.PluginSystem.Global
                 currentChannelService,
                 eventBus);
 
-            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
+            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache, currentChannelService);
 
             commandRegistry = new CommandRegistry(
                 chatConfig,

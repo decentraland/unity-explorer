@@ -45,6 +45,10 @@ MonoBehaviour:
     m_Key: Places
     m_Metadata:
       m_Items: []
+  - m_Id: 301924463168196608
+    m_Key: Events
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

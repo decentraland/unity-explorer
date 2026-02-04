@@ -11,6 +11,7 @@ using DCL.LOD;
 using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
 using DCL.Time.Systems;
@@ -79,6 +80,7 @@ namespace Global.Dynamic
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly StartParcel startParcel;
         private readonly LandscapeParcelData landscapeParcelData;
+        private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
@@ -100,7 +102,8 @@ namespace Global.Dynamic
             SceneLoadingLimit sceneLoadingLimit,
             StartParcel startParcel,
             LandscapeParcelData landscapeParcelData,
-            bool isBuilderCollectionPreview)
+            bool isBuilderCollectionPreview,
+            EntitiesAnalytics entitiesAnalytics)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -133,6 +136,7 @@ namespace Global.Dynamic
             this.startParcel = startParcel;
             this.landscapeParcelData = landscapeParcelData;
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
+            this.entitiesAnalytics = entitiesAnalytics;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
@@ -154,7 +158,7 @@ namespace Global.Dynamic
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, entitiesAnalytics);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, localSceneDevelopment, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
             LoadSceneSystemLogicBase loadSceneSystemLogic;
