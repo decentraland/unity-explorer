@@ -4,6 +4,7 @@ using DCL.RealmNavigation;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -94,8 +95,11 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         private Task WriteSampleAsync() =>
             csv != null
-                ? csv.WriteLineAsync(
-                    $"{Time.frameCount},{profiler.LastFrameTimeValueNs * 0.000001f},{profiler.LastGpuFrameTimeValueNs * 0.000001f}")
+                ? csv.WriteLineAsync(string.Format(
+                    CultureInfo.InvariantCulture, "{0},{1},{2}",
+                    Time.frameCount,
+                    profiler.LastFrameTimeValueNs * 0.000001f,
+                    profiler.LastGpuFrameTimeValueNs * 0.000001f))
                 : Task.CompletedTask;
 
         private static async UniTask WriteSummaryAsync(string csvFile,
@@ -119,14 +123,22 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
             await using (var summary = new StreamWriter(summaryFile))
             {
-                await summary.WriteLineAsync($"CPU average: {cpuTimes.Average()}");
-                await summary.WriteLineAsync($"CPU 1% worst: {PercentWorst(cpuTimes, 0.01f)}");
-                await summary.WriteLineAsync($"CPU 0.1% worst: {PercentWorst(cpuTimes, 0.001f)}");
-                await summary.WriteLineAsync($"CPU worst: {cpuTimes.Max()}");
-                await summary.WriteLineAsync($"GPU average: {gpuTimes.Average()}");
-                await summary.WriteLineAsync($"GPU 1% worst: {PercentWorst(gpuTimes, 0.01f)}");
-                await summary.WriteLineAsync($"GPU 0.1% worst: {PercentWorst(gpuTimes, 0.001f)}");
-                await summary.WriteLineAsync($"GPU worst: {gpuTimes.Max()}");
+                await summary.WriteAsync("CPU average: ");
+                await summary.WriteLineAsync(cpuTimes.Average().ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("CPU 1% worst: ");
+                await summary.WriteLineAsync(PercentWorst(cpuTimes, 0.01f).ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("CPU 0.1% worst: ");
+                await summary.WriteLineAsync(PercentWorst(cpuTimes, 0.001f).ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("CPU worst: ");
+                await summary.WriteLineAsync(cpuTimes.Max().ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("GPU average: ");
+                await summary.WriteLineAsync(gpuTimes.Average().ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("GPU 1% worst: ");
+                await summary.WriteLineAsync(PercentWorst(gpuTimes, 0.01f).ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("GPU 0.1% worst: ");
+                await summary.WriteLineAsync(PercentWorst(gpuTimes, 0.001f).ToString(CultureInfo.InvariantCulture));
+                await summary.WriteAsync("GPU worst: ");
+                await summary.WriteLineAsync(gpuTimes.Max().ToString(CultureInfo.InvariantCulture));
             }
         }
 
