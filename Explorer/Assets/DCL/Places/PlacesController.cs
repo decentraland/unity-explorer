@@ -25,6 +25,7 @@ namespace DCL.Places
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
+        private bool inputWasBlocked;
         private readonly PlacesStateService placesStateService;
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
@@ -57,14 +58,14 @@ namespace DCL.Places
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
-            view.SearchBarDeselected += RestoreShortcutsInput;
+            view.SearchBarDeselected += TryRestoreShortcutsInput;
         }
 
         public void Dispose()
         {
             view.AnyFilterChanged -= OnAnyFilterChanged;
             view.SearchBarSelected -= DisableShortcutsInput;
-            view.SearchBarDeselected -= RestoreShortcutsInput;
+            view.SearchBarDeselected -= TryRestoreShortcutsInput;
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
@@ -90,6 +91,7 @@ namespace DCL.Places
             view.SetViewActive(false);
             view.ClearCategories();
             PlacesClosed?.Invoke();
+            TryRestoreShortcutsInput();
         }
 
         public void Animate(int triggerId) =>
@@ -114,10 +116,18 @@ namespace DCL.Places
             FiltersChanged?.Invoke(newFilters);
         }
 
-        private void DisableShortcutsInput() =>
+        private void DisableShortcutsInput()
+        {
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputWasBlocked = true;
+        }
 
-        private void RestoreShortcutsInput() =>
+        private void TryRestoreShortcutsInput()
+        {
+            if (!inputWasBlocked) return;
+
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputWasBlocked = false;
+        }
     }
 }
