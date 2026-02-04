@@ -44,7 +44,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private bool sceneVisible = true;
-        private bool backfaceCulling;
         private bool shadowsDisabled;
         private Light? directionalLight;
         private LightShadows? originalShadowType;
