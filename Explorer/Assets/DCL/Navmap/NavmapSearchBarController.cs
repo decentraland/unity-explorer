@@ -27,7 +27,6 @@ namespace DCL.Navmap
         private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
         private string? currentCategory;
         private string currentSearchText = string.Empty;
-        private bool inputWasBlocked;
 
         public bool Interactable
         {
@@ -111,7 +110,8 @@ namespace DCL.Navmap
             Interactable = true;
             navmapBus.ClearFilter();
             navmapBus.ClearPlacesFromMap();
-            TryRestoreInput();
+            if (view.inputField.isFocused)
+                RestoreInput();
         }
 
         public void EnableBack()
@@ -176,22 +176,14 @@ namespace DCL.Navmap
             if (isSelected)
                 DisableShortcutsInput();
             else
-                TryRestoreInput();
+                RestoreInput();
         }
 
-        private void DisableShortcutsInput()
-        {
+        private void DisableShortcutsInput() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = true;
-        }
 
-        private void TryRestoreInput()
-        {
-            if (!inputWasBlocked) return;
-
+        private void RestoreInput() =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = false;
-        }
 
         private void Search(NavmapSearchPlaceSorting sorting)
         {

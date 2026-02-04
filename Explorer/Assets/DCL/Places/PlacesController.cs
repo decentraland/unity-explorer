@@ -25,7 +25,6 @@ namespace DCL.Places
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
-        private bool inputWasBlocked;
         private readonly PlacesStateService placesStateService;
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
@@ -58,14 +57,14 @@ namespace DCL.Places
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
-            view.SearchBarDeselected += TryRestoreShortcutsInput;
+            view.SearchBarDeselected += RestoreShortcutsInput;
         }
 
         public void Dispose()
         {
             view.AnyFilterChanged -= OnAnyFilterChanged;
             view.SearchBarSelected -= DisableShortcutsInput;
-            view.SearchBarDeselected -= TryRestoreShortcutsInput;
+            view.SearchBarDeselected -= RestoreShortcutsInput;
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
@@ -87,11 +86,14 @@ namespace DCL.Places
 
         public void Deactivate()
         {
+            // Must be before setting the view inactive or the focus state will be false regardless
+            if (view.IsSearchBarFocused)
+                RestoreShortcutsInput();
+
             isSectionActivated = false;
             view.SetViewActive(false);
             view.ClearCategories();
             PlacesClosed?.Invoke();
-            TryRestoreShortcutsInput();
         }
 
         public void Animate(int triggerId) =>
@@ -116,18 +118,10 @@ namespace DCL.Places
             FiltersChanged?.Invoke(newFilters);
         }
 
-        private void DisableShortcutsInput()
-        {
+        private void DisableShortcutsInput() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = true;
-        }
 
-        private void TryRestoreShortcutsInput()
-        {
-            if (!inputWasBlocked) return;
-
+        private void RestoreShortcutsInput() =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = false;
-        }
     }
 }

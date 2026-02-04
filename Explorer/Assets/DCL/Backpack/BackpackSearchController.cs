@@ -17,7 +17,6 @@ namespace DCL.Backpack
         private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource? searchCancellationToken;
-        private bool inputWasBlocked;
 
         public BackpackSearchController(SearchBarView view,
             IBackpackCommandBus commandBus,
@@ -31,28 +30,23 @@ namespace DCL.Backpack
             backpackEventBus.FilterEvent += OnFilterEvent;
 
             view.inputField.onSelect.AddListener(DisableShortcutsInput);
-            view.inputField.onDeselect.AddListener(TryRestoreInput);
+            view.inputField.onDeselect.AddListener(RestoreInput);
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             view.clearSearchButton.gameObject.SetActive(false);
         }
 
-        private void TryRestoreInput(string text)
-        {
-            if (!inputWasBlocked) return;
-
+        private void RestoreInput(string text) =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = false;
-        }
 
-        private void DisableShortcutsInput(string text)
-        {
+        private void DisableShortcutsInput(string text) =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            inputWasBlocked = true;
-        }
 
-        public void Clear() =>
-            TryRestoreInput(string.Empty);
+        public void Clear()
+        {
+            if (view.inputField.isFocused)
+                RestoreInput(string.Empty);
+        }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
