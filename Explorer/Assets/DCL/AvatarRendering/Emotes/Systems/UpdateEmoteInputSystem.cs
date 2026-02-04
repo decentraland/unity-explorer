@@ -22,22 +22,22 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
-        private readonly EmotesBus emotesBus;
+        private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.EmotesActions emotesActions;
 
         private int triggeredEmote = -1;
-        private bool isWheelBlocked;
+        private EmoteTriggerSource? triggeredEmoteSource;
         private int framesAfterWheelWasClosed;
 
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus)
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmoteWheelShortcutHandler emoteWheelShortcutHandler)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
             this.messageBus = messageBus;
-            this.emotesBus = emotesBus;
+            this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
 
             GetReportData();
 
@@ -53,10 +53,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
-            isWheelBlocked = true;
-            emotesBus.OnQuickActionEmotePlayed();
-            if (DCLInput.Instance.Shortcuts.EmoteWheel.IsPressed())
-                emotesBus.OnEmotePlayedFromShortcut();
+            triggeredEmoteSource = EmoteTriggerSource.SHORTCUT;
         }
 
         protected override void Update(float t)
@@ -66,6 +63,11 @@ namespace DCL.AvatarRendering.Emotes
             if (triggeredEmote >= 0)
             {
                 TriggerEmoteQuery(World, triggeredEmote);
+                if (triggeredEmoteSource.HasValue)
+                {
+                    emoteWheelShortcutHandler.NotifyEmotePlayed(triggeredEmoteSource.Value);
+                    triggeredEmoteSource = null;
+                }
                 triggeredEmote = -1;
             }
         }
@@ -75,6 +77,7 @@ namespace DCL.AvatarRendering.Emotes
         private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
         {
             triggeredEmote = intent.Slot;
+            triggeredEmoteSource = EmoteTriggerSource.WHEEL_SLOT;
             World.Remove<TriggerEmoteBySlotIntent>(entity);
         }
 
