@@ -125,8 +125,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 24, y: -12}
-  m_SizeDelta: {x: 300, y: 44}
+  m_AnchoredPosition: {x: 20, y: -12}
+  m_SizeDelta: {x: 136, y: 44}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &8770205941556429532
 CanvasRenderer:
@@ -222,7 +222,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -67.883606, w: -0.02722168}
+  m_margin: {x: 0, y: 0, z: 0.35232434, w: -0.02722168}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -681,11 +681,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 127410955035292441, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Name
-      value: RecentlyVisited
+      value: Recent
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_text
-      value: Last Visited
+      value: Recent
       objectReference: {fileID: 0}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
@@ -717,7 +717,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 155
+      value: 114
       objectReference: {fileID: 0}
     - target: {fileID: 1118554692721945216, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1104,11 +1104,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 127410955035292441, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Name
-      value: Browse
+      value: Explore
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_text
-      value: Browse
+      value: Explore
       objectReference: {fileID: 0}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite

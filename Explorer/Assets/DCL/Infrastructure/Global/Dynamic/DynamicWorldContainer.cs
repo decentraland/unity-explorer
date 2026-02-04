@@ -733,7 +733,10 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics),
-                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings, staticContainer.SceneLoadingLimit),
+                new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
+                    staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
+                    staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
+                    staticContainer.SceneLoadingLimit, appArgs, staticContainer.LoadingStatus),
                 #if UNITY_EDITOR
                     new RenderingSystemPlugin(debugBuilder),
                 #endif
