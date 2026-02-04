@@ -2,11 +2,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DG.Tweening;
@@ -194,7 +194,7 @@ namespace DCL.Communities.CommunitiesBrowser
             communityMembersCountText.gameObject.SetActive(showMembers);
 
             if (showMembers)
-                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
+                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, UIUtils.NumberToCompactString(memberCount));
         }
 
         public void SetInviteOrRequestId(string id) =>
@@ -293,10 +293,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 bool friendExists = i < communityData.friends.Length;
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
-                GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, NameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
-                bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(mutualFriend.address);
-                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName, isOfficial);
+                Profile.CompactInfo mutualFriend = communityData.friends[i];
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, mutualFriend);
+                bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(mutualFriend.UserId);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.Name, mutualFriend.HasClaimedName, isOfficial);
 
                 if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
                     continue;

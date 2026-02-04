@@ -38,11 +38,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         private static readonly object[] TEST_CASES_SOURCE =
         {
-            new object[] { 1, 100, 0.25d, 1 },
-            new object[] { 10, 50, 0.25d, 100 },
-            new object[] { 50, 50, 0.25d, 100 },
-            new object[] { 100, 50, 0.25d, 100 },
-            new object[] { 20, 10, 6, 25 },
+            new object[] { 1, 10, 0.25d, 1 },
+            new object[] { 10, 5, 0.25d, 100 },
+            new object[] { 50, 5, 0.25d, 100 },
+            new object[] { 100, 5, 0.25d, 100 },
+            new object[] { 20, 5, 6, 25 },
             new object[] { 20, 5, 20, 25 },
         };
 
@@ -65,8 +65,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency, _ => controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                                              .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(_ => controller!.GetAsync(url, CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                 .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft),
                 new[] { "" }, 2, totalRequests, iterations, delay);
         }
 
@@ -93,9 +93,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
 
@@ -108,9 +107,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/places", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/places", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
 
@@ -123,9 +121,8 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
             CreateController(concurrency);
 
-            await BenchmarkAsync(concurrency,
-                id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/members", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
-                                 .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
+            await BenchmarkAsync(id => controller!.GetAsync($"{communitiesBaseUrl}/{id}/members", CancellationToken.None, ReportCategory.GENERIC_WEB_REQUEST, AuthorizeRequest())
+                                                  .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft),
                 await GetCommunitiesIdsAsync(), 1, totalRequests, iterations, delay);
         }
     }

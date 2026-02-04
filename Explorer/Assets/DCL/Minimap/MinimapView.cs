@@ -66,6 +66,9 @@ namespace DCL.Minimap
         internal ToggleButtonWithDisabledState favoriteButton { get; private set; }
 
         [field: SerializeField]
+        internal Button donateButton { get; private set; }
+
+        [field: SerializeField]
         internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
 
         [field: SerializeField]
@@ -86,7 +89,7 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal GameObject ownPlayerBannedTooltip { get; private set; }
 
-        [SerializeField] internal ContextMenuConfig contextMenuConfig;
+        [SerializeField] internal Button contextMenuButton;
 
         private void Start()
         {
@@ -99,12 +102,5 @@ namespace DCL.Minimap
 
         private void OnUnHoverMap() =>
             minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
-
-        [Serializable]
-        public struct ContextMenuConfig
-        {
-            public Sprite copyLinkIcon;
-            public Button button;
-        }
     }
 }

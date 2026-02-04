@@ -41,6 +41,14 @@ MonoBehaviour:
     m_Key: Communities
     m_Metadata:
       m_Items: []
+  - m_Id: 294575855150305280
+    m_Key: Places
+    m_Metadata:
+      m_Items: []
+  - m_Id: 301924463168196608
+    m_Key: Events
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

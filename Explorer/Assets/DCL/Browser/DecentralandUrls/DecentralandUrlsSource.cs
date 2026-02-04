@@ -9,16 +9,17 @@ namespace DCL.Browser.DecentralandUrls
     public class DecentralandUrlsSource : IDecentralandUrlsSource
     {
         private const string ENV = "{ENV}";
-        private static string CONTENT_URL_OVERRIDE;
-        private static string LAMBDAS_URL_OVERRIDE;
+
+        private readonly string contentURLOverride;
+        private readonly string lambdasURLOverride;
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
-        private readonly string DecentralandDomain;
+        private readonly string decentralandDomain;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            DecentralandDomain = environment.ToString()!.ToLower();
+            decentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
             if (environment == DecentralandEnvironment.Today)
@@ -26,18 +27,27 @@ namespace DCL.Browser.DecentralandUrls
                 // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
                 // Content and lambdas url are hardcoded to a particular catalyst
+                // Adapter info (both scene and room) also have to responde to the `.today` environment
+                // Archipelago status as well, to have a clear minimap
                 // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
                 // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
                 Url(DecentralandUrl.AssetBundlesCDN);
-                CONTENT_URL_OVERRIDE = "https://peer-testing.decentraland.org/content/";
-                LAMBDAS_URL_OVERRIDE = "https://peer-testing.decentraland.org/lambdas/";
-                DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
+                Url(DecentralandUrl.ArchipelagoStatus);
+                Url(DecentralandUrl.ArchipelagoHotScenes);
+                Url(DecentralandUrl.Genesis);
+                Url(DecentralandUrl.GatekeeperStatus);
+                Url(DecentralandUrl.GateKeeperSceneAdapter);
+                Url(DecentralandUrl.RemotePeers);
+
+                contentURLOverride = "https://peer-testing.decentraland.org/content/";
+                lambdasURLOverride = "https://peer-testing.decentraland.org/lambdas/";
+                decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
             else
             {
-                CONTENT_URL_OVERRIDE = "NO_CONTENT_URL_OVERRIDE";
-                LAMBDAS_URL_OVERRIDE = "NO_LAMBDAS_URL_OVERRIDE";
+                contentURLOverride = "NO_CONTENT_URL_OVERRIDE";
+                lambdasURLOverride = "NO_LAMBDAS_URL_OVERRIDE";
             }
 
         }
@@ -46,7 +56,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, DecentralandDomain);
+                url = RawUrl(decentralandUrl).Replace(ENV, decentralandDomain);
                 cache[decentralandUrl] = url;
             }
 
@@ -61,12 +71,13 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        private static string RawUrl(DecentralandUrl decentralandUrl) =>
+        private string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
                 DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
+                DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
@@ -75,6 +86,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CodeOfEthics => $"https://decentraland.{ENV}/ethics",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
+                DecentralandUrl.ApiDestinations => $"https://places.decentraland.{ENV}/api/destinations",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
                 DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
@@ -97,6 +109,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
@@ -111,8 +124,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
-                DecentralandUrl.AssetBundleRegistryVersion => $"https://asset-bundle-registry.decentraland.{ENV}/entities/versions",
+                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
+                DecentralandUrl.AssetBundleRegistryVersion => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
@@ -125,11 +138,15 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.CommunityProfileLink => $"https://decentraland.{ENV}/social/communities/{{0}}?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=communities",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
-                DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
-                DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
+                DecentralandUrl.DecentralandLambdasOverride => lambdasURLOverride,
+                DecentralandUrl.DecentralandContentOverride => contentURLOverride,
                 DecentralandUrl.ChatTranslate => $"https://autotranslate-server.decentraland.{ENV}/translate",
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
+                DecentralandUrl.CreatorHub => $"https://decentraland.{ENV}/create/",
+                DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
+                DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
+                DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public event Action DiscordButtonClicked;
 
-        private MVCStateMachine<AuthStateBase, AuthStateContext> fsm;
+        private MVCStateMachine<AuthStateBase> fsm;
         private AuthenticationScreenAudio audio;
 
         public AuthenticationScreenController(
@@ -142,17 +142,14 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 
             // States
-            fsm = new MVCStateMachine<AuthStateBase, AuthStateContext>(
-                context: new AuthStateContext(),
-                states: new AuthStateBase[]
-                {
-                    new InitAuthScreenState(viewInstance, buildData.InstallSource),
-                    new LoginStartAuthState(viewInstance, this, CurrentState, splashScreen),
-                    new IdentityAndVerificationAuthState(viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
-                    new ProfileFetchingAuthState(viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
-                    new LobbyAuthState(viewInstance, this, characterPreviewController),
-                }
-            );
+            fsm = new MVCStateMachine<AuthStateBase>();
+            fsm.AddStates(
+                new InitAuthScreenState(viewInstance, buildData.InstallSource),
+                new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen),
+                new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
+                new LobbyAuthState(viewInstance, this, characterPreviewController)
+                );
             fsm.Enter<InitAuthScreenState>();
         }
 

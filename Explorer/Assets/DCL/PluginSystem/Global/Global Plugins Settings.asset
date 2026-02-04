@@ -58,8 +58,10 @@ MonoBehaviour:
   - rid: 3821626543930605662
   - rid: 1154744868092248158
   - rid: 745469515127586908
+  - rid: 2563261270153757000
   - rid: 5190442831932031144
   - rid: 5526985638232195369
+  - rid: 1221415613651484787
   references:
     version: 2
     RefIds:
@@ -169,28 +171,6 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -223,7 +203,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <IntroEmoteURN>k__BackingField: raiseHand
+          <IntroEmoteURN>k__BackingField: urn:decentraland:off-chain:base-emotes:raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
     - rid: 1154744868092248158
       type: {class: DuplicateIdentityPlugin/DuplicateIdentitySettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -234,6 +214,10 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
+    - rid: 1221415613651484787
+      type: {class: MinimapPlugin/MinimapPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        MinimapContextMenuSettings: {fileID: 11400000, guid: 4446926af4de8324abba0e06e90f3399, type: 2}
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -361,28 +345,6 @@ MonoBehaviour:
               Culture=neutral, PublicKeyToken=null
             m_SubObjectGUID: 
             m_EditorAssetChanged: 1
-        <EmbeddedEmotes>k__BackingField:
-        - urn:decentraland:off-chain:base-emotes:wave
-        - urn:decentraland:off-chain:base-emotes:fistpump
-        - urn:decentraland:off-chain:base-emotes:dance
-        - urn:decentraland:off-chain:base-emotes:raiseHand
-        - urn:decentraland:off-chain:base-emotes:clap
-        - urn:decentraland:off-chain:base-emotes:money
-        - urn:decentraland:off-chain:base-emotes:kiss
-        - urn:decentraland:off-chain:base-emotes:shrug
-        - urn:decentraland:off-chain:base-emotes:headexplode
-        - urn:decentraland:off-chain:base-emotes:cry
-        - urn:decentraland:off-chain:base-emotes:dab
-        - urn:decentraland:off-chain:base-emotes:disco
-        - urn:decentraland:off-chain:base-emotes:dontsee
-        - urn:decentraland:off-chain:base-emotes:hammer
-        - urn:decentraland:off-chain:base-emotes:handsair
-        - urn:decentraland:off-chain:base-emotes:hohoho
-        - urn:decentraland:off-chain:base-emotes:robot
-        - urn:decentraland:off-chain:base-emotes:snowfall
-        - urn:decentraland:off-chain:base-emotes:tektonik
-        - urn:decentraland:off-chain:base-emotes:tik
-        - urn:decentraland:off-chain:base-emotes:confettipopper
         <SettingsMenuConfiguration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
         <GeneralAudioMixer>k__BackingField:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
@@ -416,6 +378,24 @@ MonoBehaviour:
         <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
         <PlaceThumbnailHeight>k__BackingField: 320
         <PlaceThumbnailWidth>k__BackingField: 404
+        <PlaceCategoriesSO>k__BackingField:
+          m_AssetGUID: 508289f0a6feab048964059d0534fdd7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PlaceDetailPanelPrefab>k__BackingField:
+          m_AssetGUID: 4f3a6cf0dfd5cc94cbd5225c88c7aa8b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <EventInfoPrefab>k__BackingField:
+          m_AssetGUID: 112ec96d4c89d41d68b03e4ba73992e9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -431,12 +411,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
-        <EventInfoPrefab>k__BackingField:
-          m_AssetGUID: 112ec96d4c89d41d68b03e4ba73992e9
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -504,6 +478,15 @@ MonoBehaviour:
         <ReportHandlingSettingsDevelopment>k__BackingField: {fileID: 11400000, guid: 0dd75559898ca8d4db9fc8ab99ac2269, type: 2}
         <ReportHandlingSettingsProduction>k__BackingField: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+    - rid: 2563261270153757000
+      type: {class: DonationsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <DonationsPanelPrefab>k__BackingField:
+          m_AssetGUID: 925419b3e8ba740ef9f36530d3e3a0bc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2799748311381442562
       type: {class: ErrorPopupPlugin/ErrorPopupSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1009,6 +992,28 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <BaseEmotes>k__BackingField:
+        - urn:decentraland:off-chain:base-emotes:clap
+        - urn:decentraland:off-chain:base-emotes:cry
+        - urn:decentraland:off-chain:base-emotes:dab
+        - urn:decentraland:off-chain:base-emotes:dance
+        - urn:decentraland:off-chain:base-emotes:disco
+        - urn:decentraland:off-chain:base-emotes:dontsee
+        - urn:decentraland:off-chain:base-emotes:fistpump
+        - urn:decentraland:off-chain:base-emotes:hammer
+        - urn:decentraland:off-chain:base-emotes:handsair
+        - urn:decentraland:off-chain:base-emotes:wave
+        - urn:decentraland:off-chain:base-emotes:raiseHand
+        - urn:decentraland:off-chain:base-emotes:money
+        - urn:decentraland:off-chain:base-emotes:kiss
+        - urn:decentraland:off-chain:base-emotes:shrug
+        - urn:decentraland:off-chain:base-emotes:headexplode
+        - urn:decentraland:off-chain:base-emotes:hohoho
+        - urn:decentraland:off-chain:base-emotes:robot
+        - urn:decentraland:off-chain:base-emotes:snowfall
+        - urn:decentraland:off-chain:base-emotes:tektonik
+        - urn:decentraland:off-chain:base-emotes:tik
+        - urn:decentraland:off-chain:base-emotes:confettipopper
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

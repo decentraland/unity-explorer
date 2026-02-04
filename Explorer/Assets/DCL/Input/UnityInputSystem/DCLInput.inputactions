@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "DCLInput",
     "maps": [
         {
@@ -2225,6 +2226,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Places",
+                    "type": "Button",
+                    "id": "5a2cd426-7e96-4f96-93ad-0679ed95b588",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Events",
+                    "type": "Button",
+                    "id": "08706045-830e-441e-a5a2-c30b46feef15",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2412,6 +2431,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Communities",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a3339e67-4780-405e-972d-b7389939500b",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Places",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "92913669-52c7-4977-8826-3521a8c24a02",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Events",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

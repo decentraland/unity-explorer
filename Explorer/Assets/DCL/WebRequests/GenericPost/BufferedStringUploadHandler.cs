@@ -10,7 +10,7 @@ namespace DCL.WebRequests
     ///     Custom upload handler that builds JSON directly into a byte buffer
     ///     without intermediate string allocations.
     /// </summary>
-    public struct BufferedStringUploadHandler : IDisposable
+    public struct BufferedStringUploadHandler
     {
         // Use a native array instead of pooling a managed one to reduce the memory consumption
         // Native Arrays are not GCed so they don't produce the corresponding pressure
@@ -28,13 +28,25 @@ namespace DCL.WebRequests
 
         /// <summary>
         ///     Sets the buffer as the upload data.
-        ///     Call this after building your JSON.
+        ///     Call this after building your JSON. <br />
+        ///     UploadHandler will dispose the created underlying buffer
         /// </summary>
-        public UploadHandlerRaw CreateUploadHandler() =>
-            new (buffer.AsArray().AsReadOnly());
+        public unsafe UploadHandlerRaw CreateUploadHandler()
+        {
+            // Create a NativeArray copy that actually owns the memory with Persistent allocator (the same allocator the NativeList was created with)
+            NativeArray<byte> array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(buffer.GetUnsafePtr(), buffer.Length, Allocator.Persistent);
 
-        public void Dispose() =>
-            buffer.Dispose();
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
+#endif
+
+            // NativeList contains an underlying UnsafeList which is allocated on heap and referenced by a pointer
+            // It contains several fields apart from the byte* so they won't be deallocated automatically by UploadHandler
+            UnsafeList<byte>* listData = buffer.GetUnsafeList();
+            AllocatorManager.Free(listData -> Allocator, listData);
+
+            return new UploadHandlerRaw(array, true);
+        }
 
         /// <summary>
         ///     Writes a single byte to the buffer.
@@ -149,10 +161,7 @@ namespace DCL.WebRequests
             Span<byte> tempBuffer = stackalloc byte[4];
             int bytesWritten = Encoding.UTF8.GetBytes(stackalloc char[] { c }, tempBuffer);
 
-            fixed (byte* bp = tempBuffer)
-            {
-                buffer.AddRange(bp, bytesWritten);
-            }
+            fixed (byte* bp = tempBuffer) { buffer.AddRange(bp, bytesWritten); }
         }
 
         /// <summary>
@@ -187,7 +196,7 @@ namespace DCL.WebRequests
 
             // Calculate number of digits
             int temp = value;
-            int digitCount = 0;
+            var digitCount = 0;
 
             while (temp > 0)
             {
@@ -232,7 +241,7 @@ namespace DCL.WebRequests
             }
 
             long temp = value;
-            int digitCount = 0;
+            var digitCount = 0;
 
             while (temp > 0)
             {
@@ -273,5 +282,8 @@ namespace DCL.WebRequests
         ///     Gets the current buffer size in bytes.
         /// </summary>
         public int Length => buffer.Length;
+
+        public override unsafe string ToString() =>
+            Encoding.UTF8.GetString(buffer.GetUnsafePtr(), Length);
     }
 }

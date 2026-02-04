@@ -36,7 +36,13 @@ namespace DCL.FeatureFlags
                 [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
                 [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
+                [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT),
+                [FeatureId.CHAT_MESSAGE_BUFFER] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG),
                 [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
+                [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY),
+                [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
+                [FeatureId.DONATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)),
+                [FeatureId.FORCE_BACKFACE_CULLING] = featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING) || appArgs.HasFlag(AppArgsFlags.FORCE_BACKFACE_CULLING),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -137,6 +143,12 @@ namespace DCL.FeatureFlags
         AUTH_CODE_VALIDATION,
         GPUI_ENABLED,
         GIFTING_ENABLED,
+        CHAT_MESSAGE_RATE_LIMIT,
+        CHAT_MESSAGE_BUFFER,
         HEAD_SYNC,
+        STOP_ON_DUPLICATE_IDENTITY,
+        PRIVATE_CHAT_REQUIRES_TOPIC,
+        DONATIONS,
+        FORCE_BACKFACE_CULLING,
     }
 }

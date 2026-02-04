@@ -116,7 +116,12 @@ namespace DCL.Landscape
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             if (landscapeData.RenderTrees)
+            {
+                // We need to re-upload the transforms because the
+                // buffer might have been overwritten by WorldTerrainGenerator
+                Trees!.Instantiate();
                 Trees!.Show();
+            }
 
             IsTerrainShown = true;
 

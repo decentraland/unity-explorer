@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using MVC;
+using UnityEngine;
 
 namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 {
-    public class InitAuthScreenState : AuthStateBase
+    public class InitAuthScreenState : AuthStateBase, IState
     {
         private readonly string buildDataInstallSource;
 
@@ -14,9 +15,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.buildDataInstallSource = buildDataInstallSource;
         }
 
-        public override void Enter()
+        public void Enter()
         {
-            base.Enter();
             viewInstance.LoginContainer.SetActive(false);
             viewInstance.VerificationContainer.SetActive(false);
             viewInstance.FinalizeContainer.SetActive(false);

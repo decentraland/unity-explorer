@@ -353,5 +353,11 @@ namespace DCL.Diagnostics
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
+        public const string MVC_STATE_MACHINE = nameof(MVC_STATE_MACHINE);
+
+        public const string PLACES = nameof(PLACES);
+
+        public const string DONATIONS = nameof(DONATIONS);
+        public const string ASSET_PRE_LOAD = nameof(ASSET_PRE_LOAD);
     }
 }

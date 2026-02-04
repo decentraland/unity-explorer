@@ -45,9 +45,6 @@ namespace DCL.CharacterMotion.Components
         // Current Normal of the slope
         public Vector3 CurrentSlopeNormal;
 
-        // The last calculated platform delta
-        public Vector3 PlatformDelta;
-
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
 

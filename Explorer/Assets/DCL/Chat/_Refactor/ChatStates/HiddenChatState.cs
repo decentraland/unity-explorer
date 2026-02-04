@@ -1,15 +1,19 @@
-﻿namespace DCL.Chat.ChatStates
+﻿using MVC;
+
+namespace DCL.Chat.ChatStates
 {
-    public class HiddenChatState : ChatState
+    public class HiddenChatState : ChatState, IState
     {
-        public override void Enter()
+        private readonly ChatUIMediator mediator;
+
+        public HiddenChatState(ChatUIMediator mediator)
         {
-            context.UIMediator.SetupForHiddenState();
+            this.mediator = mediator;
         }
 
-        public override void Exit()
+        public void Enter()
         {
-            
+            mediator.SetupForHiddenState();
         }
     }
 }

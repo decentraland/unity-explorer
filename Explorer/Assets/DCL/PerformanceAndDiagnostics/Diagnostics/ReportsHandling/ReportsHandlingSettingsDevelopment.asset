@@ -581,8 +581,6 @@ MonoBehaviour:
     - Category: OUTFITS
       Severity: 1
     - Category: GIFTING
-      Severity: 3
-    - Category: GIFTING
       Severity: 2
     - Category: GIFTING
       Severity: 0
@@ -595,6 +593,12 @@ MonoBehaviour:
     - Category: SOCIAL
       Severity: 4
     - Category: SOCIAL
+      Severity: 1
+    - Category: MVC_STATE_MACHINE
+      Severity: 0
+    - Category: MVC_STATE_MACHINE
+      Severity: 4
+    - Category: MVC_STATE_MACHINE
       Severity: 1
   sentryMatrix:
     entries: []

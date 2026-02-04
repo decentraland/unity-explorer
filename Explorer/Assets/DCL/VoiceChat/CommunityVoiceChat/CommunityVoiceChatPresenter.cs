@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -44,7 +45,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             VoiceChatMicrophoneHandler microphoneHandler,
             VoiceChatRoomManager roomManager,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController)
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
@@ -53,7 +54,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.communityDataProvider = communityDataProvider;
 
             communityVoiceChatSearchPresenter = new CommunityVoiceChatSearchPresenter(view.CommunityVoiceChatSearchView);
-            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, webRequestController);
+            inCallPresenter = new CommunityVoiceChatInCallPresenter(view.CommunityVoiceChatInCallView, voiceChatOrchestrator, microphoneHandler, imageControllerProvider);
 
             inCallPresenter.OpenListenersSectionRequested += OpenListenersSection;
 
@@ -285,7 +286,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnParticipantIsSpeaking(bool isSpeaking, VoiceChatParticipantState participantState)
         {
             if (isSpeaking)
-                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name.Value);
+                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name);
             else
                 currentlySpeakingUsers.Remove(participantState.WalletId);
 

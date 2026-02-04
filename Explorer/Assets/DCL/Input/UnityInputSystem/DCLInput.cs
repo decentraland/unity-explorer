@@ -2312,6 +2312,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Places"",
+                    ""type"": ""Button"",
+                    ""id"": ""5a2cd426-7e96-4f96-93ad-0679ed95b588"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Events"",
+                    ""type"": ""Button"",
+                    ""id"": ""08706045-830e-441e-a5a2-c30b46feef15"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2499,6 +2517,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Communities"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a3339e67-4780-405e-972d-b7389939500b"",
+                    ""path"": ""<Keyboard>/z"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Places"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""92913669-52c7-4977-8826-3521a8c24a02"",
+                    ""path"": ""<Keyboard>/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Events"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3922,6 +3962,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
         m_Shortcuts_Communities = m_Shortcuts.FindAction("Communities", throwIfNotFound: true);
+        m_Shortcuts_Places = m_Shortcuts.FindAction("Places", throwIfNotFound: true);
+        m_Shortcuts_Events = m_Shortcuts.FindAction("Events", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4971,6 +5013,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_Controls;
     private readonly InputAction m_Shortcuts_FriendPanel;
     private readonly InputAction m_Shortcuts_Communities;
+    private readonly InputAction m_Shortcuts_Places;
+    private readonly InputAction m_Shortcuts_Events;
     /// <summary>
     /// Provides access to input actions defined in input action map "Shortcuts".
     /// </summary>
@@ -5043,6 +5087,14 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Communities => m_Wrapper.m_Shortcuts_Communities;
         /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/Places".
+        /// </summary>
+        public InputAction @Places => m_Wrapper.m_Shortcuts_Places;
+        /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/Events".
+        /// </summary>
+        public InputAction @Events => m_Wrapper.m_Shortcuts_Events;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
@@ -5113,6 +5165,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Communities.started += instance.OnCommunities;
             @Communities.performed += instance.OnCommunities;
             @Communities.canceled += instance.OnCommunities;
+            @Places.started += instance.OnPlaces;
+            @Places.performed += instance.OnPlaces;
+            @Places.canceled += instance.OnPlaces;
+            @Events.started += instance.OnEvents;
+            @Events.performed += instance.OnEvents;
+            @Events.canceled += instance.OnEvents;
         }
 
         /// <summary>
@@ -5169,6 +5227,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Communities.started -= instance.OnCommunities;
             @Communities.performed -= instance.OnCommunities;
             @Communities.canceled -= instance.OnCommunities;
+            @Places.started -= instance.OnPlaces;
+            @Places.performed -= instance.OnPlaces;
+            @Places.canceled -= instance.OnPlaces;
+            @Events.started -= instance.OnEvents;
+            @Events.performed -= instance.OnEvents;
+            @Events.canceled -= instance.OnEvents;
         }
 
         /// <summary>
@@ -6463,6 +6527,20 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCommunities(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Places" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPlaces(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Events" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnEvents(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Emotes" which allows adding and removing callbacks.

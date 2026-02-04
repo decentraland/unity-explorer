@@ -1,6 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -30,80 +32,89 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
-        protected override void Update(float t) =>
-            ApplyModifiersQuery(World);
-
-        [Query]
-        private void ApplyModifiers(in PBInputModifier pbInputModifier)
+        protected override void Update(float t)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if (!pbInputModifier.IsDirty) return;
 
-            DoApplyModifiers(pbInputModifier);
+            ApplyModifiersQuery(World, false);
+            HandleComponentRemovalQuery(World);
         }
 
-        [Query]
-        private void ForceApplyModifiers(ref PBInputModifier pbInputModifier) =>
-            DoApplyModifiers(pbInputModifier);
-
-        private void DoApplyModifiers(PBInputModifier pbInputModifier)
+        private void SendBusMessage(in InputModifierComponent inputModifier)
         {
-            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-
-            if (pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None)
-            {
-                inputModifier.Clear();
-                SendBusMessage(inputModifier);
-                return;
-            }
-
-            PBInputModifier.Types.StandardInput? standardInput = pbInputModifier.Standard;
-
-            bool disableAll = standardInput.DisableAll;
-            inputModifier.DisableAll = disableAll;
-
-            if (!disableAll)
-            {
-                inputModifier.DisableWalk = standardInput.DisableWalk;
-                inputModifier.DisableJog = standardInput.DisableJog;
-                inputModifier.DisableRun = standardInput.DisableRun;
-                inputModifier.DisableJump = standardInput.DisableJump;
-                inputModifier.DisableEmote = standardInput.DisableEmote;
-                inputModifier.DisableDoubleJump = standardInput.DisableDoubleJump;
-                inputModifier.DisableGliding = standardInput.DisableGliding;
-            }
-        }
-
-        private void SendBusMessage(InputModifierComponent inputModifier)
-        {
-            SceneRestrictionsAction currentAction = inputModifier.EverythingEnabled ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
+            SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
 
             if (currentAction == lastBusMessageAction) return;
 
-            lastBusMessageAction = currentAction;
-
             sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarMovementsBlocked(currentAction));
+            lastBusMessageAction = currentAction;
         }
 
-        public void OnSceneIsCurrentChanged(bool sceneIsCurrent)
-        {
-            if (sceneIsCurrent)
-                // If the scene became current, make sure the modifier is applied again by forcing it
-                ForceApplyModifiersQuery(World);
-            else
-                // Otherwise reset it
-                ClearModifierComponent();
-        }
-
-        private void ClearModifierComponent()
+        private void ResetModifiers()
         {
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-            inputModifier.Clear();
+            inputModifier.DisableAll = false;
+            inputModifier.DisableWalk = false;
+            inputModifier.DisableJog = false;
+            inputModifier.DisableRun = false;
+            inputModifier.DisableJump = false;
+            inputModifier.DisableEmote = false;
 
             SendBusMessage(inputModifier);
         }
 
-        public void FinalizeComponents(in Query query) =>
-            ClearModifierComponent();
+        [Query]
+        private void ApplyModifiers([Data] bool skipDirtyCheck, Entity entity, in PBInputModifier pbInputModifier, in CRDTEntity crdtEntity)
+        {
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY
+                || pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None
+                || (!skipDirtyCheck && !pbInputModifier.IsDirty)) return;
+
+            ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
+            PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
+
+            bool disableAll = pb.DisableAll;
+            inputModifier.DisableAll = disableAll;
+
+            if (!disableAll)
+            {
+                inputModifier.DisableWalk = pb.DisableWalk;
+                inputModifier.DisableJog = pb.DisableJog;
+                inputModifier.DisableRun = pb.DisableRun;
+                inputModifier.DisableJump = pb.DisableJump;
+                inputModifier.DisableEmote = pb.DisableEmote;
+            }
+
+            SendBusMessage(inputModifier);
+
+            // Mark scene Entity with component as well to know later when the PB component gets removed
+            World.AddOrGet<InputModifierComponent>(entity);
+        }
+
+        [Query]
+        [None(typeof(PBInputModifier))]
+        [All(typeof(InputModifierComponent))]
+        private void HandleComponentRemoval(Entity entity, in CRDTEntity crdtEntity)
+        {
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY)
+                return;
+
+            ResetModifiers();
+
+            World.Remove<InputModifierComponent>(entity);
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (value)
+                ApplyModifiersQuery(World, true);
+            else
+                ResetModifiers();
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            ResetModifiers();
+        }
     }
 }

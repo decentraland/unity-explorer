@@ -5,7 +5,9 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -19,10 +21,13 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class UpdateCurrentSceneSystem : BaseUnityLoopSystem
     {
+        private const string NO_DATA_STRING = "<No data>";
+
         private static readonly int SRC_BLEND = Shader.PropertyToID("_SrcBlend");
         private static readonly int DST_BLEND = Shader.PropertyToID("_DstBlend");
         private static readonly int CULL = Shader.PropertyToID("_Cull");
         private static readonly int SURFACE = Shader.PropertyToID("_Surface");
+
         private readonly Entity playerEntity;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
@@ -33,6 +38,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneParcelsBinding;
         private readonly ElementBinding<string> sceneHeightBinding;
         private readonly ElementBinding<string> sdk6Binding;
+        private readonly ElementBinding<string> globalPositionBinding;
+        private readonly ElementBinding<string> sceneRelativePositionBinding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject? sceneBoundsCube;
@@ -40,6 +47,11 @@ namespace ECS.SceneLifeCycle.Systems
         private Vector2Int previousParcelPosition;
 
         private Vector2Int lastParcel;
+
+        //Debug only
+        private readonly Dictionary<Material, Color> originalColors = new ();
+        private bool backfaceCulling;
+        private bool isPaintedBackface;
 
         internal UpdateCurrentSceneSystem(
             World world,
@@ -58,6 +70,8 @@ namespace ECS.SceneLifeCycle.Systems
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
             sceneHeightBinding = new ElementBinding<string>(string.Empty);
+            globalPositionBinding = new ElementBinding<string>(string.Empty);
+            sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
                          .SetVisibilityBinding(debugInfoVisibilityBinding)
@@ -65,9 +79,14 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
-                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
+                         .AddCustomMarker("Global Pos:", globalPositionBinding)
+                         .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
+                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
+                         .AddSingleButton("Backface debugger", PaintBackFaceMaterials);
             this.debugBuilder = debugBuilder;
         }
+
+
 
         protected override void Update(float t)
         {
@@ -125,9 +144,16 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sdk6Binding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
 
+            Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
+            globalPositionBinding.Value = FormatPositionVector(globalPosition);
+
             if (currentActiveScene != null)
             {
                 sceneBoundsCube?.SetActive(showDebugCube);
+
+                Vector3 sceneBasePosition = currentActiveScene.SceneData.Geometry.BaseParcelPosition;
+                Vector3 sceneRelativePosition = globalPosition.FromGlobalToSceneRelativePosition(sceneBasePosition);
+                sceneRelativePositionBinding.Value = FormatPositionVector(sceneRelativePosition);
 
                 if (sceneNameBinding.Value != currentActiveScene.Info.Name)
                 {
@@ -150,12 +176,75 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                sceneNameBinding.Value = "<No data>";
-                sceneParcelsBinding.Value = "<No data>";
-                sceneHeightBinding.Value = "<No data>";
+                sceneNameBinding.Value = NO_DATA_STRING;
+                sceneParcelsBinding.Value = NO_DATA_STRING;
+                sceneHeightBinding.Value = NO_DATA_STRING;
+                sceneRelativePositionBinding.Value = NO_DATA_STRING;
                 sceneBoundsCube?.SetActive(false);
             }
         }
+
+        //Debug only
+        private void PaintBackFaceMaterials()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (!sceneWorld.Has<TransformComponent>(sceneContainer))
+                return;
+
+            ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+            Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+            if (isPaintedBackface)
+            {
+                // Restore original colors
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        if (originalColors.TryGetValue(material, out Color originalColor))
+                            material.color = originalColor;
+                    }
+                }
+
+                originalColors.Clear();
+                isPaintedBackface = false;
+            }
+            else
+            {
+                // Paint based on backface culling setting
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        // Store original color
+                        if (!originalColors.ContainsKey(material))
+                            originalColors[material] = material.color;
+
+                        // Check if material has backface culling enabled (CullMode.Back = 2)
+                        bool hasBackfaceCulling = material.HasProperty(CULL) && material.GetInt(CULL) == (int)CullMode.Back;
+
+                        // Green if has backface culling, Red otherwise
+                        material.color = hasBackfaceCulling ? Color.green : Color.red;
+                    }
+                }
+
+                isPaintedBackface = true;
+            }
+        }
+
+        private static string FormatPositionVector(Vector3 position) =>
+            $"{position.x:F1}, {position.y:F1}, {position.z:F1}";
 
         private static GameObject CreateDebugCube()
         {

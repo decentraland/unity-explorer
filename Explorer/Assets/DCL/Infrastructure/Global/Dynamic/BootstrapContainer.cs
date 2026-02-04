@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -65,6 +65,7 @@ namespace Global.Dynamic
             Web3Authenticator?.Dispose();
             VerifiedEthereumApi?.Dispose();
             IdentityCache?.Dispose();
+            Analytics?.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(
@@ -149,7 +150,8 @@ namespace Global.Dynamic
         {
             container.enableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
+                new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController), world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
@@ -246,11 +248,10 @@ namespace Global.Dynamic
 
         private static IReportsHandlingSettings ProvideReportHandlingSettingsAsync(BootstrapSettings settings, IAppArgs applicationParametersParser)
         {
-            ReportsHandlingSettings baseSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
-                settings.ReportHandlingSettingsDevelopment;
+            ReportsHandlingSettings baseSettings = settings.ReportHandlingSettingsDevelopment;
 #else
-                settings.ReportHandlingSettingsProduction;
+            ReportsHandlingSettings baseSettings = settings.ReportHandlingSettingsProduction;
 #endif
 
             IReportsHandlingSettings finalSettings = baseSettings;

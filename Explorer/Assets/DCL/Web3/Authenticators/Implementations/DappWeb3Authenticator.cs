@@ -21,6 +21,8 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
     {
+        private const double IDENTITY_EXPIRATION_PERIOD = 30;
+
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
         private const string NETWORK_MAINNET = "mainnet";
@@ -164,7 +166,7 @@ namespace DCL.Web3.Authenticators
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = identityExpirationDuration != null
                     ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                    : DateTime.UtcNow.AddDays(7);
+                    : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD);
 
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
@@ -255,7 +257,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(GetNetworkId(), ct);
+                await ConnectToRpcAsync(request.readonlyNetwork ?? GetNetworkId(), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -267,7 +269,7 @@ namespace DCL.Web3.Authenticators
             }
             catch (Exception)
             {
-                await DisconnectFromRpcAsync(ct);
+                await DisconnectFromRpcAsync(CancellationToken.None);
                 throw;
             }
             finally

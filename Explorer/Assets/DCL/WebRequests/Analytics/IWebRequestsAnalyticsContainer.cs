@@ -1,11 +1,11 @@
 using CDPBridges;
-using Collections.Pooled;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
+using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 
@@ -16,9 +16,21 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
+        public readonly struct RequestType
+        {
+            public readonly Type Type;
+            public readonly string MarkerName;
 
-        IReadOnlyList<IRequestMetric>? GetMetric(Type requestType);
+            public RequestType(Type type, string markerName)
+            {
+                Type = type;
+                MarkerName = markerName;
+            }
+        }
+
+        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics();
+
+        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType);
 
         protected internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
@@ -28,12 +40,7 @@ namespace DCL.WebRequests.Analytics
 
         protected internal void OnProcessDataFinished<T>(T request) where T: ITypedWebRequest;
 
-        public static readonly IWebRequestsAnalyticsContainer DEFAULT = new WebRequestsAnalyticsContainer();
-    }
-
-    public interface IMutableWebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
-    {
-        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
+        public static readonly IWebRequestsAnalyticsContainer TEST = new WebRequestsAnalyticsContainer(null);
     }
 
     public static class WebRequestsAnalyticsExtensions
@@ -61,7 +68,7 @@ namespace DCL.WebRequests.Analytics
             if (chromeDevtoolProtocolClient.Status is BridgeStatus.HasListeners)
             {
                 pooledObject = envelope.Headers(out Dictionary<string, string> headers);
-                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers);
+                notifyScope = chromeDevtoolProtocolClient.NotifyWebRequestStart(uwr.url, uwr.method!, headers, envelope.GetPostData());
             }
             else
 
@@ -74,16 +81,16 @@ namespace DCL.WebRequests.Analytics
             {
                 await innerTask;
 
-                if (notifyScope.HasValue)
+                if (notifyScope != null)
                 {
                     int statusCode = (int)uwr.responseCode;
 
-                    // TODO avoid allocation?
                     Dictionary<string, string>? responseHeaders = uwr.GetResponseHeaders();
 
                     string mimeType = uwr.GetRequestHeader("Content-Type") ?? "application/octet-stream";
                     int encodedDataLength = (int)uwr.downloadedBytes;
-                    notifyScope.Value.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength).Forget();
+
+                    notifyScope.NotifyFinishAsync(statusCode, responseHeaders, mimeType, encodedDataLength, uwr.downloadHandler).Forget();
                 }
             }
             catch (OperationCanceledException)

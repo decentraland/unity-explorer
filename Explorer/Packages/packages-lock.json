@@ -68,7 +68,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d53770b979b6f53b8e74720e773707813788813e"
+      "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#chore/rust-audio-for-mac-intel",
@@ -80,19 +80,33 @@
       },
       "hash": "57d3e3176d31337f81d66beaabc5bba084bb6112"
     },
-    "com.decentraland.rpc-csharp": {
-      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
+    "com.decentraland.renum": {
+      "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
+      "hash": "d39a0d38580af74a07ff44f4a5c41a059438a220"
+    },
+    "com.decentraland.renum.sourcegen": {
+      "version": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "6dbce7af5c48df0c682b26d4f78bdbb605c2bfb9"
+    },
+    "com.decentraland.rpc-csharp": {
+      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src#f3dd251c7837cc2d844e1c07e741177a53676064",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
       "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "881241610636aefab264592ff274f7860141f4ad"
+      "hash": "55a640291aaa8430ac0c917d96e974b1b39bcb1e"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -122,11 +136,14 @@
       "url": "https://package.openupm.com"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
-      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages#chore/renum-auto-reference",
+      "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "edbcee6d16ad36e648060f0bd2eea7ea4a8a473c"
+      "dependencies": {
+        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
+        "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4"
+      },
+      "hash": "203782b16258373426a02088b8cb8b2d9628dfeb"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
@@ -477,14 +494,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
+      "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#2.4.0",
+      "version": "https://github.com/getsentry/unity.git#4.0.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0d89de3f508ea316df4cef40d3739691c51b6af8"
+      "hash": "ad36b581ab86a846c33a7d509acb9a0dd9016bde"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
@@ -500,7 +517,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "5f5056828cd3d60baf35b4473878bbb77138b46b"
+      "hash": "6d422ccc8835130dbe5664074405773b7bdc70f0"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

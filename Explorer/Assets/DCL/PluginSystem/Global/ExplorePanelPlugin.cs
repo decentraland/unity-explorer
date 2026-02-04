@@ -35,8 +35,6 @@ using ECS;
 using ECS.Prioritization;
 using Global.Dynamic;
 using MVC;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Chat.MessageBus;
@@ -44,8 +42,12 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.EventInfo;
+using DCL.Donations;
+using DCL.Events;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -57,6 +59,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Places;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -69,6 +72,7 @@ using DCL.Utilities;
 using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -135,8 +139,10 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         private readonly bool includeCameraReel;
+        private readonly bool includeDiscover;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -151,6 +157,10 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private PlacesController? placesController;
+        private PlaceDetailPanelController? placeDetailPanelController;
+        private EventsController? eventsController;
+        private EventDetailPanelController? eventDetailPanelController;
         private readonly bool isVoiceChatEnabled;
         private readonly bool isTranslationChatEnabled;
         private readonly GalleryEventBus galleryEventBus;
@@ -160,6 +170,9 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IDonationsService donationsService;
+        private readonly IRealmNavigator realmNavigator;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -203,6 +216,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
+            bool includeDiscover,
             IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
@@ -221,9 +235,13 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             HomePlaceEventBus homePlaceEventBus,
             SmartWearableCache smartWearableCache,
+            ImageControllerProvider imageControllerProvider,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IDonationsService donationsService,
+            IRealmNavigator realmNavigator,
+            ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -267,6 +285,7 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
+            this.includeDiscover = includeDiscover;
             this.appArgs = appArgs;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -285,9 +304,13 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.imageControllerProvider = imageControllerProvider;
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.donationsService = donationsService;
+            this.realmNavigator = realmNavigator;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public void Dispose()
@@ -298,7 +321,11 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
+            placesController?.Dispose();
+            eventsController?.Dispose();
+            eventDetailPanelController?.Dispose();
             upscalingController?.Dispose();
+            placeDetailPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -307,6 +334,7 @@ namespace DCL.PluginSystem.Global
         {
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
+
             explorePanelNavmapBus.SetObject(navmapBus);
 
             var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
@@ -322,7 +350,6 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
-                settings.EmbeddedEmotesAsURN(),
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -356,6 +383,8 @@ namespace DCL.PluginSystem.Global
 
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
 
+            ProvidedAsset<PlaceCategoriesSO> placeCategoriesSO = await assetsProvisioner.ProvideMainAssetAsync(settings.PlaceCategoriesSO, ct);
+
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
@@ -376,8 +405,8 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, cameraReelStorageService, cameraReelScreenshotsStorage,
+                imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(
                     settings.PlaceGridLayoutFixedColumnCount,
                     settings.PlaceThumbnailHeight,
@@ -388,8 +417,8 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser);
+                navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                userCalendar, shareContextMenu, webBrowser, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
@@ -402,8 +431,8 @@ namespace DCL.PluginSystem.Global
 
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus, homePlaceEventBus: homePlaceEventBus),
+                    imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -448,6 +477,7 @@ namespace DCL.PluginSystem.Global
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
+
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(
                     cameraReelView.CameraReelGalleryView,
@@ -467,6 +497,7 @@ namespace DCL.PluginSystem.Global
                 settings.StorageProgressBarText);
 
             CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+
             communitiesBrowserController = new CommunitiesBrowserController(
                 communitiesBrowserView,
                 cursor,
@@ -483,6 +514,31 @@ namespace DCL.PluginSystem.Global
                 analytics,
                 communityDataService,
                 loadingStatus);
+
+            var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
+            var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+            PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
+            placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+
+            PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
+            var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
+            placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
+            mvcManager.RegisterController(placeDetailPanelController);
+
+            EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
+            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager);
+
+            EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
+            var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
+            eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
+                webRequestController,
+                clipboard,
+                webBrowser,
+                eventsApiService,
+                realmNavigator);
+            mvcManager.RegisterController(eventDetailPanelController);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod,
@@ -506,8 +562,11 @@ namespace DCL.PluginSystem.Global
                         passportBridge,
                         profileRepositoryWrapper),
                     communitiesBrowserController,
+                    placesController,
+                    eventsController,
                     inputBlock,
                     includeCameraReel,
+                    includeDiscover,
                     sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
@@ -528,7 +587,7 @@ namespace DCL.PluginSystem.Global
             PlaceElementView CreatePoolElements(PlaceElementView asset)
             {
                 PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
-                placeElementView.ConfigurePlaceImageController(webRequestController);
+                placeElementView.ConfigurePlaceImageController(imageControllerProvider);
                 return placeElementView;
             }
         }
@@ -593,9 +652,6 @@ namespace DCL.PluginSystem.Global
             public BackpackSettings BackpackSettings { get; private set; }
 
             [field: SerializeField]
-            public string[] EmbeddedEmotes { get; private set; }
-
-            [field: SerializeField]
             public SettingsMenuConfiguration SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
@@ -640,7 +696,6 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailWidth { get; private set; }
 
             [field: Header("Place Reel")]
-
             [field: SerializeField]
             public int PlaceGridLayoutFixedColumnCount { get; private set; }
 
@@ -650,8 +705,14 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public int PlaceThumbnailWidth { get; private set; }
 
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
-                EmbeddedEmotes.Select(s => new URN(s)).ToArray();
+            [field: SerializeField]
+            public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
+
+            [field: Header("Place Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
+
+            [field: Header("Event Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
         }
     }
 }

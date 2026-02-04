@@ -29,6 +29,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
@@ -36,6 +37,7 @@ using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -64,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IScreenModeController screenModeController;
-
+        private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
@@ -89,7 +91,8 @@ namespace DCL.PluginSystem.Global
             IEthereumApi ethereumApi,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController)
+            IScreenModeController screenModeController,
+            ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -104,12 +107,13 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.thumbnailProvider = thumbnailProvider;
-            this.eventBus =  eventBus;
+            this.eventBus = eventBus;
             this.webBrowser = webBrowser;
             this.ethereumApi = ethereumApi;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
             this.screenModeController = screenModeController;
+            this.imageControllerProvider = imageControllerProvider;
         }
 
         public void Dispose()
@@ -163,7 +167,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 giftItemLoaderService,
                 wearableCatalog,
-                webRequestController,
+                imageControllerProvider,
                 sharedSpaceManager
             );
 
@@ -186,7 +190,7 @@ namespace DCL.PluginSystem.Global
 
             giftSelectionController = new GiftSelectionController(
                 GiftSelectionController
-                    .CreateLazily(giftSelectionPopupPrefab, null),
+                   .CreateLazily(giftSelectionPopupPrefab, null),
                 componentFactory,
                 giftInventoryService,
                 equippedStatusProvider,
@@ -196,7 +200,7 @@ namespace DCL.PluginSystem.Global
 
             giftTransferStatusController = new GiftTransferController(
                 GiftTransferController
-                    .CreateLazily(giftTransferPopupPrefab, null),
+                   .CreateLazily(giftTransferPopupPrefab, null),
                 webBrowser,
                 eventBus,
                 mvcManager,
@@ -206,7 +210,7 @@ namespace DCL.PluginSystem.Global
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
-                .CreateLazily(giftTransferSuccessPopupPrefab,
+               .CreateLazily(giftTransferSuccessPopupPrefab,
                     null));
 
             mvcManager.RegisterController(giftSelectionController);
@@ -214,8 +218,9 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
 
-            #region EDITOR_TEST
+#region EDITOR_TEST
 #if UNITY_EDITOR
+
             // NOTE: For triggering notification in the editor because
             // NOTE: method in the documentation for faking notifications doesn't work
             // NOTE: look for TestGiftNotification component on TEST_GIFT_NOTIFICATIONS game object
@@ -224,7 +229,7 @@ namespace DCL.PluginSystem.Global
             var go = new GameObject().AddComponent<TestGiftNotification>();
             go.name = "TEST_GIFT_NOTIFICATIONS";
 #endif
-            #endregion
+#endregion
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -248,14 +253,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }
-
-            [field: SerializeField]
-            public string[] EmbeddedEmotes { get; private set; }
-
-            public IReadOnlyCollection<URN> EmbeddedEmotesAsURN()
-            {
-                return EmbeddedEmotes.Select(s => new URN(s)).ToArray();
-            }
         }
     }
 }

@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -47,9 +48,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory
+            URLSubdirectory customStreamingSubdirectory,
+            EntitiesAnalytics entitiesAnalytics
         )
-            : base(world, cache, webRequestController)
+            : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;
@@ -107,8 +109,8 @@ namespace DCL.AvatarRendering.Emotes.Load
             RepoolableList<IEmote> resolvedEmotesTmp)
         {
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
-            // Keep only successful emotes in the result list
-            resolvedEmotesTmp.List.RemoveAll(emote => !successfulPointers.Contains(emote.GetUrn()));
+            // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
+            resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
 
             World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
@@ -126,6 +128,13 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
+                // Skip emotes with unresolved DTO - treat as failed
+                if (emote.DTO?.Metadata == null)
+                {
+                    emotesWithResponse++;
+                    continue;
+                }
+
                 if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;
@@ -160,10 +169,15 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (missingPointers.Count <= 0) return false;
 
+            List<URN> convertedPointers = new (missingPointers.Count);
+
+            foreach (URN pointer in missingPointers)
+                convertedPointers.Add(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(pointer));
+
             var promise = EmotesFromRealmPromise.Create(
                 World!,
-                new GetEmotesByPointersFromRealmIntention(missingPointers.ToList(),
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)
+                new GetEmotesByPointersFromRealmIntention(convertedPointers,
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)
                 ),
                 partitionComponent
             );

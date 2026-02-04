@@ -41,7 +41,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
+        [None(typeof(StopCharacterMotion), typeof(PlayerTeleportIntent), typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported), typeof(PlayerMoveToWithDurationIntent))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
@@ -68,10 +68,11 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            if (platformComponent.RotationChanged || platformComponent.PositionChanged)
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6580
+            // We used to check for platform changes, but that might get out of sync on low-framerate devices
+            if (platformComponent.CurrentPlatform)
             {
-                // Similarly to the old client, we need to adjust position directly for the platform delta. Otherwise, avatar can be pushed away.
-                characterController.transform.position += rigidTransform.PlatformDelta;
+                characterController.transform.position = platformComponent.CurrentPlatform.TransformPoint(platformComponent.LastAvatarRelativePosition);
                 Physics.SyncTransforms();
             }
 
@@ -83,7 +84,8 @@ namespace DCL.CharacterMotion.Systems
                     + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
-            bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = deltaMovement.y <= 0 &&
+                EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;

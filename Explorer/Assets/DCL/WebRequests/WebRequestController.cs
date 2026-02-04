@@ -26,7 +26,7 @@ namespace DCL.WebRequests
 
         private readonly WebRequestBudget budget;
 
-        IRequestHub IWebRequestController.requestHub => requestHub;
+        IRequestHub IWebRequestController.RequestHub => requestHub;
 
         public WebRequestController(
             IWebRequestsAnalyticsContainer analyticsContainer,
@@ -108,7 +108,7 @@ namespace DCL.WebRequests
                     {
                         // Ignore the file error as we always try to read from the file first
                         if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+                            Sentry.Unity.SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
 
                         throw;
                     }

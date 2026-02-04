@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
@@ -18,14 +19,14 @@ using Unity.PerformanceTesting;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    public class PerformanceBenchmark
+    public abstract class PerformanceBenchmark
     {
+        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
         protected SampleGroup? iterationTotalTime;
+        protected SampleGroup? iterationDownloadedData;
 
         protected IWebRequestController? controller;
         protected PerformanceTestWebRequestsAnalytics analytics;
-
-        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
 
         private MockedReportScope? reportScope;
 
@@ -33,6 +34,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void SetUpBenchmark()
         {
             iterationTotalTime = new SampleGroup("Iteration Total Time", SampleUnit.Microsecond);
+            iterationDownloadedData = new SampleGroup("Iteration Downloaded Data", SampleUnit.Megabyte);
             reportScope = new MockedReportScope();
         }
 
@@ -40,7 +42,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void TearDown() =>
             reportScope?.Dispose();
 
-        public void CreateController(int concurrency, bool disableABCache = false)
+        protected void CreateController(int concurrency, bool disableABCache = false)
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
@@ -49,7 +51,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
-        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
+        protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
             int iterationsCount, TimeSpan delayBetweenIterations, Action? onIterationFinished = null)
         {
             analytics.WarmingUp = true;
@@ -64,21 +66,34 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             {
                 long ts = Stopwatch.GetTimestamp();
 
+                double downloadedData = Sum(analytics.downloadedDataSize);
+
                 // Loop though parameters to fill up all required tasks
 
                 var tasks = new UniTask[targetRequestsCount];
 
                 for (int j = 0; j < targetRequestsCount; j++)
-                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync();
+                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync(ReportCategory.GENERIC_WEB_REQUEST);
 
                 await UniTask.WhenAll(tasks);
 
                 Measure.Custom(iterationTotalTime, PerformanceTestWebRequestsAnalytics.ToMs(ts, Stopwatch.GetTimestamp()));
+                Measure.Custom(iterationDownloadedData, Sum(analytics.downloadedDataSize) - downloadedData);
 
                 onIterationFinished?.Invoke();
 
                 await UniTask.Delay(delayBetweenIterations);
             }
+        }
+
+        protected static double Sum(SampleGroup sampleGroup)
+        {
+            double sum = 0.0;
+
+            foreach (double sample in sampleGroup.Samples)
+                sum += sample;
+
+            return sum;
         }
     }
 }

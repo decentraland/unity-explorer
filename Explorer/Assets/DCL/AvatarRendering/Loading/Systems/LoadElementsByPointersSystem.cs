@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -30,11 +31,13 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected static readonly ThreadSafeListPool<TDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
 
         private readonly IWebRequestController webRequestController;
+        private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly StringBuilder bodyBuilder = new ();
 
-        protected LoadElementsByPointersSystem(World world, IStreamableCache<TAsset, TIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        protected LoadElementsByPointersSystem(World world, IStreamableCache<TAsset, TIntention> cache, IWebRequestController webRequestController, EntitiesAnalytics entitiesAnalytics) : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.entitiesAnalytics = entitiesAnalytics;
         }
 
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, StreamableLoadingState state,
@@ -85,10 +88,14 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             bodyBuilder.Append("]}");
 
+            using EntitiesAnalytics.RequestEnvelope analytics = entitiesAnalytics.Track(AnalyticsEvents.Endpoints.AVATAR_ATTACHMENT_RETRIEVED, endIndex - startIndex);
+
             using PoolExtensions.Scope<List<TDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
             await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportCategory())
                                       .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+            analytics.OnRequestFinished(dtoPooledList.Value.Count);
 
             foreach (TDTO entityDefinitionBase in dtoPooledList.Value)
             {
