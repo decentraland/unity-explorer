@@ -10,7 +10,6 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
-using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -68,7 +67,6 @@ namespace DCL.PluginSystem.Global
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
-        private EventInfoController? eventInfoController;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -130,7 +128,6 @@ namespace DCL.PluginSystem.Global
         {
             communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
-            eventInfoController?.Dispose();
             notificationHandler.Dispose();
             rpcCommunitiesService.Dispose();
         }
@@ -188,16 +185,6 @@ namespace DCL.PluginSystem.Global
                 profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
-            EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
-            var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
-            eventInfoController = new EventInfoController(eventInfoViewFactory,
-                webRequestController,
-                clipboard,
-                webBrowser,
-                eventsApiService,
-                realmNavigator);
-            mvcManager.RegisterController(eventInfoController);
-
             rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
@@ -210,8 +197,5 @@ namespace DCL.PluginSystem.Global
 
         [field: Header("Community Creation Edition Wizard")]
         [field: SerializeField] internal AssetReferenceGameObject CommunityCreationEditionPrefab { get; private set; }
-
-        [field: Header("Event info panel")]
-        [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
     }
 }

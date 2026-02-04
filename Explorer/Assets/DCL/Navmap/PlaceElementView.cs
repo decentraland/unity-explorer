@@ -75,8 +75,7 @@ namespace DCL.Navmap
 
         private void OnDestroy()
         {
-            if (imageController != null)
-                imageController.Dispose();
+            imageController?.Dispose();
         }
     }
 }
