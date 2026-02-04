@@ -86,6 +86,10 @@ namespace DCL.Places
 
         public void Deactivate()
         {
+            // Must be before setting the view inactive or the focus state will be false regardless
+            if (view.IsSearchBarFocused)
+                RestoreShortcutsInput();
+
             isSectionActivated = false;
             view.SetViewActive(false);
             view.ClearCategories();
