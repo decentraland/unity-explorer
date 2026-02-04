@@ -77,8 +77,8 @@ namespace DCL.Events
         private void OnGoToNextDayButtonClicked() =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, currentDay.AddDays(1));
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo))).Forget();
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
 
         private void OnSectionOpen(EventsSection section, DateTime date)
         {
@@ -98,7 +98,7 @@ namespace DCL.Events
 
             var today = DateTime.Today;
 
-            string dayText = fromDate.Date == today ? 
+            string dayText = fromDate.Date == today ?
                 TODAY_TEXT :
                 fromDate.Date == today.AddDays(1) ?
                     TOMORROW_TEXT :

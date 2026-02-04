@@ -55,7 +55,6 @@ namespace DCL.Communities.EventInfo
             scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO!));
-            interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
             permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
             addToCalendarButton.onClick.AddListener(() => AddToCalendarButtonClicked?.Invoke(eventDTO!));
@@ -89,7 +88,7 @@ namespace DCL.Communities.EventInfo
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
-            UpdateInterestedButtonState();
+            UpdateInterestedButtonState(eventData.Attending);
             eventDescription.text = eventData.Description;
             jumpInButton.gameObject.SetActive(eventData.Live);
             interestedButton.gameObject.SetActive(!eventData.Live);
@@ -127,7 +126,10 @@ namespace DCL.Communities.EventInfo
             return result;
         }
 
-        public void UpdateInterestedButtonState() =>
-            interestedButton.SetSelected(eventDTO!.Attending);
+        public void UpdateInterestedButtonState(bool isInterested)
+        {
+            eventDTO!.Attending = isInterested;
+            interestedButton.SetSelected(isInterested);
+        }
     }
 }

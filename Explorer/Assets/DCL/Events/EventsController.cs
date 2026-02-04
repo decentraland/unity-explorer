@@ -36,7 +36,8 @@ namespace DCL.Events
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -45,7 +46,7 @@ namespace DCL.Events
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             EventsStateService eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader);
+            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader);
 
             view.CreateButtonClicked += OnCreateButtonClicked;

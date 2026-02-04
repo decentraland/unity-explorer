@@ -27,8 +27,10 @@ namespace DCL.Events
         private readonly IPlacesAPIService placesAPIService;
         private readonly EventsStateService eventsStateService;
         private readonly IMVCManager mvcManager;
+        private readonly EventCardActionsController eventCardActionsController;
 
         private CancellationTokenSource? loadEventsCts;
+        private CancellationTokenSource? eventCardOperationsCts;
 
         private static readonly ListObjectPool<List<EventDTO>> EVENTS_GROUPED_BY_DAY_POOL = new (defaultCapacity: 5);
 
@@ -39,7 +41,8 @@ namespace DCL.Events
             IPlacesAPIService placesAPIService,
             EventsStateService eventsStateService,
             IMVCManager mvcManager,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -47,6 +50,7 @@ namespace DCL.Events
             this.placesAPIService = placesAPIService;
             this.eventsStateService = eventsStateService;
             this.mvcManager = mvcManager;
+            this.eventCardActionsController = eventCardActionsController;
 
             view.SetDependencies(eventsStateService, thumbnailLoader);
             view.InitializeEventsLists();
@@ -56,6 +60,11 @@ namespace DCL.Events
             view.DaysRangeChanged += OnDaysRangeChanged;
             view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
             view.EventCardClicked += OnEventCardClicked;
+            view.EventInterestedButtonClicked += OnEventInterestedButtonClicked;
+            view.EventAddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+            view.EventJumpInButtonClicked += OnEventJumpInButtonClicked;
+            view.EventShareButtonClicked += OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
 
         public void Dispose()
@@ -68,8 +77,14 @@ namespace DCL.Events
             view.DaysRangeChanged -= OnDaysRangeChanged;
             view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
             view.EventCardClicked -= OnEventCardClicked;
+            view.EventInterestedButtonClicked -= OnEventInterestedButtonClicked;
+            view.EventAddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+            view.EventJumpInButtonClicked -= OnEventJumpInButtonClicked;
+            view.EventShareButtonClicked -= OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
 
             loadEventsCts?.SafeCancelAndDispose();
+            eventCardOperationsCts?.SafeCancelAndDispose();
         }
 
         private void OnSectionOpened(EventsSection section, DateTime fromDate)
@@ -93,8 +108,29 @@ namespace DCL.Events
         private void OnDaySelectorButtonClicked(DateTime date) =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo))).Forget();
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+
+        private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.SetEventAsInterestedAsync(eventInfo, eventCardView, null, eventCardOperationsCts.Token).Forget();
+        }
+
+        private void OnEventAddToCalendarButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.AddEventToCalendar(eventInfo);
+
+        private void OnEventJumpInButtonClicked(EventDTO eventInfo)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.JumpInEvent(eventInfo, eventCardOperationsCts.Token);
+        }
+
+        private void OnEventShareButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.ShareEvent(eventInfo);
+
+        private void OnEventCopyLinkButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.CopyEventLink(eventInfo);
 
         private void LoadEvents(DateTime fromDate, int numberOfDays)
         {

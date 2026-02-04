@@ -3,6 +3,8 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Controls.Configs;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,12 +19,22 @@ namespace DCL.Events
     {
         private const string HOST_FORMAT = "By <b>{0}</b>";
 
-        public event Action<EventDTO, PlacesData.PlaceInfo?>? MainButtonClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? MainButtonClicked;
+        public event Action<EventDTO, EventCardView>? InterestedButtonClicked;
+        public event Action<EventDTO>? AddToCalendarButtonClicked;
+        public event Action<EventDTO>? JumpInButtonClicked;
+        public event Action<EventDTO>? EventShareButtonClicked;
+        public event Action<EventDTO>? EventCopyLinkButtonClicked;
 
-        [SerializeField] private Button mainButton = null!;
         [SerializeField] private GameObject backgroundNormal = null!;
         [SerializeField] private GameObject backgroundRemindMe = null!;
         [SerializeField] private GameObject backgroundLive = null!;
+        [SerializeField] private Button mainButton = null!;
+        [SerializeField] private ButtonWithSelectableStateView interestedButton = null!;
+        [SerializeField] private Button addToCalendarButton = null!;
+        [SerializeField] private Button jumpInButton = null!;
+        [SerializeField] private Button shareButton = null!;
+        [SerializeField] private EventContextMenuConfiguration contextMenuSettings = null!;
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventThumbnail = null!;
@@ -33,16 +45,48 @@ namespace DCL.Events
 
         private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
-        private CancellationTokenSource loadingThumbnailCts = null!;
+        private GenericContextMenu? contextMenu;
+        private CancellationTokenSource? loadingThumbnailCts;
+        private CancellationTokenSource? openContextMenuCts;
 
         private void Awake()
         {
             if (mainButton != null)
-                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentEventInfo, currentPlaceInfo));
+                mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentEventInfo, currentPlaceInfo, this));
+
+            if (interestedButton != null)
+                interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(currentEventInfo, this));
+
+            if (addToCalendarButton != null)
+                addToCalendarButton.onClick.AddListener(() => AddToCalendarButtonClicked?.Invoke(currentEventInfo));
+
+            if (jumpInButton != null)
+                jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentEventInfo));
+
+            if (shareButton != null)
+                shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
+
+            if (contextMenuSettings != null)
+            {
+                contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding,
+                                  elementsSpacing: contextMenuSettings.ElementsSpacing,
+                                  offsetFromTarget: contextMenuSettings.OffsetFromTarget)
+                             .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(currentEventInfo)))
+                             .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(currentEventInfo)));
+            }
         }
 
-        private void OnDisable() =>
+        private void OpenContextMenu(Vector2 position)
+        {
+            openContextMenuCts = openContextMenuCts.SafeRestart();
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu!, position), openContextMenuCts.Token);
+        }
+
+        private void OnDisable()
+        {
             loadingThumbnailCts.SafeCancelAndDispose();
+            openContextMenuCts.SafeCancelAndDispose();
+        }
 
         private void OnDestroy()
         {
@@ -54,15 +98,6 @@ namespace DCL.Events
         {
             currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
-
-            if (backgroundNormal != null)
-                backgroundNormal.SetActive(eventInfo is { attending: false, live: false });
-
-            if (backgroundRemindMe != null)
-                backgroundRemindMe.SetActive(eventInfo is { attending: true, live: false });
-
-            if (backgroundLive != null)
-                backgroundLive.SetActive(eventInfo.live);
 
             if (eventThumbnail != null)
             {
@@ -82,7 +117,39 @@ namespace DCL.Events
             foreach (GameObject liveMark in liveMarks)
                 liveMark.SetActive(eventInfo.live);
 
-            ;
+            UpdateInterestedButtonState(currentEventInfo.Attending);
+            UpdateVisuals();
+        }
+
+        public void UpdateInterestedButtonState(bool isInterested)
+        {
+            currentEventInfo.attending = isInterested;
+
+            if (interestedButton == null)
+                return;
+
+            interestedButton.SetSelected(isInterested);
+        }
+
+        public void UpdateVisuals()
+        {
+            if (backgroundNormal != null)
+                backgroundNormal.SetActive(currentEventInfo is { attending: false, live: false });
+
+            if (backgroundRemindMe != null)
+                backgroundRemindMe.SetActive(currentEventInfo is { attending: true, live: false });
+
+            if (backgroundLive != null)
+                backgroundLive.SetActive(currentEventInfo.live);
+
+            if (interestedButton != null)
+                interestedButton.gameObject.SetActive(!currentEventInfo.live);
+
+            if (addToCalendarButton != null)
+                addToCalendarButton.gameObject.SetActive(!currentEventInfo.live);
+
+            if (jumpInButton != null)
+                jumpInButton.gameObject.SetActive(currentEventInfo.live);
         }
     }
 }

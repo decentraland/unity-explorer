@@ -14,7 +14,12 @@ namespace DCL.Events
     public class EventsCalendarView : MonoBehaviour
     {
         public event Action<DateTime>? DaySelectorButtonClicked;
-        public event Action<EventDTO, PlacesData.PlaceInfo?>? EventCardClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? EventCardClicked;
+        public event Action<EventDTO, EventCardView>? EventInterestedButtonClicked;
+        public event Action<EventDTO>? EventAddToCalendarButtonClicked;
+        public event Action<EventDTO>? EventJumpInButtonClicked;
+        public event Action<EventDTO>? EventShareButtonClicked;
+        public event Action<EventDTO>? EventCopyLinkButtonClicked;
 
         private const int EVENT_CARD_SMALL_PREFAB_INDEX = 0;
         private const int EVENT_CARD_BIG_PREFAB_INDEX = 1;
@@ -128,6 +133,16 @@ namespace DCL.Events
                 // Setup card events
                 highlightedBanner.MainButtonClicked -= OnEventCardClicked;
                 highlightedBanner.MainButtonClicked += OnEventCardClicked;
+                highlightedBanner.InterestedButtonClicked -= OnEventInterestedButtonClicked;
+                highlightedBanner.InterestedButtonClicked += OnEventInterestedButtonClicked;
+                highlightedBanner.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+                highlightedBanner.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+                highlightedBanner.JumpInButtonClicked -= OnEventJumpInButtonClicked;
+                highlightedBanner.JumpInButtonClicked += OnEventJumpInButtonClicked;
+                highlightedBanner.EventShareButtonClicked -= OnEventShareButtonClicked;
+                highlightedBanner.EventShareButtonClicked += OnEventShareButtonClicked;
+                highlightedBanner.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+                highlightedBanner.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
             }
         }
 
@@ -182,6 +197,16 @@ namespace DCL.Events
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;
             cardView.MainButtonClicked += OnEventCardClicked;
+            cardView.InterestedButtonClicked -= OnEventInterestedButtonClicked;
+            cardView.InterestedButtonClicked += OnEventInterestedButtonClicked;
+            cardView.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+            cardView.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+            cardView.JumpInButtonClicked -= OnEventJumpInButtonClicked;
+            cardView.JumpInButtonClicked += OnEventJumpInButtonClicked;
+            cardView.EventShareButtonClicked -= OnEventShareButtonClicked;
+            cardView.EventShareButtonClicked += OnEventShareButtonClicked;
+            cardView.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+            cardView.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
 
             return listItem;
         }
@@ -189,7 +214,22 @@ namespace DCL.Events
         private void OnDaySelectorButtonClicked(DateTime date) =>
             DaySelectorButtonClicked?.Invoke(date);
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            EventCardClicked?.Invoke(eventInfo, placeInfo);
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            EventCardClicked?.Invoke(eventInfo, placeInfo, eventCardView);
+
+        private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView) =>
+            EventInterestedButtonClicked?.Invoke(eventInfo, eventCardView);
+
+        private void OnEventAddToCalendarButtonClicked(EventDTO eventInfo) =>
+            EventAddToCalendarButtonClicked?.Invoke(eventInfo);
+
+        private void OnEventJumpInButtonClicked(EventDTO eventInfo) =>
+            EventJumpInButtonClicked?.Invoke(eventInfo);
+
+        private void OnEventShareButtonClicked(EventDTO eventInfo) =>
+            EventShareButtonClicked?.Invoke(eventInfo);
+
+        private void OnEventCopyLinkButtonClicked(EventDTO eventInfo) =>
+            EventCopyLinkButtonClicked?.Invoke(eventInfo);
     }
 }

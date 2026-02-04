@@ -271,5 +271,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dccd123838f4553b4d13208588ee777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Events.EventCardView
+  backgroundNormal: {fileID: 0}
+  backgroundRemindMe: {fileID: 0}
+  backgroundLive: {fileID: 0}
   mainButton: {fileID: 7278540001687877542}
+  interestedButton: {fileID: 0}
+  addToCalendarButton: {fileID: 0}
+  jumpInButton: {fileID: 0}
+  shareButton: {fileID: 0}
+  contextMenuSettings: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
+  eventThumbnail: {fileID: 0}
   eventText: {fileID: 7408604543191535995}
+  hostName: {fileID: 0}
+  eventDate: {fileID: 0}
+  liveMarks: []

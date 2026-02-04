@@ -16,7 +16,7 @@ namespace DCL.Events
     {
         public event Action? BackButtonClicked;
         public event Action? GoToNextDayButtonClicked;
-        public event Action<EventDTO, PlacesData.PlaceInfo?>? EventCardClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? EventCardClicked;
 
         [Header("Events Counter")]
         [SerializeField] private TMP_Text eventsCounter = null!;
@@ -112,7 +112,7 @@ namespace DCL.Events
             eventsLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            EventCardClicked?.Invoke(eventInfo, placeInfo);
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            EventCardClicked?.Invoke(eventInfo, placeInfo, eventCardView);
     }
 }
