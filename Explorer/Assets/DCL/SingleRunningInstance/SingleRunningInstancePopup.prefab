@@ -113,6 +113,10 @@ PrefabInstance:
       value: Exit Application
       objectReference: {fileID: 0}
     - target: {fileID: 5846655602745955872, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+      propertyPath: m_RenderMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5846655602745955872, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
       propertyPath: m_SortingOrder
       value: 110
       objectReference: {fileID: 0}
@@ -127,5 +131,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9152785347356188261, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3414335857880962699}
   m_SourcePrefab: {fileID: 100100000, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+--- !u!1 &8252483900249303298 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9152785347356188261, guid: 0fce4c1a785b1495bbf861787a9a3224, type: 3}
+  m_PrefabInstance: {fileID: 973779885865416551}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3414335857880962699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8252483900249303298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 1
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
