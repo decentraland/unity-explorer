@@ -73,15 +73,11 @@ pub unsafe extern "C" fn segment_server_identify(
 
     let user = user.unwrap();
 
-    SEGMENT_SERVER.try_execute(&|segment, id| {
+    SEGMENT_SERVER.try_execute(|segment, id| {
         let user = user.clone();
-        let segment = segment.clone();
         let traits_json = as_str(traits_json);
         let context_json = as_str(context_json);
-
-        let operation =
-            SegmentServer::enqueue_identify(segment, id, user, traits_json, context_json);
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SegmentServer::enqueue_identify(segment, id, user, traits_json, context_json)
     })
 }
 
@@ -104,22 +100,13 @@ pub unsafe extern "C" fn segment_server_track(
 
     let user = user.unwrap();
 
-    SEGMENT_SERVER.try_execute(&|segment, id| {
+    SEGMENT_SERVER.try_execute(|segment, id| {
         let user = user.clone();
-        let segment = segment.clone();
         let event_name = as_str(event_name);
         let properties_json = as_str(properties_json);
         let context_json = as_str(context_json);
 
-        let operation = SegmentServer::enqueue_track(
-            segment,
-            id,
-            user,
-            event_name,
-            properties_json,
-            context_json,
-        );
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        SegmentServer::enqueue_track(segment, id, user, event_name, properties_json, context_json)
     })
 }
 
@@ -142,32 +129,26 @@ pub unsafe extern "C" fn segment_server_instant_track_and_flush(
 
     let user = user.unwrap();
 
-    SEGMENT_SERVER.try_execute(&|segment, id| {
+    SEGMENT_SERVER.try_execute(|segment, id| {
         let user = user.clone();
-        let segment = segment.clone();
         let event_name = as_str(event_name);
         let properties_json = as_str(properties_json);
         let context_json = as_str(context_json);
 
-        let operation = SegmentServer::instant_track_and_flush(
+        SegmentServer::instant_track_and_flush(
             segment,
             id,
             user,
             event_name,
             properties_json,
             context_json,
-        );
-        SEGMENT_SERVER.async_runtime.spawn(operation);
+        )
     })
 }
 
 #[no_mangle]
 pub extern "C" fn segment_server_flush() -> OperationHandleId {
-    SEGMENT_SERVER.try_execute(&|segment, id| {
-        let segment = segment.clone();
-        let operation = SegmentServer::flush(segment, id);
-        SEGMENT_SERVER.async_runtime.spawn(operation);
-    })
+    SEGMENT_SERVER.try_execute(SegmentServer::flush)
 }
 
 #[no_mangle]

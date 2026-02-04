@@ -10,7 +10,8 @@ pub fn new_track(
     properties_json: &str,
     context_json: &str,
 ) -> Result<Track> {
-    let properties_json: Value = serde_json::from_str(properties_json).context("Cannot parse properties")?;
+    let properties_json: Value =
+        serde_json::from_str(properties_json).context("Cannot parse properties")?;
     let context_json: Value = serde_json::from_str(context_json).context("Cannot parse context")?;
 
     Ok(Track {
@@ -93,6 +94,9 @@ mod tests {
         let properties_json = r#"{"scene_hash": null,"old_parcel": "(NaN, NaN)","is_empty_scene": ,"new_parcel": "(1, -1)"}"#;
         let context_json = r#"{}"#;
         let result: Result<Track> = new_track(user, event_name, properties_json, context_json);
-        assert!(result.is_err(), "Serialization should fail due wrong properties_json");
+        assert!(
+            result.is_err(),
+            "Serialization should fail due wrong properties_json"
+        );
     }
 }

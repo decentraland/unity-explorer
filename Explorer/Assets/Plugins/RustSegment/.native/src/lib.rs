@@ -43,21 +43,17 @@ mod tests {
         let persistent_path = std::env::var("SEGMENT_QUEUE_PATH").unwrap();
 
         SEGMENT_SERVER.initialize(persistent_path, 100, write_key, test_callback, None);
-        SEGMENT_SERVER.try_execute(&|segment, id| {
-            let operation = SegmentServer::enqueue_track(
-                segment,
+        SEGMENT_SERVER.try_execute(|segment, id| {
+            SegmentServer::enqueue_track(
+                segment.clone(),
                 id,
                 segment::message::User::default(),
                 "rust_check",
                 "{}",
                 "{}",
-            );
-            SEGMENT_SERVER.async_runtime.block_on(operation);
+            )
         });
-        SEGMENT_SERVER.try_execute(&|segment, id| {
-            let operation = SegmentServer::flush(segment, id);
-            SEGMENT_SERVER.async_runtime.block_on(operation);
-        });
+        SEGMENT_SERVER.try_execute(|segment, id| SegmentServer::flush(segment.clone(), id));
     }
 
     unsafe extern "C" fn test_callback(id: OperationHandleId, response: Response) {

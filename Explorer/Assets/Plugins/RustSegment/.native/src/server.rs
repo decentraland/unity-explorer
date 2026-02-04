@@ -18,6 +18,9 @@ use segment::{
     Client, HttpClient,
 };
 
+use std::future::Future;
+use std::marker::Send;
+
 use crate::{operations, FfiCallbackFn, FfiErrorCallbackFn, OperationHandleId, Response};
 use segment::queue::queued_batcher::QueuedBatcher;
 
@@ -37,24 +40,17 @@ pub struct SegmentServer {
 }
 
 pub enum ServerState {
-    Ready(Arc<SegmentServer>),
+    Ready(Arc<SegmentServer>, tokio::runtime::Runtime),
     Disposed,
 }
 
 pub struct Server {
     state: std::sync::Mutex<ServerState>,
-    pub async_runtime: tokio::runtime::Runtime,
 }
 
 impl Default for Server {
     fn default() -> Self {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
         Self {
-            async_runtime: runtime,
             state: std::sync::Mutex::new(ServerState::Disposed),
         }
     }
@@ -77,17 +73,22 @@ impl Server {
         let mut state = state_lock.unwrap();
 
         match *state {
-            ServerState::Ready(_) => false,
+            ServerState::Ready(_, _) => false,
             ServerState::Disposed => {
+                let new_runtime = tokio::runtime::Builder::new_multi_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap();
+
                 let server = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
                     callback_fn,
                     error_fn,
-                    &self.async_runtime,
+                    &new_runtime,
                 );
-                *state = ServerState::Ready(Arc::new(server));
+                *state = ServerState::Ready(Arc::new(server), new_runtime);
                 true
             }
         }
@@ -100,20 +101,28 @@ impl Server {
         }
 
         let mut state = state_lock.unwrap();
+        let extracted = std::mem::replace(&mut *state, ServerState::Disposed);
 
-        match *state {
+        match extracted {
             ServerState::Disposed => false,
-            ServerState::Ready(_) => {
+            ServerState::Ready(_, runtime) => {
+                runtime.shutdown_background();
                 *state = ServerState::Disposed;
                 true
             }
         }
     }
 
-    pub fn try_execute(
+    pub fn try_execute<
+        F: FnOnce(Arc<SegmentServer>, OperationHandleId) -> Fut,
+        Fut: Future + Send + 'static,
+    >(
         &self,
-        func: &dyn Fn(Arc<SegmentServer>, OperationHandleId),
-    ) -> OperationHandleId {
+        func: F, // returns a task to schedule
+    ) -> OperationHandleId
+    where
+        <Fut as Future>::Output: Send,
+    {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
             return 0;
@@ -123,9 +132,10 @@ impl Server {
 
         match &*state {
             ServerState::Disposed => 0,
-            ServerState::Ready(server) => {
+            ServerState::Ready(server, runtime) => {
                 let id = server.next_id();
-                func(server.clone(), id);
+                let future_task = func(server.clone(), id);
+                runtime.spawn(future_task);
                 id
             }
         }
@@ -266,7 +276,7 @@ impl SegmentServer {
             self.context
                 .lock()
                 .await
-                .report_error(Some(id), format!("Cannot enqueue: {}", e.to_string()));
+                .report_error(Some(id), format!("Cannot enqueue: {e}"));
         } else {
             self.context.lock().await.report_success(id);
         }
@@ -294,7 +304,7 @@ impl SegmentServer {
         let mut context = instance.context.lock().await;
 
         if let Err(e) = context.batcher.flush().await {
-            context.report_error(Some(id), format!("Cannot flush: {}", e.to_string()));
+            context.report_error(Some(id), format!("Cannot flush: {e}"));
         } else {
             context.report_success(id);
         }
@@ -325,7 +335,7 @@ impl AppContext {
     pub fn report_error(&self, id: Option<OperationHandleId>, message: String) {
         let message = match id {
             Some(id) => {
-                format!("Operation {} failed: {}", id, message)
+                format!("Operation {id} failed: {message}")
             }
             None => message,
         };
