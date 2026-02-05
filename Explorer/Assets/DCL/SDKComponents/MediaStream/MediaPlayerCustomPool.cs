@@ -47,7 +47,10 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.PlatformOptionsWindows._audioMode = Windows.AudioOutput.Unity;
                 mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
             }
-
+            
+            mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
+            mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
+            mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;
             mediaPlayer.AutoOpen = false;
             mediaPlayer.enabled = true;
 
