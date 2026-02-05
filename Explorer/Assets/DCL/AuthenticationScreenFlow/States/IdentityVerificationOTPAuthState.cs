@@ -21,8 +21,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
-        public event Action<string, bool> OTPVerified;
-        public event Action OTPResend;
+        public event Action<string, bool>? OTPVerified;
+        public event Action? OTPResend;
 
         private string email;
         private CancellationToken loginCt;
