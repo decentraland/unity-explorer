@@ -7,12 +7,9 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using UnityEngine.UIElements;
-using Color = UnityEngine.Color;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 {

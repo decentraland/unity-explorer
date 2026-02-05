@@ -7,14 +7,12 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 using UnityEngine.UIElements;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
@@ -44,12 +42,25 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             HandleUIPointerEventsRemovalQuery(World);
         }
 
+        /*
+         * The SDK lets creators put a UI Pointer Events on any UiEntity regardless of the rest of its components...
+         * As defined in the SDK, UiButton entities composition breakdown:
+         * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Button/index.tsx#L80-L90
+         * - UiText ('value' property is mandatory)
+         * - (optional, but Explorer queries require it) uiTransform
+         * - (optional) uiBackground
+         * - (optional) onMouseDown
+         * - (optional) onMouseUp
+         * - (optional) onMouseEnter
+         * - (optional) onMouseLeave
+         */
         [Query]
-        [None(typeof(PBUiDropdown), typeof(PBUiInput))]
-        [All(typeof(PBUiText))]
+        [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
+        [All(typeof(PBPointerEvents), typeof(PBUiText))]
         private void ConfigureHoverStylesBehaviour(Entity entity, ref UITransformComponent uiTransformComponent)
         {
             UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, uiTransformComponent.Transform, 0.22f, 0.1f);
+            World.Add<UiButtonComponent>(entity);
         }
 
         [Query]

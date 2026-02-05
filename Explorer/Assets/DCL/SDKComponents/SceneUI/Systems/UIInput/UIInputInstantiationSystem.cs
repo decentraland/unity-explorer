@@ -13,8 +13,6 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
-using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 {
