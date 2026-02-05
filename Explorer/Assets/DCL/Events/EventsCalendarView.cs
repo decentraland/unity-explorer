@@ -195,7 +195,11 @@ namespace DCL.Events
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
             var eventData = eventsStateService.GetEventDataById(currentEventsIds[eventsListIndex][eventIndex]);
-            int itemPrefabIndex = eventData != null ? EVENT_CARD_SMALL_PREFAB_INDEX : EVENT_CARD_EMPTY_PREFAB_INDEX;
+
+            int itemPrefabIndex = eventData != null ?
+                eventData.EventInfo.highlighted || eventData.EventInfo.live || eventData.EventInfo.attending || eventData.CommunityInfo != null ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX :
+                EVENT_CARD_EMPTY_PREFAB_INDEX;
+
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
             EventCardView cardView = listItem.GetComponent<EventCardView>();
 
