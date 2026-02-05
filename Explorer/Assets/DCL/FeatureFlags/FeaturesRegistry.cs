@@ -50,6 +50,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
                 [FeatureId.DONATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)),
+                [FeatureId.FORCE_BACKFACE_CULLING] = featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING) || appArgs.HasFlag(AppArgsFlags.FORCE_BACKFACE_CULLING),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -159,5 +160,6 @@ namespace DCL.FeatureFlags
         PRIVATE_CHAT_REQUIRES_TOPIC = 40,
         STOP_ON_DUPLICATE_IDENTITY = 41,
         DONATIONS = 42,
+        FORCE_BACKFACE_CULLING = 43,
     }
 }

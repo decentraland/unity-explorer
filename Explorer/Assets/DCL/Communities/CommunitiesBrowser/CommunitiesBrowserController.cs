@@ -218,6 +218,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Deactivate()
         {
+            // Must be before setting the view inactive or the focus state will be false regardless
+            if (view.IsSearchBarFocused)
+                RestoreInput(string.Empty);
+
             isSectionActivated = false;
             view.SetViewActive(false);
             searchCancellationCts?.SafeCancelAndDispose();

@@ -144,6 +144,10 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4153455439339242846, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: _spritePixelsPerUnitMultiplier
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4561718667523275783, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -154,6 +158,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+    - {fileID: 6268008304506398115, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+    - {fileID: 1592991949209245285, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:

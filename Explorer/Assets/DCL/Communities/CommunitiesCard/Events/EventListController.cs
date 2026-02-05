@@ -154,7 +154,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnMainButtonClicked(PlaceAndEventDTO eventData) =>
-            mvcManager.ShowAndForget(EventInfoController.IssueCommand(new EventInfoParameter(eventData.Event, eventData.Place)), cancellationToken);
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventData.Event, eventData.Place)), cancellationToken);
 
         public override void Reset()
         {

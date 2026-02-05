@@ -103,6 +103,7 @@ namespace DCL.Backpack
                 AvatarWearableCategoryEnum.Body, string.Empty));
 
             backpackGridController.Deactivate();
+            categoriesPresenter.Deactivate();
         }
 
         public void Animate(int triggerId) =>

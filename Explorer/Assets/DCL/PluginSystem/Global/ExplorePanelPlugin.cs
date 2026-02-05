@@ -40,6 +40,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
+using DCL.Communities.EventInfo;
 using DCL.Donations;
 using DCL.Events;
 using DCL.EventsApi;
@@ -168,6 +169,7 @@ namespace DCL.PluginSystem.Global
         private PlacesController? placesController;
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
+        private EventDetailPanelController? eventDetailPanelController;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -299,12 +301,18 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            upscalingController.Dispose();
             categoryFilterController?.Dispose();
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
+            placesController?.Dispose();
+            explorePanelController?.Dispose();
+            eventsController?.Dispose();
+            eventDetailPanelController?.Dispose();
+            placeDetailPanelController?.Dispose();
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -312,12 +320,6 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
             dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
             dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
-            placesController?.Dispose();
-            upscalingController.Dispose();
-            explorePanelController?.Dispose();
-            eventsController?.Dispose();
-            upscalingController?.Dispose();
-            placeDetailPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -527,7 +529,17 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
-            eventsController = new EventsController(eventsView, cursor);
+            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager);
+
+            EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
+            var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
+            eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
+                webRequestController,
+                clipboard,
+                webBrowser,
+                eventsApiService,
+                realmNavigator);
+            mvcManager.RegisterController(eventDetailPanelController);
 
             explorePanelController = new
                 ExplorePanelController(
@@ -686,6 +698,9 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Place Detail Panel")]
             [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
+
+            [field: Header("Event Detail Panel")]
+            [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
         }
     }
 }

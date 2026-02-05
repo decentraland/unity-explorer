@@ -54,21 +54,23 @@ namespace DCL.Backpack.Gifting.Presenters
             walletAddressController = new UserWalletAddressElementPresenter(view.UserProfileWallet);
 
             view.UserProfileImage.Bind(profileThumbnail);
-            view.SearchBar.inputField.onSelect.AddListener(OnSearchSelected);
-            view.SearchBar.inputField.onDeselect.AddListener(OnSearchDeselected);
+            view.SearchBar.inputField.onSelect.AddListener(DisableInputs);
+            view.SearchBar.inputField.onDeselect.AddListener(EnableInputs);
             view.SearchBar.inputField.onValueChanged.AddListener(DebounceSearch);
             view.SearchBar.clearSearchButton.onClick.AddListener(ClearSearch);
         }
 
-        private void OnSearchSelected(string text)
+        public void Clear()
         {
-            inputBlock.Disable(BLOCKED_INPUTS);
+            if (view.SearchBar.inputField.isFocused)
+                EnableInputs(string.Empty);
         }
 
-        private void OnSearchDeselected(string text)
-        {
+        private void DisableInputs(string text) =>
+            inputBlock.Disable(BLOCKED_INPUTS);
+
+        private void EnableInputs(string text) =>
             inputBlock.Enable(BLOCKED_INPUTS);
-        }
 
         public async UniTask SetupAsync(string userId, string username, CancellationToken ct)
         {
