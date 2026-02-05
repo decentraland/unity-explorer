@@ -372,7 +372,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                 try
                 {
                     newUserProfile.Name = view.ProfileNameInputField.Text;
-                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct);
+                    Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
                     await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
