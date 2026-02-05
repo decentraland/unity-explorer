@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
     public class FakeTrimmedWearable : ITrimmedWearable
     {
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-        public TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
+        public TrimmedWearableDTO TrimmedDTO { get; }
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public FakeTrimmedWearable(

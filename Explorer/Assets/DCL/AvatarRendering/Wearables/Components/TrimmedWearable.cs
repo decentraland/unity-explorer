@@ -14,7 +14,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         }
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-        public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
+        public TrimmedWearableDTO TrimmedDTO => TrimmedModel.Asset!;
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public int Amount { get; set; }

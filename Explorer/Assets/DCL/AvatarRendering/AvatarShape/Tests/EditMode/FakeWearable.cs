@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-        public TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
+        public TrimmedWearableDTO TrimmedDTO { get; }
         public AvatarAttachmentDTO DTO { get; }
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
 

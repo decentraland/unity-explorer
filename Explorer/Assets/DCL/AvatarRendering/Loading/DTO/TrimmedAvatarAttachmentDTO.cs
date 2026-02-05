@@ -24,7 +24,6 @@ namespace DCL.AvatarRendering.Loading.DTO
             //urn
             public string id;
             public string rarity;
-            public bool isSmart;
             public string name;
         }
 
