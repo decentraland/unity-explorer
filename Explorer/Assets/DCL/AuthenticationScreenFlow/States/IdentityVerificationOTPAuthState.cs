@@ -10,7 +10,7 @@ using System.Threading;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public class IdentityVerificationOTPAuthState : AuthStateBase, IPayloadedState<(string email, CancellationToken ct)>
     {

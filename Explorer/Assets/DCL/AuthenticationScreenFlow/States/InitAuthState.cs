@@ -1,7 +1,7 @@
 ﻿using MVC;
 using UnityEngine;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public class InitAuthState : AuthStateBase, IState
     {

@@ -15,7 +15,7 @@ using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public class ProfileFetchingOTPAuthState : AuthStateBase, IPayloadedState<(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>
     {

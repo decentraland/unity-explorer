@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public class LobbyForExistingAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, bool isCached, CancellationToken ct)>
     {

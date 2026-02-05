@@ -10,7 +10,7 @@ using System.Threading;
 using UnityEngine.UI;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>, IPayloadedState<int>
     {

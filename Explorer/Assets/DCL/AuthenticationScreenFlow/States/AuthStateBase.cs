@@ -1,6 +1,6 @@
 ﻿using MVC;
 
-namespace DCL.AuthenticationScreenFlow.States
+namespace DCL.AuthenticationScreenFlow
 {
     public abstract class AuthStateBase : IExitableState
     {
