@@ -12,6 +12,7 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -66,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IProfileCache profileCache;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -105,7 +107,8 @@ namespace DCL.AuthenticationScreenFlow
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IProfileCache profileCache)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -126,6 +129,7 @@ namespace DCL.AuthenticationScreenFlow
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileCache = profileCache;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
@@ -281,6 +285,10 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
+
+                if (storedIdentityProvider.Identity != null)
+                    profileCache.Remove(storedIdentityProvider.Identity.Address);
+
                 await web3Authenticator.LogoutAsync(ct);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
