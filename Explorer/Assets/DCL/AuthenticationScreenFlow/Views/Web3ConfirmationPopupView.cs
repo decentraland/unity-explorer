@@ -56,26 +56,16 @@ namespace DCL.AuthenticationScreenFlow
             continueButtonText.text = config.ConfirmButtonText;
         }
 
-        [ContextMenu(nameof(Show))]
-        public void Show()
-        {
-            ShowAsync(new TransactionConfirmationRequest());
-        }
-
         public UniTask<bool> ShowAsync(TransactionConfirmationRequest request)
         {
-            string method = request.Method;
-
-            isTransaction = string.Equals(method, "eth_sendTransaction", StringComparison.OrdinalIgnoreCase);
-
-            UseConfig(isTransaction ? transactionConfig : signingConfig);
+            UseConfig(request.IsTransaction ? transactionConfig : signingConfig);
 
             // Hide description and details panel for internal features (Gifting, Donations)
             // since they already display this information in their own UI
             description.gameObject.SetActive(!request.HideDescription);
-            transactionInfoPanel.SetActive(isTransaction && !request.HideDetailsPanel);
+            transactionInfoPanel.SetActive(request.IsTransaction && !request.HideDetailsPanel);
 
-            if (isTransaction && !request.HideDetailsPanel)
+            if (request.IsTransaction && !request.HideDetailsPanel)
             {
                 // string networkName = string.IsNullOrEmpty(request.NetworkName) ? "Ethereum Mainnet" : request.NetworkName!;
                 string feeEth = string.IsNullOrEmpty(request.EstimatedGasFeeEth) ? "0.0" : request.EstimatedGasFeeEth!;
