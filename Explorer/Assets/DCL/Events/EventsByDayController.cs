@@ -3,9 +3,12 @@ using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Friends;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -41,7 +44,8 @@ namespace DCL.Events
             IPlacesAPIService placesAPIService,
             EventsStateService eventsStateService,
             IMVCManager mvcManager,
-            ThumbnailLoader thumbnailLoader)
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -56,7 +60,7 @@ namespace DCL.Events
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.EventsClosed += UnloadEvents;
 
-            view.SetDependencies(eventsStateService, thumbnailLoader);
+            view.SetDependencies(eventsStateService, thumbnailLoader, profileRepositoryWrapper);
             view.InitializeEventsGrid();
         }
 

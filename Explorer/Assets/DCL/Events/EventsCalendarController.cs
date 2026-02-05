@@ -7,6 +7,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Optimization.Pools;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -42,7 +43,8 @@ namespace DCL.Events
             EventsStateService eventsStateService,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
-            EventCardActionsController eventCardActionsController)
+            EventCardActionsController eventCardActionsController,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -52,7 +54,7 @@ namespace DCL.Events
             this.mvcManager = mvcManager;
             this.eventCardActionsController = eventCardActionsController;
 
-            view.SetDependencies(eventsStateService, thumbnailLoader);
+            view.SetDependencies(eventsStateService, thumbnailLoader, profileRepositoryWrapper);
             view.InitializeEventsLists();
 
             eventsController.SectionOpen += OnSectionOpened;

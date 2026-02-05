@@ -2,8 +2,11 @@
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -46,6 +49,23 @@ namespace DCL.Events
         [SerializeField] private List<GameObject> liveMarks = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private GameObject onlineMembersContainer = null!;
+        [SerializeField] private FriendsConnectedConfig friendsConnected;
+
+        [Serializable]
+        private struct FriendsConnectedConfig
+        {
+            public GameObject root;
+            public FriendsConnectedThumbnail[] thumbnails;
+            public GameObject amountContainer;
+            public TMP_Text amountLabel;
+
+            [Serializable]
+            public struct FriendsConnectedThumbnail
+            {
+                public GameObject root;
+                public ProfilePictureView picture;
+            }
+        }
 
         private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
@@ -123,7 +143,8 @@ namespace DCL.Events
                 shareButton.onClick.RemoveAllListeners();
         }
 
-        public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null)
+        public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null)
         {
             currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
@@ -149,6 +170,29 @@ namespace DCL.Events
             int onlineMembers = eventInfo.connected_addresses?.Length ?? 0;
             if (onlineMembersText != null) onlineMembersText.text = $"{onlineMembers}";
             if (onlineMembersContainer != null) onlineMembersContainer.SetActive(onlineMembers > 0 && eventInfo.live);
+
+            if (friendsConnected.root != null)
+            {
+                bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null && eventInfo.live;
+                friendsConnected.root.SetActive(showFriendsConnected);
+
+                if (showFriendsConnected)
+                {
+                    friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
+                    friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
+
+                    var friendsThumbnails = friendsConnected.thumbnails;
+
+                    for (var i = 0; i < friendsThumbnails.Length; i++)
+                    {
+                        bool friendExists = i < friends.Count;
+                        friendsThumbnails[i].root.SetActive(friendExists);
+                        if (!friendExists) continue;
+                        Profile.CompactInfo friendInfo = friends[i];
+                        friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                    }
+                }
+            }
 
             UpdateInterestedButtonState(currentEventInfo.Attending);
             UpdateVisuals();

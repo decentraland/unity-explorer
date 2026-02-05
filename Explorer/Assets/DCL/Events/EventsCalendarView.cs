@@ -1,6 +1,7 @@
 ﻿using DCL.Communities;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DG.Tweening;
 using SuperScrollView;
@@ -58,6 +59,7 @@ namespace DCL.Events
         private EventsStateService eventsStateService = null!;
         private bool showGoToTodayButtonOnTheRight;
         private ThumbnailLoader? eventCardsThumbnailLoader;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -91,10 +93,14 @@ namespace DCL.Events
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
         }
 
-        public void SetDependencies(EventsStateService stateService, ThumbnailLoader thumbnailLoader)
+        public void SetDependencies(
+            EventsStateService stateService,
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepoWrapper)
         {
             this.eventsStateService = stateService;
             this.eventCardsThumbnailLoader = thumbnailLoader;
+            this.profileRepositoryWrapper = profileRepoWrapper;
         }
 
         public void SetDaysSelectorActive(bool isActive) =>
@@ -127,8 +133,11 @@ namespace DCL.Events
 
             if (eventInfo != null)
             {
+                var eventData = eventsStateService.GetEventDataById(eventInfo.Value.id);
+
                 // Setup card data
-                highlightedBanner.Configure(eventInfo.Value, eventCardsThumbnailLoader!, placeInfo);
+                if (eventData != null)
+                    highlightedBanner.Configure(eventInfo.Value, eventCardsThumbnailLoader!, placeInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
 
                 // Setup card events
                 highlightedBanner.MainButtonClicked -= OnEventCardClicked;
@@ -192,7 +201,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;

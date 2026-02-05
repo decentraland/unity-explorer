@@ -2,6 +2,7 @@
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
@@ -31,6 +32,7 @@ namespace DCL.Events
         private EventsStateService eventsStateService = null!;
         private readonly List<string> currentEventsIds = new ();
         private ThumbnailLoader? eventCardsThumbnailLoader;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -44,10 +46,14 @@ namespace DCL.Events
             goToNextDayButton.onClick.RemoveAllListeners();
         }
 
-        public void SetDependencies(EventsStateService stateService, ThumbnailLoader thumbnailLoader)
+        public void SetDependencies(
+            EventsStateService stateService,
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepoWrapper)
         {
             this.eventsStateService = stateService;
             this.eventCardsThumbnailLoader = thumbnailLoader;
+            this.profileRepositoryWrapper = profileRepoWrapper;
         }
 
         public void SetEventsCounter(string text) =>
@@ -97,7 +103,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;
