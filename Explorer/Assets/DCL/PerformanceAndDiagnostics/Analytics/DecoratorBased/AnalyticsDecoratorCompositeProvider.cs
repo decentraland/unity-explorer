@@ -69,8 +69,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return identity;
         }
 
-        public UniTask LogoutAsync(CancellationToken ct) =>
-            core.LogoutAsync(ct);
+        public async UniTask LogoutAsync(CancellationToken ct)
+        {
+            analytics.Identify(null);
+            await core.LogoutAsync(ct);
+        }
 
         // IEthereumApi
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>

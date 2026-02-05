@@ -29,8 +29,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return identity;
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public async UniTask LogoutAsync(CancellationToken cancellationToken)
+        {
+            analytics.Identify(null);
             await core.LogoutAsync(cancellationToken);
+        }
 
         public async UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
         {
