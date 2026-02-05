@@ -10,12 +10,13 @@ using System.Collections.Generic;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Events
 {
-    public class EventCardView : MonoBehaviour
+    public abstract class EventCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const string HOST_FORMAT = "By <b>{0}</b>";
 
@@ -26,6 +27,7 @@ namespace DCL.Events
         public event Action<EventDTO>? EventShareButtonClicked;
         public event Action<EventDTO>? EventCopyLinkButtonClicked;
 
+        [Header("Card Configuration")]
         [SerializeField] private GameObject backgroundNormal = null!;
         [SerializeField] private GameObject backgroundRemindMe = null!;
         [SerializeField] private GameObject backgroundLive = null!;
@@ -48,10 +50,26 @@ namespace DCL.Events
         private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private GenericContextMenu? contextMenu;
+
         private CancellationTokenSource? loadingThumbnailCts;
         private CancellationTokenSource? openContextMenuCts;
 
-        private void Awake()
+        private bool canPlayUnHoverAnimation = true;
+        private bool canPlayUnHoverAnimationProp
+        {
+            get => canPlayUnHoverAnimation;
+            set
+            {
+                if (!canPlayUnHoverAnimation && value)
+                {
+                    canPlayUnHoverAnimation = value;
+                    PlayHoverExitAnimation();
+                }
+                canPlayUnHoverAnimation = value;
+            }
+        }
+
+        protected virtual void Awake()
         {
             if (mainButton != null)
                 mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentEventInfo, currentPlaceInfo, this));
@@ -78,11 +96,8 @@ namespace DCL.Events
             }
         }
 
-        private void OpenContextMenu(Vector2 position)
-        {
-            openContextMenuCts = openContextMenuCts.SafeRestart();
-            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu!, position), openContextMenuCts.Token);
-        }
+        private void OnEnable() =>
+            PlayHoverExitAnimation(true);
 
         private void OnDisable()
         {
@@ -94,6 +109,18 @@ namespace DCL.Events
         {
             if (mainButton != null)
                 mainButton.onClick.RemoveAllListeners();
+
+            if (interestedButton != null)
+                interestedButton.Button.onClick.RemoveAllListeners();
+
+            if (addToCalendarButton != null)
+                addToCalendarButton.onClick.RemoveAllListeners();
+
+            if (jumpInButton != null)
+                jumpInButton.onClick.RemoveAllListeners();
+
+            if (shareButton != null)
+                shareButton.onClick.RemoveAllListeners();
         }
 
         public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null)
@@ -157,5 +184,25 @@ namespace DCL.Events
             if (jumpInButton != null)
                 jumpInButton.gameObject.SetActive(currentEventInfo.live);
         }
+
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PlayHoverAnimation();
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (canPlayUnHoverAnimationProp)
+                PlayHoverExitAnimation();
+        }
+
+        private void OpenContextMenu(Vector2 position)
+        {
+            canPlayUnHoverAnimationProp = false;
+            openContextMenuCts = openContextMenuCts.SafeRestart();
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu!, position, actionOnHide: () => canPlayUnHoverAnimationProp = true), openContextMenuCts.Token);
+        }
+
+        protected abstract void PlayHoverAnimation();
+
+        protected abstract void PlayHoverExitAnimation(bool instant = false);
     }
 }

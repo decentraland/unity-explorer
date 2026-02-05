@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7023624218316291556}
   - component: {fileID: 7073980096580005897}
   - component: {fileID: 5132863510203243901}
-  - component: {fileID: 6667453795457154622}
+  - component: {fileID: 8863059230733447452}
   m_Layer: 5
   m_Name: EventCard_EmptySlot
   m_TagString: Untagged
@@ -121,7 +121,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &6667453795457154622
+--- !u!114 &8863059230733447452
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,20 +130,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 4002133698767396679}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dccd123838f4553b4d13208588ee777, type: 3}
+  m_Script: {fileID: 11500000, guid: 1c9eb39f5d8a4dac93c4ac4cb5818e1b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventCardView
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventCardEmptySlotView
+  isEmptySlotCard: 1
   backgroundNormal: {fileID: 0}
   backgroundRemindMe: {fileID: 0}
   backgroundLive: {fileID: 0}
-  mainButton: {fileID: 5132863510203243901}
+  mainButton: {fileID: 0}
   interestedButton: {fileID: 0}
   addToCalendarButton: {fileID: 0}
   jumpInButton: {fileID: 0}
   shareButton: {fileID: 0}
-  contextMenuSettings: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
+  contextMenuSettings: {fileID: 0}
   eventThumbnail: {fileID: 0}
   eventText: {fileID: 0}
   hostName: {fileID: 0}
   eventDate: {fileID: 0}
   liveMarks: []
+  onlineMembersText: {fileID: 0}
+  onlineMembersContainer: {fileID: 0}
+  hostCanvasGroup: {fileID: 0}

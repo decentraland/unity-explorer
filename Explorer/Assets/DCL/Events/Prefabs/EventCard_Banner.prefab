@@ -149,7 +149,7 @@ GameObject:
   - component: {fileID: 8006079378676375904}
   - component: {fileID: 2129600641125725786}
   - component: {fileID: 7278540001687877542}
-  - component: {fileID: 1643216536828605802}
+  - component: {fileID: 7167879942917194819}
   m_Layer: 5
   m_Name: EventCard_Banner
   m_TagString: Untagged
@@ -259,7 +259,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1643216536828605802
+--- !u!114 &7167879942917194819
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -268,9 +268,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3672595775106816743}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dccd123838f4553b4d13208588ee777, type: 3}
+  m_Script: {fileID: 11500000, guid: 7b1fd0e099144b5e88ac11ad35211333, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventCardView
+  m_EditorClassIdentifier: DCL.Social::DCL.Events.EventCardBannerView
   backgroundNormal: {fileID: 0}
   backgroundRemindMe: {fileID: 0}
   backgroundLive: {fileID: 0}
@@ -285,3 +285,6 @@ MonoBehaviour:
   hostName: {fileID: 0}
   eventDate: {fileID: 0}
   liveMarks: []
+  onlineMembersText: {fileID: 0}
+  onlineMembersContainer: {fileID: 0}
+  hostCanvasGroup: {fileID: 0}
