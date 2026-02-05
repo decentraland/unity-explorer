@@ -68,34 +68,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
-            ConfigureHoverStylesBehaviour(entity, newUIInputComponent.TextField);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newUIInputComponent.TextField, 0.22f, 0f);
 
             World!.Add(entity, newUIInputComponent);
-        }
-
-        private void ConfigureHoverStylesBehaviour(Entity entity, VisualElement targetVisualElement)
-        {
-            targetVisualElement.RegisterCallback<PointerEnterEvent>((_) =>
-            {
-                if (!World.TryGet(entity, out UITransformComponent? uiTransformComponent)) return;
-
-                float darkenFactor = 0.22f;
-                uiTransformComponent!.Transform.style.borderTopColor = Color.Lerp(uiTransformComponent.Transform.style.borderTopColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderRightColor = Color.Lerp(uiTransformComponent.Transform.style.borderRightColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderBottomColor = Color.Lerp(uiTransformComponent.Transform.style.borderBottomColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderLeftColor = Color.Lerp(uiTransformComponent.Transform.style.borderLeftColor.value, Color.black, darkenFactor);
-            });
-
-            targetVisualElement.RegisterCallback<PointerLeaveEvent>((_) =>
-            {
-                if (!World.TryGet(entity, out UITransformComponent? uiTransformComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform ))
-                    return;
-
-                uiTransformComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
-                uiTransformComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
-                uiTransformComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
-                uiTransformComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
-            });
         }
 
         [Query]

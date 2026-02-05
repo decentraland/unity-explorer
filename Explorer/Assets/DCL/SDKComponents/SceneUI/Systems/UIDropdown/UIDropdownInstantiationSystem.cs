@@ -59,43 +59,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
-            ConfigureHoverStylesBehaviour(entity, newDropdown.DropdownField);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newDropdown.DropdownField, 0.22f, 0.1f);
 
             World.Add(entity, newDropdown);
-        }
-
-        private void ConfigureHoverStylesBehaviour(Entity entity, VisualElement targetVisualElement)
-        {
-            targetVisualElement.RegisterCallback<PointerEnterEvent>((_) =>
-            {
-                if (!World.TryGet(entity, out UITransformComponent? uiTransformComponent)) return;
-
-                float darkenFactor = 0.22f;
-                uiTransformComponent!.Transform.style.borderTopColor = Color.Lerp(uiTransformComponent.Transform.style.borderTopColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderRightColor = Color.Lerp(uiTransformComponent.Transform.style.borderRightColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderBottomColor = Color.Lerp(uiTransformComponent.Transform.style.borderBottomColor.value, Color.black, darkenFactor);
-                uiTransformComponent.Transform.style.borderLeftColor = Color.Lerp(uiTransformComponent.Transform.style.borderLeftColor.value, Color.black, darkenFactor);
-
-                if (!World.TryGet(entity, out PBUiBackground? pbUiBackground))
-                    return;
-                darkenFactor = 0.1f;
-                uiTransformComponent.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, darkenFactor);
-            });
-
-            targetVisualElement.RegisterCallback<PointerLeaveEvent>((_) =>
-            {
-                if (!World.TryGet(entity, out UITransformComponent? uiTransformComponent) || !World.TryGet(entity, out PBUiTransform? pbUiTransform ))
-                    return;
-
-                uiTransformComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
-                uiTransformComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
-                uiTransformComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
-                uiTransformComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
-
-                if (!World.TryGet(entity, out PBUiBackground? pbUiBackground))
-                    return;
-                uiTransformComponent.Transform.style.backgroundColor = pbUiBackground!.GetColor();
-            });
         }
 
         [Query]

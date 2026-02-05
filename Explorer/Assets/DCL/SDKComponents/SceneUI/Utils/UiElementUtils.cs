@@ -456,5 +456,41 @@ namespace DCL.SDKComponents.SceneUI.Utils
             return prefix;
 #endif
         }
+
+        public static void ConfigureHoverStylesBehaviour(World world, Entity entity, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
+        {
+            hoverEventTarget.RegisterCallback<PointerEnterEvent>((_) =>
+            {
+                if (!world.TryGet(entity, out UITransformComponent? uiTransformComponent)) return;
+
+                if (borderDarkenFactor > 0)
+                {
+                    uiTransformComponent!.Transform.style.borderTopColor = Color.Lerp(uiTransformComponent.Transform.style.borderTopColor.value, Color.black, borderDarkenFactor);
+                    uiTransformComponent.Transform.style.borderRightColor = Color.Lerp(uiTransformComponent.Transform.style.borderRightColor.value, Color.black, borderDarkenFactor);
+                    uiTransformComponent.Transform.style.borderBottomColor = Color.Lerp(uiTransformComponent.Transform.style.borderBottomColor.value, Color.black, borderDarkenFactor);
+                    uiTransformComponent.Transform.style.borderLeftColor = Color.Lerp(uiTransformComponent.Transform.style.borderLeftColor.value, Color.black, borderDarkenFactor);
+                }
+
+                if (backgroundDarkenFactor > 0 && world.TryGet(entity, out PBUiBackground? pbUiBackground))
+                    uiTransformComponent!.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, backgroundDarkenFactor);
+            });
+
+            hoverEventTarget.RegisterCallback<PointerLeaveEvent>((_) =>
+            {
+                if (!world.TryGet(entity, out UITransformComponent? uiTransformComponent) || !world.TryGet(entity, out PBUiTransform? pbUiTransform ))
+                    return;
+
+                if (borderDarkenFactor > 0)
+                {
+                    uiTransformComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
+                    uiTransformComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
+                    uiTransformComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
+                    uiTransformComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
+                }
+
+                if (backgroundDarkenFactor > 0 && world.TryGet(entity, out PBUiBackground? pbUiBackground))
+                    uiTransformComponent!.Transform.style.backgroundColor = pbUiBackground!.GetColor();
+            });
+        }
     }
 }
