@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Avatar_AnimEvent_AirJump
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 3002ec091657f7442938e913b14d0680, type: 3}
+  - {fileID: 8300000, guid: cb5e2d1933ce0d648b51c921b067a60b, type: 3}
   relativeVolume: 0.4
   audioCategory: 3
   pitchVariation: 0.05
