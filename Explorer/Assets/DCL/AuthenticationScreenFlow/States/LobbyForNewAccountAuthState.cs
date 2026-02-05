@@ -44,7 +44,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private Dictionary<string, List<URN>>? femaleWearablesByCategory;
 
         private int currentAvatarIndex = -1;
-        private bool baseWearablesLoaded;
 
         private Profile newUserProfile;
         private string userEmail;
@@ -52,6 +51,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
+        private IReadOnlyList<ITrimmedWearable>? loadedWearables;
 
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
@@ -132,6 +132,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             characterPreviewController?.OnHide();
 
+            avatarHistory.Clear();
+            maleWearablesByCategory = null;
+            femaleWearablesByCategory = null;
+
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
 
@@ -159,7 +163,10 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         {
             try
             {
-                await LoadBaseWearablesAsync(loginCt);
+                loadedWearables ??= await LoadBaseWearablesAsync(loginCt);
+
+                if (loadedWearables != null)
+                    PopulateWearablesCatalogs(loadedWearables);
                 UpdateCharacterPreview(RandomizeAvatar());
                 UpdateAvatarNavigationButtons();
                 InitializeAvatarHistory(newUserProfile.Avatar);
@@ -169,11 +176,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
         }
 
-        private async UniTask LoadBaseWearablesAsync(CancellationToken ct)
+        private async UniTask<IReadOnlyList<ITrimmedWearable>?> LoadBaseWearablesAsync(CancellationToken ct)
         {
-            if (baseWearablesLoaded)
-                return;
-
             try
             {
                 // Load base wearables catalog from backend (pageSize 300 to get all)
@@ -183,38 +187,8 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
                     ct,
                     collectionType: IWearablesProvider.CollectionType.Base);
 
-                maleWearablesByCategory = new Dictionary<string, List<URN>>();
-                femaleWearablesByCategory = new Dictionary<string, List<URN>>();
-
-                foreach (ITrimmedWearable? wearable in wearables)
-                {
-                    string category = wearable.GetCategory();
-
-                    // Skip body shapes
-                    if (category == "body_shape")
-                        continue;
-
-                    // Add to male dictionary if compatible
-                    if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
-                    {
-                        if (!maleWearablesByCategory.ContainsKey(category))
-                            maleWearablesByCategory[category] = new List<URN>();
-
-                        maleWearablesByCategory[category].Add(wearable.GetUrn());
-                    }
-
-                    // Add to female dictionary if compatible
-                    if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
-                    {
-                        if (!femaleWearablesByCategory.ContainsKey(category))
-                            femaleWearablesByCategory[category] = new List<URN>();
-
-                        femaleWearablesByCategory[category].Add(wearable.GetUrn());
-                    }
-                }
-
-                baseWearablesLoaded = true;
-                ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items, male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
+                ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items");
+                return wearables;
             }
             catch (OperationCanceledException)
             {
@@ -223,15 +197,48 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                // Fallback to hardcoded defaults will be used
-                baseWearablesLoaded = false;
             }
+
+            return null;
+        }
+
+        private void PopulateWearablesCatalogs(IReadOnlyList<ITrimmedWearable> wearables)
+        {
+            maleWearablesByCategory = new Dictionary<string, List<URN>>();
+            femaleWearablesByCategory = new Dictionary<string, List<URN>>();
+
+            foreach (ITrimmedWearable? wearable in wearables)
+            {
+                string category = wearable.GetCategory();
+
+                // Skip body shapes
+                if (category == "body_shape")
+                    continue;
+
+                // Add to male dictionary if compatible
+                if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
+                {
+                    if (!maleWearablesByCategory.ContainsKey(category))
+                        maleWearablesByCategory[category] = new List<URN>();
+
+                    maleWearablesByCategory[category].Add(wearable.GetUrn());
+                }
+
+                // Add to female dictionary if compatible
+                if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
+                {
+                    if (!femaleWearablesByCategory.ContainsKey(category))
+                        femaleWearablesByCategory[category] = new List<URN>();
+
+                    femaleWearablesByCategory[category].Add(wearable.GetUrn());
+                }
+            }
+
+            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalogs populated: male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
         }
 
         private void InitializeAvatarHistory(Avatar initialAvatar)
         {
-            avatarHistory.Clear();
             avatarHistory.Add(initialAvatar);
             currentAvatarIndex = 0;
             UpdateAvatarNavigationButtons();
@@ -316,7 +323,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             // If base wearables loaded from backend - use randomizer
-            if (baseWearablesLoaded)
+            if (loadedWearables != null && loadedWearables.Count > 0)
             {
                 Dictionary<string, List<URN>>? wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
                     ? maleWearablesByCategory
