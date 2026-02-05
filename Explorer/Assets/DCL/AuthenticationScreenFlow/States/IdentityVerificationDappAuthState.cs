@@ -15,7 +15,7 @@ using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
 
-namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
+namespace DCL.AuthenticationScreenFlow.States
 {
     public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {

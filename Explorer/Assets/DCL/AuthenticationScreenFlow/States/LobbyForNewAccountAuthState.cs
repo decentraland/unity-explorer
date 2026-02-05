@@ -22,7 +22,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using Avatar = DCL.Profiles.Avatar;
 using Random = UnityEngine.Random;
 
-namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
+namespace DCL.AuthenticationScreenFlow.States
 {
     public class LobbyForNewAccountAuthState : AuthStateBase, IPayloadedState<(Profile profile, string email, bool isCached, CancellationToken ct)>
     {

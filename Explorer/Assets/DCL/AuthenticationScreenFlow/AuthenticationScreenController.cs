@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine;
+using DCL.AuthenticationScreenFlow.States;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
