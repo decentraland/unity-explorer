@@ -29,10 +29,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         public UniTask InitializeAsync(AdaptivePerformanceSettings settings, CancellationToken ct)
         {
             // Adaptive Performance
-            // TODO mihak: Start manually here instead of automatically
-            // adaptivePerformance = Holder.Instance;
-            // adaptivePerformance.InitializeAdaptivePerformance();
-            // adaptivePerformance.StartAdaptivePerformance();
+            Holder.Initialize();
 
             // Physics
             physicsSettings = settings.phyiscsSettings;

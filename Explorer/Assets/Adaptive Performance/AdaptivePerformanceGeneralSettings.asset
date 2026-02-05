@@ -32,6 +32,7 @@ MonoBehaviour:
   m_AutomaticLoading: 0
   m_AutomaticRunning: 0
   m_Loaders:
+  - {fileID: 11400000, guid: b0367c0515e3149e0bc059d886dca40b, type: 2}
   - {fileID: 11400000, guid: 261233175243140fda35b2807c403a29, type: 2}
 --- !u!114 &8662267240460464425
 MonoBehaviour:
@@ -46,5 +47,5 @@ MonoBehaviour:
   m_Name: Standalone Settings
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.AdaptivePerformance.AdaptivePerformanceGeneralSettings
   m_LoaderManagerInstance: {fileID: 5318997972998297671}
-  m_InitManagerOnStart: 1
+  m_InitManagerOnStart: 0
   m_LastSelectedProvider: 

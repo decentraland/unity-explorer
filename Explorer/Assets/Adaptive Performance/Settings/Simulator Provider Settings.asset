@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Simulator Provider Settings
   m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.AdaptivePerformance.Simulator.Editor.SimulatorProviderSettings
   m_Logging: 0
-  m_AutomaticPerformanceModeEnabled: 1
+  m_AutomaticPerformanceModeEnabled: 0
   m_AutomaticGameModeEnabled: 0
-  m_EnableBoostOnStartup: 1
-  m_StatsLoggingFrequencyInFrames: 50
+  m_EnableBoostOnStartup: 0
+  m_StatsLoggingFrequencyInFrames: 100
   m_IndexerSettings:
     m_Active: 1
     m_ThermalActionDelay: 10
-    m_PerformanceActionDelay: 4
+    m_PerformanceActionDelay: 2
   m_ScalerSettings:
     m_AdaptiveFramerate:
       m_Name: Adaptive Framerate
