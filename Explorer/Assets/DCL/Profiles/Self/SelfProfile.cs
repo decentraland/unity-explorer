@@ -137,7 +137,6 @@ namespace DCL.Profiles.Self
             newProfile.Version++;
 
             OwnProfile = newProfile;
-            profileCache.Set(newProfile.UserId, newProfile);
 
             if (!updateAvatarInWorld)
             {
@@ -160,6 +159,7 @@ namespace DCL.Profiles.Self
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
             // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
+            profileCache.Set(newProfile.UserId, newProfile);
             UpdateAvatarInWorld(newProfile);
 
             try
@@ -171,6 +171,7 @@ namespace DCL.Profiles.Self
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
+                profileCache.Set(savedProfile!.UserId, savedProfile);
                 UpdateAvatarInWorld(savedProfile!);
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
