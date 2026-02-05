@@ -1,12 +1,7 @@
-﻿using UnityEngine;
-
-namespace DCL.Events
+﻿namespace DCL.Events
 {
     public class EventCardBannerView : EventCardView
     {
-        [Header("Animations")]
-        [SerializeField] private CanvasGroup hostCanvasGroup = null!;
-
         protected override void PlayHoverAnimation()
         {
 
