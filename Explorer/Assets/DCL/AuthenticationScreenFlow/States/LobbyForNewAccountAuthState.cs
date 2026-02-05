@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
-using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;

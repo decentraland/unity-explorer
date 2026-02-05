@@ -32,7 +32,7 @@ namespace DCL.Communities
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
         bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData);
 
-        public void Clear();
+        void Clear();
         event Action<CommunityMetadataUpdatedEvent> CommunityMetadataUpdated;
     }
 
