@@ -68,45 +68,22 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
-            ConfigureHoverBehaviour(entity, newUIInputComponent.TextField);
+            ConfigureHoverStylesBehaviour(entity, newUIInputComponent.TextField);
 
             World!.Add(entity, newUIInputComponent);
         }
 
-        private void ConfigureHoverBehaviour(Entity entity, VisualElement targetVisualElement)
+        private void ConfigureHoverStylesBehaviour(Entity entity, VisualElement targetVisualElement)
         {
             targetVisualElement.RegisterCallback<PointerEnterEvent>((_) =>
             {
                 if (!World.TryGet(entity, out UITransformComponent? uiTransformComponent)) return;
 
-                float hoverMultiplier = 0.75f;
-                Color borderColor = new Color(
-                    uiTransformComponent!.Transform.style.borderTopColor.value.r,
-                    uiTransformComponent.Transform.style.borderTopColor.value.g,
-                    uiTransformComponent.Transform.style.borderTopColor.value.b,
-                    hoverMultiplier * uiTransformComponent.Transform.style.borderTopColor.value.a);
-                uiTransformComponent.Transform.style.borderTopColor = new StyleColor(borderColor);
-
-                borderColor = new Color(
-                    uiTransformComponent.Transform.style.borderRightColor.value.r,
-                    uiTransformComponent.Transform.style.borderRightColor.value.g,
-                    uiTransformComponent.Transform.style.borderRightColor.value.b,
-                    hoverMultiplier * uiTransformComponent.Transform.style.borderRightColor.value.a);
-                uiTransformComponent.Transform.style.borderRightColor = new StyleColor(borderColor);
-
-                borderColor = new Color(
-                    uiTransformComponent.Transform.style.borderBottomColor.value.r,
-                    uiTransformComponent.Transform.style.borderBottomColor.value.g,
-                    uiTransformComponent.Transform.style.borderBottomColor.value.b,
-                    hoverMultiplier * uiTransformComponent.Transform.style.borderBottomColor.value.a);
-                uiTransformComponent.Transform.style.borderBottomColor = new StyleColor(borderColor);
-
-                borderColor = new Color(
-                    uiTransformComponent.Transform.style.borderLeftColor.value.r,
-                    uiTransformComponent.Transform.style.borderLeftColor.value.g,
-                    uiTransformComponent.Transform.style.borderLeftColor.value.b,
-                    hoverMultiplier * uiTransformComponent.Transform.style.borderLeftColor.value.a);
-                uiTransformComponent.Transform.style.borderLeftColor = new StyleColor(borderColor);
+                float darkenFactor = 0.22f;
+                uiTransformComponent!.Transform.style.borderTopColor = Color.Lerp(uiTransformComponent.Transform.style.borderTopColor.value, Color.black, darkenFactor);
+                uiTransformComponent.Transform.style.borderRightColor = Color.Lerp(uiTransformComponent.Transform.style.borderRightColor.value, Color.black, darkenFactor);
+                uiTransformComponent.Transform.style.borderBottomColor = Color.Lerp(uiTransformComponent.Transform.style.borderBottomColor.value, Color.black, darkenFactor);
+                uiTransformComponent.Transform.style.borderLeftColor = Color.Lerp(uiTransformComponent.Transform.style.borderLeftColor.value, Color.black, darkenFactor);
             });
 
             targetVisualElement.RegisterCallback<PointerLeaveEvent>((_) =>
