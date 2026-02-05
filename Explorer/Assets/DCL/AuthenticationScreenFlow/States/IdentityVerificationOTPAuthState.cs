@@ -67,7 +67,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             view.InputField.CodeEntered -= OnEntered;
 
             email = string.Empty;
-            loginCt = default(CancellationToken);
+            loginCt = CancellationToken.None;
         }
 
         private void ResendOtp()
