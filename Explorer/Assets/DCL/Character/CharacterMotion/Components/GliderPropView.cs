@@ -3,13 +3,17 @@ using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
-    public class GliderPropController : MonoBehaviour
+    public class GliderPropView : MonoBehaviour
     {
         [field: SerializeField] private List<ParticleSystem> particleSystems;
 
         [field: SerializeField] private List<TrailRenderer> trails;
 
         private bool trailEnabled;
+
+        [field: SerializeField] public Animator Animator { get; private set; }
+
+        public bool OpenAnimationCompleted { get; private set; }
 
         public bool TrailEnabled
         {
@@ -37,5 +41,11 @@ namespace DCL.CharacterMotion.Components
 
             foreach (TrailRenderer trail in trails) trail.emitting = value;
         }
+
+        private void OnOpenAnimationCompleted() =>
+            OpenAnimationCompleted = true;
+
+        public void OnReturnedToPool() =>
+            OpenAnimationCompleted = false;
     }
 }

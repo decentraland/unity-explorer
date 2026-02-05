@@ -1047,9 +1047,8 @@ MonoBehaviour:
       data:
         <ControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
         <Gliding>k__BackingField:
-          <MinGroundDistance>k__BackingField: 0
           <PropPrefab>k__BackingField:
-            m_AssetGUID: a7a4ab5039f63fb43b40798062be0153
+            m_AssetGUID: 3c7d798e18864314497aa15d59d3ee1b
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 

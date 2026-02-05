@@ -3,11 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using ECS.Abstract;
-using Nethereum.ABI.Util;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly GameObject gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
 
-        private GameObjectPool<GliderPropController>? propPool;
+        private GameObjectPool<GliderPropView>? propPool;
 
         public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
@@ -29,12 +29,13 @@ namespace DCL.CharacterMotion.Systems
         }
 
         public override void Initialize() =>
-            propPool = new GameObjectPool<GliderPropController>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropController>());
+            propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
 
         protected override void Update(float t)
         {
             CreatePropQuery(World);
-            AnimatePropQuery(World, t);
+            CleanUpPropQuery(World);
+            UpdatePropAnimatorQuery(World);
             UpdateTrailQuery(World);
         }
 
@@ -45,62 +46,37 @@ namespace DCL.CharacterMotion.Systems
             if (!animationComponent.States.IsGliding) return;
 
             var prop = propPool!.Get();
+            prop.Animator.Rebind();
+            prop.Animator.Update(0);
 
             var transform = prop.transform;
             transform.SetParent(avatarView.GetTransform(), false);
-            transform.localPosition = Vector3.up * 2.2f;
-            transform.localRotation = Quaternion.Euler(glidingSettings.StartingRotation, 0, 0);
-            transform.localScale = Vector3.zero;
 
-            World.Add(entity, new GliderProp { Controller = prop });
+            World.Add(entity, new GliderProp { View = prop });
         }
 
         [Query]
-        private void AnimateProp([Data] float dt, Entity entity, in CharacterAnimationComponent animationComponent, ref GliderProp gliderProp)
+        private void CleanUpProp(Entity entity, ref GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
         {
-            var transform = gliderProp.Controller.transform;
+            if (animationComponent.States.IsGliding) return;
 
-            float sign = animationComponent.States.IsGliding ? 1 : -1;
+            World.Remove<GliderProp>(entity);
 
-            gliderProp.Animation = Mathf.Clamp01(gliderProp.Animation + (sign * glidingSettings.AnimationSpeed * dt));
-
-            float rotation = glidingSettings.CompleteRotationT > 0
-                ? Mathf.Lerp(glidingSettings.StartingRotation, 0, gliderProp.Animation / glidingSettings.CompleteRotationT)
-                : 0;
-            transform.localRotation = Quaternion.Euler(rotation, 0, 0);
-
-            float scale = sign > 0 ? EaseOutBack(gliderProp.Animation) : EaseInBack(gliderProp.Animation);
-            transform.localScale = Vector3.one * scale;
-
-            if (!animationComponent.States.IsGliding && gliderProp.Animation <= 0)
-            {
-                World.Remove<GliderProp>(entity);
-                propPool!.Release(gliderProp.Controller);
-            }
-
-            return;
-
-            float EaseOutBack(float t)
-            {
-                const float S = 1.70158f;
-                t -= 1;
-                return 1 + (t * t * (((S + 1) * t) + S));
-            }
-
-            float EaseInBack(float t)
-            {
-                const float S = 1.70158f;
-                return t * t * (((S + 1) * t) - S);
-            }
+            propPool!.Release(gliderProp.View);
+            gliderProp.View.OnReturnedToPool();
         }
 
         [Query]
-        private void UpdateTrail(in CharacterRigidTransform rigidTransform, in CharacterAnimationComponent animationComponent, in GliderProp gliderProp)
+        private void UpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent) =>
+            GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent);
+
+        [Query]
+        private void UpdateTrail(in GliderProp gliderProp, in CharacterRigidTransform rigidTransform, in CharacterAnimationComponent animationComponent)
         {
             float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
-            gliderProp.Controller.TrailEnabled = animationComponent.States.IsGliding &&
-                                                 gliderProp.Animation >= 1 &&
-                                                 rigidTransform.MoveVelocity.Velocity.sqrMagnitude > thresholdSq;
+            gliderProp.View.TrailEnabled = animationComponent.States.IsGliding &&
+                                           gliderProp.View.OpenAnimationCompleted &&
+                                           rigidTransform.MoveVelocity.Velocity.sqrMagnitude > thresholdSq;
         }
     }
 }

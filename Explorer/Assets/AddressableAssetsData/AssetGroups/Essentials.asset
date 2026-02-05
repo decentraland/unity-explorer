@@ -80,6 +80,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c7d798e18864314497aa15d59d3ee1b
+    m_Address: Assets/DCL/Character/CharacterMotion/Assets/GliderProp.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 41b6cad6750bc4b35ba63ebbeb956830
     m_Address: M_EyeBrows_00
     m_ReadOnly: 0
@@ -155,6 +160,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
+    m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 77042a6626e1a064f90b622d0381d7df
     m_Address: JumpIndicator
     m_ReadOnly: 0
@@ -162,11 +172,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a0ca548bf4cd42fa9f1c58db4332466
     m_Address: Assets/DCL/SDKComponents/Fonts/NotoSerif.ttf
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
-    m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -222,11 +227,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
     m_Address: RemoteAvatarCollider
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a7a4ab5039f63fb43b40798062be0153
-    m_Address: Gliding_PropIdle_Dani
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

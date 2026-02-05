@@ -23,16 +23,6 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<GameObject> PropPrefab { get; private set; }
 
             [field: SerializeField]
-            public float AnimationSpeed { get; private set; }= 2;
-
-            [field: SerializeField]
-            public float StartingRotation { get; private set; } = -60;
-
-            [field: SerializeField]
-            [field: Range(0, 1)]
-            public float CompleteRotationT { get; private set; } = 0.5f;
-
-            [field: SerializeField]
             public float TrailVelocityThreshold { get; private set; } = 1;
         }
     }
