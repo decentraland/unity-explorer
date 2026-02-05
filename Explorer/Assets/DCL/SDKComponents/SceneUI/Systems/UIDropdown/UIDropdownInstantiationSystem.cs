@@ -11,7 +11,6 @@ using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Color = UnityEngine.Color;
 
