@@ -124,7 +124,7 @@ namespace DCL.Events
             DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
         }
 
-        public void SetHighlightedBanner(EventDTO? eventInfo, PlacesData.PlaceInfo? placeInfo)
+        public void SetHighlightedBanner(EventDTO? eventInfo)
         {
             foreach (GameObject go in objectsToHideWhenBanner)
                 go.SetActive(eventInfo == null);
@@ -137,7 +137,7 @@ namespace DCL.Events
 
                 // Setup card data
                 if (eventData != null)
-                    highlightedBanner.Configure(eventInfo.Value, eventCardsThumbnailLoader!, placeInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
+                    highlightedBanner.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
 
                 // Setup card events
                 highlightedBanner.MainButtonClicked -= OnEventCardClicked;
@@ -201,7 +201,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;

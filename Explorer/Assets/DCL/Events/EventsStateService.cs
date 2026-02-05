@@ -1,4 +1,5 @@
-﻿using DCL.EventsApi;
+﻿using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using NBitcoin;
@@ -12,12 +13,14 @@ namespace DCL.Events
         private readonly Dictionary<string, EventDTO> currentEvents = new();
         private readonly Dictionary<string, PlacesData.PlaceInfo> currentPlaces = new();
         private readonly List<Profile.CompactInfo> allFriends = new();
+        private readonly List<GetUserCommunitiesData.CommunityData> myCommunities = new();
 
         public class EventWithPlaceAndFriendsData
         {
             public EventDTO EventInfo;
             public PlacesData.PlaceInfo? PlaceInfo;
             public List<Profile.CompactInfo> FriendsConnectedToPlace = new();
+            public GetUserCommunitiesData.CommunityData? CommunityInfo;
         }
 
         public EventWithPlaceAndFriendsData? GetEventDataById(string eventId)
@@ -27,6 +30,7 @@ namespace DCL.Events
             if (currentEvents.TryGetValue(eventId, out EventDTO eventInfo))
             {
                 result.EventInfo = eventInfo;
+
                 if (!string.IsNullOrEmpty(eventInfo.place_id))
                 {
                     currentPlaces.TryGetValue(eventInfo.place_id, out PlacesData.PlaceInfo? placeInfo);
@@ -43,6 +47,9 @@ namespace DCL.Events
                     }
                 }
                 result.FriendsConnectedToPlace = friendsConnectedToPlace;
+
+                if (TryGetCommunityById(eventInfo.community_id, out GetUserCommunitiesData.CommunityData? communityData))
+                    result.CommunityInfo = communityData;
 
                 return result;
             }
@@ -74,6 +81,12 @@ namespace DCL.Events
             allFriends.AddRange(friends);
         }
 
+        public void SetMyCommunities(List<GetUserCommunitiesData.CommunityData> myCommunitiesList)
+        {
+            ClearMyCommunities();
+            myCommunities.AddRange(myCommunitiesList);
+        }
+
         public void ClearEvents() =>
             currentEvents.Clear();
 
@@ -82,6 +95,9 @@ namespace DCL.Events
 
         public void ClearAllFriends() =>
             allFriends.Clear();
+
+        public void ClearMyCommunities() =>
+            myCommunities.Clear();
 
         public void Dispose()
         {
@@ -101,6 +117,21 @@ namespace DCL.Events
             }
 
             friendProfile = default(Profile.CompactInfo);
+            return false;
+        }
+
+        private bool TryGetCommunityById(string communityId, out GetUserCommunitiesData.CommunityData? communityData)
+        {
+            foreach (var community in myCommunities)
+            {
+                if (!community.id.Equals(communityId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                communityData = community;
+                return true;
+            }
+
+            communityData = null;
             return false;
         }
     }

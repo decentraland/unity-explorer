@@ -1,4 +1,5 @@
 ﻿using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
@@ -50,6 +51,8 @@ namespace DCL.Events
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
+        [SerializeField] private GameObject communityContainer = null!;
+        [SerializeField] private ImageView communityThumbnail = null!;
 
         [Serializable]
         private struct FriendsConnectedConfig
@@ -72,6 +75,7 @@ namespace DCL.Events
         private GenericContextMenu? contextMenu;
 
         private CancellationTokenSource? loadingThumbnailCts;
+        private CancellationTokenSource? loadingCommunityThumbnailCts;
         private CancellationTokenSource? openContextMenuCts;
 
         private bool canPlayUnHoverAnimation = true;
@@ -122,6 +126,7 @@ namespace DCL.Events
         private void OnDisable()
         {
             loadingThumbnailCts.SafeCancelAndDispose();
+            loadingCommunityThumbnailCts.SafeCancelAndDispose();
             openContextMenuCts.SafeCancelAndDispose();
         }
 
@@ -144,15 +149,15 @@ namespace DCL.Events
         }
 
         public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null)
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null)
         {
             currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
 
             if (eventThumbnail != null)
             {
-                loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventInfo.Image, eventThumbnail, null, loadingThumbnailCts.Token, true).Forget();
+                loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventInfo.Image, eventThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
             }
 
             if (eventText != null)
@@ -192,6 +197,15 @@ namespace DCL.Events
                         friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
                     }
                 }
+            }
+
+            if (communityContainer != null)
+                communityContainer.SetActive(communityInfo != null);
+
+            if (communityThumbnail != null && communityInfo != null)
+            {
+                loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, loadingThumbnailCts.Token, true).Forget();
             }
 
             UpdateInterestedButtonState(currentEventInfo.Attending);

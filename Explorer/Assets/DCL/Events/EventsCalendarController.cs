@@ -148,6 +148,8 @@ namespace DCL.Events
             view.SetDaysSelectorActive(false);
             view.SetAsLoading(true);
 
+            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
+
             Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
 
@@ -173,12 +175,12 @@ namespace DCL.Events
             }
 
             var showHighlightedBanner = false;
-            view.SetHighlightedBanner(null, null);
+            view.SetHighlightedBanner(null);
             if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
             {
                 showHighlightedBanner = true;
                 var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
-                view.SetHighlightedBanner(eventData!.EventInfo, eventData.PlaceInfo);
+                view.SetHighlightedBanner(eventData!.EventInfo);
             }
 
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);

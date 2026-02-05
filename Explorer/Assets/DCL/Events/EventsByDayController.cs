@@ -3,12 +3,10 @@ using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
-using DCL.Friends;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -109,6 +107,8 @@ namespace DCL.Events
                     fromDate.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
 
             view.SetEventsCounter(dayText);
+
+            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
 
             var fromDateUtc = fromDate.ToUniversalTime();
             var toDateUtc = fromDate.AddDays(1).AddSeconds(-1).ToUniversalTime();
