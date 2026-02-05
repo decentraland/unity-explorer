@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b81b82a7a1344de8ff8b1b31ae820b7, type: 3}
-  m_Name: PlaceCardContextMenuSettings
+  m_Name: PlaceContextMenuConfiguration
   m_EditorClassIdentifier: 
   <ContextMenuWidth>k__BackingField: 180
   <ElementsSpacing>k__BackingField: 5

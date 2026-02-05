@@ -59,7 +59,7 @@ namespace DCL.Places
         [SerializeField] private Button exitNavigationButton = null!;
 
         [Header("Configuration")]
-        [SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration = null!;
+        [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
 
         [Header("Categories")]
         [SerializeField] private GameObject categoriesModule = null!;

@@ -181,7 +181,7 @@ namespace DCL.SDKComponents.MediaStream
                 component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
                 {
                     MediaAddress = address,
-                    LastPropagatedState = VideoState.VsPaused,
+                    LastPropagatedVideoState = VideoState.VsPaused,
                     LastPropagatedVideoTime = 0,
                     Cts = new CancellationTokenSource(),
                     OpenMediaPromise = new OpenMediaPromise(),
