@@ -42,6 +42,9 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.sentryTransactionManager = sentryTransactionManager;
+
+            email = string.Empty;
+            loginCt = CancellationToken.None;
         }
 
         public void Enter((string email, CancellationToken ct) payload)
