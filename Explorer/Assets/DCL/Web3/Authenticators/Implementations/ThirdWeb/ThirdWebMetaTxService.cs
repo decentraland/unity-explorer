@@ -18,6 +18,7 @@ namespace DCL.Web3.Authenticators
         ///     Key = lowercase contract address, Value = (name, version) for EIP-712 domain.
         ///     IMPORTANT: EIP-712 domain names must EXACTLY match what's in decentraland-transactions npm package!
         ///     See: https://github.com/decentraland/decentraland-transactions/blob/master/src/contracts/manaToken.ts
+        ///     See dApp implementation: https://github.com/decentraland/auth/blob/main/src/components/Pages/RequestPage/RequestPage.tsx#L258
         /// </summary>
         private static readonly Dictionary<string, ContractMetaTxInfo> KnownMetaTxContracts = new ()
         {

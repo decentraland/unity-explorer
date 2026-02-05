@@ -13,9 +13,6 @@ namespace DCL.Web3.Authenticators
         public string Method { get; set; }
         public int ChainId { get; set; }
 
-        /// <summary>
-        ///     True if this is a transaction (eth_sendTransaction), false if it's a signing request.
-        /// </summary>
         public bool IsTransaction => string.Equals(Method, ETH_SEND_TRANSACTION, StringComparison.OrdinalIgnoreCase);
         public string? NetworkName { get; set; }
         public string? To { get; set; }
