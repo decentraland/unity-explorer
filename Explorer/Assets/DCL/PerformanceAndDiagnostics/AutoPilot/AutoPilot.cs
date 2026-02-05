@@ -116,8 +116,8 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 {
                     string line = await csv.ReadLineAsync();
                     string[] columns = line.Split(',');
-                    cpuTimes.Add(float.Parse(columns[1]));
-                    gpuTimes.Add(float.Parse(columns[2]));
+                    cpuTimes.Add(float.Parse(columns[1], CultureInfo.InvariantCulture));
+                    gpuTimes.Add(float.Parse(columns[2], CultureInfo.InvariantCulture));
                 }
             }
 
