@@ -466,8 +466,9 @@ namespace Global.Dynamic
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
-            var emotesBus = new EmotesBus();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, includeDiscover, emotesBus);
+            IEventBus emotesEventBus = new EventBus(true);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, includeDiscover, emotesEventBus);
+            var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -733,7 +734,7 @@ namespace Global.Dynamic
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache),
-                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emoteWheelShortcutHandler, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion)), staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
