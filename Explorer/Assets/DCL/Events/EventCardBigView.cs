@@ -1,5 +1,15 @@
-﻿using DG.Tweening;
+﻿using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.EventsApi;
+using DCL.PlacesAPIService;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.UI.Profiles.Helpers;
+using DG.Tweening;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Events
 {
@@ -7,6 +17,10 @@ namespace DCL.Events
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 64f;
+
+        [Header("Specific-card references")]
+        [SerializeField] private GameObject communityContainer = null!;
+        [SerializeField] private ImageView communityThumbnail = null!;
 
         [Header("Animations")]
         [SerializeField] private RectTransform headerContainer = null!;
@@ -23,11 +37,33 @@ namespace DCL.Events
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
+        private CancellationTokenSource? loadingCommunityThumbnailCts;
+
         protected override void Awake()
         {
             base.Awake();
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            loadingCommunityThumbnailCts.SafeCancelAndDispose();
+        }
+
+        public override void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null)
+        {
+            base.Configure(eventInfo, thumbnailLoader, placeInfo, friends, profileRepositoryWrapper, communityInfo);
+
+            communityContainer.SetActive(communityInfo != null);
+
+            if (communityInfo != null)
+            {
+                loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
+            }
         }
 
         protected override void PlayHoverAnimation()
