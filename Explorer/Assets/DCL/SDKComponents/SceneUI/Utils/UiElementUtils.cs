@@ -199,7 +199,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, ref PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
         {
             bool isReadonly = !model.IsInteractive();
             inputToSetup.Placeholder.PlaceholderText = model.Placeholder;
@@ -209,25 +209,28 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
             inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
-            
+
             int font = (int)model.GetFont();
             if (font < styleFontDefinitions.Length)
                 inputToSetup.TextField.style.unityFontDefinition = styleFontDefinitions[font];
-            
+
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
+
+            inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position; // This is not working...
+            inputToSetup.TextField.SetEnabled(!model.Disabled);
         }
 
-        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)
+        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, in PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)
         {
             var dropdownField = dropdownToSetup.DropdownField;
             dropdownField.style.fontSize = model.GetFontSize();
             dropdownField.style.color = model.GetColor();
-            
+
             int font = (int)model.GetFont();
             if (font < styleFontDefinitions.Length)
                 dropdownField.style.unityFontDefinition = styleFontDefinitions[font];
-            
+
             dropdownField.choices.Clear();
             dropdownField.choices.AddRange(model.Options);
 
@@ -248,6 +251,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
             arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
+
+            dropdownField.SetEnabled(!model.Disabled);
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

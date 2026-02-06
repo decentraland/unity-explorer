@@ -77,7 +77,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel, in styleFontDefinitions);
+            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 
