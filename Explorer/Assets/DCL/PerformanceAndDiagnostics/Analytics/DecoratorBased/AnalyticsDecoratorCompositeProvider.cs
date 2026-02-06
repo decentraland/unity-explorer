@@ -18,8 +18,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public AnalyticsDecoratorCompositeProvider(ICompositeWeb3Provider core, IAnalyticsController analytics)
         {
-            this.core = core ?? throw new ArgumentNullException(nameof(core));
-            this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
+            this.core = core;
+            this.analytics = analytics;
         }
 
         // ICompositeWeb3Provider specific

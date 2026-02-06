@@ -14,6 +14,7 @@ using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
+using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -130,7 +131,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
-            characterPreviewController?.OnHide();
+            characterPreviewController.OnHide();
 
             avatarHistory.Clear();
             maleWearablesByCategory = null;
@@ -212,7 +213,7 @@ namespace DCL.AuthenticationScreenFlow
                 string category = wearable.GetCategory();
 
                 // Skip body shapes
-                if (category == "body_shape")
+                if (category == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
                 // Add to male dictionary if compatible
@@ -267,9 +268,9 @@ namespace DCL.AuthenticationScreenFlow
         private void UpdateCharacterPreview(Avatar newAvatar)
         {
             newUserProfile.Avatar = newAvatar;
-            characterPreviewController?.Initialize(newAvatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
+            characterPreviewController.Initialize(newAvatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController.OnBeforeShow();
+            characterPreviewController.OnShow();
         }
 
         private void OnRandomizeButtonPressed()
@@ -325,9 +326,9 @@ namespace DCL.AuthenticationScreenFlow
             // If base wearables loaded from backend - use randomizer
             if (loadedWearables != null && loadedWearables.Count > 0)
             {
-                Dictionary<string, List<URN>>? wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
-                    ? maleWearablesByCategory
-                    : femaleWearablesByCategory;
+                Dictionary<string, List<URN>> wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
+                    ? maleWearablesByCategory!
+                    : femaleWearablesByCategory!;
 
                 HashSet<URN> wearablesSet = GetRandomWearablesFromCategories(wearablesByCategory);
 
@@ -381,11 +382,11 @@ namespace DCL.AuthenticationScreenFlow
                     Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
-                    await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+                    await characterPreviewController.PlayJumpInEmoteAndAwaitItAsync();
 
                     view.Hide(UIAnimationHashes.OUT);
                     await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
-                    characterPreviewController?.OnHide();
+                    characterPreviewController.OnHide();
 
                     fsm.Enter<InitAuthState>();
                     controller.TrySetLifeCycle();

@@ -58,7 +58,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             loginCt = payload.ct;
             view.JumpIntoWorldButton.interactable = true;
-            view!.DiffAccountButton.interactable = true;
+            view.DiffAccountButton.interactable = true;
 
             // splashScreen is destroyed after the first login
             if (splashScreen != null)
@@ -74,9 +74,9 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewView.transform.SetAsFirstSibling();
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
-            characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
-            characterPreviewController?.OnBeforeShow();
-            characterPreviewController?.OnShow();
+            characterPreviewController.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController.OnBeforeShow();
+            characterPreviewController.OnShow();
 
             // Listeners
             view.JumpIntoWorldButton.onClick.AddListener(OnJumpIntoWorld);
@@ -89,7 +89,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
-            characterPreviewController?.OnHide();
+            characterPreviewController.OnHide();
 
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();

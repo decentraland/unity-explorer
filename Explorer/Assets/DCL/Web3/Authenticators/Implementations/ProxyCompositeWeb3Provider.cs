@@ -18,8 +18,8 @@ namespace DCL.Web3.Authenticators
             ICompositeWeb3Provider provider,
             IWeb3IdentityCache identityCache)
         {
-            this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
-            this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
+            this.provider = provider;
+            this.identityCache = identityCache;
         }
 
         // ICompositeWeb3Provider specific
