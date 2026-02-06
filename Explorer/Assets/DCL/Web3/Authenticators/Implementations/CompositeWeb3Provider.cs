@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
 using DCL.Web3.Identities;
 using System;
@@ -11,13 +12,13 @@ namespace DCL.Web3.Authenticators
     ///     and delegates calls to the currently selected method.
     ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi,
     ///     IDappVerificationHandler and IOtpAuthenticator to provide a single entry point for all Web3 needs.
-    ///     Caches the authenticated identity in IWeb3IdentityCache after successful login.
     /// </summary>
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3Authenticator dappAuth;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IAnalyticsController analytics;
 
         private AuthProvider currentProvider = AuthProvider.Dapp;
 
@@ -50,11 +51,16 @@ namespace DCL.Web3.Authenticators
 
         private IEthereumApi CurrentEthereumApi => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
 
-        public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth, IWeb3IdentityCache identityCache)
+        public CompositeWeb3Provider(
+            ThirdWebAuthenticator thirdWebAuth,
+            DappWeb3Authenticator dappAuth,
+            IWeb3IdentityCache identityCache,
+            IAnalyticsController analytics)
         {
-            this.thirdWebAuth = thirdWebAuth;
-            this.dappAuth = dappAuth;
-            this.identityCache = identityCache;
+            this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
+            this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
+            this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
+            this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
 
         // IWeb3Authenticator
@@ -62,11 +68,13 @@ namespace DCL.Web3.Authenticators
         {
             IWeb3Identity identity = await CurrentAuthenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
+            analytics.Identify(identity);
             return identity;
         }
 
         public async UniTask LogoutAsync(CancellationToken ct)
         {
+            analytics.Identify(null);
             await CurrentAuthenticator.LogoutAsync(ct);
             identityCache.Clear();
         }

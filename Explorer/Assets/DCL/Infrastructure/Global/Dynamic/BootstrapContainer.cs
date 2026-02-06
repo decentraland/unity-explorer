@@ -240,12 +240,8 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            // Create composite provider that wraps both authenticators and caches identity
-            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache);
-
-            // Add analytics decorator if enabled
-            if (container.EnableAnalytics)
-                result = new AnalyticsDecoratorCompositeProvider(result, container.Analytics!);
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache,
+                container.Analytics ?? IAnalyticsController.Null);
 
             return result;
         }

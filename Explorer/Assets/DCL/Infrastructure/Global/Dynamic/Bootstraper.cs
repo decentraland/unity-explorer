@@ -296,13 +296,16 @@ namespace Global.Dynamic
 
             try
             {
-                bootstrapContainer.IdentityCache!.Identity =
-                    await new TokenFileAuthenticator(
-                              URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                              webRequestsContainer.WebRequestController,
-                              bootstrapContainer.Web3AccountFactory)
-                         .WithAnalytics(bootstrapContainer.Analytics!, when: EnableAnalytics)
-                         .LoginAsync(new LoginPayload(), ct);
+                IWeb3Identity identity = await new TokenFileAuthenticator(
+                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                          webRequestsContainer.WebRequestController,
+                          bootstrapContainer.Web3AccountFactory)
+                     .LoginAsync(new LoginPayload(), ct); // doesn't use payload
+
+                bootstrapContainer.IdentityCache!.Identity = identity;
+
+                if (EnableAnalytics)
+                    bootstrapContainer.Analytics!.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
