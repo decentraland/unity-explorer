@@ -238,22 +238,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
             arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
-
-            // To enforce an opacity transition since Unity instantiates the popup on demand,
-            // and we cannot be animating a property on it from the uss stylesheet.
-            dropdownField.RegisterCallback<PointerDownEvent>(_ =>
-            {
-                dropdownField.schedule.Execute(() =>
-                {
-                    var root = dropdownField.panel.visualTree;
-                    var dropdownOuterContainer = root.Q(null, "unity-base-dropdown__container-outer");
-                    if (dropdownOuterContainer == null)
-                        return;
-
-                    dropdownOuterContainer.experimental.animation
-                                          .Start(0f, 1f, 150, (VisualElement element, float value) => dropdownOuterContainer.style.opacity = value);
-                });
-            });
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

@@ -142,23 +142,39 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusOut);
         }
 
+        // Using static callbacks to avoid closure allocations
+        private static readonly EventCallback<ChangeEvent<string>, UIDropdownComponent> DROPDOWN_VALUE_CHANGED_CALLBACK = OnDropdownValueChanged;
+        private static readonly EventCallback<PointerDownEvent, UIDropdownComponent> DROPDOWN_POINTER_DOWN_CALLBACK = OnDropdownPointerDown;
+        internal static readonly System.Action<VisualElement, float> OPACITY_ANIMATION_CALLBACK = static (element, value) => element.style.opacity = value;
+
         public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
         {
-            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
-            {
-                evt.StopPropagation();
-                uiDropdownComponent.IsOnValueChangedTriggered = true;
-            };
-
             uiDropdownComponent.UnregisterDropdownCallbacks();
-            uiDropdownComponent.DropdownField.RegisterCallback(newOnChangeCallback);
-            uiDropdownComponent.currentOnValueChanged = newOnChangeCallback;
+            uiDropdownComponent.DropdownField.RegisterCallback(DROPDOWN_VALUE_CHANGED_CALLBACK, uiDropdownComponent);
+
+            // Enforce an opacity transition since Unity instantiates the popup on demand,
+            // and we cannot animate a property on it from the uss stylesheet.
+            // The animation must be scheduled (deferred) because Unity creates the popup element
+            // on demand, so it doesn't exist in the visual tree at PointerDown time.
+            uiDropdownComponent.cachedScheduledAction ??= uiDropdownComponent.AnimateDropdownOpacity;
+            uiDropdownComponent.DropdownField.RegisterCallback(DROPDOWN_POINTER_DOWN_CALLBACK, uiDropdownComponent);
         }
 
-        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
+        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
         {
-            if(uiInputComponent.currentOnValueChanged!=null)
-                uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            uiDropdownComponent.DropdownField.UnregisterCallback(DROPDOWN_VALUE_CHANGED_CALLBACK);
+            uiDropdownComponent.DropdownField.UnregisterCallback(DROPDOWN_POINTER_DOWN_CALLBACK);
+        }
+
+        private static void OnDropdownValueChanged(ChangeEvent<string> evt, UIDropdownComponent component)
+        {
+            evt.StopPropagation();
+            component.IsOnValueChangedTriggered = true;
+        }
+
+        private static void OnDropdownPointerDown(PointerDownEvent _, UIDropdownComponent component)
+        {
+            component.DropdownField.schedule.Execute(component.cachedScheduledAction);
         }
     }
 }
