@@ -54,7 +54,7 @@
     background-color: white;
     border-radius: var(--default-border-radius);
     color: rgb(0, 0, 0);
-    overflow: hidden
+    overflow: hidden;
 }
 
 .unity-base-dropdown__container-inner {

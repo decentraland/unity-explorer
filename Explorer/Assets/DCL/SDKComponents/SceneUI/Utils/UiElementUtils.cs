@@ -242,30 +242,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             // To enforce an opacity transition since Unity instantiates the popup on demand,
             // and we cannot be animating a property on it from the uss stylesheet.
-            // TODO: Fix inner-container not transitioning...
             dropdownField.RegisterCallback<PointerDownEvent>(_ =>
             {
                 dropdownField.schedule.Execute(() =>
                 {
                     var root = dropdownField.panel.visualTree;
-                    var popup = root.Q(null, "unity-base-dropdown");
-                    if (popup == null)
+                    var dropdownOuterContainer = root.Q(null, "unity-base-dropdown__container-outer");
+                    if (dropdownOuterContainer == null)
                         return;
 
-                    popup.style.opacity = 0;
-                    popup.style.transitionProperty = new List<StylePropertyName>
-                    {
-                        "opacity"
-                    };
-                    popup.style.transitionDuration = new List<TimeValue>
-                    {
-                        new(0.3f, TimeUnit.Second)
-                    };
-
-                    popup.schedule.Execute(() =>
-                    {
-                        popup.style.opacity = 1;
-                    }).StartingIn(1);
+                    dropdownOuterContainer.experimental.animation
+                                          .Start(0f, 1f, 150, (VisualElement element, float value) => dropdownOuterContainer.style.opacity = value);
                 });
             });
         }
