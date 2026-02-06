@@ -30,7 +30,6 @@ namespace DCL.Events
         public event Action<DateTime, int>? DaysRangeChanged;
 
         [Header("Days Selector")]
-        [SerializeField] private GameObject daySelectorContainer = null!;
         [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
         [SerializeField] private Button previousDateRangeButton = null!;
         [SerializeField] private Button nextDateRangeButton = null!;
@@ -103,13 +102,11 @@ namespace DCL.Events
             this.profileRepositoryWrapper = profileRepoWrapper;
         }
 
-        public void SetDaysSelectorActive(bool isActive) =>
-            daySelectorContainer.SetActive(isActive);
-
-        public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow)
+        public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow, bool triggerEvent = true, bool deactivateArrows = false)
         {
             bool isToday = fromDate.Date == DateTime.Today;
-            previousDateRangeButton.interactable = !isToday;
+            nextDateRangeButton.interactable = !deactivateArrows;
+            previousDateRangeButton.interactable = !deactivateArrows && !isToday;
             goToTodayButtonLeftSide.gameObject.SetActive(!isToday && !showGoToTodayButtonOnTheRight);
             goToTodayButtonRightSide.gameObject.SetActive(!isToday && showGoToTodayButtonOnTheRight);
 
@@ -121,7 +118,9 @@ namespace DCL.Events
 
             currentFromDate = fromDate;
             currentNumberOfDaysShowed = numberOfDaysToShow;
-            DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
+
+            if (triggerEvent)
+                DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
         }
 
         public void SetHighlightedBanner(EventDTO? eventInfo)

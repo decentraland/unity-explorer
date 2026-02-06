@@ -150,7 +150,8 @@ namespace DCL.Events
 
         private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
         {
-            view.SetDaysSelectorActive(false);
+            view.SetHighlightedBanner(null);
+            view.SetupDaysSelector(fromDate, 5, triggerEvent: false, deactivateArrows: true);
             view.SetAsLoading(true);
 
             await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
@@ -161,8 +162,10 @@ namespace DCL.Events
             if (ct.IsCancellationRequested)
                 return;
 
+            var showHighlightedBanner = false;
             if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
             {
+                showHighlightedBanner = true;
                 eventsStateService.AddEvents(highlightedEventsResult.Value, clearCurrentEvents: true);
 
                 List<string> placesIds = new ();
@@ -179,17 +182,9 @@ namespace DCL.Events
                     eventsStateService.AddPlaces(placesResponse.Value.Data, clearCurrentPlaces: true);
             }
 
-            var showHighlightedBanner = false;
-            view.SetHighlightedBanner(null);
-            if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
-            {
-                showHighlightedBanner = true;
-                var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
-                view.SetHighlightedBanner(eventData!.EventInfo);
-            }
-
+            var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
+            view.SetHighlightedBanner(eventData!.EventInfo);
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
-            view.SetDaysSelectorActive(true);
         }
 
         private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)
