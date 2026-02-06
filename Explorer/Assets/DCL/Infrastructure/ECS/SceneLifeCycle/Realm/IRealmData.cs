@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
 
@@ -34,6 +34,11 @@ namespace ECS
         bool Configured { get; }
         bool IsDirty { get; }
 
+        /// <summary>
+        ///     World manifest from asset-bundle-registry (occupied parcels, spawn coordinate, total). Null when not fetched or not applicable.
+        /// </summary>
+        DCL.Ipfs.WorldManifest? WorldManifest { get; }
+
         class Fake : IRealmData
         {
             public IIpfsRealm Ipfs { get; }
@@ -47,6 +52,7 @@ namespace ECS
             public bool IsLocalSceneDevelopment { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
+            public DCL.Ipfs.WorldManifest? WorldManifest { get; }
 
             public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3",
                 string hostname = "realm-provider.decentraland.org") : this(
@@ -56,7 +62,7 @@ namespace ECS
                 true, networkId, commsAdapter, protocol, hostname) { }
 
             public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured, int networkId,
-                string commsAdapter, string protocol, string hostname)
+                string commsAdapter, string protocol, string hostname, DCL.Ipfs.WorldManifest? worldManifest = null)
             {
                 Ipfs = ipfs;
                 ScenesAreFixed = scenesAreFixed;
@@ -66,6 +72,7 @@ namespace ECS
                 CommsAdapter = commsAdapter;
                 Protocol = protocol;
                 Hostname = hostname;
+                WorldManifest = worldManifest;
             }
         }
     }
