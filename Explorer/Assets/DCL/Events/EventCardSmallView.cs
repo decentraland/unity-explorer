@@ -86,7 +86,7 @@ namespace DCL.Events
                                                  HOVER_ANIMATION_DURATION)
                                             .SetEase(Ease.OutQuad);
 
-                nameContainerTween = dateContainer.DOAnchorPos(originalNameContainerAnchoredPosition, HOVER_ANIMATION_DURATION)
+                nameContainerTween = nameContainer.DOAnchorPos(originalNameContainerAnchoredPosition, HOVER_ANIMATION_DURATION)
                                                   .SetEase(Ease.OutQuad);
 
                 dateContainerTween = dateContainer.DOAnchorPos(originalDateContainerAnchoredPosition, HOVER_ANIMATION_DURATION)
