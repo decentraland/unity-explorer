@@ -57,7 +57,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         {
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Emotes] Request Page {page} search='{search}'");
 
-            using var pageEmotesScope = ListPool<IEmote>.Get(out var pageEmotes);
+            using var pageEmotesScope = ListPool<ITrimmedEmote>.Get(out var pageEmotes);
 
             var requestOptions = new IEmoteProvider.OwnedEmotesRequestOptions(
                 pageNum: page,
@@ -106,7 +106,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         {
             style = default;
 
-            if (!viewModelsByUrn.TryGetValue(urn, out var vm)) 
+            if (!viewModelsByUrn.TryGetValue(urn, out var vm))
                 return false;
 
             style = stylingCatalog.GetStyleSnapshot(vm.RarityId, "emote");

@@ -9,6 +9,24 @@ namespace DCL.AvatarRendering.Emotes
         public int Amount { get; set; }
         TrimmedEmoteDTO TrimmedDTO { get; }
 
+        string GetName()
+        {
+            if (string.IsNullOrEmpty(TrimmedDTO.Metadata.name))
+                return "NAME_WEARABLE";
+
+            return TrimmedDTO.Metadata.name;
+        }
+
+        string GetCategory() =>
+            TrimmedDTO.Metadata.AbstractData.category;
+
+        string GetRarity()
+        {
+            const string DEFAULT_RARITY = "base";
+            string result = TrimmedDTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
+        }
+
         // IThumbnailAttachment implementation
         URLPath IThumbnailAttachment.GetThumbnail() =>
             new (TrimmedDTO.thumbnail);

@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Emotes
             Web3Address userId,
             CancellationToken ct,
             OwnedEmotesRequestOptions requestOptions,
-            List<IEmote>? results = null,
+            List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false
         );

@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public async UniTask<int> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
-            List<IEmote>? results = null,
+            List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
@@ -38,19 +38,27 @@ namespace DCL.AvatarRendering.Emotes
                                            .Select(s => new URN(s))
                                            .ToArray();
 
-                await UniTask.WhenAll(GetEmotesAsync(pointers, BodyShape.MALE, ct, results),
-                    GetEmotesAsync(pointers, BodyShape.FEMALE, ct, results));
+                results ??= new List<ITrimmedEmote>();
+
+                var localBuffer = ListPool<IEmote>.Get();
+
+                await UniTask.WhenAll(GetEmotesAsync(pointers, BodyShape.MALE, ct, localBuffer),
+                    GetEmotesAsync(pointers, BodyShape.FEMALE, ct, localBuffer));
+
+                foreach (var emote in localBuffer)
+                    results.Add(emote);
+
+                ListPool<IEmote>.Release(localBuffer);
 
                 return results.Count;
             }
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
             {
-                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                                      .ToArray();
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                results ??= new List<IEmote>();
-                var localBuffer = ListPool<IEmote>.Get();
+                results ??= new List<ITrimmedEmote>();
+                var localBuffer = ListPool<ITrimmedEmote>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded emotes
@@ -73,7 +81,7 @@ namespace DCL.AvatarRendering.Emotes
                 }
 
                 int count = localBuffer.Count;
-                ListPool<IEmote>.Release(localBuffer);
+                ListPool<ITrimmedEmote>.Release(localBuffer);
 
                 return count;
             }
