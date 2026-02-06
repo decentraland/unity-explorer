@@ -1,4 +1,4 @@
-﻿using CRDT;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter);
+            system = new UIDropdownInstantiationSystem(world, poolsRegistry, ecsToCRDTWriter, new []{new StyleFontDefinition()});
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
             world.Add(entity, new CRDTEntity(500));

@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Input;
@@ -90,9 +90,9 @@ namespace DCL.PluginSystem.World
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock, styleFontDefinitions);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
+            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);

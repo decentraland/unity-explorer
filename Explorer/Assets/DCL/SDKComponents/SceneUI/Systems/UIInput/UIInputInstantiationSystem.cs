@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -13,6 +13,7 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 {
@@ -34,12 +35,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private readonly IComponentPool<UIInputComponent> inputTextsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IInputBlock inputBlock;
+        private readonly StyleFontDefinition[] styleFontDefinitions;
 
-        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions) : base(world)
         {
             inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>().EnsureNotNull();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
+            this.styleFontDefinitions = styleFontDefinitions;
         }
 
         protected override void Update(float t)
@@ -74,7 +77,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel);
+            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 

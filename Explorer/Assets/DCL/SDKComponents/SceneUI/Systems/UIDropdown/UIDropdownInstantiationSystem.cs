@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 {
@@ -30,11 +31,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly StyleFontDefinition[] styleFontDefinitions;
 
-        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public UIDropdownInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, in StyleFontDefinition[] styleFontDefinitions) : base(world)
         {
             dropdownsPool = poolsRegistry.GetReferenceTypePool<UIDropdownComponent>();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.styleFontDefinitions = styleFontDefinitions;
         }
 
         protected override void Update(float t)
@@ -64,7 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             if (!sdkModel.IsDirty) return;
 
-            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, ref sdkModel);
+            UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, ref sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
 
