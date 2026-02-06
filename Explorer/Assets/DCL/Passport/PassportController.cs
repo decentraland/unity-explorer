@@ -638,7 +638,6 @@ namespace DCL.Passport
             userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
-            Debug.Log($"[MAURIZIO] New user name color selected: {color}");
         }
 
         private void UpdateBackgroundColor(Color newColor)
@@ -654,14 +653,11 @@ namespace DCL.Passport
                 viewInstance.UserBasicInfoModuleView.UserNameElement.UserNameText.color = color;
         }
 
-        // TODO (Maurizio) this mocks saving the username color,
-        //  it will use passportProfileInfoController.UpdateProfileAsync()
-
         private void SaveUserNameColor()
         {
             if (userNameColorToSave != null)
             {
-                Debug.Log($"[MAURIZIO] Mock save of new user name color: {userNameColorToSave}");
+                // TODO (Maurizio) here we'll re-deploy the profile, i.e. passportProfileInfoController.UpdateProfileAsync()
                 userNameColorToSave = null;
             }
         }
