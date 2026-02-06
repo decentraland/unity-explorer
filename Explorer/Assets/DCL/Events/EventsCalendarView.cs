@@ -1,6 +1,7 @@
 ﻿using DCL.Communities;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DG.Tweening;
@@ -37,8 +38,6 @@ namespace DCL.Events
         [SerializeField] private Button goToTodayButtonRightSide = null!;
 
         [Header("Events")]
-        [SerializeField] private GameObject loadingSpinner = null!;
-        [SerializeField] private GameObject eventsContainer = null!;
         [SerializeField] private List<EventListConfiguration> eventsLists = null!;
 
         [Header("Highlighted Banner")]
@@ -51,6 +50,7 @@ namespace DCL.Events
             public LoopListView2 eventsLoopList;
             public HoverableUiElement hoverableUiElement;
             public CanvasGroup scrollBarCanvasGroup;
+            public SkeletonLoadingView skeletonLoadingView;
         }
 
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
@@ -190,8 +190,13 @@ namespace DCL.Events
 
         public void SetAsLoading(bool isLoading)
         {
-            loadingSpinner.SetActive(isLoading);
-            eventsContainer.SetActive(!isLoading);
+            foreach (var eventList in eventsLists)
+            {
+                if (isLoading)
+                    eventList.skeletonLoadingView.ShowLoading();
+                else
+                    eventList.skeletonLoadingView.HideLoading();
+            }
         }
 
         private LoopListViewItem2 SetupEventCardByIndex(LoopListView2 loopListView, int eventIndex)
