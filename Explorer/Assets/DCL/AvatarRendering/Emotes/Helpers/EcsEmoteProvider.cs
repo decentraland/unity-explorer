@@ -44,9 +44,10 @@ namespace DCL.AvatarRendering.Emotes
                 results?.Clear();
                 urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                    .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
-                    .AppendParameter(new URLParameter("includeEntities", "true"));
+                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, URLSubdirectory.FromString("/explorer/"))
+                          .AppendSubDirectory(URLSubdirectory.FromString(userId))
+                          .AppendSubDirectory(URLSubdirectory.FromString("emotes"))
+                          .AppendParameter(new URLParameter("includeEntities", "true"));
 
                 int? pageNum = requestOptions.pageNum;
                 int? pageSize = requestOptions.pageSize;
