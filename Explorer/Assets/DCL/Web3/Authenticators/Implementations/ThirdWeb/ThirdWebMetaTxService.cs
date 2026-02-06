@@ -32,6 +32,28 @@ namespace DCL.Web3.Authenticators
             + "{\"name\":\"functionSignature\",\"type\":\"bytes\"}"
             + "]},";
 
+        // Fixed JSON structure size around variable parts in CreateMetaTxTypedData:
+        //   "domain":{"name":                 17
+        //   ,"version":                       11
+        //   ,"verifyingContract":"             22
+        //   ","salt":"0x                       12
+        //   "},                                 3
+        //   "primaryType":"MetaTransaction",   32
+        //   "message":{"nonce":                19
+        //   ,"from":"                           9
+        //   ","functionSignature":"             23
+        //   "}}                                  3
+        //                               Total: 151
+        private const int TYPED_DATA_FIXED_OVERHEAD = 151;
+
+        // Fixed JSON structure size in PostToTransactionsServerAsync payload:
+        //   {"transactionData":{"from":"       28
+        //   ","params":["                      13
+        //   ","                                 3
+        //   "]}}                                 4
+        //                               Total: 48
+        private const int POST_PAYLOAD_FIXED_OVERHEAD = 48;
+
         /// <summary>
         ///     Known Decentraland contracts that support meta-transactions.
         ///     Key = contract address (case-insensitive), Value = (name, version) for EIP-712 domain.
@@ -132,6 +154,7 @@ namespace DCL.Web3.Authenticators
         {
             // getNonce(address) selector = keccak256("getNonce(address)")[:4] = 0x2d0335ab
             // Build "0x2d0335ab" + lowercase address padded to 64 hex chars = 74 chars total
+            // Single allocation via string.Create instead of ToLower() + PadLeft() + concat
             string data = string.Create(74, userAddress, static (span, addr) =>
             {
                 "0x2d0335ab".AsSpan().CopyTo(span);
@@ -192,26 +215,47 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     POSTs the signed meta-transaction to Decentraland's transactions-server.
         ///     Based on: https://github.com/decentraland/decentraland-transactions/blob/master/src/sendMetaTransaction.ts
+        ///     Payload JSON built via string.Create — single allocation, no StringBuilder.
         /// </summary>
         private async UniTask<string> PostToTransactionsServerAsync(
             string from,
             string contractAddress,
             string txData)
         {
-            // Build JSON manually to avoid anonymous type + JsonConvert.SerializeObject allocations.
+            // Build JSON via string.Create — one allocation for the final string.
             // from, contractAddress, txData are hex strings — no JSON escaping needed.
-            // Format expected by transactions-server:
-            // { transactionData: { from, params: [contractAddress, txData] } }
-            var sb = new StringBuilder(64 + from.Length + contractAddress.Length + txData.Length);
-            sb.Append("{\"transactionData\":{\"from\":\"").Append(from)
-              .Append("\",\"params\":[\"").Append(contractAddress)
-              .Append("\",\"").Append(txData)
-              .Append("\"]}}");
+            // Format: {"transactionData":{"from":"<from>","params":["<contractAddress>","<txData>"]}}
+            int payloadLen = POST_PAYLOAD_FIXED_OVERHEAD + from.Length + contractAddress.Length + txData.Length;
+
+            string payloadJson = string.Create(payloadLen, (from, contractAddress, txData), static (span, state) =>
+            {
+                int pos = 0;
+
+                "{\"transactionData\":{\"from\":\"".AsSpan().CopyTo(span);
+                pos += 28;
+
+                state.from.AsSpan().CopyTo(span[pos..]);
+                pos += state.from.Length;
+
+                "\",\"params\":[\"".AsSpan().CopyTo(span[pos..]);
+                pos += 13;
+
+                state.contractAddress.AsSpan().CopyTo(span[pos..]);
+                pos += state.contractAddress.Length;
+
+                "\",\"".AsSpan().CopyTo(span[pos..]);
+                pos += 3;
+
+                state.txData.AsSpan().CopyTo(span[pos..]);
+                pos += state.txData.Length;
+
+                "\"]}}".AsSpan().CopyTo(span[pos..]);
+            });
 
             IThirdwebHttpClient httpClient = client.HttpClient;
 
             var content = new System.Net.Http.StringContent(
-                sb.ToString(),
+                payloadJson,
                 Encoding.UTF8,
                 "application/json"
             );
@@ -240,9 +284,8 @@ namespace DCL.Web3.Authenticators
         ///     Encodes the executeMetaTransaction(address,bytes,bytes32,bytes32,uint8) call.
         ///     This is what gets sent to the transactions-server as the second param.
         ///     Based on: https://github.com/decentraland/decentraland-transactions/blob/master/src/utils.ts
-        ///     Zero intermediate string allocations — single string.Create call with Span writes.
         /// </summary>
-        public string EncodeExecuteMetaTransaction(string userAddress, string signature, string functionSignature)
+        private string EncodeExecuteMetaTransaction(string userAddress, string signature, string functionSignature)
         {
             // Pre-parse v value (need it for the state and to normalize 0/1 → 27/28)
             ReadOnlySpan<char> sigSpan = signature.AsSpan();
@@ -257,13 +300,13 @@ namespace DCL.Web3.Authenticators
                 vInt += 27;
 
             // Determine method length (without 0x prefix) for output sizing
-            ReadOnlySpan<char> methodSpan = functionSignature.AsSpan();
+            int methodHexLen = functionSignature.Length;
 
-            if (methodSpan.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                methodSpan = methodSpan[2..];
+            if (functionSignature.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                methodHexLen -= 2;
 
-            int methodHexLen = methodSpan.Length;
-            int signaturePadding = (int)Math.Ceiling(methodHexLen / 64.0);
+            // Integer ceiling division — avoids int→double conversion + Math.Ceiling
+            int signaturePadding = (methodHexLen + ABI_WORD_HEX - 1) / ABI_WORD_HEX;
 
             // Total: "0x"(2) + selector(8) + 6×64 (address,offset,r,s,v,sigLen) + 64×padding (method)
             int totalLength = 2 + 8 + (6 * ABI_WORD_HEX) + (ABI_WORD_HEX * signaturePadding);
@@ -336,9 +379,8 @@ namespace DCL.Web3.Authenticators
         ///     EIP-712 'address' type is encoded as bytes, so case shouldn't matter for the hash.
         ///     IMPORTANT: We use explicit JSON construction to ensure exact key ordering
         ///     matches the JS library. JsonConvert with anonymous types may reorder keys.
-        ///     Uses pre-sized StringBuilder and chained Append to avoid intermediate string allocations.
         /// </summary>
-        public string CreateMetaTxTypedData(
+        private string CreateMetaTxTypedData(
             string contractName,
             string contractVersion,
             string contractAddress,
@@ -347,40 +389,90 @@ namespace DCL.Web3.Authenticators
             string from,
             string functionSignature)
         {
-            // Pre-size: constant types(~280) + domain(~200) + message(~120) + variable lengths
-            int estimatedSize = TYPED_DATA_TYPES_JSON.Length + 200
-                                + contractName.Length + contractVersion.Length
-                                + contractAddress.Length + from.Length
-                                + functionSignature.Length + 80;
+            long nonceValue = (long)nonce;
+            int contractNameJsonLen = JsonEscapedLength(contractName);
+            int contractVersionJsonLen = JsonEscapedLength(contractVersion);
+            int nonceDigits = CountDecimalDigits(nonceValue);
 
-            var sb = new StringBuilder(estimatedSize);
+            int totalLen = TYPED_DATA_TYPES_JSON.Length + TYPED_DATA_FIXED_OVERHEAD + ABI_WORD_HEX
+                           + contractNameJsonLen + contractVersionJsonLen
+                           + contractAddress.Length + nonceDigits
+                           + from.Length + functionSignature.Length;
 
-            // Types section (compile-time constant, zero cost)
-            sb.Append(TYPED_DATA_TYPES_JSON);
+            string result = string.Create(
+                totalLen,
+                (contractName, contractVersion, contractAddress, chainIdValue, nonceValue, from, functionSignature),
+                static (span, state) =>
+                {
+                    int pos = 0;
 
-            // Domain — chained Append calls avoid interpolated string allocations.
-            // AppendJsonString replaces JsonConvert.SerializeObject for proper escaping.
-            sb.Append("\"domain\":{\"name\":");
-            AppendJsonString(sb, contractName);
-            sb.Append(",\"version\":");
-            AppendJsonString(sb, contractVersion);
-            sb.Append(",\"verifyingContract\":\"").Append(contractAddress);
+                    // Types section (compile-time constant)
+                    TYPED_DATA_TYPES_JSON.AsSpan().CopyTo(span);
+                    pos += TYPED_DATA_TYPES_JSON.Length;
 
-            // Salt is chainId padded to bytes32 — write hex directly into StringBuilder
-            sb.Append("\",\"salt\":\"0x");
-            AppendHexPaddedLeft(sb, chainIdValue, ABI_WORD_HEX);
-            sb.Append("\"},");
+                    // "domain":{"name":
+                    "\"domain\":{\"name\":".AsSpan().CopyTo(span[pos..]);
+                    pos += 17;
 
-            // primaryType
-            sb.Append("\"primaryType\":\"MetaTransaction\",");
+                    pos += WriteJsonString(span[pos..], state.contractName);
 
-            // message — nonce must be a number, not string
-            sb.Append("\"message\":{\"nonce\":").Append((long)nonce);
-            sb.Append(",\"from\":\"").Append(from);
-            sb.Append("\",\"functionSignature\":\"").Append(functionSignature);
-            sb.Append("\"}}");
+                    // ,"version":
+                    ",\"version\":".AsSpan().CopyTo(span[pos..]);
+                    pos += 11;
 
-            string result = sb.ToString();
+                    pos += WriteJsonString(span[pos..], state.contractVersion);
+
+                    // ,"verifyingContract":"
+                    ",\"verifyingContract\":\"".AsSpan().CopyTo(span[pos..]);
+                    pos += 22;
+
+                    state.contractAddress.AsSpan().CopyTo(span[pos..]);
+                    pos += state.contractAddress.Length;
+
+                    // ","salt":"0x
+                    "\",\"salt\":\"0x".AsSpan().CopyTo(span[pos..]);
+                    pos += 12;
+
+                    // Salt hex: chainId padded to bytes32
+                    Span<char> saltDest = span.Slice(pos, ABI_WORD_HEX);
+                    saltDest.Fill('0');
+                    WriteHexRight(saltDest, state.chainIdValue);
+                    pos += ABI_WORD_HEX;
+
+                    // "},
+                    "\"},".AsSpan().CopyTo(span[pos..]);
+                    pos += 3;
+
+                    // "primaryType":"MetaTransaction",
+                    "\"primaryType\":\"MetaTransaction\",".AsSpan().CopyTo(span[pos..]);
+                    pos += 32;
+
+                    // "message":{"nonce":
+                    "\"message\":{\"nonce\":".AsSpan().CopyTo(span[pos..]);
+                    pos += 19;
+
+                    // Nonce as decimal number — TryFormat writes directly into span
+                    state.nonceValue.TryFormat(span[pos..], out int nonceWritten);
+                    pos += nonceWritten;
+
+                    // ,"from":"
+                    ",\"from\":\"".AsSpan().CopyTo(span[pos..]);
+                    pos += 9;
+
+                    state.from.AsSpan().CopyTo(span[pos..]);
+                    pos += state.from.Length;
+
+                    // ","functionSignature":"
+                    "\",\"functionSignature\":\"".AsSpan().CopyTo(span[pos..]);
+                    pos += 23;
+
+                    state.functionSignature.AsSpan().CopyTo(span[pos..]);
+                    pos += state.functionSignature.Length;
+
+                    // "}}
+                    "\"}}".AsSpan().CopyTo(span[pos..]);
+                });
+
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb Created typed data JSON (length={result.Length}):\n{result}");
             return result;
         }
@@ -388,7 +480,6 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Writes an integer value as lowercase hex digits right-aligned within the destination span.
         ///     The destination span must be pre-filled with '0' characters.
-        ///     Zero allocations.
         /// </summary>
         private static void WriteHexRight(Span<char> dest, int value)
         {
@@ -402,76 +493,104 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
-        ///     Appends an integer as lowercase hex left-padded with '0' to the specified width.
-        ///     Zero allocations (writes directly to StringBuilder char-by-char).
+        ///     Writes a JSON-escaped string (with surrounding double quotes) directly into the span.
+        ///     Returns the number of characters written.
         /// </summary>
-        private static void AppendHexPaddedLeft(StringBuilder sb, int value, int width)
+        private static int WriteJsonString(Span<char> dest, ReadOnlySpan<char> value)
         {
-            // Count hex digits needed
-            int digits = 0;
-            int temp = value;
-
-            do
-            {
-                digits++;
-                temp >>= 4;
-            }
-            while (temp > 0);
-
-            // Leading zeros
-            for (int i = 0; i < width - digits; i++)
-                sb.Append('0');
-
-            // Hex digits (most significant first)
-            for (int i = (digits - 1) * 4; i >= 0; i -= 4)
-                sb.Append(HEX_CHARS[(value >> i) & 0xF]);
-        }
-
-        /// <summary>
-        ///     Appends a JSON-escaped string (with surrounding double quotes) to the StringBuilder.
-        ///     Replaces JsonConvert.SerializeObject to avoid its internal allocations.
-        ///     Zero allocations for typical contract names (no special characters).
-        /// </summary>
-        private static void AppendJsonString(StringBuilder sb, string value)
-        {
-            sb.Append('"');
+            int pos = 0;
+            dest[pos++] = '"';
 
             foreach (char c in value)
             {
                 switch (c)
                 {
                     case '"':
-                        sb.Append("\\\"");
+                        dest[pos++] = '\\';
+                        dest[pos++] = '"';
                         break;
                     case '\\':
-                        sb.Append("\\\\");
+                        dest[pos++] = '\\';
+                        dest[pos++] = '\\';
                         break;
                     case '\n':
-                        sb.Append("\\n");
+                        dest[pos++] = '\\';
+                        dest[pos++] = 'n';
                         break;
                     case '\r':
-                        sb.Append("\\r");
+                        dest[pos++] = '\\';
+                        dest[pos++] = 'r';
                         break;
                     case '\t':
-                        sb.Append("\\t");
+                        dest[pos++] = '\\';
+                        dest[pos++] = 't';
                         break;
                     default:
                         if (c < 0x20)
                         {
-                            sb.Append("\\u00");
-                            sb.Append(HEX_CHARS[c >> 4]);
-                            sb.Append(HEX_CHARS[c & 0xF]);
+                            dest[pos++] = '\\';
+                            dest[pos++] = 'u';
+                            dest[pos++] = '0';
+                            dest[pos++] = '0';
+                            dest[pos++] = HEX_CHARS[c >> 4];
+                            dest[pos++] = HEX_CHARS[c & 0xF];
                         }
                         else
                         {
-                            sb.Append(c);
+                            dest[pos++] = c;
                         }
 
                         break;
                 }
             }
 
-            sb.Append('"');
+            dest[pos++] = '"';
+            return pos;
+        }
+
+        /// <summary>
+        ///     Calculates the total length of a JSON-escaped string including surrounding double quotes.
+        /// </summary>
+        private static int JsonEscapedLength(string value)
+        {
+            int len = 2; // surrounding quotes
+
+            foreach (char c in value)
+            {
+                if (c == '"' || c == '\\' || c == '\n' || c == '\r' || c == '\t')
+                    len += 2;
+                else if (c < 0x20)
+                    len += 6; // \u00XX
+                else
+                    len += 1;
+            }
+
+            return len;
+        }
+
+        /// <summary>
+        ///     Counts the number of decimal digits required to represent the value.
+        ///     Handles zero (returns 1) and negative values (includes sign).
+        /// </summary>
+        private static int CountDecimalDigits(long value)
+        {
+            if (value == 0) return 1;
+
+            int digits = 0;
+
+            if (value < 0)
+            {
+                digits = 1; // minus sign
+                value = -value;
+            }
+
+            while (value > 0)
+            {
+                digits++;
+                value /= 10;
+            }
+
+            return digits;
         }
 
         /// <summary>
