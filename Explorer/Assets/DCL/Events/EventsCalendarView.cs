@@ -178,8 +178,11 @@ namespace DCL.Events
         {
             currentEventsIds.Remove(eventsListIndex);
             currentEventsIds.Add(eventsListIndex, new List<string>());
+
             foreach (EventDTO eventInfo in events)
                 currentEventsIds[eventsListIndex].Add(eventInfo.id);
+
+            FillWithEmptyCards(events, eventsListIndex);
 
             eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(currentEventsIds[eventsListIndex].Count, resetPos);
             eventsLists[eventsListIndex].eventsLoopList.ScrollRect.verticalNormalizedPosition = 1f;
@@ -195,11 +198,7 @@ namespace DCL.Events
         {
             int eventsListIndex = loopListView.transform.GetSiblingIndex();
             var eventData = eventsStateService.GetEventDataById(currentEventsIds[eventsListIndex][eventIndex]);
-
-            int itemPrefabIndex = eventData != null ?
-                eventData.EventInfo.highlighted || eventData.EventInfo.live || eventData.EventInfo.attending || eventData.CommunityInfo != null ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX :
-                EVENT_CARD_EMPTY_PREFAB_INDEX;
-
+            int itemPrefabIndex = GetCardPrefabIndex(eventData);
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[itemPrefabIndex].mItemPrefab.name);
             EventCardView cardView = listItem.GetComponent<EventCardView>();
 
@@ -222,6 +221,39 @@ namespace DCL.Events
             cardView.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
 
             return listItem;
+        }
+
+        private static int GetCardPrefabIndex(EventsStateService.EventWithPlaceAndFriendsData? eventData) =>
+            eventData != null ?
+                eventData.EventInfo.highlighted || eventData.EventInfo.live || eventData.EventInfo.attending || eventData.CommunityInfo != null ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX :
+                EVENT_CARD_EMPTY_PREFAB_INDEX;
+
+        private void FillWithEmptyCards(IReadOnlyList<EventDTO> events, int eventsListIndex)
+        {
+            var columnOccupancyValue = 0f;
+
+            foreach (EventDTO eventInfo in events)
+            {
+                var eventData = eventsStateService.GetEventDataById(eventInfo.id);
+                int cardPrefabIndex = GetCardPrefabIndex(eventData);
+                switch (cardPrefabIndex)
+                {
+                    case EVENT_CARD_BIG_PREFAB_INDEX:
+                        columnOccupancyValue += 1f; break;
+                    case EVENT_CARD_SMALL_PREFAB_INDEX:
+                        columnOccupancyValue += 0.5f; break;
+                }
+            }
+
+            int numberOfEmptyCards = columnOccupancyValue switch
+                                     {
+                                         <= 0.5f => 3,
+                                         <= 1.5f => 2,
+                                         _ => 1,
+                                     };
+
+            for (var i = 0; i < numberOfEmptyCards; i++)
+                currentEventsIds[eventsListIndex].Add(string.Empty);
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>

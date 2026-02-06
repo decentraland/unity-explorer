@@ -72,7 +72,7 @@ namespace DCL.Events
             eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
 
-            view.CreateButtonClicked += OnCreateButtonClicked;
+            view.CreateButtonClicked += GoToCreateEventPage;
         }
 
         public void Dispose()
@@ -80,7 +80,7 @@ namespace DCL.Events
             eventsCalendarController.Dispose();
             eventsByDayController.Dispose();
 
-            view.CreateButtonClicked -= OnCreateButtonClicked;
+            view.CreateButtonClicked -= GoToCreateEventPage;
         }
 
         public void Activate()
@@ -176,7 +176,7 @@ namespace DCL.Events
             eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
         }
 
-        private void OnCreateButtonClicked() =>
+        public void GoToCreateEventPage() =>
             webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");
     }
 }

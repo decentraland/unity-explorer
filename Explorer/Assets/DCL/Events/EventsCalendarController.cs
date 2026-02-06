@@ -110,8 +110,13 @@ namespace DCL.Events
         private void OnDaySelectorButtonClicked(DateTime date) =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
-            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
+        {
+            if (string.IsNullOrEmpty(eventInfo.id))
+                eventsController.GoToCreateEventPage();
+            else
+                mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+        }
 
         private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView)
         {
@@ -241,19 +246,9 @@ namespace DCL.Events
             }
 
             for (var i = 0; i < eventsGroupedByDay.Value.Count; i++)
-            {
-                AddEmptyEventCards(eventsGroupedByDay.Value[i]);
                 view.SetEvents(eventsGroupedByDay.Value[i], i, true);
-            }
 
             view.SetAsLoading(false);
-        }
-
-        private static void AddEmptyEventCards(List<EventDTO> eventsList)
-        {
-            int amountOfEmptyEvents = eventsList.Count <= 1 ? 3 : 1;
-            for (var i = 0; i < amountOfEmptyEvents; i++)
-                eventsList.Add(new EventDTO { id = "EMPTY_EVENT" });
         }
     }
 }
