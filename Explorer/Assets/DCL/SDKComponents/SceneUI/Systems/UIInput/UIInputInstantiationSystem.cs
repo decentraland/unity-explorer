@@ -19,13 +19,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     /*
      * As defined in the SDK, UiInput entities composition breakdown:
      * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Input/index.tsx#L43-L55
-     * - UiInput
-     * - (optional, but Explorer queries require it) uiTransform
-     * - (optional) uiBackground
-     * - (optional) onMouseDown
-     * - (optional) onMouseUp
-     * - (optional) onMouseEnter
-     * - (optional) onMouseLeave
+     * - PBUiInput
+     * - (optional, but Explorer queries require it) PBUiTransform
+     * - (optional) PBUiBackground
+     * - (optional) PBPointerEvents
      */
 
     [UpdateInGroup(typeof(SceneUIComponentInstantiationGroup))]

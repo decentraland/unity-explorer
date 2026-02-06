@@ -46,13 +46,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
          * The SDK lets creators put a UI Pointer Events on any UiEntity regardless of the rest of its components...
          * As defined in the SDK, UiButton entities composition breakdown:
          * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Button/index.tsx#L80-L90
-         * - UiText ('value' property is mandatory)
-         * - (optional, but Explorer queries require it) uiTransform
-         * - (optional) uiBackground
-         * - (optional) onMouseDown
-         * - (optional) onMouseUp
-         * - (optional) onMouseEnter
-         * - (optional) onMouseLeave
+         * - (mandatory) UiText
+         * - (optional, but Explorer queries require it) PBUiTransform
+         * - (optional) PBUiBackground
+         * - (optional, but the Explorer queries require it) PBPointerEvents
          */
         [Query]
         [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
