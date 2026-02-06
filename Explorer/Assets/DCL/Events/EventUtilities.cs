@@ -10,6 +10,7 @@ namespace DCL.Communities.EventInfo
         private const string STARTED_EVENT_TIME_FORMAT = "Started {0} {1} ago";
         private const string EVENT_TIME_FORMAT = "ddd, MMM dd @ h:mmtt";
         private const string EVENT_TIME_FORMAT_ONLY_HOURS = "h:mmtt";
+        private const string EVENT_DAY_FORMAT = "ddd, MMM dd";
         private const string DAY_STRING = "day";
         private const string HOUR_STRING = "hour";
         private const string MINUTES_STRING = "min";
@@ -42,6 +43,18 @@ namespace DCL.Communities.EventInfo
                 DateTime localDateTime = eventDTO.NextStartAtProcessed.ToLocalTime();
                 schedule = localDateTime.ToString(showOnlyHoursFormat ? EVENT_TIME_FORMAT_ONLY_HOURS : EVENT_TIME_FORMAT, CultureInfo.InvariantCulture).ToUpper();
             }
+
+            return schedule;
+        }
+
+        public static string GetEventDayText(IEventDTO eventDTO)
+        {
+            string schedule = string.Empty;
+
+            if (eventDTO.NextStartAtProcessed == default(DateTime)) return schedule;
+
+            DateTime localDateTime = eventDTO.NextStartAtProcessed.ToLocalTime();
+            schedule = localDateTime.ToString(EVENT_DAY_FORMAT, CultureInfo.InvariantCulture).ToUpper();
 
             return schedule;
         }

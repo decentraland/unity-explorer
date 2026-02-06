@@ -23,6 +23,7 @@ namespace DCL.Events
     public abstract class EventCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const string HOST_FORMAT = "By <b>{0}</b>";
+        private const string HOST_FORMAT_FOR_BANNER = "Organized by <b>{0}</b>";
 
         public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? MainButtonClicked;
         public event Action<EventDTO, EventCardView>? InterestedButtonClicked;
@@ -46,6 +47,7 @@ namespace DCL.Events
         [SerializeField] private ImageView eventThumbnail = null!;
         [SerializeField] private TMP_Text eventText = null!;
         [SerializeField] private TMP_Text hostName = null!;
+        [SerializeField] private TMP_Text eventDay = null!;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private List<GameObject> liveMarks = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
@@ -149,7 +151,7 @@ namespace DCL.Events
         }
 
         public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null)
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null, bool isBanner = false)
         {
             currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
@@ -157,14 +159,19 @@ namespace DCL.Events
             if (eventThumbnail != null)
             {
                 loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(eventInfo.Image, eventThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
+                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
+                    isBanner && !string.IsNullOrEmpty(eventInfo.image_vertical) ? eventInfo.image_vertical : eventInfo.image,
+                    eventThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
             }
 
             if (eventText != null)
                 eventText.text = eventInfo.name;
 
             if (hostName != null)
-                hostName.text = string.Format(HOST_FORMAT, eventInfo.user_name);
+                hostName.text = string.Format(isBanner ? HOST_FORMAT_FOR_BANNER : HOST_FORMAT, eventInfo.user_name);
+
+            if (eventDay != null)
+                eventDay.text = EventUtilities.GetEventDayText(eventInfo);
 
             if (eventDate != null)
                 eventDate.text = EventUtilities.GetEventTimeText(eventInfo, showOnlyHoursFormat: true);

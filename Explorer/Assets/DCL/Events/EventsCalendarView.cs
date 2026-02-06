@@ -137,7 +137,7 @@ namespace DCL.Events
 
                 // Setup card data
                 if (eventData != null)
-                    highlightedBanner.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
+                    highlightedBanner.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo, isBanner: true);
 
                 // Setup card events
                 highlightedBanner.MainButtonClicked -= OnEventCardClicked;
