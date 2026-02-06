@@ -96,7 +96,7 @@ MonoBehaviour:
   m_fontSize: 20
   m_fontSizeBase: 20
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 15
   m_fontSizeMax: 20
   m_fontStyle: 0
@@ -1160,6 +1160,11 @@ MonoBehaviour:
   - {fileID: 6198374905589345903}
   onlineMembersText: {fileID: 751430310696722673}
   onlineMembersContainer: {fileID: 4840294787327254036}
+  friendsConnected:
+    root: {fileID: 0}
+    thumbnails: []
+    amountContainer: {fileID: 0}
+    amountLabel: {fileID: 0}
   hostCanvasGroup: {fileID: 1431439272042991371}
   actionButtonsCanvasGroup: {fileID: 5426593791136559375}
   nameContainer: {fileID: 820100835469798758}
