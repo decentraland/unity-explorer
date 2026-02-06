@@ -18,6 +18,7 @@ using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -35,14 +36,15 @@ namespace DCL.AuthenticationScreenFlow
     {
         public enum AuthStatus
         {
-            Init,
-            FetchingProfileCached,
-            LoggedInCached,
+            Init = 0,
 
-            LoginRequested,
-            VerificationInProgress,
-            FetchingProfile,
-            LoggedIn,
+            LoginRequested = 1,
+            VerificationInProgress = 2,
+            FetchingProfile = 3,
+            LoggedIn = 4,
+
+            FetchingProfileCached = 5,
+            LoggedInCached = 6,
         }
 
         internal const int ANIMATION_DELAY = 300;
@@ -285,10 +287,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
 
-                if (storedIdentityProvider.Identity != null)
-                    profileCache.Remove(storedIdentityProvider.Identity.Address);
-
                 await web3Authenticator.LogoutAsync(ct);
+
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.SLIDE, true);
             }
         }
