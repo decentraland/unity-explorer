@@ -107,6 +107,7 @@ namespace PortableExperiences.Controller
 
             var realmData = new RealmData();
 
+            //TODO (JUANI): Why this even needs RealmData?
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
                     result),
@@ -115,7 +116,8 @@ namespace PortableExperiences.Controller
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                WorldManifest.Empty
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);

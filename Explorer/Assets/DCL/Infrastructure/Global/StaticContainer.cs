@@ -13,8 +13,6 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
-using DCL.Landscape.Parcel;
-using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -79,7 +77,6 @@ namespace Global
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
-        public readonly LandscapeParcelData LandscapeParcelData = new ();
 
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }
@@ -121,7 +118,7 @@ namespace Global
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
-        public LandscapeParcelController LandscapeParcelController { get; private set; }
+        public WorldManifestProvider WorldManifestProvider { get; private set; }
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
         public AssetPreLoadCache AssetPreLoadCache { get; private set; }
@@ -313,11 +310,10 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.LandscapeParcelController = new LandscapeParcelController(
+            container.WorldManifestProvider = new WorldManifestProvider(
                     assetsProvisioner,
-                    new LandscapeParcelService(webRequestsContainer.WebRequestController,
-                        environment.Equals(DecentralandEnvironment.Zone)),
-                    container.LandscapeParcelData
+                    container.WebRequestsContainer.WebRequestController,
+                    staticSettings.ParsedParcels
                 );
 
             return (container, true);

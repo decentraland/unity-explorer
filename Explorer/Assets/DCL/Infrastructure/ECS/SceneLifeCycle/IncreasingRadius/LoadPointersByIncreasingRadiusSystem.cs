@@ -4,7 +4,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using DCL.Landscape.Parcel;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -26,7 +25,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly IPartitionSettings partitionSettings;
-        private readonly LandscapeParcelData landscapeParcelData;
 
         private float[]? sqrDistances;
 
@@ -35,12 +33,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
-            HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData) : base(world, roadCoordinates, realmData)
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
-            this.landscapeParcelData = landscapeParcelData;
         }
 
         protected override void Update(float t)
@@ -97,7 +94,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    if (landscapeParcelData.EmptyParcels.Contains(parcelInfo.Parcel))
+                    if (realmData.WorldManifest.GetEmptyParcels().Contains(parcelInfo.Parcel))
                         // If parcel is empty skip request but mark as processed...
                         processedScenePointers.Value.Add(parcelInfo.Parcel);
                     else

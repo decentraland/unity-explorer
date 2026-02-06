@@ -53,6 +53,10 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
         [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
 
+        [field: SerializeField] public ParcelsRef ParsedParcels;
+
+
+
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
@@ -76,6 +80,12 @@ namespace DCL.PluginSystem.Global
         public class RoadDataRef : AssetReferenceT<RoadSettingsAsset>
         {
             public RoadDataRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ParcelsRef : AssetReferenceT<ParcelData>
+        {
+            public ParcelsRef(string guid) : base(guid) { }
         }
     }
 }

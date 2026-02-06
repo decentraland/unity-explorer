@@ -5,9 +5,9 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Global.Dynamic;
 using DCL.Ipfs;
-using DCL.Landscape.Utils;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -28,12 +28,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Linq;
 using Unity.Mathematics;
-using UnityEngine;
-using UnityEngine.Scripting;
 using Utility;
 
 namespace Global.Dynamic
@@ -71,6 +66,7 @@ namespace Global.Dynamic
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
+        private readonly WorldManifestProvider worldManifestProvider;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -106,7 +102,8 @@ namespace Global.Dynamic
             URLDomain assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            WorldManifestProvider worldManifestProvider)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -124,6 +121,7 @@ namespace Global.Dynamic
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
+            this.worldManifestProvider = worldManifestProvider;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -142,8 +140,7 @@ namespace Global.Dynamic
             {
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-                WorldManifest? worldManifest = await FetchWorldManifestAsync(result.configurations.realmName.EnsureNotNull("Realm name not found"), ct);
-
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(assetBundleRegistry, realm.ToString(), ct);
 
                 //The today environment requires a hardcoded content and lambda
                 if (environment.Equals(DecentralandEnvironment.Today))
@@ -153,7 +150,6 @@ namespace Global.Dynamic
                 }
 
                 string hostname = ResolveHostname(realm, result);
-
 
                 realmData.Reconfigure(
                     new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
@@ -409,67 +405,5 @@ namespace Global.Dynamic
             return index >= 0 ? input.Substring(index) : string.Empty;
         }
 
-
-        [Preserve]
-        public class Vector2Converter : JsonConverter<Vector2[]>
-        {
-            public override void WriteJson(JsonWriter writer, Vector2[]? value, JsonSerializer serializer)
-            {
-                var array = new JArray();
-
-                if (value != null)
-                    foreach (Vector2 vector in value)
-                        array.Add($"{vector.x},{vector.y}");
-
-                array.WriteTo(writer);
-            }
-
-            public override Vector2[] ReadJson(JsonReader reader, Type objectType, Vector2[]? existingValue, bool hasExistingValue, JsonSerializer serializer)
-            {
-                var array = JArray.Load(reader);
-
-                return array.Select(item =>
-                             {
-                                 string[]? parts = item.ToString().Split(',');
-                                 return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
-                             })
-                            .ToArray();
-            }
-        }
-
-        private const string ORG_MANIFEST_URL = "https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json";
-        private const string ZONE_MANIFEST_URL = "https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json";
-
-        private async UniTask<WorldManifest?> FetchWorldManifestAsync(string realmName, CancellationToken ct)
-        {
-            if (assetBundleRegistry.IsEmpty)
-                return null;
-
-            try
-            {
-                URLAddress manifestUrl = assetBundleRegistry.Append(URLPath.FromString($"worlds/{realmName}/manifest"));
-
-                var result = await webRequestController
-                                  .GetAsync(new CommonArguments(URLAddress.FromString(manifestUrl)), ct,
-                                       ReportCategory.REALM)
-                                  .StoreTextAsync();
-
-
-                var settings = new JsonSerializerSettings();
-                settings.Converters.Add(new Vector2Converter());
-                WorldManifest manifest = JsonConvert.DeserializeObject<WorldManifest>(result, settings);
-
-                return manifest;
-            }
-            catch (OperationCanceledException)
-            {
-                return null;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM, $"World manifest fetch failed for '{realmName}': {e.Message}");
-                return null;
-            }
-        }
     }
 }
