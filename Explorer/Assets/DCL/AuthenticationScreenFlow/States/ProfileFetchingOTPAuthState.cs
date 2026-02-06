@@ -92,12 +92,17 @@ namespace DCL.AuthenticationScreenFlow
 
                     sentryTransactionManager.StartSpan(profileFetchSpan);
 
-                    (Profile profile, bool isNewUser) = await FetchProfileAsync(identity, ct);
+                    Profile? profile = await selfProfile.ProfileAsync(ct);
+
                     sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
                     view.Hide(OUT);
 
-                    if (isNewUser)
+                    if (profile == null)
+                    {
+                        profile = CreateRandomProfile(identity.Address.ToString());
                         machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
+                    }
                     else
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                 }
@@ -123,15 +128,9 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private async UniTask<(Profile profile, bool isNewUser)> FetchProfileAsync(IWeb3Identity identity, CancellationToken ct)
+        private Profile CreateRandomProfile(string identityAddress)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
-
-            bool isNewUser = profile == null;
-
-            if (isNewUser)
-                profile = Profile.NewRandomProfile(identity.Address.ToString());
-
+            var profile = Profile.NewRandomProfile(identityAddress);
             profile.HasClaimedName = false;
             profile.Description = string.Empty;
             profile.Country = string.Empty;
@@ -150,7 +149,7 @@ namespace DCL.AuthenticationScreenFlow
             profile.HasConnectedWeb3 = true;
             profile.IsDirty = true;
 
-            return (profile, isNewUser);
+            return profile;
         }
 
         private static bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
