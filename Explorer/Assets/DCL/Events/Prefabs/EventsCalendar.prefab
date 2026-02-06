@@ -50,7 +50,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c97f5475597c4579a500f6f87d418372, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsCalendarView
-  daySelectorContainer: {fileID: 7855705742890439487}
   daySelectorButtons:
   - {fileID: 2387487686277149133}
   - {fileID: 787158845941801302}
@@ -753,7 +752,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 358
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1741,7 +1740,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 358
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.y
@@ -2598,7 +2597,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 358
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.y
@@ -3451,7 +3450,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 358
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.y
@@ -4703,7 +4702,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 358
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4588853583432184183, guid: 7a44239bf7231454eac81127662aa285, type: 3}
       propertyPath: m_SizeDelta.y
