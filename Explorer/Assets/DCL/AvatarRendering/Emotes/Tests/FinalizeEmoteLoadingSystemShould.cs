@@ -600,6 +600,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public StreamableLoadingResult<AudioClipData>?[] SocialEmoteOutcomeAudioAssetResults { get; set; }
             public bool IsSocial { get; }
             public int Amount { get; set; }
+            public TrimmedEmoteDTO TrimmedDTO { get; }
 
             public void SetAmount(int amount)
             {
@@ -614,6 +615,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public bool MockIsUnisexValue { get; set; }
             public bool MockHasSameClipForAllGendersValue { get; set; }
             public StreamableLoadingResult<EmoteDTO> Model { get; set; }
+            public StreamableLoadingResult<TrimmedEmoteDTO> TrimmedModel { get; set; }
             public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
             AvatarAttachmentDTO IAvatarAttachment.DTO => DTO;
