@@ -11,7 +11,6 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
@@ -48,7 +47,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IProfileCache profileCache;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -73,8 +71,7 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IProfileCache profileCache
+            IDecentralandUrlsSource decentralandUrlsSource
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -96,7 +93,6 @@ namespace DCL.PluginSystem.Global
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.profileCache = profileCache;
         }
 
         public void Dispose() { }
@@ -106,7 +102,26 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs, wearablesProvider, webRequestController, decentralandUrlsSource, profileCache);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory,
+                web3Authenticator,
+                selfProfile,
+                webBrowser,
+                storedIdentityProvider,
+                characterPreviewFactory,
+                splashScreen,
+                characterPreviewEventBus,
+                audioMixerVolumesController,
+                settings.BuildData,
+                world,
+                settings.EmotesSettings,
+                inputBlock,
+                backgroundMusic,
+                SentryTransactionManager.Instance,
+                appArgs,
+                wearablesProvider,
+                webRequestController,
+                decentralandUrlsSource);
+
             mvcManager.RegisterController(authenticationScreenController);
 
             Web3ConfirmationPopupView txConfPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TransactionConfirmationPopupPrefab, ct: ct)).Value;

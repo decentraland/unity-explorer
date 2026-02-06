@@ -11,14 +11,12 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utility;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -68,7 +66,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IProfileCache profileCache;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -108,8 +105,7 @@ namespace DCL.AuthenticationScreenFlow
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IProfileCache profileCache)
+            IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -130,7 +126,6 @@ namespace DCL.AuthenticationScreenFlow
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.profileCache = profileCache;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
