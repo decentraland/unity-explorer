@@ -240,11 +240,8 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            // Create composite provider that wraps both authenticators
-            var compositeProvider = new CompositeWeb3Provider(thirdWebAuth, dappAuth);
-
-            // Wrap with proxy to cache identity after login
-            ICompositeWeb3Provider result = new ProxyCompositeWeb3Provider(compositeProvider, identityCache);
+            // Create composite provider that wraps both authenticators and caches identity
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache);
 
             // Add analytics decorator if enabled
             if (container.EnableAnalytics)

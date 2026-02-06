@@ -11,11 +11,13 @@ namespace DCL.Web3.Authenticators
     ///     and delegates calls to the currently selected method.
     ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi,
     ///     IDappVerificationHandler and IOtpAuthenticator to provide a single entry point for all Web3 needs.
+    ///     Caches the authenticated identity in IWeb3IdentityCache after successful login.
     /// </summary>
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3Authenticator dappAuth;
+        private readonly IWeb3IdentityCache identityCache;
 
         private AuthProvider currentProvider = AuthProvider.Dapp;
 
@@ -48,18 +50,26 @@ namespace DCL.Web3.Authenticators
 
         private IEthereumApi CurrentEthereumApi => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
 
-        public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth)
+        public CompositeWeb3Provider(ThirdWebAuthenticator thirdWebAuth, DappWeb3Authenticator dappAuth, IWeb3IdentityCache identityCache)
         {
-            this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
-            this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
+            this.thirdWebAuth = thirdWebAuth;
+            this.dappAuth = dappAuth;
+            this.identityCache = identityCache;
         }
 
         // IWeb3Authenticator
-        public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
-            CurrentAuthenticator.LoginAsync(payload, ct);
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
+        {
+            IWeb3Identity identity = await CurrentAuthenticator.LoginAsync(payload, ct);
+            identityCache.Identity = identity;
+            return identity;
+        }
 
-        public UniTask LogoutAsync(CancellationToken ct) =>
-            CurrentAuthenticator.LogoutAsync(ct);
+        public async UniTask LogoutAsync(CancellationToken ct)
+        {
+            await CurrentAuthenticator.LogoutAsync(ct);
+            identityCache.Clear();
+        }
 
         // IDappVerificationHandler - only dappAuth supports this
         public void CancelCurrentWeb3Operation() =>
@@ -97,6 +107,7 @@ namespace DCL.Web3.Authenticators
         {
             thirdWebAuth.Dispose();
             dappAuth.Dispose();
+            identityCache.Dispose();
         }
     }
 }
