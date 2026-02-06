@@ -54,6 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
             UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newDropdown.DropdownField, 0.22f, 0.1f);
+            uiTransformComponent.Transform.AddToClassList("dcl-dropdown-transform");
 
             World.Add(entity, newDropdown);
         }

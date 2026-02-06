@@ -8,7 +8,6 @@ using DCL.SDKComponents.SceneUI.Defaults;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -218,10 +217,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
         {
             var dropdownField = dropdownToSetup.DropdownField;
-
-            dropdownField.parent.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
-            // dropdownField.parent.AddToClassList("dcl-dropdown-transform");
-
             dropdownField.style.fontSize = model.GetFontSize();
             dropdownField.style.color = model.GetColor();
             dropdownField.choices.Clear();
@@ -239,16 +234,14 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 dropdownToSetup.LastSceneEnforcedIndex = selectedIndex;
             }
 
-            // dropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
             dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
 
-            // TODO: Can we override the DropDown that Unity instantiates using the same one but adding classes ???
             var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
             arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
 
             // To enforce an opacity transition since Unity instantiates the popup on demand,
-            // and we cannot be animating a property on it from the uss stylesheet...
+            // and we cannot be animating a property on it from the uss stylesheet.
             // TODO: Fix inner-container not transitioning...
             dropdownField.RegisterCallback<PointerDownEvent>(_ =>
             {
