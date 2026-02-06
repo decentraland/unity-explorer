@@ -77,6 +77,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Blocklist,
 
         WorldContentServer,
+        WorldPermissions,
 
         Servers,
 

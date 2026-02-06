@@ -22,6 +22,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -65,6 +66,7 @@ namespace Global.Dynamic
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -100,7 +102,8 @@ namespace Global.Dynamic
             URLDomain assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -118,6 +121,7 @@ namespace Global.Dynamic
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)

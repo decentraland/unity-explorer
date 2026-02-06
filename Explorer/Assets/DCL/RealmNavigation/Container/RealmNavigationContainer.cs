@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Systems;
@@ -8,8 +8,11 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using ECS.SceneLifeCycle.Realm;
+using Utility;
 using Global;
 using Global.Dynamic;
 using System;
@@ -24,6 +27,11 @@ namespace DCL.RealmNavigation
         ///     Realm Navigator with core teleport functionality
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
+
+        /// <summary>
+        ///     Proxy for EventBus. Set by DynamicWorldContainer after EventBus setup.
+        /// </summary>
+        public ObjectProxy<IEventBus> EventBusProxy { get; private init; } = null!;
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
@@ -77,11 +85,25 @@ namespace DCL.RealmNavigation
             realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
             teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");
 
+            var eventBusProxy = new ObjectProxy<IEventBus>();
+
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, bootstrapContainer.Analytics!,
-                    realmChangeOperations, teleportInSameRealmOperation),
+                RealmNavigator = new RealmNavigator(
+                    loadingScreen,
+                    realmContainer.RealmController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    globalWorld,
+                    exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                    exposedGlobalDataContainer.CameraSamplingData,
+                    staticContainer.LoadingStatus,
+                    landscape,
+                    bootstrapContainer.Analytics!,
+                    realmChangeOperations,
+                    teleportInSameRealmOperation,
+                    eventBusProxy),
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
+                EventBusProxy = eventBusProxy,
             };
         }
     }

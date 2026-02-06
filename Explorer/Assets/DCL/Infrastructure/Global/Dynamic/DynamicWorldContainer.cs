@@ -120,6 +120,7 @@ using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
+using DCL.PrivateWorlds;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -344,7 +345,9 @@ namespace Global.Dynamic
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
-
+            IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                identityCache);
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
 
@@ -368,7 +371,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment);
+                bootstrapContainer.Environment,
+                worldPermissionsService);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -485,6 +489,9 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
+
+            // Set EventBus proxy for private worlds feature
+            realmNavigatorContainer.EventBusProxy.SetObject(eventBus);
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -770,6 +777,11 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
+                new PrivateWorldsPlugin(
+                    mvcManager,
+                    eventBus,
+                    assetsProvisioner,
+                    worldPermissionsService),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,

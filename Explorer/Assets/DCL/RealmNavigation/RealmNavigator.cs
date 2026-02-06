@@ -1,14 +1,17 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Utility.Types;
+using Utility;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
@@ -41,6 +44,7 @@ namespace DCL.RealmNavigation
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analyticsController;
         private readonly ILandscape landscape;
+        private readonly ObjectProxy<IEventBus> eventBusProxy;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -53,7 +57,8 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             IAnalyticsController analyticsController,
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
-            SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation)
+            SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
+            ObjectProxy<IEventBus> eventBusProxy)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -66,6 +71,7 @@ namespace DCL.RealmNavigation
             this.realmChangeOperations = realmChangeOperations;
             this.teleportInSameRealmOperation = teleportInSameRealmOperation;
             this.landscape = landscape;
+            this.eventBusProxy = eventBusProxy;
         }
 
         private bool CheckIsNewRealm(URLDomain realm)
@@ -98,9 +104,19 @@ namespace DCL.RealmNavigation
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
-            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
+            // Pre-check private world permissions before loading
+            if (isWorld && eventBusProxy.Configured)
+            {
+                ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] World change requested (isWorld=true). Checking access for realm: {realm}");
+                var result = await PublishWorldAccessCheckAsync(realm, ct);
+                ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] World access check result: {result}");
+                if (result != WorldAccessResult.Allowed)
+                    return MapToChangeRealmError(result);
+            }
+            else if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
+            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Proceeding to change realm: {realm}");
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
@@ -116,8 +132,58 @@ namespace DCL.RealmNavigation
             }
 
             NavigationExecuted?.Invoke(parcelToTeleport);
+            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Realm change completed: {realm}");
 
             return EnumResult<ChangeRealmError>.SuccessResult();
+        }
+
+        private async UniTask<WorldAccessResult> PublishWorldAccessCheckAsync(URLDomain realm, CancellationToken ct)
+        {
+            var eventBus = eventBusProxy.Object;
+            if (eventBus == null)
+                return WorldAccessResult.CheckFailed;
+
+            string worldName = ExtractWorldNameFromRealm(realm);
+            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Publishing CheckWorldAccessEvent for world: {worldName}");
+            var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
+            var evt = new CheckWorldAccessEvent(worldName, null, resultSource);
+            eventBus.Publish(evt);
+
+            try
+            {
+                return await resultSource.Task.AttachExternalCancellation(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                resultSource.TrySetResult(WorldAccessResult.PasswordCancelled);
+                return WorldAccessResult.PasswordCancelled;
+            }
+        }
+
+        private static EnumResult<ChangeRealmError> MapToChangeRealmError(WorldAccessResult result) =>
+            result switch
+            {
+                WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WhitelistAccessDenied),
+                WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordCancelled),
+                WorldAccessResult.CheckFailed => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess),
+                _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
+            };
+
+        private static string ExtractWorldNameFromRealm(URLDomain realm)
+        {
+            string realmString = realm.Value;
+            const string WORLD_PATH = "/world/";
+            int worldIndex = realmString.LastIndexOf(WORLD_PATH, StringComparison.OrdinalIgnoreCase);
+            if (worldIndex >= 0)
+            {
+                string worldPart = realmString.Substring(worldIndex + WORLD_PATH.Length);
+                int slashIndex = worldPart.IndexOf('/');
+                return slashIndex >= 0 ? worldPart.Substring(0, slashIndex) : worldPart;
+            }
+            int lastSlash = realmString.LastIndexOf('/');
+            return lastSlash >= 0 && lastSlash < realmString.Length - 1
+                ? realmString.Substring(lastSlash + 1)
+                : realmString;
         }
 
         private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(

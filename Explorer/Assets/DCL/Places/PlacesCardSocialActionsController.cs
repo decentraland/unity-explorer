@@ -15,6 +15,7 @@ using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Places
@@ -154,7 +155,9 @@ namespace DCL.Places
         public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
         {
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()), ct).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()),
+                    ct,
+                    default,true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false).Forget();
         }

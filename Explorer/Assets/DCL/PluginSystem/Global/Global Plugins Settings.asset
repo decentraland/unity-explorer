@@ -61,6 +61,7 @@ MonoBehaviour:
   - rid: 2563261270153757000
   - rid: 5190442831932031144
   - rid: 1221415613651484787
+  - rid: 5034765029205082208
   references:
     version: 2
     RefIds:
@@ -836,6 +837,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuButtonListPrefab:
           m_AssetGUID: 03dabb815fc004f9581a9528b72c106f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 5034765029205082208
+      type: {class: PrivateWorldsPlugin/PrivateWorldsSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <PrivateWorldPopup>k__BackingField:
+          m_AssetGUID: 7c462bd439e9bb04cb35c37cc1810fa8
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
