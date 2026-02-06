@@ -23,7 +23,6 @@ namespace DCL.Events
     public abstract class EventCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const string HOST_FORMAT = "By <b>{0}</b>";
-        private const string HOST_FORMAT_FOR_BANNER = "Organized by <b>{0}</b>";
 
         public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? MainButtonClicked;
         public event Action<EventDTO, EventCardView>? InterestedButtonClicked;
@@ -44,9 +43,9 @@ namespace DCL.Events
         [SerializeField] private EventContextMenuConfiguration contextMenuSettings = null!;
 
         [Header("Event Info")]
-        [SerializeField] private ImageView eventThumbnail = null!;
+        [SerializeField] protected ImageView eventThumbnail = null!;
         [SerializeField] private TMP_Text eventText = null!;
-        [SerializeField] private TMP_Text hostName = null!;
+        [SerializeField] protected TMP_Text hostName = null!;
         [SerializeField] private TMP_Text eventDay = null!;
         [SerializeField] private TMP_Text eventDate = null!;
         [SerializeField] private List<GameObject> liveMarks = null!;
@@ -77,7 +76,7 @@ namespace DCL.Events
         private GenericContextMenu? contextMenu;
 
         private CancellationTokenSource? loadingThumbnailCts;
-        private CancellationTokenSource? loadingCommunityThumbnailCts;
+        protected CancellationTokenSource? loadingCommunityThumbnailCts;
         private CancellationTokenSource? openContextMenuCts;
 
         private bool canPlayUnHoverAnimation = true;
@@ -150,25 +149,19 @@ namespace DCL.Events
                 shareButton.onClick.RemoveAllListeners();
         }
 
-        public void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null, bool isBanner = false)
+        public virtual void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null)
         {
             currentEventInfo = eventInfo;
             currentPlaceInfo = placeInfo;
 
-            if (eventThumbnail != null)
-            {
-                loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
-                    isBanner && !string.IsNullOrEmpty(eventInfo.image_vertical) ? eventInfo.image_vertical : eventInfo.image,
-                    eventThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
-            }
+            LoadThumbnail(eventInfo, thumbnailLoader);
 
             if (eventText != null)
                 eventText.text = eventInfo.name;
 
             if (hostName != null)
-                hostName.text = string.Format(isBanner ? HOST_FORMAT_FOR_BANNER : HOST_FORMAT, eventInfo.user_name);
+                hostName.text = string.Format(HOST_FORMAT, eventInfo.user_name);
 
             if (eventDay != null)
                 eventDay.text = EventUtilities.GetEventDayText(eventInfo);
@@ -257,6 +250,17 @@ namespace DCL.Events
         {
             if (canPlayUnHoverAnimationProp)
                 PlayHoverExitAnimation();
+        }
+
+        protected virtual void LoadThumbnail(EventDTO eventInfo, ThumbnailLoader thumbnailLoader)
+        {
+            if (eventThumbnail == null)
+                return;
+
+            loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
+                eventInfo.image,
+                eventThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
         }
 
         private void OpenContextMenu(Vector2 position)
