@@ -66,6 +66,8 @@ namespace Global.AppArgs
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
+        public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
