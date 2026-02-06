@@ -171,7 +171,7 @@ namespace DCL.CharacterMotion.Systems
             // Apply animator parameters
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView, isGrounded: true, movementBlendId: 0);
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView);
-            AnimationStatesLogic.SetAnimatorParameters(avatarView, animationComponent.States, jumpTriggered: false);
+            AnimationStatesLogic.SetAnimatorParameters(avatarView, animationComponent.States, jumpTriggered: false, glidingTriggered: false);
         }
 
         private static void ResetAnimationToIdle(

@@ -17,17 +17,30 @@ namespace DCL.CharacterMotion
             int physicsTick)
         {
             bool canGlide = jumpState.JumpCount > jumpState.MaxAirJumpCount && !rigidTransform.IsGrounded && rigidTransform.GroundDistance > settings.GlideMinGroundDistance;
-            bool wantsToGlide = jump.Trigger.IsAvailable(physicsTick, 0);
+
+            // Allow pressing the glide button before the action is actually available
+            // Player can hold the glide button to start gliding as soon as possible
+            // We added this to handle the specific case of trying to open the glider while it's still being closed
+            glideState.WantsToGlide |= canGlide && jump.Trigger.IsAvailable(physicsTick, 0);
+
+            // Obviously we still want to reset the flag if we release the button
+            glideState.WantsToGlide &= jump.IsPressed;
 
             // Start gliding if can and want
-            glideState.IsGliding |= canGlide && wantsToGlide;
-
-            // Stop gliding if the jump button is released or any other condition prevents it
-            glideState.IsGliding &= canGlide && jump.IsPressed;
-
-            if (glideState.IsGliding)
+            if (glideState.Value == GlideStateValue.PROP_CLOSED && canGlide && glideState.WantsToGlide)
             {
-                rigidTransform.GravityVelocity = Vector3.ClampMagnitude(rigidTransform.GravityVelocity, settings.GlideMaxGravity);
+                glideState.Value = GlideStateValue.OPENING_PROP;
+                return;
+            }
+
+            if (glideState.Value == GlideStateValue.GLIDING)
+            {
+                if (!jump.IsPressed || !canGlide)
+                    // Stop gliding if the jump button is released or any other condition prevents it
+                    glideState.Value = GlideStateValue.CLOSING_PROP;
+                else
+                    // Otherwise clamp the gravity
+                    rigidTransform.GravityVelocity = Vector3.ClampMagnitude(rigidTransform.GravityVelocity, settings.GlideMaxGravity);
             }
         }
     }

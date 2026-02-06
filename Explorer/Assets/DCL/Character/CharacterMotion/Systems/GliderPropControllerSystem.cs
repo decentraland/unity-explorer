@@ -34,16 +34,17 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             CreatePropQuery(World);
-            CleanUpPropQuery(World);
             UpdatePropAnimatorQuery(World);
             UpdateTrailQuery(World);
+            HandleStateTransitionQuery(World);
         }
 
         [Query]
         [None(typeof(GliderProp))]
-        private void CreateProp(Entity entity, in IAvatarView avatarView, in CharacterAnimationComponent animationComponent)
+        private void CreateProp(Entity entity, in CharacterAnimationComponent animationComponent, in IAvatarView avatarView)
         {
-            if (!animationComponent.States.IsGliding) return;
+            // We use the animation component value because that is synced across clients
+            if (animationComponent.States.GlideState != GlideStateValue.OPENING_PROP) return;
 
             var prop = propPool!.Get();
             prop.Animator.Rebind();
@@ -56,27 +57,38 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void CleanUpProp(Entity entity, ref GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
-        {
-            if (animationComponent.States.IsGliding) return;
+        private void UpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent) =>
+              GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent);
 
+        [Query]
+        private void UpdateTrail(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent, in CharacterRigidTransform rigidTransform)
+        {
+            float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
+            gliderProp.View.TrailEnabled = animationComponent.States.GlideState == GlideStateValue.GLIDING && rigidTransform.MoveVelocity.Velocity.sqrMagnitude > thresholdSq;
+        }
+
+        [Query]
+        private void HandleStateTransition(Entity entity, ref GlideState glideState, in GliderProp gliderProp)
+        {
+            switch (glideState.Value)
+            {
+                case GlideStateValue.OPENING_PROP when gliderProp.View.OpenAnimationCompleted:
+                    glideState.Value = GlideStateValue.GLIDING;
+                    break;
+
+                case GlideStateValue.CLOSING_PROP when gliderProp.View.CloseAnimationCompleted:
+                    glideState.Value = GlideStateValue.PROP_CLOSED;
+                    CleanUpProp(entity, gliderProp);
+                    break;
+            }
+        }
+
+        private void CleanUpProp(Entity entity, in GliderProp gliderProp)
+        {
             World.Remove<GliderProp>(entity);
 
             propPool!.Release(gliderProp.View);
             gliderProp.View.OnReturnedToPool();
-        }
-
-        [Query]
-        private void UpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent) =>
-            GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent);
-
-        [Query]
-        private void UpdateTrail(in GliderProp gliderProp, in CharacterRigidTransform rigidTransform, in CharacterAnimationComponent animationComponent)
-        {
-            float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
-            gliderProp.View.TrailEnabled = animationComponent.States.IsGliding &&
-                                           gliderProp.View.OpenAnimationCompleted &&
-                                           rigidTransform.MoveVelocity.Velocity.sqrMagnitude > thresholdSq;
         }
     }
 }

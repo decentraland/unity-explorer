@@ -13,7 +13,9 @@ namespace DCL.CharacterMotion.Components
 
         [field: SerializeField] public Animator Animator { get; private set; }
 
+        // Flags driven by animation events
         public bool OpenAnimationCompleted { get; private set; }
+        public bool CloseAnimationCompleted { get; private set; }
 
         public bool TrailEnabled
         {
@@ -45,7 +47,13 @@ namespace DCL.CharacterMotion.Components
         private void OnOpenAnimationCompleted() =>
             OpenAnimationCompleted = true;
 
-        public void OnReturnedToPool() =>
+        private void OnCloseAnimationCompleted() =>
+            CloseAnimationCompleted = true;
+
+        public void OnReturnedToPool()
+        {
             OpenAnimationCompleted = false;
+            CloseAnimationCompleted = false;
+        }
     }
 }

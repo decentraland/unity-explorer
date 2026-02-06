@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion.Components
         public bool IsFalling;
         public bool IsLongFall;
         public bool IsStunned;
-        public bool IsGliding;
+        public GlideStateValue GlideState;
         public float GlideBlendValue;
 
         public override bool Equals(object obj) =>
@@ -38,7 +38,7 @@ namespace DCL.CharacterMotion.Components
             IsFalling == other.IsFalling &&
             IsLongFall == other.IsLongFall &&
             IsLongFall == other.IsStunned &&
-            IsGliding == other.IsGliding &&
+            GlideState == other.GlideState &&
             Math.Abs(GlideBlendValue - other.GlideBlendValue) < EPSILON;
 
         public override int GetHashCode()
@@ -55,14 +55,14 @@ namespace DCL.CharacterMotion.Components
                 hash = (hash * 23) + IsFalling.GetHashCode();
                 hash = (hash * 23) + IsLongFall.GetHashCode();
                 hash = (hash * 23) + IsStunned.GetHashCode();
-                hash = (hash * 23) + IsGliding.GetHashCode();
+                hash = (hash * 23) + (int)GlideState;
                 hash = (hash * 23) + GlideBlendValue.GetHashCode();
                 return hash;
             }
         }
 
         public override string ToString() =>
-            $"gr:{IsGrounded}: sl:{IsSliding} jc:{JumpCount} lj:{IsLongJump} f:{IsFalling} lf:{IsLongFall} gl:{IsGliding} mb:{MovementBlendValue} sb:{SlideBlendValue}";
+            $"gr:{IsGrounded}: sl:{IsSliding} jc:{JumpCount} lj:{IsLongJump} f:{IsFalling} lf:{IsLongFall} gl:{GlideState} mb:{MovementBlendValue} sb:{SlideBlendValue}";
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>
             left.Equals(right);

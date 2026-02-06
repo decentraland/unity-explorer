@@ -25,7 +25,8 @@ namespace DCL.CharacterMotion.Animation
             Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
             float verticalVelocity = rigidTransform.GravityVelocity.y + velocity.y;
 
-            bool jumpTriggered = jumpState.JustJumped && jumpState.JumpCount != animationComponent.States.JumpCount;
+            bool jumpTriggered = jumpState.JumpCount > animationComponent.States.JumpCount;
+            bool glidingTriggered = glideState.Value == GlideStateValue.GLIDING && animationComponent.States.GlideState == GlideStateValue.OPENING_PROP;
 
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.JumpCount = jumpState.JumpCount;
@@ -33,10 +34,10 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsStunned = stunComponent.IsStunned;
-            animationComponent.States.IsGliding = glideState.IsGliding;
+            animationComponent.States.GlideState = glideState.Value;
             animationComponent.States.GlideBlendValue = UpdateGlideBlendValue(dt, settings, animationComponent.States.GlideBlendValue, view, velocity);
 
-            SetAnimatorParameters(view, animationComponent.States, jumpTriggered);
+            SetAnimatorParameters(view, animationComponent.States, jumpTriggered, glidingTriggered);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,7 +54,7 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetAnimatorParameters(IAvatarView view, in AnimationStates states, bool jumpTriggered)
+        public static void SetAnimatorParameters(IAvatarView view, in AnimationStates states, bool jumpTriggered, bool glidingTriggered)
         {
             view.SetAnimatorBool(AnimationHashes.GROUNDED, states.IsGrounded);
             view.SetAnimatorInt(AnimationHashes.JUMP_COUNT, states.JumpCount);
@@ -61,10 +62,11 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
             view.SetAnimatorBool(AnimationHashes.STUNNED, states.IsStunned);
-            view.SetAnimatorBool(AnimationHashes.GLIDING, states.IsGliding);
+            view.SetAnimatorBool(AnimationHashes.GLIDING, states.GlideState == GlideStateValue.GLIDING);
             view.SetAnimatorFloat(AnimationHashes.GLIDE_BLEND, states.GlideBlendValue);
 
             if (jumpTriggered) view.SetAnimatorTrigger(AnimationHashes.JUMP);
+            if (glidingTriggered) view.SetAnimatorTrigger(AnimationHashes.START_GLIDING);
         }
     }
 }

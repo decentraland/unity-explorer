@@ -88,14 +88,15 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // other states
             bool jumpTriggered = message.animState.JumpCount > animationComponent.States.JumpCount;
+            bool glidingTriggered = message.animState.GlideState == GlideStateValue.GLIDING && animationComponent.States.GlideState == GlideStateValue.OPENING_PROP;
             animationComponent.States.IsGrounded = message.animState.IsGrounded;
             animationComponent.States.JumpCount = message.animState.JumpCount;
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
             animationComponent.States.IsFalling = message.animState.IsFalling;
             animationComponent.States.IsLongFall = message.animState.IsLongFall;
-            animationComponent.States.IsGliding = message.animState.IsGliding;
+            animationComponent.States.GlideState = message.animState.GlideState;
             animationComponent.States.IsStunned = message.isStunned;
-            AnimationStatesLogic.SetAnimatorParameters(view, animationComponent.States, jumpTriggered);
+            AnimationStatesLogic.SetAnimatorParameters(view, animationComponent.States, jumpTriggered, glidingTriggered);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)

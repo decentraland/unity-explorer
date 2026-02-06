@@ -2,6 +2,16 @@
 {
     public struct GlideState
     {
-        public bool IsGliding;
+        public GlideStateValue Value;
+
+        public bool WantsToGlide;
+    }
+
+    public enum GlideStateValue
+    {
+        PROP_CLOSED,
+        OPENING_PROP,
+        GLIDING,
+        CLOSING_PROP
     }
 }
