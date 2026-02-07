@@ -457,7 +457,6 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             IEventBus emotesEventBus = new EventBus(true);
 
-            var emotesBus = new EmotesBus();
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
@@ -714,8 +713,7 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     islandThroughputBunch,
                     sceneThroughputBunch,
-                    voiceChatRoom
-                ),
+                    voiceChatRoom),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -728,7 +726,7 @@ namespace Global.Dynamic
                     staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity,
-                    builderContentURL.Value, localSceneDevelopment, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics),
+                    builderContentURL.Value, localSceneDevelopment, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics, emotesEventBus),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,

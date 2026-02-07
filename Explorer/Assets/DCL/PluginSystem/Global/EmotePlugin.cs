@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Systems;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -29,7 +28,7 @@ using ECS.SceneLifeCycle;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.InputSystem;
+using Utility;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -60,11 +59,12 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
-        private readonly DCLInput dclInput;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly IEventBus emotesEventBus;
 
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private IDisposable? requestOpenEmoteWheelSubscription;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -86,7 +86,8 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
-            EntitiesAnalytics entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            IEventBus emotesEventBus)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -107,8 +108,8 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
-            this.dclInput = DCLInput.Instance;
             this.entitiesAnalytics = entitiesAnalytics;
+            this.emotesEventBus = emotesEventBus;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -116,6 +117,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            requestOpenEmoteWheelSubscription?.Dispose();
             emotesWheelController?.Dispose();
         }
 
@@ -176,15 +178,17 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(emotesWheelController);
 
-            dclInput.Shortcuts.EmoteWheel.canceled += OnEmoteWheelShortcutPerformed;
+            requestOpenEmoteWheelSubscription = emotesEventBus.Subscribe<RequestToggleEmoteWheelEvent>(OnEmoteWheelShortcutPerformed);
         }
 
-        private void OnEmoteWheelShortcutPerformed(InputAction.CallbackContext obj)
+        private void OnEmoteWheelShortcutPerformed(RequestToggleEmoteWheelEvent _)
         {
-            if (emotesWheelController?.State is ControllerState.ViewHidden)
+            if (emotesWheelController == null) return;
+
+            if (emotesWheelController.State == ControllerState.ViewHidden)
                 mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
             else
-                emotesWheelController?.Close();
+                emotesWheelController.Close();
         }
 
         [Serializable]
@@ -211,11 +215,9 @@ namespace DCL.PluginSystem.Global
             /// Ordered list of base emote URNs.
             /// The order defines the default emote order for users with no equipped emotes.
             /// </summary>
-            [field: SerializeField]
-            public string[] BaseEmotes { get; private set; }
+            [field: SerializeField] public string[] BaseEmotes { get; private set; }
 
-            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
-                BaseEmotes.Select(s => new URN(s)).ToArray();
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() => BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }
