@@ -287,8 +287,6 @@ namespace Global.Dynamic
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
 
-            staticContainer.QualityContainer.AddDebugViews(debugBuilder);
-
             var realmSamplingData = new RealmSamplingData();
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -745,7 +743,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
-                    staticContainer.QualityContainer.RendererFeaturesCache,
+                    staticContainer.RendererFeaturesCache,
                     staticContainer.RealmData,
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
@@ -942,7 +940,6 @@ namespace Global.Dynamic
                     realmUrl => chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.ImageControllerProvider, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
-                staticContainer.QualityContainer.CreatePlugin(),
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,

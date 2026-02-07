@@ -47,7 +47,6 @@ namespace DCL.Settings.Configuration
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
             SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,

@@ -42,7 +42,6 @@ namespace DCL.Settings
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
-        private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -69,7 +68,6 @@ namespace DCL.Settings
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
-            QualitySettingsAsset qualitySettingsAsset,
             SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
@@ -88,7 +86,6 @@ namespace DCL.Settings
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
-            this.qualitySettingsAsset = qualitySettingsAsset;
             this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -205,7 +202,6 @@ namespace DCL.Settings
                                 videoPrioritizationSettings,
                                 landscapeData,
                                 generalAudioMixer,
-                                qualitySettingsAsset,
                                 skyboxSettingsAsset,
                                 controlsSettingsAsset,
                                 chatSettingsAsset,

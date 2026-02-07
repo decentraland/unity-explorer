@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -12,7 +13,10 @@ namespace DCL.AssetsProvision
         {
             // if the main asset was already loaded just return it
             if (assetReferenceT.OperationHandle.IsValid())
+            {
+                await assetReferenceT.OperationHandle.WithCancellation(ct);
                 return new ProvidedAsset<T>(assetReferenceT.OperationHandle.Convert<T>());
+            }
 
             AsyncOperationHandle<T> asyncOp = assetReferenceT.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
@@ -23,7 +27,10 @@ namespace DCL.AssetsProvision
         {
             // if the main asset was already loaded just return it
             if (componentReference.OperationHandle.IsValid())
+            {
+                await componentReference.OperationHandle.WithCancellation(ct);
                 return new ProvidedAsset<T>(componentReference.OperationHandle.Convert<T>());
+            }
 
             AsyncOperationHandle<T> asyncOp = componentReference.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);

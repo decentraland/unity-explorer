@@ -359,5 +359,7 @@ namespace DCL.Diagnostics
 
         public const string DONATIONS = nameof(DONATIONS);
         public const string ASSET_PRE_LOAD = nameof(ASSET_PRE_LOAD);
+
+        public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
     }
 }

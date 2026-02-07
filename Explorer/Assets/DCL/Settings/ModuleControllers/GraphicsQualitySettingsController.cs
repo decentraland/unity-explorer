@@ -20,16 +20,14 @@ namespace DCL.Settings.ModuleControllers
         private readonly SettingsDropdownModuleView view;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
-        private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly SkyboxSettingsAsset skyboxSettingsAsset;
 
-        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, QualitySettingsAsset qualitySettingsAsset, SkyboxSettingsAsset skyboxSettingsAsset)
+        public GraphicsQualitySettingsController(SettingsDropdownModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset, LandscapeData landscapeData, SkyboxSettingsAsset skyboxSettingsAsset)
         {
             this.view = view;
 
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
-            this.qualitySettingsAsset = qualitySettingsAsset;
             this.skyboxSettingsAsset = skyboxSettingsAsset;
 
             LoadGraphicsQualityOptions();
@@ -65,14 +63,15 @@ namespace DCL.Settings.ModuleControllers
 
         private void ForceSetQualityLevel(int index)
         {
-            int currentQualityLevel = QualitySettings.GetQualityLevel();
-            if (currentQualityLevel == index)
-            {
-                if (currentQualityLevel < qualitySettingsAsset.customSettings.Count - 1)
-                    QualitySettings.SetQualityLevel(index + 1);
-                else
-                    QualitySettings.SetQualityLevel(0);
-            }
+            // TODO: mihak
+            // int currentQualityLevel = QualitySettings.GetQualityLevel();
+            // if (currentQualityLevel == index)
+            // {
+            //     if (currentQualityLevel < qualitySettingsAsset.customSettings.Count - 1)
+            //         QualitySettings.SetQualityLevel(index + 1);
+            //     else
+            //         QualitySettings.SetQualityLevel(0);
+            // }
 
             QualitySettings.SetQualityLevel(index);
         }
@@ -98,13 +97,13 @@ namespace DCL.Settings.ModuleControllers
             // Wait for the next frame to ensure that the quality settings have been updated
             await UniTask.NextFrame();
 
-            var lastQualityLevel = qualitySettingsAsset.customSettings[QualitySettings.GetQualityLevel()];
-            if (lastQualityLevel.environmentSettings.sceneLoadRadius == realmPartitionSettingsAsset.MaxLoadingDistanceInParcels &&
-                Mathf.Approximately(lastQualityLevel.environmentSettings.chunkCullDistance, landscapeData.DetailDistance))
-                return;
-
-            // Set the custom label
-            view.DropdownView.Dropdown.value = view.DropdownView.Dropdown.options.Count - 1;
+            // var lastQualityLevel = qualitySettingsAsset.customSettings[QualitySettings.GetQualityLevel()];
+            // if (lastQualityLevel.environmentSettings.sceneLoadRadius == realmPartitionSettingsAsset.MaxLoadingDistanceInParcels &&
+            //     Mathf.Approximately(lastQualityLevel.environmentSettings.chunkCullDistance, landscapeData.DetailDistance))
+            //     return;
+            //
+            // // Set the custom label
+            // view.DropdownView.Dropdown.value = view.DropdownView.Dropdown.options.Count - 1;
         }
 
         public override void Dispose()

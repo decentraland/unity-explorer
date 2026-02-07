@@ -49,7 +49,6 @@ namespace DCL.Settings.Configuration
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
             SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
@@ -72,7 +71,6 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance,
                     realmPartitionSettingsAsset,
                     landscapeData,
-                    qualitySettingsAsset,
                     skyboxSettingsAsset),
 
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
