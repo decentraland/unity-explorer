@@ -5333,6 +5333,10 @@ PrefabInstance:
       value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 2961814149480804836, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
+      propertyPath: autoFocus
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2961814149480804836, guid: 0c02c593eecb0174ebcf32a41af3fec4, type: 3}
       propertyPath: caretWidth
       value: 2
       objectReference: {fileID: 0}

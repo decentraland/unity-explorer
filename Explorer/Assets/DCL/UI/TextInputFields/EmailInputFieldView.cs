@@ -14,6 +14,7 @@ namespace DCL.UI
         public event Action? Submitted;
 
         [SerializeField] private TMP_InputField inputField;
+        [SerializeField] private bool autoFocus;
 
         [Space]
         [SerializeField] private Button startButton;
@@ -50,7 +51,8 @@ namespace DCL.UI
             outline.color = outlineNormalColor;
             errorContainer.SetActive(false);
 
-            activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
+            if (autoFocus)
+                activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
 
             startButton.interactable = false;
 

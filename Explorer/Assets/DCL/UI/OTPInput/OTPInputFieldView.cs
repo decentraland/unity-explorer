@@ -10,6 +10,8 @@ namespace DCL.UI.OTPInput
     public class OTPInputFieldView : MonoBehaviour
     {
         [SerializeField] private TMP_InputField hiddenInput;
+        [SerializeField] private bool autoFocus;
+
         [SerializeField] private GameObject slotsParent;
         [SerializeField] private OTPSlotView[] slots;
 
@@ -81,7 +83,8 @@ namespace DCL.UI.OTPInput
             hiddenInput.onValueChanged.AddListener(UpdateSlotsWithText);
             hiddenInput.onEndEdit.AddListener(UnselectAll);
 
-            activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
+            if (autoFocus)
+                activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
         }
 
         private void OnDisable()

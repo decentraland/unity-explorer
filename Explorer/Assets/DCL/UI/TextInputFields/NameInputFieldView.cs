@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -11,6 +11,7 @@ namespace DCL.UI
         public event Action<bool>? InputValueChanged;
 
         [SerializeField] private TMP_InputField inputField;
+        [SerializeField] private bool autoFocus;
 
         [Header("CHARACTERS COUNT")]
         [SerializeField] private TMP_Text characterCountLabel;
@@ -58,7 +59,8 @@ namespace DCL.UI
             outline.color = outlineNormalColor;
             errorContainer.SetActive(false);
 
-            activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
+            if (autoFocus)
+                activateInputCoroutine = StartCoroutine(ActivateInputFieldDelayed());
 
             characterCountLabel.color = outlineNormalColor;
 
