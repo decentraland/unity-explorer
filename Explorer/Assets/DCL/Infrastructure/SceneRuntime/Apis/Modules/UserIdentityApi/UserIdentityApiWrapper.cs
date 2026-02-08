@@ -44,12 +44,12 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                     IWeb3Identity? identity = identityCache.Identity;
 
                     if (identity == null)
-                        return CreateGuestUserData();
+                        return new GetUserDataResponse(null);
 
                     Profile? profile = await profileRepository.GetAsync(identity.Address, ct, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
 
                     if (profile == null)
-                        return CreateGuestUserData();
+                        return new GetUserDataResponse(null);
 
                     lock (wearablesCache)
                     {
@@ -64,46 +64,11 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 catch (Exception e)
                 {
                     sceneExceptionsHandler.OnEngineException(e);
-                    return CreateGuestUserData();
+                    return new GetUserDataResponse(null);
                 }
             }
 
             return GetOwnUserDataAsync(disposeCts.Token).ContinueWith(JsonUtility.ToJson).ToDisconnectedPromise(this);
-        }
-
-        /// <summary>
-        /// Creates fake guest user data for when no identity is available (e.g., WebGL without login)
-        /// </summary>
-        private static GetUserDataResponse CreateGuestUserData()
-        {
-            var guestAvatar = new GetUserDataResponse.Data.Avatar(
-                bodyShape: "urn:decentraland:off-chain:base-avatars:BaseMale",
-                eyeColor: "#704232",
-                hairColor: "#000000",
-                skinColor: "#CC9B76",
-                wearables: new List<string>
-                {
-                    "urn:decentraland:off-chain:base-avatars:casual_hair_01",
-                    "urn:decentraland:off-chain:base-avatars:eyes_00",
-                    "urn:decentraland:off-chain:base-avatars:eyebrows_00",
-                    "urn:decentraland:off-chain:base-avatars:mouth_00",
-                    "urn:decentraland:off-chain:base-avatars:green_hoodie",
-                    "urn:decentraland:off-chain:base-avatars:brown_pants",
-                    "urn:decentraland:off-chain:base-avatars:sneakers"
-                },
-                snapshots: new GetUserDataResponse.Data.Avatar.Snapshot("", "")
-            );
-
-            var guestData = new GetUserDataResponse.Data(
-                displayName: "Guest",
-                publicKey: "0x0000000000000000000000000000000000000000",
-                hasConnectedWeb3: false,
-                userId: "guest-user",
-                version: 1,
-                avatar: guestAvatar
-            );
-
-            return new GetUserDataResponse(guestData);
         }
     }
 }

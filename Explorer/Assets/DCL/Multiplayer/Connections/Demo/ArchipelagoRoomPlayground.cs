@@ -1,5 +1,9 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
+using ECS.Abstract;
+using UnityEngine;
+
+#if !UNITY_WEBGL
+using Arch.Core;
 using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -10,12 +14,11 @@ using DCL.RealmNavigation;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using ECS;
-using ECS.Abstract;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using UnityEngine;
+#endif
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -33,8 +36,6 @@ namespace DCL.Multiplayer.Connections.Demo
         private async UniTaskVoid LaunchAsync()
         {
 #if !UNITY_WEBGL
-            DCL.Multiplayer.Connections.FfiClients.IFFIClient.Default.EnsureInitialize();
-
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 

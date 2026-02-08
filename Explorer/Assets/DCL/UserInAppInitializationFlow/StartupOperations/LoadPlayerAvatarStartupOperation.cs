@@ -6,6 +6,8 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using System.Threading;
+using Temp.Helper.WebClient;
+using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -31,6 +33,8 @@ namespace DCL.UserInAppInitializationFlow
             Profile? profile = await selfProfile.ProfileAsync(ct);
             args.Report.SetProgress(finalizationProgress);
 
+            WebGLDebugLog.Log("LoadPlayerAvatar", "Profile received", $"userId={profile?.UserId ?? "null"}");
+
             // Add the profile into the player entity so it will create the avatar in world
 
             World world = args.FlowParameters.World;
@@ -40,6 +44,8 @@ namespace DCL.UserInAppInitializationFlow
                 world.Set(playerEntity, profile!);
             else
                 world.Add(playerEntity, profile!);
+
+            WebGLDebugLog.Log("LoadPlayerAvatar", "Profile set on player entity, starting wait for mainPlayerAvatarBaseProxy.Configured");
 
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately

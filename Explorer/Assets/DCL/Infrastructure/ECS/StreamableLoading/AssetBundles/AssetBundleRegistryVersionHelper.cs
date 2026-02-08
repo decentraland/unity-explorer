@@ -64,17 +64,18 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             foreach (var element in dtoPooledList.Value)
+            {
+                var ab = element.versions.assets;
+                if (!ab.webgl.HasValue)
+                    throw new InvalidOperationException($"Asset bundle registry did not return webgl version for pointer {element.pointers[0]}. Registry must provide mac, windows and webgl.");
+                var webgl = new AssetBundlesVersions.VersionInfo { version = ab.webgl.Value.version, buildDate = ab.webgl.Value.buildDate };
                 result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
                 {
-                    mac = new AssetBundlesVersions.VersionInfo
-                    {
-                        version = element.versions.assets.mac.version, buildDate = element.versions.assets.mac.buildDate
-                    },
-                    windows = new AssetBundlesVersions.VersionInfo
-                    {
-                        version = element.versions.assets.windows.version, buildDate = element.versions.assets.windows.buildDate
-                    }
+                    mac = new AssetBundlesVersions.VersionInfo { version = ab.mac.version, buildDate = ab.mac.buildDate },
+                    windows = new AssetBundlesVersions.VersionInfo { version = ab.windows.version, buildDate = ab.windows.buildDate },
+                    webgl = webgl
                 });
+            }
 
             return result;
         }

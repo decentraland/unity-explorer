@@ -31,18 +31,9 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
         {
-#if UNITY_WEBGL
-            // WebGL: skip replacing Unity log handler and ReportHub init — can hang on single-threaded WebGL.
-            // Keep default ReportHub.Instance and do not touch Debug.unityLogger.
-            return new DiagnosticsContainer
-            {
-                ReportHubLogger = ReportHub.Instance,
-                defaultLogHandler = Debug.unityLogger.logHandler,
-                Sentry = null,
-                Settings = settings
-            };
-#else
+#if !UNITY_WEBGL
             settings.NotifyErrorDebugLogDisabled();
+#endif
 
             int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length;
             List<IReportHandler> handlers = new (handlersCount);
@@ -52,26 +43,27 @@ namespace DCL.Diagnostics
                 handlers.Add(new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled));
 
             SentryReportHandler? sentryReportHandler = null;
-
+#if !UNITY_WEBGL
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add(sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled));
+#endif
 
             var logger = new ReportHubLogger(handlers);
-
-            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
-
-            // Override Default Unity Logger
-            Debug.unityLogger.logHandler = logger;
-
-            // Enable Hub static accessors
             ReportHub.Initialize(logger);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings };
+            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
+#if !UNITY_WEBGL
+            Debug.unityLogger.logHandler = logger;
 #endif
+
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings };
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
+#if UNITY_WEBGL
+            return;
+#endif
             SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
             ReportHub.EnforceUnconditionalVerboseLogs = true;
             ReportHubLogger.AddHandler(reportHandler);

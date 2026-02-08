@@ -100,10 +100,15 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform!.sizeDelta;
 
+            // WebGL: use 1 sample to avoid "Attachment created with 1 samples but 4 samples were requested" (MSAA mismatch)
+            int msaaSamples = 4;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            msaaSamples = 1;
+#endif
             currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
-                antiAliasing = 4,
+                antiAliasing = msaaSamples,
                 useDynamicScale = true,
             };
 
@@ -309,7 +314,7 @@ namespace DCL.CharacterPreview
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
-            if (previewController == null || !previewController.Value.IsAvatarLoaded()) return;
+            if (!previewController.Value.IsAvatarLoaded()) return;
 
             PlayEmote(emoteURN);
 

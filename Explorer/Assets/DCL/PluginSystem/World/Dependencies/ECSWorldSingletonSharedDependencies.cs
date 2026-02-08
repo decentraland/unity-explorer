@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISceneEntityFactory EntityFactory;
         public readonly ISceneMapping SceneMapping;
         public readonly IReleasablePerformanceBudget LoadingBudget;
-        public readonly FrameTimeCapBudget FrameTimeBudget;
+        public readonly IPerformanceBudget FrameTimeBudget;
         public readonly MemoryBudget MemoryBudget;
 
         public ECSWorldSingletonSharedDependencies(
@@ -26,7 +26,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
             IReleasablePerformanceBudget loadingBudget,
-            FrameTimeCapBudget frameTimeBudget,
+            IPerformanceBudget frameTimeBudget,
             MemoryBudget memoryBudget,
             ISceneMapping sceneMapping
         )

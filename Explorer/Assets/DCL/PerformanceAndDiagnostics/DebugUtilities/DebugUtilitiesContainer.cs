@@ -4,39 +4,19 @@ using System.Collections.Generic;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using Object = UnityEngine.Object;
-using DCL.Utility.Types;
 
 namespace DCL.DebugUtilities
 {
     public class DebugUtilitiesContainer
     {
-        public UIDocument? RootDocument { get; private set; }
+        public UIDocument RootDocument { get; private set; }
         public IDebugContainerBuilder Builder { get; }
 
-        private DebugUtilitiesContainer(IDebugContainerBuilder builder, UIDocument? rootDocument)
+        private DebugUtilitiesContainer(IDebugContainerBuilder builder, UIDocument rootDocument)
         {
             Builder = builder;
             RootDocument = rootDocument;
         }
-
-#if UNITY_WEBGL
-        /// <summary>
-        ///     Stub for WebGL: no debug UI, no catalog load. Builder returns null from TryAddWidget; Container is never used.
-        /// </summary>
-        public static DebugUtilitiesContainer CreateStubForWebGL()
-        {
-            return new DebugUtilitiesContainer(new WebGLStubDebugContainerBuilder(), null);
-        }
-
-        private sealed class WebGLStubDebugContainerBuilder : IDebugContainerBuilder
-        {
-            public bool IsVisible { get; set; }
-            public DebugContainer Container => throw new NotSupportedException("WebGL stub has no debug container.");
-            public IReadOnlyDictionary<string, DebugWidget> Widgets { get; } = new Dictionary<string, DebugWidget>();
-            public Result<DebugWidgetBuilder> AddWidget(WidgetName name) => Result<DebugWidgetBuilder>.ErrorResult("WebGL stub");
-            public void BuildWithFlex(UIDocument debugRootCanvas) { }
-        }
-#endif
 
         public static DebugUtilitiesContainer Create(DebugViewsCatalogSO viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
         {

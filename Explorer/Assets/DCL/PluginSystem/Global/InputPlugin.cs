@@ -40,7 +40,7 @@ namespace DCL.PluginSystem.Global
 
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
-        private readonly IEmotesMessageBus messageBus;
+        private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly EmotesBus emotesBus;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
-            IEmotesMessageBus messageBus,
+            MultiplayerEmotesMessageBus messageBus,
             EmotesBus emotesBus,
             IMVCManager mvcManager)
         {

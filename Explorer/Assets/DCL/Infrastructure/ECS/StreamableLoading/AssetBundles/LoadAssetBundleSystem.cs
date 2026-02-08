@@ -21,6 +21,7 @@ using System.Buffers;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Utility.Multithreading;
+using Temp.Helper.WebClient;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -62,6 +63,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
+            WebGLDebugLog.Log("AB.Load", "start", $"hash={intention.Hash} url={intention.CommonArguments.URL.Value}");
+
             AssetBundleLoadingResult assetBundleResult = await webRequestController
                .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
                     suppressErrors: true); // Suppress errors because here we have our own error handling
@@ -73,7 +76,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
+            {
+                WebGLDebugLog.LogWarning("AB.Load", "failed (null bundle)", $"hash={intention.Hash} error={assetBundleResult.DataProcessingError}");
                 throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
+            }
 
             try
             {
@@ -118,12 +124,15 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
                     source, intention.IsDependency, intention.LookForDependencies, ct);
+                WebGLDebugLog.Log("AB.Load", "success", $"hash={intention.Hash}");
+                return result;
             }
             catch (Exception e)
             {
+                WebGLDebugLog.LogWarning("AB.Load", "exception", $"hash={intention.Hash} error={e.Message}");
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
                 // Can only be done in main thread
