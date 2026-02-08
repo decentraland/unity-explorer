@@ -5,6 +5,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using DCL.ECSComponents;
+using DCL.Infrastructure.Global;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -14,6 +15,7 @@ using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
 using SceneRunner.Scene;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
@@ -49,13 +51,13 @@ namespace ECS.Unity.GLTFContainer.Systems
         [None(typeof(GltfContainerComponent))]
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
-            Debug.Log($"[AB-Loading] LoadGltfContainerSystem.StartLoading: src={sdkComponent.Src}");
+            WebGLDebugLog.Log($"[AB-Loading] LoadGltfContainerSystem.StartLoading: src={sdkComponent.Src}");
             GltfContainerComponent component;
             sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
 
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
-                Debug.LogWarning($"[AB-Loading] GLTF source not found in content: {sdkComponent.Src}");
+                WebGLDebugLog.LogWarning($"[AB-Loading] GLTF source not found in content: {sdkComponent.Src}");
 
                 component = GltfContainerComponent.CreateFaulty(
                     GetReportData(),
@@ -66,7 +68,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
             else
             {
-                Debug.Log($"[AB-Loading] Creating promise for GLTF: src={sdkComponent.Src}, hash={hash}");
+                WebGLDebugLog.Log($"[AB-Loading] Creating promise for GLTF: src={sdkComponent.Src}, hash={hash}");
 
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
                 var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);

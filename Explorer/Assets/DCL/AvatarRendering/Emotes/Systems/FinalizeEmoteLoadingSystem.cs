@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using Temp.Helper.WebClient;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
@@ -82,7 +83,10 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
+                {
+                    WebGLDebugLog.Log("AB.Emote", "kept", $"emoteId={emote.DTO.id} bodyShape={bodyShape}");
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
+                }
                 else
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
 

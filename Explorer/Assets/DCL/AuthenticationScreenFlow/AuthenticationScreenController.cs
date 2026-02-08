@@ -19,6 +19,7 @@ using DCL.UI;
 using Global.AppArgs;
 using DCL.Utilities;
 using DCL.Web3;
+using Temp.Helper.WebClient;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -517,10 +518,16 @@ UnityEngine.Debug.Log("AuthenticationScreenController.cs:482"); // SPECIAL_DEBUG
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
+            WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "calling selfProfile.ProfileAsync");
             Profile? profile = await selfProfile.ProfileAsync(ct);
 
             if (profile == null)
+            {
+                WebGLDebugLog.LogError("AuthScreen.FetchProfileAsync", "ProfileAsync returned null");
                 throw new ProfileNotFoundException();
+            }
+
+            WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "Profile loaded", $"userId={profile.UserId} name={profile.Name}");
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;

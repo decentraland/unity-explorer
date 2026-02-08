@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 #endif
 
 using DCL.Multiplayer.HealthChecks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
@@ -98,11 +99,17 @@ namespace DCL.UserInAppInitializationFlow
             }
 #endif
 
+#if UNITY_WEBGL
+            IAnalyticsController analyticsForOps = IAnalyticsController.Null;
+#else
+            IAnalyticsController analyticsForOps = bootstrapContainer.Analytics.EnsureNotNull();
+#endif
+
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                bootstrapContainer.Analytics.EnsureNotNull(),
+                analyticsForOps,
                 "start-up");
 
             startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Initialization Flow");
@@ -111,7 +118,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                bootstrapContainer.Analytics.EnsureNotNull(),
+                analyticsForOps,
                 "re-login");
 
             reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
@@ -123,7 +130,7 @@ namespace DCL.UserInAppInitializationFlow
                         decentralandUrlsSource: bootstrapContainer.DecentralandUrlsSource,
                         mvcManager: mvcManager,
                         backgroundMusic: backgroundMusic,
-                        realmNavigator: realmNavigationContainer.RealmNavigator,
+                        realmNavigator: realmNavigator,
                         loadingScreen: loadingScreen,
                         realmController: realmContainer.RealmController,
                         portableExperiencesController: staticContainer.PortableExperiencesController,

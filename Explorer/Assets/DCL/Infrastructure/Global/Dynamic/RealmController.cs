@@ -27,6 +27,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
+using Temp.Helper.WebClient;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
@@ -123,6 +124,7 @@ namespace Global.Dynamic
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
+            WebGLDebugLog.Log("RealmController.cs", "SetRealmAsync start", realm.ToString());
             World world = globalWorld!.EcsWorld;
 
             try { await UnloadCurrentRealmAsync(); }
@@ -190,6 +192,7 @@ namespace Global.Dynamic
                     networkId = result.configurations.networkId;
                 }
 
+                WebGLDebugLog.Log("RealmController.cs", "SetRealmAsync /about fetched, about to Reconfigure", realmName ?? "(null)");
                 try
                 {
                     realmData.Reconfigure(
@@ -204,6 +207,7 @@ namespace Global.Dynamic
                 }
                 catch (Exception ex) { LogRealmStepError("3_RealmData_Reconfigure", ex); throw; }
 
+                WebGLDebugLog.Log("RealmController.cs", "SetRealmAsync Reconfigure done, realm configured", realmName ?? "(null)");
                 RealmComponent realmComp;
                 try
                 {
@@ -234,6 +238,7 @@ namespace Global.Dynamic
                     string realmUrl = url.Value;
                     string msg = string.IsNullOrEmpty(realmUrl) ? "Failed to connect to realm: " + e.Message : $"Failed to connect to '{realmUrl}': {e.Message}";
                     Debug.LogError($"[Realm] {msg}");
+                    WebGLDebugLog.LogError("RealmController.cs", $"SetRealmAsync failed: {e.GetType().Name}", $"{e.Message}\n{e.StackTrace}");
                 }
                 catch
                 {

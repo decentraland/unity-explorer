@@ -126,6 +126,7 @@ using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.Translation;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -318,9 +319,11 @@ namespace Global.Dynamic
 #endif
             }
 
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before InitializeContainersAsync", "{}", "H2_H3");
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync after InitializeContainersAsync", "{}", "H2_H3");
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
@@ -328,20 +331,27 @@ namespace Global.Dynamic
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
 
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before AddDebugViews", "{}", "H2");
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
-
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync after AddDebugViews", "{}", "H2");
             var realmSamplingData = new RealmSamplingData();
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "after_mainUIView", "{}", "H5");
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
-            IMVCManager mvcManager = dynamicWorldParams.EnableAnalytics
-                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics!)
+#if UNITY_WEBGL
+            IMVCManager mvcManager = coreMvcManager;
+#else
+            IMVCManager mvcManager = (dynamicWorldParams.EnableAnalytics && bootstrapContainer.Analytics != null)
+                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics)
                 : coreMvcManager;
+#endif
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "after_mvcManager", "{}", "H5");
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
@@ -397,6 +407,7 @@ namespace Global.Dynamic
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "before_realmContainer", "{}", "H5");
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
@@ -571,9 +582,6 @@ namespace Global.Dynamic
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
 
-#if UNITY_WEBGL
-            MapRendererContainer? mapRendererContainer = null;
-#else
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
@@ -594,7 +602,6 @@ namespace Global.Dynamic
                         eventBus,
                         ct
                     );
-#endif
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
@@ -825,6 +832,8 @@ namespace Global.Dynamic
             var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
+
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before globalPlugins list", "{\"mapRendererContainerNull\":" + (mapRendererContainer == null).ToString().ToLowerInvariant() + ",\"realmNavigatorContainerNull\":" + (realmNavigatorContainer == null).ToString().ToLowerInvariant() + ",\"minimapNull\":" + (minimap == null).ToString().ToLowerInvariant() + "}", "H1_H4");
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -1177,10 +1186,12 @@ namespace Global.Dynamic
                 new AvatarLocomotionOverridesGlobalPlugin(),
             };
 
-            if (mapRendererContainer != null)
+            if (mapRendererContainer != null && mapRendererContainer.MapRenderer != null)
             {
+#if !UNITY_WEBGL
                 globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
                 globalPlugins.Add(new MinimapPlugin(mvcManager, minimap!));
+#endif
             }
             if (realmNavigatorContainer != null)
                 globalPlugins.Add(realmNavigatorContainer.CreatePlugin());

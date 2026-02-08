@@ -202,6 +202,18 @@ namespace Global
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
 
+#if UNITY_WEBGL
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(
+                componentsContainer.ComponentPoolsRegistry,
+                reportHandlingSettings,
+                new SceneEntityFactory(),
+                new PartitionedWorldsAggregate.Factory(),
+                new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
+                new StubPerformanceBudget(),
+                new StubMemoryBudget(),
+                new SceneMapping()
+            );
+#else
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 reportHandlingSettings,
@@ -212,6 +224,7 @@ namespace Global
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
                 new SceneMapping()
             );
+#endif
 
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);

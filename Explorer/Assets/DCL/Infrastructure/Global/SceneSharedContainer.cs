@@ -22,6 +22,7 @@ using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using Temp.Helper.WebClient;
 
 #if UNITY_WEBGL
 using SceneRuntime.WebClient;
@@ -65,16 +66,16 @@ namespace Global
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard)
         {
-            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: start");
+            WebGLDebugLog.Log("SceneSharedContainer.Create: start");
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: before ECSWorldFactory");
+            WebGLDebugLog.Log("SceneSharedContainer.Create: before ECSWorldFactory");
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
-            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: after ECSWorldFactory");
+            WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
 
 #if UNITY_WEBGL
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
@@ -82,7 +83,7 @@ namespace Global
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
 #endif
 
-            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: before SceneFactory ctor");
+            WebGLDebugLog.Log("SceneSharedContainer.Create: before SceneFactory ctor");
             var sceneFactory = new SceneFactory(
                     ecsWorldFactory,
                     new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
@@ -121,7 +122,7 @@ namespace Global
 
                     dclEnvironment,
                     systemClipboard);
-            UnityEngine.Debug.Log("[agent] SceneSharedContainer.Create: after SceneFactory ctor");
+            WebGLDebugLog.Log("SceneSharedContainer.Create: after SceneFactory ctor");
             return new SceneSharedContainer { SceneFactory = sceneFactory };
         }
     }

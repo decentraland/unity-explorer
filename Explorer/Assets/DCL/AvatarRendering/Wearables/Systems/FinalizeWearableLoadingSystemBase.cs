@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -19,6 +19,8 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Temp.Helper.WebClient;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -30,6 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private SingleInstanceEntity defaultWearablesState;
+        private bool hasLoggedRealmConfiguredAndFinalizing;
 
         public FinalizeWearableLoadingSystemBase(
             World world,
@@ -47,7 +50,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             // Only DTO loading requires realmData
             if (realmData.Configured)
+            {
+                if (!hasLoggedRealmConfiguredAndFinalizing)
+                {
+                    hasLoggedRealmConfiguredAndFinalizing = true;
+                    WebGLDebugLog.Log("[FinalizeWearableLoading] realmData.Configured=true, running FinalizeWearableDTOQuery");
+                }
                 FinalizeWearableDTOQuery(World);
+            }
         }
 
         [Query]

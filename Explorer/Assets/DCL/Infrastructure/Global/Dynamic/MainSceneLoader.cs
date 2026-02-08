@@ -53,6 +53,7 @@ using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -97,7 +98,7 @@ namespace Global.Dynamic
         private void Awake()
         {
             UniversalRenderPipelineAsset urpAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            Debug.Log($"Current URP Asset: {urpAsset?.name ?? "null"}");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "Awake URP", urpAsset?.name ?? "null");
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -153,13 +154,13 @@ namespace Global.Dynamic
             string splash = splashNull == null ? "-" : (splashNull.Value ? "null" : "ok");
             string gp = globalPluginNull == null ? "-" : (globalPluginNull.Value ? "null" : "ok");
             string ss = staticSettingsNull == null ? "-" : (staticSettingsNull.Value ? "null" : "ok");
-            Debug.Log($"[agent] {location} {message} splash={splash} globalPlugin={gp} staticSettings={ss}");
+            WebGLDebugLog.Log(location, message, $"splash={splash} globalPlugin={gp} staticSettings={ss}");
         }
         // #endregion
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            Debug.Log("applicationParametersParser");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "applicationParametersParser");
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
@@ -168,43 +169,41 @@ namespace Global.Dynamic
 #endif
             );
 
-            Debug.Log("dclVersion");
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
             const bool KTX_ENABLED = true;
 
-            Debug.Log("hasSimulatedMemory");
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
 
-            Debug.Log("memoryCap");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "memoryCap");
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
 
-            Debug.Log("ApplyConfig");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "ApplyConfig");
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            Debug.Log("applicationParametersParser");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "applicationParametersParser");
             if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
                 WindowModeUtils.ApplyWindowedMode();
 
-            Debug.Log("Create");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "Create");
             World world = World.Create();
 
             Debug.Log("decentralandUrlsSource");
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
 
-            Debug.Log("LogEnvironment");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "LogEnvironment");
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
-            Debug.Log("AddressablesProvisioner");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "AddressablesProvisioner");
             var assetsProvisioner = new AddressablesProvisioner();
 
-            Debug.Log("splashScreen");
+            WebGLDebugLog.Log("MainSceneLoader.cs", "splashScreen");
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
             // #region agent log
             LogInit("MainSceneLoader:after_splash_await", "after ProvideInstanceAsync", splashScreen.Value == null, null, null);
@@ -213,12 +212,9 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
 
-#if UNITY_WEBGL
-            var debugContainer = DebugUtilitiesContainer.CreateStubForWebGL();
-#else
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
-#endif
+
             // #region agent log
             LogInit("MainSceneLoader:before_GetSettings", "before GetSettings", null, globalPluginSettingsContainer == null, null);
             // #endregion
@@ -227,22 +223,21 @@ namespace Global.Dynamic
             LogInit("MainSceneLoader:after_GetSettings", "after GetSettings", null, null, staticSettings == null);
             // #endregion
 
-Debug.Log("MainSceneLoader.cs:205");
             Option<ChromeDevtoolProtocolClient> cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
 
             // #region agent log
             LogInit("MainSceneLoader:before_WebRequestsCreate", "before WebRequestsContainer.Create", null, null, staticSettings == null);
             // #endregion
-Debug.Log("MainSceneLoader.cs:208");
+            WebGLDebugLog.Log("MainSceneLoader.cs:208");
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-Debug.Log("MainSceneLoader.cs:212");
+            WebGLDebugLog.Log("MainSceneLoader.cs:212");
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
 
-            Debug.Log("BootstrapContainer.CreateAsync");
+            WebGLDebugLog.Log("BootstrapContainer.CreateAsync");
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 assetsProvisioner,
                 debugSettings,
@@ -266,45 +261,45 @@ Debug.Log("MainSceneLoader.cs:212");
             LogInit("MainSceneLoader:after_BootstrapCreateAsync", "after BootstrapContainer.CreateAsync", null, null, null);
             // #endregion
 
-Debug.Log("MainSceneLoader.cs:238");
+            WebGLDebugLog.Log("MainSceneLoader.cs:238");
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
-Debug.Log("MainSceneLoader.cs:241");
+            WebGLDebugLog.Log("MainSceneLoader.cs:241");
             try
             {
-Debug.Log("MainSceneLoader.cs:244");
+                WebGLDebugLog.Log("MainSceneLoader.cs:244");
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
-Debug.Log("MainSceneLoader.cs:247");
+                WebGLDebugLog.Log("MainSceneLoader.cs:247");
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
 
-Debug.Log("MainSceneLoader.cs:252");
+                WebGLDebugLog.Log("MainSceneLoader.cs:252");
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-                Debug.Log("InitializePlayerEntity");
+                WebGLDebugLog.Log("InitializePlayerEntity");
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                Debug.Log("InitializeFeatureFlagsAsync");
+                WebGLDebugLog.Log("InitializeFeatureFlagsAsync");
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-Debug.Log("MainSceneLoader.cs:266");
+                WebGLDebugLog.Log("MainSceneLoader.cs:266");
                 bootstrap.InitializeFeaturesRegistry();
 
-Debug.Log("MainSceneLoader.cs:269");
+                WebGLDebugLog.Log("MainSceneLoader.cs:269");
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
-Debug.Log("MainSceneLoader.cs:273");
+                WebGLDebugLog.Log("MainSceneLoader.cs:273");
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
-Debug.Log("MainSceneLoader.cs:276");
+                WebGLDebugLog.Log("MainSceneLoader.cs:276");
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -319,80 +314,79 @@ Debug.Log("MainSceneLoader.cs:276");
                     dclVersion,
                     destroyCancellationToken);
 
-Debug.Log("MainSceneLoader.cs:291");
+                WebGLDebugLog.Log("MainSceneLoader.cs:291");
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-Debug.Log("MainSceneLoader.cs:297");
+                WebGLDebugLog.Log("MainSceneLoader.cs:297");
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
-Debug.Log("MainSceneLoader.cs:302");
+                WebGLDebugLog.Log("MainSceneLoader.cs:302");
 #if !UNITY_WEBGL //We only verify hardware on non-webGL platforms
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 #endif
-Debug.Log("MainSceneLoader.cs:306");
+                WebGLDebugLog.Log("MainSceneLoader.cs:306");
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
-Debug.Log("MainSceneLoader.cs:309");
+                    WebGLDebugLog.Log("MainSceneLoader.cs:309");
                     splashScreen.Value.Hide();
 
-Debug.Log("MainSceneLoader.cs:312");
+                    WebGLDebugLog.Log("MainSceneLoader.cs:312");
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
                         ExitUtils.Exit();
                         return;
                     }
 
-Debug.Log("MainSceneLoader.cs:319");
+                    WebGLDebugLog.Log("MainSceneLoader.cs:319");
                     splashScreen.Value.Show();
                 }
 
-Debug.Log("MainSceneLoader.cs:323");
+                WebGLDebugLog.Log("MainSceneLoader.cs:323");
                 DisableInputs();
 
-                Debug.Log("[agent] MainSceneLoader: before InitializePluginsAsync");
+                WebGLDebugLog.Log("MainSceneLoader: before InitializePluginsAsync");
                 bool pluginInitFailed = await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct);
-                Debug.Log($"[agent] MainSceneLoader: after InitializePluginsAsync failed={pluginInitFailed}");
+                WebGLDebugLog.Log("MainSceneLoader.cs", "after InitializePluginsAsync", $"failed={pluginInitFailed}");
                 if (pluginInitFailed)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-                Debug.Log("[agent] MainSceneLoader: before CreateGlobalWorld");
+                WebGLDebugLog.Log("MainSceneLoader: before CreateGlobalWorld");
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
-Debug.Log("MainSceneLoader.cs:336");
+                WebGLDebugLog.Log("MainSceneLoader.cs:336");
                 await LoadStartingRealmAsync(ct);
-Debug.Log("MainSceneLoader.cs:338");
+                WebGLDebugLog.Log("MainSceneLoader.cs", "after LoadStartingRealmAsync", "RealmData.Configured=" + dynamicWorldContainer!.RealmController.RealmData.Configured);
                 await LoadUserFlowAsync(playerEntity, ct);
 
-Debug.Log("MainSceneLoader.cs:341");
+                WebGLDebugLog.Log("MainSceneLoader.cs:341");
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
                 splashScreen.Dispose();
 
-Debug.Log("MainSceneLoader.cs:346");
+                WebGLDebugLog.Log("MainSceneLoader.cs:346");
                 RestoreInputs();
             }
             catch (OperationCanceledException)
             {
-Debug.Log("MainSceneLoader.cs:351");
+                WebGLDebugLog.Log("MainSceneLoader.cs:351");
                 // ignore
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-Debug.Log("MainSceneLoader.cs:356");
-                // unhandled exception
+                WebGLDebugLog.Log("MainSceneLoader.cs:catch", "Init failed", "{\"exceptionType\":\"" + (ex.GetType().FullName ?? "") + "\",\"message\":\"" + (ex.Message ?? "").Replace("\"", "'") + "\",\"stackTrace\":\"" + (ex.StackTrace ?? "").Replace("\"", "'").Replace("\n", " ").Replace("\r", " ") + "\"}", "H0_actual_exception");
                 GameReports.PrintIsDead();
                 throw;
             }
 
-Debug.Log("MainSceneLoader.cs:362");
+            WebGLDebugLog.Log("MainSceneLoader.cs:362");
             return;
 
             async UniTask LoadStartingRealmAsync(CancellationToken ct)
@@ -479,7 +473,7 @@ Debug.Log("MainSceneLoader.cs:362");
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
-#if !UNITY_WEBGL //For now, until we have Livekit Working, we ignore all these checks for WebGL.
+#if !UNITY_WEBGL
 
             //If Livekit is down, stop bootstrapping
             if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
@@ -519,9 +513,6 @@ Debug.Log("MainSceneLoader.cs:362");
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-#if UNITY_WEBGL //In WebGL we don't do versionCheck
-            return false;
-#else
             DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
@@ -549,7 +540,6 @@ Debug.Log("MainSceneLoader.cs:362");
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
             return true;
-#endif
         }
 
         private void DisableInputs()

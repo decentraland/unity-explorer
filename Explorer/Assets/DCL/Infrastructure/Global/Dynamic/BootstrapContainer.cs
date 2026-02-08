@@ -20,6 +20,7 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Temp.Helper.WebClient;
 #if !UNITY_WEBGL
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
@@ -108,26 +109,26 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                Debug.Log("[agent] BootstrapContainer createDependencies START");
+                WebGLDebugLog.Log("BootstrapContainer.cs", "createDependencies START");
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
-                Debug.Log("[agent] BootstrapContainer before CreateBootstrapperAsync");
+                WebGLDebugLog.Log("BootstrapContainer.cs", "before CreateBootstrapperAsync");
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                Debug.Log("[agent] BootstrapContainer after CreateBootstrapperAsync");
+                WebGLDebugLog.Log("BootstrapContainer.cs", "after CreateBootstrapperAsync");
                 (container.VerifiedEthereumApi, container.Web3Authenticator, container.AutoLoginAuthenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer);
 
                 if (container.enableAnalytics)
                 {
-                    Debug.Log("[agent] BootstrapContainer before Analytics.Initialize");
+                    WebGLDebugLog.Log("BootstrapContainer.cs", "before Analytics.Initialize");
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
                     CrashDetector.Initialize(container.Analytics);
-                    Debug.Log("[agent] BootstrapContainer after Analytics.Initialize");
+                    WebGLDebugLog.Log("BootstrapContainer.cs", "after Analytics.Initialize");
                 }
 
-                Debug.Log("[agent] BootstrapContainer before DiagnosticsContainer.Create");
+                WebGLDebugLog.Log("BootstrapContainer.cs", "before DiagnosticsContainer.Create");
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
-                Debug.Log("[agent] BootstrapContainer createDependencies END");
+                WebGLDebugLog.Log("BootstrapContainer.cs", "createDependencies END");
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -136,7 +137,7 @@ namespace Global.Dynamic
                 }
             });
 
-            Debug.Log("[agent] BootstrapContainer.CreateAsync returning");
+            WebGLDebugLog.Log("BootstrapContainer.cs", "CreateAsync returning");
             return bootstrapContainer;
         }
 

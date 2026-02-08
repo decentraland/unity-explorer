@@ -47,10 +47,10 @@ namespace SceneRunner
         }
 
         /// <remarks>
-        ///     <see cref="SceneFacade" /> is a component in the global scene as an
-        ///     <see cref="ISceneFacade" />. It owns its <see cref="ISceneRuntime" /> through its
-        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
-        ///     shall be the chain of Dispose calls.
+        /// <see cref="SceneFacade"/> is a component in the global scene as an
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
+        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// shall be the chain of Dispose calls.
         /// </remarks>
         public void Dispose()
         {
@@ -111,7 +111,6 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
-
             try
             {
                 // Start the scene
@@ -143,7 +142,6 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
-
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -210,10 +208,10 @@ namespace SceneRunner
         }
 
         /// <remarks>
-        ///     <see cref="SceneFacade" /> is a component in the global scene as an
-        ///     <see cref="ISceneFacade" />. It owns its <see cref="ISceneRuntime" /> through its
-        ///     <see cref="deps" /> field, which in turns owns its <see cref="V8ScriptEngine" />. So that also
-        ///     shall be the chain of Dispose calls.
+        /// <see cref="SceneFacade"/> is a component in the global scene as an
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
+        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// shall be the chain of Dispose calls.
         /// </remarks>
         public async UniTask DisposeAsync()
         {
