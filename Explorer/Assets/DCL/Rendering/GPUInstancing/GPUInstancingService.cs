@@ -97,7 +97,7 @@ namespace DCL.Rendering.GPUInstancing
 
         private Camera renderCamera;
 
-        public LandscapeData? LandscapeData { private get; set; }
+        public LandscapeData LandscapeData { private get; set; }
 
         public bool IsEnabled { get; set; } = true;
 

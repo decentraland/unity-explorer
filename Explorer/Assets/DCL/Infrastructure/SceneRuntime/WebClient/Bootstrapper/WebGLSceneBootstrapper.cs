@@ -568,9 +568,9 @@ namespace SceneRuntime.WebClient.Bootstrapper
                     : new WebClientStubImplementations.StubEventSystem();
                 var stubEmotesMessageBus = new WebClientStubImplementations.StubEmotesMessageBus();
                 var emotesBus = new EmotesBus();
-                var inputPlugin = new InputPlugin(stubCursor, stubEventSystem, assetsProvisioner, stubEmotesMessageBus, emotesBus, new WebClientStubImplementations.StubMVCManager());
-                (_, bool inputInitSuccess) = await globalPluginSettingsContainer.InitializePluginAsync(inputPlugin, destroyCancellationToken);
-                if (!inputInitSuccess)
+                //var inputPlugin = new InputPlugin(stubCursor, stubEventSystem, assetsProvisioner, stubEmotesMessageBus, emotesBus, new WebClientStubImplementations.StubMVCManager());
+                //(_, bool inputInitSuccess) = await globalPluginSettingsContainer.InitializePluginAsync(inputPlugin, destroyCancellationToken);
+                //if (!inputInitSuccess)
                 {
                     Debug.LogWarning("[WebGLSceneBootstrapper] InputPlugin init failed. Add InputSettings to globalPluginSettingsContainer for camera/movement. Camera/movement may not respond.");
                 }
@@ -582,14 +582,14 @@ namespace SceneRuntime.WebClient.Bootstrapper
                 UpdatePhysicsTickSystem.InjectToWorld(ref builder);
                 var pluginArgs = new GlobalPluginArguments(globalPlayerEntity, globalSkyboxEntity);
                 characterContainer.CreateGlobalPlugin().InjectToWorld(ref builder, pluginArgs);
-                if (inputInitSuccess)
-                    inputPlugin.InjectToWorld(ref builder, pluginArgs);
+                //if (inputInitSuccess)
+                  //  inputPlugin.InjectToWorld(ref builder, pluginArgs);
                 characterCameraPlugin.InjectToWorld(ref builder, pluginArgs);
                 globalWorldSystems = builder.Finish();
                 globalWorldSystems.Initialize();
 
                 // Same as MainSceneLoader.RestoreInputs: enable all input maps except FreeCamera/EmoteWheel, and UI
-                if (inputInitSuccess)
+                //if (inputInitSuccess)
                 {
                     var inputBlock = new ECSInputBlock(globalWorldEcs);
                     inputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA, InputMapComponent.Kind.EMOTE_WHEEL);
@@ -761,7 +761,7 @@ namespace SceneRuntime.WebClient.Bootstrapper
 
                         if (!string.IsNullOrEmpty(dto.Version) && !string.IsNullOrEmpty(dto.Date))
                         {
-                            sceneDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(dto.Version, dto.Date, dto.Version, dto.Date);
+                            sceneDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(dto.Version, dto.Date, dto.Version, dto.Date, dto.Version, dto.Date);
 
                             if (suffix != "")
                                 Debug.Log($"[WebGLSceneBootstrapper] Manifest fallback: used {suffix}.json (version={dto.Version}) for scene {sceneDefinition.id}");

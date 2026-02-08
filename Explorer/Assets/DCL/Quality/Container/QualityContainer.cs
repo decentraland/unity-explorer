@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Landscape.Settings;
-using DCL.LOD;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
@@ -39,18 +38,9 @@ namespace DCL.Quality
         {
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
-#if UNITY_WEBGL
-            ILODSettingsAsset lodSettingsValue = null;
-            LightSourceSettings lightSourceSettingsValue = null;
-            LandscapeData landscapeDataValue = null;
-#else
             var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
-            ILODSettingsAsset lodSettingsValue = lodSettingsAsset.Value;
-            var lightSourceSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, CancellationToken.None);
-            LightSourceSettings lightSourceSettingsValue = lightSourceSettings.Value;
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
-            LandscapeData landscapeDataValue = landscapeData.Value;
-#endif
+            var lightSourceSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, CancellationToken.None);
 
             var rendererFeaturesCache = new RendererFeaturesCache();
             IQualityLevelController controller = QualityRuntimeFactory.Create(
@@ -58,9 +48,9 @@ namespace DCL.Quality
                 settings.QualitySettings,
                 settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
-                lodSettingsAsset: lodSettingsValue,
-                landscapeData: landscapeDataValue,
-                lightSourceSettings: lightSourceSettingsValue);
+                lodSettingsAsset.Value,
+                landscapeData.Value,
+                lightSourceSettings.Value);
 
             return new QualityContainer
             {

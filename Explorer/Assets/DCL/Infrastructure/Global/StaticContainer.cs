@@ -349,19 +349,14 @@ namespace Global
 #if !UNITY_WEBGL
                 container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
 #endif
-
                 new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
-#if !UNITY_WEBGL
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
-#endif
                 new MultiplayerPlugin(),
 
 #if !NO_LIVEKIT_MODE
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
 #endif
-
-
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),

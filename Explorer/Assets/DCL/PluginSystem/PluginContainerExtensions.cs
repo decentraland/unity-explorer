@@ -4,7 +4,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
-using UnityEngine;
+using Temp.Helper.WebClient;
 
 namespace DCL.PluginSystem
 {
@@ -44,7 +44,7 @@ namespace DCL.PluginSystem
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                Debug.LogError($"[agent] Plugin init FAILED: {pluginName}: {e.GetType().Name}: {e.Message}\n{e.StackTrace}");
+                WebGLDebugLog.LogError($"Plugin init FAILED: {pluginName}: {e.GetType().Name}: {e.Message}\n{e.StackTrace}");
                 ReportHub.LogError(ReportCategory.ENGINE, $"Error initializing plugin {pluginName}: {e}");
                 Track(analytics, pluginName, "failed", e.ToString());
                 return (plugin, false);
@@ -75,18 +75,18 @@ namespace DCL.PluginSystem
             where TContainer: DCLContainer<TSettings>
             where TSettings: IDCLPluginSettings, new()
         {
-            Debug.Log($"[agent] InitializeContainerAsync START {typeof(TContainer).Name}");
+            WebGLDebugLog.Log($"InitializeContainerAsync START {typeof(TContainer).Name}");
             (_, bool result) = await pluginSettingsContainer.InitializePluginAsync(container, ct);
-            Debug.Log($"[agent] InitializeContainerAsync after InitializePluginAsync result={result} {typeof(TContainer).Name}");
+            WebGLDebugLog.Log($"InitializeContainerAsync after InitializePluginAsync result={result} {typeof(TContainer).Name}");
 
             if (!result)
                 return (null, false);
 
             if (createDependencies != null)
             {
-                Debug.Log($"[agent] InitializeContainerAsync before createDependencies {typeof(TContainer).Name}");
+                WebGLDebugLog.Log($"InitializeContainerAsync before createDependencies {typeof(TContainer).Name}");
                 await createDependencies(container);
-                Debug.Log($"[agent] InitializeContainerAsync after createDependencies {typeof(TContainer).Name}");
+                WebGLDebugLog.Log($"InitializeContainerAsync after createDependencies {typeof(TContainer).Name}");
             }
 
             return (container, true);

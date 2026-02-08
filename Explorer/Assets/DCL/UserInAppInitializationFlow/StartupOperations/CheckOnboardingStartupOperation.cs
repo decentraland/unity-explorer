@@ -77,6 +77,12 @@ namespace DCL.UserInAppInitializationFlow
         private async UniTask TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
+
+#if UNITY_WEBGL
+            // Onboarding check not needed on WebGL (no realm redirect, profile/tutorial flow skipped)
+            return;
+#endif
+
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE) || appParameters.HasFlag(AppArgsFlags.COMMUNITY))
                 return;

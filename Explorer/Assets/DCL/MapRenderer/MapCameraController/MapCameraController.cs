@@ -1,4 +1,4 @@
-﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -61,7 +61,11 @@ namespace DCL.MapRenderer.MapCameraController
         void IMapCameraControllerInternal.Initialize(Vector2Int textureResolution, Vector2Int zoomValues, MapLayer layers)
         {
             textureResolution = ClampTextureResolution(textureResolution);
+#if UNITY_WEBGL && !UNITY_EDITOR
+            renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 16, RenderTextureFormat.Default, 1);
+#else
             renderTexture = new RenderTexture(textureResolution.x, textureResolution.y, 16, RenderTextureFormat.Default, 0);
+#endif
             // Bilinear and Trilinear make texture blurry
             renderTexture.filterMode = FilterMode.Point;
             renderTexture.autoGenerateMips = false;

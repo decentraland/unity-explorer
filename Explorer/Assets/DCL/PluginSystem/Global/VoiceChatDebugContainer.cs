@@ -2,22 +2,20 @@
 
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
-using DCL.VoiceChat;
-#if !UNITY_WEBGL
-using RichTypes;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
+using DCL.VoiceChat;
 using LiveKit.Audio;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Runtime.Scripts.Audio;
+using RichTypes;
 using RustAudio;
-using System.Collections.Generic;
-using UnityEngine;
-#endif
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 #if UNITY_STANDALONE_OSX
@@ -35,7 +33,6 @@ namespace DCL.PluginSystem.Global
 
         public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager trackManager)
         {
-#if !UNITY_WEBGL
             var unityOutputSampleRate = new ElementBinding<ulong>(0);
 
             var availableMicrophones = new ElementBinding<ulong>(0);
@@ -194,7 +191,6 @@ namespace DCL.PluginSystem.Global
                         wavRemotesBuffer.Add((name, message));
                     }
                 }
-#endif
             }
 
             async UniTaskVoid AutoUpdateTriggerAsync(bool enable)
@@ -222,7 +218,6 @@ namespace DCL.PluginSystem.Global
 
             void UpdateWidget()
             {
-#if !UNITY_WEBGL
                 unityOutputSampleRate.Value = (ulong)UnityEngine.AudioSettings.outputSampleRate;
 
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
@@ -255,7 +250,6 @@ namespace DCL.PluginSystem.Global
 
                 speakersInfo.SetAndUpdate(speakersBuffer);
             }
-#endif
         }
 
         public void Dispose()

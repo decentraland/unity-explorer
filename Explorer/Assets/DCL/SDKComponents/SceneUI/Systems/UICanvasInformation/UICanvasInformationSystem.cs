@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
@@ -9,6 +9,7 @@ using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Groups;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
@@ -50,13 +51,39 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 
         private void UpdateUICanvasInformationComponent()
         {
-            if (lastViewportResolutionWidth == Screen.width && lastScreenRealResolutionWidth == Screen.mainWindowDisplayInfo.width)
+            int realWidth = GetScreenRealResolutionWidth();
+            if (lastViewportResolutionWidth == Screen.width && lastScreenRealResolutionWidth == realWidth)
                 return;
 
-            lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
+            lastScreenRealResolutionWidth = realWidth;
             lastViewportResolutionWidth = Screen.width;
 
             WriteToCRDT();
+        }
+
+        private static int GetScreenRealResolutionWidth()
+        {
+#if UNITY_WEBGL
+            return Screen.width;
+#else
+            return Screen.mainWindowDisplayInfo.width;
+#endif
+        }
+
+#if UNITY_WEBGL
+        [DllImport("__Internal", EntryPoint = "GetDevicePixelRatio")]
+        private static extern double GetDevicePixelRatioNative();
+#endif
+
+        private static float GetDevicePixelRatio()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return (float)GetDevicePixelRatioNative();
+#elif UNITY_WEBGL
+            return 1f;
+#else
+            return Screen.mainWindowDisplayInfo.width / (float)Screen.width;
+#endif
         }
 
         private void WriteToCRDT()
@@ -66,7 +93,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
                 component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
                 component.Height = Screen.height;
-                component.DevicePixelRatio = Screen.mainWindowDisplayInfo.width / (float)Screen.width;
+                component.DevicePixelRatio = GetDevicePixelRatio();
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, this);
         }
     }

@@ -10,7 +10,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Multithreading; 
+using Utility.Multithreading;
 
 namespace DCL.WebRequests
 {
@@ -212,55 +212,26 @@ namespace DCL.WebRequests
 
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
-UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:214"); // SPECIAL_DEBUG_LINE_STATEMENT
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
-UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:216"); // SPECIAL_DEBUG_LINE_STATEMENT
                 string text = null;
 
                 try
                 {
-UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:221"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (jsonParser == WRJsonParser.Unity
 #if !UNITY_EDITOR
                         || jsonParser == WRJsonParser.NewtonsoftInEditor
 #endif
                         )
                     {
-                        text = downloadHandler?.text;
-                        if (string.IsNullOrEmpty(text))
-                            return default;
+                        text = downloadHandler.text;
 
-#if !UNITY_WEBGL
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
-#endif
 
-                        try
-                        {
-                            return JsonUtility.FromJson<T>(text);
-                        }
-                        catch (NullReferenceException)
-                        {
-                            // JsonUtility can NRE on some JSON shapes (e.g. worlds-content-server /about); return default so caller can handle.
-                            return default;
-                        }
+                        return JsonUtility.FromJson<T>(text);
                     }
                     else
                     {
-                        // Newtonsoft path: on WebGL use .text + JsonConvert to avoid nativeData/unsafe (can NRE there).
-#if UNITY_WEBGL && !UNITY_EDITOR
-                        UnityEngine.Debug.Log($"[CreateFromJson] WebGL Newtonsoft path, type={typeof(T).Name}");
-                        text = downloadHandler?.text;
-                        if (string.IsNullOrEmpty(text))
-                        {
-                            UnityEngine.Debug.LogWarning("[CreateFromJson] WebGL: downloadHandler text null or empty");
-                            return default;
-                        }
-                        UnityEngine.Debug.Log($"[CreateFromJson] WebGL: deserializing, text length={text.Length}");
-                        var result = JsonConvert.DeserializeObject<T>(text, newtonsoftSettings);
-                        UnityEngine.Debug.Log($"[CreateFromJson] WebGL: deserialize done, result null={result == null}");
-                        return result;
-#else
                         var nativeData = downloadHandler.nativeData;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
@@ -279,12 +250,10 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:221"); // SPECIAL_DEBUG_LI
                             using var jsonReader = new JsonTextReader(textReader);
                             return serializer.Deserialize<T>(jsonReader);
                         }
-#endif
                     }
                 }
                 catch (Exception ex)
                 {
-UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LINE_STATEMENT
                     if (createCustomExceptionOnFailure != null && text != null)
                         throw createCustomExceptionOnFailure(ex, text);
                     else
@@ -292,10 +261,8 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LI
                 }
                 finally
                 {
-#if !UNITY_WEBGL
                     if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
                         await UniTask.SwitchToMainThread();
-#endif
                 }
             }
         }
@@ -331,14 +298,10 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LI
 #endif
                         )
                     {
-                        text = downloadHandler?.text;
-                        if (string.IsNullOrEmpty(text))
-                            return Target;
+                        text = downloadHandler.text;
 
-#if !UNITY_WEBGL
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
-#endif
 
                         JsonUtility.FromJsonOverwrite(text, Target);
                     }
@@ -346,10 +309,8 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LI
                     {
                         var nativeData = downloadHandler.nativeData;
 
-#if !UNITY_WEBGL
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
                             await DCLTask.SwitchToThreadPool();
-#endif
 
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
@@ -375,10 +336,8 @@ UnityEngine.Debug.Log("GenericDownloadHandlerUtils.cs:270"); // SPECIAL_DEBUG_LI
                 }
                 finally
                 {
-#if !UNITY_WEBGL
                     if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
                         await UniTask.SwitchToMainThread();
-#endif
                 }
 
                 return Target;

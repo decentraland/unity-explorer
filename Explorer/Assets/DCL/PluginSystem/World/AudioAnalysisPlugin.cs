@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
 {
     public class AudioAnalysisPlugin : IDCLWorldPlugin
     {
-        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
 
         public AudioAnalysisPlugin(ECSWorldSingletonSharedDependencies sharedDependencies)

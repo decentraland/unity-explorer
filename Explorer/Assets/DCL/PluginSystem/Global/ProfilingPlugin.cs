@@ -44,10 +44,8 @@ namespace DCL.PluginSystem.Global
         {
             UpdateProfilerSystem.InjectToWorld(ref builder, profiler, scenesCache);
 
-#if !UNITY_WEBGL
             DebugViewProfilingSystem.InjectToWorld(ref builder, realmData, profiler, memoryBudget,
                 debugContainerBuilder, dclVersion, adaptivePhysicsSettings, sceneLoadingLimit);
-#endif
         }
     }
 }

@@ -1188,10 +1188,8 @@ namespace Global.Dynamic
 
             if (mapRendererContainer != null && mapRendererContainer.MapRenderer != null)
             {
-#if !UNITY_WEBGL
                 globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
                 globalPlugins.Add(new MinimapPlugin(mvcManager, minimap!));
-#endif
             }
             if (realmNavigatorContainer != null)
                 globalPlugins.Add(realmNavigatorContainer.CreatePlugin());

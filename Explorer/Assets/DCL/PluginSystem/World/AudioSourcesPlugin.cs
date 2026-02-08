@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IAssetsProvisioner assetsProvisioner;
         private AudioMixer audioMixer;

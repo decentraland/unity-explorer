@@ -1180,6 +1180,10 @@ mergeInto(LibraryManager.library, {
             var urlStr = url ? UTF8ToString(url) : '';
             if (urlStr) window.open(urlStr, '_blank', 'noopener,noreferrer');
         }
+    },
+
+    GetDevicePixelRatio: function() {
+        return (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
     }
 
 });

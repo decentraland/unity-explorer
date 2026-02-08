@@ -1,4 +1,4 @@
-﻿using DCL.Profiling;
+using DCL.Profiling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -55,7 +55,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             return ((int) (totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
         }
 
-        public bool TrySpendBudget() =>
+        public virtual bool TrySpendBudget() =>
             !IsMemoryFull();
 
         public long GetTotalSystemMemoryInMB()

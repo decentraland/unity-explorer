@@ -55,21 +55,17 @@ namespace DCL.Web3.Identities
 
             public Default(IWeb3AccountFactory? web3AccountFactory = null, DecentralandEnvironment dclEnv = DecentralandEnvironment.Org)
             {
-                var proxy = new ProxyIdentityCache(
-                    new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(
-                        new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
-                            web3AccountFactory ?? new Web3AccountFactory()
-                        ),
-                        dclEnv
+                origin = new LogWeb3IdentityCache(
+                    new ProxyIdentityCache(
+                        new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(
+                            new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
+                                web3AccountFactory ?? new Web3AccountFactory()
+                            ),
+                            dclEnv
+                        )
                     )
                 );
-#if UNITY_WEBGL
-                // WebGL: skip LogWeb3IdentityCache to avoid spamming "Identity value get requested" (many systems poll Identity; no login flow so it stays null).
-                origin = proxy;
-#else
-                origin = new LogWeb3IdentityCache(proxy);
-#endif
             }
 
             public event Action? OnIdentityCleared

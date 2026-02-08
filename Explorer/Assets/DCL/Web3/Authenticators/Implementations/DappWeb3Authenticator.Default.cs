@@ -12,7 +12,6 @@ namespace DCL.Web3.Authenticators
 #if !UNITY_WEBGL
     public partial class DappWeb3Authenticator
     {
-        /*
         public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
         {
             private readonly IWeb3VerifiedAuthenticator originAuth;
@@ -91,7 +90,7 @@ namespace DCL.Web3.Authenticators
             {
                 public bool ShouldWaitForCodeVerificationFromServer => false;
             }
-        }*/
+        }
     }
 #endif
 }

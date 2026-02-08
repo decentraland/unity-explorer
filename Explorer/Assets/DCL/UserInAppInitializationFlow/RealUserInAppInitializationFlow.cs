@@ -7,7 +7,6 @@ using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 
 #if !NO_LIVEKIT_MODE
@@ -141,6 +140,7 @@ namespace DCL.UserInAppInitializationFlow
 #if !UNITY_WEBGL
                     && FileDCLPlayerPrefs.PrefsInstanceNumber > 0
 #endif
+
                     )
                 {
                     identityCache.Clear();
@@ -224,8 +224,9 @@ namespace DCL.UserInAppInitializationFlow
                                 var livekitOperationResult = await livekitHandshake;
 #endif
 
+
 #if !UNITY_WEBGL
-                                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT))
+                                if (isLocalSceneDevelopment)
                                 {
                                     // Fix: https://github.com/decentraland/unity-explorer/issues/5250
                                     // Prevent creators to be stuck at loading screen due to livekit issues

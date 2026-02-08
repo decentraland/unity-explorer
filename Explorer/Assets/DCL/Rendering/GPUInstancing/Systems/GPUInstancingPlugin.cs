@@ -40,12 +40,8 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
-#if UNITY_WEBGL
-            gpuInstancingService.LandscapeData = null;
-#else
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
             gpuInstancingService.LandscapeData = landscapeData.Value;
-#endif
         }
     }
 }

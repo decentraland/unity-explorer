@@ -28,7 +28,6 @@ using SceneRuntime.V8;
 
 namespace SceneRuntime.Factory
 {
-    [SuppressMessage("ReSharper", "JoinDeclarationAndInitializer")]
     public sealed class SceneRuntimeFactory
     {
         public enum InstantiationBehavior

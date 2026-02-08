@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Input;
@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;

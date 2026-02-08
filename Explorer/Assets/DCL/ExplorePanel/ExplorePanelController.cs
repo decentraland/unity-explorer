@@ -47,7 +47,7 @@ namespace DCL.ExplorePanel
         private ExploreSections lastShownSection;
         private bool isControlClosing;
 
-        public NavmapController? NavmapController { get; }
+        public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
 
@@ -62,7 +62,7 @@ namespace DCL.ExplorePanel
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
-            NavmapController? navmapController,
+            NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
             CameraReelController cameraReelController,
@@ -135,13 +135,10 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Communities, CommunitiesBrowserController },
 #endif
             };
-            if (NavmapController != null)
-                exploreSections.Add(ExploreSections.Navmap, NavmapController);
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            lastShownSection = includeCommunities ? ExploreSections.Communities
-                : (NavmapController != null ? ExploreSections.Navmap : ExploreSections.Settings);
+            lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -155,8 +152,7 @@ namespace DCL.ExplorePanel
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
-                    (section == ExploreSections.Communities && !includeCommunities) ||
-                    (section == ExploreSections.Navmap && NavmapController == null))
+                    (section == ExploreSections.Communities && !includeCommunities))
                 {
                     tabSelector.gameObject.SetActive(false);
                     continue;
@@ -176,8 +172,6 @@ namespace DCL.ExplorePanel
             sectionSelectorController!.ResetAnimators();
 
             ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
-            if (sectionToShow == ExploreSections.Navmap && NavmapController == null)
-                sectionToShow = ExploreSections.Settings;
 
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections!)
             {
@@ -258,7 +252,6 @@ namespace DCL.ExplorePanel
 
         private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
         {
-            if (NavmapController == null) return;
             if (lastShownSection != ExploreSections.Navmap)
             {
                 sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
@@ -305,8 +298,6 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            if (section == ExploreSections.Navmap && NavmapController == null)
-                return;
             ToggleSection(true, tabsBySections![section], section, true);
         }
 

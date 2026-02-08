@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -15,6 +15,7 @@ using SceneRuntime;
 using System;
 using System.Linq;
 using System.Threading;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -42,6 +43,11 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct)
         {
+#if UNITY_WEBGL
+            float worldX = (parcel.x * 16f) + 8f;
+            float worldZ = (parcel.y * 16f) + 8f;
+            WebGLDebugLog.Log("TeleportStartupOperation", "TeleportToSpawnPoint", $"parcel=({parcel.x},{parcel.y}) worldPos=({worldX:F1},{worldZ:F1})");
+#endif
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
             EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel);

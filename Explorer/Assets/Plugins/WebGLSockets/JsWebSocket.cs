@@ -49,8 +49,9 @@ UnityEngine.Debug.Log($"JsWebSocket.cs: Ctor, handleId: {handleId}");
 
         public void Dispose()
         {
+            UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose start, handleId: {handleId}");
             WS_Dispose(handleId);
-UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose, handleId: {handleId}");
+            UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose done, handleId: {handleId}");
         }
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
@@ -162,32 +163,46 @@ UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose, handleId: {handleId}");
 
         public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync, handleId: {handleId}");
+            UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsync start, handleId: {handleId}, uri: {uri}");
             Result result = await ConnectAsyncInternal(uri, cancellationToken);
             if (result.Success)
-                UnityEngine.Debug.Log($"JsWebSocket.cs: Connect Success, handleId: {handleId}");
-            else
             {
-                UnityEngine.Debug.LogError($"JsWebSocket.cs: Connect Error, handleId: {handleId}, message: {result.ErrorMessage}, uri {uri}");
-                throw new WebSocketException();
+                UnityEngine.Debug.Log($"JsWebSocket.cs: Connect Success, handleId: {handleId}");
+                return;
             }
+            // Connect failed (State=Closed/Aborted). Caller will typically dispose; use LogWarning so stack trace isn't mistaken for a crash.
+            UnityEngine.Debug.LogWarning($"JsWebSocket.cs: Connect failed, handleId: {handleId}, message: {result.ErrorMessage}, uri: {uri}. Caller may dispose.");
+            throw new WebSocketException();
         }
 
         private async UniTask<Result> ConnectAsyncInternal(Uri uri, CancellationToken cancellationToken)
         {
             if (uri == null)
-                return Result.ErrorResult($"Invalid argument: uri"); //throw new ArgumentNullException(nameof(uri));
+            {
+                UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsyncInternal invalid uri, handleId: {handleId}");
+                return Result.ErrorResult($"Invalid argument: uri");
+            }
 
             // Trigger JS-side connect (WebSocket ctor)
+            UnityEngine.Debug.Log($"JsWebSocket.cs: WS_Connect called, handleId: {handleId}");
             WS_Connect(handleId, uri.AbsoluteUri);
 
             // Wait until OPEN / terminal state
+            int pollCount = 0;
             while (true)
             {
                 if (cancellationToken.IsCancellationRequested)
+                {
+                    UnityEngine.Debug.Log($"JsWebSocket.cs: Connect cancelled (token), handleId: {handleId}");
                     return Result.ErrorResult($"WebSocket connect cancelled. State={State}");
+                }
 
                 var state = (WebSocketState)WS_State(handleId);
+                pollCount++;
+                // Log state every ~60 polls (~1s at 60fps) to avoid spam, and always on terminal state
+                bool terminal = state is WebSocketState.Closed or WebSocketState.Aborted or WebSocketState.Open;
+                if (terminal || (pollCount % 60 == 1))
+                    UnityEngine.Debug.Log($"JsWebSocket.cs: ConnectAsyncInternal poll handleId: {handleId}, state: {state}, pollCount: {pollCount}");
 
                 switch (state)
                 {
@@ -197,7 +212,6 @@ UnityEngine.Debug.Log($"JsWebSocket.cs: Dispose, handleId: {handleId}");
                     case WebSocketState.Closed:
                     case WebSocketState.Aborted:
                         return Result.ErrorResult($"WebSocket connect failed. State={state}");
-                        //throw new InvalidOperationException();
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
