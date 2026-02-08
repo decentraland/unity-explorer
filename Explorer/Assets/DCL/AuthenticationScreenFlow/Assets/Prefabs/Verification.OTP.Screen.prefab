@@ -1026,6 +1026,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7575040632810906195}
     m_Modifications:
+    - target: {fileID: 1152524897944825747, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
+      propertyPath: autoFocus
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2200195923061819213, guid: ed8db9ed5e1a2ed49b0a3bb7933e7c2e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

@@ -1821,6 +1821,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7474671335574907471, guid: b108e84c7475b12478b10608fd22c973, type: 3}
+      propertyPath: autoFocus
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7474671335574907471, guid: b108e84c7475b12478b10608fd22c973, type: 3}
       propertyPath: caretColor.b
       value: 0.09411765
       objectReference: {fileID: 0}
