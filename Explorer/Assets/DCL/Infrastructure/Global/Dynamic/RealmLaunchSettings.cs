@@ -157,13 +157,13 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        
+
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
                 return;
-    
+
             // Priority 2: Editor position override (for development convenience)
             if (HasEditorPositionOverride())
                 return;
@@ -174,11 +174,20 @@ namespace Global.Dynamic
                                            FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
                                        && parcelToTeleportOverride != null;
 
-            // Priority 3: Serialized home position (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerController.HasSerializedPosition() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0")
+            if (HomeMarkerController.HasSerializedHome() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                targetScene = HomeMarkerController.Deserialize()!.Value;
-                return;
+                if (HomeMarkerController.HasSerializedWorldName())
+                {
+                    SetWorldRealm(HomeMarkerController.DeserializeWorldName()!);
+                    return;
+                }
+
+                if (HomeMarkerController.HasSerializedPosition())
+                {
+                    targetScene = HomeMarkerController.Deserialize()!.Value;
+                    return;
+                }
             }
 
             // Priority 4: Feature flag override (used as fallback if home position not available or feature flag has specific value)
