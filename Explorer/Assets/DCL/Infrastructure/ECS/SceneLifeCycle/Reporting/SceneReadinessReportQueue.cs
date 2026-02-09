@@ -1,6 +1,7 @@
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using System.Collections.Generic;
+using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Reporting
@@ -20,8 +21,12 @@ namespace ECS.SceneLifeCycle.Reporting
 
         public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
         {
+            // #region agent log
+            bool inCache = scenesCache.Contains(parcel);
+            WebGLDebugLog.Log("SceneReadinessReportQueue.Enqueue", inCache ? "shortcut" : "queued", $"parcel=({parcel.x},{parcel.y}) inCache={inCache}", "H2");
+            // #endregion
             // Shortcut
-            if (scenesCache.Contains(parcel))
+            if (inCache)
             {
                 // conclude immediately
                 report.SetProgress(1f);

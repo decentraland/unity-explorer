@@ -2,12 +2,9 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
@@ -18,13 +15,12 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -69,6 +65,20 @@ namespace DCL.AvatarRendering.Emotes.Load
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesByPointers([Data] float dt, in Entity entity,
+            ref GetEmotesByPointersIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            try
+            {
+                GetEmotesByPointersInternal(dt, entity, ref intention, ref partitionComponent);
+            }
+            catch (NullReferenceException ex)
+            {
+                WebGLDebugLog.LogError(GetReportCategory(), $"LoadEmotesByPointers NRE: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private void GetEmotesByPointersInternal(float dt, in Entity entity,
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {

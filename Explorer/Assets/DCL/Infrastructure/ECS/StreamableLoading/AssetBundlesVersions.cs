@@ -20,6 +20,7 @@ namespace ECS.StreamableLoading
         {
             public VersionInfo mac;
             public VersionInfo windows;
+            public VersionInfo webgl;
         }
 
         public struct VersionInfo

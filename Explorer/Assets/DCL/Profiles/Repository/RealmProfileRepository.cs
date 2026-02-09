@@ -184,7 +184,10 @@ namespace DCL.Profiles
         private UniTaskCompletionSource<Profile?> AddToBatch(string userId, URLDomain? fromCatalyst,
             List<ProfilesBatchRequest> requests, IPartitionComponent partition)
         {
-            fromCatalyst ??= realm.Ipfs.LambdasBaseUrl;
+            URLDomain realmLambdas = realm.Ipfs.LambdasBaseUrl;
+            if (realmLambdas.IsEmpty && fromCatalyst == null)
+                throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load profiles.");
+            fromCatalyst ??= realmLambdas;
 
             ProfilesBatchRequest? batch = null;
 
@@ -384,7 +387,10 @@ namespace DCL.Profiles
         {
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(fromCatalyst ?? realm.Ipfs.LambdasBaseUrl)
+            URLDomain lambdasBase = fromCatalyst ?? realm.Ipfs.LambdasBaseUrl;
+            if (lambdasBase.IsEmpty)
+                throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot build profile URL.");
+            urlBuilder.AppendDomain(lambdasBase)
                       .AppendPath(URLPath.FromString($"profiles/{id}"));
 
             return urlBuilder.Build();

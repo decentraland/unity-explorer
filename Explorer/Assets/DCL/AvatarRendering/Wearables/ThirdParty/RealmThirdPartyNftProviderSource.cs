@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -27,7 +28,10 @@ namespace DCL.AvatarRendering.Wearables.ThirdParty
             if (providers != null) return providers;
             URLBuilder urlBuilder = new URLBuilder();
 
-            URLAddress url = urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+            URLDomain lambdasBase = realmData.Ipfs.LambdasBaseUrl;
+            if (lambdasBase.IsEmpty)
+                throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load third-party providers.");
+            URLAddress url = urlBuilder.AppendDomain(lambdasBase)
                                               .AppendPath(URLPath.FromString("third-party-integrations"))
                                               .Build();
 

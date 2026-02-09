@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -41,7 +42,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             }
 
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+            URLDomain lambdasBase = realmData.Ipfs.LambdasBaseUrl;
+            if (lambdasBase.IsEmpty)
+                throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load outfits.");
+            urlBuilder.AppendDomain(lambdasBase)
                 .AppendPath(URLPath.FromString($"outfits/{profile?.UserId}"));
 
             try

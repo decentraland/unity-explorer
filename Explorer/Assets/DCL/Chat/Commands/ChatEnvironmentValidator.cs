@@ -1,6 +1,5 @@
-"using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
-using UnityEngine.Networking;
 
 namespace DCL.Chat.Commands
 {
@@ -14,8 +13,8 @@ namespace DCL.Chat.Commands
         public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment)
         {
             this.dclEnvironment = dclEnvironment;
-            zoneDescription = DecentralandEnvironment.Zone.ToString().ToLower();
-            orgDescription = DecentralandEnvironment.Org.ToString().ToLower();
+            zoneDescription = nameof(DecentralandEnvironment.Zone).ToLower();
+            orgDescription = nameof(DecentralandEnvironment.Org).ToLower();
         }
 
         public Result ValidateTeleport(string realmToTeleportTo)

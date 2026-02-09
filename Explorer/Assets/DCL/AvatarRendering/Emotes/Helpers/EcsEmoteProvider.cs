@@ -7,6 +7,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -43,7 +44,10 @@ namespace DCL.AvatarRendering.Emotes
                 results?.Clear();
                 urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                URLDomain lambdasBase = realmData.Ipfs.LambdasBaseUrl;
+                if (lambdasBase.IsEmpty)
+                    throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load emotes.");
+                urlBuilder.AppendDomain(lambdasBase)
                     .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
                     .AppendParameter(new URLParameter("includeEntities", "true"));
 

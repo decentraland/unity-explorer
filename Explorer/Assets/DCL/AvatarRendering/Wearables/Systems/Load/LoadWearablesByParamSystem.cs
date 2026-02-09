@@ -22,6 +22,8 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using Temp.Helper.WebClient;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
@@ -75,21 +77,27 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
             else
             {
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
+                URLDomain lambdasBase = realmData.Ipfs.LambdasBaseUrl;
+                if (lambdasBase.IsEmpty)
+                    throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load wearables.");
+                urlBuilder.AppendDomainWithReplacedPath(lambdasBase, lambdaSubdirectory)
                     .AppendSubDirectory(URLSubdirectory.FromString(userID))
                     .AppendSubDirectory(wearablesSubdirectory);
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);
-            
+
             return urlBuilder.Build();
         }
 
         protected sealed override async UniTask<StreamableLoadingResult<WearablesResponse>> FlowInternalAsync(GetWearableByParamIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
+            if (!realmData.Configured)
+                WebGLDebugLog.Log("[LoadWearablesByParam] Waiting for realm configured...");
             await realmData.WaitConfiguredAsync();
+            WebGLDebugLog.Log("[LoadWearablesByParam] Realm configured, proceeding with wearable load");
 
             var url = BuildUrlFromIntention(in intention);
 
@@ -168,7 +176,12 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             // Run the asset bundle fallback check in parallel
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
-                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
+            {
+                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(
+                    wearableVersions.mac.version, wearableVersions.mac.buildDate,
+                    wearableVersions.windows.version, wearableVersions.windows.buildDate,
+                    wearableVersions.webgl.version, wearableVersions.webgl.buildDate);
+            }
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 

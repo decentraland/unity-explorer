@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Web3;
 using DCL.WebRequests;
 using ECS;
+using System;
 using System.Linq;
 using System.Threading;
 
@@ -26,7 +27,10 @@ namespace DCL.Profiles
         public async UniTask<INftNamesProvider.PaginatedNamesResponse> GetAsync(Web3Address userId, int pageNumber, int pageSize, CancellationToken ct)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(realm.Ipfs.LambdasBaseUrl);
+            URLDomain lambdasBase = realm.Ipfs.LambdasBaseUrl;
+            if (lambdasBase.IsEmpty)
+                throw new InvalidOperationException("Realm lambdas base URL is not configured; cannot load NFT names.");
+            urlBuilder.AppendDomain(lambdasBase);
             urlBuilder.AppendPath(new URLPath($"users/{userId}/names"));
             urlBuilder.AppendParameter(new URLParameter("pageNum", pageNumber.ToString()));
             urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));
