@@ -129,8 +129,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             int realIndex = canModify ? index - 1 : index;
             PlaceData placeInfo = membersData.Items[realIndex];
 
-            VectorUtilities.TryParseVector2Int(placeInfo.PlaceInfo.base_position, out var coordinates);
-            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfo.PlaceInfo) ?? false;
 
             elementView.Configure(
                 placeInfo: placeInfo.PlaceInfo,

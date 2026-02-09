@@ -811,7 +811,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 32, y: -14}
-  m_SizeDelta: {x: 13.47, y: 28}
+  m_SizeDelta: {x: 12.89, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5523847231545164669
 CanvasRenderer:
@@ -1749,7 +1749,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 13.264999, y: -14}
+  m_AnchoredPosition: {x: 13.555, y: -14}
   m_SizeDelta: {x: 14, y: 14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7015130602262724715
@@ -2400,7 +2400,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 309735036037124492, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -30.3767
+      value: -39.999992
       objectReference: {fileID: 0}
     - target: {fileID: 309735036037124492, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.y
@@ -2408,7 +2408,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 309735036037124492, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 30.376709
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 309735036037124492, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -2416,11 +2416,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_text
-      value: INTERESTED
+      value: REMIND ME
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_fontSize
       value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_fontStyle
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_fontColor.b
@@ -2442,6 +2446,10 @@ PrefabInstance:
       propertyPath: m_fontColor32.rgba
       value: 4294769916
       objectReference: {fileID: 0}
+    - target: {fileID: 335731955920881656, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 596702907866863807, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Color.b
       value: 0.9882353
@@ -2461,7 +2469,7 @@ PrefabInstance:
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: e8535908933ac41b0a56edc329cd96ec, type: 3}
+      objectReference: {fileID: 21300000, guid: 3c0df47c7d5d14681898c1b8268239fc, type: 3}
     - target: {fileID: 879587387267011012, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_Color.b
       value: 0.9882353
@@ -2624,28 +2632,32 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3186183880953633053, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 16
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 3186183880953633053, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedIconImage>k__BackingField
       value: 
-      objectReference: {fileID: 21300000, guid: 73aeb1ddc0514449fa178204a69a0cf8, type: 3}
+      objectReference: {fileID: 21300000, guid: e61bf9377b8894782b86510a1e0697ae, type: 3}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedTextColor>k__BackingField.b
-      value: 0.33333334
+      value: 0.9882353
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedTextColor>k__BackingField.g
-      value: 0.1764706
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <SelectedTextColor>k__BackingField.r
+      value: 0.9882353
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedIconImage>k__BackingField
       value: 
-      objectReference: {fileID: 21300000, guid: e8535908933ac41b0a56edc329cd96ec, type: 3}
+      objectReference: {fileID: 21300000, guid: 3c0df47c7d5d14681898c1b8268239fc, type: 3}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedTextColor>k__BackingField.b
       value: 0.9882353
@@ -2660,27 +2672,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedBackgroundColor>k__BackingField.b
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedBackgroundColor>k__BackingField.g
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedBackgroundColor>k__BackingField.r
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedBackgroundColor>k__BackingField.b
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedBackgroundColor>k__BackingField.g
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedBackgroundColor>k__BackingField.r
-      value: 0.9882353
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
