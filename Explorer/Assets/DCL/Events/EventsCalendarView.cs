@@ -39,9 +39,9 @@ namespace DCL.Events
         [Header("Events")]
         [SerializeField] private List<EventListConfiguration> eventsLists = null!;
 
-        [Header("Highlighted Banner")]
+        [Header("Highlighted Carousel")]
         [SerializeField] private List<GameObject> objectsToHideWhenBanner = null!;
-        [SerializeField] private EventCardView highlightedBanner = null!;
+        [SerializeField] private EventsHighlightedCarousel highlightedCarousel = null!;
 
         [Serializable]
         private struct EventListConfiguration
@@ -100,6 +100,8 @@ namespace DCL.Events
             this.eventsStateService = stateService;
             this.eventCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
+
+            highlightedCarousel.SetDependencies(thumbnailLoader, profileRepoWrapper);
         }
 
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow, bool triggerEvent = true, bool deactivateArrows = false)
@@ -123,36 +125,44 @@ namespace DCL.Events
                 DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
         }
 
-        public void SetHighlightedBanner(EventDTO? eventInfo)
+        public void SetHighlightedCarousel(IReadOnlyList<EventDTO>? eventsInfo)
         {
             foreach (GameObject go in objectsToHideWhenBanner)
-                go.SetActive(eventInfo == null);
+                go.SetActive(eventsInfo == null || eventsInfo.Count == 0);
 
-            highlightedBanner.gameObject.SetActive(eventInfo != null);
+            highlightedCarousel.gameObject.SetActive(eventsInfo is { Count: > 0 });
 
-            if (eventInfo != null)
+            if (eventsInfo != null)
             {
-                var eventData = eventsStateService.GetEventDataById(eventInfo.Value.id);
+                List<EventsStateService.EventWithPlaceAndFriendsData> eventsData = new ();
+                foreach (EventDTO eventInfo in eventsInfo)
+                {
+                    var eventData = eventsStateService.GetEventDataById(eventInfo.id);
+                    if (eventData != null)
+                        eventsData.Add(eventData);
+                }
 
                 // Setup card data
-                if (eventData != null)
-                    highlightedBanner.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
+                highlightedCarousel.Configure(eventsData);
 
                 // Setup card events
-                highlightedBanner.MainButtonClicked -= OnEventCardClicked;
-                highlightedBanner.MainButtonClicked += OnEventCardClicked;
-                highlightedBanner.InterestedButtonClicked -= OnEventInterestedButtonClicked;
-                highlightedBanner.InterestedButtonClicked += OnEventInterestedButtonClicked;
-                highlightedBanner.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
-                highlightedBanner.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
-                highlightedBanner.JumpInButtonClicked -= OnEventJumpInButtonClicked;
-                highlightedBanner.JumpInButtonClicked += OnEventJumpInButtonClicked;
-                highlightedBanner.EventShareButtonClicked -= OnEventShareButtonClicked;
-                highlightedBanner.EventShareButtonClicked += OnEventShareButtonClicked;
-                highlightedBanner.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
-                highlightedBanner.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+                highlightedCarousel.MainButtonClicked -= OnEventCardClicked;
+                highlightedCarousel.MainButtonClicked += OnEventCardClicked;
+                highlightedCarousel.InterestedButtonClicked -= OnEventInterestedButtonClicked;
+                highlightedCarousel.InterestedButtonClicked += OnEventInterestedButtonClicked;
+                highlightedCarousel.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+                highlightedCarousel.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+                highlightedCarousel.JumpInButtonClicked -= OnEventJumpInButtonClicked;
+                highlightedCarousel.JumpInButtonClicked += OnEventJumpInButtonClicked;
+                highlightedCarousel.EventShareButtonClicked -= OnEventShareButtonClicked;
+                highlightedCarousel.EventShareButtonClicked += OnEventShareButtonClicked;
+                highlightedCarousel.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+                highlightedCarousel.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
             }
         }
+
+        public void ClearHighlightedEvents() =>
+            highlightedCarousel.Clear();
 
         public void InitializeEventsLists()
         {
