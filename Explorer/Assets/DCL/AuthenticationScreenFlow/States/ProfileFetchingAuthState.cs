@@ -22,7 +22,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileFetchingAuthView view;
 
@@ -31,14 +30,13 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            SentryTransactionManager sentryTransactionManager,
             ISelfProfile selfProfile) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
-            this.sentryTransactionManager = sentryTransactionManager;
+
             this.selfProfile = selfProfile;
         }
 
@@ -59,13 +57,12 @@ namespace DCL.AuthenticationScreenFlow
         {
             var identityValidationSpan = new SpanData
             {
-                TransactionName = LOADING_TRANSACTION_NAME,
                 SpanName = "IdentityValidation",
                 SpanOperation = "auth.identity_validation",
                 Depth = 1,
             };
 
-            sentryTransactionManager.StartSpan(identityValidationSpan);
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, identityValidationSpan);
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
@@ -84,35 +81,34 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     var profileFetchSpan = new SpanData
                     {
-                        TransactionName = LOADING_TRANSACTION_NAME,
                         SpanName = "FetchProfileCached",
                         SpanOperation = "auth.profile_fetch",
                         Depth = 1,
                     };
 
-                    sentryTransactionManager.StartSpan(profileFetchSpan);
+                    SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, profileFetchSpan);
 
                     Profile? profile = await FetchProfileAsync(ct);
-                    sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                     view.Hide(OUT);
                     machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                 }
                 catch (OperationCanceledException)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
                     view.Hide(SLIDE);
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (ProfileNotFoundException e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     view.Hide(SLIDE);
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (Exception e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                     view.Hide(SLIDE);
                     machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);

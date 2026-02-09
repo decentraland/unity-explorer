@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
@@ -25,7 +26,7 @@ namespace DCL.Profiles
 
         public IProfileRepository Repository { get; }
 
-        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, IRealmData realmData, IAnalyticsController analyticsController, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, PublishIpfsEntityCommand publishIpfsEntityCommand, IAnalyticsController analyticsController, IDebugContainerBuilder debugContainerBuilder)
         {
             this.webRequestController = webRequestController;
             Cache = new DefaultProfileCache();
@@ -33,7 +34,7 @@ namespace DCL.Profiles
             profilesDebug = new ProfilesAnalytics(ProfilesDebug.Create(debugContainerBuilder), analyticsController);
 
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, urlsSource, Cache, profilesDebug, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
+                repository = new RealmProfileRepository(webRequestController, publishIpfsEntityCommand, urlsSource, Cache, profilesDebug, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
             );
         }
 

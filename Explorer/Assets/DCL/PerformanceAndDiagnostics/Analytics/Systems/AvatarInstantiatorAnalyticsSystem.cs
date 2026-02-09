@@ -35,6 +35,7 @@ namespace DCL.Analytics.Systems
                 analyticsController.Track(AnalyticsEvents.Endpoints.AVATAR_RESOLVED, new JObject
                 {
                     { "wearables_count", avatarAnalytics.WearablesCount },
+                    { "visible_wearables_count", avatarAnalytics.VisibleWearablesCount },
                     { "new_pointers", avatarAnalytics.MissingPointersCounter },
                     { "wearables_resolution_duration", (avatarAnalytics.WearablesResolvedAt - avatarAnalytics.StartedAt) * 1000 },
                     { "instantiation_duration", (timestamp - avatarAnalytics.WearablesResolvedAt) * 1000 },

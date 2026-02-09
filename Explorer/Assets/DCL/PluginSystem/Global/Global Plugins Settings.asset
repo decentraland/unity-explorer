@@ -61,6 +61,7 @@ MonoBehaviour:
   - rid: 2563261270153757000
   - rid: 5190442831932031144
   - rid: 1221415613651484787
+  - rid: 732305993255354462
   references:
     version: 2
     RefIds:
@@ -82,6 +83,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 732305993255354462
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests.Analytics, asm: DCL.Plugins}
+      data:
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        <UrlsToSample>k__BackingField:
+        - url: 50
+          samplingRate: 0.01
+        - url: 51
+          samplingRate: 0.01
+        - url: 73
+          samplingRate: 0.005
     - rid: 745469515127586908
       type: {class: GiftingPlugin/GiftingSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1020,8 +1033,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

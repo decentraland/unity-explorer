@@ -61,7 +61,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
@@ -101,7 +100,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            SentryTransactionManager sentryTransactionManager,
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
@@ -121,7 +119,6 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
@@ -214,7 +211,7 @@ namespace DCL.AuthenticationScreenFlow
                     fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
                 else
                 {
-                    sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }

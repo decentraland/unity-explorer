@@ -4,6 +4,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.Views;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -11,18 +13,20 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
+using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using Sentry;
 using System;
@@ -37,6 +41,7 @@ namespace Global.Dynamic
         private IReportsHandlingSettings reportHandlingSettings;
 
         public bool EnableAnalytics { get; private set; }
+        public WebRequestsContainer WebRequestsContainer { get; private set; }
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
         public IWebBrowser WebBrowser { get; private set; }
@@ -72,13 +77,12 @@ namespace Global.Dynamic
             DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IDecentralandUrlsSource decentralandUrlsSource,
-            WebRequestsContainer webRequestsContainer,
+            DebugUtilitiesContainer debugContainer,
             IWeb3IdentityCache identityCache,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
             SplashScreen splashScreen,
-            RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
@@ -88,7 +92,6 @@ namespace Global.Dynamic
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
-
             var bootstrapContainer = new BootstrapContainer
             {
                 IdentityCache = identityCache,
@@ -108,6 +111,13 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
+
+                var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
+                WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, ct);
+                var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+
                 (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
                 container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
@@ -116,9 +126,6 @@ namespace Global.Dynamic
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
                     CrashDetector.Initialize(container.Analytics);
                 }
-
-                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
-                container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -161,7 +168,7 @@ namespace Global.Dynamic
                     bootstrapSettings.AnalyticsConfig,
                     launcherTraits,
                     container.ApplicationParametersParser,
-                    realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment,
+                    realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment,
                     ct);
 
                 var analyticsController = new AnalyticsController(service, appArgs, bootstrapSettings.AnalyticsConfig, launcherTraits, buildData, dclVersion);

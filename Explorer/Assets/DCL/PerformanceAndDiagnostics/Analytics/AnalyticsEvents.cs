@@ -120,6 +120,7 @@
             ///     The whole path to resolve an avatar:
             ///     <list type="bullet">
             ///         <item> wearables_count: total number of wearables equipped by the avatar </item>
+            ///         <item> visible_wearables_count: total number of not hidden wearables </item>
             ///         <item> new_pointers: the pointers number to request (not cached yet) </item>
             ///         <item> wearables_resolution_duration: time to load network objects</item>
             ///         <item> instantiation_duration: time passed from the wearables resolution to the avatar instantiation</item>

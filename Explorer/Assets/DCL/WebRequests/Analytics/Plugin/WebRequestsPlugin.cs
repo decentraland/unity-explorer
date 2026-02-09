@@ -16,6 +16,6 @@ namespace DCL.WebRequests.Analytics
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments) =>
-            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, analyticsContainer.VisibilityBinding, analyticsContainer.DebugRequestTypes);
+            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer);
     }
 }

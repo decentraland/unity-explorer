@@ -116,7 +116,6 @@ namespace DCL.PluginSystem.Global
                 settings.EmotesSettings,
                 inputBlock,
                 backgroundMusic,
-                SentryTransactionManager.Instance,
                 appArgs,
                 wearablesProvider,
                 webRequestController,

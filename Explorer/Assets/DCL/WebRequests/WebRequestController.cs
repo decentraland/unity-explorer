@@ -1,17 +1,15 @@
-using CDPBridges;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using Sentry;
+using Sentry.Unity;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
-using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.WebRequests
@@ -22,7 +20,6 @@ namespace DCL.WebRequests
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
-        private readonly ChromeDevtoolProtocolClient chromeDevtoolProtocolClient;
 
         private readonly WebRequestBudget budget;
 
@@ -32,13 +29,11 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
             WebRequestBudget budget)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
-            this.chromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
             this.budget = budget;
         }
 
@@ -69,6 +64,8 @@ namespace DCL.WebRequests
 
                 try
                 {
+                    analyticsContainer.OnBeforeBudgeting(in envelope, request);
+
                     // Budget the web request itself only:
                     // There is no harm to execute pre-processing as it's lightweight
                     // and content processing as it's off the main thread
@@ -76,12 +73,10 @@ namespace DCL.WebRequests
                     {
                         attemptNumber++;
 
-                        await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct))
-                                     .WithChromeDevtoolsAsync(envelope, wr, chromeDevtoolProtocolClient);
+                        analyticsContainer.OnRequestStarted(in envelope, request);
+                        await request.SendRequest(envelope.Ct);
+                        analyticsContainer.OnRequestFinished(request);
                     }
-
-                    analyticsContainer.OnProcessDataStarted(request);
-
                     try
                     {
                         // if no exception is thrown Request is successful and the continuation op can be executed
@@ -93,6 +88,8 @@ namespace DCL.WebRequests
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    analyticsContainer.OnException(request, exception);
+
                     // No result can be concluded in this case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
                         return default(TResult);
@@ -106,18 +103,25 @@ namespace DCL.WebRequests
                             + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
                         );
 
+                    analyticsContainer.OnException(request, exception);
+
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
                     if (!canBeRepeated && !envelope.IgnoreIrrecoverableErrors)
                     {
                         // Ignore the file error as we always try to read from the file first
-                        if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-                            Sentry.Unity.SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+                        if (!envelope.CommonArguments.URL.IsFile())
+                            SentrySdk.AddBreadcrumb($"{envelope.ReportData.Category}: Irrecoverable exception (code {exception.ResponseCode}) occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
 
                         throw;
                     }
 
                     await UniTask.Delay(retryDelay, DelayType.Realtime, cancellationToken: envelope.Ct);
+                }
+                catch (Exception exception)
+                {
+                    analyticsContainer.OnException(request, exception);
+                    throw;
                 }
             }
         }

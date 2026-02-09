@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.IO;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.ReelActions
@@ -52,7 +51,7 @@ namespace DCL.InWorldCamera.ReelActions
                     throw new Exception($"Error while downloading reel: {webRequest.error}");
 
                 byte[] imageBytes = webRequest.downloadHandler.data;
-                
+
                 string directoryPath = ReelsPath;
                 string absolutePath = Path.Combine(ReelsPath, Path.GetFileName(uri.LocalPath));
 
