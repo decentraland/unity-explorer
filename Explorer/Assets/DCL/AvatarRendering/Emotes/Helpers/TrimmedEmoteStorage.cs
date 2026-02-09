@@ -1,24 +1,23 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Emotes
 {
-    public class TrimmedWearableStorage : ITrimmedWearableStorage
+    public class TrimmedEmoteStorage : ITrimmedEmoteStorage
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
         private readonly object lockObject = new ();
 
-        internal Dictionary<URN, ITrimmedWearable> wearablesCache { get; } = new (new Dictionary<URN, ITrimmedWearable>(), URNIgnoreCaseEqualityComparer.Default);
+        internal Dictionary<URN, ITrimmedEmote> emotesCache { get; } = new (new Dictionary<URN, ITrimmedEmote>(), URNIgnoreCaseEqualityComparer.Default);
 
-        public bool TryGetElement(URN urn, out ITrimmedWearable element)
+        public bool TryGetElement(URN urn, out ITrimmedEmote element)
         {
             lock (lockObject)
             {
-                if (wearablesCache.TryGetValue(urn, out element))
+                if (emotesCache.TryGetValue(urn, out element))
                 {
                     UpdateListedCachePriority(@for: urn);
                     return true;
@@ -28,13 +27,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public ITrimmedWearable GetOrAddByDTO(TrimmedWearableDTO dto, bool qualifiedForUnloading = true)
+        public ITrimmedEmote GetOrAddByDTO(TrimmedEmoteDTO dto, bool qualifiedForUnloading = true)
         {
             lock (lockObject)
             {
-                return TryGetElement(dto.metadata.id, out var existingWearable)
-                    ? existingWearable
-                    : AddWearable(dto.metadata.id, new TrimmedWearable(dto), qualifiedForUnloading);
+                return TryGetElement(dto.metadata.id, out var existingEmote)
+                    ? existingEmote
+                    : AddWearable(dto.metadata.id, new TrimmedEmote(dto), qualifiedForUnloading);
             }
         }
 
@@ -46,23 +45,23 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 {
                     var urn = node.Value.key;
 
-                    if (!wearablesCache.TryGetValue(urn, out var wearable))
+                    if (!emotesCache.TryGetValue(urn, out var wearable))
                         continue;
 
                     DisposeThumbnail(wearable);
 
-                    wearablesCache.Remove(urn);
+                    emotesCache.Remove(urn);
                     cacheKeysDictionary.Remove(urn);
                     listedCacheKeys.Remove(node);
                 }
             }
         }
 
-        private ITrimmedWearable AddWearable(URN urn, ITrimmedWearable wearable, bool qualifiedForUnloading)
+        private ITrimmedEmote AddWearable(URN urn, ITrimmedEmote wearable, bool qualifiedForUnloading)
         {
             lock (lockObject)
             {
-                wearablesCache.Add(urn, wearable);
+                emotesCache.Add(urn, wearable);
 
                 if (qualifiedForUnloading)
                     cacheKeysDictionary[urn] =
@@ -84,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        private static void DisposeThumbnail(ITrimmedWearable wearable)
+        private static void DisposeThumbnail(ITrimmedEmote wearable)
         {
             if (wearable.ThumbnailAssetResult is { IsInitialized: true })
                 wearable.ThumbnailAssetResult.Value.Asset.RemoveReference();

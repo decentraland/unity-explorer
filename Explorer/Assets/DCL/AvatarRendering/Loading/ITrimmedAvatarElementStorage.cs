@@ -1,11 +1,11 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Optimization.PerformanceBudgeting;
 
-namespace DCL.AvatarRendering.Wearables.Helpers
+namespace DCL.AvatarRendering.Loading
 {
-    public interface ITrimmedWearableStorage : ITrimmedAvatarElementStorage<ITrimmedWearable, TrimmedWearableDTO>
+    public interface ITrimmedAvatarElementStorage<TElement, in TDTO> where TElement: IThumbnailAttachment where TDTO: TrimmedAvatarAttachmentDTO
     {
         /// <summary>
         ///     Attempts to retrieve an element from the catalog.
@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <param name="urn">The URN identifier.</param>
         /// <param name="element">The element instance if found.</param>
         /// <returns>Returns true if the element exists; otherwise, false.</returns>
-        bool TryGetElement(URN urn, out ITrimmedWearable element);
+        bool TryGetElement(URN urn, out TElement element);
 
         /// <summary>
         ///     Retrieves an element by its DTO or adds a new one if it doesn't exist.
@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <param name="dto">The wearable DTO</param>
         /// <param name="qualifiedForUnloading">Determines if the wearable should be unloaded when memory is full</param>
         /// <returns>An instance of the <see cref="TElement" /> type.</returns>
-        ITrimmedWearable GetOrAddByDTO(TrimmedWearableDTO dto, bool qualifiedForUnloading = true);
+        TElement GetOrAddByDTO(TDTO dto, bool qualifiedForUnloading = true);
 
         /// <summary>
         ///     Unloads the wearable from the catalog by a frame time budget provider.

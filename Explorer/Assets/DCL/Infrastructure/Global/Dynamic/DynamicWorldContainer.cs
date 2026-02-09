@@ -308,6 +308,7 @@ namespace Global.Dynamic
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
             var trimmedWearableCatalog = new TrimmedWearableStorage();
+            var trimmedEmoteCatalog = new TrimmedEmoteStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
@@ -328,6 +329,7 @@ namespace Global.Dynamic
 
             var emotesCache = new MemoryEmotesStorage();
             staticContainer.CacheCleaner.Register(emotesCache);
+            staticContainer.CacheCleaner.Register(trimmedEmoteCatalog);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
 
