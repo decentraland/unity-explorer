@@ -9,7 +9,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public readonly DropdownField DropdownField = new ();
         public TextElement TextElement { get; private set; }
         public bool IsOnValueChangedTriggered;
-        public int LastSceneEnforcedIndex;
+        public int LastIndexSetByScene;
 
         internal Action? cachedScheduledAction;
 
@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             TextElement = DropdownField.Q<TextElement>(className: "unity-base-popup-field__text");
 
             IsOnValueChangedTriggered = false;
-            LastSceneEnforcedIndex = int.MinValue; // -1 is used for the case of 'accept Empty value'
+            LastIndexSetByScene = int.MinValue; // -1 is used for the case of 'accept Empty value'
 
             this.RegisterDropdownCallbacks();
         }

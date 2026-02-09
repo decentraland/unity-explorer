@@ -202,10 +202,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
         {
             bool isReadonly = !model.IsInteractive();
+
             inputToSetup.Placeholder.PlaceholderText = model.Placeholder;
             inputToSetup.Placeholder.PlaceholderColor = model.GetPlaceholderColor();
             inputToSetup.Placeholder.NormalColor = model.GetColor();
             inputToSetup.Placeholder.IsReadonly = isReadonly;
+
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
 
@@ -235,23 +237,25 @@ namespace DCL.SDKComponents.SceneUI.Utils
             dropdownField.choices.AddRange(model.Options);
 
             int selectedIndex = model.GetSelectedIndex();
-            if (selectedIndex != dropdownToSetup.LastSceneEnforcedIndex)
+            if (selectedIndex != dropdownToSetup.LastIndexSetByScene)
             {
                 var newValue = dropdownField.choices.ElementAtOrDefault(selectedIndex) ?? model.EmptyLabel;
-                if (dropdownToSetup.LastSceneEnforcedIndex < -1) // -1 is used for the case of 'accept Empty value'
+
+                // Below '-1' is checked, because '-1' is used for the case of 'accept Empty value'
+                if (dropdownToSetup.LastIndexSetByScene < -1)
                     dropdownField.SetValueWithoutNotify(newValue);
                 else
                     dropdownField.value = newValue;
 
-                dropdownToSetup.LastSceneEnforcedIndex = selectedIndex;
+                dropdownToSetup.LastIndexSetByScene = selectedIndex;
             }
 
-            dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
 
             var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
             arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
 
+            dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             dropdownField.SetEnabled(!model.Disabled);
         }
 
