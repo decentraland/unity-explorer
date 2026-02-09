@@ -58,7 +58,7 @@ namespace DCL.Places
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
 
         [Header("Configuration")]
-        [SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration = null!;
+        [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
 
         private PlacesStateService placesStateService = null!;
         private readonly List<string> currentPlacesIds = new ();

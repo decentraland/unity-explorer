@@ -12,6 +12,8 @@ namespace Global.AppArgs
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
+        public const string AUTOPILOT_CSV = "csv";
+        public const string AUTOPILOT_SUMMARY = "summary";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
