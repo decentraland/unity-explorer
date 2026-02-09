@@ -1,5 +1,5 @@
 :root {
-    --default-border-radius: 25px; 
+    --default-border-radius: 15px; 
 }
 
 /* MAIN CANVAS STYLES */
@@ -59,7 +59,7 @@
 
 .unity-base-dropdown__container-inner {
     background-color: white;
-    margin: 15px;
+    margin: 10px;
 }
 
 .unity-base-dropdown__item {
@@ -74,7 +74,7 @@
 
 .unity-base-dropdown__checkmark,
 .unity-base-dropdown__item:hover:enabled > .unity-base-dropdown__item-content > .unity-base-dropdown__checkmark {
-    margin-top: 15px;
+    margin-top: 5px;
     -unity-background-image-tint-color: rgb(0, 0, 0);
 }
 
