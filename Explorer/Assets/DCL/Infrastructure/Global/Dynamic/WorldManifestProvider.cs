@@ -75,8 +75,8 @@ namespace Global.Dynamic
 
             var settings = new JsonSerializerSettings();
             settings.Converters.Add(new Vector2Converter());
-            WorldManifest raw = JsonConvert.DeserializeObject<WorldManifest>(result, settings);
-            return WorldManifest.WithParsedSets(raw);
+            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
+            return WorldManifest.Create(dto);
         }
 
         private async UniTask<WorldManifest> FetchGenesisManifestAsync(string realmURL, bool isZone, CancellationToken ct)
@@ -101,14 +101,12 @@ namespace Global.Dynamic
             {
                 var settings = new JsonSerializerSettings();
                 settings.Converters.Add(new Vector2Converter());
-                WorldManifest raw = JsonConvert.DeserializeObject<WorldManifest>(result, settings);
-                cachedMainManifest = WorldManifest.WithParsedSets(raw);
+                WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
+                cachedMainManifest = WorldManifest.Create(dto);
                 return cachedMainManifest.Value;
             }
 
-            return new  WorldManifest(fallbackParcelData.Value.ownedParcels,
-                                          fallbackParcelData.Value.emptyParcels,
-                                          fallbackParcelData.Value.roadParcels);
+            return new  WorldManifest(fallbackParcelData.Value.ownedParcels);
         }
     }
 

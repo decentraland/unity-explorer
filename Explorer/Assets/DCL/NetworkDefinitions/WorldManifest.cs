@@ -8,15 +8,11 @@ namespace ECS
     /// <summary>
     ///     World manifest from asset-bundle-registry (e.g. /worlds/{realmName}/manifest).
     ///     Form: { "occupied": ["0,0", "10,10"], "spawn_coordinate": { "x": 0, "y": 0 }, "total": 2 }
-    ///     Parsed parcel sets are built when creating the struct via <see cref="WithParsedSets" />. Do not dispose returned sets.
+    ///     When non-empty, always has parsed parcel sets. Create from JSON via <see cref="WorldManifestDto" /> and <see cref="Create" />. Do not dispose returned sets.
     /// </summary>
     [Serializable]
     public struct WorldManifest : IDisposable
     {
-        //Roads are analyzed
-        public string[] roads;
-        public string[] occupied;
-        public string[] empty;
         public int total;
 
         [JsonProperty("spawn_coordinate")]
@@ -28,11 +24,8 @@ namespace ECS
         [JsonIgnore]
         private bool isEmpty;
 
-        public WorldManifest(int2[] valueOccupiedParcels, int2[] valueEmptyParcels, int2[] valueRoadParcels)
+        public WorldManifest(int2[] valueOccupiedParcels)
         {
-            roads = null;
-            occupied = null;
-            empty = null;
             total = 0;
             spawn_coordinate = null;
             occupiedParcels = ParcelArraysToSet(valueOccupiedParcels);
@@ -42,21 +35,18 @@ namespace ECS
         public bool IsEmpty => isEmpty;
 
         /// <summary>
-        ///     Returns a new WorldManifest with parsed parcel sets from the raw string arrays. Call after JSON deserialization.
+        ///     Creates a WorldManifest with parsed parcel sets from a DTO. Call after JSON deserialization into <see cref="WorldManifestDto" />.
         /// </summary>
-        public static WorldManifest WithParsedSets(in WorldManifest raw)
+        public static WorldManifest Create(WorldManifestDto dto)
         {
-            if (IsNullOrEmpty(raw.roads) && IsNullOrEmpty(raw.occupied) && IsNullOrEmpty(raw.empty))
+            if (IsNullOrEmpty(dto.roads) && IsNullOrEmpty(dto.occupied) && IsNullOrEmpty(dto.empty))
                 return Empty;
 
             return new WorldManifest
             {
-                roads = raw.roads,
-                occupied = raw.occupied,
-                empty = raw.empty,
-                total = raw.total,
-                spawn_coordinate = raw.spawn_coordinate,
-                occupiedParcels = ParseParcelStringsToSet(raw.occupied),
+                total = dto.total,
+                spawn_coordinate = dto.spawn_coordinate,
+                occupiedParcels = ParseParcelStringsToSet(dto.occupied),
                 isEmpty = false
             };
         }
@@ -112,5 +102,20 @@ namespace ECS
             public int x;
             public int y;
         }
+    }
+
+    /// <summary>
+    ///     DTO for JSON deserialization of world manifest. Use <see cref="WorldManifest.Create" /> to obtain a <see cref="WorldManifest" /> with parsed sets.
+    /// </summary>
+    [Serializable]
+    public class WorldManifestDto
+    {
+        public string[] roads;
+        public string[] occupied;
+        public string[] empty;
+        public int total;
+
+        [JsonProperty("spawn_coordinate")]
+        public WorldManifest.SpawnCoordinateData spawn_coordinate;
     }
 }
