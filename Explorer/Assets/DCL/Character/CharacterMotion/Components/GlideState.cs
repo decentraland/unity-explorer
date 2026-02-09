@@ -5,6 +5,8 @@
         public GlideStateValue Value;
 
         public bool WantsToGlide;
+
+        public int CooldownStartedTick;
     }
 
     public enum GlideStateValue

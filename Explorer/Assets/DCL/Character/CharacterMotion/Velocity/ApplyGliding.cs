@@ -14,9 +14,14 @@ namespace DCL.CharacterMotion
             in JumpState jumpState,
             in JumpInputComponent jump,
             ref GlideState glideState,
-            int physicsTick)
+            int physicsTick,
+            float dt)
         {
-            bool canGlide = jumpState.JumpCount > jumpState.MaxAirJumpCount && !rigidTransform.IsGrounded && rigidTransform.GroundDistance > settings.GlideMinGroundDistance;
+            bool coolingDown = (physicsTick - glideState.CooldownStartedTick) * dt < settings.GlideCooldown;
+            bool canGlide = jumpState.JumpCount > jumpState.MaxAirJumpCount &&
+                            !rigidTransform.IsGrounded &&
+                            rigidTransform.GroundDistance > settings.GlideMinGroundDistance &&
+                            !coolingDown;
 
             // Allow pressing the glide button before the action is actually available
             // Player can hold the glide button to start gliding as soon as possible

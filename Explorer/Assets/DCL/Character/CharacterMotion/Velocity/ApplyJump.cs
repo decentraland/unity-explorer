@@ -17,7 +17,8 @@ namespace DCL.CharacterMotion
             in MovementInputComponent movementInput,
             in Vector3 viewerForward,
             in Vector3 viewerRight,
-            int physicsTick)
+            int physicsTick,
+            float dt)
         {
             jumpState.JustJumped = false;
 
@@ -35,7 +36,7 @@ namespace DCL.CharacterMotion
             if (AwaitAirJumpDelay(settings, rigidTransform, ref jumpState, movementInput, viewerForward, viewerRight)) return;
 
             // The bonus frames are used for BOTH input buffering and coyote time
-            int bonusFrames = ComputeBonusFrames(settings, rigidTransform, physicsTick);
+            int bonusFrames = ComputeBonusFrames(settings, rigidTransform, physicsTick, dt);
 
             if (!isGrounded && !jumpState.IsCoyoteTimeActive(physicsTick, bonusFrames))
             {
@@ -49,9 +50,9 @@ namespace DCL.CharacterMotion
             if (canJump && wantsToJump) StartJump(settings, rigidTransform, ref jumpState, ref jumpInput, movementInput, physicsTick);
         }
 
-        private static int ComputeBonusFrames(ICharacterControllerSettings settings, CharacterRigidTransform rigidTransform, int physicsTick)
+        private static int ComputeBonusFrames(ICharacterControllerSettings settings, CharacterRigidTransform rigidTransform, int physicsTick, float fixedDeltaTime)
         {
-            int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
+            int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / fixedDeltaTime);
 
             // Reset the input buffering / coyote time windows if
             // - Positive Y velocity, so we already jumped

@@ -15,7 +15,7 @@ namespace DCL.CharacterMotion
             in JumpState jumpState,
             in JumpInputComponent jumpInput,
             int physicsTick,
-            float deltaTime)
+            float dt)
         {
             Vector3 gravityDirection = characterPhysics.IsOnASteepSlope ? characterPhysics.GravityDirection : Vector3.down;
 
@@ -36,20 +36,20 @@ namespace DCL.CharacterMotion
                 gravity *= characterPhysics.GravityMultiplier;
 
                 // In order to jump higher when pressing the jump button, we reduce the gravity
-                if (jumpInput.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
+                if (jumpInput.IsPressed && (physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) * dt < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
                 // In order to feel less floaty when jumping, we increase the gravity when going up ( the jump velocity is also scaled up )
                 if (characterPhysics.GravityVelocity.y > 0)
                     gravity *= settings.JumpGravityFactor;
 
-                characterPhysics.GravityVelocity += gravityDirection * (gravity * deltaTime);
-                characterPhysics.SlopeGravity += gravityDirection * (gravity * deltaTime);
+                characterPhysics.GravityVelocity += gravityDirection * (gravity * dt);
+                characterPhysics.SlopeGravity += gravityDirection * (gravity * dt);
             }
             else
             {
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
-                characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * deltaTime);
+                characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * dt);
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
 

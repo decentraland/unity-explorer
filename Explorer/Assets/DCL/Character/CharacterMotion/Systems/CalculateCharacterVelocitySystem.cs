@@ -214,9 +214,9 @@ namespace DCL.CharacterMotion.Systems
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
             // Apply vertical velocity
-            ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick, dt);
             ApplyGravity.Execute(settings, ref rigidTransform, jumpState, in jumpInput, physicsTick, dt);
-            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick);
+            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick, dt);
 
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 

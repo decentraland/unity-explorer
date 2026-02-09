@@ -36,6 +36,7 @@ namespace DCL.CharacterMotion.Settings
         public float GlideSpeed { get; }
         public float GlideMinGroundDistance { get; }
         public float GlideMaxGravity { get; }
+        public float GlideCooldown { get; }
         public float GlideAnimMaxAngle { get; }
         public float GlideAnimBlendSpeed { get; }
         float JumpGraceTime { get; }

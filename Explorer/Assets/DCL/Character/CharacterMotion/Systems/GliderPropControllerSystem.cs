@@ -18,6 +18,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly CharacterMotionSettings.GlidingSettings glidingSettings;
         private readonly GameObject gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private SingleInstanceEntity tickEntity;
 
         private GameObjectPool<GliderPropView>? propPool;
 
@@ -28,15 +29,20 @@ namespace DCL.CharacterMotion.Systems
             this.poolsRegistry = poolsRegistry;
         }
 
-        public override void Initialize() =>
+        public override void Initialize()
+        {
             propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+            tickEntity = World.CachePhysicsTick();
+        }
 
         protected override void Update(float t)
         {
+            int tick = tickEntity.GetPhysicsTickComponent(World).Tick;
+
             CreatePropQuery(World);
             UpdatePropAnimatorQuery(World);
             UpdateTrailQuery(World);
-            HandleStateTransitionQuery(World);
+            HandleStateTransitionQuery(World, tick);
             RemotePlayerCleanUpPropQuery(World);
         }
 
@@ -69,7 +75,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void HandleStateTransition(Entity entity, ref GlideState glideState, in GliderProp gliderProp)
+        private void HandleStateTransition([Data] int tick, Entity entity, ref GlideState glideState, in GliderProp gliderProp)
         {
             switch (glideState.Value)
             {
@@ -79,6 +85,7 @@ namespace DCL.CharacterMotion.Systems
 
                 case GlideStateValue.CLOSING_PROP when gliderProp.View.CloseAnimationCompleted:
                     glideState.Value = GlideStateValue.PROP_CLOSED;
+                    glideState.CooldownStartedTick = tick;
                     CleanUpProp(entity, gliderProp);
                     break;
             }
