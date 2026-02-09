@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
-            ConsumeEmoteIntentQuery(World);
+            ConsumeEmoteIntentQuery(World, t);
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
@@ -206,8 +206,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
+        private void ConsumeEmoteIntent([Data] float dt, Entity entity,
+            ref CharacterEmoteComponent emoteComponent,
+            ref CharacterEmoteIntent emoteIntent,
+            in IAvatarView avatarView,
+            ref AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -242,9 +245,20 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    // Fixes https://github.com/decentraland/unity-explorer/issues/6531
+                    // Rarely happens for an unknown reason that emote.AssetResults[bodyShape] is null, provoking the emote intent to never finish,
+                    // thus props of the previous emote cannot be disposed either.
+                    // By setting a timeout we force unstuck the process
+                    if (emoteIntent.UpdatePlayTimeout(dt))
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
 
-                    //Loading not complete
+                    // Loading not complete
                     if (emote.AssetResults[bodyShape] == null)
                         return;
 
