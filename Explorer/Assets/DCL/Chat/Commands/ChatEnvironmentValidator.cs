@@ -1,4 +1,4 @@
-using DCL.Multiplayer.Connections.DecentralandUrls;
+"using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
 using UnityEngine.Networking;
 
