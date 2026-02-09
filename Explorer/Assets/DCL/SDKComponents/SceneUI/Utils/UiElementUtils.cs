@@ -217,7 +217,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
 
-            inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position; // This is not working...
+            inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             inputToSetup.TextField.SetEnabled(!model.Disabled);
         }
 
@@ -439,13 +439,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
         // A struct and static callbacks are used to avoid allocations.
         private readonly struct HoverStyleBehaviourData
         {
+            public readonly VisualElement HoverEventTarget;
             public readonly World World;
             public readonly Entity Entity;
             public readonly float BorderDarkenFactor;
             public readonly float BackgroundDarkenFactor;
 
-            public HoverStyleBehaviourData(World world, Entity entity, float borderDarkenFactor, float backgroundDarkenFactor)
+            public HoverStyleBehaviourData(VisualElement hoverEventTarget, World world, Entity entity, float borderDarkenFactor, float backgroundDarkenFactor)
             {
+                HoverEventTarget = hoverEventTarget;
                 World = world;
                 Entity = entity;
                 BorderDarkenFactor = borderDarkenFactor;
@@ -458,14 +460,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ConfigureHoverStylesBehaviour(World world, Entity entity, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
         {
-            var data = new HoverStyleBehaviourData(world, entity, borderDarkenFactor, backgroundDarkenFactor);
+            var data = new HoverStyleBehaviourData(hoverEventTarget, world, entity, borderDarkenFactor, backgroundDarkenFactor);
             hoverEventTarget.RegisterCallback(HOVER_ENTER_CALLBACK, data);
             hoverEventTarget.RegisterCallback(HOVER_LEAVE_CALLBACK, data);
         }
 
-        private static void OnHoverEnter(PointerEnterEvent _, HoverStyleBehaviourData behaviourData)
+        private static void OnHoverEnter(PointerEnterEvent evt, HoverStyleBehaviourData behaviourData)
         {
-            if (!behaviourData.World.TryGet(behaviourData.Entity, out UITransformComponent? uiTransformComponent)) return;
+            if (behaviourData.HoverEventTarget.hasDisabledPseudoState
+                || !behaviourData.World.TryGet(behaviourData.Entity, out UITransformComponent? uiTransformComponent)) return;
 
             if (behaviourData.BorderDarkenFactor > 0)
             {
@@ -479,8 +482,11 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 uiTransformComponent!.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, behaviourData.BackgroundDarkenFactor);
         }
 
-        private static void OnHoverLeave(PointerLeaveEvent _, HoverStyleBehaviourData behaviourData)
+        private static void OnHoverLeave(PointerLeaveEvent evt, HoverStyleBehaviourData behaviourData)
         {
+            if (evt.target != behaviourData.HoverEventTarget)
+                return; // detected on child
+
             if (!behaviourData.World.TryGet(behaviourData.Entity, out UITransformComponent? uiTransformComponent) || !behaviourData.World.TryGet(behaviourData.Entity, out PBUiTransform? pbUiTransform))
                 return;
 
