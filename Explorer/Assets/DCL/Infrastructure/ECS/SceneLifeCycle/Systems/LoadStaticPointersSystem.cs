@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -32,6 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (staticScenePointers.Promise == null)
             {
+                WebGLDebugLog.Log("LoadStaticPointersSystem", "Promise created", $"parcelsCount={staticScenePointers.Value.Count}", "H1");
                 // start loading
                 staticScenePointers.Promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
@@ -50,6 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
                     {
                         SceneEntityDefinition definition = result.Asset.Value[i];
                         var path = new IpfsPath(definition.id, URLDomain.EMPTY);
+                        WebGLDebugLog.Log("LoadStaticPointersSystem", "CreateSceneEntity", $"parcel={definition.metadata.scene.DecodedBase}", "H1");
                         CreateSceneEntity(definition, path);
                     }
                 }

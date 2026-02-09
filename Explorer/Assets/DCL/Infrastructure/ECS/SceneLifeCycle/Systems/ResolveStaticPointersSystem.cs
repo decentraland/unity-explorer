@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using Utility;
 
@@ -57,6 +58,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
+                    WebGLDebugLog.Log("ResolveStaticPointersSystem", "CreateSceneFacadePromise", $"parcel=({parcel.x},{parcel.y})", "H5");
                     CreateSceneFacadePromise.Execute(World, entity, realm, in definition, partitionComponent);
                     return;
                 }

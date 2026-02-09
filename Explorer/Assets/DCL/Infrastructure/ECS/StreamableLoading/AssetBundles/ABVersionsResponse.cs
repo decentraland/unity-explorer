@@ -21,6 +21,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             public ABAssetVersionInfo mac;
             public ABAssetVersionInfo windows;
+            public ABAssetVersionInfo? webgl;
         }
 
         [Serializable]

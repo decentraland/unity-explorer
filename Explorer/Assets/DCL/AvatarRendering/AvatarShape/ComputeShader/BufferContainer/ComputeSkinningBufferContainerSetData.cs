@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
 
@@ -29,20 +29,36 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             bindPosesMatrix = new NativeArray<Matrix4x4>(skinnedMeshRendererBoneCount, Allocator.Temp);
         }
 
-        //Constant buffer works in MAC but now in WINDOWS
+        // Constant buffer works on Mac but not on Windows. WebGPU expects Storage (Structured), not Uniform (Constant).
+        static ComputeBufferType InputBufferType()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return ComputeBufferType.Structured;
+#else
+            return ComputeBufferType.Constant;
+#endif
+        }
+
         public override void EndWriting()
         {
-            vertexIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
+            ComputeBufferType bufferType = InputBufferType();
+            int vector3Stride = Marshal.SizeOf(typeof(Vector3));
+            int vector4Stride = Marshal.SizeOf(typeof(Vector4));
+            int boneWeightStride = Marshal.SizeOf(typeof(BoneWeight));
+            int matrixStride = Marshal.SizeOf(typeof(Matrix4x4));
+            int intStride = Marshal.SizeOf(typeof(int));
+
+            vertexIn = new ComputeBuffer(vertCount, vector3Stride, bufferType);
             vertexIn.SetData(totalVertsIn);
-            tangentsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector4)), ComputeBufferType.Constant);
+            tangentsIn = new ComputeBuffer(vertCount, vector4Stride, bufferType);
             tangentsIn.SetData(totalTangentsIn);
-            normalsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
+            normalsIn = new ComputeBuffer(vertCount, vector3Stride, bufferType);
             normalsIn.SetData(totalNormalsIn);
-            sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)), ComputeBufferType.Constant);
+            sourceSkin = new ComputeBuffer(vertCount, boneWeightStride, bufferType);
             sourceSkin.SetData(totalSkinIn);
-            bindPoses = new ComputeBuffer(skinnedMeshRendererBoneCount, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Constant);
+            bindPoses = new ComputeBuffer(skinnedMeshRendererBoneCount, matrixStride, bufferType);
             bindPoses.SetData(bindPosesMatrix);
-            bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Constant);
+            bindPosesIndex = new ComputeBuffer(vertCount, intStride, bufferType);
             bindPosesIndex.SetData(bindPosesIndexList);
         }
     }
