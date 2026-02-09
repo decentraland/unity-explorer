@@ -3,8 +3,8 @@ using DCL.Browser.DecentralandUrls;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using DCL.WebRequests;
-using Global.Dynamic.LaunchModes;
 using NUnit.Framework;
 using System;
 using System.Linq;
@@ -31,7 +31,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public SocialServicePerformanceTests(DecentralandEnvironment env)
         {
             this.env = env;
-            urlsSource = new DecentralandUrlsSource(env, ILaunchMode.PLAY);
+            urlsSource = DecentralandUrlsSource.CreateForTest(env, ILaunchMode.PLAY);
         }
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);

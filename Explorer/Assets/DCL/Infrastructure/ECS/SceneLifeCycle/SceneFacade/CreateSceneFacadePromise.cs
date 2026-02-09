@@ -1,5 +1,5 @@
 using Arch.Core;
-using DCL.Ipfs;
+using CommunicationData.URLHelpers;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -10,11 +10,11 @@ namespace ECS.SceneLifeCycle.SceneFacade
 {
     public static class CreateSceneFacadePromise
     {
-        public static void Execute(World world, Entity entity, IIpfsRealm ipfsRealm, in SceneDefinitionComponent definitionComponent, IPartitionComponent partitionComponent)
+        public static void Execute(World world, Entity entity, URLDomain contentBaseUrl, in SceneDefinitionComponent definitionComponent, IPartitionComponent partitionComponent)
         {
             world.Add(entity,
                 AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world,
-                    new GetSceneFacadeIntention(ipfsRealm, definitionComponent), partitionComponent));
+                    new GetSceneFacadeIntention(contentBaseUrl, definitionComponent), partitionComponent));
         }
     }
 }

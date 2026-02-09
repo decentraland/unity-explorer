@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -31,17 +32,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public ResolveWearablePromisesSystem(
             World world,
             IWearableStorage wearableStorage,
-            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory
             ) : base(world)
         {
             this.wearableStorage = wearableStorage;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -157,7 +158,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive, cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
 

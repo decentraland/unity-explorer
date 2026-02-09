@@ -60,7 +60,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthScreenEmotesSettings emotesSettings;
         private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IAppArgs appArgs;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
@@ -93,7 +92,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            SentryTransactionManager sentryTransactionManager,
             IAppArgs appArgs)
             : base(viewFactory)
         {
@@ -110,7 +108,6 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.sentryTransactionManager = sentryTransactionManager;
             this.appArgs = appArgs;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
@@ -146,8 +143,8 @@ namespace DCL.AuthenticationScreenFlow
             fsm.AddStates(
                 new InitAuthScreenState(viewInstance, buildData.InstallSource),
                 new LoginStartAuthState(fsm, viewInstance, this, CurrentState, splashScreen),
-                new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, splashScreen, characterPreviewController, selfProfile),
+                new IdentityAndVerificationAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, splashScreen, characterPreviewController, selfProfile),
                 new LobbyAuthState(viewInstance, this, characterPreviewController)
                 );
             fsm.Enter<InitAuthScreenState>();
@@ -172,7 +169,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginStartAuthState>(allowReEnterSameState: true);
             }
         }

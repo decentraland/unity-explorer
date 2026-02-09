@@ -13,6 +13,11 @@
         public float WearablesResolvedAt;
         public float MissingPointersCounter;
 
+        /// <summary>
+        ///     The number of wearables for which assets are needed and resolved
+        /// </summary>
+        public int VisibleWearablesCount;
+
         public AvatarAnalytics(float startedAt, int wearablesCount) : this()
         {
             StartedAt = startedAt;
