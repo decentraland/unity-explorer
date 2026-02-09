@@ -37,6 +37,7 @@ namespace DCL.CharacterMotion.Systems
             UpdatePropAnimatorQuery(World);
             UpdateTrailQuery(World);
             HandleStateTransitionQuery(World);
+            RemotePlayerCleanUpPropQuery(World);
         }
 
         [Query]
@@ -81,6 +82,16 @@ namespace DCL.CharacterMotion.Systems
                     CleanUpProp(entity, gliderProp);
                     break;
             }
+        }
+
+        [Query]
+        [None(typeof(CharacterController))]
+        private void RemotePlayerCleanUpProp(Entity entity, in GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
+        {
+            // Remote players need specific cleanup when their synced glide state reports the glider has been closed
+            // For local players we need to time it correctly and do it the same frame the state transition happens
+            // (see HandleStateTransition for local player handling)
+            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED) CleanUpProp(entity, gliderProp);
         }
 
         private void CleanUpProp(Entity entity, in GliderProp gliderProp)

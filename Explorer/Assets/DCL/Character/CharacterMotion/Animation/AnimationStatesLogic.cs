@@ -26,7 +26,7 @@ namespace DCL.CharacterMotion.Animation
             float verticalVelocity = rigidTransform.GravityVelocity.y + velocity.y;
 
             bool jumpTriggered = jumpState.JumpCount > animationComponent.States.JumpCount;
-            bool glidingTriggered = glideState.Value == GlideStateValue.GLIDING && animationComponent.States.GlideState == GlideStateValue.OPENING_PROP;
+            bool glidingTriggered = glideState.Value == GlideStateValue.OPENING_PROP && animationComponent.States.GlideState != GlideStateValue.OPENING_PROP;
 
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.JumpCount = jumpState.JumpCount;
@@ -62,7 +62,7 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
             view.SetAnimatorBool(AnimationHashes.STUNNED, states.IsStunned);
-            view.SetAnimatorBool(AnimationHashes.GLIDING, states.GlideState == GlideStateValue.GLIDING);
+            view.SetAnimatorBool(AnimationHashes.GLIDING, states.GlideState is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING);
             view.SetAnimatorFloat(AnimationHashes.GLIDE_BLEND, states.GlideBlendValue);
 
             if (jumpTriggered) view.SetAnimatorTrigger(AnimationHashes.JUMP);
