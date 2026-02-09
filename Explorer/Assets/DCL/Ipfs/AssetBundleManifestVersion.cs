@@ -17,6 +17,11 @@ public class AssetBundleManifestVersion
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+        /// <summary>
+        ///     WebGL: lower minimum for backward compatibility with older wearables/emotes in the registry (e.g. v11).
+        ///     Older ABs may have been built with a different Unity version; use at your own risk.
+        /// </summary>
+        public static readonly int AB_MIN_SUPPORTED_VERSION_WEBGL = 1;
 
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
@@ -55,10 +60,20 @@ public class AssetBundleManifestVersion
         }
 
         public string? GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version : assets?.mac!.version;
+            GetPlatformVersion()?.version;
 
         public string? GetAssetBundleManifestBuildDate() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate : assets?.mac!.buildDate;
+            GetPlatformVersion()?.buildDate;
+
+        private PlatformInfo? GetPlatformVersion()
+        {
+            if (assets == null) return null;
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL))
+                return assets.webgl;
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+                return assets.windows;
+            return assets.mac;
+        }
 
         public bool IsEmpty() =>
             assets?.IsEmpty() ?? true;
@@ -86,12 +101,16 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string buildDateMac, string assetBundleManifestVersionWin, string buildDateWin)
+        public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string buildDateMac, string assetBundleManifestVersionWin, string buildDateWin, string? assetBundleManifestVersionWebgl = null, string? buildDateWebgl = null)
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDateMac);
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDateWin);
+            bool hasWebgl = !string.IsNullOrEmpty(assetBundleManifestVersionWebgl) && !string.IsNullOrEmpty(buildDateWebgl);
+            var assets = new AssetBundleManifestVersionPerPlatform
+            {
+                mac = new PlatformInfo(assetBundleManifestVersionMac, buildDateMac),
+                windows = new PlatformInfo(assetBundleManifestVersionWin, buildDateWin),
+                webgl = hasWebgl ? new PlatformInfo(assetBundleManifestVersionWebgl!, buildDateWebgl!) : null,
+            };
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
@@ -101,9 +120,12 @@ public class AssetBundleManifestVersion
         public static AssetBundleManifestVersion CreateManualManifest()
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1");
-            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1");
+            var assets = new AssetBundleManifestVersionPerPlatform
+            {
+                webgl = new PlatformInfo("v" + AB_MIN_SUPPORTED_VERSION_WEBGL, "1"),
+                mac = new PlatformInfo("v" + AB_MIN_SUPPORTED_VERSION_MAC, "1"),
+                windows = new PlatformInfo("v" + AB_MIN_SUPPORTED_VERSION_WINDOWS, "1"),
+            };
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
@@ -167,6 +189,10 @@ public class AssetBundleManifestVersion
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 for (int i = 0; i < entityDefinitionContent.Length; i++)
                     convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
+
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL))
+                for (int i = 0; i < entityDefinitionContent.Length; i++)
+                    convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
         }
     }
 
@@ -174,10 +200,13 @@ public class AssetBundleManifestVersion
     {
         public PlatformInfo? mac;
         public PlatformInfo? windows;
+        public PlatformInfo? webgl;
 
         public void SetVersion(string assetBundleManifestVersion, string buildDate)
         {
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL))
+                webgl = new PlatformInfo(assetBundleManifestVersion, buildDate);
+            else if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 windows = new PlatformInfo(assetBundleManifestVersion, buildDate);
             else
                 mac = new PlatformInfo(assetBundleManifestVersion, buildDate);
@@ -185,9 +214,10 @@ public class AssetBundleManifestVersion
 
         public bool IsEmpty()
         {
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL))
+                return webgl == null || string.IsNullOrEmpty(webgl.version);
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
                 return windows == null || string.IsNullOrEmpty(windows.version);
-
             return mac == null || string.IsNullOrEmpty(mac.version);
         }
     }
