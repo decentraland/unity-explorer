@@ -208,7 +208,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
             inputToSetup.Placeholder.IsReadonly = isReadonly;
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
-            inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
 
             int font = (int)model.GetFont();
             if (font < styleFontDefinitions.Length)
@@ -219,6 +218,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
             inputToSetup.TextField.SetEnabled(!model.Disabled);
+            inputToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
         }
 
         public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, in PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)

@@ -7,18 +7,18 @@ namespace DCL.SDKComponents.SceneUI.Components
     public class UIDropdownComponent
     {
         public readonly DropdownField DropdownField = new ();
-        public TextElement TextElement;
+        public TextElement TextElement { get; private set; }
         public bool IsOnValueChangedTriggered;
         public int LastSceneEnforcedIndex;
 
         internal Action? cachedScheduledAction;
 
-        public void Initialize(string dropdownName, string dropdownStyleClass, string textElementStyleClass)
+        public void Initialize(string dropdownName)
         {
             DropdownField.name = dropdownName;
-            DropdownField.AddToClassList(dropdownStyleClass);
+            DropdownField.AddToClassList("dcl-dropdown");
             DropdownField.pickingMode = PickingMode.Position;
-            TextElement = DropdownField.Q<TextElement>(className: textElementStyleClass);
+            TextElement = DropdownField.Q<TextElement>(className: "unity-base-popup-field__text");
 
             IsOnValueChangedTriggered = false;
             LastSceneEnforcedIndex = int.MinValue; // -1 is used for the case of 'accept Empty value'

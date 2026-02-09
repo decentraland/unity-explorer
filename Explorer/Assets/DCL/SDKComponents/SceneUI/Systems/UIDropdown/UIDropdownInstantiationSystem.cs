@@ -53,7 +53,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         private void InstantiateUIDropdown(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var newDropdown = dropdownsPool.Get();
-            newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity), "dcl-dropdown", "unity-base-popup-field__text");
+            newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity));
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
             UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newDropdown.DropdownField, 0.22f, 0.1f);

@@ -60,7 +60,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             var newUIInputComponent = inputTextsPool.Get()!;
             newUIInputComponent.Initialize(inputBlock,
                 UiElementUtils.BuildElementName(COMPONENT_NAME, entity),
-                "dcl-input",
                 sdkModel.Value,
                 sdkModel.Placeholder,
                 sdkModel.GetPlaceholderColor());
