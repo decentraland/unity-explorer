@@ -117,7 +117,7 @@ namespace DCL.Backpack
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
-                realmData,
+                decentralandUrlsSource,
                 outfitsLogger);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,

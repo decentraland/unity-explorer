@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -118,7 +118,7 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested) return;
 
-            if (result.Success)
+            if (result.Success && result.Value?.data?.results != null)
             {
                 var openCommunities = new List<GetUserCommunitiesData.CommunityData>();
                 var response = result.Value;

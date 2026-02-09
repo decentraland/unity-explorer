@@ -1,0 +1,28 @@
+{
+    "name": "DCL.Network",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:b46779583a009f04ba9f5f31d0e7e6ac",
+        "GUID:4725c02394ab4ce19f889e4e8001f989",
+        "GUID:3d354272d3f2f4c3387dbccbaebd0f60",
+        "GUID:8614faad1014549c88b57654b0fb41bd",
+        "GUID:75edf6fa50ff464395ca31529ea14d25",
+        "GUID:9c1932d9907bf426d845767a97c591ac",
+        "GUID:1087662aaf1c5462baa91fb9484296fd",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:9887bf5401cdc9140916d3edbea10b69",
+        "GUID:8baf705856414dad9a73b3f382f1bc8b",
+        "GUID:479525a7f2ececd499dc130b607f895f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -49,7 +49,7 @@ namespace DCL.WebRequests
             }
         }
 
-        internal static GetAudioClipWebRequest Initialize(in CommonArguments commonArguments, GetAudioClipArguments audioClipArguments)
+        internal static GetAudioClipWebRequest Initialize(in CommonArguments commonArguments, ref GetAudioClipArguments audioClipArguments)
         {
             UnityWebRequest wr = UnityWebRequestMultimedia.GetAudioClip(commonArguments.URL, audioClipArguments.AudioType);
             return new GetAudioClipWebRequest(wr, commonArguments.URL);

@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
@@ -84,6 +84,7 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService,
                 privateConversationUserStateService,
                 communityUserStateService,
+                communityDataService,
                 chatMemberListService,
                 translationMemory,
                 translationCache);

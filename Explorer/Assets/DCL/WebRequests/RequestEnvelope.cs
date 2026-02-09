@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests.RequestsHub;
@@ -13,7 +14,7 @@ using UnityEngine.Pool;
 
 namespace DCL.WebRequests
 {
-    public readonly struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
+    public struct RequestEnvelope<TWebRequest, TWebRequestArgs> : IDisposable where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct
     {
         public readonly ReportData ReportData;
         public readonly CommonArguments CommonArguments;
@@ -21,7 +22,7 @@ namespace DCL.WebRequests
         public readonly bool SuppressErrors;
         public readonly bool IgnoreIrrecoverableErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
-        internal readonly TWebRequestArgs args;
+        internal TWebRequestArgs args;
         private readonly DownloadHandler? customDownloadHandler;
         internal readonly WebRequestHeadersInfo headersInfo;
         internal readonly WebRequestSignInfo? signInfo;
@@ -96,7 +97,7 @@ namespace DCL.WebRequests
 
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
         {
-            TWebRequest request = initializeRequest(CommonArguments, args);
+            TWebRequest request = initializeRequest(CommonArguments, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
             AssignTimeout(unityWebRequest);
@@ -126,7 +127,7 @@ namespace DCL.WebRequests
             SetHeaders(unityWebRequest);
         }
 
-        public PooledObject<Dictionary<string, string>> Headers(out Dictionary<string, string> headers) =>
+        public readonly PoolExtensions.Scope<Dictionary<string, string>> Headers(out Dictionary<string, string> headers) =>
             headersInfo.AsPooledDictionary(out headers);
 
         private void AssignDownloadHandler(UnityWebRequest unityWebRequest)

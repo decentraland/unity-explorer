@@ -238,8 +238,13 @@ namespace DCL.Minimap
 
         private void SetInitialHomeToggleValue()
         {
-            bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
-            homeToggleSettings!.SetInitialValue(isHome);
+            bool isHome;
+            if (realmData.ScenesAreFixed)
+                isHome = homePlaceEventBus.CurrentHomeWorldName == realmData.RealmName;
+            else
+                isHome = !homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+
+            homeToggleSettings.SetInitialValue(isHome);
         }
 
         private void ShowContextMenu()
@@ -252,9 +257,16 @@ namespace DCL.Minimap
         private void SetAsHomeToggledAsync(bool value)
         {
             if (value)
-                homePlaceEventBus.SetAsHome(previousParcelPosition);
+            {
+                if (realmData.ScenesAreFixed)
+                    homePlaceEventBus.SetAsHome(realmData.RealmName);
+                else
+                    homePlaceEventBus.SetAsHome(previousParcelPosition);
+            }
             else
+            {
                 homePlaceEventBus.UnsetHome();
+            }
 
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.

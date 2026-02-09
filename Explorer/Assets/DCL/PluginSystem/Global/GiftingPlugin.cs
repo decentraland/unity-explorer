@@ -1,12 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Views;
 using MVC;
 using System.Threading;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -27,15 +24,12 @@ using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utility;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global;
-using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -59,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
         private readonly IWebBrowser webBrowser;
-        private readonly IEthereumApi ethereumApi;
+        private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IScreenModeController screenModeController;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -67,7 +61,6 @@ namespace DCL.PluginSystem.Global
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
         private GiftReceivedPopupController? giftReceivedPopupController;
-        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -84,7 +77,7 @@ namespace DCL.PluginSystem.Global
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
             IWebBrowser webBrowser,
-            IEthereumApi ethereumApi,
+            ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IScreenModeController screenModeController,
             ImageControllerProvider imageControllerProvider)
@@ -104,7 +97,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.eventBus = eventBus;
             this.webBrowser = webBrowser;
-            this.ethereumApi = ethereumApi;
+            this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.screenModeController = screenModeController;
             this.imageControllerProvider = imageControllerProvider;
@@ -136,7 +129,7 @@ namespace DCL.PluginSystem.Global
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
                     assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            var giftTransferService = new Web3GiftTransferService(ethereumApi);
+            var giftTransferService = new Web3GiftTransferService(web3Provider);
             var giftItemLoaderService = new GiftItemLoaderService(webRequestController);
 
             var giftInventoryService = new GiftInventoryService(wearableStorage,
@@ -151,7 +144,8 @@ namespace DCL.PluginSystem.Global
             var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus,
                 web3IdentityCache,
                 giftTransferService,
-                pendingTransferService);
+                pendingTransferService,
+                web3Provider);
 
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);
@@ -164,8 +158,6 @@ namespace DCL.PluginSystem.Global
                 imageControllerProvider,
                 mvcManager
             );
-
-            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
 
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,

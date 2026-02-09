@@ -62,8 +62,11 @@ namespace DCL.Navmap
                 cameraController.SetPosition(coordinates);
         }
 
-        private void CenterToHome() =>
-            homePlaceEventBus.DisplayPlacesInfoPanel(homePlaceEventBus.CurrentHomeCoordinates ?? Vector2Int.zero);
+        private void CenterToHome()
+        {
+            if (!homePlaceEventBus.IsWorldHome)
+                homePlaceEventBus.DisplayPlacesInfoPanel(homePlaceEventBus.CurrentHomeCoordinates ?? Vector2Int.zero);
+        }
 
         private void CenterToPlayer()
         {

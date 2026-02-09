@@ -1,5 +1,6 @@
-﻿using DCL.Chat.ChatServices;
+using DCL.Chat.ChatServices;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.Translation.Service;
 
 namespace DCL.Chat.ChatCommands
@@ -12,6 +13,7 @@ namespace DCL.Chat.ChatCommands
         private readonly CurrentChannelService currentChannelService;
         private readonly PrivateConversationUserStateService privateConversationUserStateService;
         private readonly CommunityUserStateService communityUserStateService;
+        private readonly ICommunityDataService communityDataService;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ITranslationMemory translationMemory;
         private readonly ITranslationCache translationCache;
@@ -23,6 +25,7 @@ namespace DCL.Chat.ChatCommands
             CurrentChannelService currentChannelService,
             PrivateConversationUserStateService privateConversationUserStateService,
             CommunityUserStateService communityUserStateService,
+            ICommunityDataService communityDataService,
             ChatMemberListService chatMemberListService,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache)
@@ -33,6 +36,7 @@ namespace DCL.Chat.ChatCommands
             this.currentChannelService = currentChannelService;
             this.privateConversationUserStateService = privateConversationUserStateService;
             this.communityUserStateService = communityUserStateService;
+            this.communityDataService = communityDataService;
             this.chatMemberListService = chatMemberListService;
             this.translationMemory = translationMemory;
             this.translationCache = translationCache;
@@ -43,6 +47,7 @@ namespace DCL.Chat.ChatCommands
             chatMemberListService.Stop();
             privateConversationUserStateService.Reset();
             communityUserStateService.Reset();
+            communityDataService.Clear();
             chatHistory.DeleteAllChannels();
             currentChannelService.Reset();
             translationMemory.Clear();

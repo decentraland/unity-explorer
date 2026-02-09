@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly DCLInput dclInput;
+        private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -94,7 +95,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            ISocialServiceEventBus socialServiceEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -120,7 +122,8 @@ namespace DCL.PluginSystem.Global
             this.analytics = analytics;
             this.homePlaceEventBus = homePlaceEventBus;
             dclInput = DCLInput.Instance;
-            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
+            this.socialServiceEventBus = socialServiceEventBus;
+            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
             notificationHandler = new NotificationHandler(realmNavigator);
 
             dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformedAsync;

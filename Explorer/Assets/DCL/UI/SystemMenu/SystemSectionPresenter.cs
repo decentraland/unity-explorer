@@ -118,9 +118,7 @@ namespace DCL.UI.SystemMenu
                 }
 
                 Web3Address address = web3IdentityCache.Identity!.Address;
-
                 await web3Authenticator.LogoutAsync(ct);
-
                 profileCache.Remove(address);
 
                 await userInAppInitializationFlow.ExecuteAsync(

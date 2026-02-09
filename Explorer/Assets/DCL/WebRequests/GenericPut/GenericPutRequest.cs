@@ -8,11 +8,9 @@ namespace DCL.WebRequests
 
         public bool Idempotent => false;
 
-        internal static GenericPutRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
+        internal static GenericPutRequest Initialize(in CommonArguments commonArguments, ref GenericPostArguments arguments)
         {
-            UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null
-                ? UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)
-                : UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType);
+            UnityWebRequest unityWebRequest = GenericPostRequest.CreateWebRequest(in commonArguments, ref arguments);
 
             unityWebRequest.method = "PUT";
 

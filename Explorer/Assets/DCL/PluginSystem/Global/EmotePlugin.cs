@@ -10,6 +10,7 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -59,6 +60,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly IEventBus emotesEventBus;
 
@@ -86,6 +89,7 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
             EntitiesAnalytics entitiesAnalytics,
             IEventBus emotesEventBus)
         {
@@ -110,6 +114,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;
             this.emotesEventBus = emotesEventBus;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -129,7 +134,7 @@ namespace DCL.PluginSystem.Global
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory, entitiesAnalytics);
+                emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
