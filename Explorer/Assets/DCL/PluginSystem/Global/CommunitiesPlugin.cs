@@ -17,6 +17,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
@@ -64,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService? worldPermissionsService;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -94,9 +96,11 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService? worldPermissionsService = null)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -165,7 +169,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 selfProfile,
                 analytics,
-                homePlaceEventBus);
+                homePlaceEventBus,
+                worldPermissionsService);
 
             mvcManager.RegisterController(communityCardController);
 

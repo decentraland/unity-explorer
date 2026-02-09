@@ -25,6 +25,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -91,6 +92,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISelfProfile selfProfile;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService? worldPermissionsService;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -133,10 +135,12 @@ namespace DCL.Communities.CommunitiesCard
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IAnalyticsController analytics,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService? worldPermissionsService = null)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
@@ -403,7 +407,8 @@ namespace DCL.Communities.CommunitiesCard
                 webBrowser,
                 profileRepository,
                 decentralandUrlsSource,
-                homePlaceEventBus);
+                homePlaceEventBus,
+                worldPermissionsService);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

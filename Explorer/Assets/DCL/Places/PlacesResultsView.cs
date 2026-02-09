@@ -1,7 +1,10 @@
-﻿using DCL.Audio;
+using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -40,6 +43,7 @@ namespace DCL.Places
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? openContextMenuCts;
         private HomePlaceEventBus? homePlaceEventBus;
+        private IWorldPermissionsService? worldPermissionsService;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -85,12 +89,14 @@ namespace DCL.Places
             PlacesStateService stateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepoWrapper,
-            HomePlaceEventBus homeEventBus)
+            HomePlaceEventBus homeEventBus,
+            IWorldPermissionsService? worldPermissionsService = null)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
             this.homePlaceEventBus = homeEventBus;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
@@ -192,7 +198,24 @@ namespace DCL.Places
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
 
+            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) && worldPermissionsService != null)
+                CheckWorldAccessAndUpdateCardAsync(placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, CancellationToken.None).Forget();
+
             return gridItem;
+        }
+
+        private async UniTaskVoid CheckWorldAccessAndUpdateCardAsync(string worldName, PlaceCardView cardView, CancellationToken ct)
+        {
+            try
+            {
+                WorldAccessCheckContext context = await worldPermissionsService!.CheckWorldAccessAsync(worldName, ct);
+                cardView.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"[PlacesResultsView] Failed to check world access for '{worldName}': {e.Message}");
+            }
         }
 
         private void OpenCardContextMenu(PlacesData.PlaceInfo placeInfo, Vector2 position, PlaceCardView placeCardView)

@@ -1197,7 +1197,8 @@ namespace Global.Dynamic
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.Analytics!,
-                    homePlaceEventBus));
+                    homePlaceEventBus,
+                    worldPermissionsService));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

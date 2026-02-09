@@ -1,4 +1,5 @@
 using DCL.Communities;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -49,6 +50,14 @@ namespace DCL.Places
         [SerializeField] private Button deleteButton = null!;
         [SerializeField] private Button mainButton = null!;
 
+        [Header("World Access")]
+        [SerializeField] private Button enterPasswordButton = null!;
+        [SerializeField] private GameObject invitationOnlyLabel = null!;
+
+        /// <summary>Sprite tags for padlock in place name (TMP). No spacing between sprite and world name.</summary>
+        private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
+        private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
+
         [Serializable]
         private struct FriendsConnectedConfig
         {
@@ -72,6 +81,10 @@ namespace DCL.Places
         private Vector2 originalFooterSizeDelta;
         private PlaceInfo? currentPlaceInfo;
         private CancellationTokenSource loadingThumbnailCts;
+        private string lastPlaceTitle = string.Empty;
+        private WorldAccessCheckResult lastAccessState = WorldAccessCheckResult.Allowed;
+        private WorldAccessType? lastAccessType;
+        private bool isHovered;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -113,6 +126,7 @@ namespace DCL.Places
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo!, shareButton.transform.position, this));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
+            enterPasswordButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
             deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo!));
             mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentPlaceInfo!, this));
         }
@@ -131,7 +145,8 @@ namespace DCL.Places
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, loadingThumbnailCts.Token, true).Forget();
 
-            placeNameText.text = placeInfo.title;
+            lastPlaceTitle = placeInfo.title ?? string.Empty;
+            placeNameText.text = lastPlaceTitle;
             placeDescriptionText.text = ownerName;
             onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
@@ -178,6 +193,37 @@ namespace DCL.Places
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
             SilentlySetHomeToggle(isHome);
+
+            SetWorldAccessState(WorldAccessCheckResult.Allowed);
+        }
+
+        /// <summary>
+        /// Configures padlock in title and hover footer from world access state.
+        /// Padlock closed: AccessDenied or PasswordRequired. Padlock opened: Allowed + AllowList (invited). No extra labels when not hovered.
+        /// </summary>
+        public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
+        {
+            lastAccessState = accessState;
+            lastAccessType = accessType;
+
+            RefreshPlaceTitleWithPadlock();
+
+            jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
+            enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
+            invitationOnlyLabel.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
+        }
+
+        /// <summary>Appends padlock sprite to start of world name with no spacing (TMP sprite name="PaddlockClosed" / "PaddlockOpened").</summary>
+        private void RefreshPlaceTitleWithPadlock()
+        {
+            if (placeNameText == null || string.IsNullOrEmpty(lastPlaceTitle))
+                return;
+
+            bool isRestricted = lastAccessState == WorldAccessCheckResult.AccessDenied || lastAccessState == WorldAccessCheckResult.PasswordRequired;
+            bool isInvited = lastAccessState == WorldAccessCheckResult.Allowed && lastAccessType == WorldAccessType.AllowList;
+
+            string prefix = isRestricted ? PADDLOCK_CLOSED_SPRITE : isInvited ? PADDLOCK_OPENED_SPRITE : string.Empty;
+            placeNameText.text = prefix + lastPlaceTitle;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,
@@ -246,6 +292,8 @@ namespace DCL.Places
 
         private void PlayHoverAnimation()
         {
+            isHovered = true;
+
             headerTween?.Kill();
             footerTween?.Kill();
             descriptionTween?.Kill();
@@ -274,6 +322,8 @@ namespace DCL.Places
 
         private void PlayHoverExitAnimation(bool instant = false)
         {
+            isHovered = false;
+
             headerTween?.Kill();
             footerTween?.Kill();
             descriptionTween?.Kill();
