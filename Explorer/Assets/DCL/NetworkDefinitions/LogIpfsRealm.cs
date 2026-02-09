@@ -18,6 +18,20 @@ namespace DCL.Ipfs
             this.origin = origin;
         }
 
+        public URLDomain EntitiesBaseUrl
+        {
+            get
+            {
+                URLDomain result = origin.EntitiesBaseUrl;
+
+                ReportHub
+                   .WithReport(ReportCategory.REALM)
+                   .Log($"IpfsRealm EntitiesBaseUrl requested, result: {result}");
+
+                return result;
+            }
+        }
+
         public URLDomain CatalystBaseUrl
         {
             get
@@ -76,31 +90,6 @@ namespace DCL.Ipfs
                     .Log($"IpfsRealm EntitiesActiveEndpoint requested, result: {result}");
                 return result;
             }
-        }
-
-        public URLDomain AssetBundleRegistryEntitiesActive
-        {
-            get
-            {
-                URLDomain result = origin.AssetBundleRegistryEntitiesActive;
-                ReportHub
-                    .WithReport(ReportCategory.REALM)
-                    .Log($"IpfsRealm AssetBundleRegistry requested, result: {result}");
-                return result;
-            }
-        }
-
-        public async UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine("IpfsRealm PublishAsync requested");
-            sb.AppendLine($"Entity: {entity.FullInfo()}");
-            sb.AppendLine($"Content files: {string.Join(", ", contentFiles?.Keys ?? Array.Empty<string>())}");
-            ReportHub
-                .WithReport(ReportCategory.REALM)
-                .Log(sb.ToString());
-
-            await origin.PublishAsync(entity, ct, serializerSettings, contentFiles);
         }
 
         public string GetFileHash(byte[] file)

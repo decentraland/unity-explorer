@@ -19,6 +19,7 @@ namespace DCL.Ipfs
             }
         }
 
+        public URLDomain EntitiesBaseUrl => URLDomain.EMPTY;
         public URLDomain CatalystBaseUrl => URLDomain.EMPTY;
         public URLDomain ContentBaseUrl => URLDomain.EMPTY;
         public URLDomain LambdasBaseUrl => URLDomain.EMPTY;

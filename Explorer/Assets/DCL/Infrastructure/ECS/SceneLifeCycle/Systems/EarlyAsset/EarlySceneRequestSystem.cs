@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.RealmNavigation;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -23,13 +24,15 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
     {
         private readonly StartParcel startParcel;
         private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private bool sceneRequestInitialized;
 
-        public EarlySceneRequestSystem(World world, StartParcel startParcel, IRealmData realmData) : base(world)
+        public EarlySceneRequestSystem(World world, StartParcel startParcel, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world)
         {
             this.startParcel = startParcel;
             this.realmData = realmData;
+            this.urlsSource = urlsSource;
         }
 
         protected override void Update(float t)
@@ -53,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
             var pointersList = new List<int2> { startParcel.Peek().ToInt2() };
 
             var promise = ScenePromise.Create(World,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
                 PartitionComponent.TOP_PRIORITY);
 
             World.Create(promise, new EarlySceneFlag());

@@ -26,13 +26,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
             { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
 
-        private readonly IRealmData realm;
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
 
-        public OutfitsRepository(IRealmData realm,
+        public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider)
         {
-            this.realm = realm;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.nftNamesProvider = nftNamesProvider;
         }
 
@@ -41,9 +41,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         /// </summary>
         public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct)
         {
-            if (realm is { Configured: false })
-                return;
-
             if (profile == null)
                 throw new ArgumentException("Cannot save outfits for a null profile");
 
@@ -71,7 +68,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>(),
             };
 
-            try { await realm.Ipfs.PublishAsync(outfitsEntity, ct, SERIALIZER_SETTINGS); }
+            try { await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, ct, SERIALIZER_SETTINGS); }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
