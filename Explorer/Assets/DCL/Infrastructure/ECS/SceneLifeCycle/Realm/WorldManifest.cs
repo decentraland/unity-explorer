@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace DCL.Ipfs
+namespace ECS.SceneLifeCycle.Realm
 {
     /// <summary>
     ///     World manifest from asset-bundle-registry (e.g. /worlds/{realmName}/manifest).
@@ -13,6 +13,7 @@ namespace DCL.Ipfs
     [Serializable]
     public struct WorldManifest : IDisposable
     {
+        //Roads are analyzed
         public string[] roads;
         public string[] occupied;
         public string[] empty;
@@ -22,27 +23,19 @@ namespace DCL.Ipfs
         public SpawnCoordinateData? spawn_coordinate;
 
         [JsonIgnore]
-        private NativeHashSet<int2> roadParcels;
-
-        [JsonIgnore]
         private NativeHashSet<int2> occupiedParcels;
-
-        [JsonIgnore]
-        private NativeHashSet<int2> emptyParcels;
 
         [JsonIgnore]
         private bool isEmpty;
 
-        public WorldManifest(int2[] fallbackParcelData, int2[] valueEmptyParcels, int2[] valueRoadParcels)
+        public WorldManifest(int2[] valueOccupiedParcels, int2[] valueEmptyParcels, int2[] valueRoadParcels)
         {
             roads = null;
             occupied = null;
             empty = null;
             total = 0;
             spawn_coordinate = null;
-            roadParcels = ParcelArraysToSet(valueRoadParcels);
-            occupiedParcels = ParcelArraysToSet(fallbackParcelData);
-            emptyParcels = ParcelArraysToSet(valueEmptyParcels);
+            occupiedParcels = ParcelArraysToSet(valueOccupiedParcels);
             isEmpty = false;
         }
 
@@ -63,20 +56,16 @@ namespace DCL.Ipfs
                 empty = raw.empty,
                 total = raw.total,
                 spawn_coordinate = raw.spawn_coordinate,
-                roadParcels = ParseParcelStrings(raw.roads),
-                occupiedParcels = ParseParcelStrings(raw.occupied),
-                emptyParcels = ParseParcelStrings(raw.empty),
+                occupiedParcels = ParseParcelStringsToSet(raw.occupied),
                 isEmpty = false
             };
         }
 
         private static bool IsNullOrEmpty(string[]? a) => a == null || a.Length == 0;
 
-        public NativeHashSet<int2> GetRoadParcels() => roadParcels;
         public NativeHashSet<int2> GetOccupiedParcels() => occupiedParcels;
-        public NativeHashSet<int2> GetEmptyParcels() => emptyParcels;
 
-        private static NativeHashSet<int2> ParseParcelStrings(string[]? parcelStrings)
+        private static NativeHashSet<int2> ParseParcelStringsToSet(string[]? parcelStrings)
         {
             if (parcelStrings == null || parcelStrings.Length == 0)
                 return new NativeHashSet<int2>(0, Allocator.Persistent);
@@ -102,31 +91,18 @@ namespace DCL.Ipfs
             return set;
         }
 
-        public NativeList<int2> GetEmptyParcelsList()
-        {
-            NativeHashSet<int2> set = emptyParcels;
-            var list = new NativeList<int2>(set.Count, Allocator.Persistent);
-            foreach (int2 item in set)
-                list.Add(item);
-            return list;
-        }
-
         public void Dispose()
         {
             if (isEmpty)
                 return;
-            if (roadParcels.IsCreated) roadParcels.Dispose();
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
-            if (emptyParcels.IsCreated) emptyParcels.Dispose();
         }
 
         private static readonly NativeHashSet<int2> EMPTY_SET = new (0, Allocator.Persistent);
 
         public static WorldManifest Empty => new ()
         {
-            roadParcels = EMPTY_SET,
             occupiedParcels = EMPTY_SET,
-            emptyParcels = EMPTY_SET,
             isEmpty = true
         };
 

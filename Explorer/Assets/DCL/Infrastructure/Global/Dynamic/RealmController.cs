@@ -26,6 +26,7 @@ using System.Threading;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -140,10 +141,10 @@ namespace Global.Dynamic
             {
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(assetBundleRegistry, realm.ToString(), ct);
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(assetBundleRegistry, result.configurations.realmName, environment == DecentralandEnvironment.Zone, ct);
 
                 //The today environment requires a hardcoded content and lambda
-                if (environment.Equals(DecentralandEnvironment.Today))
+                if (environment == DecentralandEnvironment.Today)
                 {
                     result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
                     result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);

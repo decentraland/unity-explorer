@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS.SceneLifeCycle.Realm;
 
 namespace ECS
 {

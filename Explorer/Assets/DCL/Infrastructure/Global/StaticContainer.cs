@@ -59,6 +59,7 @@ using Runtime.Wearables;
 using System.Buffers;
 using DCL.UI;
 using ECS.Unity.AssetLoad.Cache;
+using Global.Dynamic;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 

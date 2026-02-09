@@ -19,6 +19,7 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.LaunchModes;
 
 namespace PortableExperiences.Controller
@@ -107,7 +108,6 @@ namespace PortableExperiences.Controller
 
             var realmData = new RealmData();
 
-            //TODO (JUANI): Why this even needs RealmData?
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
                     result),

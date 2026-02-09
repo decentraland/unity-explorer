@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
+using ECS.SceneLifeCycle.Realm;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -44,9 +45,6 @@ namespace DCL.Landscape
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
         public TreeData? Trees { get; private set; }
-
-        private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
-        private NativeParallelHashMap<int2, int> emptyParcelsData;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
@@ -146,8 +144,7 @@ namespace DCL.Landscape
             if (!isInitialized) return;
 
             //TODO (JUANI): Can WorldModel go away?
-            var worldModel = new WorldModel(worldManifest.GetOccupiedParcels());
-            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding);
+            TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -155,16 +152,11 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
-                    {
-                        await SetupEmptyParcelDataAsync(TerrainModel, worldModel.OwnedParcels,  worldManifest.GetEmptyParcelsList(), cancellationToken);
-                    }
-
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
                     // The MinParcel, MaxParcel already has padding, so padding zero works here,
                     // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
-                    OccupancyMap = CreateOccupancyMap(worldModel.OwnedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyMap = CreateOccupancyMap(worldManifest.GetOccupiedParcels(), TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
                     (int floor, int maxSteps) distanceFieldData = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
                     OccupancyFloor = distanceFieldData.floor;
                     MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
@@ -217,13 +209,8 @@ namespace DCL.Landscape
             finally
             {
                 float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                FreeMemory();
 
                 IsTerrainGenerated = true;
-
-                //TODO (JUANI): Clear data
-                // emptyParcels.Dispose();
-                // ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -233,25 +220,6 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-        }
-
-        private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel,
-            NativeHashSet<int2> ownedParcels, NativeList<int2> emptyParcels, CancellationToken cancellationToken)
-        {
-            JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
-                ref emptyParcelsData, ref emptyParcelsNeighborData,
-                emptyParcels.AsArray(), ownedParcels,
-                terrainModel.MinParcel, terrainModel.MaxParcel,
-                terrainGenData.heightScaleNerf);
-
-            await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-        }
-
-        // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
-        private void FreeMemory()
-        {
-            emptyParcelsNeighborData.Dispose();
-            emptyParcelsData.Dispose();
         }
 
         internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
