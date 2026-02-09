@@ -21,11 +21,12 @@ namespace DCL.CharacterMotion
             // Direction is already in world space
             Vector3 impulseVelocity = settings.ImpulseDirection.normalized * (settings.ImpulseForce / settings.CharacterMass);
 
-            // Apply impulse to gravity velocity (affects vertical component)
-            characterPhysics.GravityVelocity += new Vector3(0, impulseVelocity.y, 0);
-            
-            // Apply horizontal impulse to move velocity
-            characterPhysics.MoveVelocity.Velocity += new Vector3(impulseVelocity.x, 0, impulseVelocity.z);
+            // Add to external velocity (will decay over time via drag/friction)
+            characterPhysics.ExternalVelocity += impulseVelocity;
+
+            // Clamp to max
+            if (characterPhysics.ExternalVelocity.sqrMagnitude > settings.MaxExternalVelocity * settings.MaxExternalVelocity)
+                characterPhysics.ExternalVelocity = characterPhysics.ExternalVelocity.normalized * settings.MaxExternalVelocity;
 
             // Consume the impulse
             impulseInput.WasTriggered = false;

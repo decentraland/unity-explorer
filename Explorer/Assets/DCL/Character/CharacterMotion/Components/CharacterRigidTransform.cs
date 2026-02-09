@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
@@ -45,6 +45,10 @@ namespace DCL.CharacterMotion.Components
 
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
+
+        // External velocity from impulses (jump pads, knockbacks, etc.)
+        // Decays over time via drag/friction
+        public Vector3 ExternalVelocity;
 
         public struct MovementVelocity
         {

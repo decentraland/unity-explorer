@@ -168,8 +168,9 @@ namespace DCL.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
             
-            // Apply impulse (prototype)
+            // Apply impulse and external velocity decay
             ApplyImpulse.Execute(settings, ref rigidTransform, ref impulse);
+            ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);

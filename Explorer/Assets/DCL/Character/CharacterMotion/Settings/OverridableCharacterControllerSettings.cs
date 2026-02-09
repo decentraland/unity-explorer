@@ -335,6 +335,24 @@ namespace DCL.CharacterMotion.Settings
             set => impl.CharacterMass = value;
         }
 
+        public float ExternalAirDrag
+        {
+            get => impl.ExternalAirDrag;
+            set => impl.ExternalAirDrag = value;
+        }
+
+        public float ExternalFriction
+        {
+            get => impl.ExternalFriction;
+            set => impl.ExternalFriction = value;
+        }
+
+        public float MaxExternalVelocity
+        {
+            get => impl.MaxExternalVelocity;
+            set => impl.MaxExternalVelocity = value;
+        }
+
         public float HeadIKWeightChangeSpeed
         {
             get => impl.HeadIKWeightChangeSpeed;
