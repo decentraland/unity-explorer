@@ -1,7 +1,7 @@
 using Arch.Core;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
-using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace ECS.Unity.AvatarShape.Components

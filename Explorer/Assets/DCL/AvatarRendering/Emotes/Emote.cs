@@ -45,6 +45,8 @@ namespace DCL.AvatarRendering.Emotes
         public TrimmedEmoteDTO TrimmedDTO =>
             TrimmedModel.Asset!;
 
+        TrimmedAvatarAttachmentDTO? ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
+
         public void SetAmount(int amount)
         {
             Amount = amount;

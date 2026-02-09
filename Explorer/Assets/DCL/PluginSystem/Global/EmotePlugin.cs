@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -33,13 +34,15 @@ using UnityEngine.AddressableAssets;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
-using LoadOwnedEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadOwnedEmotesSystem;
 using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
 
 namespace DCL.PluginSystem.Global
 {
     public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
     {
+        private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
+        private static readonly URLSubdirectory EMOTES_COMPLEMENT_URL = URLSubdirectory.FromString("/emotes/");
+
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteStorage emoteStorage;
         private readonly IRealmData realmData;
@@ -64,6 +67,8 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
+        private readonly URLDomain assetBundleRegistryURL;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -86,7 +91,9 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
-            EntitiesAnalytics entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            ITrimmedEmoteStorage trimmedEmoteStorage,
+            URLDomain assetBundleRegistryURL)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -109,6 +116,8 @@ namespace DCL.PluginSystem.Global
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;
+            this.trimmedEmoteStorage = trimmedEmoteStorage;
+            this.assetBundleRegistryURL = assetBundleRegistryURL;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -129,9 +138,10 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 emoteStorage, realmData, customStreamingSubdirectory, entitiesAnalytics);
 
-            LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
-                new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteStorage, builderContentURL);
+            LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
+                new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
+                emoteStorage, trimmedEmoteStorage, EXPLORER_SUBDIRECTORY, EMOTES_COMPLEMENT_URL,
+                assetBundleRegistryURL, builderContentURL);
 
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);

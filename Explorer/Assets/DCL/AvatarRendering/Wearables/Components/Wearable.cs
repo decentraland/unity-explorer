@@ -49,6 +49,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public AvatarAttachmentDTO DTO => Model.Asset!;
         public TrimmedWearableDTO TrimmedDTO => TrimmedModel.Asset!;
+        TrimmedAvatarAttachmentDTO? ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
         public WearableType Type { get; private set; }
 

@@ -8,7 +8,7 @@ using ECS.StreamableLoading.Textures;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface ITrimmedWearable : IThumbnailAttachment
+    public interface ITrimmedWearable : IThumbnailAttachment, ITrimmedAvatarAttachment
     {
         public int Amount { get; set; }
         bool IsCompatibleWithBodyShape(string bodyShape);
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             return TrimmedDTO.Metadata.name;
         }
 
-        public void SetAmount(int amount)
+        void ITrimmedAvatarAttachment.SetAmount(int amount)
         {
             Amount = amount;
         }

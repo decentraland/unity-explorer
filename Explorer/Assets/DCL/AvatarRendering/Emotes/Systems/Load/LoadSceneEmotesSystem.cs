@@ -11,7 +11,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromRealmIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, EmotesResolution>(
+            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, TrimmedEmotesResponse>(
                     World!,
                     GetReportCategory(),
                     entity,
@@ -137,7 +137,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 return;
             }
 
-            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+            World.Add(entity, new StreamableResult(new TrimmedEmotesResponse(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
         private bool CreatePromiseIfRequired<TIntention>(

@@ -202,8 +202,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
+            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
             globalWorld.Add(promise.Entity, result);
 
             // ACT 2
@@ -293,8 +293,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
+            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
             globalWorld.Add(promise.Entity, result);
 
             // ACT 2
@@ -386,7 +386,7 @@ namespace ECS.Unity.AvatarShape.Tests
             var promise = sdkAvatarShapeComponent.LocalSceneEmotePromise.Value;
             var exception = new StreamableLoadingException(LogType.Exception, "Emote loading failed");
             LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
-            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, exception);
+            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(ReportData.UNSPECIFIED, exception);
             globalWorld.Add(promise.Entity, result);
 
             system.Update(0);
@@ -547,8 +547,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
+            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
             globalWorld.Add(secondPromise.Entity, result);
 
             system.Update(0);

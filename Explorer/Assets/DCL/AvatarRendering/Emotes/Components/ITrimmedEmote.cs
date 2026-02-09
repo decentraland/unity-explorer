@@ -4,7 +4,7 @@ using DCL.Ipfs;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public interface ITrimmedEmote : IThumbnailAttachment
+    public interface ITrimmedEmote : IThumbnailAttachment, ITrimmedAvatarAttachment
     {
         public int Amount { get; set; }
         TrimmedEmoteDTO TrimmedDTO { get; }
@@ -15,6 +15,11 @@ namespace DCL.AvatarRendering.Emotes
                 return "NAME_WEARABLE";
 
             return TrimmedDTO.Metadata.name;
+        }
+
+        void ITrimmedAvatarAttachment.SetAmount(int amount)
+        {
+            Amount = amount;
         }
 
         string GetCategory() =>

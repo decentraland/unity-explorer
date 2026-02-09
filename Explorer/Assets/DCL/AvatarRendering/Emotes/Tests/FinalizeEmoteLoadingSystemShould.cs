@@ -32,7 +32,7 @@ using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoad
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
-using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using Object = UnityEngine.Object; // Corrected alias
 
 namespace DCL.AvatarRendering.Emotes.Tests
@@ -454,7 +454,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             var emoteURN = new URN("urn:resolution:emote");
             var pointers = new List<URN> { emoteURN };
             var intention = new GetEmotesByPointersIntention(pointers, BodyShape.MALE);
-            var resolution = new EmotesResolution(RepoolableList<IEmote>.NewList(), 0);
+            var resolution = new TrimmedEmotesResponse(RepoolableList<IEmote>.NewList(), 0);
 
             CancellationTokenSource cts = intention.CancellationTokenSource;
             Assert.IsFalse(cts.IsCancellationRequested, "Intention CTS should not be cancelled initially.");
@@ -467,7 +467,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity promiseCarrierEntity = world.Create(promise);
 
             // Add the result to the promise's designated result-holding entity.
-            world.Add(promise.Entity, new StreamableLoadingResult<EmotesResolution>(resolution));
+            world.Add(promise.Entity, new StreamableLoadingResult<TrimmedEmotesResponse>(resolution));
 
             system.Update(0);
 

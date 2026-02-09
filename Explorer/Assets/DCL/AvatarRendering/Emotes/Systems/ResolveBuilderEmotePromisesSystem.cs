@@ -11,7 +11,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.GLTF;
 using System;
 
-using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Systems
@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void ResolveBuilderEmotePromise(Entity entity, ref GetOwnedEmotesFromRealmIntention intention, ref IPartitionComponent partitionComponent)
+        private void ResolveBuilderEmotePromise(Entity entity, ref GetTrimmedEmotesByParamIntention intention, ref IPartitionComponent partitionComponent)
         {
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
             }
 
             if (allEmotesProcessed)
-                World!.Add(entity, new StreamableResult(new EmotesResolution(intention.Result, intention.TotalAmount)));
+                World!.Add(entity, new StreamableResult(new TrimmedEmotesResponse(intention.Result, intention.TotalAmount)));
         }
 
         private bool TryCreateBuilderEmoteAssetPromises(in IEmote emote, in IPartitionComponent partitionComponent)

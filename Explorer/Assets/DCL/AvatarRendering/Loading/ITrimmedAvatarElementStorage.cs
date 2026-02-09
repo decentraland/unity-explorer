@@ -5,7 +5,7 @@ using DCL.Optimization.PerformanceBudgeting;
 
 namespace DCL.AvatarRendering.Loading
 {
-    public interface ITrimmedAvatarElementStorage<TElement, in TDTO> where TElement: IThumbnailAttachment where TDTO: TrimmedAvatarAttachmentDTO
+    public interface ITrimmedAvatarElementStorage<TElement, in TDTO> where TElement: ITrimmedAvatarAttachment where TDTO: TrimmedAvatarAttachmentDTO
     {
         /// <summary>
         ///     Attempts to retrieve an element from the catalog.

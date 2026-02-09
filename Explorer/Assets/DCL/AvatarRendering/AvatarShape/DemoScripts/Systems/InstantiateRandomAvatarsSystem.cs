@@ -33,7 +33,7 @@ using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.TrimmedWearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetTrimmedWearableByParamIntention>;
 using Profile = DCL.Profiles.Profile;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -184,7 +184,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var collectionPromises = new List<ParamPromise>
             {
                 ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[]
+                    new GetTrimmedWearableByParamIntention(new[]
                     {
                         ("collectionType", "base-wearable"), ("pageSize", "282"),
                     }, "DummyUser", new List<ITrimmedWearable>(), 0),
@@ -215,7 +215,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             foreach (ParamPromise assetPromise in randomAvatarRequest.CollectionPromise)
             {
-                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<WearablesResponse> _))
+                if (!assetPromise.TryGetResult(World, out StreamableLoadingResult<TrimmedWearablesResponse> _))
                     return;
             }
 
@@ -224,7 +224,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             foreach (ParamPromise assetPromise in randomAvatarRequest.CollectionPromise)
             {
-                assetPromise.TryConsume(World, out StreamableLoadingResult<WearablesResponse> baseWearables);
+                assetPromise.TryConsume(World, out StreamableLoadingResult<TrimmedWearablesResponse> baseWearables);
 
                 if (baseWearables.Succeeded)
                     GenerateRandomizers(baseWearables, male, female);
@@ -238,7 +238,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             World.Destroy(entity);
         }
 
-        private void GenerateRandomizers(StreamableLoadingResult<WearablesResponse> baseWearables, AvatarRandomizer male, AvatarRandomizer female)
+        private void GenerateRandomizers(StreamableLoadingResult<TrimmedWearablesResponse> baseWearables, AvatarRandomizer male, AvatarRandomizer female)
         {
             foreach (var wearable in baseWearables.Asset.Wearables)
             {

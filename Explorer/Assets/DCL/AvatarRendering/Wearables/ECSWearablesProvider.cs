@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Utility;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.TrimmedWearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetTrimmedWearableByParamIntention>;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.Wearables
 
             results ??= new List<ITrimmedWearable>();
 
-            var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            var intention = new GetTrimmedWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
@@ -171,7 +171,7 @@ namespace DCL.AvatarRendering.Wearables
             // We need a temporary buffer because the Intention expects List<ITrimmedWearable>
             var tempResultsBuffer = new List<ITrimmedWearable>();
 
-            var intention = new GetWearableByParamIntention(localParams, web3IdentityCache.Identity!.Address, tempResultsBuffer, 0);
+            var intention = new GetTrimmedWearableByParamIntention(localParams, web3IdentityCache.Identity!.Address, tempResultsBuffer, 0);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 

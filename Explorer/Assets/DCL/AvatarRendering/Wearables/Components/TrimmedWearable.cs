@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
@@ -16,6 +17,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public TrimmedWearableDTO TrimmedDTO => TrimmedModel.Asset!;
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
+        TrimmedAvatarAttachmentDTO ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
         public int Amount { get; set; }
 

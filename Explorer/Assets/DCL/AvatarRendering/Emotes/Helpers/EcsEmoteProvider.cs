@@ -12,8 +12,8 @@ using System.Threading;
 using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
-using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetOwnedEmotesFromRealmIntention>;
+using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
+    DCL.AvatarRendering.Emotes.GetTrimmedEmotesByParamIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -81,7 +81,7 @@ namespace DCL.AvatarRendering.Emotes
                 loadingArguments = new CommonLoadingArguments(url);
             }
 
-            var intention = new GetOwnedEmotesFromRealmIntention(loadingArguments.Value, needsBuilderAPISigning);
+            var intention = new GetTrimmedEmotesByParamIntention(loadingArguments.Value, needsBuilderAPISigning);
             var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)

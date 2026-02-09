@@ -20,9 +20,9 @@ using System.Threading;
 using UnityEngine;
 using Utility.Arch;
 using Utility.Multithreading;
-using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace CrdtEcsBridge.RestrictedActions

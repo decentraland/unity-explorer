@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Tests;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems.Load;
 using DCL.Ipfs;
 using ECS;
 using ECS.StreamableLoading.Tests;
@@ -13,12 +14,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     [TestFixture]
-    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, WearablesResponse, GetWearableByParamIntention>
+    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadTrimmedWearablesByParamSystem, TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>
     {
         private TrimmedWearableStorage trimmedWearableStorage;
         private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
@@ -29,18 +29,18 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
         private int totalAmount => 0;
 
-        protected override LoadWearablesByParamSystem CreateSystem()
+        protected override LoadTrimmedWearablesByParamSystem CreateSystem()
         {
             trimmedWearableStorage = new TrimmedWearableStorage();
 
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
+            return new LoadTrimmedWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), URLDomain.EMPTY, new WearableStorage(), trimmedWearableStorage);
         }
 
-        protected override void AssertSuccess(WearablesResponse asset)
+        protected override void AssertSuccess(TrimmedWearablesResponse asset)
         {
             base.AssertSuccess(asset);
 
@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             await ConcludeSuccess();
         }
 
-        protected override GetWearableByParamIntention CreateSuccessIntention()
+        protected override GetTrimmedWearableByParamIntention CreateSuccessIntention()
         {
             IURLBuilder urlBuilder = Substitute.For<IURLBuilder>();
             urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
@@ -72,13 +72,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             system.urlBuilder = urlBuilder;
 
-            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<ITrimmedWearable>(), totalAmount);
+            return new GetTrimmedWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<ITrimmedWearable>(), totalAmount);
         }
 
-        protected override GetWearableByParamIntention CreateNotFoundIntention() =>
+        protected override GetTrimmedWearableByParamIntention CreateNotFoundIntention() =>
             new (Array.Empty<(string, string)>(), failPath, new List<ITrimmedWearable>(), totalAmount);
 
-        protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
+        protected override GetTrimmedWearableByParamIntention CreateWrongTypeIntention() =>
             new (Array.Empty<(string, string)>(), wrongTypePath, new List<ITrimmedWearable>(), totalAmount);
     }
 }
