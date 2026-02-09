@@ -19,9 +19,14 @@ namespace DCL.PrivateWorlds.UI
         [SerializeField] private GameObject accessDeniedContent = null!;
         
         [Header("Password")]
-        [SerializeField] private  TMP_InputField passwordInputField = null!;
+        [SerializeField] private TMP_InputField passwordInputField = null!;
         [SerializeField] private GameObject wrongPasswordWarningObject = null!;
         [SerializeField] private TMP_Text? wrongPasswordMessageText;
+
+        [Header("Password Visibility")]
+        [SerializeField] private Button passwordVisibilityToggleButton = null!;
+        [SerializeField] private GameObject passwordVisibleIcon = null!;
+        [SerializeField] private GameObject passwordHiddenIcon = null!;
 
         [Header("Buttons")]
         [SerializeField] private Button passwordConfirmButton = null!;
@@ -41,6 +46,18 @@ namespace DCL.PrivateWorlds.UI
         /// Password entered by user.
         /// </summary>
         public string EnteredPassword => passwordInputField != null ? passwordInputField.text : string.Empty;
+
+        private void OnEnable()
+        {
+            passwordVisibilityToggleButton.onClick.AddListener(TogglePasswordVisibility);
+            passwordInputField.onValueChanged.AddListener(OnPasswordValueChanged);
+        }
+
+        private void OnDisable()
+        {
+            passwordVisibilityToggleButton.onClick.RemoveListener(TogglePasswordVisibility);
+            passwordInputField.onValueChanged.RemoveListener(OnPasswordValueChanged);
+        }
 
         /// <summary>
         /// Configures the popup for the given parameters.
@@ -108,7 +125,12 @@ namespace DCL.PrivateWorlds.UI
             if (passwordInputField != null)
             {
                 passwordInputField.text = string.Empty;
+                passwordInputField.contentType = TMP_InputField.ContentType.Password;
+                passwordInputField.ForceLabelUpdate();
             }
+
+            UpdatePasswordVisibilityState();
+
             if (wrongPasswordWarningObject != null)
             {
                 wrongPasswordWarningObject.SetActive(false);
@@ -125,6 +147,41 @@ namespace DCL.PrivateWorlds.UI
                 passwordInputField.Select();
                 passwordInputField.ActivateInputField();
             }
+        }
+
+        private void TogglePasswordVisibility()
+        {
+            passwordInputField.contentType = passwordInputField.contentType == TMP_InputField.ContentType.Password
+                ? TMP_InputField.ContentType.Standard
+                : TMP_InputField.ContentType.Password;
+
+            passwordInputField.ForceLabelUpdate();
+            UpdatePasswordVisibilityState();
+        }
+
+        private void OnPasswordValueChanged(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                passwordInputField.contentType = TMP_InputField.ContentType.Password;
+                passwordInputField.ForceLabelUpdate();
+            }
+
+            UpdatePasswordVisibilityState();
+        }
+
+        private void UpdatePasswordVisibilityState()
+        {
+            bool hasText = passwordInputField != null && !string.IsNullOrEmpty(passwordInputField.text);
+            bool isVisible = passwordInputField != null && passwordInputField.contentType != TMP_InputField.ContentType.Password;
+
+            passwordVisibilityToggleButton.gameObject.SetActive(hasText);
+
+            if (passwordVisibleIcon != null)
+                passwordVisibleIcon.SetActive(isVisible);
+
+            if (passwordHiddenIcon != null)
+                passwordHiddenIcon.SetActive(!isVisible);
         }
     }
 }

@@ -78,6 +78,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         WorldContentServer,
         WorldPermissions,
+        WorldComms,
 
         Servers,
 

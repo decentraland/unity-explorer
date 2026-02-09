@@ -180,10 +180,49 @@ namespace DCL.PrivateWorlds
             }
         }
 
-        public UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
+        public async UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
         {
-            // TODO: Call world content server API to validate. For now, accept only "1234" for testing.
-            return UniTask.FromResult(password == "1234");
+            try
+            {
+                string baseUrl = urlsSource.Url(DecentralandUrl.WorldComms);
+                string url = string.Format(baseUrl, worldName);
+
+                string metadata = $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(password)}\"}}";
+
+                long statusCode = await webRequestController
+                    .SignedFetchPostAsync(url, metadata, ct)
+                    .StatusCodeAsync();
+
+                ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {statusCode}");
+                return statusCode != 401;
+            }
+            catch (UnityWebRequestException e)
+            {
+                ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': caught status {e.ResponseCode}");
+                return e.ResponseCode != 401;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}' failed: {e.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Escapes special characters in a string for safe JSON embedding.
+        /// </summary>
+        private static string EscapeJsonString(string value)
+        {
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\t", "\\t");
         }
 
         /// <summary>
