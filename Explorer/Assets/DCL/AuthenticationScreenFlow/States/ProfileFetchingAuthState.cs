@@ -66,7 +66,7 @@ namespace DCL.AuthenticationScreenFlow
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 view.Hide(SLIDE);
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
                 currentState.Value = isCached ? AuthStatus.FetchingProfileCached : AuthStatus.FetchingProfile;
 
                 // Close IdentityValidation span before starting profile fetch
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                 try
                 {

@@ -18,7 +18,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private readonly VerificationOTPAuthView view;
 
         public event Action<string, bool>? OTPVerified;
@@ -32,8 +31,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ICompositeWeb3Provider compositeWeb3Provider,
-            SentryTransactionManager sentryTransactionManager) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             view = viewInstance.VerificationOTPAuthView;
 
@@ -41,7 +39,6 @@ namespace DCL.AuthenticationScreenFlow
             this.controller = controller;
             this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
-            this.sentryTransactionManager = sentryTransactionManager;
 
             email = string.Empty;
             loginCt = CancellationToken.None;
@@ -93,7 +90,7 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (Exception e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                     view.Hide(SLIDE);
@@ -111,33 +108,32 @@ namespace DCL.AuthenticationScreenFlow
 
                 var web3AuthSpan = new SpanData
                 {
-                    TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = "Web3Authentication",
                     SpanOperation = "auth.web3_login",
                     Depth = 1,
                 };
 
-                sentryTransactionManager.StartSpan(web3AuthSpan);
+                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, web3AuthSpan);
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
 
                 // Close Web3Authentication span before transitioning to profile fetching
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
             catch (OperationCanceledException)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
 
                 view.Hide(SLIDE);
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (SignatureExpiredException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
@@ -145,7 +141,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (Web3SignatureException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
@@ -153,7 +149,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (CodeVerificationException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
@@ -161,7 +157,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (Exception e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                 view.Hide(SLIDE);
@@ -190,7 +186,7 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (Exception e)
                 {
-                    sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
                     view.Hide(SLIDE);

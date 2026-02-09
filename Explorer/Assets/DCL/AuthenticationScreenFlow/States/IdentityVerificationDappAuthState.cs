@@ -26,7 +26,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
-        private readonly SentryTransactionManager sentryTransactionManager;
 
         public IdentityVerificationDappAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -35,8 +34,7 @@ namespace DCL.AuthenticationScreenFlow
             ReactiveProperty<AuthStatus> currentState,
             ICompositeWeb3Provider compositeWeb3Provider,
             IAppArgs appArgs,
-            List<Resolution> possibleResolutions,
-            SentryTransactionManager sentryTransactionManager) : base(viewInstance)
+            List<Resolution> possibleResolutions) : base(viewInstance)
         {
             this.machine = machine;
             view = viewInstance.VerificationDappAuthView;
@@ -45,7 +43,6 @@ namespace DCL.AuthenticationScreenFlow
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.appArgs = appArgs;
             this.possibleResolutions = possibleResolutions;
-            this.sentryTransactionManager = sentryTransactionManager;
         }
 
         public void Enter((LoginMethod method, CancellationToken ct) payload)
@@ -71,22 +68,21 @@ namespace DCL.AuthenticationScreenFlow
 
                 var web3AuthSpan = new SpanData
                 {
-                    TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = "Web3Authentication",
                     SpanOperation = "auth.web3_login",
                     Depth = 1,
                 };
 
-                sentryTransactionManager.StartSpan(web3AuthSpan);
+                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, web3AuthSpan);
 
                 compositeWeb3Provider.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
 
                 // Close auth spans before transitioning to profile fetching
                 if (currentState.Value == AuthStatus.VerificationInProgress)
-                    sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close CodeVerification
+                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close CodeVerification
 
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close Web3Authentication
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close Web3Authentication
 
                 view.Hide(OUT);
                 machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
@@ -165,13 +161,12 @@ namespace DCL.AuthenticationScreenFlow
 
             var verificationSpan = new SpanData
             {
-                TransactionName = LOADING_TRANSACTION_NAME,
                 SpanName = "CodeVerification",
                 SpanOperation = "auth.code_verification",
                 Depth = 1,
             };
 
-            sentryTransactionManager.StartSpan(verificationSpan);
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, verificationSpan);
 
             // Hide non-interactable Login Screen
             viewInstance.LoginSelectionAuthView.Hide();
@@ -185,10 +180,10 @@ namespace DCL.AuthenticationScreenFlow
         {
             // Close CodeVerification span if it was started
             if (currentState.Value == AuthStatus.VerificationInProgress)
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
 
             // Close Web3Authentication span
-            sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
+            SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
         }
 
         private void RestoreResolutionAndScreenMode()

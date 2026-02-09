@@ -156,19 +156,19 @@ namespace DCL.AuthenticationScreenFlow
             fsm.AddStates(
                 new InitAuthState(viewInstance, buildData.InstallSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions, sentryTransactionManager),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
             );
 
             if (enableEmailOTP)
             {
-                var otpVerificationState = new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, sentryTransactionManager);
+                var otpVerificationState = new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator);
                 otpVerificationState.OTPVerified += (email, success) => OTPVerified?.Invoke(email, success);
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
                 fsm.AddStates(
-                    new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, sentryTransactionManager, selfProfile),
+                    new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
                     otpVerificationState,
                     new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
                 );
@@ -196,7 +196,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
@@ -221,7 +221,7 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
