@@ -157,9 +157,9 @@ namespace DCL.Backpack.EmotesSection
 
             async UniTaskVoid RequestPageAsync(CancellationToken ct)
             {
-                IReadOnlyList<IEmote> emotes;
+                IReadOnlyList<ITrimmedEmote> emotes;
 
-                using var _ = ListPool<IEmote>.Get(out var customOwnedEmotes);
+                using var _ = ListPool<ITrimmedEmote>.Get(out var customOwnedEmotes);
                 customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
 
                 int totalAmount = await emoteProvider.GetOwnedEmotesAsync(
@@ -262,7 +262,7 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void SetGridElements(IReadOnlyList<IEmote> emotes)
+        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = emotes.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -340,7 +340,7 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(1, true);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment emote, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
