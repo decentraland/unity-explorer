@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
 using DCL.Ipfs;
 using ECS.Abstract;
@@ -12,6 +13,7 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 
@@ -25,8 +27,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveStaticPointersSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity cameraEntity;
+        private readonly IDecentralandUrlsSource urlsSource;
 
-        internal ResolveStaticPointersSystem(World world) : base(world) { }
+        internal ResolveStaticPointersSystem(World world, IDecentralandUrlsSource urlsSource) : base(world)
+        {
+            this.urlsSource = urlsSource;
+        }
 
         public override void Initialize()
         {
@@ -57,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    CreateSceneFacadePromise.Execute(World, entity, realm, in definition, partitionComponent);
+                    CreateSceneFacadePromise.Execute(World, entity, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)), in definition, partitionComponent);
                     return;
                 }
             }

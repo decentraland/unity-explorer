@@ -20,7 +20,7 @@ using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 
 namespace PortableExperiences.Controller
 {
@@ -109,7 +109,7 @@ namespace PortableExperiences.Controller
             var realmData = new RealmData();
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
+                new IpfsRealm(portableExperiencePath,
                     result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,

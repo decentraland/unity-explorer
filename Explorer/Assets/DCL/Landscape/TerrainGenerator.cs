@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using TerrainProto;
 using Unity.Collections;
@@ -143,7 +144,6 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            //TODO (JUANI): Can WorldModel go away?
             TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);

@@ -1,4 +1,6 @@
 ﻿using Arch.Core;
+using DCL.Browser.DecentralandUrls;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Utilities;
 using ECS.Prioritization;
@@ -36,9 +38,22 @@ namespace ECS.SceneLifeCycle.Tests
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
                 partitionSettings = Substitute.For<IPartitionSettings>(),
-                new HashSet<Vector2Int>(), realmData);
+                new HashSet<Vector2Int>(), realmData, DecentralandUrlsSource.CreateForTest());
+
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
+        }
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
         }
 
         [TearDown]

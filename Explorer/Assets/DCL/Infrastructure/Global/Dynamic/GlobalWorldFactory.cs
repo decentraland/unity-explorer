@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -55,7 +56,7 @@ namespace Global.Dynamic
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundlesURL;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -81,10 +82,14 @@ namespace Global.Dynamic
         private readonly bool isBuilderCollectionPreview;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
-            URLDomain assetBundlesURL, IRealmData realmData,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
+            CameraSamplingData cameraSamplingData,
+            RealmSamplingData realmSamplingData,
+            IDecentralandUrlsSource urlsSource,
+            IRealmData realmData,
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
+            IDebugContainerBuilder debugContainerBuilder,
+            IScenesCache scenesCache,
+            HybridSceneParams hybridSceneParams,
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             HashSet<Vector2Int> roadCoordinates,
@@ -110,7 +115,7 @@ namespace Global.Dynamic
 
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
-            this.assetBundlesURL = assetBundlesURL;
+            this.urlsSource = urlsSource;
             this.globalPlugins = globalPlugins;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
@@ -158,10 +163,12 @@ namespace Global.Dynamic
 
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
+            var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams);
             else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
+                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
@@ -169,8 +176,8 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
-            LoadStaticPointersSystem.InjectToWorld(ref builder, roadCoordinates, realmData);
-            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
+            LoadStaticPointersSystem.InjectToWorld(ref builder, roadCoordinates, realmData, urlsSource);
+            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData, urlsSource);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
             // are replace by increasing radius
@@ -178,11 +185,11 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings, roadCoordinates, realmData);
+                partitionSettings, roadCoordinates, realmData, urlsSource);
 
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
-            ResolveStaticPointersSystem.InjectToWorld(ref builder);
+            ResolveStaticPointersSystem.InjectToWorld(ref builder, urlsSource);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
@@ -204,7 +211,7 @@ namespace Global.Dynamic
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
-            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData);
+            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData, urlsSource);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController);
@@ -220,7 +227,7 @@ namespace Global.Dynamic
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache, staticContainer.RealmPartitionSettings),
                 UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
-                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
+                ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), urlsSource, sceneLoadingLimit),
             };
 
             SystemGroupWorld worldSystems = builder.Finish();

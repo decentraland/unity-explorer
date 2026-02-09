@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.RequestsHub;
 using System;
@@ -11,14 +10,16 @@ namespace DCL.WebRequests.Dumper
     public class WebRequestDumpRecorder : IWebRequestController
     {
         private readonly IWebRequestController origin;
-        private readonly WebRequestsAnalyticsContainer analyticsContainer;
+        private readonly DebugMetricsAnalyticsHandler analyticsContainer;
+        private readonly WebRequestDumpAnalyticsHandler webRequestDumpAnalyticsHandler;
 
         IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
 
-        public WebRequestDumpRecorder(IWebRequestController origin, WebRequestsAnalyticsContainer analyticsContainer)
+        public WebRequestDumpRecorder(IWebRequestController origin, DebugMetricsAnalyticsHandler analyticsContainer, WebRequestDumpAnalyticsHandler webRequestDumpAnalyticsHandler)
         {
             this.origin = origin;
             this.analyticsContainer = analyticsContainer;
+            this.webRequestDumpAnalyticsHandler = webRequestDumpAnalyticsHandler;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -67,7 +68,7 @@ namespace DCL.WebRequests.Dumper
             {
                 var recorder = new RequestMetricRecorder(ctor());
                 WebRequestsDumper.Instance.activeMetrics[MetricsRegistry.INDICES[type]] = recorder;
-                analyticsContainer.AddFlatMetric(recorder);
+                webRequestDumpAnalyticsHandler.AddFlatMetric(recorder);
             }
         }
     }

@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

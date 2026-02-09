@@ -44,14 +44,9 @@ namespace DCL.RealmNavigation
             DecentralandEnvironment dclEnvironment)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
-            var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
+            var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
-
-            var assetBundleRegistry =
-                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
-                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
-                    : URLDomain.EMPTY;
 
             var realmController = new RealmController(
                 identityCache,
@@ -67,7 +62,6 @@ namespace DCL.RealmNavigation
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
                 localSceneDevelopment,
-                assetBundleRegistry,
                 appArgs,
                 urlsSource,
                 dclEnvironment,

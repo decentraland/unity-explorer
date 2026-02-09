@@ -63,7 +63,6 @@ namespace Global.Dynamic
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-        private readonly URLDomain assetBundleRegistry;
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
@@ -100,7 +99,6 @@ namespace Global.Dynamic
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
             bool isLocalSceneDevelopment,
-            URLDomain assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
@@ -118,7 +116,6 @@ namespace Global.Dynamic
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.realmNavigatorDebugView = realmNavigatorDebugView;
-            this.assetBundleRegistry = assetBundleRegistry;
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
@@ -141,19 +138,12 @@ namespace Global.Dynamic
             {
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(assetBundleRegistry, result.configurations.realmName, environment == DecentralandEnvironment.Zone, ct);
-
-                //The today environment requires a hardcoded content and lambda
-                if (environment == DecentralandEnvironment.Today)
-                {
-                    result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
-                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);
-                }
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment == DecentralandEnvironment.Zone, ct);
 
                 string hostname = ResolveHostname(realm, result);
 
                 realmData.Reconfigure(
-                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
+                    new IpfsRealm(realm, result),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
                     result.configurations.networkId,
                     ResolveCommsAdapter(result),
@@ -405,6 +395,5 @@ namespace Global.Dynamic
             int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
             return index >= 0 ? input.Substring(index) : string.Empty;
         }
-
     }
 }
