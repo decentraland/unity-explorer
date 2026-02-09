@@ -910,7 +910,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     donationsService,
                     realmNavigator,
-                    friendServiceProxy
+                    friendServiceProxy,
+                    worldPermissionsService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

@@ -60,6 +60,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -173,6 +174,7 @@ namespace DCL.PluginSystem.Global
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -241,7 +243,8 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
-            ObjectProxy<IFriendsService> friendServiceProxy)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -311,6 +314,7 @@ namespace DCL.PluginSystem.Global
             this.donationsService = donationsService;
             this.realmNavigator = realmNavigator;
             this.friendServiceProxy = friendServiceProxy;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public void Dispose()
@@ -524,7 +528,7 @@ namespace DCL.PluginSystem.Global
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
             placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
-                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, worldPermissionsService);
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();

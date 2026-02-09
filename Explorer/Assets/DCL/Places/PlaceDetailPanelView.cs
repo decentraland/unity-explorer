@@ -1,7 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Communities;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
@@ -55,8 +56,13 @@ namespace DCL.Places
         [SerializeField] private Button shareButton = null!;
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private GameObject startExitNavigationButtonsContainer = null!;
+        [SerializeField] private GameObject navigationButtonsDummy = null!;
         [SerializeField] private Button startNavigationButton = null!;
         [SerializeField] private Button exitNavigationButton = null!;
+
+        [Header("World Access")]
+        [SerializeField] private Button enterPasswordButton = null!;
+        [SerializeField] private GameObject invitationOnlyLabel = null!;
 
         [Header("Configuration")]
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
@@ -114,6 +120,7 @@ namespace DCL.Places
             homeToggle.Toggle.onValueChanged.AddListener(value => HomeToggleChanged?.Invoke(currentPlaceInfo, value));
             shareButton.onClick.AddListener(() => OpenCardContextMenu(shareButton.transform.position));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
+            enterPasswordButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
             startNavigationButton.onClick.AddListener(() => StartNavigationButtonClicked?.Invoke(currentPlaceInfo));
             exitNavigationButton.onClick.AddListener(() => ExitNavigationButtonClicked?.Invoke());
 
@@ -186,8 +193,12 @@ namespace DCL.Places
 
             bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
             startExitNavigationButtonsContainer.SetActive(!isWorld);
+            navigationButtonsDummy.SetActive(isWorld);
             if (!isWorld)
                 SetNavigation(isNavigating);
+
+            // Default: show JUMP IN for all worlds; the controller updates asynchronously after permission check
+            SetWorldAccessState(WorldAccessCheckResult.Allowed);
 
             SetCategories(placeInfo.categories);
         }
@@ -274,6 +285,17 @@ namespace DCL.Places
         {
             startNavigationButton.gameObject.SetActive(!isNavigating);
             exitNavigationButton.gameObject.SetActive(isNavigating);
+        }
+
+        /// <summary>
+        /// Configures which action button to show based on the world's access state.
+        /// Allowed/CheckFailed: JUMP IN; PasswordRequired: ENTER PASSWORD; AccessDenied: INVITATION ONLY label.
+        /// </summary>
+        public void SetWorldAccessState(WorldAccessCheckResult accessState)
+        {
+            jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
+            enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
+            invitationOnlyLabel.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
         }
 
         private void OpenCardContextMenu(Vector2 position)
