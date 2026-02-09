@@ -25,6 +25,7 @@ namespace DCL.AvatarRendering.Emotes
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
+            TrimmedModel = new StreamableLoadingResult<TrimmedEmoteDTO>(model.Asset!.Convert(this.GetThumbnail().Value));
             IsLoading = isLoading;
         }
 
