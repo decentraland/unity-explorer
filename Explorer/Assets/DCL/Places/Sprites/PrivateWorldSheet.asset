@@ -103,7 +103,7 @@ MonoBehaviour:
       m_Y: 96
       m_Width: 32
       m_Height: 32
-    m_Scale: 1
+    m_Scale: 1.2
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -651742661, guid: 0c0a4c16861e77a4a9011b51d8e6d336, type: 3}
@@ -119,7 +119,7 @@ MonoBehaviour:
       m_Y: 96
       m_Width: 32
       m_Height: 32
-    m_Scale: 1
+    m_Scale: 1.2
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
     sprite: {fileID: -906508955, guid: 0c0a4c16861e77a4a9011b51d8e6d336, type: 3}

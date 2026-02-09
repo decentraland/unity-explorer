@@ -20,8 +20,11 @@ namespace DCL.PrivateWorlds.UI
         
         [Header("Password")]
         [SerializeField] private TMP_InputField passwordInputField = null!;
+        [SerializeField] private Image? passwordInputOutlineImage;
         [SerializeField] private GameObject wrongPasswordWarningObject = null!;
-        [SerializeField] private TMP_Text? wrongPasswordMessageText;
+
+        private static readonly Color PASSWORD_INPUT_ERROR_OUTLINE_COLOR = new (1f, 0.18f, 0.33f, 1f); // bright red for wrong password
+        private static readonly Color PASSWORD_INPUT_DEFAULT_OUTLINE_COLOR = new (0.988f, 0.988f, 0.988f, 1f); // default outline (light grey/white)
 
         [Header("Password Visibility")]
         [SerializeField] private Button passwordVisibilityToggleButton = null!;
@@ -89,9 +92,10 @@ namespace DCL.PrivateWorlds.UI
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 wrongPasswordWarningObject.SetActive(true);
-                if (wrongPasswordMessageText != null)
-                    wrongPasswordMessageText.text = errorMessage;
+                SetPasswordInputOutlineError(true);
             }
+            else
+                SetPasswordInputOutlineError(false);
         }
 
         private void ConfigureForAccessDenied()
@@ -130,11 +134,20 @@ namespace DCL.PrivateWorlds.UI
             }
 
             UpdatePasswordVisibilityState();
+            SetPasswordInputOutlineError(false);
 
             if (wrongPasswordWarningObject != null)
             {
                 wrongPasswordWarningObject.SetActive(false);
             }
+        }
+
+        private void SetPasswordInputOutlineError(bool isError)
+        {
+            if (passwordInputOutlineImage == null)
+                return;
+
+            passwordInputOutlineImage.color = isError ? PASSWORD_INPUT_ERROR_OUTLINE_COLOR : PASSWORD_INPUT_DEFAULT_OUTLINE_COLOR;
         }
 
         /// <summary>

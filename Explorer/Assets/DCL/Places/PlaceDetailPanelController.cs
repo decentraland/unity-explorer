@@ -123,7 +123,7 @@ namespace DCL.Places
             try
             {
                 WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-                viewInstance!.SetWorldAccessState(context.Result);
+                viewInstance!.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

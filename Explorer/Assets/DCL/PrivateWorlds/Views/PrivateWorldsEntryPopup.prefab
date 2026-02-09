@@ -1395,7 +1395,7 @@ GameObject:
   - component: {fileID: 3326478271341785494}
   - component: {fileID: 1233296801925906640}
   m_Layer: 5
-  m_Name: Background
+  m_Name: Outline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1441,7 +1441,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.6627451, g: 0.5176471, b: 0.7882353, a: 1}
+  m_Color: {r: 0.87843144, g: 0, b: 0, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2871,8 +2871,8 @@ MonoBehaviour:
   passwordRequiredContent: {fileID: 721885585085616420}
   accessDeniedContent: {fileID: 5551752513456188670}
   passwordInputField: {fileID: 5606508522907202527}
+  passwordInputOutlineImage: {fileID: 3326478271341785494}
   wrongPasswordWarningObject: {fileID: 7889654903446612753}
-  wrongPasswordMessageText: {fileID: 8817625477380620337}
   passwordVisibilityToggleButton: {fileID: 1861698907944412279}
   passwordVisibleIcon: {fileID: 771255638131188436}
   passwordHiddenIcon: {fileID: 4938482166890824996}
@@ -2946,7 +2946,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Password not correct
+  m_text: Incorrect Password. Please Try Again
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -2955,8 +2955,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278452448
+  m_fontColor: {r: 0.87843144, g: 0, b: 0.015686275, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2980,7 +2980,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
