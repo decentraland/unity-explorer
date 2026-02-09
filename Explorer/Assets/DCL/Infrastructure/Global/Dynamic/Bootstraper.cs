@@ -278,6 +278,9 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
+            string realm = await realmUrls.StartingRealmAsync(ct);
+            startingRealm = URLDomain.FromString(realm);
+
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
