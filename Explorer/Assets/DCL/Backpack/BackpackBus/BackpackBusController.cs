@@ -26,10 +26,12 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEmoteStorage emoteStorage;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
-        
+        private readonly IEmoteProvider emotesProvider;
+
         private readonly CancellationTokenSource fetchWearableCts = new ();
+        private readonly CancellationTokenSource fetchEmoteCts = new ();
         private CancellationTokenSource equipOutfitCts = new ();
-        
+
         private int currentEmoteSlot = -1;
 
         public BackpackBusController(
@@ -39,7 +41,8 @@ namespace DCL.Backpack.BackpackBus
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
-            IWearablesProvider wearablesProvider)
+            IWearablesProvider wearablesProvider,
+            IEmoteProvider emotesProvider)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -48,6 +51,7 @@ namespace DCL.Backpack.BackpackBus
             this.emoteStorage = emoteStorage;
             this.equippedWearables = equippedWearables;
             this.wearablesProvider = wearablesProvider;
+            this.emotesProvider = emotesProvider;
 
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
             this.backpackCommandBus.UnEquipWearableMessageReceived += HandleUnEquipWearableCommand;
@@ -81,9 +85,10 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.UnEquipAllWearablesMessageReceived -= HandleUnEquipAllWearables;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
             backpackCommandBus.EquipOutfitMessageReceived -= HandleEquipOutfitCommand;
-            
+
             equipOutfitCts.SafeCancelAndDispose();
             fetchWearableCts.SafeCancelAndDispose();
+            fetchEmoteCts.SafeCancelAndDispose();
         }
 
         private void HandleEquipOutfitCommand(BackpackEquipOutfitCommand command)
@@ -173,14 +178,11 @@ namespace DCL.Backpack.BackpackBus
             ListPool<IWearable>.Release(incompatibleWearables);
         }
 
-        private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command)
-        {
-            if (!emoteStorage.TryGetElement(command.Id, out IEmote emote))
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot equip emote, not found: {command.Id}");
-                return;
-            }
+        private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command) =>
+            EmoteProviderHelper.FetchEmoteByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => EquipEmote(emote, command), fetchEmoteCts.Token).Forget();
 
+        private void EquipEmote(IEmote emote, BackpackEquipEmoteCommand command)
+        {
             int slot = command.Slot ?? currentEmoteSlot;
 
             if (slot is < 0 or >= 10)
@@ -191,6 +193,7 @@ namespace DCL.Backpack.BackpackBus
 
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
             backpackEventBus.SendEquipEmote(slot, emote, command.IsManuallyEquipped);
+            command.EndAction?.Invoke();
         }
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
@@ -222,10 +225,13 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
         }
 
-        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command)
+        private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command) =>
+            EmoteProviderHelper.FetchEmoteByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token).Forget();
+
+        private void SelectEmote(IEmote emote, BackpackSelectEmoteCommand command)
         {
-            if (emoteStorage.TryGetElement(command.Id, out IEmote emote))
-                backpackEventBus.SendEmoteSelect(emote);
+            backpackEventBus.SendEmoteSelect(emote);
+            command.EndAction?.Invoke();
         }
 
         private void HandleHideCommand(BackpackHideCommand command)
@@ -275,8 +281,8 @@ namespace DCL.Backpack.BackpackBus
                 if (missingUrns.Count > 0)
                 {
                     BodyShape bodyShape = BodyShape.FromStringSafe(command.BodyShape);
-                    
-                    var fetched = 
+
+                    var fetched =
                         await wearablesProvider.RequestPointersAsync(missingUrns, bodyShape, ct);
 
                     if (fetched != null)
@@ -286,7 +292,7 @@ namespace DCL.Backpack.BackpackBus
                 // NOTE: simulate outfit loading takes a bit of time to make sure that
                 // NOTE: we can cancel previous outfit loading
                 // NOTE: await UniTask.Delay(2000, cancellationToken: ct);
-                
+
                 if (!ct.IsCancellationRequested)
                 {
                     backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());

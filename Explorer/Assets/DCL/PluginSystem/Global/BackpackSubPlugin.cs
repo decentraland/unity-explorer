@@ -163,7 +163,8 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 equippedEmotes,
                 emoteStorage,
-                wearablesProvider);
+                wearablesProvider,
+                emoteProvider);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
