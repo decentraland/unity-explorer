@@ -1,6 +1,8 @@
 ﻿using CDPBridges;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Networking;
@@ -8,7 +10,7 @@ using UnityEngine.Pool;
 
 namespace DCL.WebRequests.ChromeDevtool
 {
-    public class NotifyWebRequestScope
+    public class ChromeDevToolWebRequestScope
     {
         private const string DEFAULT_CHARSET = "utf-8";
         private const bool DEFAULT_CONNECTION_REUSED = true; // consider connection as reused by default
@@ -19,11 +21,14 @@ namespace DCL.WebRequests.ChromeDevtool
 
         private readonly int id;
         private readonly string url;
-        private readonly Dictionary<string, string> requestHeaders;
+        private readonly PoolExtensions.Scope<Dictionary<string, string>> requestHeaders;
         private readonly IBridge bridge;
         private readonly CancellationToken token;
 
-        public NotifyWebRequestScope(int id, string url, Dictionary<string, string> requestHeaders, IBridge bridge, CancellationToken token)
+        // Is not set if the request has not been actually started
+        private ResourceTiming? resourceTiming;
+
+        public ChromeDevToolWebRequestScope(int id, string url, PoolExtensions.Scope<Dictionary<string, string>> requestHeaders, IBridge bridge, CancellationToken token)
         {
             this.id = id;
             this.url = url;
@@ -34,37 +39,39 @@ namespace DCL.WebRequests.ChromeDevtool
 
         internal string responseBody { get; private set; } = string.Empty;
 
-        public async UniTaskVoid NotifyFinishAsync(int status, Dictionary<string, string>? headers, string mimeType, int encodedDataLength, DownloadHandler? downloadHandler)
+        public void OnRequestStarted()
         {
-            // create a copy to don't mess up lifetimes and pooling
-            using PooledObject<Dictionary<string, string>> _ = ThreadSafeDictionaryPool<string, string>.SHARED.Get(out Dictionary<string, string> headersCopy);
+            resourceTiming = ResourceTiming.CreateFromUnityWebRequestStarted(MonotonicTime.Now.Seconds);
+        }
+
+        public async UniTaskVoid NotifyFinishAsync(string effectiveUrl, int status, Dictionary<string, string> responseHeaders, string mimeType, int encodedDataLength,
+            DownloadHandler? downloadHandler)
+        {
+            using PoolExtensions.Scope<Dictionary<string, string>> _ = requestHeaders;
 
             responseBody = GetResponseBody(downloadHandler);
-
-            if (headers != null)
-                foreach ((string key, string value) in headers)
-                    headersCopy.Add(key, value);
 
             TimeSinceEpoch epochTimestamp = TimeSinceEpoch.Now;
 
             var response = new NetworkResponse(
-                url,
+                effectiveUrl,
                 status,
                 SUCCESS_STATUS_TEXT,
-                headersCopy,
+                responseHeaders,
                 mimeType,
                 DEFAULT_CHARSET,
-                requestHeaders,
+                requestHeaders.Value,
                 DEFAULT_CONNECTION_REUSED,
                 DEFAULT_CONNECTION_ID,
                 encodedDataLength,
+                resourceTiming,
                 epochTimestamp,
                 DEFAULT_CACHE_STORAGE_CACHE_NAME,
                 DEFAULT_PROTOCOL,
                 SecurityState.Secure()
             );
 
-            var network = new CDPEvent.Network_responseReceived(id, ChromeDevtoolProtocolClient.LOADER_ID, MonotonicTime.Now, ResourceType.Fetch, response);
+            var network = new CDPEvent.Network_responseReceived(id, ChromeDevToolHandler.LOADER_ID, MonotonicTime.Now, ResourceType.Fetch, response);
             var cdp = CDPEvent.FromNetwork_responseReceived(network);
             await bridge.SendEventAsync(cdp, token);
 
@@ -79,9 +86,34 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public void NotifyFailed(string errorText, bool hasBeenCancelled)
         {
+            using PoolExtensions.Scope<Dictionary<string, string>> _ = requestHeaders;
+
             var failed = new CDPEvent.Network_loadingFailed(id, MonotonicTime.Now, ResourceType.Fetch, errorText, hasBeenCancelled);
             var cdp = CDPEvent.FromNetwork_loadingFailed(failed);
             bridge.SendEventAsync(cdp, token).Forget();
+        }
+
+        public void Update(UnityWebRequest uwr)
+        {
+            if (resourceTiming == null) return;
+
+            ResourceTiming rtValue = resourceTiming.Value;
+
+            // For UWR these values are very rough, and can't be calculated directly
+
+            // 1. sendEnd - when uploadProgress hits 1.0
+            UploadHandler? uploadHandler = uwr.uploadHandler;
+
+            if (uploadHandler == null || uploadHandler.progress >= 1)
+                rtValue.AssignSendEnd(MonotonicTime.Now.Seconds);
+
+            // 2. receiveHeadersEnd - when downloadedBytes > 0
+            DownloadHandler? downloadHandler = uwr.downloadHandler;
+
+            if (downloadHandler == null || uwr.downloadedBytes > 0)
+                rtValue.AssignReceiveHeadersEnd(MonotonicTime.Now.Seconds);
+
+            resourceTiming = rtValue;
         }
 
         private static string GetResponseBody(DownloadHandler? downloadHandler) =>

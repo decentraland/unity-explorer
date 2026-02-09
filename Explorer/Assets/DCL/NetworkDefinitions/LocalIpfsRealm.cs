@@ -12,6 +12,7 @@ namespace DCL.Ipfs
     /// </summary>
     public class LocalIpfsRealm : IIpfsRealm
     {
+        public URLDomain EntitiesBaseUrl => throw new NotSupportedException();
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
@@ -26,9 +27,6 @@ namespace DCL.Ipfs
             AssetBundleRegistryEntitiesActive = fullPath;
             LambdasBaseUrl = URLDomain.FromString("https://peer.decentraland.org/explorer/");
         }
-
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
-            throw new NotSupportedException();
 
         public string GetFileHash(byte[] file) =>
             file.IpfsHashV1();

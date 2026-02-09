@@ -14,7 +14,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private const string LOADING_TRANSACTION_NAME = "loading_process";
@@ -29,7 +28,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             isFirstLoading = true;
             this.analytics = analytics;
             this.web3IdentityCache = web3IdentityCache;
-            this.sentryTransactionManager = SentryTransactionManager.Instance;;
         }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
@@ -54,32 +52,33 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         ? new[] { new KeyValuePair<string, string>("has_identity", "false") }
                         : new[] { new KeyValuePair<string, string>("has_identity", "true"), new KeyValuePair<string, string>("identity_expired", web3IdentityCache.Identity.IsExpired.ToString()) },
                 };
-                sentryTransactionManager.StartSentryTransaction(transactionData);
+
+                SentryTransactionNameMapping.Instance.StartSentryTransaction(transactionData);
             }
 
             if (stage != LoadingStatus.LoadingStage.Completed)
             {
                 var spanData = new SpanData
                 {
-                    TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = stage.ToString(),
                     SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
                     Depth = 0
                 };
-                sentryTransactionManager.StartSpan(spanData);
+
+                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, spanData);
             }
 
             if (stage == LoadingStatus.LoadingStage.Completed)
             {
                 var spanData = new SpanData
                 {
-                    TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = stage.ToString(),
                     SpanOperation = "loading_completed",
                     Depth = 0
                 };
-                sentryTransactionManager.StartSpan(spanData);
-                sentryTransactionManager.EndTransaction(LOADING_TRANSACTION_NAME);
+
+                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, spanData);
+                SentryTransactionNameMapping.Instance.EndTransaction(LOADING_TRANSACTION_NAME);
             }
         }
 

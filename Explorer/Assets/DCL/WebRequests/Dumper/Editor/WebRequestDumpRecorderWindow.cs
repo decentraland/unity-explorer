@@ -254,13 +254,13 @@ namespace DCL.WebRequests.Dumper.Editor
             dumper.Filter = filterField.value;
             dumper.Restart();
 
-            if (dumper.AnalyticsContainer != null)
+            if (dumper.AnalyticsHandler != null)
             {
                 // Remove tracked metrics
                 foreach (RequestMetricRecorder requestMetric in activeMetrics)
                 {
                     if (requestMetric == null) continue;
-                    dumper.AnalyticsContainer.RemoveFlatMetric(requestMetric);
+                    dumper.AnalyticsHandler.RemoveFlatMetric(requestMetric);
                 }
             }
 

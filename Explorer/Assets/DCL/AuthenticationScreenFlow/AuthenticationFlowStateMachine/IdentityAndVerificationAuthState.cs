@@ -25,7 +25,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
-        private readonly SentryTransactionManager sentryTransactionManager;
         private CancellationTokenSource? verificationCountdownCancellationToken;
 
         public IdentityAndVerificationAuthState(
@@ -35,8 +34,7 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             ReactiveProperty<AuthenticationStatus> currentState,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IAppArgs appArgs,
-            List<Resolution> possibleResolutions,
-            SentryTransactionManager sentryTransactionManager) : base(viewInstance)
+            List<Resolution> possibleResolutions) : base(viewInstance)
         {
             this.machine = machine;
             this.controller = controller;
@@ -44,7 +42,6 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             this.web3Authenticator = web3Authenticator;
             this.appArgs = appArgs;
             this.possibleResolutions = possibleResolutions;
-            this.sentryTransactionManager = sentryTransactionManager;
         }
 
         public void Enter(CancellationToken ct)
@@ -80,13 +77,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
                 var web3AuthSpan = new SpanData
                 {
-                    TransactionName = LOADING_TRANSACTION_NAME,
                     SpanName = "Web3Authentication",
                     SpanOperation = "auth.web3_login",
                     Depth = 1,
                 };
 
-                sentryTransactionManager.StartSpan(web3AuthSpan);
+                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, web3AuthSpan);
 
                 web3Authenticator.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
@@ -95,37 +91,34 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
             }
             catch (OperationCanceledException)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
                 machine.Enter<LoginStartAuthState>();
             }
             catch (SignatureExpiredException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState>();
             }
             catch (Web3SignatureException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState>();
             }
             catch (CodeVerificationException e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState>();
             }
             catch (Exception e)
             {
-                sentryTransactionManager.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
+                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 machine.Enter<LoginStartAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
-            finally
-            {
-               web3Authenticator.VerificationRequired -= ShowVerification;
-            }
+            finally { web3Authenticator.VerificationRequired -= ShowVerification; }
         }
 
         private void RestoreResolutionAndScreenMode()
@@ -145,13 +138,12 @@ namespace DCL.AuthenticationScreenFlow.AuthenticationFlowStateMachine
 
             var verificationSpan = new SpanData
             {
-                TransactionName = LOADING_TRANSACTION_NAME,
                 SpanName = "CodeVerification",
                 SpanOperation = "auth.code_verification",
                 Depth = 1,
             };
 
-            sentryTransactionManager.StartSpan(verificationSpan);
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, verificationSpan);
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();

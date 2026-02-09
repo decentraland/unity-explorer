@@ -3,9 +3,9 @@
 using DCL.Browser.DecentralandUrls;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.Dynamic.LaunchModes;
 using System;
 using System.Linq;
 using System.Threading;
@@ -45,7 +45,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         {
             get
             {
-                var urlsSource = new DecentralandUrlsSource(Env, ILaunchMode.PLAY);
+                var urlsSource = DecentralandUrlsSource.CreateForTest(Env, ILaunchMode.PLAY);
                 return new CameraReelImagesMetadataRemoteDatabase(webRequestController, urlsSource);
             }
         }
