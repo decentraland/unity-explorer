@@ -26,8 +26,13 @@ namespace DCL.Prefs
             Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
-        public static void SetString(string key, string value) =>
+        public static void SetString(string key, string value, bool save = false)
+        {
             dclPrefs.SetString(key, value);
+
+            if (save)
+                Save();
+        }
 
         public static void SetInt(string key, int value, bool save = false)
         {
@@ -76,8 +81,13 @@ namespace DCL.Prefs
         public static bool HasVectorKey(string key) =>
             dclPrefs.HasKey(string.Format(VECTOR2_KEY_FORMAT, "X", key));
 
-        public static void DeleteKey(string key) =>
+        public static void DeleteKey(string key, bool save = false)
+        {
             dclPrefs.DeleteKey(key);
+
+            if (save)
+                Save();
+        }
 
         public static void DeleteVector2Key(string key)
         {

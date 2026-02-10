@@ -69,7 +69,7 @@ namespace DCL.Web3.Authenticators
                 finally { ActiveWallet = null; }
             }
 
-            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
@@ -150,7 +150,7 @@ namespace DCL.Web3.Authenticators
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"ThirdWeb login: logged in as wallet {pendingWallet.WalletId}");
 
             // Store email for auto-login
-            DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, email);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.LOGGEDIN_EMAIL, email, save: true);
 
             ActiveWallet = pendingWallet;
             InAppWallet result = pendingWallet;
