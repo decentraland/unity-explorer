@@ -6,8 +6,10 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS.SceneLifeCycle;
+using Newtonsoft.Json;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -54,10 +56,13 @@ namespace DCL.SkyBox
 
                 if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out settingsJson))
                 {
-                    float normalizedTime = SkyboxSettingsAsset.NormalizeTime(settingsJson.time);
-                    skyboxSettings.TimeOfDayNormalized = normalizedTime;
-                    skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
+                    if (settingsJson.DayCycleDurationInSeconds != null)
+                        skyboxSettings.FullDayCycleInSeconds =  settingsJson.DayCycleDurationInSeconds.Value;
+
+                    SetInitialTime(settingsJson, skyboxSettings);
                 }
+                else
+                    SetInitialTime(null, skyboxSettings);
 
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -79,6 +84,37 @@ namespace DCL.SkyBox
                 ReportHub.LogError(ReportCategory.SKYBOX, $"Failed to initialize SkyboxPlugin: {ex}");
                 throw;
             }
+
+            return;
+
+            void SetInitialTime(SkyboxSettings? jsonConfig, SkyboxSettingsAsset skyboxSettings)
+            {
+                if (jsonConfig?.FixedTimeInSeconds != null)
+                {
+                    float normalizedTime = SkyboxSettingsAsset.NormalizeTime(jsonConfig.Value.FixedTimeInSeconds.Value);
+                    skyboxSettings.TimeOfDayNormalized = normalizedTime;
+                    skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
+                    // Force the state to not cycle, as the time has been set by the feature flag
+                    skyboxSettings.IsUIControlled = true;
+
+                    return;
+                }
+
+                if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SKYBOX_FIXED_TIME))
+                {
+                    float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);
+                    skyboxSettings.TimeOfDayNormalized = fixedTime;
+                    skyboxSettings.TargetTimeOfDayNormalized = fixedTime;
+                    // Force the state to not cycle, as it was previously assigned by the user
+                    skyboxSettings.IsUIControlled = true;
+                }
+                else
+                {
+                    float globalTime = skyboxSettings!.GlobalTimeOfDayNormalized;
+                    skyboxSettings.TimeOfDayNormalized = globalTime;
+                    skyboxSettings.TargetTimeOfDayNormalized = globalTime;
+                }
+            }
         }
 
         public class SkyboxTimeSettings : IDCLPluginSettings
@@ -90,8 +126,10 @@ namespace DCL.SkyBox
         [Serializable]
         private struct SkyboxSettings
         {
-            public uint time;
-            public uint speed;
+            [JsonProperty("fixedTimeInSeconds")]
+            public uint? FixedTimeInSeconds;
+            [JsonProperty("dayCycleDurationInSeconds")]
+            public uint? DayCycleDurationInSeconds;
         }
     }
 }
