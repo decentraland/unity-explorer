@@ -1,35 +1,37 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables.ThirdParty
 {
     public class RealmThirdPartyNftProviderSource : IThirdPartyNftProviderSource
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private ThirdPartyNftProviderDefinition[]? providers;
 
         public RealmThirdPartyNftProviderSource(IWebRequestController webRequestController,
-            IRealmData realmData)
+            IDecentralandUrlsSource urlsSource)
         {
             this.webRequestController = webRequestController;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
         }
 
         public async UniTask<IReadOnlyList<ThirdPartyNftProviderDefinition>> GetAsync(ReportData reportData, CancellationToken ct)
         {
             if (providers != null) return providers;
-            URLBuilder urlBuilder = new URLBuilder();
 
-            URLAddress url = urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                                              .AppendPath(URLPath.FromString("third-party-integrations"))
-                                              .Build();
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.Lambdas, out URLBuilder urlBuilder);
+
+            URLAddress url = urlBuilder.AppendPath(URLPath.FromString("third-party-integrations"))
+                                       .Build();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> request = webRequestController.GetAsync(new CommonArguments(url), ct, reportData);
             ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJson<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity);

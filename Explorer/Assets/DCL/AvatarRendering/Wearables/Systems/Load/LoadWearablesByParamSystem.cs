@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
 using DCL.WebRequests;
 using ECS;
@@ -40,24 +41,24 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType = "wearable";
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundleRegistryVersionURL;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController,
             IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
-            IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, URLDomain assetBundleRegistryVersionURL,
-            IWearableStorage wearableStorage, ITrimmedWearableStorage trimmedWearableStorage, string? builderContentURL = null
+            IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
+            IWearableStorage wearableStorage, ITrimmedWearableStorage trimmedWearableStorage, IDecentralandUrlsSource urlsSource, string? builderContentURL = null
         ) : base(world, cache)
         {
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearablesSubdirectory = wearablesSubdirectory;
-            this.assetBundleRegistryVersionURL = assetBundleRegistryVersionURL;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             avatarElementStorage = wearableStorage;
             this.trimmedWearableStorage = trimmedWearableStorage;
+            this.urlsSource = urlsSource;
             this.builderContentURL = builderContentURL;
         }
 
@@ -75,14 +76,14 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             }
             else
             {
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                    .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                    .AppendSubDirectory(wearablesSubdirectory);
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas)), lambdaSubdirectory)
+                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                          .AppendSubDirectory(wearablesSubdirectory);
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);
-            
+
             return urlBuilder.Build();
         }
 
@@ -151,7 +152,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             for (int i = 0; i < lambdaResponse.Page.Count; i++)
                 urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
 
-            var result = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(urns, webRequestController, assetBundleRegistryVersionURL, GetReportData(), ct);
+            AssetBundlesVersions result = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(urns, webRequestController, urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion), GetReportData(), ct);
 
             ARRAY_POOL.Return(urns);
 

@@ -16,6 +16,7 @@ namespace ECS.SceneLifeCycle.Tests
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
         public URLDomain AssetBundleRegistryEntitiesActive { get; }
+        public URLDomain EntitiesBaseUrl => throw new NotSupportedException();
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }

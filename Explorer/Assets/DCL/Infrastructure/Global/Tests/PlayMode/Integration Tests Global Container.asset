@@ -21,9 +21,15 @@ MonoBehaviour:
   - rid: 2174542042650378246
   - rid: 5734404089553354752
   - rid: 9078877983710380130
+  - rid: 732305993255354463
   references:
     version: 2
     RefIds:
+    - rid: 732305993255354463
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests.Analytics, asm: DCL.Plugins}
+      data:
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 1268264197252972544
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -129,12 +135,11 @@ MonoBehaviour:
       data:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
+        <SkyboxSettings>k__BackingField: {fileID: 0}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481024
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
