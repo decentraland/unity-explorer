@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction.Id != remoteEmoteIntention.SocialEmote.InteractionId)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores reaction messages when the initiator started the same social emote again, while they were interacting (which cancels the emote for both) emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId} interaction id1: {interaction.Id} interaction id2: {remoteEmoteIntention.SocialEmote.InteractionId}</color>");
-                            return;
+                            continue;
                         }
 
                         // Ignores start interaction message when, for the same interaction, avatars are already using outcome animations
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores start interaction message when, for the same interaction, avatars are already using outcome animations emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
-                            return;
+                            continue;
                         }
 
                         // Ignores messages of reaction to social emote when the interaction does not exist yet (may occur when a third player connects while 2 avatars are already interacting)
@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                             interaction.Id == remoteEmoteIntention.SocialEmote.InteractionId)
                         {
                             ReportHub.Log(ReportCategory.SOCIAL_EMOTE, $"RemoteEmotesSystem.Update() <color=magenta>Ignores repeated social emote messages for the same interaction emote: {remoteEmoteIntention.EmoteId} wallet: {remoteEmoteIntention.WalletId}</color>");
-                            return;
+                            continue;
                         }
 
                         // Ignores reaction messages to non-existing interactions, unless it's the first time they are processed (when a third player connects while other 2 are interacting)
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Emotes
                                     World.Add(entry.Entity, new StopEmoteIntent(remoteEmoteIntention.EmoteId));
                             }
 
-                            return;
+                            continue;
                         }
 
                         // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
