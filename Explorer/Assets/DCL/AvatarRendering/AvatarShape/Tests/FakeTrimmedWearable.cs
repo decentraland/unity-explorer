@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -11,6 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public TrimmedWearableDTO TrimmedDTO { get; }
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
+        TrimmedAvatarAttachmentDTO ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
         public FakeTrimmedWearable(
             TrimmedWearableDTO dto,

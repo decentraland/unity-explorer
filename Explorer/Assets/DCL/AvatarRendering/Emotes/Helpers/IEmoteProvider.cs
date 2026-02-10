@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
         /// <returns>Total amount</returns>
         UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetOwnedEmotesAsync(
             CancellationToken ct,
-            IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
+            OwnedEmotesRequestOptions requestOptions,
             List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false

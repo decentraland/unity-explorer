@@ -26,7 +26,8 @@ namespace DCL.AvatarRendering.Emotes
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<int> GetOwnedEmotesAsync(Web3Address userId, CancellationToken ct,
+        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetOwnedEmotesAsync(
+            CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
             List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
@@ -50,7 +51,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 ListPool<IEmote>.Release(localBuffer);
 
-                return results.Count;
+                return (results, results.Count);
             }
 
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
@@ -62,7 +63,7 @@ namespace DCL.AvatarRendering.Emotes
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded emotes
-                    await source.GetOwnedEmotesAsync(userId, ct, requestOptions, localBuffer,
+                    await source.GetOwnedEmotesAsync(ct, requestOptions, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
                             builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
@@ -83,11 +84,11 @@ namespace DCL.AvatarRendering.Emotes
                 int count = localBuffer.Count;
                 ListPool<ITrimmedEmote>.Release(localBuffer);
 
-                return count;
+                return (results, count);
             }
 
             // Regular path without any "self-preview" element
-            return await source.GetOwnedEmotesAsync(userId, ct, requestOptions, results);
+            return await source.GetOwnedEmotesAsync(ct, requestOptions, results);
         }
 
         public UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> results) =>
