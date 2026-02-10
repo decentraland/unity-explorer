@@ -148,7 +148,7 @@ namespace DCL.Passport
         private readonly bool isGiftingEnabled;
         private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
-        private NameColorPickerController? colorPickerController;
+        private NameColorPickerController colorPickerController;
         private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
@@ -530,8 +530,6 @@ namespace DCL.Passport
 
         protected override void OnViewClose()
         {
-            SaveUserNameColor();
-
             passportErrorsController!.Hide(true);
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
@@ -585,12 +583,9 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
 
-            if (colorPickerController != null)
-            {
-                colorPickerController.OnColorChanged -= SetNewUserNameColor;
-                colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
-                colorPickerController.Dispose();
-            }
+            colorPickerController.OnColorChanged -= SetNewUserNameColor;
+            colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
+            colorPickerController.Dispose();
         }
 
         private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
@@ -655,7 +650,7 @@ namespace DCL.Passport
 
         private void SaveUserNameColor()
         {
-            if (userNameColorToSave != null)
+            if (userNameColorToSave.HasValue)
             {
                 // TODO (Maurizio) here we'll re-deploy the profile, i.e. passportProfileInfoController.UpdateProfileAsync()
                 userNameColorToSave = null;

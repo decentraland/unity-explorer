@@ -26,12 +26,12 @@ namespace DCL.Passport.Modules
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly NameColorPickerController colorPickerController;
         private readonly bool isNameEditorEnabled;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
         private Profile? currentProfile;
-        private NameColorPickerController? colorPickerController;
 
         public event Action? NameClaimRequested;
 
@@ -42,7 +42,7 @@ namespace DCL.Passport.Modules
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            NameColorPickerController? colorPickerController,
+            NameColorPickerController colorPickerController,
             bool isNameEditorEnabled)
         {
             this.view = view;
@@ -104,7 +104,7 @@ namespace DCL.Passport.Modules
                     view.NameColorPickerView.gameObject.SetActive(
                         FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && ownProfile.HasClaimedName
                     );
-                    colorPickerController?.SetColor(ownProfile.UserNameColor);
+                    colorPickerController.SetColor(ownProfile.UserNameColor);
 
                     if (isNameEditorEnabled)
                     {
