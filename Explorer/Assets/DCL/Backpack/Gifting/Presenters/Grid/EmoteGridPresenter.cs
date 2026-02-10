@@ -67,8 +67,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 name: search,
                 includeAmount: true);
 
-            int total = await emoteProvider.GetOwnedEmotesAsync(
-                identityCache.Identity!.Address,
+            var result = await emoteProvider.GetOwnedEmotesAsync(
                 ct,
                 requestOptions,
                 pageEmotes);
@@ -77,7 +76,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             foreach (var e in pageEmotes)
                 giftables.Add(new GiftableAvatarAttachment(e, e.Amount));
 
-            return (giftables, total);
+            return (giftables, result.totalAmount);
         }
 
         protected override GiftItemViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable)

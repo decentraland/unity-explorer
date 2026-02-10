@@ -23,8 +23,8 @@ using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility.Arch;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
-using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
+using RealmSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -210,7 +210,7 @@ namespace ECS.Unity.AvatarShape.Systems
             }
         }
 
-        private void ProcessSceneEmotePromiseResult(Entity globalWorldEntity, StreamableLoadingResult<TrimmedEmotesResponse> promiseResult)
+        private void ProcessSceneEmotePromiseResult(Entity globalWorldEntity, StreamableLoadingResult<EmotesResolution> promiseResult)
         {
             if (promiseResult is not { Succeeded: true }) return;
 

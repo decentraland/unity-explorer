@@ -26,7 +26,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse>;
+using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
@@ -112,11 +112,11 @@ namespace DCL.AvatarRendering.Emotes.Load
             // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
             resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
 
-            World.Add(entity, new StreamableResult(new TrimmedEmotesResponse(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
+            World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
 
         private static StreamableResult NewEmotesResult(RepoolableList<IEmote> resolvedEmotesTmp, int pointersCount) =>
-            new (new TrimmedEmotesResponse(resolvedEmotesTmp, pointersCount));
+            new (new EmotesResolution(resolvedEmotesTmp, pointersCount));
 
         private bool GetAssetBundlesUntilAllAreResolved(
             in GetEmotesByPointersIntention intention,

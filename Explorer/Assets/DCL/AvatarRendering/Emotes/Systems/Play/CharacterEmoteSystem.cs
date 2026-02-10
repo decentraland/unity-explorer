@@ -30,8 +30,8 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
-using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {

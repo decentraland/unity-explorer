@@ -202,8 +202,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
+            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
             globalWorld.Add(promise.Entity, result);
 
             // ACT 2
@@ -293,8 +293,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
+            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
             globalWorld.Add(promise.Entity, result);
 
             // ACT 2
@@ -547,8 +547,8 @@ namespace ECS.Unity.AvatarShape.Tests
             emote.DTO.Returns(dto);
             emote.GetUrn().Returns(emoteUrn);
             var emotes = RepoolableList<IEmote>.NewListWithContentOf(emote);
-            var resolution = new TrimmedEmotesResponse(emotes, BodyShape.MALE);
-            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(resolution);
+            var resolution = new EmotesResolution(emotes, BodyShape.MALE);
+            var result = new StreamableLoadingResult<EmotesResolution>(resolution);
             globalWorld.Add(secondPromise.Entity, result);
 
             system.Update(0);

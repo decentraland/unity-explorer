@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
             }
 
             // Only create promises for builder collections
-            if (intention is { NeedsBuilderAPISigning: false } || intention.Result.List is not { Count: > 0 })
+            if (intention is { NeedsBuilderAPISigning: false } || intention.Results is not { Count: > 0 })
                 return;
 
             bool allEmotesProcessed = true;

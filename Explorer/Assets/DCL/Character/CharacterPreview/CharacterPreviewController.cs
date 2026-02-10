@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.CharacterPreview

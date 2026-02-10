@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -17,12 +16,11 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules
@@ -42,7 +40,6 @@ namespace DCL.Passport.Modules
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly ImageControllerProvider imageControllerProvider;
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -62,8 +59,7 @@ namespace DCL.Passport.Modules
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            PassportErrorsController passportErrorsController,
-            ImageControllerProvider imageControllerProvider)
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
             this.world = world;
@@ -74,7 +70,6 @@ namespace DCL.Passport.Modules
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
-            this.imageControllerProvider = imageControllerProvider;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,

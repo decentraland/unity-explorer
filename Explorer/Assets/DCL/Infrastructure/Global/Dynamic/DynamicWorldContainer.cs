@@ -348,7 +348,7 @@ namespace Global.Dynamic
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
-                new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
+                new EcsEmoteProvider(globalWorld, identityCache), builderDTOsURL.Value);
 
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);

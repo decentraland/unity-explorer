@@ -37,7 +37,6 @@ namespace DCL.Backpack.EmotesSection
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly IBackpackEventBus eventBus;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -51,7 +50,6 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly bool builderEmotesPreview;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -64,7 +62,6 @@ namespace DCL.Backpack.EmotesSection
             BackpackGridView view,
             BackpackCommandBus commandBus,
             IBackpackEventBus eventBus,
-            IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -75,13 +72,11 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IAppArgs appArgs,
             IEmoteStorage emoteStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
-            this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -93,7 +88,6 @@ namespace DCL.Backpack.EmotesSection
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
-            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
             eventBus.EquipEmoteEvent += OnEquip;
@@ -149,11 +143,13 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(pageNumber, false);
         }
 
-        public void RequestAndFillEmotes(int pageNumber, bool reconfigurePageSelector)
+        private void RequestAndFillEmotes(int pageNumber, bool reconfigurePageSelector)
         {
             loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
 
             SetGridAsLoading();
+            RequestPageAsync(loadElementsCancellationToken.Token).Forget();
+            return;
 
             async UniTaskVoid RequestPageAsync(CancellationToken ct)
             {
@@ -162,8 +158,7 @@ namespace DCL.Backpack.EmotesSection
                 using var _ = ListPool<ITrimmedEmote>.Get(out var customOwnedEmotes);
                 customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
 
-                int totalAmount = await emoteProvider.GetOwnedEmotesAsync(
-                    web3IdentityCache.Identity!.Address,
+                var result = await emoteProvider.GetOwnedEmotesAsync(
                     ct,
                     new IEmoteProvider.OwnedEmotesRequestOptions(
                         pageNum: pageNumber,
@@ -174,6 +169,8 @@ namespace DCL.Backpack.EmotesSection
                     ),
                     customOwnedEmotes
                 );
+
+                int totalAmount = result.totalAmount;
 
                 // TODO: request base emotes collection instead of pointers:
                 // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
@@ -204,7 +201,7 @@ namespace DCL.Backpack.EmotesSection
 
                     baseEmotes = filteredEmotes.ToList();
 
-                    int customOwnedEmotesAmount = totalAmount;
+                    int customOwnedEmotesAmount = result.totalAmount;
                     totalAmount += baseEmotes.Count;
 
                     var baseEmotesToSkip = 0;
@@ -244,8 +241,6 @@ namespace DCL.Backpack.EmotesSection
                 if (reconfigurePageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
             }
-
-            RequestPageAsync(loadElementsCancellationToken!.Token).Forget();
         }
 
         private void SetGridAsLoading()

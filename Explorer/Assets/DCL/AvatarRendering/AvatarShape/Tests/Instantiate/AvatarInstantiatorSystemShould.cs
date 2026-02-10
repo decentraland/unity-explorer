@@ -29,7 +29,6 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
