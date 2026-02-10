@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
@@ -21,13 +21,21 @@ namespace DCL.RealmNavigation
         {
             // Wait for all pointers resolution, they should be resolved at start-up
 
+
+
             var resolved = false;
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null!;
+            SceneEntityDefinition? startupScene = null;
 
             while (!resolved)
             {
-                ReadFixedRealmQuery(World, ref resolved, ref result);
+                //ReadFixedRealmQuery(World, ref resolved, ref result, ref startupScene);
                 await UniTask.Yield(ct);
+            }
+
+            if (startupScene != null)
+            {
+                return startupScene;
             }
 
             // Check if result contains the requested parcel
@@ -50,12 +58,15 @@ namespace DCL.RealmNavigation
 
         [Query]
         private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result,
-            in FixedScenePointers fixedScenePointers)
+            in FixedScenePointers fixedScenePointers, ref SceneEntityDefinition? startupScene)
         {
             resolved = fixedScenePointers.AllPromisesResolved;
 
             if (resolved)
+            {
                 result = fixedScenePointers.Promises;
+                startupScene = fixedScenePointers.StartupScene;
+            }
         }
     }
 }
