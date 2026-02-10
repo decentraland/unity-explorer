@@ -383,7 +383,7 @@ namespace DCL.PrivateWorlds.Testing
                 ReportHub.Log(ReportCategory.REALM, "[EventBus] Publishing CheckWorldAccessEvent...");
 
                 var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-                var evt = new CheckWorldAccessEvent(testWorldName, null, resultSource);
+                var evt = new CheckWorldAccessEvent(testWorldName, null, resultSource, ct);
                 eventBus!.Publish(evt);
 
                 ReportHub.Log(ReportCategory.REALM, "[EventBus] Waiting for result...");

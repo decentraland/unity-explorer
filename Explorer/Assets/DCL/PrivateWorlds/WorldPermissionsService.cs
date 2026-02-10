@@ -4,8 +4,8 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.PrivateWorlds
@@ -98,23 +98,10 @@ namespace DCL.PrivateWorlds
 
             try
             {
-                // Always use random mock for mirko.dcl.eth so we can test both flows regardless of backend
-                if (string.Equals(worldName, "mirko.dcl.eth", StringComparison.OrdinalIgnoreCase))
-                {
-                    context = GetMockWorldAccessContext(worldName);
-                    return context;
-                }
-
                 WorldAccessInfo? accessInfo = await GetWorldPermissionsAsync(worldName, ct);
 
                 if (accessInfo == null)
                 {
-                    context = GetMockWorldAccessContext(worldName);
-                    if (context.AccessInfo != null)
-                    {
-                        ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] Backend returned no data for '{worldName}'. Using mock access: {context.Result} (name-based).");
-                        return context;
-                    }
                     context.Result = WorldAccessCheckResult.CheckFailed;
                     context.ErrorMessage = "Failed to fetch world permissions";
                     return context;
@@ -223,72 +210,13 @@ namespace DCL.PrivateWorlds
         }
 
         /// <summary>
-        /// Escapes special characters in a string for safe JSON embedding.
+        /// Escapes a string for safe embedding in a JSON value using Newtonsoft.
         /// </summary>
         private static string EscapeJsonString(string value)
         {
-            return value
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
-        }
-
-        /// <summary>
-        /// When backend has no data, mock access by world name so you can test flows.
-        /// mirko.dcl.eth: randomly password protected or invitation only (for testing both flows).
-        /// Names containing "password" or "secret" -> password protected; "invite" or "private" or "whitelist" -> invitation only; else -> unrestricted.
-        /// </summary>
-        private static WorldAccessCheckContext GetMockWorldAccessContext(string worldName)
-        {
-            var context = new WorldAccessCheckContext();
-            var nameLower = worldName.ToLowerInvariant();
-
-            if (string.Equals(nameLower, "mirko.dcl.eth", StringComparison.Ordinal))
-            {
-                bool passwordMode = UnityEngine.Random.Range(0,2) == 0;
-                context.Result = passwordMode ? WorldAccessCheckResult.PasswordRequired : WorldAccessCheckResult.AccessDenied;
-                context.AccessInfo = new WorldAccessInfo
-                {
-                    AccessType = passwordMode ? WorldAccessType.SharedSecret : WorldAccessType.AllowList,
-                    OwnerAddress = "0xMockOwner0000000000000000000000000000",
-                    AllowedWallets = passwordMode ? new List<string>() : new List<string>()
-                };
-                ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] Mock for mirko.dcl.eth: {(passwordMode ? "Password protected" : "Invitation only")} (random).");
-                return context;
-            }
-
-            if (nameLower.Contains("password") || nameLower.Contains("secret"))
-            {
-                context.Result = WorldAccessCheckResult.PasswordRequired;
-                context.AccessInfo = new WorldAccessInfo
-                {
-                    AccessType = WorldAccessType.SharedSecret,
-                    OwnerAddress = "0xMockOwner0000000000000000000000000000"
-                };
-                return context;
-            }
-
-            if (nameLower.Contains("invite") || nameLower.Contains("private") || nameLower.Contains("whitelist"))
-            {
-                context.Result = WorldAccessCheckResult.AccessDenied;
-                context.AccessInfo = new WorldAccessInfo
-                {
-                    AccessType = WorldAccessType.AllowList,
-                    OwnerAddress = "0xMockOwner0000000000000000000000000000",
-                    AllowedWallets = new List<string>()
-                };
-                return context;
-            }
-
-            context.Result = WorldAccessCheckResult.Allowed;
-            context.AccessInfo = new WorldAccessInfo
-            {
-                AccessType = WorldAccessType.Unrestricted,
-                OwnerAddress = string.Empty
-            };
-            return context;
+            // JsonConvert.ToString returns a quoted string like "the\"value", so trim the outer quotes
+            string quoted = JsonConvert.ToString(value);
+            return quoted.Substring(1, quoted.Length - 2);
         }
 
         private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
@@ -306,26 +234,8 @@ namespace DCL.PrivateWorlds
                     return true;
             }
 
-            // Check community membership
-            // if (accessInfo.AllowedCommunities.Count > 0)
-            // {
-            //     foreach (string communityId in accessInfo.AllowedCommunities)
-            //     {
-            //         if (ct.IsCancellationRequested)
-            //             return false;
-            //
-            //         try
-            //         {
-            //             bool isMember = await checkCommunityMembership(communityId, ct);
-            //             if (isMember)
-            //                 return true;
-            //         }
-            //         catch (Exception e)
-            //         {
-            //             ReportHub.LogWarning(ReportCategory.REALM, $"Failed to check community membership for '{communityId}': {e.Message}");
-            //         }
-            //     }
-            // }
+            // TODO: Implement community membership check for AllowedCommunities.
+            // Use CommunitiesDataProvider.GetCommunityAsync(communityId) and check role != CommunityMemberRole.none.
 
             return false;
         }

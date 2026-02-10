@@ -107,16 +107,13 @@ namespace DCL.RealmNavigation
             // Pre-check private world permissions before loading
             if (isWorld && eventBusProxy.Configured)
             {
-                ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] World change requested (isWorld=true). Checking access for realm: {realm}");
                 var result = await PublishWorldAccessCheckAsync(realm, ct);
-                ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] World access check result: {result}");
                 if (result != WorldAccessResult.Allowed)
                     return MapToChangeRealmError(result);
             }
             else if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
-            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Proceeding to change realm: {realm}");
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
@@ -132,10 +129,11 @@ namespace DCL.RealmNavigation
             }
 
             NavigationExecuted?.Invoke(parcelToTeleport);
-            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Realm change completed: {realm}");
 
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
+
+        private const int ACCESS_CHECK_TIMEOUT_SECONDS = 60;
 
         private async UniTask<WorldAccessResult> PublishWorldAccessCheckAsync(URLDomain realm, CancellationToken ct)
         {
@@ -144,19 +142,29 @@ namespace DCL.RealmNavigation
                 return WorldAccessResult.CheckFailed;
 
             string worldName = ExtractWorldNameFromRealm(realm);
-            ReportHub.Log(ReportCategory.REALM, $"[RealmNavigator] Publishing CheckWorldAccessEvent for world: {worldName}");
             var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-            var evt = new CheckWorldAccessEvent(worldName, null, resultSource);
+            var evt = new CheckWorldAccessEvent(worldName, null, resultSource, ct);
             eventBus.Publish(evt);
 
             try
             {
-                return await resultSource.Task.AttachExternalCancellation(ct);
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(ACCESS_CHECK_TIMEOUT_SECONDS));
+
+                return await resultSource.Task.AttachExternalCancellation(timeoutCts.Token);
             }
             catch (OperationCanceledException)
             {
-                resultSource.TrySetResult(WorldAccessResult.PasswordCancelled);
-                return WorldAccessResult.PasswordCancelled;
+                if (ct.IsCancellationRequested)
+                {
+                    resultSource.TrySetResult(WorldAccessResult.PasswordCancelled);
+                    return WorldAccessResult.PasswordCancelled;
+                }
+
+                // Timeout (not caller cancellation)
+                ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] World access check timed out for '{worldName}'");
+                resultSource.TrySetResult(WorldAccessResult.CheckFailed);
+                return WorldAccessResult.CheckFailed;
             }
         }
 

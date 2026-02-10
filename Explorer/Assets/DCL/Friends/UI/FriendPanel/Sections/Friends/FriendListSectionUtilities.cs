@@ -52,7 +52,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (userData.IsInWorld)
                 {
-                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct).Forget();
+                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct, default, true).Forget();
                 }
                 else
                 {

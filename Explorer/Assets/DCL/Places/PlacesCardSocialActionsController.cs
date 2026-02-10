@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
@@ -157,7 +157,7 @@ namespace DCL.Places
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
                 realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()),
                     ct,
-                    default,true).Forget();
+                    default, true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false).Forget();
         }

@@ -155,26 +155,12 @@ namespace DCL.Communities.CommunitiesCard.Places
                 (placeInfo, cardView) => ElementMainButtonClicked?.Invoke(placeInfo, cardView));
 
             if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name) && worldPermissionsService != null)
-                CheckWorldAccessAndUpdateCardAsync(placeInfo.PlaceInfo.world_name, elementView, cancellationToken).Forget();
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfo.PlaceInfo.world_name, elementView, cancellationToken).Forget();
 
             if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();
 
             return listItem;
-        }
-
-        private async UniTaskVoid CheckWorldAccessAndUpdateCardAsync(string worldName, PlaceCardView cardView, CancellationToken ct)
-        {
-            try
-            {
-                WorldAccessCheckContext context = await worldPermissionsService!.CheckWorldAccessAsync(worldName, ct);
-                cardView.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM, $"[PlacesSectionView] Failed to check world access for '{worldName}': {e.Message}");
-            }
         }
 
         private void OpenCardContextMenu(PlaceInfo placeInfo, Vector2 position, PlaceCardView placeCardView)

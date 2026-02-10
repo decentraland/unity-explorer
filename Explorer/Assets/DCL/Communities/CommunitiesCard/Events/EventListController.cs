@@ -148,7 +148,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (!string.IsNullOrWhiteSpace(eventData.Place.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token, default, true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(eventData.Place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
         }

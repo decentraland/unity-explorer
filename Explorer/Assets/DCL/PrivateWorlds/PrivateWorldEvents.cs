@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace DCL.PrivateWorlds
 {
@@ -20,16 +21,19 @@ namespace DCL.PrivateWorlds
     {
         public readonly string WorldName;
         public readonly string? OwnerAddress;
+        public readonly CancellationToken CancellationToken;
         public readonly UniTaskCompletionSource<WorldAccessResult> ResultSource;
 
         public CheckWorldAccessEvent(
             string worldName,
             string? ownerAddress,
-            UniTaskCompletionSource<WorldAccessResult> resultSource)
+            UniTaskCompletionSource<WorldAccessResult> resultSource,
+            CancellationToken cancellationToken)
         {
             WorldName = worldName;
             OwnerAddress = ownerAddress;
             ResultSource = resultSource;
+            CancellationToken = cancellationToken;
         }
     }
 }

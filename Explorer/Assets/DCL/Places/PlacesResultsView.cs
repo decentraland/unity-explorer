@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.PrivateWorlds;
@@ -199,23 +198,9 @@ namespace DCL.Places
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
 
             if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) && worldPermissionsService != null)
-                CheckWorldAccessAndUpdateCardAsync(placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, CancellationToken.None).Forget();
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, destroyCancellationToken).Forget();
 
             return gridItem;
-        }
-
-        private async UniTaskVoid CheckWorldAccessAndUpdateCardAsync(string worldName, PlaceCardView cardView, CancellationToken ct)
-        {
-            try
-            {
-                WorldAccessCheckContext context = await worldPermissionsService!.CheckWorldAccessAsync(worldName, ct);
-                cardView.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM, $"[PlacesResultsView] Failed to check world access for '{worldName}': {e.Message}");
-            }
         }
 
         private void OpenCardContextMenu(PlacesData.PlaceInfo placeInfo, Vector2 position, PlaceCardView placeCardView)
