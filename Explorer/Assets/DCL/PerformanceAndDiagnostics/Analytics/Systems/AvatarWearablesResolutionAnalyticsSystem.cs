@@ -38,7 +38,9 @@ namespace DCL.Analytics.Systems
                 avatarAnalytics.WearablesResolvedAt = UnityEngine.Time.realtimeSinceStartup;
 
                 // If we don't save it here this information will be destroyed with the promise itself
-                avatarAnalytics.MissingPointersCounter = World.Get<GetWearablesByPointersIntention>(avatarShapeComponent.WearablePromise.Entity).MissingPointersCount;
+                GetWearablesByPointersIntention intent = World.Get<GetWearablesByPointersIntention>(avatarShapeComponent.WearablePromise.Entity);
+                avatarAnalytics.MissingPointersCounter = intent.MissingPointersCount;
+                avatarAnalytics.VisibleWearablesCount = intent.HideWearablesResolution.VisibleWearables?.Count ?? 0;
             }
         }
     }

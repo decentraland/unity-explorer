@@ -18,22 +18,21 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.NotificationsBus;
-using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -178,6 +177,8 @@ namespace DCL.PluginSystem.Global
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
+            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
 
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
@@ -224,7 +225,9 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
-                imageControllerProvider
+                imageControllerProvider,
+                colorToggle,
+                nameColors
             );
 
             mvcManager.RegisterController(passportController);
@@ -269,6 +272,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject NameEditorPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ColorToggle { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; }
 
             [field: SerializeField]
             public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }

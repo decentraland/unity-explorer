@@ -3,30 +3,33 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
-using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS;
 using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
     public class Web3AuthenticationPlugin : IDCLGlobalPlugin<Web3AuthPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
@@ -41,13 +44,17 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IAppArgs appArgs;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
+        private Web3ConfirmationPopupView? transactionConfirmationView;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IWeb3VerifiedAuthenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -61,7 +68,10 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioClipConfig backgroundMusic,
             Arch.Core.World world,
-            IAppArgs appArgs
+            IAppArgs appArgs,
+            IWearablesProvider wearablesProvider,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -80,6 +90,9 @@ namespace DCL.PluginSystem.Global
             this.backgroundMusic = backgroundMusic;
             this.world = world;
             this.appArgs = appArgs;
+            this.wearablesProvider = wearablesProvider;
+            this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public void Dispose() { }
@@ -89,8 +102,37 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world, settings.EmotesSettings, inputBlock, backgroundMusic, SentryTransactionManager.Instance, appArgs);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory,
+                web3Authenticator,
+                selfProfile,
+                webBrowser,
+                storedIdentityProvider,
+                characterPreviewFactory,
+                splashScreen,
+                characterPreviewEventBus,
+                audioMixerVolumesController,
+                settings.BuildData,
+                world,
+                settings.EmotesSettings,
+                inputBlock,
+                backgroundMusic,
+                appArgs,
+                wearablesProvider,
+                webRequestController,
+                decentralandUrlsSource);
+
             mvcManager.RegisterController(authenticationScreenController);
+
+            Web3ConfirmationPopupView txConfPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.TransactionConfirmationPopupPrefab, ct: ct)).Value;
+            InitializeTransactionConfirmationPopup(txConfPopupPrefab);
+        }
+
+        private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
+        {
+            transactionConfirmationView = Object.Instantiate(popupPrefab);
+            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            transactionConfirmationView.gameObject.SetActive(false);
+            web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -104,6 +146,7 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
         [field: Space]
         [field: SerializeField] public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+        [field: SerializeField] public TransactionConfirmationPopupRef TransactionConfirmationPopupPrefab { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
 
         [field: Space]
@@ -113,6 +156,12 @@ namespace DCL.PluginSystem.Global
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>
         {
             public AuthScreenObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class TransactionConfirmationPopupRef : ComponentReference<Web3ConfirmationPopupView>
+        {
+            public TransactionConfirmationPopupRef(string guid) : base(guid) { }
         }
     }
 }

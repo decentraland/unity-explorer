@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -21,7 +23,12 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadFixedPointersSystem(World world, IRealmData realmData) : base(world, new HashSet<Vector2Int>(), realmData) { }
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        internal LoadFixedPointersSystem(World world, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
+        {
+            this.urlsSource = urlsSource;
+        }
 
         protected override void Update(float t)
         {
@@ -46,7 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 // can't prioritize scenes definition - they are always top priority
                 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)))), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
             }

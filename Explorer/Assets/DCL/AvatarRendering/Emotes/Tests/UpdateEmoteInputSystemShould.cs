@@ -11,6 +11,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.AvatarRendering.Emotes.Tests
@@ -21,7 +22,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private World world;
         private UpdateEmoteInputSystem system;
         private MockEmotesMessageBus mockMessageBus;
-        private EmotesBus emotesBus;
+        private TestEmoteWheelShortcutHandler testShortcutHandler;
         private GameObject testGameObject;
 
         [SetUp]
@@ -30,10 +31,10 @@ namespace DCL.AvatarRendering.Emotes.Tests
             world = World.Create();
 
             mockMessageBus = new MockEmotesMessageBus();
-            emotesBus = new EmotesBus();
+            testShortcutHandler = new TestEmoteWheelShortcutHandler();
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            system = UpdateEmoteInputSystem.InjectToWorld(ref builder, mockMessageBus, emotesBus);
+            system = UpdateEmoteInputSystem.InjectToWorld(ref builder, mockMessageBus, testShortcutHandler);
             system.Initialize();
 
             testGameObject = new GameObject("TestPlayer");
@@ -43,6 +44,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void TearDown()
         {
             system?.Dispose();
+            testShortcutHandler?.Dispose();
             world?.Dispose();
 
             if (testGameObject != null)
@@ -251,21 +253,19 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void NotFireQuickActionEmotePlayedEventOnTriggerEmoteBySlotIntent()
+        public void NotifyHandlerWithWheelSlotWhenTriggeringFromIntent()
         {
             // Arrange
             var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:wave");
             var entity = CreatePlayerEntity(profile);
             world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
 
-            bool eventFired = false;
-            emotesBus.QuickActionEmotePlayed += () => eventFired = true;
-
             // Act
             system.Update(0);
 
-            // Assert - TriggerEmoteBySlotIntent does not fire the QuickActionEmotePlayed event
-            Assert.IsFalse(eventFired, "QuickActionEmotePlayed event should not be fired for TriggerEmoteBySlotIntent");
+            // Assert - handler is notified with WheelSlot when trigger came from wheel intent (not Shortcut)
+            Assert.AreEqual(1, testShortcutHandler.NotifyCalls.Count, "Handler should be notified once");
+            Assert.AreEqual(EmoteTriggerSource.WHEEL_SLOT, testShortcutHandler.NotifyCalls[0]);
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity), "Emote should still be triggered");
         }
 
@@ -297,6 +297,26 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
             var intent = world.Get<CharacterEmoteIntent>(entity);
             Assert.AreEqual($"urn:test:emote{expectedIndex}", intent.EmoteId.ToString());
+        }
+
+        private class NoOpEventBus : IEventBus
+        {
+            public void Publish<T>(T evt) { }
+            public IDisposable Subscribe<T>(Action<T> handler) => new DisposableStub();
+            private class DisposableStub : IDisposable { public void Dispose() { } }
+        }
+
+        private class TestEmoteWheelShortcutHandler : EmoteWheelShortcutHandler
+        {
+            public List<EmoteTriggerSource> NotifyCalls { get; } = new ();
+
+            public TestEmoteWheelShortcutHandler() : base(new NoOpEventBus()) { }
+
+            public override void NotifyEmotePlayed(EmoteTriggerSource source)
+            {
+                NotifyCalls.Add(source);
+                base.NotifyEmotePlayed(source);
+            }
         }
 
         // Mock implementation of IEmotesMessageBus

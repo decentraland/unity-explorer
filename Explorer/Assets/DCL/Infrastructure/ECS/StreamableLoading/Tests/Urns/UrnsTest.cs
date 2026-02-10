@@ -2,8 +2,8 @@
 
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using ECS.StreamableLoading.NFTShapes.URNs;
-using Global.Dynamic.LaunchModes;
 using NUnit.Framework;
 
 namespace ECS.StreamableLoading.Tests.URNs
@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Tests.URNs
         {
             Assert.AreEqual(
                 expectedUrl,
-                new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))
+                new BasedURNSource(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY))
                    .UrlOrEmpty(urn)
                    .Value
             );

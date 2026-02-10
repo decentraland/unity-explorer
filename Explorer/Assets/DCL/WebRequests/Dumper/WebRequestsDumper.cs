@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.GenericDelete;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System;
@@ -88,7 +87,7 @@ namespace DCL.WebRequests.Dumper
         public bool IsMatch(bool signed, string url) =>
             Enabled && !signed && (string.IsNullOrEmpty(Filter) || (IsRegEx ? Regex.IsMatch(url, Filter) : url.Contains(Filter, StringComparison.OrdinalIgnoreCase)));
 
-        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; set; }
+        public WebRequestDumpAnalyticsHandler? AnalyticsHandler { get; set; }
 
         public int Count => dump.entries.Count;
 

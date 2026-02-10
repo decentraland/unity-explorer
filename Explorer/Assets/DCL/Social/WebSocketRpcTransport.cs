@@ -130,6 +130,8 @@ namespace DCL.SocialService
 
         public async UniTask CloseAsync(CancellationToken ct)
         {
+            if (isDisposed) return;
+
             if (State is WebSocketState.Open or WebSocketState.CloseReceived)
             {
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
