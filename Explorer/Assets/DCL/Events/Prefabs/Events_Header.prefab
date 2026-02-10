@@ -640,10 +640,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2455532748531280314}
     m_Modifications:
-    - target: {fileID: 1739371582477019066, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_Transition
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3716530754177414804, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -724,41 +720,12 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3770015041422509227, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_Color.a
-      value: 0.03137255
-      objectReference: {fileID: 0}
-    - target: {fileID: 3770015041422509227, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_PixelsPerUnitMultiplier
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4060633646178684312, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4060633646178684312, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4088952875281013740, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_fontSize
-      value: 18
-      objectReference: {fileID: 0}
-    - target: {fileID: 4088952875281013740, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_fontSizeBase
-      value: 18
-      objectReference: {fileID: 0}
     - target: {fileID: 4454769216961752845, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
       propertyPath: m_Name
       value: GoToTodayButton
       objectReference: {fileID: 0}
-    - target: {fileID: 4454769216961752845, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 5616890045287497052, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 931654d6edcb08747ad03b89dc314293, type: 3}
