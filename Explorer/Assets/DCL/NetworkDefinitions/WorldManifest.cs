@@ -14,14 +14,8 @@ namespace ECS
     public struct WorldManifest : IDisposable
     {
         public int total;
-
-        [JsonProperty("spawn_coordinate")]
         public SpawnCoordinateData? spawn_coordinate;
-
-        [JsonIgnore]
         private NativeHashSet<int2> occupiedParcels;
-
-        [JsonIgnore]
         private bool isEmpty;
 
         public WorldManifest(int2[] valueOccupiedParcels)
@@ -95,13 +89,13 @@ namespace ECS
             occupiedParcels = EMPTY_SET,
             isEmpty = true
         };
+    }
 
-        [Serializable]
-        public class SpawnCoordinateData
-        {
-            public int x;
-            public int y;
-        }
+    [Serializable]
+    public class SpawnCoordinateData
+    {
+        public int x;
+        public int y;
     }
 
     /// <summary>
@@ -116,6 +110,6 @@ namespace ECS
         public int total;
 
         [JsonProperty("spawn_coordinate")]
-        public WorldManifest.SpawnCoordinateData spawn_coordinate;
+        public SpawnCoordinateData? spawn_coordinate;
     }
 }

@@ -101,11 +101,22 @@ namespace DCL.RealmNavigation.TeleportOperations
         {
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
-            if (!promises.Any(p =>
-                    p.Result.HasValue
-                    && (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)
-                ))
+            // If the WorldManifest defines an explicit spawn coordinate, always use it
+            // (e.g. worlds with a fixed or curated spawn point)
+            WorldManifest manifest = realmController.RealmData.WorldManifest;
+
+            if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
+            {
+                parcelToTeleport = new Vector2Int(spawn.x, spawn.y);
+            }
+            // Otherwise, verify that the chosen parcel is actually owned by at least one loaded scene.
+            // If it isn't inside any scene's DecodedParcels, fall back to the first scene's DecodedBase.
+            else if (!promises.Any(p =>
+                         p.Result.HasValue &&
+                         (p.Result.Value.Asset?.metadata.scene.DecodedParcels.Contains(parcelToTeleport) ?? false)))
+            {
                 parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
+            }
 
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
