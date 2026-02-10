@@ -67,13 +67,13 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
+        private readonly IInputBlock inputBlock;
 
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.Init);
-
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
         public AuthProvider CurrentProvider => web3Authenticator.CurrentProvider;
@@ -82,7 +82,8 @@ namespace DCL.AuthenticationScreenFlow
         public event Action<string, bool> OTPVerified;
         public event Action OTPResend;
 
-        private AuthenticationScreenAudio? authenticationScreenAudio;
+        private MVCStateMachine<AuthStateBase> fsm;
+        private AuthenticationScreenAudio audio;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -133,7 +134,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController?.Dispose();
 
             CancelLoginProcess();
-            authenticationScreenAudio?.Dispose();
+            audio.Dispose();
             fsm.Dispose();
         }
 
@@ -141,8 +142,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            authenticationScreenAudio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance!.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
+            audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             bool enableEmailOTP = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
@@ -231,7 +232,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewShow();
 
             BlockUnwantedInputs();
-            authenticationScreenAudio?.OnShow();
+            audio.OnShow();
         }
 
         protected override void OnViewClose()
@@ -242,7 +243,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
 
             UnblockUnwantedInputs();
-            authenticationScreenAudio?.OnHide();
+            audio.OnHide();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
