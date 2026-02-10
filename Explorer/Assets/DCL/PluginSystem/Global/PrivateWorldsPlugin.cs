@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Input;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly IInputBlock inputBlock;
 
         private IDisposable? checkWorldAccessSubscription;
 
@@ -32,12 +34,14 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            IInputBlock inputBlock)
         {
             this.mvcManager = mvcManager;
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
             this.worldPermissionsService = worldPermissionsService;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -58,7 +62,7 @@ namespace DCL.PluginSystem.Global
                 PrivateWorldPopupView popupView = prefab.Value.GetComponent<PrivateWorldPopupView>()
                     .EnsureNotNull($"{nameof(PrivateWorldPopupView)} not found in the asset");
 
-                var popupController = new PrivateWorldPopupController(PrivateWorldPopupController.CreateLazily(popupView, null));
+                var popupController = new PrivateWorldPopupController(PrivateWorldPopupController.CreateLazily(popupView, null), inputBlock);
                 mvcManager.RegisterController(popupController);
             }
 

@@ -1,7 +1,8 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
-using DCL.Utility;
+using DCL.Input;
+using DCL.Input.Component;
 
 namespace DCL.PrivateWorlds.UI
 {
@@ -11,10 +12,15 @@ namespace DCL.PrivateWorlds.UI
     /// </summary>
     public class PrivateWorldPopupController : ControllerBase<PrivateWorldPopupView, PrivateWorldPopupParams>
     {
+        private readonly IInputBlock inputBlock;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public PrivateWorldPopupController(ViewFactoryMethod viewFactory)
-            : base(viewFactory) { }
+        public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock)
+            : base(viewFactory)
+        {
+            this.inputBlock = inputBlock;
+        }
 
         protected override void OnBeforeViewShow()
         {
@@ -23,12 +29,15 @@ namespace DCL.PrivateWorlds.UI
 
         protected override void OnViewShow()
         {
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
             if (inputData.Mode == PrivateWorldPopupMode.PasswordRequired)
                 viewInstance!.FocusPasswordInput();
         }
 
         protected override void OnViewClose()
         {
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             viewInstance?.ResetState();
         }
 

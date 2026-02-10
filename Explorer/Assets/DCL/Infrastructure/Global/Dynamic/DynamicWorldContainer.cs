@@ -782,7 +782,8 @@ namespace Global.Dynamic
                     mvcManager,
                     eventBus,
                     assetsProvisioner,
-                    worldPermissionsService),
+                    worldPermissionsService,
+                    staticContainer.InputBlock),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,
