@@ -31,6 +31,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public int Amount { get; set; }
 
+        TrimmedAvatarAttachmentDTO ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
+
         public void SetAmount(int amount)
         {
             Amount = amount;

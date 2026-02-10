@@ -11,6 +11,9 @@ namespace DCL.AvatarRendering.Emotes
     {
         public List<ITrimmedEmote> Results { get; }
 
+        // This is used only in builder flow after the trimmed emotes are fetched, so we can fetch the full emotes in order to let ResolveBuilderEmotePromisesSystem resolve all the assets
+        public RepoolableList<IEmote> FullResults { get; }
+
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public CommonLoadingArguments CommonArguments { get; set; }
@@ -26,6 +29,7 @@ namespace DCL.AvatarRendering.Emotes
             TotalAmount = totalAmount;
             NeedsBuilderAPISigning = needsBuilderAPISigning;
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
+            FullResults = RepoolableList<IEmote>.NewList();
         }
 
         public bool Equals(GetTrimmedEmotesByParamIntention other) =>

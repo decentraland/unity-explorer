@@ -7,6 +7,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -84,6 +85,13 @@ namespace DCL.AvatarRendering.Emotes
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception!;
+
+            if (needsBuilderAPISigning)
+            {
+                List<URN> urns = promise.Result.Value.Asset.Emotes.Select(x => x.GetUrn()).ToList();
+                await UniTask.WhenAll(GetEmotesAsync(urns, BodyShape.MALE, ct, intention.FullResults.List),
+                    GetEmotesAsync(urns, BodyShape.FEMALE, ct, intention.FullResults.List));
+            }
 
             return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
         }
