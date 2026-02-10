@@ -43,6 +43,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
                 [FeatureId.DONATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DONATIONS_UI)),
                 [FeatureId.FORCE_BACKFACE_CULLING] = featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING) || appArgs.HasFlag(AppArgsFlags.FORCE_BACKFACE_CULLING),
+                [FeatureId.NAME_COLOR_CHANGE] = featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.NAME_COLOR_CHANGE)) || Application.isEditor,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -150,5 +151,6 @@ namespace DCL.FeatureFlags
         PRIVATE_CHAT_REQUIRES_TOPIC,
         DONATIONS,
         FORCE_BACKFACE_CULLING,
+        NAME_COLOR_CHANGE
     }
 }
