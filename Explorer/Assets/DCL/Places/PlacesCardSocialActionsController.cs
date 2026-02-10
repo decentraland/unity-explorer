@@ -137,16 +137,27 @@ namespace DCL.Places
 
         public void SetPlaceAsHome(PlacesData.PlaceInfo placeInfo, bool isHome, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView)
         {
-            if (!VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates))
-                return;
-
             if (isHome)
             {
-                homePlaceEventBus.SetAsHome(coordinates);
+                if (!string.IsNullOrEmpty(placeInfo.world_name))
+                {
+                    homePlaceEventBus.SetAsHome(placeInfo.world_name);
+                }
+                else if (VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates))
+                {
+                    homePlaceEventBus.SetAsHome(coordinates);
+                }
+                else
+                {
+                    return;
+                }
+
                 PlaceSetAsHome?.Invoke(placeInfo.id);
             }
             else
+            {
                 homePlaceEventBus.UnsetHome();
+            }
 
             placeCardView?.SilentlySetHomeToggle(isHome);
             placeDetailPanelView?.SilentlySetHomeToggle(isHome);

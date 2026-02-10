@@ -51,7 +51,10 @@ namespace DCL.Web3.Authenticators
         {
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload _, CancellationToken ct) =>
+            await LoginAsync(ct);
+
+        private async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
             if (!File.Exists(TOKEN_PATH))
                 throw new AutoLoginTokenNotFoundException();
@@ -77,20 +80,16 @@ namespace DCL.Web3.Authenticators
                                                  .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>();
 
             var authChain = AuthChain.Create();
-
             foreach (AuthLink authLink in json.identity.authChain)
                 authChain.Set(authLink);
-
             string address = authChain.Get(AuthLinkType.SIGNER).payload;
-
             IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
-
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain);
         }
 
-        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public UniTask LogoutAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
         public UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)

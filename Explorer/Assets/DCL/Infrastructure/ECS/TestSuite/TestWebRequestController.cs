@@ -3,7 +3,6 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using NSubstitute;
 
@@ -17,7 +16,6 @@ namespace ECS.TestSuite
             Substitute.For<IWebRequestsAnalyticsContainer>(),
             Substitute.For<IWeb3IdentityCache>(),
             new RequestHub(Substitute.For<IDecentralandUrlsSource>()),
-            ChromeDevtoolProtocolClient.NewForTest(),
             new WebRequestBudget(TOTAL_BUDGET,
                 new ElementBinding<ulong>(TOTAL_BUDGET))
         );

@@ -190,8 +190,7 @@ namespace DCL.Places
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
             liveTag.SetActive(placeInfo.live);
 
-            VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates);
-            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);
 
             LoadFriendsThumbnailsAsync(friends, cancellationToken).Forget();

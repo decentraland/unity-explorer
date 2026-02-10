@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -97,6 +98,7 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
+            ISocialServiceEventBus socialServiceEventBus)
             IWorldPermissionsService worldPermissionsService)
         {
             this.mvcManager = mvcManager;
@@ -124,7 +126,8 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.analytics = analytics;
             this.homePlaceEventBus = homePlaceEventBus;
-            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
+            this.socialServiceEventBus = socialServiceEventBus;
+            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
             notificationHandler = new NotificationHandler(realmNavigator);
         }
 

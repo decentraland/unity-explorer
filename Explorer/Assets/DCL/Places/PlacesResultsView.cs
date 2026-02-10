@@ -174,8 +174,7 @@ namespace DCL.Places
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
-            VectorUtilities.TryParseVector2Int(placeInfoWithConnectedFriends.PlaceInfo.base_position, out var coordinates);
-            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends.PlaceInfo) ?? false;
             cardView.Configure(
                 placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
                 ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
