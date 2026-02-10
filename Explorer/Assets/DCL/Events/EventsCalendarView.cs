@@ -9,6 +9,7 @@ using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Events
@@ -104,6 +105,8 @@ namespace DCL.Events
 
             if (triggerEvent)
                 DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
+
+            EventSystem.current.SetSelectedGameObject(null);
         }
 
         public void SetHighlightedCarousel(IReadOnlyList<EventDTO>? eventsInfo)
