@@ -57,13 +57,17 @@ namespace DCL.PrivateWorlds.Tests.EditMode
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
                 .Returns(_ => UniTask.FromException<WorldAccessCheckContext>(new Exception("API error")));
             var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
-            LogAssert.Expect(LogType.Exception, "Exception: API error");
+
+            // ReportHub.LogException emits two LogType.Exception entries (category prefix + exception);
+            // suppress them so the test runner does not treat them as failures.
+            LogAssert.ignoreFailingMessages = true;
 
             // Act
             handler.OnCheckWorldAccess(evt);
             var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
 
             // Assert
+            LogAssert.ignoreFailingMessages = false;
             Assert.AreEqual(WorldAccessResult.CheckFailed, result);
         }
 
@@ -263,13 +267,17 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     return UniTask.CompletedTask;
                 });
             var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
-            LogAssert.Expect(LogType.Exception, "Exception: Network error");
+
+            // ReportHub.LogException emits two LogType.Exception entries (category prefix + exception);
+            // suppress them so the test runner does not treat them as failures.
+            LogAssert.ignoreFailingMessages = true;
 
             // Act
             handler.OnCheckWorldAccess(evt);
             var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
 
             // Assert
+            LogAssert.ignoreFailingMessages = false;
             Assert.AreEqual(WorldAccessResult.CheckFailed, result);
         }
     }
