@@ -140,23 +140,26 @@ jobs:
     name: Prebuild
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Skip when PR has 'perf_test' label (only performance tests should run)
     if: |
-      (github.ref == 'refs/heads/dev') ||
-      (github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch') ||
-      (
-        github.event_name == 'pull_request' &&
+      !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
+        (github.ref == 'refs/heads/dev') ||
+        (github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch') ||
         (
+          github.event_name == 'pull_request' &&
           (
-            (github.event.action == 'opened' ||
-             github.event.action == 'reopened' ||
-             github.event.action == 'synchronize') &&
-            !github.event.pull_request.draft
-          ) ||
-          github.event.action == 'ready_for_review' ||
-          (
-            github.event.action == 'labeled' &&
-            (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+            (
+              (github.event.action == 'opened' ||
+               github.event.action == 'reopened' ||
+               github.event.action == 'synchronize') &&
+              !github.event.pull_request.draft
+            ) ||
+            github.event.action == 'ready_for_review' ||
+            (
+              github.event.action == 'labeled' &&
+              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+            )
           )
         )
       )
@@ -351,7 +354,7 @@ jobs:
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
           # solves https://github.com/decentraland/unity-explorer/issues/6789
           # use pre-defined sentry dsn, but in case it is not defined, use the development sentry project
-          PARAM_SENTRY_DSN: ${{ inputs.is_release_build == 'true' && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
+          PARAM_SENTRY_DSN: ${{ inputs.is_release_build && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
@@ -570,7 +573,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ inputs.is_release_build == 'true' && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
+          SENTRY_PROJECT: ${{ inputs.is_release_build && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
         run: |
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \

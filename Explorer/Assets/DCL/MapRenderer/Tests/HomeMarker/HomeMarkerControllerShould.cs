@@ -24,10 +24,10 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 		private HomePlaceEventBus homePlaceEventBus;
 		private IEventBus eventBus;
 		private Transform parent;
-		
+
 		private static IDCLPrefs originalPrefs;
 		private static bool prefsInitialized;
-		
+
 		[OneTimeSetUp]
 		public void OneTimeSetup()
 		{
@@ -41,7 +41,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			// Restore original implementation if it existed
 			RestoreOriginalPrefs();
 		}
-		
+
 		[SetUp]
 		public void Setup()
 		{
@@ -52,10 +52,10 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			navmapBus = Substitute.For<INavmapBus>();
 			placesAPIService = Substitute.For<IPlacesAPIService>();
 			homePlaceEventBus = new HomePlaceEventBus();
-			eventBus = Substitute.For<IEventBus>();			
+			eventBus = Substitute.For<IEventBus>();
 
 			coordsUtils.CoordsToPositionWithOffset(Arg.Any<Vector2>())
-				.Returns(callInfo => 
+				.Returns(callInfo =>
 				{
 					var coords = callInfo.Arg<Vector2>();
 					return new Vector3(coords.x, coords.y, 0);
@@ -75,28 +75,32 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 			// Clear prefs keys (safe because player prefs are replaced for test duration)
 			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
 				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
+				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
 		}
-		
+
 		[TearDown]
         public void TearDown()
         {
 			controller?.Dispose();
 			if (parent != null && parent.gameObject != null)
 				Object.DestroyImmediate(parent.gameObject);
-	        
+
 			// Clean up test data
 			if (DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA))
 				DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+			if (DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
+				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
         }
-		
+
 		private static void InitializeTestPrefs()
 		{
 			var dclPrefsField = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static);
-            
+
 			if (dclPrefsField != null)
 			{
 				var currentPrefs = dclPrefsField.GetValue(null) as IDCLPrefs;
-                
+
 				if (currentPrefs == null)
 				{
 					var testPrefs = new InMemoryDCLPlayerPrefs();
@@ -113,7 +117,7 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 				}
 			}
 		}
-		
+
 		private static void RestoreOriginalPrefs()
 		{
 			if (!prefsInitialized && originalPrefs != null)
@@ -219,6 +223,97 @@ namespace DCL.MapRenderer.Tests.HomeMarker
 
             // Assert
             Assert.IsTrue(homePlaceEventBus.CurrentHomeCoordinates == null);
+        }
+
+        [Test]
+        public void SetWorldAsHomeWhenRequested()
+        {
+            controller.Initialize();
+            var worldName = "testworld.dcl.eth";
+
+            homePlaceEventBus.SetAsHome(worldName);
+
+            Assert.IsTrue(controller.HomeIsSet);
+            Assert.IsTrue(controller.IsWorldHome);
+            Assert.AreEqual(worldName, homePlaceEventBus.CurrentHomeWorldName);
+            Assert.IsNull(homePlaceEventBus.CurrentHomeCoordinates);
+            marker.Received().SetActive(false);
+        }
+
+        [Test]
+        public void UnsetWorldHomeWhenRequested()
+        {
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome("testworld.dcl.eth");
+
+            homePlaceEventBus.UnsetHome();
+
+            Assert.IsFalse(controller.HomeIsSet);
+            Assert.IsFalse(controller.IsWorldHome);
+            Assert.IsNull(homePlaceEventBus.CurrentHomeWorldName);
+        }
+
+        [Test]
+        public void ClearWorldHomeWhenSettingCoordinateHome()
+        {
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome("testworld.dcl.eth");
+
+            homePlaceEventBus.SetAsHome(new Vector2Int(10, 20));
+
+            Assert.IsTrue(controller.HomeIsSet);
+            Assert.IsFalse(controller.IsWorldHome);
+            Assert.IsNull(homePlaceEventBus.CurrentHomeWorldName);
+            Assert.AreEqual(new Vector2Int(10, 20), homePlaceEventBus.CurrentHomeCoordinates);
+        }
+
+        [Test]
+        public void ClearCoordinateHomeWhenSettingWorldHome()
+        {
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome(new Vector2Int(10, 20));
+
+            homePlaceEventBus.SetAsHome("testworld.dcl.eth");
+
+            Assert.IsTrue(controller.HomeIsSet);
+            Assert.IsTrue(controller.IsWorldHome);
+            Assert.AreEqual("testworld.dcl.eth", homePlaceEventBus.CurrentHomeWorldName);
+            Assert.IsNull(homePlaceEventBus.CurrentHomeCoordinates);
+        }
+
+        [Test]
+        public void SerializeAndDeserializeWorldHome()
+        {
+            controller.Initialize();
+            var worldName = "testworld.dcl.eth";
+
+            homePlaceEventBus.SetAsHome(worldName);
+
+            Assert.IsTrue(HomeMarkerController.HasSerializedWorldName());
+            Assert.AreEqual(worldName, HomeMarkerController.DeserializeWorldName());
+            Assert.IsFalse(HomeMarkerController.HasSerializedPosition());
+        }
+
+        [Test]
+        public void IdentifyWorldPlaceAsHome()
+        {
+            controller.Initialize();
+            var worldName = "testworld.dcl.eth";
+            homePlaceEventBus.SetAsHome(worldName);
+
+            var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero) { world_name = worldName };
+
+            Assert.IsTrue(homePlaceEventBus.IsHome(placeInfo));
+        }
+
+        [Test]
+        public void NotIdentifyDifferentWorldAsHome()
+        {
+            controller.Initialize();
+            homePlaceEventBus.SetAsHome("testworld.dcl.eth");
+
+            var placeInfo = new PlacesData.PlaceInfo(Vector2Int.zero) { world_name = "otherworld.dcl.eth" };
+            Assert.IsFalse(homePlaceEventBus.IsHome(placeInfo));
         }
 	}
 }

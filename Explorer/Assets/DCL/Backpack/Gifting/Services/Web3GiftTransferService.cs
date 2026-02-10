@@ -30,7 +30,7 @@ namespace DCL.Backpack.Gifting.Services
         private const string JsonKeyFrom = "from";
         private const string JsonKeyTo = "to";
         private const string JsonKeyData = "data";
-        
+
         private readonly IEthereumApi ethereumApi;
 
         public Web3GiftTransferService(IEthereumApi ethereumApi)
@@ -82,9 +82,8 @@ namespace DCL.Backpack.Gifting.Services
                     }
                 };
 
-                // This call automatically triggers the
-                // browser pop-up via DappWeb3Authenticator
-                var response = await ethereumApi.SendAsync(request, ct);
+                // This call automatically triggers web3 confirmation pop-up (in-browser for dappAuth, in-game for ThirdWeb)
+                EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
                 if (response.result == null ||
                     string.IsNullOrEmpty(response.result.ToString()))

@@ -30,10 +30,8 @@ namespace DCL.Backpack.Gifting.Factory
             return new GiftingHeaderPresenter(view, profileRepository, inputBlock);
         }
 
-        public GiftingFooterPresenter CreateFooter(GiftingFooterView view)
-        {
-            return new GiftingFooterPresenter(view);
-        }
+        public GiftingFooterPresenter CreateFooter(GiftingFooterView view) =>
+            new (view);
 
         public GiftingErrorsController CreateErrorController(GiftingView view)
         {

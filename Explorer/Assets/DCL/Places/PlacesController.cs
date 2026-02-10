@@ -1,13 +1,15 @@
 ﻿using DCL.Browser;
-using DCL.Clipboard;
+using DCL.Communities;
+using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -36,10 +38,12 @@ namespace DCL.Places
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            PlacesCardSocialActionsController placesCardSocialActionsController,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -49,7 +53,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                webRequestController, realmNavigator, clipboard, dclUrlSource);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -82,6 +86,10 @@ namespace DCL.Places
 
         public void Deactivate()
         {
+            // Must be before setting the view inactive or the focus state will be false regardless
+            if (view.IsSearchBarFocused)
+                RestoreShortcutsInput();
+
             isSectionActivated = false;
             view.SetViewActive(false);
             view.ClearCategories();

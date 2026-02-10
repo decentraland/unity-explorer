@@ -3,12 +3,14 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.Analytics.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -30,17 +32,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public ResolveWearablePromisesSystem(
             World world,
             IWearableStorage wearableStorage,
-            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory
             ) : base(world)
         {
             this.wearableStorage = wearableStorage;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -55,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
+        private void ResolveWearablePromise(Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -108,7 +110,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (missingPointers.Count > 0)
             {
-                CreateMissingPointersPromise(missingPointers, wearablesByPointersIntention, partitionComponent);
+                CreateMissingPointersPromise(missingPointers, ref wearablesByPointersIntention, partitionComponent);
                 return;
             }
 
@@ -148,17 +150,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 //One last safeguard in case the dto was successfull but the assets failed
                 WearableComponentsUtils.ConfirmWearableVisibility(wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
-                World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
+                World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables!, hideWearablesResolution.HiddenCategories!)));
             }
         }
 
-        private void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private void CreateMissingPointersPromise(List<URN> missingPointers, ref GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive, cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
+
+            intention.MissingPointersCount = missingPointers.Count;
 
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
