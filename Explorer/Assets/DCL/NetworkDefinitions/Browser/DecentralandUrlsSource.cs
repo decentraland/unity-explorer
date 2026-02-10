@@ -99,7 +99,7 @@ namespace DCL.Browser.DecentralandUrls
         private UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
-                DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.SupportLink => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
@@ -114,9 +114,11 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiDestinations => $"https://places.decentraland.{ENV}/api/destinations",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
+                DecentralandUrl.MetaTransactionServer => $"https://transactions-api.decentraland.{ENV}/v1/transactions",
                 DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
+                DecentralandUrl.BuilderApiNewsletter => $"https://builder-api.decentraland.{ENV}/v1/newsletter",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
