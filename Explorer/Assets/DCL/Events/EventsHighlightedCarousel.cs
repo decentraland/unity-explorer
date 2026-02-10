@@ -140,7 +140,7 @@ namespace DCL.Events
             if (currentEvents.Count > 1)
             {
                 carouselCts = carouselCts.SafeRestart();
-                PlayCarousel(carouselCts.Token).Forget();
+                PlayCarouselAsync(carouselCts.Token).Forget();
             }
         }
 
@@ -157,7 +157,7 @@ namespace DCL.Events
             ).SetEase(Ease.OutCubic);
         }
 
-        private async UniTask PlayCarousel(CancellationToken ct)
+        private async UniTask PlayCarouselAsync(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
             {
