@@ -92,7 +92,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISelfProfile selfProfile;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly IWorldPermissionsService? worldPermissionsService;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -136,7 +136,7 @@ namespace DCL.Communities.CommunitiesCard
             ISelfProfile selfProfile,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService = null)
+            IWorldPermissionsService worldPermissionsService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;

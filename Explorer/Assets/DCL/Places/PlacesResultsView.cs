@@ -42,7 +42,7 @@ namespace DCL.Places
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? openContextMenuCts;
         private HomePlaceEventBus? homePlaceEventBus;
-        private IWorldPermissionsService? worldPermissionsService;
+        private IWorldPermissionsService worldPermissionsService = null!;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -89,7 +89,7 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepoWrapper,
             HomePlaceEventBus homeEventBus,
-            IWorldPermissionsService? worldPermissionsService = null)
+            IWorldPermissionsService worldPermissionsService)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
@@ -197,8 +197,8 @@ namespace DCL.Places
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
 
-            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) && worldPermissionsService != null)
-                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, destroyCancellationToken).Forget();
+            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name))
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, cardView.WorldAccessCancellationToken).Forget();
 
             return gridItem;
         }

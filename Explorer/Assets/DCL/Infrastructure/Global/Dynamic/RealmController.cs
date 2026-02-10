@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -223,6 +223,13 @@ namespace Global.Dynamic
             return statusCode != 401;
         }
 
+        private static string ExtractCommsAdapterUrl(string input)
+        {
+            const string MARKER = "https";
+            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
+            return index >= 0 ? input.Substring(index) : string.Empty;
+        }
+
         public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
             FixedScenePointers fixedScenePointers = default;
@@ -394,13 +401,6 @@ namespace Global.Dynamic
 
             //"offline property like in previous implementation"
             return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
-        }
-
-        private static string ExtractCommsAdapterUrl(string input)
-        {
-            const string MARKER = "https";
-            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
-            return index >= 0 ? input.Substring(index) : string.Empty;
         }
     }
 }

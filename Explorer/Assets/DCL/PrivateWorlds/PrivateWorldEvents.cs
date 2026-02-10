@@ -19,6 +19,11 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public readonly struct CheckWorldAccessEvent
     {
+        /// <summary>
+        /// World name used by PrivateWorldsTestTrigger to simulate a handler that never completes (for timeout testing).
+        /// </summary>
+        public const string WORLD_NAME_TIMEOUT_TEST = "//timeout-test";
+
         public readonly string WorldName;
         public readonly string? OwnerAddress;
         public readonly CancellationToken CancellationToken;

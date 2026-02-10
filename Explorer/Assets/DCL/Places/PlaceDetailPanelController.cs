@@ -24,7 +24,7 @@ namespace DCL.Places
         private readonly INavmapBus navmapBus;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly IWorldPermissionsService? worldPermissionsService;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private string currentNavigationPlaceId = string.Empty;
 
@@ -38,7 +38,7 @@ namespace DCL.Places
             INavmapBus navmapBus,
             IMapPathEventBus mapPathEventBus,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService = null) : base(viewFactory)
+            IWorldPermissionsService worldPermissionsService) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
@@ -78,7 +78,7 @@ namespace DCL.Places
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
 
-            if (!string.IsNullOrEmpty(inputData.PlaceData.world_name) && worldPermissionsService != null)
+            if (!string.IsNullOrEmpty(inputData.PlaceData.world_name))
                 CheckWorldAccessAsync(inputData.PlaceData.world_name, panelCts.Token).Forget();
         }
 
@@ -122,7 +122,7 @@ namespace DCL.Places
         {
             try
             {
-                WorldAccessCheckContext context = await worldPermissionsService!.CheckWorldAccessAsync(worldName, ct);
+                WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
                 viewInstance!.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
             }
             catch (OperationCanceledException) { }

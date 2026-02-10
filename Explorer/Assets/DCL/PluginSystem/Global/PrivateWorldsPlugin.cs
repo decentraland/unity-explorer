@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
 
         private IDisposable? checkWorldAccessSubscription;
 
-        public IWorldPermissionsService? WorldPermissionsService => worldPermissionsService;
+        public IWorldPermissionsService WorldPermissionsService => worldPermissionsService;
 
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,

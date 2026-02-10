@@ -42,7 +42,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IMVCManager mvcManager;
-        private readonly IWorldPermissionsService? worldPermissionsService;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -68,7 +68,7 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService = null)
+            IWorldPermissionsService worldPermissionsService)
         {
             this.view = view;
             this.placesController = placesController;

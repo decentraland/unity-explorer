@@ -52,7 +52,6 @@ namespace DCL.Places
 
         [Header("World Access")]
         [SerializeField] private Button enterPasswordButton = null!;
-        [SerializeField] private GameObject invitationOnlyLabel = null!;
 
         private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
         private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
@@ -80,6 +79,7 @@ namespace DCL.Places
         private Vector2 originalFooterSizeDelta;
         private PlaceInfo? currentPlaceInfo;
         private CancellationTokenSource loadingThumbnailCts;
+        private CancellationTokenSource? worldAccessCts;
         private string lastPlaceTitle = string.Empty;
         private WorldAccessCheckResult lastAccessState = WorldAccessCheckResult.Allowed;
         private WorldAccessType? lastAccessType;
@@ -96,6 +96,7 @@ namespace DCL.Places
         public event Action<PlaceInfo, PlaceCardView>? MainButtonClicked;
 
         public bool IsSetAsHome => homeToggle.Toggle.isOn;
+        public CancellationToken WorldAccessCancellationToken => worldAccessCts?.Token ?? CancellationToken.None;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -133,8 +134,11 @@ namespace DCL.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        private void OnDisable() =>
+        private void OnDisable()
+        {
             loadingThumbnailCts.SafeCancelAndDispose();
+            worldAccessCts.SafeCancelAndDispose();
+        }
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
             List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false)
@@ -142,6 +146,7 @@ namespace DCL.Places
             currentPlaceInfo = placeInfo;
 
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+            worldAccessCts = worldAccessCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, loadingThumbnailCts.Token, true).Forget();
 
             lastPlaceTitle = placeInfo.title ?? string.Empty;
@@ -205,7 +210,6 @@ namespace DCL.Places
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
             enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
-            invitationOnlyLabel.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
         }
 
         private void RefreshPlaceTitleWithPadlock()

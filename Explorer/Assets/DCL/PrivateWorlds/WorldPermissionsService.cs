@@ -74,6 +74,18 @@ namespace DCL.PrivateWorlds
     }
 
     /// <summary>
+    /// Abstraction for checking if the current user is a member of a community.
+    /// Implemented by an adapter that uses CommunitiesDataProvider (avoids DCL.PrivateWorlds referencing DCL.Social).
+    /// </summary>
+    public interface ICommunityMembershipChecker
+    {
+        /// <summary>
+        /// Returns true if the current user is a member of the given community (role != none).
+        /// </summary>
+        UniTask<bool> IsMemberOfCommunityAsync(string communityId, CancellationToken ct);
+    }
+
+    /// <summary>
     /// Service for fetching and checking world access permissions.
     /// </summary>
     public class WorldPermissionsService : IWorldPermissionsService
@@ -81,15 +93,18 @@ namespace DCL.PrivateWorlds
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ICommunityMembershipChecker? communityMembershipChecker;
 
         public WorldPermissionsService(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunityMembershipChecker? communityMembershipChecker = null)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.communityMembershipChecker = communityMembershipChecker;
         }
 
         public async UniTask<WorldAccessCheckContext> CheckWorldAccessAsync(string worldName, CancellationToken ct)
@@ -234,8 +249,26 @@ namespace DCL.PrivateWorlds
                     return true;
             }
 
-            // TODO: Implement community membership check for AllowedCommunities.
-            // Use CommunitiesDataProvider.GetCommunityAsync(communityId) and check role != CommunityMemberRole.none.
+            if (communityMembershipChecker != null && accessInfo.AllowedCommunities.Count > 0)
+            {
+                foreach (string communityId in accessInfo.AllowedCommunities)
+                {
+                    try
+                    {
+                        if (await communityMembershipChecker.IsMemberOfCommunityAsync(communityId, ct))
+                            return true;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogWarning(ReportCategory.REALM,
+                            $"Failed to check community membership for '{communityId}': {e.Message}");
+                    }
+                }
+            }
 
             return false;
         }

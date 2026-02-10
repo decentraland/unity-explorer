@@ -4,7 +4,6 @@ using DCL.PrivateWorlds.UI;
 using MVC;
 using System;
 using System.Threading;
-
 namespace DCL.PrivateWorlds
 {
     /// <summary>
@@ -32,6 +31,12 @@ namespace DCL.PrivateWorlds
         {
             try
             {
+                if (evt.WorldName == CheckWorldAccessEvent.WORLD_NAME_TIMEOUT_TEST)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(20),DelayType.DeltaTime,PlayerLoopTiming.Update, evt.CancellationToken);
+                    return;
+                }
+
                 var context = await worldPermissionsService.CheckWorldAccessAsync(evt.WorldName, evt.CancellationToken);
 
                 switch (context.Result)

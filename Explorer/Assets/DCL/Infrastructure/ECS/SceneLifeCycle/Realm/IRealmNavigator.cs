@@ -71,6 +71,7 @@ namespace ECS.SceneLifeCycle.Realm
             error is ChangeRealmError.SameRealm
                 or ChangeRealmError.NotReachable
                 or ChangeRealmError.LocalSceneDevelopmentBlocked
+                or ChangeRealmError.PasswordRequired
                 or ChangeRealmError.PasswordCancelled
                 or ChangeRealmError.WhitelistAccessDenied
                 or ChangeRealmError.CommunityAccessDenied;
@@ -93,7 +94,7 @@ namespace ECS.SceneLifeCycle.Realm
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            bool isWorld = false
+            string? worldName = null
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);

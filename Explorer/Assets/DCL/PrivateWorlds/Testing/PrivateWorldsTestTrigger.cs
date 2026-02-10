@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using MVC;
@@ -398,6 +400,133 @@ namespace DCL.PrivateWorlds.Testing
             catch (Exception ex)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"[EventBus] Error: {ex.Message}");
+            }
+        }
+
+        private const string PERMISSION_CHECK_FAILED_MESSAGE =
+            "Could not verify world permissions. You may experience access issues.";
+        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
+
+        [ContextMenu("Test - Simulate CheckFailed Toast")]
+        public void TestSimulateCheckFailedToast()
+        {
+            if (NotificationsBusController.Instance == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: NotificationsBusController not initialized.");
+                return;
+            }
+            NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+            ReportHub.Log(ReportCategory.REALM, "CheckFailed toast triggered. Verify the toast appears.");
+        }
+
+        [ContextMenu("Test - Simulate Timeout")]
+        public void TestSimulateTimeout()
+        {
+            if (eventBus == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: EventBus not initialized.");
+                return;
+            }
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+            SimulateTimeoutAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid SimulateTimeoutAsync(CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Publishing CheckWorldAccessEvent with handler that delays 20s...");
+                var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
+                var evt = new CheckWorldAccessEvent(CheckWorldAccessEvent.WORLD_NAME_TIMEOUT_TEST, null, resultSource, ct);
+                eventBus!.Publish(evt);
+
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(PERMISSION_CHECK_TIMEOUT_SECONDS));
+                var result = await resultSource.Task.AttachExternalCancellation(timeoutCts.Token);
+                ReportHub.Log(ReportCategory.REALM, $"[Timeout Test] Unexpected: got result {result}");
+            }
+            catch (OperationCanceledException)
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Caller cancelled.");
+                    return;
+                }
+                ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Timeout fired. Showing toast and blocking.");
+                if (NotificationsBusController.Instance != null)
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"[Timeout Test] Error: {ex.Message}");
+            }
+        }
+
+        [ContextMenu("Test - Double Jump In")]
+        public void TestDoubleJumpIn()
+        {
+            if (eventBus == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: EventBus not initialized.");
+                return;
+            }
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+            DoubleJumpInAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid DoubleJumpInAsync(CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.REALM, "[Double Jump In] Publishing two CheckWorldAccessEvents in rapid succession...");
+                var resultSource1 = new UniTaskCompletionSource<WorldAccessResult>();
+                var resultSource2 = new UniTaskCompletionSource<WorldAccessResult>();
+                eventBus!.Publish(new CheckWorldAccessEvent(testWorldName, null, resultSource1, ct));
+                eventBus!.Publish(new CheckWorldAccessEvent(testWorldName, null, resultSource2, ct));
+                var result = await resultSource1.Task.AttachExternalCancellation(ct);
+                ReportHub.Log(ReportCategory.REALM, $"[Double Jump In] First result: {result}. Verify only one popup appeared.");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.REALM, "[Double Jump In] Cancelled");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"[Double Jump In] Error: {ex.Message}");
+            }
+        }
+
+        [ContextMenu("Test - Cancel During Popup")]
+        public void TestCancelDuringPopup()
+        {
+            if (mvcManager == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: MVC Manager not initialized. Call Initialize() first.");
+                return;
+            }
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+            ShowPasswordPopupThenCancelAfterDelayAsync(cts, TimeSpan.FromSeconds(3)).Forget();
+        }
+
+        private async UniTaskVoid ShowPasswordPopupThenCancelAfterDelayAsync(CancellationTokenSource popupCts, TimeSpan cancelAfter)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.REALM, "Showing password popup; will cancel after 3 seconds...");
+                ShowPasswordPopupAsync(popupCts.Token).Forget();
+                await UniTask.Delay(cancelAfter);
+                popupCts.Cancel();
+                ReportHub.Log(ReportCategory.REALM, "Cancel during popup completed. Verify popup closed cleanly.");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"Cancel during popup error: {ex.Message}");
             }
         }
     }

@@ -3,6 +3,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
@@ -27,6 +29,8 @@ namespace DCL.RealmNavigation
         private const int MAX_REALM_CHANGE_RETRIES = 3;
         private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
             "Teleport is not allowed in local scene development mode";
+        private const string PERMISSION_CHECK_FAILED_MESSAGE =
+            "Could not verify world permissions. You may experience access issues.";
 
         public event Action<Vector2Int>? NavigationExecuted;
 
@@ -89,7 +93,7 @@ namespace DCL.RealmNavigation
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            bool isWorld = false
+            string? worldName = null
         )
         {
             if (ct.IsCancellationRequested)
@@ -105,14 +109,20 @@ namespace DCL.RealmNavigation
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
             // Pre-check private world permissions before loading
-            if (isWorld && eventBusProxy.Configured)
+            if (!string.IsNullOrEmpty(worldName))
             {
-                var result = await PublishWorldAccessCheckAsync(realm, ct);
+                var result = await PublishWorldAccessCheckAsync(worldName, ct);
+
+                if (result == WorldAccessResult.CheckFailed)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+                    return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+                }
+
                 if (result != WorldAccessResult.Allowed)
                     return MapToChangeRealmError(result);
             }
-            else if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
@@ -133,24 +143,25 @@ namespace DCL.RealmNavigation
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private const int ACCESS_CHECK_TIMEOUT_SECONDS = 60;
+        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
 
-        private async UniTask<WorldAccessResult> PublishWorldAccessCheckAsync(URLDomain realm, CancellationToken ct)
+        private async UniTask<WorldAccessResult> PublishWorldAccessCheckAsync(string worldName, CancellationToken ct)
         {
             var eventBus = eventBusProxy.Object;
             if (eventBus == null)
                 return WorldAccessResult.CheckFailed;
 
-            string worldName = ExtractWorldNameFromRealm(realm);
             var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
             var evt = new CheckWorldAccessEvent(worldName, null, resultSource, ct);
             eventBus.Publish(evt);
 
             try
             {
+                // Short timeout as safety net for hung permission HTTP calls.
+                // The popup flow (password entry, access denied) is not subject to this timeout —
+                // it is only cancelled by the caller's ct (e.g., user navigating away).
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                timeoutCts.CancelAfter(TimeSpan.FromSeconds(ACCESS_CHECK_TIMEOUT_SECONDS));
-
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(PERMISSION_CHECK_TIMEOUT_SECONDS));
                 return await resultSource.Task.AttachExternalCancellation(timeoutCts.Token);
             }
             catch (OperationCanceledException)
@@ -161,9 +172,8 @@ namespace DCL.RealmNavigation
                     return WorldAccessResult.PasswordCancelled;
                 }
 
-                // Timeout (not caller cancellation)
-                ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] World access check timed out for '{worldName}'");
-                resultSource.TrySetResult(WorldAccessResult.CheckFailed);
+                // Timeout (not caller cancellation) — permission check hung
+                ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check timed out for '{worldName}'");
                 return WorldAccessResult.CheckFailed;
             }
         }
@@ -173,26 +183,8 @@ namespace DCL.RealmNavigation
             {
                 WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WhitelistAccessDenied),
                 WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordCancelled),
-                WorldAccessResult.CheckFailed => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess),
                 _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
             };
-
-        private static string ExtractWorldNameFromRealm(URLDomain realm)
-        {
-            string realmString = realm.Value;
-            const string WORLD_PATH = "/world/";
-            int worldIndex = realmString.LastIndexOf(WORLD_PATH, StringComparison.OrdinalIgnoreCase);
-            if (worldIndex >= 0)
-            {
-                string worldPart = realmString.Substring(worldIndex + WORLD_PATH.Length);
-                int slashIndex = worldPart.IndexOf('/');
-                return slashIndex >= 0 ? worldPart.Substring(0, slashIndex) : worldPart;
-            }
-            int lastSlash = realmString.LastIndexOf('/');
-            return lastSlash >= 0 && lastSlash < realmString.Length - 1
-                ? realmString.Substring(lastSlash + 1)
-                : realmString;
-        }
 
         private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(
             TeleportParams teleportParams,

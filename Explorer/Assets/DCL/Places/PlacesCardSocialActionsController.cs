@@ -157,7 +157,7 @@ namespace DCL.Places
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
                 realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()),
                     ct,
-                    default, true).Forget();
+                    default, placeInfo.world_name).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false).Forget();
         }

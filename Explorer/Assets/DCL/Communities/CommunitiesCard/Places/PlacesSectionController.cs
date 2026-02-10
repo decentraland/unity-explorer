@@ -73,7 +73,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IProfileRepository profileRepository,
             IDecentralandUrlsSource dclUrlSource,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService) : base(view, PAGE_SIZE)
+            IWorldPermissionsService worldPermissionsService) : base(view, PAGE_SIZE)
         {
             this.view = view;
             view.SetDependencies(homePlaceEventBus);

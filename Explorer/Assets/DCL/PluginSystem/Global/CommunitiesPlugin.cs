@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
-        private readonly IWorldPermissionsService? worldPermissionsService;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService = null)
+            IWorldPermissionsService worldPermissionsService)
         {
             this.mvcManager = mvcManager;
             this.worldPermissionsService = worldPermissionsService;

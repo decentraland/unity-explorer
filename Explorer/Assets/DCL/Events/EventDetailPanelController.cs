@@ -104,7 +104,7 @@ namespace DCL.Communities.EventInfo
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token, default, true).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token, default, eventData.Server).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
         }

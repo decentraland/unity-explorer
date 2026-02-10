@@ -45,7 +45,7 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
-            IWorldPermissionsService? worldPermissionsService = null)
+            IWorldPermissionsService worldPermissionsService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();

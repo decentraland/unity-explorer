@@ -56,7 +56,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, PlaceCardView>? ElementMainButtonClicked;
 
         private HomePlaceEventBus? homePlaceEventBus;
-        private IWorldPermissionsService? worldPermissionsService;
+        private IWorldPermissionsService worldPermissionsService = null!;
 
         private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
@@ -79,7 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void SetDependencies(HomePlaceEventBus homeEventBus) =>
             this.homePlaceEventBus = homeEventBus;
 
-        public void SetWorldPermissionsService(IWorldPermissionsService? service) =>
+        public void SetWorldPermissionsService(IWorldPermissionsService service) =>
             worldPermissionsService = service;
 
         public void SetActive(bool active) => gameObject.SetActive(active);
@@ -154,8 +154,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name),
                 (placeInfo, cardView) => ElementMainButtonClicked?.Invoke(placeInfo, cardView));
 
-            if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name) && worldPermissionsService != null)
-                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfo.PlaceInfo.world_name, elementView, cancellationToken).Forget();
+            if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name))
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfo.PlaceInfo.world_name, elementView, elementView.WorldAccessCancellationToken).Forget();
 
             if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();

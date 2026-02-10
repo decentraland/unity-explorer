@@ -71,7 +71,7 @@ namespace DCL.Chat.Commands
             if (!environmentValidationResult.Success)
                 return environmentValidationResult.ErrorMessage!;
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default, isWorld);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default, isWorld ? realm : null);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";

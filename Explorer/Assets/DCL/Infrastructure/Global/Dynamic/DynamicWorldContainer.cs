@@ -345,9 +345,12 @@ namespace Global.Dynamic
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
+            var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var communityMembershipChecker = new CommunityMembershipCheckerAdapter(communitiesDataProvider);
             IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,
-                identityCache);
+                identityCache,
+                communityMembershipChecker);
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
 
@@ -647,8 +650,6 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
-
-            var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             var communitiesDataService = new CommunityDataService(chatHistory,
                 mvcManager,

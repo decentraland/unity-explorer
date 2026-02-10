@@ -63,7 +63,6 @@ namespace DCL.Places
         [SerializeField] private GameObject? worldAccessStatusContainer;
         [SerializeField] private TMP_Text? worldAccessStatusText;
         [SerializeField] private Button enterPasswordButton = null!;
-        [SerializeField] private GameObject invitationOnlyLabel = null!;
 
         private static readonly Color WORLD_ACCESS_STATUS_RESTRICTED = new (0.761f, 0.722f, 0.792f, 1f);
         private static readonly Color WORLD_ACCESS_STATUS_GREEN = new (0.2f, 0.8f, 0.2f);
@@ -323,7 +322,6 @@ namespace DCL.Places
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
             enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
-            invitationOnlyLabel.SetActive(false);
         }
 
         private void OpenCardContextMenu(Vector2 position)
