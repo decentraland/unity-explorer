@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
@@ -22,12 +23,14 @@ namespace DCL.RealmNavigation
         private static readonly ListObjectPool<SceneEntityDefinition> TARGET_COLLECTION_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 1);
 
         private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public World? World { get; set; }
 
-        public RetrieveSceneFromVolatileWorld(IRealmData realmData)
+        public RetrieveSceneFromVolatileWorld(IRealmData realmData, IDecentralandUrlsSource urlsSource)
         {
             this.realmData = realmData;
+            this.urlsSource = urlsSource;
         }
 
         public async UniTask<SceneEntityDefinition?> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
@@ -44,7 +47,7 @@ namespace DCL.RealmNavigation
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                 new GetSceneDefinitionList(targetCollection.Value, pointersList.Value,
-                    new CommonLoadingArguments(realmIpfs.AssetBundleRegistryEntitiesActive)),
+                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(World, cancellationToken: ct);

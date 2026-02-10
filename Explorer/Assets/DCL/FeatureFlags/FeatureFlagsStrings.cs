@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace DCL.FeatureFlags
 {
@@ -40,6 +40,7 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
+        public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
@@ -58,6 +59,7 @@ namespace DCL.FeatureFlags
         public const string STOP_ON_DUPLICATE_IDENTITY = "alfa-stop-on-duplicate-identity";
         public const string DONATIONS = "alfa-donations";
         public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
+        public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
 

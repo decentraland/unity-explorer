@@ -81,7 +81,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 112ec96d4c89d41d68b03e4ba73992e9
-    m_Address: Assets/DCL/Communities/EventInfo/Prefabs/EventInfoPanel.prefab
+    m_Address: EventDetailPanel
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -472,6 +472,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
     m_Address: NftRarityColors
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 780e6ed0fdb34194c92f8e560963b8f9
+    m_Address: Web3ConfirmationPopup
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
