@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using ECS.Abstract;
+using ECS.Unity.GliderProp;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -44,6 +45,7 @@ namespace DCL.CharacterMotion.Systems
             UpdateTrailQuery(World);
             HandleStateTransitionQuery(World, tick);
             RemotePlayerCleanUpPropQuery(World);
+            ControlPropAudioQuery(World, t);
         }
 
         [Query]
@@ -81,6 +83,7 @@ namespace DCL.CharacterMotion.Systems
             {
                 case GlideStateValue.OPENING_PROP when gliderProp.View.OpenAnimationCompleted:
                     glideState.Value = GlideStateValue.GLIDING;
+                    gliderProp.View.PlayOpenSound();
                     break;
 
                 case GlideStateValue.CLOSING_PROP when gliderProp.View.CloseAnimationCompleted:
@@ -107,6 +110,20 @@ namespace DCL.CharacterMotion.Systems
 
             propPool!.Release(gliderProp.View);
             gliderProp.View.OnReturnedToPool();
+        }
+
+        [Query]
+        private void ControlPropAudio([Data] float dt, in GlideState glideState, in GliderProp gliderProp, in CharacterRigidTransform rigidTransform)
+        {
+            if (glideState.Value != GlideStateValue.GLIDING)
+            {
+                gliderProp.View.SetEngineState(false, 0, dt);
+                return;
+            }
+
+            // Given it's for audio playback purposes, this is an acceptable approximation that doesn't require sqrt
+            float engineLevel = Mathf.Max(Mathf.Abs(rigidTransform.MoveVelocity.XVelocity), Mathf.Abs(rigidTransform.MoveVelocity.ZVelocity));
+            gliderProp.View.SetEngineState(true, engineLevel, dt);
         }
     }
 }

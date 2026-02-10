@@ -1,5 +1,4 @@
 ﻿using DCL.Audio.Avatar;
-using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using JetBrains.Annotations;
 using System;
@@ -21,24 +20,23 @@ namespace DCL.CharacterMotion.Animation
 
     public class AvatarAnimationEventsHandler : MonoBehaviour
     {
+        private const MovementKind ANY_KIND = (MovementKind)byte.MaxValue;
+
         private static readonly Dictionary<(MovementKind, AvatarAnimationEventType), AvatarAudioClipType> AUDIO_CLIP_LOOKUP = new()
         {
             { (MovementKind.RUN, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartRun },
             { (MovementKind.RUN, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandRun },
             { (MovementKind.RUN, AvatarAnimationEventType.Step), AvatarAudioClipType.StepRun },
-            { (MovementKind.RUN, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.JOG, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartJog },
             { (MovementKind.JOG, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandJog },
             { (MovementKind.JOG, AvatarAnimationEventType.Step), AvatarAudioClipType.StepJog },
-            { (MovementKind.JOG, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.WALK, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
             { (MovementKind.WALK, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
             { (MovementKind.WALK, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
-            { (MovementKind.WALK, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
             { (MovementKind.IDLE, AvatarAnimationEventType.Jump), AvatarAudioClipType.JumpStartWalk },
             { (MovementKind.IDLE, AvatarAnimationEventType.Land), AvatarAudioClipType.JumpLandWalk },
             { (MovementKind.IDLE, AvatarAnimationEventType.Step), AvatarAudioClipType.StepWalk },
-            { (MovementKind.IDLE, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
+            { (ANY_KIND, AvatarAnimationEventType.AirJump), AvatarAudioClipType.AirJump },
         };
 
         [SerializeField] private AvatarAudioPlaybackController AudioPlaybackController;
@@ -65,32 +63,6 @@ namespace DCL.CharacterMotion.Animation
         private bool playingContinuousAudio;
 
         public event Action? PlayerStepped;
-
-        [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_Jump()
-        {
-            if (!TryGetAudioClipType(AvatarAnimationEventType.Jump, out var audioClipType)) return;
-            if (!TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump, audioClipType)) return;
-
-            lastJumpTime = currentTime;
-        }
-
-        [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_AirJump()
-        {
-            if (!TryGetAudioClipType(AvatarAnimationEventType.AirJump, out var audioClipType)) return;
-
-            TryPlayAnimEventFX(0, 0, centerBottomTransform, AvatarAnimationEventType.AirJump, audioClipType);
-        }
-
-        [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_Land()
-        {
-            if (!TryGetAudioClipType(AvatarAnimationEventType.Land, out var audioClipType)) return;
-            if (!TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land, audioClipType)) return;
-
-            lastLandTime = currentTime;
-        }
 
         private void PlayStepSoundForFoot(Transform footTransform)
         {
@@ -127,15 +99,11 @@ namespace DCL.CharacterMotion.Animation
             return true;
         }
 
-        private void PlayContinuousAudio(AvatarAudioClipType clipType)
-        {
+        private void PlayContinuousAudio(AvatarAudioClipType clipType) =>
             AudioPlaybackController.PlayContinuousAudio(clipType);
-        }
 
-        private void PlayAudioForType(AvatarAudioClipType clipType)
-        {
+        private void PlayAudioForType(AvatarAudioClipType clipType) =>
             AudioPlaybackController.PlayAudioForType(clipType);
-        }
 
         private bool CheckMovementBlendThreshold()
         {
@@ -146,20 +114,8 @@ namespace DCL.CharacterMotion.Animation
         private bool TryGetAudioClipType(AvatarAnimationEventType eventType, out AvatarAudioClipType audioClipType)
         {
             int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
-            var key = ((MovementKind)movementType, eventType);
-            return AUDIO_CLIP_LOOKUP.TryGetValue(key, out audioClipType);
-        }
-
-        [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_RightStep()
-        {
-            PlayStepSoundForFoot(rightFootTransform);
-        }
-
-        [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_LeftStep()
-        {
-            PlayStepSoundForFoot(leftFootTransform);
+            return AUDIO_CLIP_LOOKUP.TryGetValue(((MovementKind)movementType, eventType), out audioClipType) ||
+                   AUDIO_CLIP_LOOKUP.TryGetValue((ANY_KIND, eventType), out audioClipType);
         }
 
         private void PlaySfxWithParticles(AvatarAudioClipType audioClipType, Transform particlesAttach, AvatarAnimationEventType animationEventType)
@@ -169,14 +125,38 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_Jump()
+        {
+            if (!TryGetAudioClipType(AvatarAnimationEventType.Jump, out var audioClipType)) return;
+            if (!TryPlayAnimEventFX(lastJumpTime, jumpIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Jump, audioClipType)) return;
+
+            lastJumpTime = currentTime;
+        }
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_Land()
+        {
+            if (!TryGetAudioClipType(AvatarAnimationEventType.Land, out var audioClipType)) return;
+            if (!TryPlayAnimEventFX(lastLandTime, landIntervalSeconds, centerBottomTransform, AvatarAnimationEventType.Land, audioClipType)) return;
+
+            lastLandTime = currentTime;
+        }
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_RightStep() =>
+            PlayStepSoundForFoot(rightFootTransform);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_LeftStep() =>
+            PlayStepSoundForFoot(leftFootTransform);
+
+        [PublicAPI("Used by Animation Events")]
         public void AnimEvent_LongFall() =>
             PlayContinuousAudio(AvatarAudioClipType.LongFall);
 
         [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_HardLanding()
-        {
+        public void AnimEvent_HardLanding() =>
             PlaySfxWithParticles(AvatarAudioClipType.HardLanding, centerBottomTransform, AvatarAnimationEventType.Land);
-        }
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_ShortFall() =>
@@ -224,6 +204,14 @@ namespace DCL.CharacterMotion.Animation
         public void AnimEvent_Snowflakes()
         {
             //In old renderer we would play some sticker animations here
+        }
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_AirJump()
+        {
+            if (!TryGetAudioClipType(AvatarAnimationEventType.AirJump, out var audioClipType)) return;
+
+            TryPlayAnimEventFX(0, 0, centerBottomTransform, AvatarAnimationEventType.AirJump, audioClipType);
         }
     }
 }

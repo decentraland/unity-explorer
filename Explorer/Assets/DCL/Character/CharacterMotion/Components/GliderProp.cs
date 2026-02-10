@@ -1,4 +1,6 @@
-﻿namespace DCL.CharacterMotion.Components
+﻿using ECS.Unity.GliderProp;
+
+namespace DCL.CharacterMotion.Components
 {
     public struct GliderProp
     {
