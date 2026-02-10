@@ -26,6 +26,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALPHATEST_ON
+  - _SPECULAR_COLOR
   m_InvalidKeywords:
   - _GLOSSYREFLECTIONS_OFF
   m_LightmapFlags: 4
@@ -48,9 +49,18 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _FlutterFrequency: 5
+    - _FlutterSpeed: 0.35
+    - _FlutterStrength: 0.1
+    - _RequiresWind: 1
+    - _WindFrequency: 0
+    - _WindSpeed: 1.5
+    - _WindStrength: 0.05
+    - _WindTurbulence: 1.5
     m_Colors:
     - _BaseColor: {r: 0.27367392, g: 0.7735849, b: 0.5473779, a: 1}
     - _Color: {r: 0.2736739, g: 0.7735849, b: 0.5473779, a: 1}
+    - _WindDirection: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

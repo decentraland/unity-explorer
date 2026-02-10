@@ -169,7 +169,7 @@ Material:
     - _FadeAngleThreshold: 15
     - _FadingOn: 0
     - _FlutterFrequency: 5
-    - _FlutterSpeed: 1
+    - _FlutterSpeed: 0.8
     - _FlutterStrength: 0.1
     - _FrameCount_GPUI: 8
     - _GlossMapScale: 0
@@ -222,7 +222,7 @@ Material:
     - _VertexDarkening: 0.1
     - _WINDQUALITY: 4
     - _WindAmbientStrength: 0.2
-    - _WindFrequency: 3
+    - _WindFrequency: 0
     - _WindGustFreq: 4
     - _WindGustSpeed: 4
     - _WindGustStrength: 0.2
