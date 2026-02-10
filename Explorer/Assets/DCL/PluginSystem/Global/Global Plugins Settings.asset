@@ -213,6 +213,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <TransactionConfirmationPopupPrefab>k__BackingField:
+          m_AssetGUID: 780e6ed0fdb34194c92f8e560963b8f9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
           <IntroEmoteURN>k__BackingField: urn:decentraland:off-chain:base-emotes:raiseHand
