@@ -18,7 +18,9 @@ namespace DCL.PrivateWorlds.Testing
     public class PrivateWorldsTestTrigger : MonoBehaviour
     {
         [Header("Test Configuration")]
-        [SerializeField] private string testWorldName = "test-world.dcl.eth";
+        [SerializeField] private string testWorldName = "yourname.dcl.eth";
+        [SerializeField] private string testWrongPassword = "wrong";
+        [SerializeField] private string testCorrectPassword = "abc123";
 
         private IWorldPermissionsService? permissionsService;
         private IMVCManager? mvcManager;
@@ -128,6 +130,52 @@ namespace DCL.PrivateWorlds.Testing
             catch (Exception ex)
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Error checking access: {ex.Message}");
+            }
+        }
+
+        [ContextMenu("Test - Validate Password (Wrong)")]
+        public void TestValidatePasswordWrong()
+        {
+            if (permissionsService == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: Service not initialized. Call Initialize() first.");
+                return;
+            }
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+            ValidatePasswordAsync(testWrongPassword, cts.Token).Forget();
+        }
+
+        [ContextMenu("Test - Validate Password (Correct)")]
+        public void TestValidatePasswordCorrect()
+        {
+            if (permissionsService == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: Service not initialized. Call Initialize() first.");
+                return;
+            }
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+            ValidatePasswordAsync(testCorrectPassword, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid ValidatePasswordAsync(string password, CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.REALM, $"[ValidatePassword] World: {testWorldName}, password length: {password?.Length ?? 0}");
+                bool valid = await permissionsService!.ValidatePasswordAsync(testWorldName, password ?? string.Empty, ct);
+                ReportHub.Log(ReportCategory.REALM, $"[ValidatePassword] Result: {(valid ? "valid" : "invalid")}");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.REALM, "[ValidatePassword] Cancelled");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"[ValidatePassword] Error: {ex.Message}\n{ex.StackTrace}");
             }
         }
 

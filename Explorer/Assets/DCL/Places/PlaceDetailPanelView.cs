@@ -65,8 +65,8 @@ namespace DCL.Places
         [SerializeField] private Button enterPasswordButton = null!;
         [SerializeField] private GameObject invitationOnlyLabel = null!;
 
-        private static readonly Color WORLD_ACCESS_STATUS_RESTRICTED = new (0.761f, 0.722f, 0.792f, 1f); // #C2B8CA for INVITE ONLY / PASSWORD REQUIRED
-        private static readonly Color WORLD_ACCESS_STATUS_GREEN = new (0.2f, 0.8f, 0.2f); // "YOU ARE INVITED" green
+        private static readonly Color WORLD_ACCESS_STATUS_RESTRICTED = new (0.761f, 0.722f, 0.792f, 1f);
+        private static readonly Color WORLD_ACCESS_STATUS_GREEN = new (0.2f, 0.8f, 0.2f);
         private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
         private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
 
@@ -202,7 +202,6 @@ namespace DCL.Places
             if (!isWorld)
                 SetNavigation(isNavigating);
 
-            // Default: show JUMP IN for all worlds; the controller updates asynchronously after permission check
             SetWorldAccessState(WorldAccessCheckResult.Allowed);
 
             SetCategories(placeInfo.categories);
@@ -292,10 +291,6 @@ namespace DCL.Places
             exitNavigationButton.gameObject.SetActive(isNavigating);
         }
 
-        /// <summary>
-        /// Configures top status (INVITE ONLY / YOU ARE INVITED / PASSWORD REQUIRED with padlock) and bottom action.
-        /// Invite-only not invited: status only, no button at bottom. Invited: green YOU ARE INVITED + JUMP IN. Password: PASSWORD REQUIRED + ENTER PASSWORD.
-        /// </summary>
         public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
         {
             bool isInvited = accessState == WorldAccessCheckResult.Allowed && accessType == WorldAccessType.AllowList;
@@ -328,7 +323,7 @@ namespace DCL.Places
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
             enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
-            invitationOnlyLabel.SetActive(false); // No "INVITATION ONLY" text at bottom for invite-only not invited
+            invitationOnlyLabel.SetActive(false);
         }
 
         private void OpenCardContextMenu(Vector2 position)

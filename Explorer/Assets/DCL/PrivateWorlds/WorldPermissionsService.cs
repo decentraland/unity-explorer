@@ -180,6 +180,8 @@ namespace DCL.PrivateWorlds
             }
         }
 
+        private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
+
         public async UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
         {
             try
@@ -189,17 +191,25 @@ namespace DCL.PrivateWorlds
 
                 string metadata = $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(password)}\"}}";
 
+                var commonArguments = new CommonArguments(
+                    URLAddress.FromString(url),
+                    RetryPolicy.NONE,
+                    timeout: VALIDATE_PASSWORD_TIMEOUT_SECONDS);
+
                 long statusCode = await webRequestController
-                    .SignedFetchPostAsync(url, metadata, ct)
+                    .SignedFetchPostAsync(commonArguments, metadata, ct)
                     .StatusCodeAsync();
 
                 ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {statusCode}");
-                return statusCode != 401;
+                // Only allow access on explicit success (2xx). 403 = wrong password; any other code or no response = invalid.
+                return statusCode >= 200 && statusCode < 300;
             }
             catch (UnityWebRequestException e)
             {
-                ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': caught status {e.ResponseCode}");
-                return e.ResponseCode != 401;
+                ReportHub.Log(ReportCategory.REALM,
+                    $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {e.ResponseCode}, response: {e.Text}");
+                // No successful response (network error, timeout, 4xx, 5xx) => do not allow access
+                return false;
             }
             catch (OperationCanceledException)
             {

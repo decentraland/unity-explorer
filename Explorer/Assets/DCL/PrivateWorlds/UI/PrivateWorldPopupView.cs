@@ -23,8 +23,8 @@ namespace DCL.PrivateWorlds.UI
         [SerializeField] private Image? passwordInputOutlineImage;
         [SerializeField] private GameObject wrongPasswordWarningObject = null!;
 
-        private static readonly Color PASSWORD_INPUT_ERROR_OUTLINE_COLOR = new (1f, 0.18f, 0.33f, 1f); // bright red for wrong password
-        private static readonly Color PASSWORD_INPUT_DEFAULT_OUTLINE_COLOR = new (0.988f, 0.988f, 0.988f, 1f); // default outline (light grey/white)
+        private static readonly Color PASSWORD_INPUT_ERROR_OUTLINE_COLOR = new (1f, 0.18f, 0.33f, 1f);
+        private static readonly Color PASSWORD_INPUT_DEFAULT_OUTLINE_COLOR = new (0.988f, 0.988f, 0.988f, 1f);
 
         [Header("Password Visibility")]
         [SerializeField] private Button passwordVisibilityToggleButton = null!;

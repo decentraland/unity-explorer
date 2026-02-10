@@ -54,7 +54,6 @@ namespace DCL.Places
         [SerializeField] private Button enterPasswordButton = null!;
         [SerializeField] private GameObject invitationOnlyLabel = null!;
 
-        /// <summary>Sprite tags for padlock in place name (TMP). No spacing between sprite and world name.</summary>
         private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
         private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
 
@@ -197,10 +196,6 @@ namespace DCL.Places
             SetWorldAccessState(WorldAccessCheckResult.Allowed);
         }
 
-        /// <summary>
-        /// Configures padlock in title and hover footer from world access state.
-        /// Padlock closed: AccessDenied or PasswordRequired. Padlock opened: Allowed + AllowList (invited). No extra labels when not hovered.
-        /// </summary>
         public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
         {
             lastAccessState = accessState;
@@ -213,7 +208,6 @@ namespace DCL.Places
             invitationOnlyLabel.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
         }
 
-        /// <summary>Appends padlock sprite to start of world name with no spacing (TMP sprite name="PaddlockClosed" / "PaddlockOpened").</summary>
         private void RefreshPlaceTitleWithPadlock()
         {
             if (placeNameText == null || string.IsNullOrEmpty(lastPlaceTitle))
