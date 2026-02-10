@@ -30,9 +30,9 @@ namespace DCL.Browser
             DecentralandUrl.ApiChunks,
 
             // LiveKit rooms providers require signed fetch
-            // DecentralandUrl.GateKeeperSceneAdapter,
-            // DecentralandUrl.LocalGateKeeperSceneAdapter,
-            // DecentralandUrl.ChatAdapter,
+            DecentralandUrl.GateKeeperSceneAdapter,
+            DecentralandUrl.LocalGateKeeperSceneAdapter,
+            DecentralandUrl.ChatAdapter,
             DecentralandUrl.GatekeeperStatus,
             DecentralandUrl.RemotePeers,
             DecentralandUrl.RemotePeersWorld,
@@ -47,26 +47,26 @@ namespace DCL.Browser
             DecentralandUrl.Badges,
 
             // Requires signed fetch
-            //DecentralandUrl.CameraReelImages,
-            //DecentralandUrl.CameraReelLink,
-            //DecentralandUrl.CameraReelPlaces,
-            //DecentralandUrl.CameraReelUsers,
+            DecentralandUrl.CameraReelImages,
+            DecentralandUrl.CameraReelLink,
+            DecentralandUrl.CameraReelPlaces,
+            DecentralandUrl.CameraReelUsers,
 
             DecentralandUrl.AssetBundleRegistry,
             DecentralandUrl.AssetBundleRegistryVersion,
 
             DecentralandUrl.MediaConverter,
 
-            // DecentralandUrl.MarketplaceCredits,
-            // DecentralandUrl.Notifications, Notification partially required signed fetch
+            DecentralandUrl.MarketplaceCredits,
+            DecentralandUrl.Notifications, // Notification partially required signed fetch
 
             // Social
             DecentralandUrl.CommunityThumbnail,
 
             // The following requires signed fetch
-            //DecentralandUrl.Communities,
-            //DecentralandUrl.Members,
-            //DecentralandUrl.ActiveCommunityVoiceChats,
+            DecentralandUrl.Communities,
+            DecentralandUrl.Members,
+            DecentralandUrl.ActiveCommunityVoiceChats,
         };
 
         /// <summary>
@@ -79,6 +79,8 @@ namespace DCL.Browser
 
         private readonly bool envSupported;
         private readonly List<string>? resolvedNonClientHosts;
+        private readonly string? gatewayPrefix;
+        private readonly string? domainSuffix;
 
         private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
@@ -93,12 +95,18 @@ namespace DCL.Browser
 
                 foreach (string pattern in SUPPORTED_URLS_OF_NON_CLIENT_ORIGIN)
                     resolvedNonClientHosts.Add(pattern.Replace(ENV, envDomain));
+
+                gatewayPrefix = $"https://{GATEWAY_SUBDOMAIN}.decentraland.{envDomain}/";
+                domainSuffix = $".decentraland.{envDomain}";
             }
         }
 
         public new static GatewayUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
             new (environment, new IRealmData.Fake(), launchMode);
 
+        /// <summary>
+        ///     Transforms a 3rd party URL, DecentralandURLs are already transformed by <see cref="RawUrl" />
+        /// </summary>
         public override string TransformUrl(string originalUrl)
         {
             if (!enabled || resolvedNonClientHosts == null || originalUrl.Length <= HTTPS_PREFIX_LENGTH)
@@ -125,7 +133,51 @@ namespace DCL.Browser
             if (!enabled || serviceUrl == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
+            // it is called only once and then cached in the base class
             return TransformToGateway(serviceUrl);
+        }
+
+        public override string GetOriginalUrl(string url)
+        {
+            if (!enabled || gatewayPrefix == null || !url.StartsWith(gatewayPrefix, StringComparison.OrdinalIgnoreCase))
+                return url;
+
+            string original = ReverseGatewayTransform(url);
+            return original;
+        }
+
+        /// <summary>
+        ///     Reverse of <see cref="TransformToGateway" />:
+        ///     https://gateway.{domain}/{subdomain}/{path} → https://{subdomain}.{domain}/{path}
+        /// </summary>
+        private string ReverseGatewayTransform(string url)
+        {
+            int prefixLength = gatewayPrefix!.Length;
+            ReadOnlySpan<char> afterPrefix = url.AsSpan(prefixLength);
+            int slashIdx = afterPrefix.IndexOf('/');
+
+            int subdomainLength = slashIdx >= 0 ? slashIdx : afterPrefix.Length;
+            int pathLength = slashIdx >= 0 ? afterPrefix.Length - slashIdx : 0;
+            string suffix = domainSuffix!;
+            int resultLength = HTTPS_PREFIX_LENGTH + subdomainLength + suffix.Length + pathLength;
+
+            return string.Create(resultLength, (url, prefixLength, subdomainLength, pathLength, suffix), static (span, state) =>
+            {
+                ReadOnlySpan<char> src = state.url.AsSpan();
+                var pos = 0;
+
+                "https://".AsSpan().CopyTo(span);
+                pos += 8;
+
+                src.Slice(state.prefixLength, state.subdomainLength).CopyTo(span.Slice(pos));
+                pos += state.subdomainLength;
+
+                state.suffix.AsSpan().CopyTo(span.Slice(pos));
+                pos += state.suffix.Length;
+
+                if (state.pathLength > 0)
+                    src.Slice(state.prefixLength + state.subdomainLength, state.pathLength).CopyTo(span.Slice(pos));
+            });
         }
 
         /// <summary>
@@ -149,7 +201,6 @@ namespace DCL.Browser
 
             return string.Create(resultLength, (url, firstDot, domainLength, subdomainLength, pathStart, pathLength), static (span, state) =>
             {
-                const string GATEWAY = "gateway";
                 ReadOnlySpan<char> src = state.url.AsSpan();
 
                 var pos = 0;
@@ -157,8 +208,8 @@ namespace DCL.Browser
                 "https://".AsSpan().CopyTo(span);
                 pos += 8;
 
-                GATEWAY.AsSpan().CopyTo(span.Slice(pos));
-                pos += GATEWAY.Length;
+                GATEWAY_SUBDOMAIN.AsSpan().CopyTo(span.Slice(pos));
+                pos += GATEWAY_SUBDOMAIN.Length;
 
                 src.Slice(state.firstDot, state.domainLength).CopyTo(span.Slice(pos));
                 pos += state.domainLength;

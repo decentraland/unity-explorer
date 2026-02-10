@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;

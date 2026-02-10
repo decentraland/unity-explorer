@@ -9,12 +9,17 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         /// <summary>
         ///     Get a raw url without caching at any moment (without dependency on FF)
         /// </summary>
-        /// <param name="decentralandUrl"></param>
         public string? Probe(DecentralandUrl decentralandUrl);
 
         string Url(DecentralandUrl decentralandUrl);
 
         public string TransformUrl(string originalUrl);
+
+        /// <summary>
+        ///     Only used by Signed Fetch, as the original URL should be signed (not the gateway one). <br />
+        ///     It's an expensive allocating function that shouldn't be used frequently
+        /// </summary>
+        public string GetOriginalUrl(string url);
 
         string GetHostnameForFeatureFlag();
     }

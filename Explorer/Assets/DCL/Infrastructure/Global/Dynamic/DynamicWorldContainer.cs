@@ -229,8 +229,7 @@ namespace Global.Dynamic
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
 
-            HttpEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
-                URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
+            var eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var mapPathEventBus = new MapPathEventBus();
             NotificationsBusController.Initialize(new NotificationsBusController());

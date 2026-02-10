@@ -32,13 +32,12 @@ namespace DCL.WebRequests.RequestsHub
                 new (typeof(T), typeof(TWebRequest));
         }
 
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
         public RequestHub(IDecentralandUrlsSource urlsSource, bool disableABCache = false)
         {
-            this.urlsSource = urlsSource;
+            UrlsSource = urlsSource;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
@@ -54,12 +53,14 @@ namespace DCL.WebRequests.RequestsHub
             Add(mutableMap, (string url, ref GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(url, specificArguments, urlsSource, ktxEnabled));
         }
 
+        public IDecentralandUrlsSource UrlsSource { get; }
+
         private void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
             where T: struct
             where TWebRequest: struct, ITypedWebRequest
         {
             InitializeRequest<T, TWebRequest> invokeWithTransformedUrl
-                = (string url, ref T arguments) => requestDelegate.Invoke(urlsSource.TransformUrl(url), ref arguments);
+                = (string url, ref T arguments) => requestDelegate.Invoke(UrlsSource.TransformUrl(url), ref arguments);
 
             map.Add(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl);
         }
