@@ -7049,7 +7049,7 @@ MonoBehaviour:
     m_Left: 20
     m_Right: 30
     m_Top: 10
-    m_Bottom: 20
+    m_Bottom: 50
   mItemPadding: {x: 20, y: 20}
   mItemSize: {x: 358, y: 280}
   mItemRecycleDistance: {x: 50, y: 50}
