@@ -162,10 +162,7 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            Task.Run(() =>
-            {
-                WriteToDisk();
-            });
+            Task.Run(WriteToDisk);
         }
 
         public void SaveSync()
