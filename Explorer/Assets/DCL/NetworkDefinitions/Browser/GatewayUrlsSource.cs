@@ -126,15 +126,15 @@ namespace DCL.Browser
             return originalUrl;
         }
 
-        protected override string? RawUrl(DecentralandUrl decentralandUrl)
+        protected override UrlData RawUrl(DecentralandUrl decentralandUrl)
         {
-            string? serviceUrl = base.RawUrl(decentralandUrl);
+            UrlData serviceUrl = base.RawUrl(decentralandUrl);
 
-            if (!enabled || serviceUrl == null || !SUPPORTED_URLS.Contains(decentralandUrl))
+            if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
             // it is called only once and then cached in the base class
-            return TransformToGateway(serviceUrl);
+            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, TransformToGateway(serviceUrl.Url));
         }
 
         public override string GetOriginalUrl(string url)

@@ -70,7 +70,7 @@ namespace DCL.Diagnostics
             var environmentUrls = Enum.GetValues(typeof(DecentralandUrl)).Cast<DecentralandUrl>();
             foreach (var decentralandUrl in environmentUrls)
             {
-                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Probe(decentralandUrl) ?? "<DYNAMICALLY RESOLVED>");
+                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Probe(decentralandUrl));
             }
             AppendFooter(stringBuilder);
 

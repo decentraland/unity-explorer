@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         /// <summary>
         ///     Get a raw url without caching at any moment (without dependency on FF)
         /// </summary>
-        public string? Probe(DecentralandUrl decentralandUrl);
+        public string Probe(DecentralandUrl decentralandUrl);
 
         string Url(DecentralandUrl decentralandUrl);
 
