@@ -126,5 +126,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiNewsletter = 77,
         MetaTransactionServer = 78,
+        
+        WorldPermissions = 79,
+        WorldComms = 80
     }
 }

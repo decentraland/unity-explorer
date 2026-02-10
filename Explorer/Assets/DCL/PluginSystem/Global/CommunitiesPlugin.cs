@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
-            ISocialServiceEventBus socialServiceEventBus)
+            ISocialServiceEventBus socialServiceEventBus,
             IWorldPermissionsService worldPermissionsService)
         {
             this.mvcManager = mvcManager;
