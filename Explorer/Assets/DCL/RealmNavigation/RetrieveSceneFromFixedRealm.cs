@@ -29,7 +29,7 @@ namespace DCL.RealmNavigation
 
             while (!resolved)
             {
-                //ReadFixedRealmQuery(World, ref resolved, ref result, ref startupScene);
+                ReadFixedRealmQuery(World, ref resolved, ref result, ref startupScene);
                 await UniTask.Yield(ct);
             }
 
@@ -58,7 +58,7 @@ namespace DCL.RealmNavigation
 
         [Query]
         private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result,
-            in FixedScenePointers fixedScenePointers, ref SceneEntityDefinition? startupScene)
+            [Data] ref SceneEntityDefinition startupScene, in FixedScenePointers fixedScenePointers)
         {
             resolved = fixedScenePointers.AllPromisesResolved;
 
