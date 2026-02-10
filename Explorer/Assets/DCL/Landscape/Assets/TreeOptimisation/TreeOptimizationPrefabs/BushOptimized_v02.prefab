@@ -217,9 +217,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2767fcdb24796d9409280567974acfb7, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2979678853182598443}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2767fcdb24796d9409280567974acfb7, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 8048733978291462842}
   m_SourcePrefab: {fileID: 100100000, guid: 2767fcdb24796d9409280567974acfb7, type: 3}
 --- !u!1 &4758652354189796069 stripped
@@ -227,29 +224,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2767fcdb24796d9409280567974acfb7, type: 3}
   m_PrefabInstance: {fileID: 5677711793707950004}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2979678853182598443
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4758652354189796069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fadcc2d9a34a1a34f93d4962ec37e6e7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AmplifyImpostors.Runtime::AmplifyImpostors.AmplifyImpostor
-  m_data: {fileID: 11400000, guid: 8fec15a21b1b1384982761371708910c, type: 2}
-  m_rootTransform: {fileID: 5278766002639698015}
-  m_lodGroup: {fileID: 8048733978291462842}
-  m_renderers:
-  - {fileID: 6416184069626823472}
-  m_lodReplacement: 2
-  m_renderPipelineInUse: 2
-  m_insertIndex: 0
-  m_lastImpostor: {fileID: 4276685525244920025}
-  m_folderPath: Assets/DCL/Landscape/Assets/TreeOptimisation/TreeOptimizationAssets/
-  m_cutMode: 0
 --- !u!205 &8048733978291462842
 LODGroup:
   m_ObjectHideFlags: 0
