@@ -59,6 +59,7 @@ namespace DCL.Events
 
             eventsController.SectionOpen += OnSectionOpened;
             eventsController.EventsClosed += OnSectionClosed;
+            eventsController.GoToTodayClicked += OnGoToTodayClicked;
             view.DaysRangeChanged += OnDaysRangeChanged;
             view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
             view.EventCardClicked += OnEventCardClicked;
@@ -76,6 +77,7 @@ namespace DCL.Events
 
             eventsController.SectionOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
+            eventsController.GoToTodayClicked -= OnGoToTodayClicked;
             view.DaysRangeChanged -= OnDaysRangeChanged;
             view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
             view.EventCardClicked -= OnEventCardClicked;
@@ -100,6 +102,9 @@ namespace DCL.Events
 
         private void OnSectionClosed() =>
             UnloadEvents();
+
+        private void OnGoToTodayClicked() =>
+            eventsController.OpenSection(EventsSection.CALENDAR);
 
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
         {
