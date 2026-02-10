@@ -10,6 +10,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -61,6 +62,9 @@ namespace DCL.Events
 
         public void AddEventToCalendar(IEventDTO eventData) =>
             webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData));
+
+        public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart) =>
+            webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData, utcStart));
 
         public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
         {
