@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
@@ -9,6 +10,7 @@ using DCL.PrivateWorlds.Testing;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Chat;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -53,7 +55,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            var handler = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager);
+            var handler = new PrivateWorldAccessHandler(
+                worldPermissionsService,
+                mvcManager,
+                () => eventBus.Publish(new ChatEvents.CloseChatEvent()));
             checkWorldAccessSubscription = eventBus.Subscribe<CheckWorldAccessEvent>(handler.OnCheckWorldAccess);
 
             if (settings.PrivateWorldPopup != null)

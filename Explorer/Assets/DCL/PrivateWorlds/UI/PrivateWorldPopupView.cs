@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.PrivateWorlds.UI
@@ -151,15 +153,31 @@ namespace DCL.PrivateWorlds.UI
         }
 
         /// <summary>
-        /// Focuses the password input field.
+        /// Focuses the password input field after a short delay.
+        /// Waits multiple frames so the ECS input-block (set by the popup controller) has time
+        /// to propagate and transition the chat input state machine out of TypingEnabledChatInputState,
+        /// which otherwise re-selects itself on deselect and steals focus.
         /// </summary>
         public void FocusPasswordInput()
         {
             if (passwordInputField != null && passwordInputField.gameObject.activeInHierarchy)
-            {
-                passwordInputField.Select();
-                passwordInputField.ActivateInputField();
-            }
+                StartCoroutine(ActivateInputFieldDelayed());
+        }
+
+        private IEnumerator ActivateInputFieldDelayed()
+        {
+            // Clear current selection so nothing fights for focus during the wait.
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
+
+            // Wait for the ECS input-block to propagate and the chat state machine
+            // to exit TypingEnabledChatInputState (which re-selects on deselect).
+            yield return null;
+            yield return null;
+
+            passwordInputField.caretPosition = 0;
+            passwordInputField.ActivateInputField();
+            passwordInputField.Select();
         }
 
         private void TogglePasswordVisibility()

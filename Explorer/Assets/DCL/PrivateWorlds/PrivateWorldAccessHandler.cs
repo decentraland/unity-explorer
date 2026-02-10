@@ -15,13 +15,16 @@ namespace DCL.PrivateWorlds
 
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IMVCManager mvcManager;
+        private readonly Action? beforePopupShown;
 
         public PrivateWorldAccessHandler(
             IWorldPermissionsService worldPermissionsService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            Action? beforePopupShown = null)
         {
             this.worldPermissionsService = worldPermissionsService;
             this.mvcManager = mvcManager;
+            this.beforePopupShown = beforePopupShown;
         }
 
         public void OnCheckWorldAccess(CheckWorldAccessEvent evt) => 
@@ -106,6 +109,7 @@ namespace DCL.PrivateWorlds
                         ErrorMessage = errorMessage
                     };
 
+                    beforePopupShown?.Invoke();
                     await mvcManager.ShowAsync(PrivateWorldPopupController.IssueCommand(popupParams));
 
                     if (popupParams.Result == PrivateWorldPopupResult.Cancelled)
