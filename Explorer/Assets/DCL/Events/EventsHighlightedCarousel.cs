@@ -37,7 +37,7 @@ namespace DCL.Events
         [SerializeField] private Color selectedDotColor;
         [SerializeField] private float selectedDotWidth = 40f;
         [SerializeField] private Color nonSelectedDotColor;
-        [SerializeField] private float nonselectedDotWidth = 14f;
+        [SerializeField] private float nonSelectedDotWidth = 14f;
 
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
@@ -134,6 +134,7 @@ namespace DCL.Events
 
             var selectedEvent = currentEvents[eventIndex];
             eventCard.Configure(selectedEvent.EventInfo, eventCardsThumbnailLoader!, selectedEvent.PlaceInfo, selectedEvent.FriendsConnectedToPlace, profileRepositoryWrapper, selectedEvent.CommunityInfo);
+            eventCard.SetContentYPosition(currentEvents.Count > 1);
 
             currentCarouselIndex = eventIndex;
 
@@ -152,7 +153,7 @@ namespace DCL.Events
             DOTween.To(
                 () => rt.rect.width,
                 x => rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, x),
-                isSelected ? selectedDotWidth : nonselectedDotWidth,
+                isSelected ? selectedDotWidth : nonSelectedDotWidth,
                 DOTS_ANIMATION_DURATION
             ).SetEase(Ease.OutCubic);
         }

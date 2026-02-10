@@ -1930,6 +1930,9 @@ MonoBehaviour:
     amountLabel: {fileID: 5870309569166388579}
   eventDateContainer: {fileID: 8639742498505920653}
   eventDay: {fileID: 7052142763688925687}
+  contentRt: {fileID: 543531335378566307}
+  contentYPositionWithCarouselDots: 48
+  contentYPositionWithoutCarouselDots: 14
 --- !u!114 &4683337981261915476
 MonoBehaviour:
   m_ObjectHideFlags: 0
