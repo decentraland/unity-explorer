@@ -112,6 +112,13 @@ namespace DCL.Prefs
         public static void Save() =>
             dclPrefs.Save();
 
+        /// <summary>
+        /// Synchronous save that blocks until data is written to disk.
+        /// Use in OnApplicationQuit or other shutdown paths where async save may not complete.
+        /// </summary>
+        public static void SaveSync() =>
+            dclPrefs.SaveSync();
+
         private static void Initialize(bool inMemory)
         {
             if (dclPrefs != null)
