@@ -2,14 +2,12 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Web3;
-using ECS;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.Pool;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using OwnedEmotesPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.TrimmedEmotesResponse,
@@ -19,19 +17,28 @@ namespace DCL.AvatarRendering.Emotes
 {
     public class EcsEmoteProvider : IEmoteProvider
     {
+        private const string PAGE_NUMBER = "pageNum";
+        private const string PAGE_SIZE = "pageSize";
+        private const string TRIMMED = "trimmed";
+        private const string INCLUDE_AMOUNT = "includeAmount";
+        private const string COLLECTION_ID = "collectionId";
+        private const string ORDER_BY = "orderBy";
+        private const string ORDER_DIRECTION = "direction";
+        private const string NAME = "name";
+        private const string INCLUDE_ENTITIES = "includeEntities";
+
         private readonly World world;
-        private readonly IRealmData realmData;
-        private readonly URLBuilder urlBuilder = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly List<(string, string)> requestParameters = new ();
 
         public EcsEmoteProvider(World world,
-            IRealmData realmData)
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.world = world;
-            this.realmData = realmData;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
-        public async UniTask<int> GetOwnedEmotesAsync(
-            Web3Address userId,
+        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetOwnedEmotesAsync(
             CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
             List<ITrimmedEmote>? results = null,
@@ -39,62 +46,46 @@ namespace DCL.AvatarRendering.Emotes
             bool needsBuilderAPISigning = false
         )
         {
-            if (!loadingArguments.HasValue)
+            requestParameters.Clear();
+            requestParameters.Add((TRIMMED, "true"));
+            requestParameters.Add((INCLUDE_ENTITIES, "true"));
+
+            if (requestOptions.pageNum.HasValue)
+                requestParameters.Add((PAGE_NUMBER, requestOptions.pageNum.ToString()));
+
+            if (requestOptions.pageSize.HasValue)
+                requestParameters.Add((PAGE_SIZE, requestOptions.pageSize.ToString()));
+
+            if (requestOptions.includeAmount ?? true)
+                requestParameters.Add((INCLUDE_AMOUNT, "true"));
+
+            if (requestOptions.collectionId.HasValue)
+                requestParameters.Add((COLLECTION_ID, requestOptions.collectionId));
+
+            if (requestOptions.orderOperation.HasValue)
             {
-                results?.Clear();
-                urlBuilder.Clear();
-
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, URLSubdirectory.FromString("/explorer/"))
-                          .AppendSubDirectory(URLSubdirectory.FromString(userId))
-                          .AppendSubDirectory(URLSubdirectory.FromString("emotes"))
-                          .AppendParameter(new URLParameter("includeEntities", "true"));
-
-                int? pageNum = requestOptions.pageNum;
-                int? pageSize = requestOptions.pageSize;
-                URN? collectionId = requestOptions.collectionId;
-                IEmoteProvider.OrderOperation? orderOperation = requestOptions.orderOperation;
-                string? name = requestOptions.name;
-                bool? includeAmount = requestOptions.includeAmount;
-
-                if (pageNum != null)
-                    urlBuilder.AppendParameter(new URLParameter("pageNum", pageNum.ToString()));
-
-                if (pageSize != null)
-                    urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));
-
-                if (collectionId != null)
-                    urlBuilder.AppendParameter(new URLParameter("collectionId", collectionId));
-
-                if (orderOperation.HasValue)
-                {
-                    urlBuilder.AppendParameter(new URLParameter("orderBy", orderOperation.Value.By));
-                    urlBuilder.AppendParameter(new URLParameter("direction", orderOperation.Value.IsAscendent ? "asc" : "desc"));
-                }
-
-                if (name != null)
-                    urlBuilder.AppendParameter(new URLParameter("name", name));
-
-                if (includeAmount == true)
-                    urlBuilder.AppendParameter(new URLParameter("includeAmount", "true"));
-
-                URLAddress url = urlBuilder.Build();
-                loadingArguments = new CommonLoadingArguments(url);
+                requestParameters.Add((ORDER_BY, requestOptions.orderOperation.Value.By));
+                requestParameters.Add((ORDER_DIRECTION, requestOptions.orderOperation.Value.IsAscendent ? "asc" : "desc"));
             }
 
-            var intention = new GetTrimmedEmotesByParamIntention(loadingArguments.Value, needsBuilderAPISigning);
+            if(requestOptions.name != null)
+                requestParameters.Add((NAME, requestOptions.name));
+
+            results ??= new List<ITrimmedEmote>();
+
+            var intention = new GetTrimmedEmotesByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            if (loadingArguments.HasValue)
+                intention.CommonArguments = loadingArguments.Value;
+
             var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
-                return 0;
+                return (results, 0);
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception!;
 
-            using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
-
-            results?.AddRange(emotes.Value);
-
-            return promise.Result.Value.Asset.TotalAmount;
+            return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
         }
 
         public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)

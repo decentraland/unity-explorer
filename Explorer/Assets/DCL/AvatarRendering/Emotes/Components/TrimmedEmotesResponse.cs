@@ -6,11 +6,11 @@ namespace DCL.AvatarRendering.Emotes
     {
         public int TotalAmount { get; }
 
-        private readonly IReadOnlyList<ITrimmedEmote> emotes;
+        public readonly IReadOnlyList<ITrimmedEmote> Emotes;
 
         public TrimmedEmotesResponse(IReadOnlyList<ITrimmedEmote> emotes, int totalAmount)
         {
-            this.emotes = emotes;
+            this.Emotes = emotes;
             TotalAmount = totalAmount;
         }
     }

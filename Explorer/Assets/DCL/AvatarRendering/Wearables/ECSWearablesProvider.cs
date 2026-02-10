@@ -72,16 +72,12 @@ namespace DCL.AvatarRendering.Wearables
             requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
             requestParameters.Add((TRIMMED, "true"));
 
-            bool requestingAmount = includeAmount ?? false;
-            if (!requestingAmount)
-                requestParameters.Add((TRIMMED, "true"));
-            
             if (!string.IsNullOrEmpty(network))
                 requestParameters.Add((NETWORK, network));
-            
+
             if (includeAmount ?? true)
                 requestParameters.Add((INCLUDE_AMOUNT, "true"));
-            
+
             if (!string.IsNullOrEmpty(category))
                 requestParameters.Add((CATEGORY, category));
 
@@ -196,7 +192,7 @@ namespace DCL.AvatarRendering.Wearables
 
             return (typedResults, wearablesPromise.Result.Value.Asset.TotalAmount);
         }
-        
+
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct)
