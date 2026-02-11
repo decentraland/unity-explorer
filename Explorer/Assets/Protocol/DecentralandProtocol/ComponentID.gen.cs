@@ -60,5 +60,6 @@ namespace DCL.ECS7
         public const int AUDIO_ANALYSIS = 1212;
         public const int ASSET_LOAD = 1213;
         public const int ASSET_LOAD_LOADING_STATE = 1214;
+        public const int PHYSICS_IMPULSE = 1215;
     }
 }
