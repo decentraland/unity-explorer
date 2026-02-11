@@ -16,21 +16,30 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         public string AdapterUrlAsync(string unrefinedAdapter)
         {
             unrefinedAdapter = unrefinedAdapter.Replace(replaceRefined, string.Empty);
-            unrefinedAdapter = RemoveHttpsPreInfo(unrefinedAdapter);
-            unrefinedAdapter = RemoveWssPreInfo(unrefinedAdapter);
+            unrefinedAdapter = ReturnHttpsProtocolURL(unrefinedAdapter);
+            unrefinedAdapter = ReturnWSSProtocolURL(unrefinedAdapter);
+            unrefinedAdapter = AddWSSPreInfoIfProtocolMissing(unrefinedAdapter);
             return unrefinedAdapter;
         }
 
-        private string RemoveHttpsPreInfo(string url)
+        private string ReturnHttpsProtocolURL(string url)
         {
             int index = url.IndexOf("https://", StringComparison.OrdinalIgnoreCase);
             return index == -1 ? url : url.Substring(index);
         }
 
-        private string RemoveWssPreInfo(string url)
+        private string ReturnWSSProtocolURL(string url)
         {
             int index = url.IndexOf("wss://", StringComparison.OrdinalIgnoreCase);
             return index == -1 ? url : url.Substring(index);
+        }
+
+        private string AddWSSPreInfoIfProtocolMissing(string url)
+        {
+            if (url.StartsWith("ws-room:"))
+                return $"wss://{url.Substring(8)}";
+
+            return url;
         }
     }
 }
