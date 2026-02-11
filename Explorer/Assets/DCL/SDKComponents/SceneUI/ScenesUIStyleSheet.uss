@@ -76,8 +76,14 @@
 .unity-base-dropdown__item:hover:enabled > .unity-base-dropdown__item-content > .unity-base-dropdown__checkmark {
     margin-top: 5px;
     -unity-background-image-tint-color: rgb(0, 0, 0);
+    flex-grow: 0;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 .unity-base-popup-field__arrow {
     margin-right: 10px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
 }
