@@ -106,7 +106,7 @@ namespace Global.Dynamic
                 return cachedMainManifest.Value;
             }
 
-            return new  WorldManifest(fallbackParcelData.Value.ownedParcels);
+            return  WorldManifest.Create(fallbackParcelData.Value.ownedParcels);
         }
     }
 
