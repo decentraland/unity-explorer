@@ -18,13 +18,7 @@ namespace ECS
         private NativeHashSet<int2> occupiedParcels;
         private bool isEmpty;
 
-        public WorldManifest(int2[] valueOccupiedParcels)
-        {
-            total = 0;
-            spawn_coordinate = new SpawnCoordinateData();
-            occupiedParcels = ParcelArraysToSet(valueOccupiedParcels);
-            isEmpty = false;
-        }
+
 
         public bool IsEmpty => isEmpty;
 
@@ -41,6 +35,17 @@ namespace ECS
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
                 occupiedParcels = ParseParcelStringsToSet(dto.occupied),
+                isEmpty = false
+            };
+        }
+
+        public static WorldManifest Create(int2[] valueOccupiedParcels)
+        {
+            return new WorldManifest
+            {
+                total = valueOccupiedParcels.Length,
+                spawn_coordinate = null,
+                occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
                 isEmpty = false
             };
         }
@@ -77,8 +82,7 @@ namespace ECS
 
         public void Dispose()
         {
-            if (isEmpty)
-                return;
+            if (isEmpty) return;
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
         }
 

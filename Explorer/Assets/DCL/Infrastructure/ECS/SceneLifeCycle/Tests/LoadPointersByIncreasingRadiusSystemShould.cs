@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Ipfs;
@@ -22,22 +22,18 @@ namespace ECS.SceneLifeCycle.Tests
     {
         private ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private IRealmPartitionSettings realmPartitionSettings;
-        private IPartitionSettings partitionSettings;
+        private IRealmData realmData;
 
         [SetUp]
         public void SetUp()
         {
-            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
-
-            var emptyParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
-            var roadParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
-            var occupiedParcels = new NativeHashSet<int2>(100, Allocator.Persistent);
 
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
-                partitionSettings = Substitute.For<IPartitionSettings>(),
+                Substitute.For<IPartitionSettings>(),
                 new HashSet<Vector2Int>(), realmData, DecentralandUrlsSource.CreateForTest());
 
 
@@ -69,6 +65,15 @@ namespace ECS.SceneLifeCycle.Tests
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
+
+            var occupiedParcels = new int2[(radius * 2 + 1) * (radius * 2 + 1)];
+            int idx = 0;
+            for (int x = 1 - radius; x <= 1 + radius; x++)
+                for (int y = 1 - radius; y <= 1 + radius; y++)
+                    occupiedParcels[idx++] = new int2(x, y);
+
+            using var manifest = WorldManifest.Create(occupiedParcels);
+            realmData.WorldManifest.Returns(manifest);
 
             var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(),
                 new List<int2>(), new PartitionComponent());
