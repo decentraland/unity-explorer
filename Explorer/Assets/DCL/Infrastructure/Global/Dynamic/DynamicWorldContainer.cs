@@ -382,6 +382,8 @@ namespace Global.Dynamic
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource, appArgs);
 
+            var worldCommsSecret = new WorldCommsSecret();
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, gateKeeperSceneRoomOptions)
                .AsActivatable();
 
@@ -393,7 +395,8 @@ namespace Global.Dynamic
                 new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
-                staticContainer.WebRequestsContainer.WebRequestController
+                staticContainer.WebRequestsContainer.WebRequestController,
+                worldCommsSecret
             );
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
@@ -492,7 +495,7 @@ namespace Global.Dynamic
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
             
-            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager);
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, worldCommsSecret);
             realmNavigatorContainer.WorldAccessGateProxy.SetObject(worldAccessGate);
 
             MapRendererContainer? mapRendererContainer =

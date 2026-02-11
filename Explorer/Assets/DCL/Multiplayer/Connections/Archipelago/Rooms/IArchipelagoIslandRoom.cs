@@ -2,6 +2,7 @@ using DCL.Character;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.PrivateWorlds;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
@@ -17,7 +18,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IMemoryPool memoryPool,
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress,
-            IWebRequestController webRequestController
+            IWebRequestController webRequestController,
+            IWorldCommsSecret? worldCommsSecret = null
         ) =>
             new ForkGlobalRealmRoom(
                 currentAdapterAddress,
@@ -31,7 +33,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 () => new FixedConnectiveRoom(
                     webRequestController,
                     currentAdapterAddress,
-                    identityCache
+                    identityCache,
+                    worldCommsSecret
                 )).AsActivatable();
     }
 }

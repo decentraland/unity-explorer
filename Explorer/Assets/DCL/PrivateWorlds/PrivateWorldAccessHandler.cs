@@ -17,17 +17,25 @@ namespace DCL.PrivateWorlds
 
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IMVCManager mvcManager;
+        private readonly IWorldCommsSecret worldCommsSecret;
 
         public PrivateWorldAccessHandler(
             IWorldPermissionsService worldPermissionsService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IWorldCommsSecret worldCommsSecret)
         {
             this.worldPermissionsService = worldPermissionsService;
             this.mvcManager = mvcManager;
+            this.worldCommsSecret = worldCommsSecret;
         }
 
         public async UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, CancellationToken ct)
         {
+            // Clear any secret from a previous world before checking the new one.
+            // A new secret is set only if password validation succeeds.
+            worldCommsSecret.Secret = null;
+            ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Checking access for '{worldName}', secret cleared");
+
             try
             {
                 var context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
@@ -90,7 +98,11 @@ namespace DCL.PrivateWorlds
                         worldName, popupParams.EnteredPassword ?? string.Empty, ct);
 
                     if (valid)
+                    {
+                        worldCommsSecret.Secret = popupParams.EnteredPassword;
+                        ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Password validated for '{worldName}', secret stored (length={popupParams.EnteredPassword?.Length ?? 0})");
                         return WorldAccessResult.Allowed;
+                    }
 
                     errorMessage = "Incorrect password. Please try again.";
                 }

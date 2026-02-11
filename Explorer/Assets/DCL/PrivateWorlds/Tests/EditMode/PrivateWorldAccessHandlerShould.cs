@@ -17,6 +17,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         private const string WORLD_NAME = "yourname.dcl.eth";
         private IWorldPermissionsService permissionsService = null!;
         private IMVCManager mvcManager = null!;
+        private IWorldCommsSecret worldCommsSecret = null!;
         private PrivateWorldAccessHandler handler = null!;
 
         [SetUp]
@@ -24,7 +25,8 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         {
             permissionsService = Substitute.For<IWorldPermissionsService>();
             mvcManager = Substitute.For<IMVCManager>();
-            handler = new PrivateWorldAccessHandler(permissionsService, mvcManager);
+            worldCommsSecret = new WorldCommsSecret();
+            handler = new PrivateWorldAccessHandler(permissionsService, mvcManager, worldCommsSecret);
         }
 
         [Test]

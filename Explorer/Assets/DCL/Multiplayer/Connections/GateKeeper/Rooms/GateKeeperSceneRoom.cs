@@ -184,6 +184,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             string url = options.AdapterUrl;
             string json = meta.ToJson();
 
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"GateKeeper POST to {url} with body: {json}");
+
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, json, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
