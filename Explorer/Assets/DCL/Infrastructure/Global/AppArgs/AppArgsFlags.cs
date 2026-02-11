@@ -1,4 +1,4 @@
-namespace Global.AppArgs
+﻿namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -65,6 +65,8 @@ namespace Global.AppArgs
         public const string DISCOVER = "discover";
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
+
+        public const string NAME_COLOR_CHANGE = "name-color-change";
 
         public static class Multiplayer
         {

@@ -600,6 +600,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a64bc37fc09f340bd821a73ed1a9342a
+    m_Address: Assets/DCL/UI/Assets/ColorPicker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a731ee28947d7d54d8f4ff349525c868
     m_Address: Assets/Textures/ExplorePanel/EmotesHoverSpriteAtlas.spriteatlasv2
     m_ReadOnly: 0
