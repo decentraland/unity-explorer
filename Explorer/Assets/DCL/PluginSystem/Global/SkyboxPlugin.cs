@@ -90,8 +90,10 @@ namespace DCL.SkyBox
                     float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);
                     skyboxSettings.TimeOfDayNormalized = fixedTime;
                     skyboxSettings.TargetTimeOfDayNormalized = fixedTime;
+                    skyboxSettings.UIOverrideTimeOfDayNormalized = fixedTime;
                     // Force the state to not cycle, as it was previously assigned by the user
                     skyboxSettings.IsUIControlled = true;
+                    skyboxSettings.IsDayCycleEnabled = false;
                 }
                 else
                 {
@@ -100,8 +102,10 @@ namespace DCL.SkyBox
                         float normalizedTime = SkyboxSettingsAsset.NormalizeTime(jsonConfig.FixedTimeInSeconds.Value);
                         skyboxSettings.TimeOfDayNormalized = normalizedTime;
                         skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
+                        skyboxSettings.UIOverrideTimeOfDayNormalized = normalizedTime;
                         // Force the state to not cycle, as the time has been set by the feature flag
                         skyboxSettings.IsUIControlled = true;
+                        skyboxSettings.IsDayCycleEnabled = false;
                     }
                     else
                     {
