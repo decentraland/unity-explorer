@@ -85,6 +85,8 @@ namespace DCL.PluginSystem.Global
 
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
             {
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
+
                 GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
                     treesProfile, out treeRendererKeys[prototypeIndex]);
 

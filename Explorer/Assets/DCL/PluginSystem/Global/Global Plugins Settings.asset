@@ -62,6 +62,7 @@ MonoBehaviour:
   - rid: 5190442831932031144
   - rid: 1221415613651484787
   - rid: 732305993255354462
+  - rid: 7426570530121056350
   references:
     version: 2
     RefIds:
@@ -172,7 +173,7 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <ColorToggle>k__BackingField:
-            m_AssetGUID: 
+            m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 
@@ -209,6 +210,12 @@ MonoBehaviour:
       data:
         <AuthScreenPrefab>k__BackingField:
           m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <TransactionConfirmationPopupPrefab>k__BackingField:
+          m_AssetGUID: 780e6ed0fdb34194c92f8e560963b8f9
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -558,6 +565,18 @@ MonoBehaviour:
         <ThumbnailWidth>k__BackingField: 272
         NameEditorPrefab:
           m_AssetGUID: 4362b43091b0d462db2641f8c866e9b9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <ColorToggle>k__BackingField:
+          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NameColors>k__BackingField:
+          m_AssetGUID: 502bd975d08eca847807411acf6a73d2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1119,6 +1138,21 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 7426570530121056350
+      type: {class: ColorPickerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ColorPickerPrefab:
+          m_AssetGUID: a64bc37fc09f340bd821a73ed1a9342a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ColorTogglePrefab:
+          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

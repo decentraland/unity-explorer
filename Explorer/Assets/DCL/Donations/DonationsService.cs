@@ -189,7 +189,7 @@ namespace DCL.Donations
                 }
             };
 
-            EthApiResponse response = await ethereumApi.SendAsync(request, ct);
+            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
             string weiString = response.result.ToString()[2..];
 
@@ -218,7 +218,7 @@ namespace DCL.Donations
                 }
             };
 
-            EthApiResponse response = await ethereumApi.SendAsync(request, ct);
+            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
             if (response.result != null)
                 ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {response.result}");

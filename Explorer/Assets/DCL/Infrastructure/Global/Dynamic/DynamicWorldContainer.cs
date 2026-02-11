@@ -311,7 +311,6 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
-            NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
@@ -761,7 +760,7 @@ namespace Global.Dynamic
                     assetsProvisioner, mvcManager, mainUIView,
                     notificationsRequestController, identityCache, profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser, dynamicWorldDependencies.CompositeWeb3Provider,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeDiscover,
@@ -845,7 +844,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     characterPreviewFactory,
                     profilesRepository,
-                    dynamicWorldDependencies.Web3Authenticator,
+                    dynamicWorldDependencies.CompositeWeb3Provider,
                     initializationFlowContainer.InitializationFlow,
                     selfProfile,
                     equippedWearables,
@@ -915,14 +914,14 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     eventBus,
                     webBrowser,
-                    bootstrapContainer.VerifiedEthereumApi,
+                    bootstrapContainer.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
                     screenModeController,
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
@@ -1005,6 +1004,7 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
+                new ColorPickerPlugin(assetsProvisioner, mvcManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
@@ -1033,7 +1033,8 @@ namespace Global.Dynamic
                     globalWorld,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
-                    staticContainer.InputBlock));
+                    staticContainer.InputBlock,
+                    dynamicWorldDependencies.CompositeWeb3Provider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
@@ -1184,7 +1185,8 @@ namespace Global.Dynamic
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.Analytics!,
-                    homePlaceEventBus));
+                    homePlaceEventBus,
+                    socialServiceEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
