@@ -55,14 +55,10 @@ namespace DCL.SkyBox
                 skyboxSettings.Reset();
 
                 if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out settingsJson))
-                {
                     if (settingsJson.DayCycleDurationInSeconds != null)
                         skyboxSettings.FullDayCycleInSeconds =  settingsJson.DayCycleDurationInSeconds.Value;
 
-                    SetInitialTime(settingsJson, skyboxSettings);
-                }
-                else
-                    SetInitialTime(null, skyboxSettings);
+                SetInitialTime(settingsJson, skyboxSettings);
 
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -87,19 +83,8 @@ namespace DCL.SkyBox
 
             return;
 
-            void SetInitialTime(SkyboxSettings? jsonConfig, SkyboxSettingsAsset skyboxSettings)
+            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings)
             {
-                if (jsonConfig?.FixedTimeInSeconds != null)
-                {
-                    float normalizedTime = SkyboxSettingsAsset.NormalizeTime(jsonConfig.Value.FixedTimeInSeconds.Value);
-                    skyboxSettings.TimeOfDayNormalized = normalizedTime;
-                    skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
-                    // Force the state to not cycle, as the time has been set by the feature flag
-                    skyboxSettings.IsUIControlled = true;
-
-                    return;
-                }
-
                 if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SKYBOX_FIXED_TIME))
                 {
                     float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);
@@ -110,9 +95,20 @@ namespace DCL.SkyBox
                 }
                 else
                 {
-                    float globalTime = skyboxSettings!.GlobalTimeOfDayNormalized;
-                    skyboxSettings.TimeOfDayNormalized = globalTime;
-                    skyboxSettings.TargetTimeOfDayNormalized = globalTime;
+                    if (jsonConfig.FixedTimeInSeconds != null)
+                    {
+                        float normalizedTime = SkyboxSettingsAsset.NormalizeTime(jsonConfig.FixedTimeInSeconds.Value);
+                        skyboxSettings.TimeOfDayNormalized = normalizedTime;
+                        skyboxSettings.TargetTimeOfDayNormalized = normalizedTime;
+                        // Force the state to not cycle, as the time has been set by the feature flag
+                        skyboxSettings.IsUIControlled = true;
+                    }
+                    else
+                    {
+                        float globalTime = skyboxSettings.GlobalTimeOfDayNormalized;
+                        skyboxSettings.TimeOfDayNormalized = globalTime;
+                        skyboxSettings.TargetTimeOfDayNormalized = globalTime;
+                    }
                 }
             }
         }
