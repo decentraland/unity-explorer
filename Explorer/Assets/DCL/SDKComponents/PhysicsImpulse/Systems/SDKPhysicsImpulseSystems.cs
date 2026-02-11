@@ -15,14 +15,14 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 {
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
-    public partial class PhysicsImpulseSystems : BaseUnityLoopSystem
+    public partial class SDKPhysicsImpulseSystems : BaseUnityLoopSystem
     {
         private const float MAX_EXTERNAL_VELOCITY = 50f;
 
         private readonly World globalWorld;
         private readonly Entity globalPlayerEntity;
 
-        internal PhysicsImpulseSystems(World world, World globalWorld, Entity globalPlayerEntity) : base(world)
+        internal SDKPhysicsImpulseSystems(World world, World globalWorld, Entity globalPlayerEntity) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;

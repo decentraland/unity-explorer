@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            PhysicsImpulseSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity);
+            SDKPhysicsImpulseSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity);
         }
     }
 }
