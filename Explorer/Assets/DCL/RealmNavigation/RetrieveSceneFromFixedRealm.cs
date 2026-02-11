@@ -21,8 +21,6 @@ namespace DCL.RealmNavigation
         {
             // Wait for all pointers resolution, they should be resolved at start-up
 
-
-
             var resolved = false;
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null!;
             SceneEntityDefinition? startupScene = null;
@@ -33,27 +31,7 @@ namespace DCL.RealmNavigation
                 await UniTask.Yield(ct);
             }
 
-            if (startupScene != null)
-            {
-                return startupScene;
-            }
-
-            // Check if result contains the requested parcel
-            // TODO O(N)
-            foreach (var sceneDefPromise in result)
-            {
-                if (!sceneDefPromise.Result.HasValue) continue;
-                if (!sceneDefPromise.Result!.Value.Succeeded) continue;
-
-                SceneEntityDefinition? sceneDef = sceneDefPromise.Result!.Value.Asset;
-
-                for (var j = 0; j < sceneDef?.metadata.scene.DecodedParcels.Count; j++)
-                    if (sceneDef.metadata.scene.DecodedParcels[j] == parcel)
-                        return sceneDef;
-            }
-
-            // No real scene found
-            return null;
+            return startupScene;
         }
 
         [Query]

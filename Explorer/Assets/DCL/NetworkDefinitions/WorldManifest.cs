@@ -14,14 +14,14 @@ namespace ECS
     public struct WorldManifest : IDisposable
     {
         public int total;
-        public SpawnCoordinateData? spawn_coordinate;
+        public SpawnCoordinateData spawn_coordinate;
         private NativeHashSet<int2> occupiedParcels;
         private bool isEmpty;
 
         public WorldManifest(int2[] valueOccupiedParcels)
         {
             total = 0;
-            spawn_coordinate = null;
+            spawn_coordinate = new SpawnCoordinateData();
             occupiedParcels = ParcelArraysToSet(valueOccupiedParcels);
             isEmpty = false;
         }
@@ -87,7 +87,8 @@ namespace ECS
         public static WorldManifest Empty => new ()
         {
             occupiedParcels = EMPTY_SET,
-            isEmpty = true
+            isEmpty = true,
+            spawn_coordinate = new SpawnCoordinateData()
         };
     }
 
@@ -109,7 +110,6 @@ namespace ECS
         public string[] empty;
         public int total;
 
-        [JsonProperty("spawn_coordinate")]
-        public SpawnCoordinateData? spawn_coordinate;
+        public SpawnCoordinateData spawn_coordinate;
     }
 }

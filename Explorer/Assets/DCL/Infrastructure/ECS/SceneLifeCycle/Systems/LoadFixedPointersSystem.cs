@@ -30,7 +30,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IDecentralandUrlsSource urlsSource;
         private IURLBuilder urlBuilder = new URLBuilder();
 
-
         internal LoadFixedPointersSystem(World world, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
         {
             this.urlsSource = urlsSource;
@@ -38,7 +37,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            ResolvePromisesQuery(World);
+            ResolveCatalystPromisesQuery(World);
+            ResolveRegistryPromisesQuery(World);
             InitiateDefinitionLoadingQuery(World);
         }
 
@@ -49,80 +49,17 @@ namespace ECS.SceneLifeCycle.Systems
             if (!realmComponent.ScenesAreFixed)
                 return;
 
-            if (!realmData.WorldManifest.IsEmpty)
-            {
-                NativeHashSet<int2> occupiedParcels = realmData.WorldManifest.GetOccupiedParcels();
-                var pointersList = new List<int2>(occupiedParcels.Count);
-                foreach (int2 parcel in occupiedParcels)
-                    pointersList.Add(parcel);
-
-                URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.EntitiesActive)))
-                                                   .AppendParameter(new URLParameter("world_name", realmComponent.RealmData.RealmName)).Build();
-
-                var listPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(new List<SceneEntityDefinition>(pointersList.Count), pointersList, new CommonLoadingArguments(destination)),
-                    PartitionComponent.TOP_PRIORITY);
-
-                World.Add(entity, new FixedScenePointers(listPromise));
-                return;
-            }
-
-            // tolerate allocations as it's once per realm only
-            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
-
-            for (var i = 0; i < realmComponent.Ipfs.SceneUrns.Count; i++)
-            {
-                string urn = realmComponent.Ipfs.SceneUrns[i];
-                IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
-
-                // can't prioritize scenes definition - they are always top priority
-                var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
-
-                promises[i] = promise;
-            }
-
-            World.Add(entity, new FixedScenePointers(promises));
+            if (realmData.WorldManifest.IsEmpty)
+                InitiateCatalystPromise(entity, realmComponent);
+            else
+                InitiateRegistryPromise(entity, realmComponent);
         }
 
-        [Query]
-        private void ResolvePromises(ref FixedScenePointers fixedScenePointers, ref ProcessedScenePointers processedScenePointers, ref RealmComponent realmComponent)
+         [Query]
+         [None(typeof(FixedPointerRegistryPromise))]
+        private void ResolveCatalystPromises(ref FixedScenePointers fixedScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved) return;
-
-            if (fixedScenePointers.ListPromise is { } listPromise)
-            {
-                if (listPromise.IsConsumed) return;
-
-                if (!listPromise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result))
-                    return;
-
-                fixedScenePointers.AllPromisesResolved = true;
-
-                string spawnCoordinate = "-1,-1";
-
-                if (realmData.WorldManifest.spawn_coordinate != null)
-                    spawnCoordinate = $"{realmData.WorldManifest.spawn_coordinate.x},{realmData.WorldManifest.spawn_coordinate.y}";
-
-                if (result.Succeeded)
-                {
-                    IReadOnlyList<SceneEntityDefinition> definitions = result.Asset.Value;
-                    for (var i = 0; i < definitions.Count; i++)
-                    {
-                        SceneEntityDefinition definition = definitions[i];
-                        var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
-                        CreateSceneEntity(definition, ipfsPath);
-                        IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
-                        for (var j = 0; j < parcels.Count; j++)
-                            processedScenePointers.Value.Add(parcels[j].ToInt2());
-
-                        if (definition.pointers.ToList().Contains(spawnCoordinate))
-                            fixedScenePointers.StartupScene = definition;
-                    }
-                }
-
-                return;
-            }
 
             fixedScenePointers.AllPromisesResolved = true;
 
@@ -138,6 +75,9 @@ namespace ECS.SceneLifeCycle.Systems
                         CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
                         IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
+                        //We are gonna load into the first loaded scene as startup
+                        fixedScenePointers.StartupScene ??= result.Asset;
+
                         for (var j = 0; j < parcels.Count; j++)
                             processedScenePointers.Value.Add(parcels[j].ToInt2());
                     }
@@ -149,5 +89,86 @@ namespace ECS.SceneLifeCycle.Systems
                 }
             }
         }
+
+
+        [Query]
+        [All(typeof(FixedPointerRegistryPromise))]
+        private void ResolveRegistryPromises(ref FixedScenePointers fixedScenePointers, ref ProcessedScenePointers processedScenePointers)
+        {
+            if (fixedScenePointers.AllPromisesResolved) return;
+
+            if (fixedScenePointers.ListPromise!.Value.IsConsumed) return;
+
+            if (!fixedScenePointers.ListPromise!.Value.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result))
+                return;
+
+            fixedScenePointers.AllPromisesResolved = true;
+
+            Vector2Int spawnCoordinate = new Vector2Int(realmData.WorldManifest.spawn_coordinate.x,
+                realmData.WorldManifest.spawn_coordinate.y);
+
+            if (result.Succeeded)
+            {
+                IReadOnlyList<SceneEntityDefinition> definitions = result.Asset.Value;
+                for (var i = 0; i < definitions.Count; i++)
+                {
+                    SceneEntityDefinition definition = definitions[i];
+                    var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
+                    CreateSceneEntity(definition, ipfsPath);
+                    IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
+
+                    for (var j = 0; j < parcels.Count; j++)
+                    {
+                        processedScenePointers.Value.Add(parcels[j].ToInt2());
+                        if (parcels[j] == spawnCoordinate)
+                            fixedScenePointers.StartupScene = definition;
+                    }
+                }
+            }
+        }
+
+        private void InitiateCatalystPromise(Entity entity, RealmComponent realmComponent)
+        {
+            // tolerate allocations as it's once per realm only
+            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[realmComponent.Ipfs.SceneUrns.Count];
+
+            for (var i = 0; i < realmComponent.Ipfs.SceneUrns.Count; i++)
+            {
+                string urn = realmComponent.Ipfs.SceneUrns[i];
+                IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
+
+                // can't prioritize scenes definition - they are always top priority
+                var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)))), ipfsPath), PartitionComponent.TOP_PRIORITY);
+
+                promises[i] = promise;
+            }
+
+            World.Add(entity, new FixedScenePointers(promises));
+        }
+
+        private void InitiateRegistryPromise(Entity entity, RealmComponent realmComponent)
+        {
+            NativeHashSet<int2> occupiedParcels = realmData.WorldManifest.GetOccupiedParcels();
+            var pointersList = new List<int2>(occupiedParcels.Count);
+            foreach (int2 parcel in occupiedParcels)
+                pointersList.Add(parcel);
+
+            URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.EntitiesActive)))
+                                               .AppendParameter(new URLParameter("world_name", realmComponent.RealmData.RealmName)).Build();
+
+            var listPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
+                new GetSceneDefinitionList(new List<SceneEntityDefinition>(pointersList.Count), pointersList, new CommonLoadingArguments(destination)),
+                PartitionComponent.TOP_PRIORITY);
+
+            World.Add(entity, new FixedScenePointers(listPromise), new FixedPointerRegistryPromise());
+        }
+
+        //Flag structure for clear querys
+        private struct FixedPointerRegistryPromise
+        {
+
+        }
+
     }
 }
