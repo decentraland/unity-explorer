@@ -134,9 +134,10 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterController characterController,
             ref JumpInputComponent jump,
             ref ImpulseInputComponent impulse,
+            ref ExternalForceInputComponent externalForceInput,
             in MovementInputComponent movementInput)
         {
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, in movementInput, cameraComponent.Camera.transform);
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, ref externalForceInput, in movementInput, cameraComponent.Camera.transform);
         }
 
         [Query]
@@ -152,10 +153,11 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterController characterController,
             ref JumpInputComponent jump,
             ref ImpulseInputComponent impulse,
+            ref ExternalForceInputComponent externalForceInput,
             in MovementInputComponent movementInput)
         {
             // Random avatars are not affected by the player's camera
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, in movementInput, characterController.transform);
+            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, ref impulse, ref externalForceInput, in movementInput, characterController.transform);
         }
 
         private void ResolveAvatarVelocity(
@@ -167,6 +169,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterController characterController,
             ref JumpInputComponent jump,
             ref ImpulseInputComponent impulse,
+            ref ExternalForceInputComponent externalForceInput,
             in MovementInputComponent movementInput,
             Transform viewerTransform)
         {
@@ -184,8 +187,17 @@ namespace DCL.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
-            // Apply impulse and external velocity decay
+            // Apply impulse (instant Δv)
             ApplyImpulse.Execute(settings, ref rigidTransform, ref impulse);
+
+            // Accumulate test force while button is held (reuses impulse direction/magnitude from settings)
+            if (externalForceInput.IsPressed)
+                rigidTransform.ExternalForce += settings.ImpulseDirection.normalized * settings.ImpulseForce;
+
+            // Apply continuous external force → acceleration → velocity
+            ApplyExternalForce.Execute(settings, ref rigidTransform, dt);
+
+            // Decay external velocity over time
             ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)

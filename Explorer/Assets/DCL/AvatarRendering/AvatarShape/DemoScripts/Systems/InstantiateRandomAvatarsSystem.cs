@@ -335,6 +335,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new HandsIKComponent(),
                     new HeadIKComponent(),
                     new JumpInputComponent(),
+                    new ImpulseInputComponent(),
+                    new ExternalForceInputComponent(),
                     new MovementInputComponent(),
                     characterControllerSettings,
                     new RandomAvatar()

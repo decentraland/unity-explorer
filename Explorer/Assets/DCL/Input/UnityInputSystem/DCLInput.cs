@@ -253,6 +253,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ExternalForce"",
+                    ""type"": ""Button"",
+                    ""id"": ""c3d4e5f6-a7b8-9012-cdef-345678901234"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -270,11 +279,22 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""4ffcefc2-581d-410a-89d9-f32a5a74c733"",
-                    ""path"": ""<Keyboard>/q"",
+                    ""path"": ""<Keyboard>/j"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Impulse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c9868e03-b6ef-461f-ac87-06ddb5905994"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ExternalForce"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -3877,6 +3897,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Impulse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d4e5f6a7-b8c9-0123-def4-567890123456"",
+                    ""path"": ""<Keyboard>/j"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ExternalForce"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -3937,6 +3968,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
         m_Player_Any = m_Player.FindAction("Any", throwIfNotFound: true);
         m_Player_Impulse = m_Player.FindAction("Impulse", throwIfNotFound: true);
+        m_Player_ExternalForce = m_Player.FindAction("ExternalForce", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -4147,6 +4179,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionLeft;
     private readonly InputAction m_Player_Any;
     private readonly InputAction m_Player_Impulse;
+    private readonly InputAction m_Player_ExternalForce;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -4231,6 +4264,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Impulse => m_Wrapper.m_Player_Impulse;
         /// <summary>
+        /// Provides access to the underlying input action "Player/ExternalForce".
+        /// </summary>
+        public InputAction @ExternalForce => m_Wrapper.m_Player_ExternalForce;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -4310,6 +4347,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Impulse.started += instance.OnImpulse;
             @Impulse.performed += instance.OnImpulse;
             @Impulse.canceled += instance.OnImpulse;
+            @ExternalForce.started += instance.OnExternalForce;
+            @ExternalForce.performed += instance.OnExternalForce;
+            @ExternalForce.canceled += instance.OnExternalForce;
         }
 
         /// <summary>
@@ -4375,6 +4415,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Impulse.started -= instance.OnImpulse;
             @Impulse.performed -= instance.OnImpulse;
             @Impulse.canceled -= instance.OnImpulse;
+            @ExternalForce.started -= instance.OnExternalForce;
+            @ExternalForce.performed -= instance.OnExternalForce;
+            @ExternalForce.canceled -= instance.OnExternalForce;
         }
 
         /// <summary>
@@ -6202,6 +6245,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnImpulse(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ExternalForce" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnExternalForce(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

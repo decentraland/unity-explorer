@@ -167,6 +167,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ExternalForce",
+                    "type": "Button",
+                    "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -184,11 +193,22 @@
                 {
                     "name": "",
                     "id": "4ffcefc2-581d-410a-89d9-f32a5a74c733",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/j",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Impulse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c9868e03-b6ef-461f-ac87-06ddb5905994",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ExternalForce",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -3789,6 +3809,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Impulse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d4e5f6a7-b8c9-0123-def4-567890123456",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ExternalForce",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

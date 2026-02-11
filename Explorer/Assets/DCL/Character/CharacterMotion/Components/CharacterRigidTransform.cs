@@ -46,7 +46,13 @@ namespace DCL.CharacterMotion.Components
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
 
-        // External velocity from impulses (jump pads, knockbacks, etc.)
+        // Net external force acting on the character this frame (cleared after applying)
+        public Vector3 ExternalForce;
+
+        // Computed acceleration from ExternalForce (a = F / mass), per-frame
+        public Vector3 ExternalAcceleration;
+
+        // External velocity from impulses, forces (jump pads, knockbacks, wind, etc.)
         // Decays over time via drag/friction
         public Vector3 ExternalVelocity;
 
