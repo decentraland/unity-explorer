@@ -18,27 +18,38 @@ using static Unity.Mathematics.math;
 
 namespace ECS.Unity.SceneBoundsChecker
 {
+    /// <summary>
+    /// This system is the replacement of another system that disabled
+    /// colliders that went out of bounds of the scenes they belong to. It had
+    /// a significant per-frame cost that this system does not.
+    /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
-    public sealed partial class SceneBoundsCheckerSystem : BaseUnityLoopSystem
+    public sealed partial class DisableSceneCollidersSystem : BaseUnityLoopSystem
     {
-        private readonly IScenesCache sceneCache;
         private readonly Entity playerEntity;
+        private readonly float playerRadius;
         private readonly List<Vector2Int> overlappedParcels;
         private readonly List<ISceneFacade> overlappedScenes;
-        private readonly float playerRadius;
+        private readonly IScenesCache sceneCache;
 
-        private SceneBoundsCheckerSystem(World world, IScenesCache sceneCache,
-            Entity playerEntity) : base(world)
+        private DisableSceneCollidersSystem(World world, Entity playerEntity,
+            IScenesCache sceneCache) : base(world)
         {
-            this.sceneCache = sceneCache;
             this.playerEntity = playerEntity;
+            this.sceneCache = sceneCache;
+
+            // The worst cae is when the player stands on a corner between four
+            // parcels that each belong to a different scene.
             overlappedParcels = new List<Vector2Int>(4);
             overlappedScenes = new List<ISceneFacade>(4);
 
             var playerObject = world.Get<ICharacterObject>(playerEntity);
             playerRadius = playerObject.Controller.radius;
 
+            // There are three cases to consider: player moving around, a scene
+            // loading into a parcel the player is standing in, and the player
+            // teleporting to a world or back.
             sceneCache.SceneAdded += OnSceneLoaded;
             sceneCache.ScenesCleared += OnAllScenesUnloaded;
         }

@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
-            SceneBoundsCheckerSystem.InjectToWorld(ref builder, scenesCache, arguments.PlayerEntity);
+            DisableSceneCollidersSystem.InjectToWorld(ref builder, arguments.PlayerEntity, scenesCache);
         }
     }
 }
