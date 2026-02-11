@@ -83,7 +83,6 @@ namespace DCL.CharacterMotion.Systems
             {
                 case GlideStateValue.OPENING_PROP when gliderProp.View.OpenAnimationCompleted:
                     glideState.Value = GlideStateValue.GLIDING;
-                    gliderProp.View.PlayOpenSound();
                     break;
 
                 case GlideStateValue.CLOSING_PROP when gliderProp.View.CloseAnimationCompleted:

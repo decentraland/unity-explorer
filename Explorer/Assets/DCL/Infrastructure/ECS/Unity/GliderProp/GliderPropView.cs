@@ -64,25 +64,6 @@ namespace ECS.Unity.GliderProp
             foreach (TrailRenderer trail in Trails) trail.emitting = value;
         }
 
-        private void OnOpenAnimationCompleted() =>
-            OpenAnimationCompleted = true;
-
-        private void OnCloseAnimationCompleted() =>
-            CloseAnimationCompleted = true;
-
-        public void OnReturnedToPool()
-        {
-            OpenAnimationCompleted = false;
-            CloseAnimationCompleted = false;
-        }
-
-        public void PlayOpenSound()
-        {
-            if (!Settings.AudioEnabled) return;
-
-            AudioSources.OpenGlider.Play();
-        }
-
         public void SetEngineState(bool engineEnabled, float engineLevel, float dt)
         {
             const float VOLUME_TRANSITION_DURATION = 0.5f;
@@ -99,6 +80,29 @@ namespace ECS.Unity.GliderProp
             AudioSources.Idle.volume = (1 - t) * IdleMaxVolume * engineVolume;
             AudioSources.Moving.volume = t * FullSpeedMaxVolume * engineVolume;
         }
+
+        public void OnReturnedToPool()
+        {
+            OpenAnimationCompleted = false;
+            CloseAnimationCompleted = false;
+        }
+
+#region Animation Events
+
+        private void OnOpenAnimationStarted()
+        {
+            if (!Settings.AudioEnabled) return;
+
+            AudioSources.OpenGlider.Play();
+        }
+
+        private void OnOpenAnimationCompleted() =>
+            OpenAnimationCompleted = true;
+
+        private void OnCloseAnimationCompleted() =>
+            CloseAnimationCompleted = true;
+
+#endregion
 
         [Serializable]
         public class AudioSourceSettings
