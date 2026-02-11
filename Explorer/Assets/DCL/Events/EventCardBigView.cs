@@ -19,8 +19,7 @@ namespace DCL.Events
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 64f;
 
         [Header("Specific-card references")]
-        [SerializeField] private GameObject communityContainer = null!;
-        [SerializeField] private ImageView communityThumbnail = null!;
+        [SerializeField] private EventCommunityThumbnail eventCommunityThumbnail = null!;
 
         [Header("Animations")]
         [SerializeField] private RectTransform headerContainer = null!;
@@ -57,12 +56,12 @@ namespace DCL.Events
         {
             base.Configure(eventInfo, thumbnailLoader, placeInfo, friends, profileRepositoryWrapper, communityInfo);
 
-            communityContainer.SetActive(communityInfo != null);
+            eventCommunityThumbnail.gameObject.SetActive(communityInfo != null);
 
             if (communityInfo != null)
             {
                 loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
-                thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
+                eventCommunityThumbnail.Configure(communityInfo, thumbnailLoader, loadingCommunityThumbnailCts.Token);
             }
         }
 

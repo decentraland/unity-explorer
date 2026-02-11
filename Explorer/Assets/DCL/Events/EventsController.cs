@@ -29,6 +29,7 @@ namespace DCL.Events
 
         public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
+        public event Action? GoToTodayClicked;
 
         public  DateTime CurrentCalendarFromDate { get; set; }
 
@@ -72,6 +73,7 @@ namespace DCL.Events
             eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
 
+            view.GoToTodayButtonClicked += OnGoToTodayButtonClicked;
             view.CreateButtonClicked += GoToCreateEventPage;
         }
 
@@ -80,6 +82,7 @@ namespace DCL.Events
             eventsCalendarController.Dispose();
             eventsByDayController.Dispose();
 
+            view.GoToTodayButtonClicked -= OnGoToTodayButtonClicked;
             view.CreateButtonClicked -= GoToCreateEventPage;
         }
 
@@ -175,6 +178,9 @@ namespace DCL.Events
 
             eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
         }
+
+        private void OnGoToTodayButtonClicked() =>
+            GoToTodayClicked?.Invoke();
 
         public void GoToCreateEventPage() =>
             webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");

@@ -129,5 +129,22 @@ namespace DCL.Communities.EventInfo
                 nextStartAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 nextFinishAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }
+
+        public static string GetEventAddToCalendarLink(IEventDTO eventData, DateTime utcStart)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
+            DateTime utcEnd = utcStart.Add(duration);
+
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
+            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
+
+            return string.Format(ADD_TO_CALENDAR_LINK,
+                eventData.Name,
+                eventData.Description,
+                $"jump in: {GetPlaceJumpInLink(eventData)}",
+                utcStart.ToString("yyyyMMdd'T'HHmmss'Z'"),
+                utcEnd.ToString("yyyyMMdd'T'HHmmss'Z'"));
+        }
     }
 }

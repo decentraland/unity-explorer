@@ -9,6 +9,7 @@ using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Events
@@ -33,15 +34,13 @@ namespace DCL.Events
         [SerializeField] private List<EventsDaySelectorButton> daySelectorButtons = null!;
         [SerializeField] private Button previousDateRangeButton = null!;
         [SerializeField] private Button nextDateRangeButton = null!;
-        [SerializeField] private Button goToTodayButtonLeftSide = null!;
-        [SerializeField] private Button goToTodayButtonRightSide = null!;
 
         [Header("Events")]
         [SerializeField] private List<EventListConfiguration> eventsLists = null!;
 
-        [Header("Highlighted Banner")]
+        [Header("Highlighted Carousel")]
         [SerializeField] private List<GameObject> objectsToHideWhenBanner = null!;
-        [SerializeField] private EventCardView highlightedBanner = null!;
+        [SerializeField] private EventsHighlightedCarousel highlightedCarousel = null!;
 
         [Serializable]
         private struct EventListConfiguration
@@ -56,26 +55,13 @@ namespace DCL.Events
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
         private EventsStateService eventsStateService = null!;
-        private bool showGoToTodayButtonOnTheRight;
         private ThumbnailLoader? eventCardsThumbnailLoader;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         private void Awake()
         {
-            previousDateRangeButton.onClick.AddListener(() =>
-            {
-                showGoToTodayButtonOnTheRight = false;
-                SetupDaysSelector(currentFromDate.AddDays(-currentNumberOfDaysShowed), currentNumberOfDaysShowed);
-            });
-            nextDateRangeButton.onClick.AddListener(() =>
-            {
-                showGoToTodayButtonOnTheRight = true;
-                SetupDaysSelector(currentFromDate.AddDays(currentNumberOfDaysShowed), currentNumberOfDaysShowed);
-            });
-
-            DateTime todayAtTheBeginningOfTheDay = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 0, 0, DateTimeKind.Local);
-            goToTodayButtonLeftSide.onClick.AddListener(() => SetupDaysSelector(todayAtTheBeginningOfTheDay, currentNumberOfDaysShowed));
-            goToTodayButtonRightSide.onClick.AddListener(() => SetupDaysSelector(todayAtTheBeginningOfTheDay, currentNumberOfDaysShowed));
+            previousDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(-currentNumberOfDaysShowed), currentNumberOfDaysShowed));
+            nextDateRangeButton.onClick.AddListener(() => SetupDaysSelector(currentFromDate.AddDays(currentNumberOfDaysShowed), currentNumberOfDaysShowed));
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked += OnDaySelectorButtonClicked;
@@ -85,8 +71,6 @@ namespace DCL.Events
         {
             previousDateRangeButton.onClick.RemoveAllListeners();
             nextDateRangeButton.onClick.RemoveAllListeners();
-            goToTodayButtonLeftSide.onClick.RemoveAllListeners();
-            goToTodayButtonRightSide.onClick.RemoveAllListeners();
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
@@ -100,6 +84,8 @@ namespace DCL.Events
             this.eventsStateService = stateService;
             this.eventCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
+
+            highlightedCarousel.SetDependencies(thumbnailLoader, profileRepoWrapper);
         }
 
         public void SetupDaysSelector(DateTime fromDate, int numberOfDaysToShow, bool triggerEvent = true, bool deactivateArrows = false)
@@ -107,8 +93,6 @@ namespace DCL.Events
             bool isToday = fromDate.Date == DateTime.Today;
             nextDateRangeButton.interactable = !deactivateArrows;
             previousDateRangeButton.interactable = !deactivateArrows && !isToday;
-            goToTodayButtonLeftSide.gameObject.SetActive(!isToday && !showGoToTodayButtonOnTheRight);
-            goToTodayButtonRightSide.gameObject.SetActive(!isToday && showGoToTodayButtonOnTheRight);
 
             for (var i = 0; i < daySelectorButtons.Count; i++)
             {
@@ -121,38 +105,48 @@ namespace DCL.Events
 
             if (triggerEvent)
                 DaysRangeChanged?.Invoke(fromDate, currentNumberOfDaysShowed);
+
+            EventSystem.current.SetSelectedGameObject(null);
         }
 
-        public void SetHighlightedBanner(EventDTO? eventInfo)
+        public void SetHighlightedCarousel(IReadOnlyList<EventDTO>? eventsInfo)
         {
             foreach (GameObject go in objectsToHideWhenBanner)
-                go.SetActive(eventInfo == null);
+                go.SetActive(eventsInfo == null || eventsInfo.Count == 0);
 
-            highlightedBanner.gameObject.SetActive(eventInfo != null);
+            highlightedCarousel.gameObject.SetActive(eventsInfo is { Count: > 0 });
 
-            if (eventInfo != null)
+            if (eventsInfo != null)
             {
-                var eventData = eventsStateService.GetEventDataById(eventInfo.Value.id);
+                List<EventsStateService.EventWithPlaceAndFriendsData> eventsData = new ();
+                foreach (EventDTO eventInfo in eventsInfo)
+                {
+                    var eventData = eventsStateService.GetEventDataById(eventInfo.id);
+                    if (eventData != null)
+                        eventsData.Add(eventData);
+                }
 
                 // Setup card data
-                if (eventData != null)
-                    highlightedBanner.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
+                highlightedCarousel.Configure(eventsData);
 
                 // Setup card events
-                highlightedBanner.MainButtonClicked -= OnEventCardClicked;
-                highlightedBanner.MainButtonClicked += OnEventCardClicked;
-                highlightedBanner.InterestedButtonClicked -= OnEventInterestedButtonClicked;
-                highlightedBanner.InterestedButtonClicked += OnEventInterestedButtonClicked;
-                highlightedBanner.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
-                highlightedBanner.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
-                highlightedBanner.JumpInButtonClicked -= OnEventJumpInButtonClicked;
-                highlightedBanner.JumpInButtonClicked += OnEventJumpInButtonClicked;
-                highlightedBanner.EventShareButtonClicked -= OnEventShareButtonClicked;
-                highlightedBanner.EventShareButtonClicked += OnEventShareButtonClicked;
-                highlightedBanner.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
-                highlightedBanner.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+                highlightedCarousel.MainButtonClicked -= OnEventCardClicked;
+                highlightedCarousel.MainButtonClicked += OnEventCardClicked;
+                highlightedCarousel.InterestedButtonClicked -= OnEventInterestedButtonClicked;
+                highlightedCarousel.InterestedButtonClicked += OnEventInterestedButtonClicked;
+                highlightedCarousel.AddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+                highlightedCarousel.AddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+                highlightedCarousel.JumpInButtonClicked -= OnEventJumpInButtonClicked;
+                highlightedCarousel.JumpInButtonClicked += OnEventJumpInButtonClicked;
+                highlightedCarousel.EventShareButtonClicked -= OnEventShareButtonClicked;
+                highlightedCarousel.EventShareButtonClicked += OnEventShareButtonClicked;
+                highlightedCarousel.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+                highlightedCarousel.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
             }
         }
+
+        public void ClearHighlightedEvents() =>
+            highlightedCarousel.Clear();
 
         public void InitializeEventsLists()
         {

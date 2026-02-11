@@ -59,6 +59,7 @@ namespace DCL.Events
 
             eventsController.SectionOpen += OnSectionOpened;
             eventsController.EventsClosed += OnSectionClosed;
+            eventsController.GoToTodayClicked += OnGoToTodayClicked;
             view.DaysRangeChanged += OnDaysRangeChanged;
             view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
             view.EventCardClicked += OnEventCardClicked;
@@ -76,6 +77,7 @@ namespace DCL.Events
 
             eventsController.SectionOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
+            eventsController.GoToTodayClicked -= OnGoToTodayClicked;
             view.DaysRangeChanged -= OnDaysRangeChanged;
             view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
             view.EventCardClicked -= OnEventCardClicked;
@@ -100,6 +102,9 @@ namespace DCL.Events
 
         private void OnSectionClosed() =>
             UnloadEvents();
+
+        private void OnGoToTodayClicked() =>
+            eventsController.OpenSection(EventsSection.CALENDAR);
 
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
         {
@@ -145,18 +150,21 @@ namespace DCL.Events
             LoadEventsAsync(fromDate, numberOfDays, loadEventsCts.Token).Forget();
         }
 
-        private void UnloadEvents() =>
+        private void UnloadEvents()
+        {
             view.ClearAllEvents();
+            view.ClearHighlightedEvents();
+        }
 
         private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
         {
-            view.SetHighlightedBanner(null);
+            view.SetHighlightedCarousel(null);
             view.SetupDaysSelector(fromDate, 5, triggerEvent: false, deactivateArrows: true);
             view.SetAsLoading(true);
 
             await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
 
-            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, true, ct)
+            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 10, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
@@ -182,8 +190,7 @@ namespace DCL.Events
                     eventsStateService.AddPlaces(placesResponse.Value.Data, clearCurrentPlaces: true);
             }
 
-            var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
-            view.SetHighlightedBanner(eventData!.EventInfo);
+            view.SetHighlightedCarousel(highlightedEventsResult.Value);
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
         }
 

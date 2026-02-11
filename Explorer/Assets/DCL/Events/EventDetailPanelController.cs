@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Events;
 using DCL.EventsApi;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -35,7 +36,8 @@ namespace DCL.Communities.EventInfo
 
             viewInstance.InterestedButtonClicked -= OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
-            viewInstance.AddToCalendarButtonClicked -= AddToCalendarButtonClicked;
+            viewInstance.AddToCalendarButtonClicked -= OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked -= OnAddRecurrentDateToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked -= OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
@@ -47,7 +49,8 @@ namespace DCL.Communities.EventInfo
         {
             viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
-            viewInstance.AddToCalendarButtonClicked += AddToCalendarButtonClicked;
+            viewInstance.AddToCalendarButtonClicked += OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked += OnAddRecurrentDateToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
@@ -66,8 +69,11 @@ namespace DCL.Communities.EventInfo
         private void OnEventCopyLinkButtonClicked(IEventDTO eventData) =>
             eventCardActionsController.CopyEventLink(eventData);
 
-        private void AddToCalendarButtonClicked(IEventDTO eventData) =>
+        private void OnAddToCalendarButtonClicked(IEventDTO eventData) =>
             eventCardActionsController.AddEventToCalendar(eventData);
+
+        private void OnAddRecurrentDateToCalendarButtonClicked(IEventDTO eventData, DateTime utcStart) =>
+            eventCardActionsController.AddEventToCalendar(eventData, utcStart);
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
             eventCardActionsController.ShareEvent(eventData);

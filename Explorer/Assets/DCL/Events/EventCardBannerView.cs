@@ -19,6 +19,9 @@ namespace DCL.Events
         [Header("Specific-card references")]
         [SerializeField] private GameObject eventDateContainer = null!;
         [SerializeField] private TMP_Text eventDay = null!;
+        [SerializeField] private RectTransform contentRt = null!;
+        [SerializeField] private float contentYPositionWithCarouselDots = 48f;
+        [SerializeField] private float contentYPositionWithoutCarouselDots = 14f;
 
         public override void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
             List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, GetUserCommunitiesData.CommunityData? communityInfo = null)
@@ -29,6 +32,9 @@ namespace DCL.Events
             eventDateContainer.SetActive(!eventInfo.live);
             eventDay.text = EventUtilities.GetEventDayText(eventInfo);
         }
+
+        public void SetContentYPosition(bool showCarouselDots) =>
+            contentRt.anchoredPosition = new Vector2(contentRt.anchoredPosition.x, showCarouselDots ? contentYPositionWithCarouselDots : contentYPositionWithoutCarouselDots);
 
         protected override void LoadThumbnail(EventDTO eventInfo, ThumbnailLoader thumbnailLoader)
         {
