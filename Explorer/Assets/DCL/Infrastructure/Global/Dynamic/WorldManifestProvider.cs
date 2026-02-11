@@ -27,8 +27,8 @@ namespace Global.Dynamic
 
         private static URLAddress ORG_MANIFEST_URL = URLAddress.FromString("https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json");
         private static URLAddress ZONE_MANIFEST_URL = URLAddress.FromString("https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json");
-        private static string mainRealmName = "main";
-        private static string dclWorldName = "dcl.eth";
+        private const string mainRealmName = "main";
+        private const string dclWorldName = "dcl.eth";
 
         private WorldManifest? cachedMainManifest;
 
