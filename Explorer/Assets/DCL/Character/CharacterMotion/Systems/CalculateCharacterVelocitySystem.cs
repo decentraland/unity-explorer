@@ -43,6 +43,11 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> airDrag = new (0);
         private readonly ElementBinding<float> stopTime = new (0);
 
+        private readonly ElementBinding<float> characterMass = new (0);
+        private readonly ElementBinding<float> externalAirDrag = new (0);
+        private readonly ElementBinding<float> externalFriction = new (0);
+        private readonly ElementBinding<float> maxExternalVelocity = new (0);
+
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             debugBuilder.TryAddWidget("Locomotion: Base")
@@ -59,6 +64,10 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Max Air Acceleration", maxAirAcc)
                         .AddFloatField("Air Drag", airDrag)
                         .AddFloatField("Grounded Stop Time", stopTime)
+                        .AddFloatField("Character Mass", characterMass)
+                        .AddFloatField("External Air Drag", externalAirDrag)
+                        .AddFloatField("External Friction", externalFriction)
+                        .AddFloatField("Max External Velocity", maxExternalVelocity)
                 ;
         }
 
@@ -82,6 +91,10 @@ namespace DCL.CharacterMotion.Systems
             maxAirAcc.Value = settings.MaxAirAcceleration;
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
+            characterMass.Value = settings.CharacterMass;
+            externalAirDrag.Value = settings.ExternalAirDrag;
+            externalFriction.Value = settings.ExternalFriction;
+            maxExternalVelocity.Value = settings.MaxExternalVelocity;
         }
 
         protected override void Update(float t)
@@ -101,6 +114,10 @@ namespace DCL.CharacterMotion.Systems
             settings.MaxAirAcceleration = maxAirAcc.Value;
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
+            settings.CharacterMass = characterMass.Value;
+            settings.ExternalAirDrag = externalAirDrag.Value;
+            settings.ExternalFriction = externalFriction.Value;
+            settings.MaxExternalVelocity = maxExternalVelocity.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
             ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
