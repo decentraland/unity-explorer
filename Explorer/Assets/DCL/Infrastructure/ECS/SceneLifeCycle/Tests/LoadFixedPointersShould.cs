@@ -41,7 +41,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
-            system = new LoadFixedPointersSystem(world, realmData);
+            system = new LoadFixedPointersSystem(world, realmData, DecentralandUrlsSource.CreateForTest());
         }
 
         [Test]

@@ -27,11 +27,11 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
-        private readonly DecentralandUrlsSource urlsSource;
-        internal IURLBuilder urlBuilder = new URLBuilder();
+        private readonly IDecentralandUrlsSource urlsSource;
+        private IURLBuilder urlBuilder = new URLBuilder();
 
 
-        internal LoadFixedPointersSystem(World world, IRealmData realmData, DecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
+        internal LoadFixedPointersSystem(World world, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
         {
             this.urlsSource = urlsSource;
         }
@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
                 foreach (int2 parcel in occupiedParcels)
                     pointersList.Add(parcel);
 
-                URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)))
+                URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.EntitiesActive)))
                                                    .AppendParameter(new URLParameter("world_name", realmComponent.RealmData.RealmName)).Build();
 
                 var listPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,

@@ -177,7 +177,7 @@ namespace Global.Dynamic
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
             LoadStaticPointersSystem.InjectToWorld(ref builder, roadCoordinates, realmData, urlsSource);
-            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
+            LoadFixedPointersSystem.InjectToWorld(ref builder, realmData, urlsSource);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
             // are replace by increasing radius
