@@ -148,7 +148,7 @@ namespace DCL.Passport
         private readonly bool isGiftingEnabled;
         private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
-        private NameColorPickerController colorPickerController;
+        private NameColorPickerController? colorPickerController;
         private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
@@ -582,6 +582,8 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
+
+            if (colorPickerController == null) return;
 
             colorPickerController.OnColorChanged -= SetNewUserNameColor;
             colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
