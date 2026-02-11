@@ -14,7 +14,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
 using DCL.AvatarRendering.DemoScripts.Components;
-using DCL.CharacterMotion;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -167,7 +166,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
-            
+
             // Apply impulse and external velocity decay
             ApplyImpulse.Execute(settings, ref rigidTransform, ref impulse);
             ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);

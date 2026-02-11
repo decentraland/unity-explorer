@@ -227,10 +227,8 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
-    public static class DirtyMarkerExtensions
+    public partial class PBPhysicsImpulse : IDirtyMarker
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNotDirty(this IDirtyMarker dirtyMarker) =>
-            dirtyMarker.IsDirty == false;
+        public bool IsDirty { get; set; }
     }
 }
