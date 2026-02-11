@@ -81,7 +81,7 @@ MonoBehaviour:
   <CooldownBetweenJumps>k__BackingField: 0.3
   <AirJumpDirectionChangeImpulse>k__BackingField: 8
   <GlideSpeed>k__BackingField: 6
-  <GlideMinGroundDistance>k__BackingField: 2
+  <GlideMinGroundDistance>k__BackingField: 0.2
   <GlideMaxGravity>k__BackingField: 1
   <GlideCooldown>k__BackingField: 0.2
   <GlideAnimMaxAngle>k__BackingField: 30
