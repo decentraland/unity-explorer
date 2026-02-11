@@ -782,8 +782,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     worldPermissionsService,
                     worldAccessGate,
-                    staticContainer.InputBlock,
-                    eventBus),
+                    staticContainer.InputBlock),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,

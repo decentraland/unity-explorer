@@ -200,9 +200,8 @@ If any check passes, access is granted. Community checks that throw exceptions a
 
 For password-protected worlds, the handler runs a retry loop (max 3 attempts):
 
-1. Minimizes chat (via `beforePopupShown` callback) to prevent input focus conflicts
-2. Shows the password popup via MVC
-3. User enters password and submits (or cancels)
+1. Shows the password popup via MVC (the popup controller implements `IBlocksChat`, so the chat is automatically minimized to prevent input focus conflicts)
+2. User enters password and submits (or cancels)
 4. Calls `ValidatePasswordAsync()` which POSTs to `/worlds/{worldName}/comms` using [ADR-44 Signed Fetch](https://adr.decentraland.org/adr/ADR-44) with the password in the `secret` field of the auth chain metadata
 5. Server returns **200** (correct password) or **403** (wrong password)
 6. On failure, re-shows the popup with an error message

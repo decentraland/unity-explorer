@@ -94,7 +94,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ShowsToastAndBlocks_WhenCheckFailed()
+        public async Task ShowsToastAndBlocksWhenCheckFailed()
         {
             // Arrange
             worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -110,7 +110,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task LetsThrough_WhenAllowed()
+        public async Task LetsThroughWhenAllowed()
         {
             // Arrange
             worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -125,7 +125,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task BlocksWithRecoverableError_WhenDenied()
+        public async Task BlocksWithRecoverableErrorWhenDenied()
         {
             // Arrange
             worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -141,7 +141,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task BlocksWithRecoverableError_WhenPasswordCancelled()
+        public async Task BlocksWithRecoverableErrorWhenPasswordCancelled()
         {
             // Arrange
             worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -157,7 +157,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task SkipsPermissionCheck_WhenWorldNameIsNull()
+        public async Task SkipsPermissionCheckWhenWorldNameIsNull()
         {
             // Arrange — gate should never be called
             worldAccessGate.CheckAccessAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -174,7 +174,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [Test]
         [Explicit("Runs ~15s due to permission check timeout; gate delays indefinitely so navigator returns CheckFailed.")]
         [Timeout(20000)]
-        public async Task ReturnsCheckFailed_WhenTimeoutFires()
+        public async Task ReturnsCheckFailedWhenTimeoutFires()
         {
             // Arrange — gate hangs forever, navigator's 15s timeout kicks in
             worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())

@@ -7,7 +7,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
     public class WorldAccessInfoShould
     {
         [Test]
-        public void ParseUnrestricted_WhenAccessIsNull()
+        public void ParseUnrestrictedWhenAccessIsNull()
         {
             var response = new WorldPermissionsResponse
             {
@@ -22,7 +22,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseUnrestricted_WhenTypeIsEmptyString()
+        public void ParseUnrestrictedWhenTypeIsEmptyString()
         {
             var response = new WorldPermissionsResponse
             {
@@ -39,7 +39,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseUnrestricted_CaseInsensitive()
+        public void ParseUnrestrictedCaseInsensitive()
         {
             var response = new WorldPermissionsResponse
             {
@@ -73,7 +73,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseSharedSecret_CaseInsensitive()
+        public void ParseSharedSecretCaseInsensitive()
         {
             var response = new WorldPermissionsResponse
             {
@@ -90,7 +90,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseAllowList_WithWalletsAndCommunities()
+        public void ParseAllowListWithWalletsAndCommunities()
         {
             var response = new WorldPermissionsResponse
             {
@@ -117,7 +117,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseAllowList_WithNullWalletsAndCommunities()
+        public void ParseAllowListWithNullWalletsAndCommunities()
         {
             var response = new WorldPermissionsResponse
             {
@@ -143,7 +143,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ParseAllowList_CaseInsensitive()
+        public void ParseAllowListCaseInsensitive()
         {
             var response = new WorldPermissionsResponse
             {
@@ -160,7 +160,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void DefaultToUnrestricted_WhenTypeIsUnknown()
+        public void DefaultToUnrestrictedWhenTypeIsUnknown()
         {
             // Unknown type falls through all if/else branches — AccessType stays at default (Unrestricted)
             var response = new WorldPermissionsResponse
@@ -192,7 +192,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnTrue_WhenWalletIsInList()
+        public void ReturnTrueWhenWalletIsInList()
         {
             var info = new WorldAccessInfo
             {
@@ -203,7 +203,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnTrue_CaseInsensitive()
+        public void ReturnTrueCaseInsensitive()
         {
             var info = new WorldAccessInfo
             {
@@ -214,7 +214,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnFalse_WhenWalletNotInList()
+        public void ReturnFalseWhenWalletNotInList()
         {
             var info = new WorldAccessInfo
             {
@@ -225,7 +225,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnFalse_WhenListIsEmpty()
+        public void ReturnFalseWhenListIsEmpty()
         {
             var info = new WorldAccessInfo
             {
@@ -236,7 +236,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnFalse_WhenWalletIsNull()
+        public void ReturnFalseWhenWalletIsNull()
         {
             var info = new WorldAccessInfo
             {
@@ -247,7 +247,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public void ReturnFalse_WhenWalletIsEmpty()
+        public void ReturnFalseWhenWalletIsEmpty()
         {
             var info = new WorldAccessInfo
             {

@@ -28,7 +28,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task Allowed_WhenWorldIsUnrestricted()
+        public async Task AllowedWhenWorldIsUnrestricted()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -43,7 +43,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task CheckFailed_WhenPermissionServiceThrows()
+        public async Task CheckFailedWhenPermissionServiceThrows()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -62,7 +62,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ShowsPasswordPopup_WhenSharedSecret()
+        public async Task ShowsPasswordPopupWhenSharedSecret()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -89,7 +89,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsAllowed_WhenPasswordCorrect()
+        public async Task ReturnsAllowedWhenPasswordCorrect()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -118,7 +118,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsCancelled_WhenUserCancelsPassword()
+        public async Task ReturnsCancelledWhenUserCancelsPassword()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -143,7 +143,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsCancelled_AfterMaxPasswordAttempts()
+        public async Task ReturnsCancelledAfterMaxPasswordAttempts()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -178,7 +178,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ShowsAccessDeniedPopup_WhenNotOnAllowList()
+        public async Task ShowsAccessDeniedPopupWhenNotOnAllowList()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
@@ -205,7 +205,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ThrowsOperationCanceled_WhenCancellationTokenFires()
+        public async Task ThrowsOperationCanceledWhenCancellationTokenFires()
         {
             // Arrange
             using var cts = new CancellationTokenSource();

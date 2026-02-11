@@ -5,7 +5,6 @@ using MVC;
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.PrivateWorlds.UI
@@ -56,13 +55,18 @@ namespace DCL.PrivateWorlds.UI
         {
             passwordVisibilityToggleButton.onClick.AddListener(TogglePasswordVisibility);
             passwordInputField.onValueChanged.AddListener(OnPasswordValueChanged);
+            passwordInputField.onSubmit.AddListener(OnPasswordSubmitted);
         }
 
         private void OnDisable()
         {
             passwordVisibilityToggleButton.onClick.RemoveListener(TogglePasswordVisibility);
             passwordInputField.onValueChanged.RemoveListener(OnPasswordValueChanged);
+            passwordInputField.onSubmit.RemoveListener(OnPasswordSubmitted);
         }
+
+        private void OnPasswordSubmitted(string _) =>
+            passwordConfirmButton.onClick.Invoke();
 
         /// <summary>
         /// Configures the popup for the given parameters.
@@ -154,9 +158,9 @@ namespace DCL.PrivateWorlds.UI
 
         /// <summary>
         /// Focuses the password input field after a short delay.
-        /// Waits multiple frames so the ECS input-block (set by the popup controller) has time
-        /// to propagate and transition the chat input state machine out of TypingEnabledChatInputState,
-        /// which otherwise re-selects itself on deselect and steals focus.
+        /// The popup controller implements IBlocksChat, so the MVC system automatically
+        /// minimizes the chat before the popup shows — no manual chat closing needed.
+        /// The single-frame delay lets the UI layout settle before activating the field.
         /// </summary>
         public void FocusPasswordInput()
         {
@@ -166,13 +170,6 @@ namespace DCL.PrivateWorlds.UI
 
         private IEnumerator ActivateInputFieldDelayed()
         {
-            // Clear current selection so nothing fights for focus during the wait.
-            if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(null);
-
-            // Wait for the ECS input-block to propagate and the chat state machine
-            // to exit TypingEnabledChatInputState (which re-selects on deselect).
-            yield return null;
             yield return null;
 
             passwordInputField.caretPosition = 0;

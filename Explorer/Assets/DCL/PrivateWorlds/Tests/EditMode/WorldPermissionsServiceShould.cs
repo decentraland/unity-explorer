@@ -55,7 +55,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsAllowed_WhenUnrestricted()
+        public async Task ReturnsAllowedWhenUnrestricted()
         {
             service.StubPermissions(new WorldAccessInfo { AccessType = WorldAccessType.Unrestricted });
 
@@ -65,7 +65,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsPasswordRequired_WhenSharedSecret()
+        public async Task ReturnsPasswordRequiredWhenSharedSecret()
         {
             service.StubPermissions(new WorldAccessInfo { AccessType = WorldAccessType.SharedSecret });
 
@@ -75,7 +75,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsCheckFailed_WhenPermissionsAreNull()
+        public async Task ReturnsCheckFailedWhenPermissionsAreNull()
         {
             service.StubPermissions(null);
 
@@ -86,7 +86,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsAllowed_WhenWalletIsInList()
+        public async Task AllowListReturnsAllowedWhenWalletIsInList()
         {
             // Arrange
             var identity = Substitute.For<IWeb3Identity>();
@@ -108,7 +108,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsAllowed_WhenWalletIsOwner()
+        public async Task AllowListReturnsAllowedWhenWalletIsOwner()
         {
             // Arrange
             var identity = Substitute.For<IWeb3Identity>();
@@ -130,7 +130,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsDenied_WhenWalletNotInListAndNotOwner()
+        public async Task AllowListReturnsDeniedWhenWalletNotInListAndNotOwner()
         {
             // Arrange
             var identity = Substitute.For<IWeb3Identity>();
@@ -152,7 +152,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsDenied_WhenIdentityIsNull()
+        public async Task AllowListReturnsDeniedWhenIdentityIsNull()
         {
             // Arrange — no logged-in user
             identityCache.Identity.Returns((IWeb3Identity?)null);
@@ -172,7 +172,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsAllowed_WhenUserIsCommunityMember()
+        public async Task AllowListReturnsAllowedWhenUserIsCommunityMember()
         {
             // Arrange — wallet not in list, but user is a member of an allowed community
             var identity = Substitute.For<IWeb3Identity>();
@@ -198,7 +198,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsAllowed_WhenSecondCommunityMatches()
+        public async Task AllowListReturnsAllowedWhenSecondCommunityMatches()
         {
             // Arrange — first community check returns false, second returns true
             var identity = Substitute.For<IWeb3Identity>();
@@ -226,7 +226,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ReturnsDenied_WhenNoCommunityMatches()
+        public async Task AllowListReturnsDeniedWhenNoCommunityMatches()
         {
             // Arrange
             var identity = Substitute.For<IWeb3Identity>();
@@ -252,7 +252,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_ContinuesChecking_WhenOneCommunityCheckThrows()
+        public async Task AllowListContinuesCheckingWhenOneCommunityCheckThrows()
         {
             // Arrange — first community throws, second succeeds
             var identity = Substitute.For<IWeb3Identity>();
@@ -280,7 +280,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_SkipsCommunityCheck_WhenCheckerIsNull()
+        public async Task AllowListSkipsCommunityCheckWhenCheckerIsNull()
         {
             // Arrange — service created without community checker
             var serviceWithoutCommunity = new TestableWorldPermissionsService(
@@ -309,7 +309,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task AllowList_SkipsCommunityCheck_WhenNoCommunities()
+        public async Task AllowListSkipsCommunityCheckWhenNoCommunities()
         {
             // Arrange — allow-list with wallets only, no communities
             var identity = Substitute.For<IWeb3Identity>();

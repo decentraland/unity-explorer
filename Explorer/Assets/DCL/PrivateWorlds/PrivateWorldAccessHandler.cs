@@ -17,7 +17,6 @@ namespace DCL.PrivateWorlds
 
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IMVCManager mvcManager;
-        private Action? beforePopupShown;
 
         public PrivateWorldAccessHandler(
             IWorldPermissionsService worldPermissionsService,
@@ -26,12 +25,6 @@ namespace DCL.PrivateWorlds
             this.worldPermissionsService = worldPermissionsService;
             this.mvcManager = mvcManager;
         }
-
-        /// <summary>
-        /// Optional callback invoked before showing the password popup (e.g. to minimize chat).
-        /// Set by the plugin that has access to the chat event bus.
-        /// </summary>
-        public void SetBeforePopupCallback(Action? callback) => beforePopupShown = callback;
 
         public async UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, CancellationToken ct)
         {
@@ -86,7 +79,6 @@ namespace DCL.PrivateWorlds
                     ErrorMessage = errorMessage
                 };
 
-                beforePopupShown?.Invoke();
                 await mvcManager.ShowAsync(PrivateWorldPopupController.IssueCommand(popupParams), ct);
 
                 if (popupParams.Result == PrivateWorldPopupResult.Cancelled)

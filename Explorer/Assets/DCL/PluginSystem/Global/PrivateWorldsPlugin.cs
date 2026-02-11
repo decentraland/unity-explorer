@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat;
 using DCL.Input;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
@@ -11,13 +10,13 @@ using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility;
 
 namespace DCL.PluginSystem.Global
 {
     /// <summary>
-    /// Plugin for Private Worlds feature. Registers popup controller, wires chat minimization callback, and spawns test trigger.
+    /// Plugin for Private Worlds feature. Registers popup controller and spawns test trigger.
     /// The handler (PrivateWorldAccessHandler) is created in DynamicWorldContainer.
+    /// Chat minimization on popup show is handled by IBlocksChat on the popup controller.
     /// </summary>
     public class PrivateWorldsPlugin : IDCLGlobalPlugin<PrivateWorldsPlugin.PrivateWorldsSettings>
     {
@@ -26,22 +25,19 @@ namespace DCL.PluginSystem.Global
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
-        private readonly IEventBus eventBus;
 
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IWorldPermissionsService worldPermissionsService,
             IWorldAccessGate worldAccessGate,
-            IInputBlock inputBlock,
-            IEventBus eventBus)
+            IInputBlock inputBlock)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.worldPermissionsService = worldPermissionsService;
             this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
-            this.eventBus = eventBus;
         }
 
         public void Dispose() { }
@@ -50,10 +46,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            // Minimize chat before showing password popup to avoid input focus conflicts
-            if (worldAccessGate is PrivateWorldAccessHandler handler)
-                handler.SetBeforePopupCallback(() => eventBus.Publish(new ChatEvents.CloseChatEvent()));
-
             if (settings.PrivateWorldPopup != null)
             {
                 ProvidedAsset<GameObject> prefab = await assetsProvisioner.ProvideMainAssetAsync(settings.PrivateWorldPopup, ct: ct);
