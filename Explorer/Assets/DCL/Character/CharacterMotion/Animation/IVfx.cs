@@ -12,6 +12,6 @@ namespace DCL.CharacterMotion.Animation
 
         public void SetPosition(Vector3 position);
 
-        public UniTask WaitForCompletion(CancellationToken ct);
+        public UniTask WaitForCompletionAsync(CancellationToken ct);
     }
 }

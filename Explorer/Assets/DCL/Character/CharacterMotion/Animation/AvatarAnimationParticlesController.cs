@@ -71,7 +71,7 @@ namespace DCL.CharacterMotion.Animation
 
         private async UniTask ScheduleReturnVfxToPoolAsync(IVfx vfx, IObjectPool<IVfx> pool, CancellationToken ct)
         {
-            await vfx.WaitForCompletion(ct);
+            await vfx.WaitForCompletionAsync(ct);
             
             pool.Release(vfx);
         }

@@ -10,7 +10,7 @@ namespace DCL.CharacterMotion.Animation
         {
         }
 
-        public override async UniTask WaitForCompletion(CancellationToken ct)
+        public override async UniTask WaitForCompletionAsync(CancellationToken ct)
         {
             // Arbitrary 1-second delay, we assume by this time we emitted all particle bursts
             await UniTask.Delay(1000, cancellationToken: ct);

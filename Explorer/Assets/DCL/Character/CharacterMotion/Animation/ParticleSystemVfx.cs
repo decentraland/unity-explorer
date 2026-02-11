@@ -18,7 +18,7 @@ namespace DCL.CharacterMotion.Animation
             base.OnReleased();
         }
 
-        public override async UniTask WaitForCompletion(CancellationToken ct)
+        public override async UniTask WaitForCompletionAsync(CancellationToken ct)
         {
             // Wait the particle system duration so that all particles have been emitted
             await UniTask.Delay((int)(target.main.duration * 1000), cancellationToken: ct);

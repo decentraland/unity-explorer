@@ -22,6 +22,6 @@ namespace DCL.CharacterMotion.Animation
         public void SetPosition(Vector3 position) =>
             target.transform.position = position;
 
-        public abstract UniTask WaitForCompletion(CancellationToken ct);
+        public abstract UniTask WaitForCompletionAsync(CancellationToken ct);
     }
 }
