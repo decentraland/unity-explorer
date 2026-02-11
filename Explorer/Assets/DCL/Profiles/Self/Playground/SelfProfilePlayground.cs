@@ -13,10 +13,10 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.Dynamic.LaunchModes;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -40,24 +40,24 @@ namespace DCL.Profiles.Self.Playground
             var world = World.Create();
             var playerEntity = world.Create();
 
+            var realmData = new RealmData(
+                new LogIpfsRealm(
+                    new IpfsRealm(URLDomain.FromString(url),
+                        new ServerAbout(
+                            lambdas: new ContentEndpoint(url)
+                        )
+                    )
+                )
+            );
+
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY);
+
             SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
                         IWebRequestController.TEST,
-                        new RealmData(
-                            new LogIpfsRealm(
-                                new IpfsRealm(
-                                    web3IdentityCache,
-                                    IWebRequestController.TEST,
-                                    URLDomain.FromString(url),
-                                    URLDomain.EMPTY,
-                                    new ServerAbout(
-                                        lambdas: new ContentEndpoint(url)
-                                    )
-                                )
-                            )
-                        ),
-                        new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY),
+                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
+                        urlsSource,
                         new DefaultProfileCache(),
                         new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null),
                         false)
