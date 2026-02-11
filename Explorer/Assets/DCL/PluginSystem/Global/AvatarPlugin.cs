@@ -208,10 +208,10 @@ namespace DCL.PluginSystem.Global
                 },
                 actionOnRelease: nh =>
                 {
-                    nh.Nametag.SetDisplayed(false);
+                    nh.gameObject.SetActive(false);
                 },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                actionOnGet: nh => nh.Nametag.SetDisplayed(true));
+                actionOnGet: nh => nh.gameObject.SetActive(true));
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
