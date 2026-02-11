@@ -2,7 +2,9 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -25,7 +27,14 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadFixedPointersSystem(World world, IRealmData realmData) : base(world, new HashSet<Vector2Int>(), realmData) { }
+        private readonly DecentralandUrlsSource urlsSource;
+        internal IURLBuilder urlBuilder = new URLBuilder();
+
+
+        internal LoadFixedPointersSystem(World world, IRealmData realmData, DecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
+        {
+            this.urlsSource = urlsSource;
+        }
 
         protected override void Update(float t)
         {
@@ -47,9 +56,12 @@ namespace ECS.SceneLifeCycle.Systems
                 foreach (int2 parcel in occupiedParcels)
                     pointersList.Add(parcel);
 
+                URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)))
+                                                   .AppendParameter(new URLParameter("world_name", realmComponent.RealmData.RealmName)).Build();
+
                 var listPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(new List<SceneEntityDefinition>(pointersList.Count), pointersList,
-                        new CommonLoadingArguments("https://asset-bundle-registry.decentraland.zone/entities/active?world_name=pastrami.dcl.eth")), PartitionComponent.TOP_PRIORITY);
+                    new GetSceneDefinitionList(new List<SceneEntityDefinition>(pointersList.Count), pointersList, new CommonLoadingArguments(destination)),
+                    PartitionComponent.TOP_PRIORITY);
 
                 World.Add(entity, new FixedScenePointers(listPromise));
                 return;
@@ -98,7 +110,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < definitions.Count; i++)
                     {
                         SceneEntityDefinition definition = definitions[i];
-                        var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString("https://worlds-content-server.decentraland.zone/contents/"));
+                        var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
                         CreateSceneEntity(definition, ipfsPath);
                         IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
                         for (var j = 0; j < parcels.Count; j++)

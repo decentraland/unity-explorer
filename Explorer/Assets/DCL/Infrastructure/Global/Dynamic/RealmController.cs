@@ -180,14 +180,6 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask RestartRealmAsync(CancellationToken ct)
-        {
-            if (!CurrentDomain.HasValue)
-                throw new Exception("Cannot restart realm, no valid domain set. First call SetRealmAsync(domain)");
-
-            await SetRealmAsync(CurrentDomain.Value, ct);
-        }
-
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
