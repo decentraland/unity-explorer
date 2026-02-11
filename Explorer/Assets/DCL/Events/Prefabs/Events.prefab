@@ -171,6 +171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d645cf184c140d6a0510a9f55a3c1db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Events.EventsView
+  goToTodayButton: {fileID: 3623219162585564526}
   createEventButton: {fileID: 969080405382745993}
   eventsCalendarView: {fileID: 5575432089246675442}
   eventsByDayView: {fileID: 3704284314502140452}
@@ -305,6 +306,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Header
       objectReference: {fileID: 0}
+    - target: {fileID: 5448937976517788066, guid: 6c13ff44f3873d64b8aafbee66bd6b63, type: 3}
+      propertyPath: m_text
+      value: Today
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -313,6 +318,17 @@ PrefabInstance:
 --- !u!114 &969080405382745993 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6069029460794586899, guid: 6c13ff44f3873d64b8aafbee66bd6b63, type: 3}
+  m_PrefabInstance: {fileID: 6434336948687206554}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3623219162585564526 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7711035559374159348, guid: 6c13ff44f3873d64b8aafbee66bd6b63, type: 3}
   m_PrefabInstance: {fileID: 6434336948687206554}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
