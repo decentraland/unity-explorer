@@ -9,6 +9,8 @@ namespace DCL.Communities.EventInfo
     {
         private const string STARTED_EVENT_TIME_FORMAT = "Started {0} {1} ago";
         private const string EVENT_TIME_FORMAT = "ddd, MMM dd @ h:mmtt";
+        private const string EVENT_TIME_FORMAT_ONLY_HOURS = "h:mmtt";
+        private const string EVENT_DAY_FORMAT = "ddd, MMM dd";
         private const string DAY_STRING = "day";
         private const string HOUR_STRING = "hour";
         private const string MINUTES_STRING = "min";
@@ -19,7 +21,7 @@ namespace DCL.Communities.EventInfo
         private const string TWITTER_HASHTAG = "DCLPlace";
         private const string ADD_TO_CALENDAR_LINK = "https://calendar.google.com/calendar/r/eventedit?text={0}&details={1}\n\n{2}&dates={3}/{4}";
 
-        public static string GetEventTimeText(IEventDTO eventDTO)
+        public static string GetEventTimeText(IEventDTO eventDTO, bool showOnlyHoursFormat = false)
         {
             string schedule = string.Empty;
 
@@ -39,8 +41,20 @@ namespace DCL.Communities.EventInfo
             else
             {
                 DateTime localDateTime = eventDTO.NextStartAtProcessed.ToLocalTime();
-                schedule = localDateTime.ToString(EVENT_TIME_FORMAT).ToUpper();
+                schedule = localDateTime.ToString(showOnlyHoursFormat ? EVENT_TIME_FORMAT_ONLY_HOURS : EVENT_TIME_FORMAT, CultureInfo.InvariantCulture).ToUpper();
             }
+
+            return schedule;
+        }
+
+        public static string GetEventDayText(IEventDTO eventDTO)
+        {
+            string schedule = string.Empty;
+
+            if (eventDTO.NextStartAtProcessed == default(DateTime)) return schedule;
+
+            DateTime localDateTime = eventDTO.NextStartAtProcessed.ToLocalTime();
+            schedule = localDateTime.ToString(EVENT_DAY_FORMAT, CultureInfo.InvariantCulture).ToUpper();
 
             return schedule;
         }
@@ -114,6 +128,23 @@ namespace DCL.Communities.EventInfo
                 $"jump in: {GetPlaceJumpInLink(eventData)}",
                 nextStartAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"),
                 nextFinishAtDate.ToString("yyyyMMdd'T'HHmmss'Z'"));
+        }
+
+        public static string GetEventAddToCalendarLink(IEventDTO eventData, DateTime utcStart)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
+            DateTime utcEnd = utcStart.Add(duration);
+
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
+            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
+
+            return string.Format(ADD_TO_CALENDAR_LINK,
+                eventData.Name,
+                eventData.Description,
+                $"jump in: {GetPlaceJumpInLink(eventData)}",
+                utcStart.ToString("yyyyMMdd'T'HHmmss'Z'"),
+                utcEnd.ToString("yyyyMMdd'T'HHmmss'Z'"));
         }
     }
 }
