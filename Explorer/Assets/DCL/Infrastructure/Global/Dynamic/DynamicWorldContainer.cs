@@ -225,7 +225,7 @@ namespace Global.Dynamic
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
             // So far, the chance of using it is quite low, so it's preferable to do it lazy avoiding extra requests & memory allocations
             IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
-                staticContainer.RealmData);
+                bootstrapContainer.DecentralandUrlsSource);
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
 
@@ -312,7 +312,6 @@ namespace Global.Dynamic
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ISystemClipboard clipboard = new UnityClipboard();
-            NameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
 
             ChatSharedAreaEventBus chatSharedAreaEventBus = new ChatSharedAreaEventBus();
 
@@ -323,7 +322,6 @@ namespace Global.Dynamic
 
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
-            var assetBundlesURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             var builderDTOsURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
             var builderContentURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
 
@@ -374,7 +372,7 @@ namespace Global.Dynamic
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
-            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
+            SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource, appArgs);
@@ -602,7 +600,7 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
 
-            var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
+            var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var upscaleController = new UpscalingController(mvcManager);
@@ -688,15 +686,13 @@ namespace Global.Dynamic
                 new ConfirmationDialogOpener(mvcManager)));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
-                staticContainer.RealmData);
+                bootstrapContainer.DecentralandUrlsSource);
 
-            var thumbnailProvider = new ECSThumbnailProvider(staticContainer.RealmData, globalWorld);
+            var thumbnailProvider = new ECSThumbnailProvider(bootstrapContainer.DecentralandUrlsSource, globalWorld);
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var entitiesAnalytics = new EntitiesAnalytics(bootstrapContainer.Analytics);
-
-            URLDomain abRegistryURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion));
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -734,11 +730,11 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emoteWheelShortcutHandler, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, abRegistryURL, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity,
-                    builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, entitiesAnalytics,
-                    trimmedEmoteCatalog, abRegistryURL),
+                    builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache,
+                    bootstrapContainer.DecentralandUrlsSource, entitiesAnalytics, trimmedEmoteCatalog),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -768,7 +764,7 @@ namespace Global.Dynamic
                     assetsProvisioner, mvcManager, mainUIView,
                     notificationsRequestController, identityCache, profilesRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser, dynamicWorldDependencies.CompositeWeb3Provider,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeDiscover,
@@ -852,7 +848,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     characterPreviewFactory,
                     profilesRepository,
-                    dynamicWorldDependencies.Web3Authenticator,
+                    dynamicWorldDependencies.CompositeWeb3Provider,
                     initializationFlowContainer.InitializationFlow,
                     selfProfile,
                     equippedWearables,
@@ -904,7 +900,8 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     donationsService,
                     realmNavigator,
-                    friendServiceProxy
+                    friendServiceProxy,
+                    staticContainer.PublishIpfsEntityCommand
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -921,14 +918,14 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     eventBus,
                     webBrowser,
-                    bootstrapContainer.VerifiedEthereumApi,
+                    bootstrapContainer.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
                     screenModeController,
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
@@ -1011,6 +1008,7 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
+                new ColorPickerPlugin(assetsProvisioner, mvcManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
@@ -1039,7 +1037,8 @@ namespace Global.Dynamic
                     globalWorld,
                     webBrowser,
                     bootstrapContainer.DecentralandUrlsSource,
-                    staticContainer.InputBlock));
+                    staticContainer.InputBlock,
+                    dynamicWorldDependencies.CompositeWeb3Provider));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
@@ -1190,7 +1189,8 @@ namespace Global.Dynamic
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.Analytics!,
-                    homePlaceEventBus));
+                    homePlaceEventBus,
+                    socialServiceEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -1223,7 +1223,7 @@ namespace Global.Dynamic
                 in staticContainer,
                 exposedGlobalDataContainer.CameraSamplingData,
                 realmSamplingData,
-                assetBundlesURL,
+                bootstrapContainer.DecentralandUrlsSource,
                 staticContainer.RealmData,
                 globalPlugins,
                 debugBuilder,

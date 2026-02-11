@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -35,12 +36,12 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         private readonly ITrimmedAvatarElementStorage<TAvatarElement, TAvatarElementDTO> trimmedAvatarElementStorage;
         private readonly IAvatarElementStorage<TFullAvatarElement, TFullAvatarElementDTO> avatarElementStorage;
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundleRegistryVersionURL;
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly URLSubdirectory elementSubdirectory;
         private readonly IWebRequestController webRequestController;
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
@@ -52,9 +53,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             IRealmData realmData,
             URLSubdirectory lambdaSubdirectory,
             URLSubdirectory elementSubdirectory,
-            URLDomain assetBundleRegistryVersionURL,
             IWebRequestController webRequestController,
             string expectedBuilderItemType,
+            IDecentralandUrlsSource urlsSource,
             DiskCacheOptions<TAsset, TIntention>? diskCacheOptions = null,
             string? builderContentURL = null
         ) : base(world, cache, diskCacheOptions)
@@ -64,10 +65,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.elementSubdirectory = elementSubdirectory;
-            this.assetBundleRegistryVersionURL = assetBundleRegistryVersionURL;
             this.webRequestController = webRequestController;
             this.builderContentURL = builderContentURL;
             this.expectedBuilderItemType = expectedBuilderItemType;
+            this.urlsSource = urlsSource;
         }
 
         private URLAddress BuildUrlFromIntention(in TIntention intention)
@@ -84,7 +85,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
             else
             {
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas)), lambdaSubdirectory)
                           .AppendSubDirectory(URLSubdirectory.FromString(userID))
                           .AppendSubDirectory(elementSubdirectory);
             }
@@ -160,7 +161,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             for (int i = 0; i < lambdaResponse.Page.Count; i++)
                 urns[i] = new URN(lambdaResponse.Page[i].Entity.Metadata.id);
 
-            var result = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(urns, webRequestController, assetBundleRegistryVersionURL, GetReportData(), ct);
+            AssetBundlesVersions result = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(urns, webRequestController, urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion), GetReportData(), ct);
 
             ARRAY_POOL.Return(urns);
 

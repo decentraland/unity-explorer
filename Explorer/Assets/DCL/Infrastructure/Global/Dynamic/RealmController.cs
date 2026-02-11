@@ -97,7 +97,6 @@ namespace Global.Dynamic
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
             bool isLocalSceneDevelopment,
-            URLDomain assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment)
@@ -114,7 +113,6 @@ namespace Global.Dynamic
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.realmNavigatorDebugView = realmNavigatorDebugView;
-            this.assetBundleRegistry = assetBundleRegistry;
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
@@ -137,17 +135,10 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-                //The today environment requires a hardcoded content and lambda
-                if (environment.Equals(DecentralandEnvironment.Today))
-                {
-                    result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
-                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);
-                }
-
                 string hostname = ResolveHostname(realm, result);
 
                 realmData.Reconfigure(
-                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
+                    new IpfsRealm(realm, result),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
                     result.configurations.networkId,
                     ResolveCommsAdapter(result),

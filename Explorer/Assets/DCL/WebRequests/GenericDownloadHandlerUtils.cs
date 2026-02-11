@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

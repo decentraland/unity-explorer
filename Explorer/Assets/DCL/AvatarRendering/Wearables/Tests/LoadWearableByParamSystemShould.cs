@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems.Load;
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using ECS;
 using ECS.StreamableLoading.Tests;
@@ -37,7 +38,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             realmData.Configured.Returns(true);
 
             return new LoadTrimmedWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), URLDomain.EMPTY, new WearableStorage(), trimmedWearableStorage);
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(), trimmedWearableStorage);
         }
 
         protected override void AssertSuccess(TrimmedWearablesResponse asset)

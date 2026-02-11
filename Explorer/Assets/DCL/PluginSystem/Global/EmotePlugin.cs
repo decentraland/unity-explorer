@@ -12,6 +12,7 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -66,9 +67,10 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
-        private readonly URLDomain assetBundleRegistryURL;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -91,9 +93,9 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
             EntitiesAnalytics entitiesAnalytics,
-            ITrimmedEmoteStorage trimmedEmoteStorage,
-            URLDomain assetBundleRegistryURL)
+            ITrimmedEmoteStorage trimmedEmoteStorage)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -117,7 +119,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;
             this.trimmedEmoteStorage = trimmedEmoteStorage;
-            this.assetBundleRegistryURL = assetBundleRegistryURL;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -136,12 +138,12 @@ namespace DCL.PluginSystem.Global
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory, entitiesAnalytics);
+                emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
 
             LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
                 emoteStorage, trimmedEmoteStorage, EXPLORER_SUBDIRECTORY, EMOTES_COMPLEMENT_URL,
-                assetBundleRegistryURL, builderContentURL);
+                decentralandUrlsSource, builderContentURL);
 
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);

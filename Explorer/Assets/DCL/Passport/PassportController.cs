@@ -14,7 +14,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -123,6 +122,8 @@ namespace DCL.Passport
         private readonly ISystemClipboard systemClipboard;
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly ColorToggleView colorToggle;
+        private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -147,6 +148,8 @@ namespace DCL.Passport
         private readonly bool isGiftingEnabled;
         private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private NameColorPickerController colorPickerController;
+        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -206,7 +209,9 @@ namespace DCL.Passport
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider,
-            ImageControllerProvider imageControllerProvider) : base(viewFactory)
+            ImageControllerProvider imageControllerProvider,
+            ColorToggleView colorToggle,
+            ColorPresetsSO colorPresets) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -241,7 +246,7 @@ namespace DCL.Passport
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
+            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             isGiftingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GIFTING_ENABLED);
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -252,6 +257,8 @@ namespace DCL.Passport
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
+            this.colorToggle = colorToggle;
+            this.colorPresets = colorPresets;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -273,13 +280,24 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+
+            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView,
+                characterPreviewFactory,
+                world,
+                characterPreviewEventBus);
 
             characterPreviewController = new PassportCharacterPreviewController(
                 viewInstance.CharacterPreviewView,
                 characterPreviewFactory,
                 world,
                 characterPreviewEventBus);
+
+            colorPickerController = new NameColorPickerController(
+                mvcManager,
+                viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
+                colorPresets);
+            colorPickerController.OnColorChanged += SetNewUserNameColor;
+            colorPickerController.OnColorPickerClosed += SaveUserNameColor;
 
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
@@ -288,6 +306,7 @@ namespace DCL.Passport
                 mvcManager,
                 nftNamesProvider,
                 decentralandUrlsSource,
+                colorPickerController,
                 isNameEditorEnabled);
 
             userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
@@ -379,27 +398,50 @@ namespace DCL.Passport
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
 
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH,
+                              CONTEXT_MENU_OFFSET,
+                              CONTEXT_MENU_VERTICAL_LAYOUT_PADDING,
+                              CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings)
-                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
-                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                        parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false));
+                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT,
+                                  -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left,
+                                  -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
+                              false))
+                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText,
+                                  viewInstance.JumpInSprite,
+                                  () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId,
+                                      jumpToFriendLocationCts,
+                                      getUserPositionBuffer,
+                                      onlineUsersProvider,
+                                      realmNavigator,
+                                      parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
+                                          parcel))),
+                              false));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
             {
                 contextMenu.AddControl(contextMenuGiftButton =
                     new GenericContextMenuElement(
                         new ButtonContextMenuControlSettings(viewInstance.GiftText,
-                            viewInstance.GiftSprite, GiftUserClicked), true));
+                            viewInstance.GiftSprite,
+                            GiftUserClicked),
+                        true));
             }
 
-            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
+                    viewInstance.BlockSprite,
+                    BlockUserClicked),
+                false));
 
             if (includeCommunities)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, CONTEXT_MENU_SUBMENU_OFFSET, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider,
+                    CONTEXT_MENU_ELEMENTS_SPACING);
+
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu,
+                    CONTEXT_MENU_SUBMENU_OFFSET,
+                    viewInstance.InviteToCommunityText,
+                    viewInstance.InviteToCommunitySprite);
             }
         }
 
@@ -539,6 +581,10 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
+
+            colorPickerController.OnColorChanged -= SetNewUserNameColor;
+            colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
+            colorPickerController.Dispose();
         }
 
         private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
@@ -581,10 +627,33 @@ namespace DCL.Passport
             }
         }
 
-        private void UpdateBackgroundColor(Color profileColor)
+        private void SetNewUserNameColor(Color color)
         {
-            Color.RGBToHSV(profileColor, out float h, out float s, out float v);
+            userNameColorToSave = color;
+            UpdateBackgroundColor(color);
+            UpdateUserNameTextColor(color);
+        }
+
+        private void UpdateBackgroundColor(Color newColor)
+        {
+            Color.RGBToHSV(newColor, out float h, out float s, out float v);
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
+            viewInstance?.BackgroundImage.SetMaterialDirty();
+        }
+
+        private void UpdateUserNameTextColor(Color color)
+        {
+            if (viewInstance != null)
+                viewInstance.UserBasicInfoModuleView.UserNameElement.UserNameText.color = color;
+        }
+
+        private void SaveUserNameColor()
+        {
+            if (userNameColorToSave.HasValue)
+            {
+                // TODO (Maurizio) here we'll re-deploy the profile, i.e. passportProfileInfoController.UpdateProfileAsync()
+                userNameColorToSave = null;
+            }
         }
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)
@@ -764,6 +833,7 @@ namespace DCL.Passport
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
                     // Dont show any interaction for our own user
                     if (ownProfile?.UserId == inputData.UserId) return;
 

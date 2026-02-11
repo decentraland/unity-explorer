@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
@@ -25,10 +26,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             ITrimmedEmoteStorage trimmedEmoteStorage,
             URLSubdirectory lambdaSubdirectory,
             URLSubdirectory emotesSubdirectory,
-            URLDomain assetBundleRegistryVersionURL,
+            IDecentralandUrlsSource urlsSource,
             string? builderContentURL = null
         ) : base(world, cache, trimmedEmoteStorage, emoteStorage, realmData, lambdaSubdirectory, emotesSubdirectory,
-            assetBundleRegistryVersionURL, webRequestController,"emote", builderContentURL: builderContentURL)
+            webRequestController,"emote", urlsSource, builderContentURL: builderContentURL)
         {
         }
 

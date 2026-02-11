@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -26,12 +27,12 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IRealmData realmData,
             URLSubdirectory lambdaSubdirectory,
             URLSubdirectory wearablesSubdirectory,
-            URLDomain assetBundleRegistryVersionURL,
+            IDecentralandUrlsSource urlsSource,
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             string? builderContentURL = null
         ) : base(world, cache, trimmedWearableStorage, wearableStorage, realmData, lambdaSubdirectory, wearablesSubdirectory,
-            assetBundleRegistryVersionURL, webRequestController,"wearable", builderContentURL: builderContentURL)
+            webRequestController,"wearable", urlsSource, builderContentURL: builderContentURL)
         {
         }
 

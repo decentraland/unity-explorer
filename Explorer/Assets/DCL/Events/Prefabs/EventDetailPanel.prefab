@@ -4768,7 +4768,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6952247620005373462}
   m_HandleRect: {fileID: 175607292521401437}
   m_Direction: 2
-  m_Value: 1.0000005
+  m_Value: 1
   m_Size: 0.8681382
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -5609,27 +5609,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3186183880953633053, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 20
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 3186183880953633053, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 20
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 3186183880953633053, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 92
+      value: 88
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedIconImage>k__BackingField
       value: 
-      objectReference: {fileID: 21300000, guid: a02beeecce19a4a618e8998086b5f275, type: 3}
+      objectReference: {fileID: 21300000, guid: e61bf9377b8894782b86510a1e0697ae, type: 3}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedTextColor>k__BackingField.b
-      value: 0.33333334
+      value: 0.9882353
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <SelectedTextColor>k__BackingField.g
-      value: 0.1764706
+      value: 0.9882353
+      objectReference: {fileID: 0}
+    - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+      propertyPath: <SelectedTextColor>k__BackingField.r
+      value: 0.9882353
       objectReference: {fileID: 0}
     - target: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
       propertyPath: <UnselectedIconImage>k__BackingField

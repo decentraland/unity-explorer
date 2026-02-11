@@ -28,12 +28,12 @@ using System.Threading;
 using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -55,7 +55,7 @@ namespace Global.Tests.PlayMode
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+            IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
@@ -81,10 +81,11 @@ namespace Global.Tests.PlayMode
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 dclUrls,
+                new RealmData(),
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), 1000, 1000),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,

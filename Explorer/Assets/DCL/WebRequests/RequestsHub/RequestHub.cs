@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests.Dumper;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 
@@ -33,13 +32,11 @@ namespace DCL.WebRequests.RequestsHub
                 new (typeof(T), typeof(TWebRequest));
         }
 
-        private readonly bool disableABCache;
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
         public RequestHub(IDecentralandUrlsSource urlsSource, bool disableABCache = false)
         {
-            this.disableABCache = disableABCache;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
@@ -50,9 +47,9 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericPostArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache || WebRequestsDebugControl.DisableCache));
+            Add(mutableMap, (in CommonArguments arguments, ref GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache || WebRequestsDebugControl.DisableCache));
             Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
+            Add(mutableMap, (in CommonArguments arguments, ref GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
         }
 
         private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
