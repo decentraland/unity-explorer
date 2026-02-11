@@ -13,6 +13,8 @@ namespace ECS.SceneLifeCycle
         IReadonlyReactiveProperty<ISceneFacade?> CurrentScene { get;}
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
         IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
+        public event Action<ISceneFacade>? SceneAdded;
+        public event Action? ScenesCleared;
 
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
@@ -41,9 +43,6 @@ namespace ECS.SceneLifeCycle
         void SetCurrentScene(ISceneFacade? sceneFacade);
 
         void UpdateCurrentParcel(Vector2Int currentParcel);
-
-        public event Action<ISceneFacade>? SceneAdded;
-        public event Action? ScenesCleared;
     }
 
     public class ScenesCache : IScenesCache
@@ -59,6 +58,8 @@ namespace ECS.SceneLifeCycle
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
         public IReadonlyReactiveProperty<Vector2Int> CurrentParcel => currentParcel;
         public IReadonlyReactiveProperty<ISceneFacade?> CurrentScene => currentScene;
+        public event Action<ISceneFacade>? SceneAdded;
+        public event Action? ScenesCleared;
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -149,8 +150,5 @@ namespace ECS.SceneLifeCycle
         {
             currentParcel.UpdateValue(newParcel);
         }
-
-        public event Action<ISceneFacade>? SceneAdded;
-        public event Action? ScenesCleared;
     }
 }

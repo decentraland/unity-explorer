@@ -21,7 +21,9 @@ namespace ECS.Unity.SceneBoundsChecker
     /// <summary>
     /// This system is the replacement of another system that disabled
     /// colliders that went out of bounds of the scenes they belong to. It had
-    /// a significant per-frame cost that this system does not.
+    /// a significant per-frame cost that this system does not. This system
+    /// does a different thing: it enables colliders in scenes that the player
+    /// is overlapping with while disabling all others.
     /// </summary>
     [UpdateInGroup(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
@@ -39,8 +41,8 @@ namespace ECS.Unity.SceneBoundsChecker
             this.playerEntity = playerEntity;
             this.sceneCache = sceneCache;
 
-            // The worst cae is when the player stands on a corner between four
-            // parcels that each belong to a different scene.
+            // The worst case is when the player stands on a corner between
+            // four parcels that each belong to a different scene.
             overlappedParcels = new List<Vector2Int>(4);
             overlappedScenes = new List<ISceneFacade>(4);
 
