@@ -9,10 +9,17 @@ namespace ECS.Unity.GliderProp
     {
         private bool trailEnabled;
 
+        // Angular speed of the animated rotors, degrees / sec
+        private float rotorsSpeed;
+
         // Overall multiplier applied to engine sounds
         private float engineVolume;
 
         [field: Header("Animation")] [field: SerializeField] public Animator Animator { get; private set; }
+
+        [field: SerializeField] public List<Transform> Rotors { get; private set; }
+
+        [field: SerializeField] public Vector2 RotorRotationSpeedRange { get; private set; } = new (360, 360 * 4);
 
         [field: Header("Audio")] [field: SerializeField] public AvatarAudioSettings Settings { get; private set; }
         [field: SerializeField] public AudioSourceSettings AudioSources { get; private set; }
@@ -64,21 +71,37 @@ namespace ECS.Unity.GliderProp
             foreach (TrailRenderer trail in Trails) trail.emitting = value;
         }
 
-        public void SetEngineState(bool engineEnabled, float engineLevel, float dt)
+        public void UpdateEngineState(bool engineEnabled, float engineLevel, float dt)
         {
-            const float VOLUME_TRANSITION_DURATION = 0.5f;
-            engineVolume = Mathf.MoveTowards(engineVolume, engineEnabled ? 1 : 0, dt / VOLUME_TRANSITION_DURATION);
+            float normalizedEngineLevel = Mathf.Clamp01(engineLevel / FullSpeedEngineLevel);
+
+            UpdateRotorsAnimation(engineEnabled, normalizedEngineLevel, dt);
+            UpdateEngineVolume(engineEnabled, normalizedEngineLevel, dt);
+        }
+
+        private void UpdateRotorsAnimation(bool engineEnabled, float normalizedEngineLevel, float dt)
+        {
+            const float ROTORS_LERP_FACTOR = 4;
+            rotorsSpeed = Mathf.MoveTowards(rotorsSpeed, engineEnabled ? normalizedEngineLevel : 0, dt * ROTORS_LERP_FACTOR);
+            float rotationSpeed = Mathf.Lerp(RotorRotationSpeedRange.x, RotorRotationSpeedRange.y, rotorsSpeed);
+            foreach (Transform rotor in Rotors) rotor.localRotation *= Quaternion.Euler(0, 0, rotationSpeed * dt);
+        }
+
+        private void UpdateEngineVolume(bool engineEnabled, float normalizedEngineLevel, float dt)
+        {
+            const float VOLUME_LERP_FACTOR = 2;
+            engineVolume = Mathf.MoveTowards(engineVolume, engineEnabled ? 1 : 0, dt * VOLUME_LERP_FACTOR);
 
             if (!Settings.AudioEnabled)
             {
+                // Intended immediate cutoff, no lerping
                 AudioSources.Idle.volume = 0;
                 AudioSources.Moving.volume = 0;
                 return;
             }
 
-            float t = Mathf.Clamp01(engineLevel / FullSpeedEngineLevel);
-            AudioSources.Idle.volume = (1 - t) * IdleMaxVolume * engineVolume;
-            AudioSources.Moving.volume = t * FullSpeedMaxVolume * engineVolume;
+            AudioSources.Idle.volume = (1 - normalizedEngineLevel) * IdleMaxVolume * engineVolume;
+            AudioSources.Moving.volume = normalizedEngineLevel * FullSpeedMaxVolume * engineVolume;
         }
 
         public void OnReturnedToPool()
@@ -87,7 +110,7 @@ namespace ECS.Unity.GliderProp
             CloseAnimationCompleted = false;
         }
 
-#region Animation Events
+        #region Animation Events
 
         private void OnOpenAnimationStarted()
         {
@@ -102,7 +125,7 @@ namespace ECS.Unity.GliderProp
         private void OnCloseAnimationCompleted() =>
             CloseAnimationCompleted = true;
 
-#endregion
+        #endregion
 
         [Serializable]
         public class AudioSourceSettings

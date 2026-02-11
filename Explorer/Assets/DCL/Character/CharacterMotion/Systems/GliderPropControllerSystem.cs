@@ -116,13 +116,13 @@ namespace DCL.CharacterMotion.Systems
         {
             if (glideState.Value != GlideStateValue.GLIDING)
             {
-                gliderProp.View.SetEngineState(false, 0, dt);
+                gliderProp.View.UpdateEngineState(false, 0, dt);
                 return;
             }
 
             // Given it's for audio playback purposes, this is an acceptable approximation that doesn't require sqrt
             float engineLevel = Mathf.Max(Mathf.Abs(rigidTransform.MoveVelocity.XVelocity), Mathf.Abs(rigidTransform.MoveVelocity.ZVelocity));
-            gliderProp.View.SetEngineState(true, engineLevel, dt);
+            gliderProp.View.UpdateEngineState(true, engineLevel, dt);
         }
     }
 }
