@@ -13,6 +13,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.Unity.SceneBoundsChecker;
 using System.Threading;
 using UnityEngine;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
@@ -90,6 +91,7 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            SceneBoundsCheckerSystem.InjectToWorld(ref builder, scenesCache, arguments.PlayerEntity);
         }
     }
 }

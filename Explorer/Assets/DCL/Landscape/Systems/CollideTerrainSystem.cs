@@ -16,6 +16,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Utility;
 using static Unity.Mathematics.math;
 
 namespace DCL.Landscape.Systems
@@ -163,7 +164,8 @@ namespace DCL.Landscape.Systems
         [Query, All(typeof(PlayerComponent))]
         private void ApplyCharacterPositions(CharacterTransform character)
         {
-            RectInt usedRect = PositionToParcelRect(float3(character.Position).xz, collisionRadius);
+            RectInt usedRect = ParcelMathHelper.PositionToParcelRect(
+                float3(character.Position).xz, collisionRadius);
 
             for (int i = usedParcels.Count - 1; i >= 0; i--)
             {
@@ -352,14 +354,6 @@ namespace DCL.Landscape.Systems
 
                 parcel.Trees.Clear();
             }
-        }
-
-        private RectInt PositionToParcelRect(float2 center, float radius)
-        {
-            float invParcelSize = 1f / landscapeData.terrainData.parcelSize;
-            int2 min = (int2)floor((center - radius) * invParcelSize);
-            int2 size = (int2)ceil((center + radius) * invParcelSize) - min;
-            return new RectInt(min.x, min.y, size.x, size.y);
         }
 
         private sealed class ParcelData

@@ -5,7 +5,6 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
-using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,9 +31,6 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneStateProvider);
 
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EntityCollidersSceneCache);
-
-            sceneIsCurrentListeners.Add(new SceneBoundsChecker(builder.World,
-                sharedDependencies.SceneStateProvider));
 
             var releaseColliderSystem =
                 ReleasePoolableComponentSystem<Collider, PrimitiveColliderComponent>.InjectToWorld(ref builder,

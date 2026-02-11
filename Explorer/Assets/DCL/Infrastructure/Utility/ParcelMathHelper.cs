@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
+using static Unity.Mathematics.math;
 
 namespace Utility
 {
     public static class ParcelMathHelper
     {
         public const int PARCEL_SIZE = 16;
+        private const float INV_PARCEL_SIZE = 1f / PARCEL_SIZE;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
         private const float BOUNDS_OFFSET_EPSILON = 0.3f;
 
@@ -16,6 +18,16 @@ namespace Utility
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue), float.MaxValue);
 
         public static readonly Vector3 RoadPivotDeviation = new (8, 0, 8);
+
+        /// <summary>
+        /// Find which parcels are potentially in range of a given position.
+        /// </summary>
+        public static RectInt PositionToParcelRect(float2 center, float radius)
+        {
+            int2 min = (int2)floor((center - radius) * INV_PARCEL_SIZE);
+            int2 size = (int2)ceil((center + radius) * INV_PARCEL_SIZE) - min;
+            return new RectInt(min.x, min.y, size.x, size.y);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>

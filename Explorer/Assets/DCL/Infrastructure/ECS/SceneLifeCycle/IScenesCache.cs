@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Utilities;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,6 +41,9 @@ namespace ECS.SceneLifeCycle
         void SetCurrentScene(ISceneFacade? sceneFacade);
 
         void UpdateCurrentParcel(Vector2Int currentParcel);
+
+        public event Action<ISceneFacade>? SceneAdded;
+        public event Action? ScenesCleared;
     }
 
     public class ScenesCache : IScenesCache
@@ -62,6 +66,7 @@ namespace ECS.SceneLifeCycle
                 scenesByParcels.Add(parcels[i], sceneFacade);
 
             scenes.Add(sceneFacade);
+            SceneAdded?.Invoke(sceneFacade);
         }
 
         public void AddNonRealScene(IReadOnlyList<Vector2Int> parcels)
@@ -132,6 +137,7 @@ namespace ECS.SceneLifeCycle
             nonRealSceneByParcel.Clear();
             if (clearPortableExperiences) portableExperienceScenesByUrn.Clear();
             scenes.Clear();
+            ScenesCleared?.Invoke();
         }
 
         public void SetCurrentScene(ISceneFacade? sceneFacade)
@@ -143,5 +149,8 @@ namespace ECS.SceneLifeCycle
         {
             currentParcel.UpdateValue(newParcel);
         }
+
+        public event Action<ISceneFacade>? SceneAdded;
+        public event Action? ScenesCleared;
     }
 }
