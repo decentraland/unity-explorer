@@ -491,9 +491,9 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
-
-            // Set EventBus proxy for private worlds feature
-            realmNavigatorContainer.EventBusProxy.SetObject(eventBus);
+            
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager);
+            realmNavigatorContainer.WorldAccessGateProxy.SetObject(worldAccessGate);
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -779,10 +779,11 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(
                     mvcManager,
-                    eventBus,
                     assetsProvisioner,
                     worldPermissionsService,
-                    staticContainer.InputBlock),
+                    worldAccessGate,
+                    staticContainer.InputBlock,
+                    eventBus),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,

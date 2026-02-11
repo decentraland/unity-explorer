@@ -10,59 +10,125 @@ When a user navigates to a world, the system checks permissions **before** loadi
 - **Prompted for a password** (shared-secret worlds, up to 3 attempts)
 - **Denied access** (invitation-only, not on the allow-list)
 
-The feature is wired through `PrivateWorldsPlugin` and uses an event-driven architecture to keep navigation, permission checking, and UI decoupled.
+The feature uses a direct `IWorldAccessGate` interface — `RealmNavigator` awaits the gate, the gate runs permissions and shows popups, and returns a result. No event bus, no fire-and-forget.
 
 ## Architecture
 
 ```mermaid
 sequenceDiagram
     participant RN as RealmNavigator
-    participant EB as EventBus
-    participant AH as PrivateWorldAccessHandler
+    participant Gate as IWorldAccessGate<br/>(PrivateWorldAccessHandler)
     participant WPS as WorldPermissionsService
     participant MVC as MVCManager
     participant PC as PopupController
     participant PV as PopupView
     participant API as WorldsContentServer
 
-    RN->>EB: Publish CheckWorldAccessEvent
-    EB->>AH: OnCheckWorldAccess
-    AH->>WPS: CheckWorldAccessAsync
+    RN->>Gate: await CheckAccessAsync(worldName, ct)
+    Gate->>WPS: CheckWorldAccessAsync
     WPS->>API: GET /world/{name}/permissions
     API-->>WPS: permissions JSON
-    WPS-->>AH: WorldAccessCheckContext
+    WPS-->>Gate: WorldAccessCheckContext
 
     alt Allowed
-        AH-->>RN: WorldAccessResult.Allowed
+        Gate-->>RN: WorldAccessResult.Allowed
     end
 
     alt AccessDenied
-        AH->>MVC: ShowAsync (AccessDenied popup)
+        Gate->>MVC: ShowAsync (AccessDenied popup)
         MVC->>PC: OnViewShow
         PC->>PV: Configure + Show
         PV-->>PC: User clicks OK
         PC-->>MVC: Close
-        AH-->>RN: WorldAccessResult.Denied
+        Gate-->>RN: WorldAccessResult.Denied
     end
 
     alt PasswordRequired
         loop Up to 3 attempts
-            AH->>MVC: ShowAsync (Password popup)
+            Gate->>MVC: ShowAsync (Password popup)
             MVC->>PC: OnViewShow (blocks input)
             PC->>PV: Configure + FocusPasswordInput
             PV-->>PC: User submits password
             PC-->>MVC: Close (restores input)
-            AH->>WPS: ValidatePasswordAsync
+            Gate->>WPS: ValidatePasswordAsync
             WPS->>API: POST /worlds/{name}/comms (signed fetch with secret)
             API-->>WPS: 200 OK or 403 Forbidden
             alt Valid (200)
-                AH-->>RN: WorldAccessResult.Allowed
+                Gate-->>RN: WorldAccessResult.Allowed
             else Invalid (403)
-                Note over AH: Show popup again with error
+                Note over Gate: Show popup again with error
             end
         end
-        AH-->>RN: WorldAccessResult.PasswordCancelled
+        Gate-->>RN: WorldAccessResult.PasswordCancelled
     end
+```
+
+## Component Map
+
+```mermaid
+classDiagram
+    direction TB
+
+    class IWorldAccessGate {
+        <<interface>>
+        +CheckAccessAsync(worldName, ownerAddress, ct)
+    }
+
+    class PrivateWorldAccessHandler {
+        +CheckAccessAsync(worldName, ownerAddress, ct)
+        -ShowAccessDeniedAsync()
+        -HandlePasswordRequiredAsync()
+    }
+
+    class IWorldPermissionsService {
+        <<interface>>
+        +CheckWorldAccessAsync(worldName, ct)
+        +GetWorldPermissionsAsync(worldName, ct)
+        +ValidatePasswordAsync(worldName, password, ct)
+    }
+
+    class WorldPermissionsService {
+        -CheckAllowListAccessAsync(accessInfo, ct)
+    }
+
+    class ICommunityMembershipChecker {
+        <<interface>>
+        +IsMemberOfCommunityAsync(communityId, ct)
+    }
+
+    class CommunityMembershipCheckerAdapter
+
+    class WorldAccessInfo {
+        +AccessType
+        +OwnerAddress
+        +AllowedWallets
+        +AllowedCommunities
+        +FromResponse(response)$
+        +IsWalletAllowed(wallet)
+    }
+
+    class PrivateWorldPopupController
+    class PrivateWorldPopupView
+    class PrivateWorldPopupParams
+
+    class RealmNavigator {
+        -CheckWorldAccessAsync(worldName, ct)
+    }
+
+    IWorldAccessGate <|.. PrivateWorldAccessHandler : implements
+    IWorldPermissionsService <|.. WorldPermissionsService : implements
+    ICommunityMembershipChecker <|.. CommunityMembershipCheckerAdapter : implements
+
+    PrivateWorldAccessHandler --> IWorldPermissionsService
+    PrivateWorldAccessHandler --> PrivateWorldPopupController : shows via MVC
+
+    WorldPermissionsService --> ICommunityMembershipChecker
+    WorldPermissionsService --> WorldAccessInfo : creates
+
+    PrivateWorldPopupController --> PrivateWorldPopupView
+    PrivateWorldPopupController --> PrivateWorldPopupParams
+
+    RealmNavigator --> IWorldAccessGate : calls via ObjectProxy
 ```
 
 ## Key Components
@@ -71,15 +137,16 @@ sequenceDiagram
 
 | File | Class | Role |
 |------|-------|------|
-| `PluginSystem/Global/PrivateWorldsPlugin.cs` | `PrivateWorldsPlugin` | Entry point. Subscribes handler to event bus, registers popup controller with MVC, spawns editor test trigger. |
+| `PluginSystem/Global/PrivateWorldsPlugin.cs` | `PrivateWorldsPlugin` | Registers popup controller with MVC, spawns editor test trigger. |
+| `Infrastructure/Global/Dynamic/DynamicWorldContainer.cs` | `DynamicWorldContainer` | Creates `PrivateWorldAccessHandler` and sets it on `RealmNavigator`'s `ObjectProxy<IWorldAccessGate>`. |
 
 ### Core Logic
 
 | File | Class | Role |
 |------|-------|------|
-| `PrivateWorldAccessHandler.cs` | `PrivateWorldAccessHandler` | Orchestrates the full flow: permission check, popup display, password validation retry loop. |
-| `WorldPermissionsService.cs` | `WorldPermissionsService` | Calls backend APIs. Fetches permissions (`GET /world/{name}/permissions`), validates passwords (`POST /worlds/{name}/comms` via signed fetch). |
-| `PrivateWorldEvents.cs` | `CheckWorldAccessEvent`, `WorldAccessResult` | Event struct published by `RealmNavigator`, consumed by handler. Result communicated back via `UniTaskCompletionSource`. |
+| `PrivateWorldAccessHandler.cs` | `PrivateWorldAccessHandler` | Implements `IWorldAccessGate`. Orchestrates the full flow: permission check, popup display, password validation retry loop. |
+| `WorldPermissionsService.cs` | `WorldPermissionsService` | Calls backend APIs. Fetches permissions (`GET`), validates passwords (`POST` via signed fetch). Checks allow-list wallets, owner, and community membership. |
+| `PrivateWorldEvents.cs` | `IWorldAccessGate`, `WorldAccessResult` | Interface for the access gate. Result enum returned to `RealmNavigator`. |
 | `WorldPermissionsData.cs` | `WorldAccessInfo`, `WorldAccessType` | Parsed permission data. Access types: `Unrestricted`, `AllowList`, `SharedSecret`. |
 
 ### UI (MVC)
@@ -94,40 +161,53 @@ sequenceDiagram
 
 | File | Class | Role |
 |------|-------|------|
-| `RealmNavigation/RealmNavigator.cs` | `RealmNavigator` | Triggers access check before realm change. Publishes `CheckWorldAccessEvent`, awaits result, blocks world load if not `Allowed`. |
+| `RealmNavigation/RealmNavigator.cs` | `RealmNavigator` | Triggers access check before realm change. Calls `IWorldAccessGate.CheckAccessAsync` via `ObjectProxy`, applies 15s timeout, blocks world load if not `Allowed`. |
 
 ## Flow Detail
 
 ### 1. Navigation triggers access check
 
-`RealmNavigator.TryChangeRealmAsync()` publishes a `CheckWorldAccessEvent` when `isWorld == true` and waits for the result before proceeding:
+`RealmNavigator.TryChangeRealmAsync()` calls the gate directly when `worldName` is provided:
 
 ```csharp
-var result = await PublishWorldAccessCheckAsync(realm, ct);
+var result = await CheckWorldAccessAsync(worldName, ct);
 if (result != WorldAccessResult.Allowed)
     return MapToChangeRealmError(result);
 // ... proceed to load the world
 ```
 
+The `CheckWorldAccessAsync` method applies a 15-second timeout via linked `CancellationTokenSource`. If the gate hangs (e.g., network issue), the navigator catches `OperationCanceledException` and distinguishes caller cancellation from timeout.
+
 ### 2. Handler checks permissions
 
-`PrivateWorldAccessHandler` calls `WorldPermissionsService.CheckWorldAccessAsync()` which fetches the world's permission configuration from the backend and determines the access type:
+`PrivateWorldAccessHandler.CheckAccessAsync()` calls `WorldPermissionsService.CheckWorldAccessAsync()` which fetches the world's permission configuration from the backend and determines the access type:
 
 - **Unrestricted** -- allowed immediately
 - **SharedSecret** -- password required
-- **AllowList** -- checks if the current wallet is on the list or is the owner
+- **AllowList** -- checks wallet, owner, then community membership
 
-### 3. Password validation
+### 3. Allow-list check
+
+`WorldPermissionsService.CheckAllowListAccessAsync` checks in order:
+
+1. Is the user's wallet in the `AllowedWallets` list? (case-insensitive)
+2. Is the user's wallet the world owner?
+3. Is the user a member of any `AllowedCommunities`? (via `ICommunityMembershipChecker`)
+
+If any check passes, access is granted. Community checks that throw exceptions are logged and skipped (other communities are still checked).
+
+### 4. Password validation
 
 For password-protected worlds, the handler runs a retry loop (max 3 attempts):
 
-1. Shows the password popup via MVC
-2. User enters password and submits (or cancels)
-3. Calls `ValidatePasswordAsync()` which POSTs to `/worlds/{worldName}/comms` using [ADR-44 Signed Fetch](https://adr.decentraland.org/adr/ADR-44) with the password in the `secret` field of the auth chain metadata
-4. Server returns **200** (correct password) or **403** (wrong password)
-5. On failure, re-shows the popup with an error message
+1. Minimizes chat (via `beforePopupShown` callback) to prevent input focus conflicts
+2. Shows the password popup via MVC
+3. User enters password and submits (or cancels)
+4. Calls `ValidatePasswordAsync()` which POSTs to `/worlds/{worldName}/comms` using [ADR-44 Signed Fetch](https://adr.decentraland.org/adr/ADR-44) with the password in the `secret` field of the auth chain metadata
+5. Server returns **200** (correct password) or **403** (wrong password)
+6. On failure, re-shows the popup with an error message
 
-### 4. Input blocking
+### 5. Input blocking
 
 While the popup is visible, game input is blocked via `IInputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT)` to prevent keyboard shortcuts (camera, movement, emotes, etc.) from firing while the user types. Input is restored on popup close.
 
@@ -205,17 +285,30 @@ All paths that navigate to a world eventually call `RealmNavigator.TryChangeReal
 
 - Debug widget teleport buttons in `RealmContainer` (parcel and spawn point teleports)
 
-All of these paths converge on `RealmNavigator.TryChangeRealmAsync()` (directly or via `ChatTeleporter`), which publishes `CheckWorldAccessEvent` and waits for the result before loading the world.
+All of these paths converge on `RealmNavigator.TryChangeRealmAsync()` (directly or via `ChatTeleporter`), which calls `IWorldAccessGate.CheckAccessAsync` and waits for the result before loading the world.
 
 ## Testing
 
+### Unit Tests (Tests/EditMode)
+
+| File | Tests | What it covers |
+|------|-------|----------------|
+| `WorldAccessInfoShould.cs` | 13 | `FromResponse` parsing (all access types, case sensitivity, null handling) and `IsWalletAllowed` (case-insensitive matching, empty/null) |
+| `WorldPermissionsServiceShould.cs` | 10 | Routing (unrestricted/secret/null), allow-list wallet/owner checks, community membership (match, no match, error resilience, null checker) |
+| `PrivateWorldAccessHandlerShould.cs` | 8 | Gate implementation: switch cases, password popup + retry loop, cancellation propagation, exception handling |
+| `RealmNavigatorPrivateWorldsShould.cs` | 6 | Navigator integration: result-to-error mapping, skip when worldName is null, 15s timeout |
+
+### Editor Test Trigger
+
 In the Unity Editor, a `[DEBUG] PrivateWorldsTestTrigger` GameObject is spawned automatically. Use its context menu options in the Inspector:
 
-- **Test - Check World Access** -- runs the full permissions check
-- **Test - Validate Password (Wrong)** -- sends a wrong password to the comms endpoint
-- **Test - Validate Password (Correct)** -- sends a correct password
+- **Test - Fetch World Permissions** -- raw API call to GET permissions
+- **Test - Check World Access (Raw)** -- runs `CheckWorldAccessAsync` on the service
+- **Test - Validate Password (Wrong/Correct)** -- sends passwords to the comms endpoint
 - **Test - Show Password Required Popup** -- opens the password popup
 - **Test - Show Access Denied Popup** -- opens the access denied popup
+- **Test - Gate: Full Access Flow** -- runs the full `IWorldAccessGate.CheckAccessAsync` flow
+- **Test - Simulate CheckFailed Toast** -- triggers the notification toast
 
 Default test values (zone environment):
 
@@ -224,12 +317,3 @@ Default test values (zone environment):
 - `testCorrectPassword`: `abc123`
 
 These can be changed in the Inspector fields on the `[DEBUG] PrivateWorldsTestTrigger` GameObject.
-
-## Mock / Fallback Behavior
-
-When the permissions API is unavailable or for local testing, `WorldPermissionsService` falls back to name-based mocks:
-
-- World names containing `password` or `secret` → password required
-- World names containing `invite`, `private`, or `whitelist` → invitation only
-- `mirko.dcl.eth` → randomly password or invitation (for testing both flows)
-- All others → unrestricted

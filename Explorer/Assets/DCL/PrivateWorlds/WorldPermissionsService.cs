@@ -90,6 +90,8 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public class WorldPermissionsService : IWorldPermissionsService
     {
+        private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -158,7 +160,7 @@ namespace DCL.PrivateWorlds
             return context;
         }
 
-        public async UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct)
+        public virtual async UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct)
         {
             try
             {
@@ -181,8 +183,6 @@ namespace DCL.PrivateWorlds
                 return null;
             }
         }
-
-        private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
 
         public async UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
         {

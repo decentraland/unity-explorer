@@ -27,23 +27,15 @@ namespace DCL.PrivateWorlds.Tests.EditMode
             handler = new PrivateWorldAccessHandler(permissionsService, mvcManager);
         }
 
-        private static CheckWorldAccessEvent CreateEvent(string worldName, CancellationToken ct, out UniTaskCompletionSource<WorldAccessResult> resultSource)
-        {
-            resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-            return new CheckWorldAccessEvent(worldName, null, resultSource, ct);
-        }
-
         [Test]
         public async Task Allowed_WhenWorldIsUnrestricted()
         {
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(new WorldAccessCheckContext { Result = WorldAccessCheckResult.Allowed }));
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(WorldAccessResult.Allowed, result);
@@ -56,15 +48,13 @@ namespace DCL.PrivateWorlds.Tests.EditMode
             // Arrange
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
                 .Returns(_ => UniTask.FromException<WorldAccessCheckContext>(new Exception("API error")));
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // ReportHub.LogException emits two LogType.Exception entries (category prefix + exception);
             // suppress them so the test runner does not treat them as failures.
             LogAssert.ignoreFailingMessages = true;
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             LogAssert.ignoreFailingMessages = false;
@@ -88,11 +78,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     cmd.InputData.Result = PrivateWorldPopupResult.Cancelled;
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             await mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>(c =>
@@ -120,11 +108,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     cmd.InputData.EnteredPassword = "correct";
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(WorldAccessResult.Allowed, result);
@@ -148,11 +134,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     cmd.InputData.Result = PrivateWorldPopupResult.Cancelled;
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(WorldAccessResult.PasswordCancelled, result);
@@ -185,11 +169,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     }
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(5));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             Assert.AreEqual(WorldAccessResult.PasswordCancelled, result);
@@ -212,11 +194,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     cmd.InputData.Result = PrivateWorldPopupResult.Cancelled;
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             await mvcManager.Received(1).ShowAsync(Arg.Is<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>(c =>
@@ -225,7 +205,7 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         }
 
         [Test]
-        public async Task ReturnsCancelled_WhenCancellationTokenFires()
+        public async Task ThrowsOperationCanceled_WhenCancellationTokenFires()
         {
             // Arrange
             using var cts = new CancellationTokenSource();
@@ -235,15 +215,17 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     await UniTask.Delay(5000, cancellationToken: callInfo.ArgAt<CancellationToken>(1));
                     return new WorldAccessCheckContext { Result = WorldAccessCheckResult.Allowed };
                 }));
-            var evt = CreateEvent(WORLD_NAME, cts.Token, out var resultSource);
 
             // Act
-            handler.OnCheckWorldAccess(evt);
             cts.Cancel();
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
 
-            // Assert
-            Assert.AreEqual(WorldAccessResult.PasswordCancelled, result);
+            // Assert — cancellation propagates to the caller (TaskCanceledException extends OperationCanceledException)
+            try
+            {
+                await handler.CheckAccessAsync(WORLD_NAME, null, cts.Token);
+                Assert.Fail("Expected OperationCanceledException was not thrown");
+            }
+            catch (OperationCanceledException) { /* expected */ }
         }
 
         [Test]
@@ -266,15 +248,13 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                     cmd.InputData.EnteredPassword = "test";
                     return UniTask.CompletedTask;
                 });
-            var evt = CreateEvent(WORLD_NAME, CancellationToken.None, out var resultSource);
 
             // ReportHub.LogException emits two LogType.Exception entries (category prefix + exception);
             // suppress them so the test runner does not treat them as failures.
             LogAssert.ignoreFailingMessages = true;
 
             // Act
-            handler.OnCheckWorldAccess(evt);
-            var result = await resultSource.Task.AttachExternalCancellation(CancellationToken.None).Timeout(TimeSpan.FromSeconds(2));
+            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
 
             // Assert
             LogAssert.ignoreFailingMessages = false;

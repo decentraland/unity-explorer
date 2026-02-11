@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DCL.RealmNavigation.TeleportOperations;
-using Utility;
 
 namespace DCL.PrivateWorlds.Tests.EditMode
 {
@@ -28,8 +27,8 @@ namespace DCL.PrivateWorlds.Tests.EditMode
     {
         private const string WORLD_NAME = "test.dcl.eth";
         private RealmNavigator navigator = null!;
-        private IEventBus eventBus = null!;
-        private ObjectProxy<IEventBus> eventBusProxy = null!;
+        private IWorldAccessGate worldAccessGate = null!;
+        private ObjectProxy<IWorldAccessGate> worldAccessGateProxy = null!;
         private IRealmController realmController = null!;
         private IRealmData realmData = null!;
         private URLDomain testRealm;
@@ -38,7 +37,6 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         public void OneTimeSetUp()
         {
             // Ensure the singleton is available for tests that hit the CheckFailed path.
-            // Initialize once for the entire fixture since the generated singleton has no Deinitialize.
             try { NotificationsBusController.Initialize(new NotificationsBusController()); }
             catch (InvalidOperationException) { /* already initialized by another fixture */ }
         }
@@ -46,9 +44,9 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
-            eventBus = new EventBus(false);
-            eventBusProxy = new ObjectProxy<IEventBus>();
-            eventBusProxy.SetObject(eventBus);
+            worldAccessGate = Substitute.For<IWorldAccessGate>();
+            worldAccessGateProxy = new ObjectProxy<IWorldAccessGate>();
+            worldAccessGateProxy.SetObject(worldAccessGate);
 
             realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
@@ -91,15 +89,16 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                 Substitute.For<DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController>(),
                 realmChangeOps,
                 teleportInRealmOps,
-                eventBusProxy
+                worldAccessGateProxy
             );
         }
 
         [Test]
         public async Task ShowsToastAndBlocks_WhenCheckFailed()
         {
-            // Arrange: no handler sets result, so event bus is empty — navigator will get CheckFailed when eventBus.Object is set and handler runs.
-            eventBus.Subscribe<CheckWorldAccessEvent>(evt => evt.ResultSource.TrySetResult(WorldAccessResult.CheckFailed));
+            // Arrange
+            worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(WorldAccessResult.CheckFailed));
 
             // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, WORLD_NAME)
@@ -113,22 +112,30 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [Test]
         public async Task LetsThrough_WhenAllowed()
         {
-            eventBus.Subscribe<CheckWorldAccessEvent>(evt => evt.ResultSource.TrySetResult(WorldAccessResult.Allowed));
+            // Arrange
+            worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(WorldAccessResult.Allowed));
 
+            // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, WORLD_NAME)
                 .Timeout(TimeSpan.FromSeconds(5));
 
+            // Assert
             Assert.IsTrue(result.Success);
         }
 
         [Test]
         public async Task BlocksWithRecoverableError_WhenDenied()
         {
-            eventBus.Subscribe<CheckWorldAccessEvent>(evt => evt.ResultSource.TrySetResult(WorldAccessResult.Denied));
+            // Arrange
+            worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(WorldAccessResult.Denied));
 
+            // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, WORLD_NAME)
                 .Timeout(TimeSpan.FromSeconds(5));
 
+            // Assert
             Assert.IsFalse(result.Success);
             Assert.AreEqual(ChangeRealmError.WhitelistAccessDenied, result.Error.Value.State);
         }
@@ -136,11 +143,15 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [Test]
         public async Task BlocksWithRecoverableError_WhenPasswordCancelled()
         {
-            eventBus.Subscribe<CheckWorldAccessEvent>(evt => evt.ResultSource.TrySetResult(WorldAccessResult.PasswordCancelled));
+            // Arrange
+            worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(UniTask.FromResult(WorldAccessResult.PasswordCancelled));
 
+            // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, WORLD_NAME)
                 .Timeout(TimeSpan.FromSeconds(5));
 
+            // Assert
             Assert.IsFalse(result.Success);
             Assert.AreEqual(ChangeRealmError.PasswordCancelled, result.Error.Value.State);
         }
@@ -148,23 +159,36 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [Test]
         public async Task SkipsPermissionCheck_WhenWorldNameIsNull()
         {
-            eventBus.Subscribe<CheckWorldAccessEvent>(_ => Assert.Fail("Permission check should not run when worldName is null"));
+            // Arrange — gate should never be called
+            worldAccessGate.CheckAccessAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(_ => { Assert.Fail("Permission check should not run when worldName is null"); return UniTask.FromResult(WorldAccessResult.Allowed); });
 
+            // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, worldName: null)
                 .Timeout(TimeSpan.FromSeconds(5));
 
+            // Assert
             Assert.IsTrue(result.Success);
         }
 
         [Test]
-        [Explicit("Runs ~15s due to permission check timeout; no handler sets result so navigator returns CheckFailed.")]
+        [Explicit("Runs ~15s due to permission check timeout; gate delays indefinitely so navigator returns CheckFailed.")]
         [Timeout(20000)]
         public async Task ReturnsCheckFailed_WhenTimeoutFires()
         {
-            // No subscriber sets result — permission check times out after 15s
+            // Arrange — gate hangs forever, navigator's 15s timeout kicks in
+            worldAccessGate.CheckAccessAsync(WORLD_NAME, Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo => UniTask.Create(async () =>
+                {
+                    await UniTask.Delay(60000, cancellationToken: callInfo.ArgAt<CancellationToken>(2));
+                    return WorldAccessResult.Allowed;
+                }));
+
+            // Act
             var result = await navigator.TryChangeRealmAsync(testRealm, CancellationToken.None, default, WORLD_NAME)
                 .Timeout(TimeSpan.FromSeconds(18));
 
+            // Assert
             Assert.IsFalse(result.Success);
             Assert.AreEqual(ChangeRealmError.UnauthorizedWorldAccess, result.Error.Value.State);
         }

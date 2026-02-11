@@ -5,14 +5,13 @@ using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Utility;
 using ECS.SceneLifeCycle.Realm;
-using Utility;
 using Global;
 using Global.Dynamic;
 using System;
@@ -29,9 +28,9 @@ namespace DCL.RealmNavigation
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
         /// <summary>
-        ///     Proxy for EventBus. Set by DynamicWorldContainer after EventBus setup.
+        ///     Proxy for IWorldAccessGate. Set by DynamicWorldContainer after handler creation.
         /// </summary>
-        public ObjectProxy<IEventBus> EventBusProxy { get; private init; } = null!;
+        public ObjectProxy<IWorldAccessGate> WorldAccessGateProxy { get; private init; } = null!;
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
@@ -85,7 +84,7 @@ namespace DCL.RealmNavigation
             realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
             teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");
 
-            var eventBusProxy = new ObjectProxy<IEventBus>();
+            var worldAccessGateProxy = new ObjectProxy<IWorldAccessGate>();
 
             return new RealmNavigationContainer
             {
@@ -101,9 +100,9 @@ namespace DCL.RealmNavigation
                     bootstrapContainer.Analytics!,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
-                    eventBusProxy),
+                    worldAccessGateProxy),
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
-                EventBusProxy = eventBusProxy,
+                WorldAccessGateProxy = worldAccessGateProxy,
             };
         }
     }

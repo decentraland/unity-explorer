@@ -8,17 +8,19 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.PrivateWorlds.Testing
 {
     /// <summary>
     /// Debug test controller for Private Worlds feature.
-    /// Use context menu actions to test the popup UI without RealmNavigator integration.
-    /// Spawn via DynamicWorldContainer in Editor mode.
+    /// Use context menu actions to test the popup UI and access gate without RealmNavigator integration.
+    /// Spawn via PrivateWorldsPlugin in Editor mode.
     /// </summary>
     public class PrivateWorldsTestTrigger : MonoBehaviour
     {
+        private const string PERMISSION_CHECK_FAILED_MESSAGE =
+            "Could not verify world permissions. You may experience access issues.";
+
         [Header("Test Configuration")]
         [SerializeField] private string testWorldName = "yourname.dcl.eth";
         [SerializeField] private string testWrongPassword = "wrong";
@@ -26,18 +28,17 @@ namespace DCL.PrivateWorlds.Testing
 
         private IWorldPermissionsService? permissionsService;
         private IMVCManager? mvcManager;
-        private IEventBus? eventBus;
+        private IWorldAccessGate? worldAccessGate;
         private CancellationTokenSource? cts;
 
         /// <summary>
         /// Initialize the test trigger with required services.
-        /// Call this from DynamicWorldContainer after instantiating the component.
         /// </summary>
-        public void Initialize(IWorldPermissionsService permissionsService, IMVCManager mvcManager, IEventBus eventBus)
+        public void Initialize(IWorldPermissionsService permissionsService, IMVCManager mvcManager, IWorldAccessGate worldAccessGate)
         {
             this.permissionsService = permissionsService;
             this.mvcManager = mvcManager;
-            this.eventBus = eventBus;
+            this.worldAccessGate = worldAccessGate;
             ReportHub.Log(ReportCategory.REALM, "PrivateWorldsTestTrigger initialized");
         }
 
@@ -95,7 +96,7 @@ namespace DCL.PrivateWorlds.Testing
             }
         }
 
-        [ContextMenu("Test - Check World Access")]
+        [ContextMenu("Test - Check World Access (Raw)")]
         public void TestCheckWorldAccess()
         {
             if (permissionsService == null)
@@ -267,239 +268,6 @@ namespace DCL.PrivateWorlds.Testing
             }
         }
 
-        [ContextMenu("Test - Full Permission Flow (Simulate Join)")]
-        public void TestFullPermissionFlow()
-        {
-            if (permissionsService == null || mvcManager == null)
-            {
-                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: Services not initialized. Call Initialize() first.");
-                return;
-            }
-
-            cts?.Cancel();
-            cts?.Dispose();
-            cts = new CancellationTokenSource();
-
-            SimulateFullPermissionFlowAsync(cts.Token).Forget();
-        }
-
-        private async UniTaskVoid SimulateFullPermissionFlowAsync(CancellationToken ct)
-        {
-            try
-            {
-                ReportHub.Log(ReportCategory.REALM, $"Simulating full permission flow for world: {testWorldName}");
-
-                // Step 1: Check access
-                var accessContext = await permissionsService!.CheckWorldAccessAsync(testWorldName, ct);
-                var accessInfo = accessContext.AccessInfo;
-
-                ReportHub.Log(ReportCategory.REALM, $"Access check completed. Result: {accessContext.Result}, Type: {accessInfo?.AccessType.ToString() ?? "N/A"}");
-
-                if (accessContext.Result == WorldAccessCheckResult.Allowed)
-                {
-                    ReportHub.Log(ReportCategory.REALM, "Access granted! Would proceed to load world.");
-                    return;
-                }
-
-                if (accessContext.Result == WorldAccessCheckResult.CheckFailed)
-                {
-                    ReportHub.Log(ReportCategory.REALM, "Permission check failed. Would fallback to server-side check.");
-                    return;
-                }
-
-                string? ownerAddress = accessInfo?.OwnerAddress;
-
-                // Step 2: Handle based on result
-                switch (accessContext.Result)
-                {
-                    case WorldAccessCheckResult.AccessDenied:
-                        ReportHub.Log(ReportCategory.REALM, "User not on allow list. Showing access denied popup...");
-
-                        var deniedParams = new PrivateWorldPopupParams(
-                            testWorldName,
-                            PrivateWorldPopupMode.AccessDenied,
-                            ownerAddress
-                        );
-
-                        await mvcManager!.ShowAsync(PrivateWorldPopupController.IssueCommand(deniedParams), ct);
-
-                        ReportHub.Log(ReportCategory.REALM, "Access denied flow completed.");
-                        break;
-
-                    case WorldAccessCheckResult.PasswordRequired:
-                        ReportHub.Log(ReportCategory.REALM, "World requires password. Showing password popup...");
-
-                        var passwordParams = new PrivateWorldPopupParams(
-                            testWorldName,
-                            PrivateWorldPopupMode.PasswordRequired,
-                            ownerAddress
-                        );
-
-                        await mvcManager!.ShowAsync(PrivateWorldPopupController.IssueCommand(passwordParams), ct);
-
-                        if (passwordParams.Result == PrivateWorldPopupResult.PasswordSubmitted)
-                            ReportHub.Log(ReportCategory.REALM, "Password submitted! Would proceed to validate and load world.");
-                        else
-                            ReportHub.Log(ReportCategory.REALM, "Password entry cancelled.");
-                        break;
-
-                    default:
-                        ReportHub.Log(ReportCategory.REALM, "Unexpected access result - world should be accessible.");
-                        break;
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                ReportHub.Log(ReportCategory.REALM, "Permission flow cancelled");
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.REALM, $"Error in permission flow: {ex.Message}");
-            }
-        }
-
-        // ============================================================
-        // Event Bus Testing (simulates what RealmNavigator does)
-        // ============================================================
-
-        [ContextMenu("Test - EventBus: Check World Access")]
-        public void TestEventBusCheckWorldAccess()
-        {
-            if (eventBus == null)
-            {
-                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: EventBus not initialized.");
-                return;
-            }
-
-            cts?.Cancel();
-            cts?.Dispose();
-            cts = new CancellationTokenSource();
-
-            TestEventBusCheckWorldAccessAsync(cts.Token).Forget();
-        }
-
-        private async UniTaskVoid TestEventBusCheckWorldAccessAsync(CancellationToken ct)
-        {
-            try
-            {
-                ReportHub.Log(ReportCategory.REALM, "[EventBus] Publishing CheckWorldAccessEvent...");
-
-                var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-                var evt = new CheckWorldAccessEvent(testWorldName, null, resultSource, ct);
-                eventBus!.Publish(evt);
-
-                ReportHub.Log(ReportCategory.REALM, "[EventBus] Waiting for result...");
-                var result = await resultSource.Task.AttachExternalCancellation(ct);
-
-                ReportHub.Log(ReportCategory.REALM, $"[EventBus] World access result: {result}");
-            }
-            catch (OperationCanceledException)
-            {
-                ReportHub.Log(ReportCategory.REALM, "[EventBus] Check world access cancelled");
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.REALM, $"[EventBus] Error: {ex.Message}");
-            }
-        }
-
-        private const string PERMISSION_CHECK_FAILED_MESSAGE =
-            "Could not verify world permissions. You may experience access issues.";
-        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
-
-        [ContextMenu("Test - Simulate CheckFailed Toast")]
-        public void TestSimulateCheckFailedToast()
-        {
-            if (NotificationsBusController.Instance == null)
-            {
-                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: NotificationsBusController not initialized.");
-                return;
-            }
-            NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
-            ReportHub.Log(ReportCategory.REALM, "CheckFailed toast triggered. Verify the toast appears.");
-        }
-
-        [ContextMenu("Test - Simulate Timeout")]
-        public void TestSimulateTimeout()
-        {
-            if (eventBus == null)
-            {
-                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: EventBus not initialized.");
-                return;
-            }
-            cts?.Cancel();
-            cts?.Dispose();
-            cts = new CancellationTokenSource();
-            SimulateTimeoutAsync(cts.Token).Forget();
-        }
-
-        private async UniTaskVoid SimulateTimeoutAsync(CancellationToken ct)
-        {
-            try
-            {
-                ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Publishing CheckWorldAccessEvent with handler that delays 20s...");
-                var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-                var evt = new CheckWorldAccessEvent(CheckWorldAccessEvent.WORLD_NAME_TIMEOUT_TEST, null, resultSource, ct);
-                eventBus!.Publish(evt);
-
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                timeoutCts.CancelAfter(TimeSpan.FromSeconds(PERMISSION_CHECK_TIMEOUT_SECONDS));
-                var result = await resultSource.Task.AttachExternalCancellation(timeoutCts.Token);
-                ReportHub.Log(ReportCategory.REALM, $"[Timeout Test] Unexpected: got result {result}");
-            }
-            catch (OperationCanceledException)
-            {
-                if (ct.IsCancellationRequested)
-                {
-                    ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Caller cancelled.");
-                    return;
-                }
-                ReportHub.Log(ReportCategory.REALM, "[Timeout Test] Timeout fired. Showing toast and blocking.");
-                if (NotificationsBusController.Instance != null)
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.REALM, $"[Timeout Test] Error: {ex.Message}");
-            }
-        }
-
-        [ContextMenu("Test - Double Jump In")]
-        public void TestDoubleJumpIn()
-        {
-            if (eventBus == null)
-            {
-                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: EventBus not initialized.");
-                return;
-            }
-            cts?.Cancel();
-            cts?.Dispose();
-            cts = new CancellationTokenSource();
-            DoubleJumpInAsync(cts.Token).Forget();
-        }
-
-        private async UniTaskVoid DoubleJumpInAsync(CancellationToken ct)
-        {
-            try
-            {
-                ReportHub.Log(ReportCategory.REALM, "[Double Jump In] Publishing two CheckWorldAccessEvents in rapid succession...");
-                var resultSource1 = new UniTaskCompletionSource<WorldAccessResult>();
-                var resultSource2 = new UniTaskCompletionSource<WorldAccessResult>();
-                eventBus!.Publish(new CheckWorldAccessEvent(testWorldName, null, resultSource1, ct));
-                eventBus!.Publish(new CheckWorldAccessEvent(testWorldName, null, resultSource2, ct));
-                var result = await resultSource1.Task.AttachExternalCancellation(ct);
-                ReportHub.Log(ReportCategory.REALM, $"[Double Jump In] First result: {result}. Verify only one popup appeared.");
-            }
-            catch (OperationCanceledException)
-            {
-                ReportHub.Log(ReportCategory.REALM, "[Double Jump In] Cancelled");
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.REALM, $"[Double Jump In] Error: {ex.Message}");
-            }
-        }
-
         [ContextMenu("Test - Cancel During Popup")]
         public void TestCancelDuringPopup()
         {
@@ -528,6 +296,52 @@ namespace DCL.PrivateWorlds.Testing
             {
                 ReportHub.LogError(ReportCategory.REALM, $"Cancel during popup error: {ex.Message}");
             }
+        }
+
+        [ContextMenu("Test - Gate: Full Access Flow")]
+        public void TestGateFullAccessFlow()
+        {
+            if (worldAccessGate == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: WorldAccessGate not initialized.");
+                return;
+            }
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            GateFullAccessFlowAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid GateFullAccessFlowAsync(CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(ReportCategory.REALM, $"[Gate] Calling CheckAccessAsync for world: {testWorldName}");
+                var result = await worldAccessGate!.CheckAccessAsync(testWorldName, null, ct);
+                ReportHub.Log(ReportCategory.REALM, $"[Gate] World access result: {result}");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.REALM, "[Gate] Access flow cancelled");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.REALM, $"[Gate] Error: {ex.Message}");
+            }
+        }
+
+        [ContextMenu("Test - Simulate CheckFailed Toast")]
+        public void TestSimulateCheckFailedToast()
+        {
+            if (NotificationsBusController.Instance == null)
+            {
+                ReportHub.LogError(ReportCategory.REALM, "PrivateWorldsTestTrigger: NotificationsBusController not initialized.");
+                return;
+            }
+            NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+            ReportHub.Log(ReportCategory.REALM, "CheckFailed toast triggered. Verify the toast appears.");
         }
     }
 }

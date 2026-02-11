@@ -11,9 +11,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
-using DCL.Utility;
 using DCL.Utility.Types;
-using Utility;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
@@ -27,6 +25,7 @@ namespace DCL.RealmNavigation
     public class RealmNavigator : IRealmNavigator
     {
         private const int MAX_REALM_CHANGE_RETRIES = 3;
+        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
         private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
             "Teleport is not allowed in local scene development mode";
         private const string PERMISSION_CHECK_FAILED_MESSAGE =
@@ -48,7 +47,7 @@ namespace DCL.RealmNavigation
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analyticsController;
         private readonly ILandscape landscape;
-        private readonly ObjectProxy<IEventBus> eventBusProxy;
+        private readonly ObjectProxy<IWorldAccessGate> worldAccessGateProxy;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -62,7 +61,7 @@ namespace DCL.RealmNavigation
             IAnalyticsController analyticsController,
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
             SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
-            ObjectProxy<IEventBus> eventBusProxy)
+            ObjectProxy<IWorldAccessGate> worldAccessGateProxy)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -75,7 +74,7 @@ namespace DCL.RealmNavigation
             this.realmChangeOperations = realmChangeOperations;
             this.teleportInSameRealmOperation = teleportInSameRealmOperation;
             this.landscape = landscape;
-            this.eventBusProxy = eventBusProxy;
+            this.worldAccessGateProxy = worldAccessGateProxy;
         }
 
         private bool CheckIsNewRealm(URLDomain realm)
@@ -108,10 +107,12 @@ namespace DCL.RealmNavigation
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
-            // Pre-check private world permissions before loading
+            // We use worldName != null to determine if the target is a world, instead of
+            // RealmData.IsWorld(), because RealmData reflects the *current* realm — not the target.
+            // This also avoids parsing the URL to extract a world name from the realm domain.
             if (!string.IsNullOrEmpty(worldName))
             {
-                var result = await PublishWorldAccessCheckAsync(worldName, ct);
+                var result = await CheckWorldAccessAsync(worldName, ct);
 
                 if (result == WorldAccessResult.CheckFailed)
                 {
@@ -143,17 +144,12 @@ namespace DCL.RealmNavigation
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
-
-        private async UniTask<WorldAccessResult> PublishWorldAccessCheckAsync(string worldName, CancellationToken ct)
+        private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, CancellationToken ct)
         {
-            var eventBus = eventBusProxy.Object;
-            if (eventBus == null)
-                return WorldAccessResult.CheckFailed;
+            IWorldAccessGate? gate = worldAccessGateProxy.Object;
 
-            var resultSource = new UniTaskCompletionSource<WorldAccessResult>();
-            var evt = new CheckWorldAccessEvent(worldName, null, resultSource, ct);
-            eventBus.Publish(evt);
+            if (gate == null)
+                return WorldAccessResult.CheckFailed;
 
             try
             {
@@ -162,15 +158,13 @@ namespace DCL.RealmNavigation
                 // it is only cancelled by the caller's ct (e.g., user navigating away).
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(PERMISSION_CHECK_TIMEOUT_SECONDS));
-                return await resultSource.Task.AttachExternalCancellation(timeoutCts.Token);
+
+                return await gate.CheckAccessAsync(worldName, null, timeoutCts.Token);
             }
             catch (OperationCanceledException)
             {
                 if (ct.IsCancellationRequested)
-                {
-                    resultSource.TrySetResult(WorldAccessResult.PasswordCancelled);
                     return WorldAccessResult.PasswordCancelled;
-                }
 
                 // Timeout (not caller cancellation) — permission check hung
                 ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check timed out for '{worldName}'");

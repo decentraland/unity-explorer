@@ -1,16 +1,14 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Input;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
 using DCL.PrivateWorlds.Testing;
 using MVC;
-using System;
 using System.Threading;
-using DCL.Chat;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -18,48 +16,43 @@ using Utility;
 namespace DCL.PluginSystem.Global
 {
     /// <summary>
-    /// Plugin for Private Worlds feature. Wires handler (subscribes to CheckWorldAccessEvent), popup controller, and test trigger.
+    /// Plugin for Private Worlds feature. Registers popup controller, wires chat minimization callback, and spawns test trigger.
+    /// The handler (PrivateWorldAccessHandler) is created in DynamicWorldContainer.
     /// </summary>
     public class PrivateWorldsPlugin : IDCLGlobalPlugin<PrivateWorldsPlugin.PrivateWorldsSettings>
     {
         private readonly IMVCManager mvcManager;
-        private readonly IEventBus eventBus;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
-
-        private IDisposable? checkWorldAccessSubscription;
-
-        public IWorldPermissionsService WorldPermissionsService => worldPermissionsService;
+        private readonly IEventBus eventBus;
 
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,
-            IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
             IWorldPermissionsService worldPermissionsService,
-            IInputBlock inputBlock)
+            IWorldAccessGate worldAccessGate,
+            IInputBlock inputBlock,
+            IEventBus eventBus)
         {
             this.mvcManager = mvcManager;
-            this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
             this.worldPermissionsService = worldPermissionsService;
+            this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
+            this.eventBus = eventBus;
         }
 
-        public void Dispose()
-        {
-            checkWorldAccessSubscription?.Dispose();
-        }
+        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            var handler = new PrivateWorldAccessHandler(
-                worldPermissionsService,
-                mvcManager,
-                () => eventBus.Publish(new ChatEvents.CloseChatEvent()));
-            checkWorldAccessSubscription = eventBus.Subscribe<CheckWorldAccessEvent>(handler.OnCheckWorldAccess);
+            // Minimize chat before showing password popup to avoid input focus conflicts
+            if (worldAccessGate is PrivateWorldAccessHandler handler)
+                handler.SetBeforePopupCallback(() => eventBus.Publish(new ChatEvents.CloseChatEvent()));
 
             if (settings.PrivateWorldPopup != null)
             {
@@ -72,7 +65,7 @@ namespace DCL.PluginSystem.Global
             }
 
 #if UNITY_EDITOR
-            SpawnPrivateWorldsTestTrigger(worldPermissionsService, mvcManager, eventBus);
+            SpawnPrivateWorldsTestTrigger(worldPermissionsService, mvcManager, worldAccessGate);
 #endif
         }
 
@@ -80,11 +73,11 @@ namespace DCL.PluginSystem.Global
         private static void SpawnPrivateWorldsTestTrigger(
             IWorldPermissionsService permissionsService,
             IMVCManager mvcManager,
-            IEventBus eventBus)
+            IWorldAccessGate worldAccessGate)
         {
             var testTriggerGo = new GameObject("[DEBUG] PrivateWorldsTestTrigger");
             var testTrigger = testTriggerGo.AddComponent<PrivateWorldsTestTrigger>();
-            testTrigger.Initialize(permissionsService, mvcManager, eventBus);
+            testTrigger.Initialize(permissionsService, mvcManager, worldAccessGate);
         }
 #endif
 
