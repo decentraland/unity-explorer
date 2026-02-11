@@ -256,7 +256,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.38",
+      "version": "3.0.39",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -479,11 +479,11 @@
       }
     },
     "decentraland.culling": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/Culling",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/Culling/Drakkar",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cc1edefe3d22116e5367eaa3f0af8d4265d6f849"
+      "hash": "5816ce50d7fbec5b6a3a9f30f59042f368677300"
     },
     "decentraland.grassshader": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
