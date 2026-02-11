@@ -98,7 +98,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             if (SetColliderLayer(entity, sdkEntity, ref collider, sdkComponent))
                 setupCollider.Execute(collider.Collider, sdkComponent);
 
-            collider.ForceActiveBySceneBounds(sceneStateProvider.IsCurrent);
+            collider.ForceActiveBySceneBounds(sceneStateProvider.IsOverlapped);
         }
 
         private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, ref SDKCollider sdkCollider, in PBMeshCollider sdkComponent)

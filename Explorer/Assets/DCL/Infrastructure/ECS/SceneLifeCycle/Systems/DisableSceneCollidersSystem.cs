@@ -84,6 +84,7 @@ namespace ECS.Unity.SceneBoundsChecker
                 if (overlappedScenes.Contains(scene))
                     continue;
 
+                scene.SceneStateProvider.IsOverlapped = false;
                 var world = scene.EcsExecutor.World;
                 DisablePrimitiveCollidersQuery(world);
                 DisableGltfCollidersQuery(world);
@@ -94,8 +95,12 @@ namespace ECS.Unity.SceneBoundsChecker
             {
                 Vector2Int parcel = new Vector2Int(x, y);
 
-                if (overlappedParcels.Contains(parcel)
-                    || !sceneCache.TryGetByParcel(parcel, out ISceneFacade scene))
+                if (overlappedParcels.Contains(parcel))
+                    continue;
+
+                overlappedParcels.Add(parcel);
+
+                if (!sceneCache.TryGetByParcel(parcel, out ISceneFacade scene))
                     continue;
 
                 bool alreadyContains = overlappedScenes.Contains(scene);
@@ -104,6 +109,7 @@ namespace ECS.Unity.SceneBoundsChecker
                 if (alreadyContains)
                     continue;
 
+                scene.SceneStateProvider.IsOverlapped = true;
                 var world = scene.EcsExecutor.World;
                 EnablePrimitiveCollidersQuery(world);
                 EnableGltfCollidersQuery(world);
@@ -121,9 +127,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     && scene == loadedScene)
                 {
                     overlappedScenes.Add(loadedScene);
-                    var world = loadedScene.EcsExecutor.World;
-                    EnablePrimitiveCollidersQuery(world);
-                    EnableGltfCollidersQuery(world);
+                    loadedScene.SceneStateProvider.IsOverlapped = true;
                 }
             }
         }

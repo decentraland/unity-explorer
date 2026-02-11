@@ -13,19 +13,21 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         internal static void SetupColliders(
             ref GltfContainerComponent component, GltfContainerAsset asset,
-            bool sceneIsCurrent)
+            bool sceneIsOverlapped)
         {
             SetupVisibleColliders(ref component, asset);
             SetupInvisibleColliders(ref component, asset);
 
             if (asset.DecodedVisibleSDKColliders != null)
                 ForceActiveBySceneBounds(asset.DecodedVisibleSDKColliders,
-                    sceneIsCurrent);
+                    sceneIsOverlapped);
 
-            ForceActiveBySceneBounds(asset.InvisibleColliders, sceneIsCurrent);
+            ForceActiveBySceneBounds(asset.InvisibleColliders,
+                sceneIsOverlapped);
         }
 
-        private static void ForceActiveBySceneBounds(List<SDKCollider> colliders, bool value)
+        private static void ForceActiveBySceneBounds(
+            List<SDKCollider> colliders, bool value)
         {
             for (var i = 0; i < colliders.Count; i++)
             {

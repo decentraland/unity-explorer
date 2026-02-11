@@ -11,6 +11,9 @@ namespace SceneRunner.Scene
         /// </summary>
         public bool IsCurrent { get; set; }
 
+        /// <inheritdoc/>
+        public bool IsOverlapped { get; set; }
+
         public Atomic<SceneState> State { get; set; } = new (SceneState.NotStarted);
 
         public uint TickNumber { get; set; }

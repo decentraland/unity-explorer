@@ -9,6 +9,13 @@ namespace SceneRunner.Scene
         /// </summary>
         bool IsCurrent { get; set; }
 
+        /// <summary>
+        /// Whether the local player's collider is overlapping the bounds of
+        /// the scene. While only one scene can be current, up to four can be
+        /// overlapped.
+        /// </summary>
+        public bool IsOverlapped { get; set; }
+
         Atomic<SceneState> State { get; set; }
 
         uint TickNumber { get; set; }

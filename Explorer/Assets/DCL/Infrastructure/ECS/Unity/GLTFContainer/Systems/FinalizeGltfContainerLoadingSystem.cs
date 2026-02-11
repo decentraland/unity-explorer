@@ -88,7 +88,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component,
-                    result.Asset!, sceneStateProvider.IsCurrent);
+                    result.Asset!, sceneStateProvider.IsOverlapped);
 
                 ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
