@@ -31,10 +31,6 @@
 }
 
 /* DROPDOWN STYLES */
-.dcl-dropdown-transform {
-    overflow: hidden;
-}
-
 .dcl-dropdown {
     flex-grow: 1;
     margin : 0;

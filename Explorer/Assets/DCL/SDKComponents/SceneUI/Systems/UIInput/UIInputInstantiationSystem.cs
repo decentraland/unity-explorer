@@ -65,6 +65,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
+            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
             UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newUIInputComponent.TextField, 0.22f, 0f);
 
             World!.Add(entity, newUIInputComponent);

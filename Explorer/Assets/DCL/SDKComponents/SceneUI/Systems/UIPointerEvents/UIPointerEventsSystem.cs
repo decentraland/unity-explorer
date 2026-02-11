@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            ConfigureHoverStylesBehaviourQuery(World);
+            SetupUiButtonQuery(World);
             TriggerPointerEventsQuery(World);
 
             HandleEntityDestructionQuery(World);
@@ -53,10 +53,29 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
          */
         [Query]
         [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
-        [All(typeof(PBPointerEvents), typeof(PBUiText))]
-        private void ConfigureHoverStylesBehaviour(Entity entity, ref UITransformComponent uiTransformComponent)
+        [All(typeof(PBUiText))]
+        private void SetupUiButton(Entity entity, ref UITransformComponent uiTransformComponent, in PBPointerEvents pbPointerEvents)
         {
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, uiTransformComponent.Transform, 0.22f, 0.1f);
+            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
+
+            bool showHoverFeedback = true;
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
+            {
+                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
+                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
+
+                if (pointerEvent.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetDown or PointerEventType.PetUp
+                    && info is { HasShowFeedback: true, ShowFeedback: false })
+                {
+                    showHoverFeedback = false;
+                    break;
+                }
+            }
+
+            if (showHoverFeedback)
+                UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, uiTransformComponent.Transform, 0.22f, 0.1f);
+
             World.Add<UiButtonComponent>(entity);
         }
 
@@ -86,13 +105,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         [Query]
         [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
-        private void HandleUIPointerEventsRemoval(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleUIPointerEventsRemoval(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, ref sdkModel);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleEntityDestruction(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, ref sdkModel);
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
@@ -107,10 +126,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();
+
+            if (World.Has<UiButtonComponent>(entity))
+                World.Remove<UiButtonComponent>(entity);
         }
     }
 }

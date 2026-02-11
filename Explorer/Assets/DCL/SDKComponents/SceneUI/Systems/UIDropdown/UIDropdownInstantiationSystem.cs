@@ -56,8 +56,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity));
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
+            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
             UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newDropdown.DropdownField, 0.22f, 0.1f);
-            uiTransformComponent.Transform.AddToClassList("dcl-dropdown-transform");
 
             World.Add(entity, newDropdown);
         }

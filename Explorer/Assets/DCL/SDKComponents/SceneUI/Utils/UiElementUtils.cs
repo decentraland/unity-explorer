@@ -505,5 +505,70 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (behaviourData.BackgroundDarkenFactor > 0 && behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground))
                 uiTransformComponent!.Transform.style.backgroundColor = pbUiBackground!.GetColor();
         }
+
+        /// <summary>
+        /// Applies default UI transform styles for interactive UI elements (dropdowns, inputs, buttons).
+        /// Sets overflow to hidden, and applies default border radius, border width, and border color
+        /// when these properties are not explicitly defined in the PBUiTransform component.
+        /// </summary>
+        public static void ApplyDefaultUiTransformValues(World world, Entity entity, VisualElement uiTransform)
+        {
+            var pbUiTransform = world.Get<PBUiTransform>(entity);
+
+            uiTransform.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
+
+            if (pbUiTransform is
+                {
+                    HasBorderBottomLeftRadius: false,
+                    HasBorderBottomRightRadius: false,
+                    HasBorderTopLeftRadius: false,
+                    HasBorderTopRightRadius: false
+                })
+            {
+                uiTransform.style.borderBottomLeftRadius = new StyleLength(10);
+                uiTransform.style.borderBottomRightRadius = new StyleLength(10);
+                uiTransform.style.borderTopLeftRadius = new StyleLength(10);
+                uiTransform.style.borderTopRightRadius = new StyleLength(10);
+            }
+
+            if (pbUiTransform is
+                {
+                    HasBorderTopWidth: false,
+                    HasBorderRightWidth: false,
+                    HasBorderBottomWidth: false,
+                    HasBorderLeftWidth: false
+                })
+            {
+                uiTransform.style.borderTopWidth = new StyleFloat(1);
+                uiTransform.style.borderRightWidth = new StyleFloat(1);
+                uiTransform.style.borderBottomWidth = new StyleFloat(1);
+                uiTransform.style.borderLeftWidth = new StyleFloat(1);
+            }
+
+            if (pbUiTransform is
+                {
+                    BorderTopColor: null,
+                    BorderRightColor: null,
+                    BorderBottomColor: null,
+                    BorderLeftColor: null
+                })
+            {
+                uiTransform.style.borderTopColor = new StyleColor(Color.gray);
+                uiTransform.style.borderRightColor = new StyleColor(Color.gray);
+                uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
+                uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
+            }
+        }
+
+        /// <summary>
+        /// Applies a default background color to UI elements that don't have an explicit PBUiBackground component.
+        /// This ensures interactive elements like dropdowns, inputs, and buttons have a visible background by default.
+        /// </summary>
+        public static void ApplyDefaultUiBackgroundValues(World world, Entity entity, VisualElement uiTransform)
+        {
+            if (world.Has<PBUiBackground>(entity)) return;
+
+            uiTransform.style.backgroundColor = new StyleColor(Color.white);
+        }
     }
 }
