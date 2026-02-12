@@ -1,4 +1,4 @@
-﻿#if !UNITY_WEBGL
+﻿//#if !UNITY_WEBGL
 
 using DCL.DebugUtilities;
 using DCL.Landscape;
@@ -22,14 +22,22 @@ namespace Global.Dynamic
 
         private bool landscapeEnabled { get; init; }
 
-        public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer? mapRendererContainer,
-            IDebugContainerBuilder debugBuilder) =>
+        public LandscapePlugin CreatePlugin(
+                StaticContainer staticContainer,
+                BootstrapContainer bootstrapContainer,
+                MapRendererContainer? mapRendererContainer,
+                IDebugContainerBuilder debugBuilder
+            ) =>
             new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, WorldsTerrain, bootstrapContainer.AssetsProvisioner,
                 debugBuilder, mapRendererContainer?.TextureContainer ?? new MapRendererTextureContainer(),
                 staticContainer.WebRequestsContainer.WebRequestController, staticContainer.LandscapeParcelData, staticContainer.LandscapeParcelController, landscapeEnabled,
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone), (Landscape)Landscape);
 
-        public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
+        public static TerrainContainer Create(
+                StaticContainer staticContainer,
+                RealmContainer realmContainer,
+                bool enableLandscape,
+                bool localSceneDevelopemnt)
         {
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
@@ -45,4 +53,4 @@ namespace Global.Dynamic
     }
 }
 
-#endif
+//#endif

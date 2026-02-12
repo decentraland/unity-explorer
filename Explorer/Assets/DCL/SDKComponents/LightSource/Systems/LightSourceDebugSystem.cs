@@ -36,9 +36,17 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         protected override void Update(float t)
         {
+//TODO for some reason it throws NRE in WebGL, investigate later
+//
+//NullReferenceException: Object reference not set to an instance of an object.
+//Rethrow as EcsSystemException: [LightSourceDebugSystem]
+//  at ECS.Abstract.BaseUnityLoopSystem.Update (System.Single& t) [0x00000] in <00000000000000000000000000000000>:0 
+//Rethrow as SceneExecutionException: <color=#FC9C26>[ECS] (88, -10)</color>: One or more errors occurred. ([LightSourceDebugSystem]) ([LightSourceDebugSystem]) ([LightSourceDebugSystem]) ([LightSourceDebugSystem])
+#if !UNITY_WEBGL
             var debugState = globalWorld.Get<LightSourceDebugState>(debugStateEntity);
 
             ApplyDebugStateQuery(World, debugState);
+#endif
         }
 
         [Query]

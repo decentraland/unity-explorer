@@ -1,4 +1,4 @@
-﻿#if !UNITY_WEBGL
+﻿// #if !UNITY_WEBGL
 
 using Arch.Core;
 using Arch.System;
@@ -387,4 +387,4 @@ namespace DCL.Landscape.Systems
     }
 }
 
-#endif
+// #endif

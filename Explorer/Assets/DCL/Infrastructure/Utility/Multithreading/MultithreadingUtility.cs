@@ -57,8 +57,11 @@ namespace Utility.Multithreading
         [Conditional("DEBUG")]
         public static void AssertMainThread(string funcName, bool isMainThread = false)
         {
+// there is no 'none' main thread in WebGL
+#if !UNITY_WEBGL
             if (PlayerLoopHelper.IsMainThread != isMainThread)
                 throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
+#endif
         }
 
         public static void InvokeOnMainThread(this Action action, PlayerLoopTiming timing = PlayerLoopTiming.Update)

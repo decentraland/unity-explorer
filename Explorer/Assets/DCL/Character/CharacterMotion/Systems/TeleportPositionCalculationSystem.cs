@@ -22,22 +22,16 @@ namespace DCL.Character.CharacterMotion.Systems
     {
 
 
-#if !UNITY_WEBGL
         private readonly ILandscape landscape;
-#endif
 
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
         public TeleportPositionCalculationSystem(World world
-#if !UNITY_WEBGL
                 , ILandscape landscape
-#endif
                 ) : base(world)
         {
-#if !UNITY_WEBGL
             this.landscape = landscape;
-#endif
         }
 
         protected override void Update(float t)
@@ -57,7 +51,7 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
 
-#if !UNITY_WEBGL
+//#if !UNITY_WEBGL
                 teleportIntent.Position = targetWorldPosition
                     .WithTerrainOffset(
                             landscape
@@ -66,20 +60,20 @@ namespace DCL.Character.CharacterMotion.Systems
                                 targetWorldPosition.z
                                 )
                             );
-#else
-                teleportIntent.Position = targetWorldPosition;
-#endif
+//#else
+//                teleportIntent.Position = targetWorldPosition;
+//#endif
 
             }
 
-#if !UNITY_WEBGL
+//#if !UNITY_WEBGL
             else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) 
             { 
                 teleportIntent.Position = ParcelMathHelper
                     .GetPositionByParcelPosition(parcel)
                     .WithErrorCompensation(); 
             }
-#endif
+//#endif
 
             else
             {

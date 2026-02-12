@@ -25,9 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-#if !UNITY_WEBGL
         private readonly ILandscape landscape;
-#endif
         private readonly IScenesCache scenesCache;
 
         private CharacterControllerSettings settings;
@@ -37,18 +35,14 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-#if !UNITY_WEBGL
             ILandscape landscape,
-#endif
             IScenesCache scenesCache)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-#if !UNITY_WEBGL
             this.landscape = landscape;
-#endif
             this.scenesCache = scenesCache;
         }
 
@@ -84,9 +78,7 @@ namespace DCL.PluginSystem.Global
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
 
             TeleportPositionCalculationSystem.InjectToWorld(ref builder
-#if !UNITY_WEBGL
                     , landscape
-#endif
                     );
 
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);

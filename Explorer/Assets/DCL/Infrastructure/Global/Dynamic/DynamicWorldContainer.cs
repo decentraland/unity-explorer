@@ -422,15 +422,12 @@ namespace Global.Dynamic
                 teleportController,
                 bootstrapContainer.Environment);
 
-#if !UNITY_WEBGL
-            var terrainContainer = TerrainContainer.Create(
+            TerrainContainer terrainContainer = TerrainContainer.Create(
                 staticContainer,
                 realmContainer,
-                false,
                 dynamicWorldParams.EnableLandscape,
                 localSceneDevelopment
             );
-#endif
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
@@ -557,9 +554,9 @@ namespace Global.Dynamic
                 realmContainer,
                 realmNavigatorForInit,
                 realmNavigatorContainer,
-#if !UNITY_WEBGL
+//#if !UNITY_WEBGL
                 terrainContainer,
-#endif
+//#endif
                 loadingScreen,
 #if !NO_LIVEKIT_MODE
                 livekitHealthCheck,
@@ -878,9 +875,7 @@ namespace Global.Dynamic
                         debugBuilder,
                         staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                         staticContainer.SceneReadinessReportQueue,
-#if !UNITY_WEBGL
                         terrainContainer.Landscape,
-#endif
                         staticContainer.ScenesCache
                         ),
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emotesBus, mvcManager),
@@ -1087,10 +1082,13 @@ namespace Global.Dynamic
 #endif
 
                 new AudioPlaybackPlugin(
+
+// TODO it's for now to be without audio for Terrain
 #if !UNITY_WEBGL
                         terrainContainer.GenesisTerrain,
                         terrainContainer.WorldsTerrain,
 #endif
+
 
                         assetsProvisioner,
                         dynamicWorldParams.EnableLandscape,
@@ -1214,10 +1212,8 @@ namespace Global.Dynamic
                 );
 #endif
 
-#if !UNITY_WEBGL
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
-#endif
 
             if (localSceneDevelopment)
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));

@@ -23,6 +23,7 @@ using Global.AppArgs;
 using Global.Dynamic;
 using MVC;
 using System.Collections.Generic;
+using Global.Dynamic;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -37,9 +38,9 @@ namespace DCL.UserInAppInitializationFlow
             IRealmNavigator realmNavigator,
             RealmNavigationContainer realmNavigationContainer,
 
-#if !UNITY_WEBGL
+//#if !UNITY_WEBGL
             TerrainContainer terrainContainer,
-#endif
+//#endif
 
             ILoadingScreen loadingScreen,
 #if !NO_LIVEKIT_MODE
@@ -68,9 +69,10 @@ namespace DCL.UserInAppInitializationFlow
 
 #if !UNITY_WEBGL
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
-            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            // TODO teleportation is broken at the moment, fix required
 #endif
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
+
+            // TODO teleportation is broken at the moment, fix required
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
