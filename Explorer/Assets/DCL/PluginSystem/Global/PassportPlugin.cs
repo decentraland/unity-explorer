@@ -42,7 +42,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
@@ -77,7 +76,6 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
@@ -110,7 +108,6 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
@@ -220,8 +217,8 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
             [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
-            [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
+            [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }
     }
 }

@@ -6,6 +6,7 @@ using MVC;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine.EventSystems;
@@ -31,6 +32,7 @@ namespace DCL.Chat.ChatInput
         private readonly CustomInputField inputField;
 
         private CancellationTokenSource? suggestionCloseCts;
+        private CancellationTokenSource? searchSuggestionCts;
 
         private bool isLocked;
 
@@ -115,16 +117,31 @@ namespace DCL.Chat.ChatInput
 
         private void OnInputChanged(string inputText)
         {
-            bool matchFound = suggestionPanelState.TryFindMatch(inputText);
-
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.chatInputTextAudio);
             pasteToastState.TryDeactivate();
             view.UpdateCharacterCount();
 
-            if (matchFound)
-                suggestionPanelState.TryActivate();
-            else
-                suggestionPanelState.TryDeactivate();
+            searchSuggestionCts = searchSuggestionCts.SafeRestart();
+            SuggestElementsAndShowPanelAsync(searchSuggestionCts.Token).Forget();
+            return;
+
+            async UniTaskVoid SuggestElementsAndShowPanelAsync(CancellationToken ct)
+            {
+                try
+                {
+                    // Fixes https://github.com/decentraland/unity-explorer/issues/6965
+                    // This operation needs to be awaited otherwise a race condition occurs
+                    // between the suggested elements generated and the submitted element processed once the panel is activated
+                    bool matchFound = await suggestionPanelState.TryFindMatchAsync(inputText, ct);
+
+                    if (matchFound)
+                        suggestionPanelState.TryActivate();
+                    else
+                        suggestionPanelState.TryDeactivate();
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
+            }
         }
 
         private void OnPasteShortcut()
@@ -178,6 +195,7 @@ namespace DCL.Chat.ChatInput
                 return;
 
             suggestionPanelState.ReplaceSuggestionInText(suggestion.Id);
+
             // suggestionPanelState.TryDeactivate();
 
             suggestionCloseCts = suggestionCloseCts.SafeRestart();

@@ -121,7 +121,6 @@ namespace DCL.Passport
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
         private readonly ImageControllerProvider imageControllerProvider;
-        private readonly ColorToggleView colorToggle;
         private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -146,7 +145,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuBlockUserButton;
         private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
-        private NameColorPickerController colorPickerController;
+        private NameColorPickerController? colorPickerController;
         private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
@@ -238,7 +237,6 @@ namespace DCL.Passport
             this.communitiesDataProvider = communitiesDataProvider;
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.imageControllerProvider = imageControllerProvider;
-            this.colorToggle = colorToggle;
             this.colorPresets = colorPresets;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
@@ -406,16 +404,14 @@ namespace DCL.Passport
                               false));
 
             if (isGiftFeatureEnabled)
-            {
-                contextMenu.AddControl(contextMenuGiftButton =
-                    new GenericContextMenuElement(
-                        new ButtonContextMenuControlSettings(viewInstance.GiftText,
-                            viewInstance.GiftSprite,
-                            GiftUserClicked),
-                        true));
-            }
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(
+                        viewInstance.GiftText,
+                        viewInstance.GiftSprite,
+                        GiftUserClicked));
 
-            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(
+                new ButtonContextMenuControlSettings(
+                    viewInstance.BlockText,
                     viewInstance.BlockSprite,
                     BlockUserClicked),
                 false));
@@ -554,6 +550,8 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
+
+            if (colorPickerController == null) return;
 
             colorPickerController.OnColorChanged -= SetNewUserNameColor;
             colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
