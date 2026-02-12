@@ -2,11 +2,10 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle.Realm;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -27,8 +26,8 @@ namespace Global.Dynamic
 
         private static URLAddress ORG_MANIFEST_URL = URLAddress.FromString("https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json");
         private static URLAddress ZONE_MANIFEST_URL = URLAddress.FromString("https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json");
-        private static string mainRealmName = "main";
-        private static string dclWorldName = "dcl.eth";
+        private const string mainRealmName = "main";
+        private const string dclWorldName = "dcl.eth";
 
         private WorldManifest? cachedMainManifest;
 
@@ -42,12 +41,12 @@ namespace Global.Dynamic
             this.parsedParcels = parsedParcels;
         }
 
-        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, bool isZone, CancellationToken ct)
+        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, CancellationToken ct)
         {
             try
             {
                 if(realmName.StartsWith(mainRealmName))
-                    return await FetchGenesisManifestAsync(realmName, isZone, ct);
+                    return await FetchGenesisManifestAsync(environment, ct);
 
                 if(realmName.EndsWith(dclWorldName))
                     return await FetchNonGenesisManifestAsync(assetBundleRegistry, realmName, ct);
@@ -73,13 +72,11 @@ namespace Global.Dynamic
                                    ReportCategory.REALM)
                               .StoreTextAsync();
 
-            var settings = new JsonSerializerSettings();
-            settings.Converters.Add(new Vector2Converter());
-            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
+            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result);
             return WorldManifest.Create(dto);
         }
 
-        private async UniTask<WorldManifest> FetchGenesisManifestAsync(string realmURL, bool isZone, CancellationToken ct)
+        private async UniTask<WorldManifest> FetchGenesisManifestAsync(DecentralandEnvironment environment, CancellationToken ct)
         {
             if (cachedMainManifest.HasValue)
                 return cachedMainManifest.Value;
@@ -87,7 +84,7 @@ namespace Global.Dynamic
             ProvidedAsset<ParcelData> fallbackParcelData = await assetsProvisioner.ProvideMainAssetAsync(parsedParcels, ct);
             URLAddress manifestURL = URLAddress.EMPTY;
 
-            if (isZone)
+            if (environment == DecentralandEnvironment.Zone)
                 manifestURL = ZONE_MANIFEST_URL;
             else
                 manifestURL = ORG_MANIFEST_URL;
@@ -100,40 +97,13 @@ namespace Global.Dynamic
             if (!string.IsNullOrEmpty(result))
             {
                 var settings = new JsonSerializerSettings();
-                settings.Converters.Add(new Vector2Converter());
                 WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
-                cachedMainManifest = WorldManifest.Create(dto);
+                cachedMainManifest = WorldManifest.Create(dto, true);
                 return cachedMainManifest.Value;
             }
 
-            return new  WorldManifest(fallbackParcelData.Value.ownedParcels);
+            return  WorldManifest.Create(fallbackParcelData.Value.ownedParcels, true);
         }
     }
 
-    [Preserve]
-    public class Vector2Converter : JsonConverter<Vector2[]>
-    {
-        public override void WriteJson(JsonWriter writer, Vector2[]? value, JsonSerializer serializer)
-        {
-            var array = new JArray();
-
-            if (value != null)
-                foreach (Vector2 vector in value)
-                    array.Add($"{vector.x},{vector.y}");
-
-            array.WriteTo(writer);
-        }
-
-        public override Vector2[] ReadJson(JsonReader reader, Type objectType, Vector2[]? existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            var array = JArray.Load(reader);
-
-            return array.Select(item =>
-                         {
-                             string[]? parts = item.ToString().Split(',');
-                             return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
-                         })
-                        .ToArray();
-        }
-    }
 }

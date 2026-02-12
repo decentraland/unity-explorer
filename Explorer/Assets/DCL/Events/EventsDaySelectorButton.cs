@@ -13,19 +13,24 @@ namespace DCL.Events
 
         public event Action<DateTime>? ButtonClicked;
 
-        [SerializeField] private Button mainButton = null!;
-        [SerializeField] private TMP_Text dayText = null!;
-        [SerializeField] private Image backgroundImage = null!;
-        [SerializeField] private Color todayTextColor;
-        [SerializeField] private Color nonTodayTextColor;
+        [SerializeField] private Button todayButton = null!;
+        [SerializeField] private Button nonTodayButton = null!;
+        [SerializeField] private TMP_Text todayText = null!;
+        [SerializeField] private TMP_Text nonTodayText = null!;
 
         private DateTime currentDate;
 
-        private void Awake() =>
-            mainButton.onClick.AddListener(() => ButtonClicked?.Invoke(currentDate));
+        private void Awake()
+        {
+            todayButton.onClick.AddListener(() => ButtonClicked?.Invoke(currentDate));
+            nonTodayButton.onClick.AddListener(() => ButtonClicked?.Invoke(currentDate));
+        }
 
-        private void OnDestroy() =>
-            mainButton.onClick.RemoveAllListeners();
+        private void OnDestroy()
+        {
+            todayButton.onClick.RemoveAllListeners();
+            nonTodayButton.onClick.RemoveAllListeners();
+        }
 
         public void Setup(DateTime date)
         {
@@ -34,14 +39,14 @@ namespace DCL.Events
             var today = DateTime.Today;
 
             if (date.Date == today)
-                dayText.text = TODAY_TEXT;
+                todayText.text = TODAY_TEXT;
             else if (date.Date == today.AddDays(1))
-                dayText.text = TOMORROW_TEXT;
+                nonTodayText.text = TOMORROW_TEXT;
             else
-                dayText.text = date.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
+                nonTodayText.text = date.ToString("ddd, MMM dd", CultureInfo.InvariantCulture);
 
-            backgroundImage.color = new Color(backgroundImage.color.r, backgroundImage.color.g, backgroundImage.color.b, date.Date == today ? 1f : 0f);
-            dayText.color = date.Date == today ? todayTextColor : nonTodayTextColor;
+            todayButton.gameObject.SetActive(date.Date == today);
+            nonTodayButton.gameObject.SetActive(date.Date != today);
         }
     }
 }

@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         GatekeeperStatus = 3,
         ArchipelagoHotScenes = 4,
 
-        DiscordLink = 5,
+        SupportLink = 5,
         DiscordDirectLink = 6,
         TwitterLink = 7,
         TwitterNewPostLink = 8,
@@ -124,7 +124,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Content = 75,
         EntitiesDeployment = 76,
 
-        WorldContentServer = 77,
 
+        BuilderApiNewsletter = 77,
+        MetaTransactionServer = 78,
+        
+        WorldContentServer = 79,
+        
     }
 }
