@@ -62,6 +62,7 @@ namespace DCL.FeatureFlags
         public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
+        public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
 
         public static class Endpoints
         {

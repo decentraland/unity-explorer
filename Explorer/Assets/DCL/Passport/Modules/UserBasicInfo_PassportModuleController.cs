@@ -5,6 +5,7 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ProfileNames;
 using DCL.Web3;
@@ -26,6 +27,7 @@ namespace DCL.Passport.Modules
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly bool isNameEditorFeatureEnabled;
+        private readonly NameColorPickerController colorPickerController;
 
         private CancellationTokenSource? checkNameEditionCancellationToken;
         private CancellationTokenSource? showNameEditorCancellationToken;
@@ -39,7 +41,9 @@ namespace DCL.Passport.Modules
             IWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            NameColorPickerController colorPickerController
+            )
         {
             this.view = view;
             this.selfProfile = selfProfile;
@@ -47,8 +51,8 @@ namespace DCL.Passport.Modules
             this.mvcManager = mvcManager;
             this.nftNamesProvider = nftNamesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.colorPickerController = colorPickerController;
             isNameEditorFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PROFILE_NAME_EDITOR);
-
             userNameElementPresenter = new UserNameElementPresenter(view.UserNameElement);
             walletAddressElementPresenter = new UserWalletAddressElementPresenter(view.UserWalletAddressElement);
 
@@ -87,6 +91,7 @@ namespace DCL.Passport.Modules
             {
                 view.EditNameButton.gameObject.SetActive(false);
                 view.ClaimNameButton.gameObject.SetActive(false);
+                view.NameColorPickerView.gameObject.SetActive(false);
 
                 Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
@@ -96,6 +101,11 @@ namespace DCL.Passport.Modules
                 {
                     view.EditNameButton.gameObject.SetActive(isNameEditorFeatureEnabled);
                     view.ClaimNameButton.gameObject.SetActive(false);
+
+                    view.NameColorPickerView.gameObject.SetActive(
+                        FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && ownProfile.HasClaimedName
+                    );
+                    colorPickerController.SetColor(ownProfile.UserNameColor);
 
                     if (isNameEditorFeatureEnabled)
                     {

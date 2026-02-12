@@ -1,52 +1,30 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
-using DCL.Clipboard;
-using DCL.CommunicationData.URLHelpers;
-using DCL.Diagnostics;
+using DCL.Events;
 using DCL.EventsApi;
-using DCL.NotificationsBus;
-using DCL.NotificationsBus.NotificationTypes;
-using DCL.UI;
-using DCL.Utilities.Extensions;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.EventInfo
 {
     public class EventDetailPanelController : ControllerBase<EventDetailPanelView, EventDetailPanelParameter>
     {
-        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
-        private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
-
-        private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
-        private readonly HttpEventsApiService eventsApiService;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly EventCardActionsController eventCardActionsController;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
+        private readonly ThumbnailLoader? eventCardThumbnailLoader;
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();
-        private readonly ThumbnailLoader thumbnailLoader;
 
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
-            IWebRequestController webRequestController,
-            ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
-            HttpEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator)
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController)
             : base(viewFactory)
         {
-            this.clipboard = clipboard;
-            this.webBrowser = webBrowser;
-            this.eventsApiService = eventsApiService;
-            this.realmNavigator = realmNavigator;
-            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+            eventCardThumbnailLoader = thumbnailLoader;
+            this.eventCardActionsController = eventCardActionsController;
         }
 
         public override void Dispose()
@@ -58,7 +36,8 @@ namespace DCL.Communities.EventInfo
 
             viewInstance.InterestedButtonClicked -= OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
-            viewInstance.AddToCalendarButtonClicked -= AddToCalendarButtonClicked;
+            viewInstance.AddToCalendarButtonClicked -= OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked -= OnAddRecurrentDateToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked -= OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
@@ -70,7 +49,8 @@ namespace DCL.Communities.EventInfo
         {
             viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
-            viewInstance.AddToCalendarButtonClicked += AddToCalendarButtonClicked;
+            viewInstance.AddToCalendarButtonClicked += OnAddToCalendarButtonClicked;
+            viewInstance.AddRecurrentDateToCalendarButtonClicked += OnAddRecurrentDateToCalendarButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
@@ -78,7 +58,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, thumbnailLoader, panelCts.Token);
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, eventCardThumbnailLoader!, panelCts.Token);
         }
 
         protected override void OnViewClose()
@@ -86,55 +66,28 @@ namespace DCL.Communities.EventInfo
             panelCts.SafeCancelAndDispose();
         }
 
-        private void OnEventCopyLinkButtonClicked(IEventDTO eventData)
-        {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
+        private void OnEventCopyLinkButtonClicked(IEventDTO eventData) =>
+            eventCardActionsController.CopyEventLink(eventData);
 
-            NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
-        }
+        private void OnAddToCalendarButtonClicked(IEventDTO eventData) =>
+            eventCardActionsController.AddEventToCalendar(eventData);
 
-        private void AddToCalendarButtonClicked(IEventDTO eventData) =>
-            webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData));
+        private void OnAddRecurrentDateToCalendarButtonClicked(IEventDTO eventData, DateTime utcStart) =>
+            eventCardActionsController.AddEventToCalendar(eventData, utcStart);
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
-            webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData));
+            eventCardActionsController.ShareEvent(eventData);
 
         private void OnJumpInButtonClicked(IEventDTO eventData)
         {
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
-
-            if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
-            else
-                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
+            eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
         }
 
         private void OnInterestedButtonClicked(IEventDTO eventData)
         {
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
-            UpdateUserInterestedAsync(eventCardOperationsCts.Token).Forget();
-            return;
-
-            async UniTaskVoid UpdateUserInterestedAsync(CancellationToken ct)
-            {
-                var result = eventData.Attending
-                    ? await eventsApiService.MarkAsNotInterestedAsync(eventData.Id, ct)
-                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                    : await eventsApiService.MarkAsInterestedAsync(eventData.Id, ct)
-                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                if (!result.Success)
-                {
-                    viewInstance!.UpdateInterestedButtonState();
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(INTERESTED_CHANGED_ERROR_MESSAGE));
-                    return;
-                }
-
-                eventData.Attending = !eventData.Attending;
-                eventData.Total_attendees += eventData.Attending ? 1 : -1;
-
-                viewInstance!.UpdateInterestedButtonState();
-            }
+            eventCardActionsController.SetEventAsInterestedAsync(eventData, inputData.SummonerEventCard, viewInstance, eventCardOperationsCts.Token).Forget();
         }
     }
 }
