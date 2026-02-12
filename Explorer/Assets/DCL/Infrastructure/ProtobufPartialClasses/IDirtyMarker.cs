@@ -231,4 +231,9 @@ namespace DCL.ECSComponents
     {
         public bool IsDirty { get; set; }
     }
+
+    public partial class PBPhysicsForce : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
 }

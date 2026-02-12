@@ -146,7 +146,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBTriggerArea>.Create(ComponentID.TRIGGER_AREA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTriggerAreaResult>.Create(ComponentID.TRIGGER_AREA_RESULT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBAvatarLocomotionSettings>.Create(ComponentID.AVATAR_LOCOMOTION_SETTINGS).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBPhysicsImpulse>.Create(ComponentID.PHYSICS_IMPULSE).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBPhysicsImpulse>.Create(ComponentID.PHYSICS_IMPULSE).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBPhysicsForce>.Create(ComponentID.PHYSICS_FORCE).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

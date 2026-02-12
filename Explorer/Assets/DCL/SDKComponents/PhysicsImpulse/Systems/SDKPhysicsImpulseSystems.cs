@@ -33,6 +33,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             ApplyPhysicsImpulseQuery(World!);
+            ApplyPhysicsForceQuery(World!);
         }
 
         [Query]
@@ -52,6 +53,17 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             rigidTransform.ExternalImpulse += pbPhysicsImpulse.Direction.ToUnityVector();
 
             pbPhysicsImpulse.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(PBPhysicsForce))]
+        private void ApplyPhysicsForce(in PBPhysicsForce pbPhysicsForce, in CRDTEntity crdtEntity)
+        {
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
+            if (pbPhysicsForce.Direction == null) return;
+
+            var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
+            rigidTransform.ExternalForce += pbPhysicsForce.Direction.ToUnityVector();
         }
     }
 }
