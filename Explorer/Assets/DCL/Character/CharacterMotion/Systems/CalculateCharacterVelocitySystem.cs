@@ -189,6 +189,7 @@ namespace DCL.CharacterMotion.Systems
 
             // Apply impulse (instant Δv)
             ApplyImpulse.Execute(settings, ref rigidTransform, ref impulse);
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform);
 
             // Accumulate test force while button is held (reuses impulse direction/magnitude from settings)
             if (externalForceInput.IsPressed)

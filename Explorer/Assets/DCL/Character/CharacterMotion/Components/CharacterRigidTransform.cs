@@ -52,6 +52,10 @@ namespace DCL.CharacterMotion.Components
         // Computed acceleration from ExternalForce (a = F / mass), per-frame
         public Vector3 ExternalAcceleration;
 
+        // Pending external impulse to apply this frame (cleared after applying)
+        // Impulse = instant velocity change: Δv = J / mass
+        public Vector3 ExternalImpulse;
+
         // External velocity from impulses, forces (jump pads, knockbacks, wind, etc.)
         // Decays over time via drag/friction
         public Vector3 ExternalVelocity;
