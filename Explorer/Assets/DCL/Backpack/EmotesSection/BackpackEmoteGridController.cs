@@ -6,15 +6,11 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.Web3;
-using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -24,7 +20,6 @@ using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.EmotesSection
@@ -291,6 +286,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnUnequip += UnEquipItem;
+                backpackItemView.Slot = i;
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
@@ -312,8 +308,20 @@ namespace DCL.Backpack.EmotesSection
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
+        private void EquipItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true, () => SetLoadingSlot(slot, false)));
+        }
+
+        private void SetLoadingSlot(int slot, bool isLoading)
+        {
+            loadingResults[slot]!.IsLoading = isLoading;
+
+            for (int i = 0; i < loadingResults.Length; i++)
+                if (i != slot && loadingResults[i] != null)
+                    loadingResults[i]!.CanHover = !isLoading;
+        }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {

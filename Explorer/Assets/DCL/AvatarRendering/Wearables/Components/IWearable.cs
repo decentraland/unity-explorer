@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public static IWearable NewEmpty() =>
             new Wearable();
-        
+
         string ITrimmedWearable.GetRarity() =>
             ((IAvatarAttachment)this).GetRarity();
 
