@@ -1,10 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -39,7 +41,9 @@ namespace DCL.Events
             HttpEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
             EventsStateService eventsStateService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -54,7 +58,7 @@ namespace DCL.Events
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.EventsClosed += UnloadEvents;
 
-            view.SetDependencies(eventsStateService);
+            view.SetDependencies(eventsStateService, thumbnailLoader, profileRepositoryWrapper);
             view.InitializeEventsGrid();
         }
 
@@ -75,8 +79,8 @@ namespace DCL.Events
         private void OnGoToNextDayButtonClicked() =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, currentDay.AddDays(1));
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo))).Forget();
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
 
         private void OnSectionOpen(EventsSection section, DateTime date)
         {
@@ -96,7 +100,7 @@ namespace DCL.Events
 
             var today = DateTime.Today;
 
-            string dayText = fromDate.Date == today ? 
+            string dayText = fromDate.Date == today ?
                 TODAY_TEXT :
                 fromDate.Date == today.AddDays(1) ?
                     TOMORROW_TEXT :
@@ -104,9 +108,11 @@ namespace DCL.Events
 
             view.SetEventsCounter(dayText);
 
+            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
+
             var fromDateUtc = fromDate.ToUniversalTime();
             var toDateUtc = fromDate.AddDays(1).AddSeconds(-1).ToUniversalTime();
-            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
+            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
