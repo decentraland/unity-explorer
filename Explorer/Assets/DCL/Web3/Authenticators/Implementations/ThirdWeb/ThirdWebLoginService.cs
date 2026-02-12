@@ -14,6 +14,12 @@ namespace DCL.Web3.Authenticators
 {
     public class ThirdWebLoginService
     {
+        /// <summary>
+        ///     Maximum time allowed for auto-login to complete.
+        ///     Prevents indefinite waiting on the splash screen if ThirdWeb services are slow or unreachable.
+        /// </summary>
+        private static readonly TimeSpan AUTO_LOGIN_TIMEOUT = TimeSpan.FromSeconds(60);
+
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
         public IThirdwebWallet? ActiveWallet { get; private set; }
@@ -38,9 +44,13 @@ namespace DCL.Web3.Authenticators
             if (string.IsNullOrEmpty(email))
                 return false;
 
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(AUTO_LOGIN_TIMEOUT);
+            CancellationToken linkedCt = timeoutCts.Token;
+
             try
             {
-                await UniTask.SwitchToMainThread(ct);
+                await UniTask.SwitchToMainThread(linkedCt);
 
                 InAppWallet? wallet = await InAppWallet.Create(
                     client,
@@ -51,8 +61,19 @@ namespace DCL.Web3.Authenticators
                     return false;
 
                 ActiveWallet = wallet;
-                ReportHub.Log(ReportCategory.AUTHENTICATION, "✅ ThirdWeb auto-login successful");
+                ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
                 return true;
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                // Timeout expired (not an external cancellation) — treat as auto-login failure
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                // External cancellation — rethrow so caller knows it was cancelled
+                throw;
             }
             catch (Exception e)
             {

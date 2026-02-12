@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
 using DCL.Web3.Identities;
@@ -19,6 +20,7 @@ namespace DCL.Web3.Authenticators
         private readonly DappWeb3Authenticator dappAuth;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
+        private readonly bool emailOtpEnabled;
 
         private AuthProvider currentProvider = AuthProvider.Dapp;
 
@@ -55,12 +57,14 @@ namespace DCL.Web3.Authenticators
             ThirdWebAuthenticator thirdWebAuth,
             DappWeb3Authenticator dappAuth,
             IWeb3IdentityCache identityCache,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            bool emailOtpEnabled)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
             this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
+            this.emailOtpEnabled = emailOtpEnabled;
         }
 
         // IWeb3Authenticator
@@ -92,8 +96,19 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
-            // Temporary heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
             string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
+
+            // If OTP feature flag is disabled, skip ThirdWeb auto-login entirely — even if there is a stored email.
+            // This prevents getting stuck at the splash screen when the FF is turned off while the user has a previous OTP session.
+            if (!emailOtpEnabled && !string.IsNullOrEmpty(email))
+            {
+                ReportHub.Log(ReportCategory.AUTHENTICATION, "OTP email feature flag is disabled — clearing stored email and skipping ThirdWeb auto-login");
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+                CurrentProvider = AuthProvider.Dapp;
+                return UniTask.FromResult(true);
+            }
+
+            // Heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
             CurrentProvider = string.IsNullOrEmpty(email) ? AuthProvider.Dapp : AuthProvider.ThirdWeb;
 
             // Only ThirdWeb supports auto-login

@@ -250,8 +250,10 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
+            bool emailOtpEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
+
             ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache,
-                container.Analytics ?? IAnalyticsController.Null);
+                container.Analytics ?? IAnalyticsController.Null, emailOtpEnabled);
 
             return result;
         }
