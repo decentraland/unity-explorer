@@ -135,7 +135,7 @@ namespace DCL.Profiles
             return link;
         }
 
-        private void  DeserializeAvatar(JToken jObject, ref Profile profile)
+        private void DeserializeAvatar(JToken jObject, ref Profile profile)
         {
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
