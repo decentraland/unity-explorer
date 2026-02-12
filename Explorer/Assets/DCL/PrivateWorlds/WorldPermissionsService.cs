@@ -133,7 +133,16 @@ namespace DCL.PrivateWorlds
                         break;
 
                     case WorldAccessType.SharedSecret:
-                        context.Result = WorldAccessCheckResult.PasswordRequired;
+                        string? currentWallet = web3IdentityCache.Identity?.Address;
+                        if (!string.IsNullOrEmpty(currentWallet) &&
+                            currentWallet.Equals(accessInfo.OwnerAddress, StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Result = WorldAccessCheckResult.Allowed;
+                        }
+                        else
+                        {
+                            context.Result = WorldAccessCheckResult.PasswordRequired;
+                        }
                         break;
 
                     case WorldAccessType.AllowList:

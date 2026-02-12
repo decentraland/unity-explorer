@@ -42,7 +42,7 @@ namespace DCL.PrivateWorlds
 
                 return context.Result switch
                 {
-                    WorldAccessCheckResult.Allowed => WorldAccessResult.Allowed,
+                    WorldAccessCheckResult.Allowed => HandleAllowed(context),
                     WorldAccessCheckResult.CheckFailed => WorldAccessResult.CheckFailed,
                     WorldAccessCheckResult.AccessDenied => await ShowAccessDeniedAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
                     WorldAccessCheckResult.PasswordRequired => await HandlePasswordRequiredAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
@@ -74,6 +74,16 @@ namespace DCL.PrivateWorlds
             }
 
             return WorldAccessResult.Denied;
+        }
+
+        private WorldAccessResult HandleAllowed(WorldAccessCheckContext context)
+        {
+            // Owner of a SharedSecret world still needs a secret in the comms handshake.
+            // Backend validates ownership via signed fetch, so the actual value doesn't matter.
+            if (context.AccessInfo?.AccessType == WorldAccessType.SharedSecret)
+                worldCommsSecret.Secret = "owner";
+
+            return WorldAccessResult.Allowed;
         }
 
         private async UniTask<WorldAccessResult> HandlePasswordRequiredAsync(string worldName, string? ownerAddress, CancellationToken ct)
