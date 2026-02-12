@@ -181,14 +181,14 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
+            string url = $"https://worlds-content-server.decentraland.zone/worlds/pastrami.dcl.eth/scenes/{meta.sceneId}/comms";
             string json = meta.ToJson();
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, json, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
-            string connectionString = response.adapter;
+            string connectionString = response.fixedAdapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
@@ -197,6 +197,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private struct AdapterResponse
         {
             public string adapter;
+            public string fixedAdapter;
         }
     }
 }
