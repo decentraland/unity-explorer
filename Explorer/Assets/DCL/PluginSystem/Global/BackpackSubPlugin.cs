@@ -246,7 +246,7 @@ namespace DCL.PluginSystem.Global
                 sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage);
 
             var emotesController = new EmotesController(emoteView,
-                new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
+                new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping, thumbnailProvider), emoteGridController);
 
             var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                 characterPreviewFactory, backpackEventBus, world, equippedEmotes, characterPreviewEventBus);
