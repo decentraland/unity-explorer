@@ -17,12 +17,10 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -31,6 +29,7 @@ using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -149,15 +148,13 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
         {
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
-            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
             ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
 
             passportController = new PassportController(
@@ -199,7 +196,6 @@ namespace DCL.PluginSystem.Global
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
                 imageControllerProvider,
-                colorToggle,
                 nameColors
             );
 
@@ -220,12 +216,12 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
-            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; } = null!;
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
             [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
             [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace DCL.UI
         private readonly List<ColorToggleView> usedColorToggles = new ();
         private RectTransform viewRectTransform;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public ColorPickerController(
             ViewFactoryMethod viewFactory,

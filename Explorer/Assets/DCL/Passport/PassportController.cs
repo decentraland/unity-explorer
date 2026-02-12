@@ -34,7 +34,6 @@ using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -179,7 +178,6 @@ namespace DCL.Passport
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            IWebRequestController webRequestController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -202,7 +200,6 @@ namespace DCL.Passport
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider,
             ImageControllerProvider imageControllerProvider,
-            ColorToggleView colorToggle,
             ColorPresetsSO colorPresets) : base(viewFactory)
         {
             this.cursor = cursor;
