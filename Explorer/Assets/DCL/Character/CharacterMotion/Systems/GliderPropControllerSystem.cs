@@ -16,6 +16,8 @@ namespace DCL.CharacterMotion.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class GliderPropControllerSystem : BaseUnityLoopSystem
     {
+        private const int PRE_ALLOCATED_PROP_COUNT = 4;
+
         private readonly CharacterMotionSettings.GlidingSettings glidingSettings;
         private readonly GameObject gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
@@ -33,6 +35,8 @@ namespace DCL.CharacterMotion.Systems
         public override void Initialize()
         {
             propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+            propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
+
             tickEntity = World.CachePhysicsTick();
         }
 

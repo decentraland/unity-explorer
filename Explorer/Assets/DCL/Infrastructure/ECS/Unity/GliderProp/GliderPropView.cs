@@ -5,20 +5,25 @@ using UnityEngine;
 
 namespace ECS.Unity.GliderProp
 {
+    /// <summary>
+    /// Controls all audio / visual aspects of the glider prop
+    ///
+    /// <see cref="UpdateEngineState"/> needs to be called to set whether the engine is enabled or not and the 'engine level'
+    /// </summary>
     public class GliderPropView : MonoBehaviour
     {
         private bool trailEnabled;
 
-        // Angular speed of the animated rotors, degrees / sec
-        private float rotorsSpeed;
+        private float overallEngineVolume;
 
-        // Overall multiplier applied to engine sounds
-        private float engineVolume;
+        private float smoothedEngineLevel;
+
+        // How smoothly the 'engine level' is interpolated between idle and full speed
+        // (see UpdateEngineState)
+        [field: Header("General Settings")] [field: SerializeField] public float EngineLevelSmoothness { get; private set; } = 1;
 
         [field: Header("Animation")] [field: SerializeField] public Animator Animator { get; private set; }
-
         [field: SerializeField] public List<Transform> Rotors { get; private set; }
-
         [field: SerializeField] public Vector2 RotorRotationSpeedRange { get; private set; } = new (360, 360 * 4);
 
         [field: Header("Audio")] [field: SerializeField] public AvatarAudioSettings Settings { get; private set; }
@@ -73,35 +78,36 @@ namespace ECS.Unity.GliderProp
 
         public void UpdateEngineState(bool engineEnabled, float engineLevel, float dt)
         {
-            float normalizedEngineLevel = Mathf.Clamp01(engineLevel / FullSpeedEngineLevel);
+            float normalizedEngineLevel = engineEnabled ? Mathf.Clamp01(engineLevel / FullSpeedEngineLevel) : 0;
+            smoothedEngineLevel = Mathf.MoveTowards(smoothedEngineLevel, normalizedEngineLevel, dt / EngineLevelSmoothness);
 
-            UpdateRotorsAnimation(engineEnabled, normalizedEngineLevel, dt);
-            UpdateEngineVolume(engineEnabled, normalizedEngineLevel, dt);
+            UpdateRotorsAnimation(dt);
+            UpdateEngineVolume(engineEnabled, dt);
         }
 
-        private void UpdateRotorsAnimation(bool engineEnabled, float normalizedEngineLevel, float dt)
+        private void UpdateRotorsAnimation(float dt)
         {
-            const float ROTORS_LERP_FACTOR = 4;
-            rotorsSpeed = Mathf.MoveTowards(rotorsSpeed, engineEnabled ? normalizedEngineLevel : 0, dt * ROTORS_LERP_FACTOR);
-            float rotationSpeed = Mathf.Lerp(RotorRotationSpeedRange.x, RotorRotationSpeedRange.y, rotorsSpeed);
+            float rotationSpeed = Mathf.Lerp(RotorRotationSpeedRange.x, RotorRotationSpeedRange.y, smoothedEngineLevel);
             foreach (Transform rotor in Rotors) rotor.localRotation *= Quaternion.Euler(0, 0, rotationSpeed * dt);
         }
 
-        private void UpdateEngineVolume(bool engineEnabled, float normalizedEngineLevel, float dt)
+        private void UpdateEngineVolume(bool engineEnabled, float dt)
         {
-            const float VOLUME_LERP_FACTOR = 2;
-            engineVolume = Mathf.MoveTowards(engineVolume, engineEnabled ? 1 : 0, dt * VOLUME_LERP_FACTOR);
-
             if (!Settings.AudioEnabled)
             {
-                // Intended immediate cutoff, no lerping
+                // Intended immediate cutoff if audio is disabled by the settings, no interpolation
                 AudioSources.Idle.volume = 0;
                 AudioSources.Moving.volume = 0;
                 return;
             }
 
-            AudioSources.Idle.volume = (1 - normalizedEngineLevel) * IdleMaxVolume * engineVolume;
-            AudioSources.Moving.volume = normalizedEngineLevel * FullSpeedMaxVolume * engineVolume;
+            // When the engine is disabled we want to stop playing the engine sounds
+            // If we didn't have this additional multiplier we'd be playing the idle
+            const float VOLUME_LERP_FACTOR = 4;
+            overallEngineVolume = Mathf.MoveTowards(overallEngineVolume, engineEnabled ? 1 : 0, dt * VOLUME_LERP_FACTOR);
+
+            AudioSources.Idle.volume = (1 - smoothedEngineLevel) * IdleMaxVolume * overallEngineVolume;
+            AudioSources.Moving.volume = smoothedEngineLevel * FullSpeedMaxVolume * overallEngineVolume;
         }
 
         public void OnReturnedToPool()
@@ -122,6 +128,13 @@ namespace ECS.Unity.GliderProp
         private void OnOpenAnimationCompleted() =>
             OpenAnimationCompleted = true;
 
+        private void OnCloseAnimationStarted()
+        {
+            if (!Settings.AudioEnabled) return;
+
+            AudioSources.CloseGlider.Play();
+        }
+
         private void OnCloseAnimationCompleted() =>
             CloseAnimationCompleted = true;
 
@@ -131,6 +144,8 @@ namespace ECS.Unity.GliderProp
         public class AudioSourceSettings
         {
             [field: SerializeField] public AudioSource OpenGlider { get; private set; }
+
+            [field: SerializeField] public AudioSource CloseGlider { get; private set; }
 
             [field: SerializeField] public AudioSource Idle { get; private set; }
 
