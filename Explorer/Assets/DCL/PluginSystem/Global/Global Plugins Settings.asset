@@ -24,6 +24,7 @@ MonoBehaviour:
   - rid: 6784895265412481027
   - rid: 4340256219339423747
   - rid: 7621844642437005314
+  - rid: 7426570530121056350
   - rid: 1766526334245273896
   - rid: 648265872610426982
   - rid: 6478896861045588059
@@ -57,13 +58,11 @@ MonoBehaviour:
   - rid: 3601422469352914947
   - rid: 6144113899072913496
   - rid: 3821626543930605662
-  - rid: 1154744868092248158
-  - rid: 745469515127586908
-  - rid: 2563261270153757000
-  - rid: 5190442831932031144
-  - rid: 1221415613651484787
+  - rid: 6784895264912310272
+  - rid: 7162477752737071106
+  - rid: 3511243270148325472
+  - rid: 1095376790733193218
   - rid: 732305993255354462
-  - rid: 7426570530121056350
   references:
     version: 2
     RefIds:
@@ -556,23 +555,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <RarityInfoPanelBackgroundsMapping>k__BackingField:
-          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         <GridLayoutFixedColumnCount>k__BackingField: 4
         <ThumbnailHeight>k__BackingField: 201
         <ThumbnailWidth>k__BackingField: 272
         NameEditorPrefab:
           m_AssetGUID: 4362b43091b0d462db2641f8c866e9b9
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ColorToggle>k__BackingField:
-          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -699,7 +686,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+          m_EditorAssetChanged: 1
     - rid: 3821626543930605662
       type: {class: SmartWearablesGlobalPlugin/Settings, ns: DCL.PluginSystem.SmartWearables, asm: DCL.Plugins}
       data:

@@ -533,7 +533,6 @@ namespace DCL.Passport
             passportErrorsController?.Hide(true);
             openPassportFromNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
-            characterPreviewController?.Dispose();
             friendshipStatusCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             fetchMutualFriendsCts?.SafeCancelAndDispose();
