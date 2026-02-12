@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 await UniTask.SwitchToMainThread();
                 onWearableFetched(wearable);
-                
+
                 return;
             }
 
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 BodyShape currenBodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
-                var results = await wearablesProvider.RequestPointersAsync(urnRequest, currenBodyShape, ct);
+                var results = await wearablesProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct);
 
                 if (results != null)
                     foreach (var result in results)

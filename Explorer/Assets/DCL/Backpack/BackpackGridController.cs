@@ -364,15 +364,17 @@ namespace DCL.Backpack
 
             try
             {
-                (var wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
-                    pageNumber,
+                (var wearables, int totalAmount) = await wearablesProvider.GetTrimmedByParamsAsync(
+                    new IWearablesProvider.Params(CURRENT_PAGE_SIZE, pageNumber)
+                    {
+                        SortingField = currentSort.OrderByOperation.ToSortingField(),
+                        OrderBy = currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
+                        Category = currentCategory,
+                        CollectionType = collectionType,
+                        SmartWearablesOnly = currentSmartWearablesOnly,
+                        Name = currentSearch,
+                    },
                     ct,
-                    currentSort.OrderByOperation.ToSortingField(),
-                    currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                    currentCategory,
-                    collectionType,
-                    currentSmartWearablesOnly,
-                    currentSearch,
                     results);
 
                 if (refreshPageSelector)
