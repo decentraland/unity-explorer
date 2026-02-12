@@ -129,6 +129,7 @@ namespace DCL.Places
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.REALM, $"[PlaceDetailPanelController] Failed to check world access for '{worldName}': {e.Message}");
+                viewInstance!.SetWorldAccessState(WorldAccessCheckResult.CheckFailed);
             }
         }
 

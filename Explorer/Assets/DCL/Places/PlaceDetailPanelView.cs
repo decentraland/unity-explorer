@@ -200,7 +200,10 @@ namespace DCL.Places
             if (!isWorld)
                 SetNavigation(isNavigating);
 
-            SetWorldAccessState(WorldAccessCheckResult.Allowed);
+            if (isWorld)
+                HideWorldAccessButtons();
+            else
+                SetWorldAccessState(WorldAccessCheckResult.Allowed);
 
             SetCategories(placeInfo.categories);
         }
@@ -289,16 +292,24 @@ namespace DCL.Places
             exitNavigationButton.gameObject.SetActive(isNavigating);
         }
 
+        public void HideWorldAccessButtons()
+        {
+            jumpInButton.gameObject.SetActive(false);
+            enterPasswordButton.gameObject.SetActive(false);
+            if (worldAccessStatusText != null)
+                worldAccessStatusText.gameObject.SetActive(false);
+        }
+
         public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
         {
             bool isInvited = accessState == WorldAccessCheckResult.Allowed && accessType == WorldAccessType.AllowList;
             bool isRestricted = accessState == WorldAccessCheckResult.AccessDenied || accessState == WorldAccessCheckResult.PasswordRequired;
 
-            if (worldAccessStatusContainer != null && worldAccessStatusText != null)
+            if (worldAccessStatusText != null)
             {
                 if (isRestricted || isInvited)
                 {
-                    worldAccessStatusContainer.SetActive(true);
+                    worldAccessStatusText.gameObject.SetActive(true);
                     if (accessState == WorldAccessCheckResult.AccessDenied)
                     {
                         worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " INVITE ONLY";
@@ -316,7 +327,7 @@ namespace DCL.Places
                     }
                 }
                 else
-                    worldAccessStatusContainer.SetActive(false);
+                    worldAccessStatusText.gameObject.SetActive(false);
             }
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
