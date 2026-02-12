@@ -72,9 +72,7 @@ namespace Global.Dynamic
                                    ReportCategory.REALM)
                               .StoreTextAsync();
 
-            var settings = new JsonSerializerSettings();
-            settings.Converters.Add(new Vector2Converter());
-            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
+            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result);
             return WorldManifest.Create(dto);
         }
 
@@ -99,7 +97,6 @@ namespace Global.Dynamic
             if (!string.IsNullOrEmpty(result))
             {
                 var settings = new JsonSerializerSettings();
-                settings.Converters.Add(new Vector2Converter());
                 WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
                 cachedMainManifest = WorldManifest.Create(dto, true);
                 return cachedMainManifest.Value;
@@ -109,30 +106,4 @@ namespace Global.Dynamic
         }
     }
 
-    [Preserve]
-    public class Vector2Converter : JsonConverter<Vector2[]>
-    {
-        public override void WriteJson(JsonWriter writer, Vector2[]? value, JsonSerializer serializer)
-        {
-            var array = new JArray();
-
-            if (value != null)
-                foreach (Vector2 vector in value)
-                    array.Add($"{vector.x},{vector.y}");
-
-            array.WriteTo(writer);
-        }
-
-        public override Vector2[] ReadJson(JsonReader reader, Type objectType, Vector2[]? existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            var array = JArray.Load(reader);
-
-            return array.Select(item =>
-                         {
-                             string[]? parts = item.ToString().Split(',');
-                             return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
-                         })
-                        .ToArray();
-        }
-    }
 }
