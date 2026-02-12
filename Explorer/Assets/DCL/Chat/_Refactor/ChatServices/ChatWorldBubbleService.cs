@@ -117,6 +117,8 @@ namespace DCL.Chat.ChatServices
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null, bool isCommunityMessage = false, string? communityName = null)
         {
+            if (!world.Has<NametagHolder>(e)) return;
+
             world.AddOrSet(e, new ChatBubbleComponent(
                 chatMessage.Message,
                 chatMessage.SenderValidatedName,

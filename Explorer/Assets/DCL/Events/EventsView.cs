@@ -6,9 +6,11 @@ namespace DCL.Events
 {
     public class EventsView : MonoBehaviour
     {
+        public event Action? GoToTodayButtonClicked;
         public event Action? CreateButtonClicked;
 
         [Header("Buttons")]
+        [SerializeField] private Button goToTodayButton = null!;
         [SerializeField] private Button createEventButton = null!;
 
         [Header("Views")]
@@ -22,11 +24,17 @@ namespace DCL.Events
         public EventsCalendarView EventsCalendarView => eventsCalendarView;
         public EventsByDayView EventsByDayView => eventsByDayView;
 
-        private void Awake() =>
+        private void Awake()
+        {
+            goToTodayButton.onClick.AddListener(() => GoToTodayButtonClicked?.Invoke());
             createEventButton.onClick.AddListener(() => CreateButtonClicked?.Invoke());
+        }
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
+            goToTodayButton.onClick.RemoveAllListeners();
             createEventButton.onClick.RemoveAllListeners();
+        }
 
         public void SetViewActive(bool isActive)
         {
