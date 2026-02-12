@@ -969,7 +969,6 @@ namespace Global.Dynamic
                     dclCursor,
                     profilesRepository,
                     characterPreviewFactory,
-                    staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
                     selfProfile,
                     webBrowser,
