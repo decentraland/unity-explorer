@@ -36,6 +36,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
+        [SerializeField] private GameObject inviteOnlyTag = null!;
         [SerializeField] private GameObject liveTag = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
@@ -198,6 +199,7 @@ namespace DCL.Places
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
             SilentlySetHomeToggle(isHome);
 
+            inviteOnlyTag.SetActive(false);
             SetWorldAccessState(WorldAccessCheckResult.Allowed);
         }
 
@@ -207,6 +209,8 @@ namespace DCL.Places
             lastAccessType = accessType;
 
             RefreshPlaceTitleWithPadlock();
+
+            inviteOnlyTag.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
             enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
