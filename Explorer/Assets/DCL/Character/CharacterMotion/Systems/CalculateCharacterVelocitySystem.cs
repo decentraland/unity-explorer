@@ -44,8 +44,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> stopTime = new (0);
 
         private readonly ElementBinding<float> characterMass = new (0);
-        private readonly ElementBinding<float> externalAirDrag = new (0);
-        private readonly ElementBinding<float> externalFriction = new (0);
+        private readonly ElementBinding<float> externalEnvDrag = new (0);
+        private readonly ElementBinding<float> externalGroundFriction = new (0);
         private readonly ElementBinding<float> maxExternalVelocity = new (0);
 
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
@@ -65,8 +65,8 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Air Drag", airDrag)
                         .AddFloatField("Grounded Stop Time", stopTime)
                         .AddFloatField("Character Mass", characterMass)
-                        .AddFloatField("External Air Drag", externalAirDrag)
-                        .AddFloatField("External Friction", externalFriction)
+                        .AddFloatField("External Env Drag", externalEnvDrag)
+                        .AddFloatField("External Ground Friction", externalGroundFriction)
                         .AddFloatField("Max External Velocity", maxExternalVelocity)
                 ;
         }
@@ -92,8 +92,8 @@ namespace DCL.CharacterMotion.Systems
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
             characterMass.Value = settings.CharacterMass;
-            externalAirDrag.Value = settings.ExternalAirDrag;
-            externalFriction.Value = settings.ExternalFriction;
+            externalEnvDrag.Value = settings.ExternalEnvDrag;
+            externalGroundFriction.Value = settings.ExternalGroundFriction;
             maxExternalVelocity.Value = settings.MaxExternalVelocity;
         }
 
@@ -115,8 +115,8 @@ namespace DCL.CharacterMotion.Systems
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
             settings.CharacterMass = characterMass.Value;
-            settings.ExternalAirDrag = externalAirDrag.Value;
-            settings.ExternalFriction = externalFriction.Value;
+            settings.ExternalEnvDrag = externalEnvDrag.Value;
+            settings.ExternalGroundFriction = externalGroundFriction.Value;
             settings.MaxExternalVelocity = maxExternalVelocity.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));

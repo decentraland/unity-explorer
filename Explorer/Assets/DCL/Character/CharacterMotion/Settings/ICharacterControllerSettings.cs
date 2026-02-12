@@ -86,8 +86,8 @@ namespace DCL.CharacterMotion.Settings
         float ImpulseForce { get; set; }
         Vector3 ImpulseDirection { get; set; }
         float CharacterMass { get; set; }
-        float ExternalAirDrag { get; set; }
-        float ExternalFriction { get; set; }
+        float ExternalEnvDrag { get; set; }
+        float ExternalGroundFriction { get; set; }
         float MaxExternalVelocity { get; set; }
     }
 }
