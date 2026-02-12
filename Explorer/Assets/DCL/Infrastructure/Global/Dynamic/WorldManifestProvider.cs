@@ -101,11 +101,11 @@ namespace Global.Dynamic
                 var settings = new JsonSerializerSettings();
                 settings.Converters.Add(new Vector2Converter());
                 WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
-                cachedMainManifest = WorldManifest.Create(dto);
+                cachedMainManifest = WorldManifest.Create(dto, true);
                 return cachedMainManifest.Value;
             }
 
-            return  WorldManifest.Create(fallbackParcelData.Value.ownedParcels);
+            return  WorldManifest.Create(fallbackParcelData.Value.ownedParcels, true);
         }
     }
 

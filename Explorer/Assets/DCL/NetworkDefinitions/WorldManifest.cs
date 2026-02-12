@@ -18,14 +18,16 @@ namespace ECS
         private NativeHashSet<int2> occupiedParcels;
         private bool isEmpty;
 
-
-
         public bool IsEmpty => isEmpty;
+
+        //Avoid the dealloaction of occupiedParcels
+        //Used by Genesis to avoid losing the data on realm change
+        private bool persist;
 
         /// <summary>
         ///     Creates a WorldManifest with parsed parcel sets from a DTO. Call after JSON deserialization into <see cref="WorldManifestDto" />.
         /// </summary>
-        public static WorldManifest Create(WorldManifestDto dto)
+        public static WorldManifest Create(WorldManifestDto dto, bool persist = false)
         {
             if (IsNullOrEmpty(dto.roads) && IsNullOrEmpty(dto.occupied) && IsNullOrEmpty(dto.empty))
                 return Empty;
@@ -35,18 +37,20 @@ namespace ECS
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
                 occupiedParcels = ParseParcelStringsToSet(dto.occupied),
-                isEmpty = false
+                isEmpty = false,
+                persist = persist
             };
         }
 
-        public static WorldManifest Create(int2[] valueOccupiedParcels)
+        public static WorldManifest Create(int2[] valueOccupiedParcels, bool persist = false)
         {
             return new WorldManifest
             {
                 total = valueOccupiedParcels.Length,
                 spawn_coordinate = null,
                 occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
-                isEmpty = false
+                isEmpty = false,
+                persist = persist
             };
         }
 
@@ -83,6 +87,7 @@ namespace ECS
         public void Dispose()
         {
             if (isEmpty) return;
+            if (persist) return;
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
         }
 
