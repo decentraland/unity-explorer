@@ -545,7 +545,8 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                realmNavigator);
+                realmNavigator,
+                decentralandUrlsSource);
             mvcManager.RegisterController(eventDetailPanelController);
 
             ExplorePanelController explorePanelController = new

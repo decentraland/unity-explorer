@@ -683,7 +683,8 @@ namespace Global.Dynamic
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
-                communitiesDataProvider);
+                communitiesDataProvider,
+                bootstrapContainer.DecentralandUrlsSource);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -1121,7 +1122,8 @@ namespace Global.Dynamic
                     friendsCacheProxy,
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
-                    voiceChatContainer.VoiceChatOrchestrator
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.DecentralandUrlsSource
                 );
 
                 globalPlugins.Add(friendsContainer);

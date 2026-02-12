@@ -128,7 +128,7 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.socialServiceEventBus = socialServiceEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
-            notificationHandler = new NotificationHandler(realmNavigator);
+            notificationHandler = new NotificationHandler(realmNavigator, decentralandUrlsSource);
         }
 
         public void Dispose()

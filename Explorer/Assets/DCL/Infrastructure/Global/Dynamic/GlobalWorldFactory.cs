@@ -171,7 +171,11 @@ namespace Global.Dynamic
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams);
+            {
+                string worldContentServerBaseUrl = urlsSource.Url(DecentralandUrl.WorldContentServer);
+                URLDomain worldContentServerContentsUrl = URLDomain.FromString(worldContentServerBaseUrl.Replace("/world", "/contents/"));
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams, worldContentServerContentsUrl, worldContentServerBaseUrl);
+            }
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl);
 

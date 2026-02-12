@@ -5,6 +5,7 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
@@ -27,6 +28,7 @@ namespace DCL.Communities.EventInfo
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -39,13 +41,15 @@ namespace DCL.Communities.EventInfo
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
         }
 
@@ -104,7 +108,7 @@ namespace DCL.Communities.EventInfo
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token, default, eventData.Server).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer))), eventCardOperationsCts.Token, default, eventData.Server).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
         }

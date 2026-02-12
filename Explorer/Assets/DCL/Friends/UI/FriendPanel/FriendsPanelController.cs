@@ -4,6 +4,7 @@ using DCL.Chat.EventBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
@@ -70,7 +71,8 @@ namespace DCL.Friends.UI.FriendPanel
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
@@ -87,6 +89,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
+                    decentralandUrlsSource,
                     friendsConnectivityStatusTracker,
                     chatEventBus,
                     sharedSpaceManager);
@@ -101,6 +104,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
+                    decentralandUrlsSource,
                     chatEventBus,
                     sharedSpaceManager,
                     voiceChatOrchestrator);

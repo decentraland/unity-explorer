@@ -132,7 +132,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
-                DecentralandUrl.RemotePeersWorld => "https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
+                DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.{ENV}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",

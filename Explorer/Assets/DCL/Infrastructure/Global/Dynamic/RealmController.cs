@@ -373,7 +373,10 @@ namespace Global.Dynamic
             string hostname;
 
             if (about.configurations.realmName.IsEns())
-                hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
+            {
+                var uri = new Uri(realm.Value);
+                hostname = $"{uri.Host}{uri.AbsolutePath}";
+            }
             else
                 hostname = about.comms == null
 

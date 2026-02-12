@@ -415,6 +415,7 @@ namespace DCL.Passport
                                       getUserPositionBuffer,
                                       onlineUsersProvider,
                                       realmNavigator,
+                                      decentralandUrlsSource,
                                       parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
                                           parcel))),
                               false));
@@ -471,7 +472,7 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,
                 parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
         }
 
