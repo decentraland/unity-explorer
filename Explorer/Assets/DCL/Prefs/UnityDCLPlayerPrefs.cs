@@ -47,5 +47,8 @@ namespace DCL.Prefs
 
         public void Save() =>
             PlayerPrefs.Save();
+
+        public void SaveSync() =>
+            PlayerPrefs.Save();
     }
 }
