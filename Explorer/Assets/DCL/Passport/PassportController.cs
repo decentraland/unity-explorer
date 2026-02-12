@@ -37,7 +37,6 @@ using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -124,7 +123,6 @@ namespace DCL.Passport
         private readonly ISystemClipboard systemClipboard;
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly ColorToggleView colorToggle;
         private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -147,10 +145,8 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
-        private readonly bool isGiftingEnabled;
-        private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
-        private NameColorPickerController colorPickerController;
+        private NameColorPickerController? colorPickerController;
         private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
@@ -184,7 +180,6 @@ namespace DCL.Passport
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            IWebRequestController webRequestController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -213,7 +208,6 @@ namespace DCL.Passport
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider,
             ImageControllerProvider imageControllerProvider,
-            ColorToggleView colorToggle,
             ColorPresetsSO colorPresets) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -251,7 +245,6 @@ namespace DCL.Passport
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
-            isGiftingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GIFTING_ENABLED);
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -261,7 +254,6 @@ namespace DCL.Passport
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
-            this.colorToggle = colorToggle;
             this.colorPresets = colorPresets;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
@@ -425,14 +417,9 @@ namespace DCL.Passport
                               false));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
-            {
-                contextMenu.AddControl(contextMenuGiftButton =
-                    new GenericContextMenuElement(
-                        new ButtonContextMenuControlSettings(viewInstance.GiftText,
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.GiftText,
                             viewInstance.GiftSprite,
-                            GiftUserClicked),
-                        true));
-            }
+                            GiftUserClicked));
 
             contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
                     viewInstance.BlockSprite,
@@ -587,6 +574,8 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
+
+            if (colorPickerController == null) return;
 
             colorPickerController.OnColorChanged -= SetNewUserNameColor;
             colorPickerController.Dispose();
