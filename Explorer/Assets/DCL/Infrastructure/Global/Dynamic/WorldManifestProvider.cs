@@ -2,11 +2,10 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle.Realm;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -42,12 +41,12 @@ namespace Global.Dynamic
             this.parsedParcels = parsedParcels;
         }
 
-        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, bool isZone, CancellationToken ct)
+        public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, CancellationToken ct)
         {
             try
             {
                 if(realmName.StartsWith(mainRealmName))
-                    return await FetchGenesisManifestAsync(realmName, isZone, ct);
+                    return await FetchGenesisManifestAsync(environment, ct);
 
                 if(realmName.EndsWith(dclWorldName))
                     return await FetchNonGenesisManifestAsync(assetBundleRegistry, realmName, ct);
@@ -79,7 +78,7 @@ namespace Global.Dynamic
             return WorldManifest.Create(dto);
         }
 
-        private async UniTask<WorldManifest> FetchGenesisManifestAsync(string realmURL, bool isZone, CancellationToken ct)
+        private async UniTask<WorldManifest> FetchGenesisManifestAsync(DecentralandEnvironment environment, CancellationToken ct)
         {
             if (cachedMainManifest.HasValue)
                 return cachedMainManifest.Value;
@@ -87,7 +86,7 @@ namespace Global.Dynamic
             ProvidedAsset<ParcelData> fallbackParcelData = await assetsProvisioner.ProvideMainAssetAsync(parsedParcels, ct);
             URLAddress manifestURL = URLAddress.EMPTY;
 
-            if (isZone)
+            if (environment == DecentralandEnvironment.Zone)
                 manifestURL = ZONE_MANIFEST_URL;
             else
                 manifestURL = ORG_MANIFEST_URL;
