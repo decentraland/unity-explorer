@@ -17,6 +17,13 @@ namespace DCL.Profiles
     [Preserve]
     public class ProfileConverter : JsonConverter<Profile>
     {
+        private readonly bool includeSnapshots;
+
+        public ProfileConverter(bool includeSnapshots = false)
+        {
+            this.includeSnapshots = includeSnapshots;
+        }
+
         public override void WriteJson(JsonWriter writer, Profile? value, JsonSerializer serializer)
         {
             if (value == null)
@@ -128,7 +135,7 @@ namespace DCL.Profiles
             return link;
         }
 
-        private void DeserializeAvatar(JToken jObject, ref Profile profile)
+        private void  DeserializeAvatar(JToken jObject, ref Profile profile)
         {
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
@@ -313,6 +320,20 @@ namespace DCL.Profiles
 
             writer.WritePropertyName("emotes");
             SerializeEmoteList(writer, avatar.emotes);
+
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6841
+            // We need to propagate the snapshots to the scenes
+            if (includeSnapshots)
+            {
+                writer.WritePropertyName("snapshots");
+                writer.WriteStartObject();
+
+                writer.WritePropertyName("face256");
+                writer.WriteValue(profile.Compact.FaceSnapshotUrl);
+                writer.WritePropertyName("body");
+                writer.WriteValue(avatar.BodySnapshotUrl);
+                writer.WriteEndObject();
+            }
 
             writer.WritePropertyName("eyes");
             writer.WriteStartObject();
