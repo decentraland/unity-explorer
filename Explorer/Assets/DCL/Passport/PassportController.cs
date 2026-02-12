@@ -51,6 +51,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -82,6 +83,7 @@ namespace DCL.Passport
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly World world;
@@ -173,6 +175,7 @@ namespace DCL.Passport
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             CharacterPreviewEventBus characterPreviewEventBus,
+            ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             World world,
@@ -220,6 +223,7 @@ namespace DCL.Passport
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.profileChangesBus = profileChangesBus;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
@@ -294,10 +298,11 @@ namespace DCL.Passport
 
             colorPickerController = new NameColorPickerController(
                 mvcManager,
+                selfProfile,
+                profileChangesBus,
                 viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
                 colorPresets);
             colorPickerController.OnColorChanged += SetNewUserNameColor;
-            colorPickerController.OnColorPickerClosed += SaveUserNameColor;
 
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
@@ -584,7 +589,6 @@ namespace DCL.Passport
                 module.Dispose();
 
             colorPickerController.OnColorChanged -= SetNewUserNameColor;
-            colorPickerController.OnColorPickerClosed -= SaveUserNameColor;
             colorPickerController.Dispose();
         }
 
@@ -646,15 +650,6 @@ namespace DCL.Passport
         {
             if (viewInstance != null)
                 viewInstance.UserBasicInfoModuleView.UserNameElement.UserNameText.color = color;
-        }
-
-        private void SaveUserNameColor()
-        {
-            if (userNameColorToSave.HasValue)
-            {
-                // TODO (Maurizio) here we'll re-deploy the profile, i.e. passportProfileInfoController.UpdateProfileAsync()
-                userNameColorToSave = null;
-            }
         }
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)

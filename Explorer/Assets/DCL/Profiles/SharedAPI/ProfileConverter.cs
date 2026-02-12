@@ -1,6 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Utilities;
+using DCL.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -133,9 +133,9 @@ namespace DCL.Profiles
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
 
-            avatar.EyesColor = DeserializeColor(jObject["eyes"]?["color"], Color.black);
-            avatar.HairColor = DeserializeColor(jObject["hair"]?["color"], Color.black);
-            avatar.SkinColor = DeserializeColor(jObject["skin"]?["color"], Color.black);
+            avatar.EyesColor = JsonUtils.DeserializeColor(jObject["eyes"]?["color"], Color.black);
+            avatar.HairColor = JsonUtils.DeserializeColor(jObject["hair"]?["color"], Color.black);
+            avatar.SkinColor = JsonUtils.DeserializeColor(jObject["skin"]?["color"], Color.black);
 
             avatar.BodyShape = BodyShape.FromStringSafe(jObject["bodyShape"]?.Value<string>() ?? "");
 
@@ -164,18 +164,6 @@ namespace DCL.Profiles
                     equippedEmotes[slot] = urn;
                 }
             }
-        }
-
-        private Color DeserializeColor(JToken? jObject, Color color)
-        {
-            if (jObject == null) return color;
-
-            color.r = jObject["r"]?.Value<float>() ?? 0;
-            color.g = jObject["g"]?.Value<float>() ?? 0;
-            color.b = jObject["b"]?.Value<float>() ?? 0;
-            color.a = jObject["a"]?.Value<float>() ?? 1;
-
-            return color;
         }
 
         private void DeserializeArrayToHashSet<TResult>(JToken? token, HashSet<TResult> set, Func<string, TResult> selector)
@@ -292,6 +280,12 @@ namespace DCL.Profiles
             writer.WritePropertyName("interests");
             SerializeCollectionToArray(writer, profile.interests);
 
+            if (profile is { HasClaimedName: true, ClaimedNameColor: not null })
+            {
+                writer.WritePropertyName("nameColor");
+                JsonUtils.SerializeColor(writer, profile.ClaimedNameColor.Value);
+            }
+
             writer.WriteEndObject();
         }
 
@@ -317,35 +311,21 @@ namespace DCL.Profiles
             writer.WritePropertyName("eyes");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.EyesColor);
+            JsonUtils.SerializeColor(writer, avatar.EyesColor);
             writer.WriteEndObject();
 
             writer.WritePropertyName("hair");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.HairColor);
+            JsonUtils.SerializeColor(writer, avatar.HairColor);
             writer.WriteEndObject();
 
             writer.WritePropertyName("skin");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.SkinColor);
+            JsonUtils.SerializeColor(writer, avatar.SkinColor);
             writer.WriteEndObject();
 
-            writer.WriteEndObject();
-        }
-
-        private void SerializeColor(JsonWriter writer, Color color)
-        {
-            writer.WriteStartObject();
-            writer.WritePropertyName("r");
-            writer.WriteValue(color.r);
-            writer.WritePropertyName("g");
-            writer.WriteValue(color.g);
-            writer.WritePropertyName("b");
-            writer.WriteValue(color.b);
-            writer.WritePropertyName("a");
-            writer.WriteValue(color.a);
             writer.WriteEndObject();
         }
 
