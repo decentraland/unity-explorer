@@ -535,8 +535,11 @@ namespace DCL.PluginSystem.Global
                 placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, worldPermissionsService);
             mvcManager.RegisterController(placeDetailPanelController);
 
+            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);
+            var eventsThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
-            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager);
+            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
+                eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendServiceProxy, communitiesDataProvider);
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
@@ -546,7 +549,9 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 eventsApiService,
                 realmNavigator,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                eventsThumbnailLoader,
+                eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
             ExplorePanelController explorePanelController = new

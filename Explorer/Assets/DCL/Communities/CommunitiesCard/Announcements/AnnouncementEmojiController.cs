@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Chat;
+using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.Input.Utils;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -29,10 +31,11 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly InputSuggestionPanelController suggestionPanelController;
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
+        private readonly EventSubscriptionScope eventsScope = new ();
 
         private int wordMatchIndex;
         private Match lastMatch = Match.Empty;
-        private readonly EventSubscriptionScope eventsScope = new ();
+        private CancellationTokenSource? searchSuggestionsCts;
 
         public AnnouncementEmojiController(
             CustomInputField announcementInput,
@@ -58,6 +61,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 this.suggestionPanel.transform.SetParent(suggestionPanelParent);
 
             EmojiMapping emojiMapping = new EmojiMapping(emojiPanelConfiguration);
+
             emojiPanelPresenter = new EmojiPanelPresenter(
                 emojiPanel,
                 emojiPanelConfiguration,
@@ -69,6 +73,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
 
             emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
+
             foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
 
@@ -96,16 +101,33 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void OnAnnouncementInputValueChanged(string text)
         {
-            Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(text, 0, announcementInput.stringPosition);
+            searchSuggestionsCts = searchSuggestionsCts.SafeRestart();
+            SearchSuggestionsAndShowPanelAsync(searchSuggestionsCts.Token).Forget();
+            return;
 
-            lastMatch = Match.Empty;
-            if (wordMatch.Success)
+            async UniTaskVoid SearchSuggestionsAndShowPanelAsync(CancellationToken ct)
             {
-                wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
-            }
+                try
+                {
+                    Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(text, 0, announcementInput.stringPosition);
 
-            suggestionPanelController.SetPanelVisibility(lastMatch.Success);
+                    lastMatch = Match.Empty;
+
+                    if (wordMatch.Success)
+                    {
+                        wordMatchIndex = wordMatch.Index;
+
+                        // Fixes https://github.com/decentraland/unity-explorer/issues/6965
+                        // This operation needs to be awaited otherwise a race condition occurs
+                        // between the suggested elements generated and the submitted element processed once the panel is activated
+                        lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary, ct);
+                    }
+
+                    suggestionPanelController.SetPanelVisibility(lastMatch.Success);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
+            }
         }
 
         private char OnAnnouncementInputValidateInput(string text, int charIndex, char addedChar)
@@ -144,6 +166,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             var clickPosition = DCLInputUtilities.GetPointerPosition(context);
             bool isClickedInsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
+
             if (!isClickedInsideEmojiPanel)
                 SetEmojiPanelVisibility(false);
         }
