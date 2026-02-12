@@ -474,6 +474,7 @@ MonoBehaviour:
   startExitNavigationButtonsContainer: {fileID: 3549557115608786368}
   startNavigationButton: {fileID: 8282167053355849618}
   exitNavigationButton: {fileID: 1455051285254262937}
+  actionButtonsContainer: {fileID: 2303018708603604998}
   worldAccessStatusContainer: {fileID: 1838471123315806448}
   worldAccessStatusText: {fileID: 1349317684323922596}
   enterPasswordButton: {fileID: 1803683118443818036}
@@ -7834,11 +7835,11 @@ RectTransform:
   - {fileID: 1592383636195915305}
   m_Father: {fileID: 1391358168273974991}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 528, y: -224}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 528, y: 480.00006}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 1}
+  m_Pivot: {x: 0, y: 0}
 --- !u!114 &7370118552576476710
 MonoBehaviour:
   m_ObjectHideFlags: 0

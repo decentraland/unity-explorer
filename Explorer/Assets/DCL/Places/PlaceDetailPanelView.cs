@@ -60,6 +60,7 @@ namespace DCL.Places
         [SerializeField] private Button exitNavigationButton = null!;
 
         [Header("World Access")]
+        [SerializeField] private GameObject? actionButtonsContainer;
         [SerializeField] private GameObject? worldAccessStatusContainer;
         [SerializeField] private TMP_Text? worldAccessStatusText;
         [SerializeField] private Button enterPasswordButton = null!;
@@ -296,8 +297,10 @@ namespace DCL.Places
         {
             jumpInButton.gameObject.SetActive(false);
             enterPasswordButton.gameObject.SetActive(false);
-            if (worldAccessStatusText != null)
-                worldAccessStatusText.gameObject.SetActive(false);
+            if (worldAccessStatusContainer != null)
+                worldAccessStatusContainer.SetActive(false);
+            if (actionButtonsContainer != null)
+                actionButtonsContainer.SetActive(false);
         }
 
         public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
@@ -305,33 +308,44 @@ namespace DCL.Places
             bool isInvited = accessState == WorldAccessCheckResult.Allowed && accessType == WorldAccessType.AllowList;
             bool isRestricted = accessState == WorldAccessCheckResult.AccessDenied || accessState == WorldAccessCheckResult.PasswordRequired;
 
-            if (worldAccessStatusText != null)
+            if (worldAccessStatusContainer != null)
             {
                 if (isRestricted || isInvited)
                 {
-                    worldAccessStatusText.gameObject.SetActive(true);
-                    if (accessState == WorldAccessCheckResult.AccessDenied)
+                    worldAccessStatusContainer.SetActive(true);
+                    if (worldAccessStatusText != null)
                     {
-                        worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " INVITE ONLY";
-                        worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
-                    }
-                    else if (accessState == WorldAccessCheckResult.PasswordRequired)
-                    {
-                        worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " PASSWORD REQUIRED";
-                        worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
-                    }
-                    else
-                    {
-                        worldAccessStatusText.text = PADDLOCK_OPENED_SPRITE + " YOU ARE INVITED";
-                        worldAccessStatusText.color = WORLD_ACCESS_STATUS_GREEN;
+                        if (accessState == WorldAccessCheckResult.AccessDenied)
+                        {
+                            worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " INVITE ONLY";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
+                        }
+                        else if (accessState == WorldAccessCheckResult.PasswordRequired)
+                        {
+                            worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " PASSWORD REQUIRED";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
+                        }
+                        else
+                        {
+                            worldAccessStatusText.text = PADDLOCK_OPENED_SPRITE + " YOU ARE INVITED";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_GREEN;
+                        }
                     }
                 }
                 else
-                    worldAccessStatusText.gameObject.SetActive(false);
+                    worldAccessStatusContainer.SetActive(false);
             }
 
-            jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
-            enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
+            bool showJumpIn = accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed;
+            bool showEnterPassword = accessState == WorldAccessCheckResult.PasswordRequired;
+
+            jumpInButton.gameObject.SetActive(showJumpIn);
+            enterPasswordButton.gameObject.SetActive(showEnterPassword);
+
+            // Hide the action buttons container entirely when no button is visible,
+            // so it doesn't take layout space (e.g. Invitation Only worlds).
+            if (actionButtonsContainer != null)
+                actionButtonsContainer.SetActive(showJumpIn || showEnterPassword || startExitNavigationButtonsContainer.activeSelf);
         }
 
         private void OpenCardContextMenu(Vector2 position)
