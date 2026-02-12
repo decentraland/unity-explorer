@@ -535,7 +535,7 @@ namespace DCL.PluginSystem.Global
                 placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, worldPermissionsService);
             mvcManager.RegisterController(placeDetailPanelController);
 
-            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);
+            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
             var eventsThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,

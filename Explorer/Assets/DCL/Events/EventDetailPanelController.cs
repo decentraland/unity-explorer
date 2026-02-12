@@ -11,6 +11,11 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Browser;
+using DCL.Clipboard;
+using DCL.CommunicationData.URLHelpers;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.EventInfo
@@ -26,6 +31,7 @@ namespace DCL.Communities.EventInfo
         private readonly HttpEventsApiService eventsApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
