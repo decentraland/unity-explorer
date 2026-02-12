@@ -180,6 +180,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
+
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
                 DecentralandUrl.Lambdas => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
                     realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),

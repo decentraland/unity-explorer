@@ -28,7 +28,6 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
         private readonly IDecentralandUrlsSource urlsSource;
-        private IURLBuilder urlBuilder = new URLBuilder();
 
         internal LoadFixedPointersSystem(World world, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, new HashSet<Vector2Int>(), realmData)
         {
@@ -52,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (realmData.WorldManifest.IsEmpty)
                 InitiateCatalystPromise(entity, realmComponent);
             else
-                InitiateRegistryPromise(entity, realmComponent);
+                InitiateRegistryPromise(entity);
         }
 
          [Query]
@@ -147,15 +146,14 @@ namespace ECS.SceneLifeCycle.Systems
             World.Add(entity, new FixedScenePointers(promises));
         }
 
-        private void InitiateRegistryPromise(Entity entity, RealmComponent realmComponent)
+        private void InitiateRegistryPromise(Entity entity)
         {
             NativeHashSet<int2> occupiedParcels = realmData.WorldManifest.GetOccupiedParcels();
             var pointersList = new List<int2>(occupiedParcels.Count);
             foreach (int2 parcel in occupiedParcels)
                 pointersList.Add(parcel);
 
-            URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.EntitiesActive)))
-                                               .AppendParameter(new URLParameter("world_name", realmComponent.RealmData.RealmName)).Build();
+            URLAddress destination = URLDomain.FromString(string.Format(urlsSource.Url(DecentralandUrl.WorldEntitiesActive), realmData.RealmName));
 
             var listPromise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                 new GetSceneDefinitionList(new List<SceneEntityDefinition>(pointersList.Count), pointersList, new CommonLoadingArguments(destination)),
