@@ -25,6 +25,15 @@ namespace DCL.AvatarRendering.Emotes
         public static IEmote NewEmpty() =>
             new Emote();
 
+        string ITrimmedEmote.GetRarity() =>
+            ((IAvatarAttachment)this).GetRarity();
+
+        string ITrimmedEmote.GetCategory() =>
+            ((IAvatarAttachment)this).GetCategory();
+
+        string ITrimmedEmote.GetName() =>
+            ((IAvatarAttachment)this).GetName();
+
         // IThumbnailAttachment implementation
         URLPath IThumbnailAttachment.GetThumbnail()
         {
@@ -58,11 +67,9 @@ namespace DCL.AvatarRendering.Emotes
         string? IThumbnailAttachment.GetEntityId() =>
             DTO.id;
 
-        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct)
-        {
+        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
             // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
-            return WaitForThumbnailImplAsync(this, checkInterval, ct);
-        }
+            WaitForThumbnailImplAsync(this, checkInterval, ct);
 
         private static async UniTask<Sprite> WaitForThumbnailImplAsync(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
         {

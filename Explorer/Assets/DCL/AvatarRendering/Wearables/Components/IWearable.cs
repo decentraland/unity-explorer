@@ -39,6 +39,15 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public static IWearable NewEmpty() =>
             new Wearable();
+        
+        string ITrimmedWearable.GetRarity() =>
+            ((IAvatarAttachment)this).GetRarity();
+
+        string ITrimmedWearable.GetCategory() =>
+            ((IAvatarAttachment)this).GetCategory();
+
+        string ITrimmedWearable.GetName() =>
+            ((IAvatarAttachment)this).GetName();
 
         // Resolve ambiguity: IWearable inherits IThumbnailAttachment through both IAvatarAttachment and ITrimmedAvatarAttachment
         // Use IAvatarAttachment implementation as the most specific one by implementing directly using DTO
@@ -59,36 +68,25 @@ namespace DCL.AvatarRendering.Wearables.Components
             return new URLPath(thumbnailHash);
         }
 
-        URN IThumbnailAttachment.GetUrn()
-        {
-            return DTO.Metadata.id;
-        }
+        URN IThumbnailAttachment.GetUrn() =>
+            DTO.Metadata.id;
 
-        string IThumbnailAttachment.GetHash()
-        {
-            return DTO.GetHash();
-        }
+        string IThumbnailAttachment.GetHash() =>
+            DTO.GetHash();
 
-        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
-        {
-            return DTO.assetBundleManifestVersion;
-        }
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() =>
+            DTO.assetBundleManifestVersion;
 
-        string? IThumbnailAttachment.GetContentDownloadUrl()
-        {
-            return DTO.ContentDownloadUrl;
-        }
+        string? IThumbnailAttachment.GetContentDownloadUrl() =>
+            DTO.ContentDownloadUrl;
 
-        string? IThumbnailAttachment.GetEntityId()
-        {
-            return DTO.id;
-        }
+        string? IThumbnailAttachment.GetEntityId() =>
+            DTO.id;
 
-        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct)
-        {
+        UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
+
             // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
-            return WaitForThumbnailImplAsync(this, checkInterval, ct);
-        }
+            WaitForThumbnailImplAsync(this, checkInterval, ct);
 
         private static async UniTask<Sprite> WaitForThumbnailImplAsync(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
         {
