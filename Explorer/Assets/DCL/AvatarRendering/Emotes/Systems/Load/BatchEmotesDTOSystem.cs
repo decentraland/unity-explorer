@@ -1,0 +1,33 @@
+﻿using Arch.Core;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Systems.Abstract;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.GlobalPartitioning;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System;
+using System.Collections.Generic;
+
+namespace DCL.AvatarRendering.Emotes.Load
+{
+    /// <summary>
+    ///     Batches <see cref="GetEmotesDTOByPointersFromRealmIntention" /> from different avatars into a single request
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(GlobalDeferredLoadingSystem))] // It is executed before Deferred System to intercept promises
+    // Finalization systems will destroy the entity with promise
+    [UpdateBefore(typeof(FinalizeEmoteLoadingSystem))]
+    public partial class BatchEmotesDTOSystem : BatchPointersSystemBase<GetEmotesDTOByPointersFromRealmIntention, EmotesDTOList>
+    {
+        internal BatchEmotesDTOSystem(World world, IDecentralandUrlsSource urlsSource, TimeSpan batchHeartbeat) : base(world, batchHeartbeat, urlsSource) { }
+
+        protected override AssetPromise<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention> CreateAssetPromise(in BatchedPointersIntentions batchedIntentions, CommonLoadingArguments commonLoadingArguments) =>
+            AssetPromise<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>.Create(World, new GetEmotesDTOByPointersFromRealmIntention(batchedIntentions.Pointers, commonLoadingArguments), batchedIntentions.Partition);
+
+        protected override IReadOnlyCollection<URN> GetPointers(in AssetPromise<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention> promise) =>
+            promise.LoadingIntention.Pointers;
+    }
+}

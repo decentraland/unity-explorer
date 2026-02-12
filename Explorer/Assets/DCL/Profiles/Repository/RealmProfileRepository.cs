@@ -26,8 +26,6 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
-        private readonly int batchMaxSize;
-
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesAnalytics profilesAnalytics;

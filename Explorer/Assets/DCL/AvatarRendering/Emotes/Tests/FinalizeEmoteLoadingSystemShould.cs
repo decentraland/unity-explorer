@@ -31,7 +31,7 @@ using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.Streama
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using Object = UnityEngine.Object; // Corrected alias
 
@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             mockEmoteStorage.Set(emoteURN1, mockEmote1); // Pre-populate for existing case
 
             var pointers = new List<URN> { emoteURN1, emoteURN2 };
-            var intention = new GetEmotesByPointersFromRealmIntention(pointers, new CommonLoadingArguments(URLAddress.EMPTY));
+            var intention = new GetEmotesDTOByPointersFromRealmIntention(pointers, new CommonLoadingArguments(URLAddress.EMPTY));
             var repoolableList = RepoolableList<EmoteDTO>.NewList();
             repoolableList.List.Add(dto1);
             repoolableList.List.Add(dto2);
@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public void CancelEmoteDTOLoadingCorrectly()
         {
             var pointers = new List<URN> { new ("urn:realm:cancel") };
-            var intention = new GetEmotesByPointersFromRealmIntention(pointers, new CommonLoadingArguments(URLAddress.EMPTY));
+            var intention = new GetEmotesDTOByPointersFromRealmIntention(pointers, new CommonLoadingArguments(URLAddress.EMPTY));
 
             // Create promise struct; promise.Entity is the result-holder
             var promise = EmotesFromRealmPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);

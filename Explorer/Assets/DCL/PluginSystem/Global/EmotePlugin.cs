@@ -131,7 +131,7 @@ namespace DCL.PluginSystem.Global
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
+                new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
                 emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
