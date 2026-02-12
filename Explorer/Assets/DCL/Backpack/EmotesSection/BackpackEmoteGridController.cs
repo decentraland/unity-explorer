@@ -373,8 +373,11 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
+        private void SelectItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId, () => SetLoadingSlot(slot, false)));
+        }
 
         private void OnUnequip(int slot, IEmote? emote)
         {

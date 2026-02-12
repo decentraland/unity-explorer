@@ -155,7 +155,7 @@ namespace DCL.Backpack
                 return backpackItemView;
             }
         }
-        
+
         private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
         {
             IWearable? newBodyShape = null;
@@ -183,7 +183,7 @@ namespace DCL.Backpack
                         break;
                     }
                 }
-                
+
                 itemView.IsEquipped = isEquipped;
                 itemView.SetEquipButtonsState();
             }
@@ -430,8 +430,11 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
+        private void SelectItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId, () => SetLoadingSlot(slot, false)));
+        }
 
         private void OnUnequip(IWearable unequippedWearable)
         {
