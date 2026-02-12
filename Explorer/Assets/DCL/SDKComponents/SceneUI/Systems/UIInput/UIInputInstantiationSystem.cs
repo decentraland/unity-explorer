@@ -47,15 +47,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         protected override void Update(float t)
         {
+            UpdateUIInputTransformDefaultsQuery(World!);
+
             InstantiateUIInputQuery(World!);
             UpdateUIInputQuery(World!);
+
             TriggerInputResultsQuery(World!);
         }
 
         [Query]
-        [All(typeof(PBUiInput), typeof(UITransformComponent))]
+        [All(typeof(PBUiInput))]
         [None(typeof(UIInputComponent))]
-        private void InstantiateUIInput(in Entity entity, ref PBUiInput sdkModel, ref UITransformComponent uiTransformComponent)
+        private void InstantiateUIInput(in Entity entity, in PBUiInput sdkModel, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newUIInputComponent = inputTextsPool.Get()!;
             newUIInputComponent.Initialize(inputBlock,
@@ -65,9 +68,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
 
-            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newUIInputComponent.TextField, 0.22f, 0f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, 0.22f, 0f);
 
             World!.Add(entity, newUIInputComponent);
         }
@@ -80,6 +83,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(UIInputComponent))]
+        private void UpdateUIInputTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        {
+            if (!pbUiTransform.IsDirty) return;
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
         }
 
         [Query]

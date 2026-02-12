@@ -42,23 +42,26 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         protected override void Update(float t)
         {
+            UpdateUIDropdownTransformDefaultsQuery(World);
+
             InstantiateUIDropdownQuery(World);
             UpdateUIDropdownQuery(World);
+
             TriggerDropdownResultsQuery(World);
         }
 
         [Query]
-        [All(typeof(PBUiDropdown), typeof(UITransformComponent))]
+        [All(typeof(PBUiDropdown))]
         [None(typeof(UIDropdownComponent))]
-        private void InstantiateUIDropdown(in Entity entity, ref UITransformComponent uiTransformComponent)
+        private void InstantiateUIDropdown(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newDropdown = dropdownsPool.Get();
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity));
             uiTransformComponent.Transform.Add(newDropdown.DropdownField);
 
-            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, newDropdown.DropdownField, 0.22f, 0.1f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newDropdown.DropdownField, 0.22f, 0.1f);
 
             World.Add(entity, newDropdown);
         }
@@ -70,6 +73,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             UiElementUtils.SetupUIDropdownComponent(ref uiDropdownComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(UIDropdownComponent))]
+        private void UpdateUIDropdownTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        {
+            if (!pbUiTransform.IsDirty) return;
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
         }
 
         [Query]

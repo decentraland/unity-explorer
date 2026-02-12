@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
+            UpdateUIButtonTransformDefaultsQuery(World);
+
             SetupUiButtonQuery(World);
             TriggerPointerEventsQuery(World);
 
@@ -54,9 +56,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         [Query]
         [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
         [All(typeof(PBUiText))]
-        private void SetupUiButton(Entity entity, ref UITransformComponent uiTransformComponent, in PBPointerEvents pbPointerEvents)
+        private void SetupUiButton(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent, in PBPointerEvents pbPointerEvents)
         {
-            UiElementUtils.ApplyDefaultUiTransformValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
 
             bool showHoverFeedback = true;
@@ -74,9 +76,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             }
 
             if (showHoverFeedback)
-                UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, uiTransformComponent.Transform, 0.22f, 0.1f);
+                UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiTransformComponent.Transform, 0.22f, 0.1f);
 
             World.Add<UiButtonComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(UiButtonComponent))]
+        private void UpdateUIButtonTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        {
+            if (!pbUiTransform.IsDirty) return;
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
         }
 
         [Query]
@@ -105,13 +116,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         [Query]
         [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
-        private void HandleUIPointerEventsRemoval(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(entity, ref uiTransformComponent, ref sdkModel);
+        private void HandleUIPointerEventsRemoval(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(entity, ref uiTransformComponent, ref sdkModel);
+        private void HandleEntityDestruction(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
@@ -126,7 +137,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel)
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();

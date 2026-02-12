@@ -444,46 +444,93 @@ namespace DCL.SDKComponents.SceneUI.Utils
         private readonly struct HoverStyleBehaviourData
         {
             public readonly VisualElement HoverEventTarget;
+            public readonly VisualElement UiTransform;
             public readonly World World;
             public readonly Entity Entity;
             public readonly float BorderDarkenFactor;
             public readonly float BackgroundDarkenFactor;
 
-            public HoverStyleBehaviourData(VisualElement hoverEventTarget, World world, Entity entity, float borderDarkenFactor, float backgroundDarkenFactor)
+            // Store original border colors from VisualElement to lerp back to on hover leave
+            public readonly Color OriginalBorderTopColor;
+            public readonly Color OriginalBorderRightColor;
+            public readonly Color OriginalBorderBottomColor;
+            public readonly Color OriginalBorderLeftColor;
+
+            public HoverStyleBehaviourData(
+                VisualElement hoverEventTarget,
+                VisualElement uiTransform,
+                World world,
+                Entity entity,
+                float borderDarkenFactor,
+                float backgroundDarkenFactor,
+                Color originalBorderTopColor,
+                Color originalBorderRightColor,
+                Color originalBorderBottomColor,
+                Color originalBorderLeftColor)
             {
                 HoverEventTarget = hoverEventTarget;
+                UiTransform = uiTransform;
                 World = world;
                 Entity = entity;
                 BorderDarkenFactor = borderDarkenFactor;
                 BackgroundDarkenFactor = backgroundDarkenFactor;
+                OriginalBorderTopColor = originalBorderTopColor;
+                OriginalBorderRightColor = originalBorderRightColor;
+                OriginalBorderBottomColor = originalBorderBottomColor;
+                OriginalBorderLeftColor = originalBorderLeftColor;
             }
         }
 
         private static readonly EventCallback<PointerEnterEvent, HoverStyleBehaviourData> HOVER_ENTER_CALLBACK = OnHoverEnter;
         private static readonly EventCallback<PointerLeaveEvent, HoverStyleBehaviourData> HOVER_LEAVE_CALLBACK = OnHoverLeave;
 
-        public static void ConfigureHoverStylesBehaviour(World world, Entity entity, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
+        public static void ConfigureHoverStylesBehaviour(World world, Entity entity, in UITransformComponent uiTransformComponent, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
         {
-            var data = new HoverStyleBehaviourData(hoverEventTarget, world, entity, borderDarkenFactor, backgroundDarkenFactor);
+            // Capture the current border colors from the VisualElement
+            var transform = uiTransformComponent.Transform;
+            var borderTopColor = transform.resolvedStyle.borderTopColor;
+            var borderRightColor = transform.resolvedStyle.borderRightColor;
+            var borderBottomColor = transform.resolvedStyle.borderBottomColor;
+            var borderLeftColor = transform.resolvedStyle.borderLeftColor;
+
+            var data = new HoverStyleBehaviourData(
+                hoverEventTarget,
+                transform,
+                world,
+                entity,
+                borderDarkenFactor,
+                backgroundDarkenFactor,
+                borderTopColor,
+                borderRightColor,
+                borderBottomColor,
+                borderLeftColor);
+
             hoverEventTarget.RegisterCallback(HOVER_ENTER_CALLBACK, data);
             hoverEventTarget.RegisterCallback(HOVER_LEAVE_CALLBACK, data);
         }
 
         private static void OnHoverEnter(PointerEnterEvent evt, HoverStyleBehaviourData behaviourData)
         {
-            if (behaviourData.HoverEventTarget.hasDisabledPseudoState
-                || !behaviourData.World.TryGet(behaviourData.Entity, out UITransformComponent? uiTransformComponent)) return;
+            if (behaviourData.HoverEventTarget.hasDisabledPseudoState)
+                return;
 
             if (behaviourData.BorderDarkenFactor > 0)
             {
-                uiTransformComponent!.Transform.style.borderTopColor = Color.Lerp(uiTransformComponent.Transform.style.borderTopColor.value, Color.black, behaviourData.BorderDarkenFactor);
-                uiTransformComponent.Transform.style.borderRightColor = Color.Lerp(uiTransformComponent.Transform.style.borderRightColor.value, Color.black, behaviourData.BorderDarkenFactor);
-                uiTransformComponent.Transform.style.borderBottomColor = Color.Lerp(uiTransformComponent.Transform.style.borderBottomColor.value, Color.black, behaviourData.BorderDarkenFactor);
-                uiTransformComponent.Transform.style.borderLeftColor = Color.Lerp(uiTransformComponent.Transform.style.borderLeftColor.value, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderTopColor = Color.Lerp(behaviourData.OriginalBorderTopColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderRightColor = Color.Lerp(behaviourData.OriginalBorderRightColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderBottomColor = Color.Lerp(behaviourData.OriginalBorderBottomColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderLeftColor = Color.Lerp(behaviourData.OriginalBorderLeftColor, Color.black, behaviourData.BorderDarkenFactor);
             }
 
-            if (behaviourData.BackgroundDarkenFactor > 0 && behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground))
-                uiTransformComponent!.Transform.style.backgroundColor = Color.Lerp(pbUiBackground!.GetColor(), Color.black, behaviourData.BackgroundDarkenFactor);
+            if (behaviourData.BackgroundDarkenFactor > 0)
+            {
+                // Get the background color from PBUiBackground if it exists, otherwise use default one
+                Color backgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
+                    ? pbUiBackground!.GetColor()
+                    : Color.white;
+
+                behaviourData.UiTransform.style.backgroundColor = Color.Lerp(backgroundColor, Color.black, behaviourData.BackgroundDarkenFactor);
+            }
         }
 
         private static void OnHoverLeave(PointerLeaveEvent evt, HoverStyleBehaviourData behaviourData)
@@ -491,30 +538,34 @@ namespace DCL.SDKComponents.SceneUI.Utils
             if (evt.target != behaviourData.HoverEventTarget)
                 return; // detected on child
 
-            if (!behaviourData.World.TryGet(behaviourData.Entity, out UITransformComponent? uiTransformComponent) || !behaviourData.World.TryGet(behaviourData.Entity, out PBUiTransform? pbUiTransform))
-                return;
-
             if (behaviourData.BorderDarkenFactor > 0)
             {
-                uiTransformComponent!.Transform.style.borderTopColor = pbUiTransform!.GetBorderTopColor();
-                uiTransformComponent.Transform.style.borderRightColor = pbUiTransform!.GetBorderRightColor();
-                uiTransformComponent.Transform.style.borderBottomColor = pbUiTransform!.GetBorderBottomColor();
-                uiTransformComponent.Transform.style.borderLeftColor = pbUiTransform!.GetBorderLeftColor();
+                behaviourData.UiTransform.style.borderTopColor = behaviourData.OriginalBorderTopColor;
+                behaviourData.UiTransform.style.borderRightColor = behaviourData.OriginalBorderRightColor;
+                behaviourData.UiTransform.style.borderBottomColor = behaviourData.OriginalBorderBottomColor;
+                behaviourData.UiTransform.style.borderLeftColor = behaviourData.OriginalBorderLeftColor;
             }
 
-            if (behaviourData.BackgroundDarkenFactor > 0 && behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground))
-                uiTransformComponent!.Transform.style.backgroundColor = pbUiBackground!.GetColor();
+            if (behaviourData.BackgroundDarkenFactor > 0)
+            {
+                // Restore to the current PBUiBackground color if it exists, otherwise use default one
+                Color originalBackgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
+                    ? pbUiBackground!.GetColor()
+                    : Color.white;
+
+                behaviourData.UiTransform.style.backgroundColor = originalBackgroundColor;
+            }
         }
 
+        private const float UI_TRANSFORM_DEFAULT_RADIUS = 10f;
+        private const float UI_TRANSFORM_DEFAULT_BORDER_WIDTH = 1f;
         /// <summary>
         /// Applies default UI transform styles for interactive UI elements (dropdowns, inputs, buttons).
         /// Sets overflow to hidden, and applies default border radius, border width, and border color
         /// when these properties are not explicitly defined in the PBUiTransform component.
         /// </summary>
-        public static void ApplyDefaultUiTransformValues(World world, Entity entity, VisualElement uiTransform)
+        public static void ApplyDefaultUiTransformValues(in PBUiTransform pbUiTransform, VisualElement uiTransform)
         {
-            var pbUiTransform = world.Get<PBUiTransform>(entity);
-
             uiTransform.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
 
             if (pbUiTransform is
@@ -525,10 +576,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     HasBorderTopRightRadius: false
                 })
             {
-                uiTransform.style.borderBottomLeftRadius = new StyleLength(10);
-                uiTransform.style.borderBottomRightRadius = new StyleLength(10);
-                uiTransform.style.borderTopLeftRadius = new StyleLength(10);
-                uiTransform.style.borderTopRightRadius = new StyleLength(10);
+                uiTransform.style.borderBottomLeftRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderBottomRightRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderTopLeftRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderTopRightRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
             }
 
             if (pbUiTransform is
@@ -539,10 +590,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     HasBorderLeftWidth: false
                 })
             {
-                uiTransform.style.borderTopWidth = new StyleFloat(1);
-                uiTransform.style.borderRightWidth = new StyleFloat(1);
-                uiTransform.style.borderBottomWidth = new StyleFloat(1);
-                uiTransform.style.borderLeftWidth = new StyleFloat(1);
+                uiTransform.style.borderTopWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderRightWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderBottomWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderLeftWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
             }
 
             if (pbUiTransform is
