@@ -1237,7 +1237,6 @@ namespace Global.Dynamic
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
-                staticContainer.LandscapeParcelData,
                 builderCollectionsPreview,
                 entitiesAnalytics
             );
