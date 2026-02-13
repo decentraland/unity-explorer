@@ -1,6 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Diagnostics;
 using Runtime.Wearables;
@@ -9,30 +11,34 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 
-namespace DCL.AvatarRendering.Emotes
+namespace DCL.AvatarRendering.Wearables
 {
-    public static class EmoteProviderHelper
+    public static class ElementProviderHelper
     {
-        public static async UniTaskVoid FetchEmoteByPointerAndExecuteAsync(string pointer,
-            IEmoteProvider emoteProvider,
-            IEmoteStorage emoteStorage,
+        public static async UniTaskVoid FetchElementByPointerAndExecuteAsync<TTrimmedElement, TElement, TParams, TElementDTO>(
+            string pointer,
+            IElementsProvider<TTrimmedElement, TElement, TParams> elementProvider,
+            IAvatarElementStorage<TElement, TElementDTO> elementStorage,
             IReadOnlyEquippedWearables equippedWearables,
-            Action<IEmote> onEmoteFetched,
-            CancellationToken ct)
+            Action<TElement> onElementFetched,
+            CancellationToken ct,
+            ReportData reportData)
+            where TElement: IAvatarAttachment<TElementDTO>
+            where TElementDTO: AvatarAttachmentDTO
         {
-            if (emoteStorage.TryGetElement(pointer, out var emote))
+            if (elementStorage.TryGetElement(pointer, out var element))
             {
                 // Emote could be in the storage but still loading their data. Wait until they finish loading.
-                await UniTask.WaitWhile(() => emote.IsLoading, cancellationToken: ct);
+                await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
 
                 await UniTask.SwitchToMainThread();
-                onEmoteFetched(emote);
+                onElementFetched(element);
 
                 return;
             }
 
             List<URN> urnRequest = ListPool<URN>.Get();
-            List<IEmote> results = ListPool<IEmote>.Get();
+            List<TElement> results = ListPool<TElement>.Get();
 
             try
             {
@@ -40,25 +46,25 @@ namespace DCL.AvatarRendering.Emotes
 
                 BodyShape currenBodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
-                await emoteProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
+                await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 if (results != null)
                     foreach (var result in results)
                         if (result.GetUrn() == pointer)
                         {
                             await UniTask.SwitchToMainThread();
-                            onEmoteFetched(result);
+                            onElementFetched(result);
                             return;
                         }
 
-                ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Couldn't fetch emote for pointer: {pointer}");
+                ReportHub.LogError(reportData, $"Couldn't fetch element of type {typeof(TElement)} for pointer: {pointer}");
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.EMOTE)); }
             finally
             {
                 ListPool<URN>.Release(urnRequest);
-                ListPool<IEmote>.Release(results);
+                ListPool<TElement>.Release(results);
             }
         }
     }

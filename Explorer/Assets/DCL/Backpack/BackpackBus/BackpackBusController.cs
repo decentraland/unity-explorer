@@ -32,6 +32,9 @@ namespace DCL.Backpack.BackpackBus
         private readonly CancellationTokenSource fetchEmoteCts = new ();
         private CancellationTokenSource equipOutfitCts = new ();
 
+        private readonly ReportData emoteReportData = new (ReportCategory.EMOTE);
+        private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
+
         private int currentEmoteSlot = -1;
 
         public BackpackBusController(
@@ -115,7 +118,7 @@ namespace DCL.Backpack.BackpackBus
             backpackEventBus.SendFilter(command.Category, command.CategoryEnum, command.SearchText);
 
         private void HandleSelectWearableCommand(BackpackSelectWearableCommand command) =>
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => SelectWearable(item, command), fetchWearableCts.Token).Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => SelectWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
 
         private void SelectWearable(IWearable wearable, BackpackSelectWearableCommand command)
         {
@@ -124,7 +127,7 @@ namespace DCL.Backpack.BackpackBus
         }
 
         private void HandleEquipWearableCommand(BackpackEquipWearableCommand command) =>
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token).Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, wearablesProvider, wearableStorage, equippedWearables, item => EquipWearable(item, command), fetchWearableCts.Token, wearableReportData).Forget();
 
         private void EquipWearable(IWearable wearable, BackpackEquipWearableCommand command)
         {
@@ -179,7 +182,7 @@ namespace DCL.Backpack.BackpackBus
         }
 
         private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command) =>
-            EmoteProviderHelper.FetchEmoteByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => EquipEmote(emote, command), fetchEmoteCts.Token).Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => EquipEmote(emote, command), fetchEmoteCts.Token, emoteReportData).Forget();
 
         private void EquipEmote(IEmote emote, BackpackEquipEmoteCommand command)
         {
@@ -226,7 +229,7 @@ namespace DCL.Backpack.BackpackBus
         }
 
         private void HandleSelectEmoteCommand(BackpackSelectEmoteCommand command) =>
-            EmoteProviderHelper.FetchEmoteByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token).Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(command.Id, emotesProvider, emoteStorage, equippedWearables, emote => SelectEmote(emote, command), fetchEmoteCts.Token, emoteReportData).Forget();
 
         private void SelectEmote(IEmote emote, BackpackSelectEmoteCommand command)
         {

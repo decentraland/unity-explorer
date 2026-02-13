@@ -50,6 +50,7 @@ namespace DCL.Backpack
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems = new ();
         private readonly List<ITrimmedWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
+        private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -272,10 +273,10 @@ namespace DCL.Backpack
         private void EquipItem(int slot, string itemId)
         {
             SetLoadingSlot(slot, true);
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
-                                       wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
-                                       CancellationToken.None)
-                                  .Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
+                                      wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
+                                      CancellationToken.None, wearableReportData)
+                                 .Forget();
         }
 
         private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, int slot, CancellationToken ct)
