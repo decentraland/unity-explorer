@@ -1,10 +1,9 @@
 ﻿using System;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace DCL.Landscape.Config
+namespace DCL.PluginSystem.Global
 {
     [Serializable]
     public class ParcelData : ScriptableObject
