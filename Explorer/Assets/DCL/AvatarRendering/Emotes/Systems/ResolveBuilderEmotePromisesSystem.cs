@@ -10,7 +10,8 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.GLTF;
 using System;
-
+using System.Collections.Generic;
+using UnityEngine.Pool;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
@@ -50,19 +51,32 @@ namespace DCL.AvatarRendering.Emotes.Systems
             }
 
             // Only create promises for builder collections
-            if (intention is { NeedsBuilderAPISigning: false } || intention.FullResults.List is not { Count: > 0 })
+            if (intention is { NeedsBuilderAPISigning: false } || intention.Results is not { Count: > 0 })
                 return;
 
             bool allEmotesProcessed = true;
+            List<IEmote> emoteList = ListPool<IEmote>.Get();
 
-            foreach (IEmote emote in intention.FullResults.List)
+            foreach (ITrimmedEmote trimmedEmote in intention.Results)
             {
+                // All trimmed emotes from the builder endpoint should be processable to full emotes
+                if (trimmedEmote is not IEmote emote)
+                    continue;
+
+                emoteList.Add(emote);
+
                 if (TryCreateBuilderEmoteAssetPromises(emote, partitionComponent))
                     allEmotesProcessed = false;
             }
 
             if (allEmotesProcessed)
-                World!.Add(entity, new StreamableResult(new EmotesResolution(intention.FullResults, intention.TotalAmount)));
+            {
+                RepoolableList<IEmote> resultList = RepoolableList<IEmote>.NewList();
+                resultList.List.AddRange(emoteList);
+                World!.Add(entity, new StreamableResult(new EmotesResolution(resultList, intention.TotalAmount)));
+            }
+
+            ListPool<IEmote>.Release(emoteList);
         }
 
         private bool TryCreateBuilderEmoteAssetPromises(in IEmote emote, in IPartitionComponent partitionComponent)
