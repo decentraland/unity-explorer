@@ -451,5 +451,30 @@ namespace DCL.Rendering.Menus
                 }
             }
         }
+
+        public class FindSpeedTreeMaterials : EditorWindow
+        {
+            [MenuItem("Decentraland/Shaders/Find SpeedTree Materials")]
+            static void FindMaterials()
+            {
+                string[] guids = AssetDatabase.FindAssets("t:Material");
+                List<Material> speedTreeMats = new List<Material>();
+
+                foreach (string guid in guids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+
+                    if (mat != null && mat.shader != null &&
+                        mat.shader.name.Contains("SpeedTree"))
+                    {
+                        speedTreeMats.Add(mat);
+                        Debug.Log($"SpeedTree material found: {mat.name} at {path}");
+                    }
+                }
+
+                Debug.Log($"Total SpeedTree materials found: {speedTreeMats.Count}");
+            }
+        }
     }
 }
