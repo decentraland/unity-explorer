@@ -20,7 +20,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -67,7 +66,6 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -79,21 +77,22 @@ namespace DCL.Minimap
         private readonly IDonationsService donationsService;
         private readonly MinimapContextMenuSettings minimapContextMenuSettings;
 
+        private SideMenuPresenter? sideMenuPresenter;
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
-        private CancellationTokenSource? favoriteCancellationToken = new ();
-        private CancellationTokenSource showBannedTooltipCts;
+        private CancellationTokenSource favoriteCancellationToken = new ();
+        private CancellationTokenSource showBannedTooltipCts = new ();
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
-        private ToggleContextMenuControlSettings homeToggleSettings;
+        private ToggleContextMenuControlSettings? homeToggleSettings;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
         public MinimapController(
             MinimapView minimapView,
@@ -106,7 +105,6 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             Vector2Int startParcelInGenesis,
-            ISharedSpaceManager sharedSpaceManager,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
@@ -128,7 +126,6 @@ namespace DCL.Minimap
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.systemClipboard = systemClipboard;
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
@@ -149,6 +146,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             placesApiCts.SafeCancelAndDispose();
+            sideMenuPresenter?.Dispose();
             disposeCts.Cancel();
             favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
@@ -196,14 +194,14 @@ namespace DCL.Minimap
         {
             viewInstance!.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
-            viewInstance.minimapRendererButton.Button.onClick.AddListener(() => sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Navmap)));
+            viewInstance.minimapRendererButton.Button.onClick.AddListener(OnMinimapRendererButtonClicked);
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
             viewInstance.favoriteButton.OnButtonClicked += OnFavoriteButtonClicked;
             viewInstance.donateButton.onClick.AddListener(OpenDonateToCreatorPanel);
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
-            new SideMenuController(viewInstance.sideMenuView);
+            sideMenuPresenter = new SideMenuPresenter(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmData.IsGenesis());
             realmData.RealmType.OnUpdate += OnRealmChanged;
@@ -233,6 +231,11 @@ namespace DCL.Minimap
             }
         }
 
+        private void OnMinimapRendererButtonClicked()
+        {
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap)));
+        }
+
         private void SetInitialHomeToggleValue()
         {
             bool isHome;
@@ -246,9 +249,8 @@ namespace DCL.Minimap
 
         private void ShowContextMenu()
         {
-            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuButton.transform.position)))
+                           new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();
         }
 
@@ -284,15 +286,17 @@ namespace DCL.Minimap
                 try
                 {
                     PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(previousParcelPosition, favoriteCancellationToken.Token);
+
                     if (placeInfo == null)
                     {
                         viewInstance!.favoriteButton.SetButtonState(false, false);
                         return;
                     }
-                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo!.id, value, ct);
+
+                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
-                catch (OperationCanceledException _) { }
+                catch (OperationCanceledException) { }
                 catch (Exception exception)
                 {
                     viewInstance!.favoriteButton.SetButtonState(false);
@@ -470,7 +474,7 @@ namespace DCL.Minimap
 
                 return await placesAPIService.GetPlaceAsync(parcelPosition, ct, renewCache);
             }
-            catch (OperationCanceledException _) { }
+            catch (OperationCanceledException) { }
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
@@ -611,6 +615,6 @@ namespace DCL.Minimap
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TrackPlayerPositionSystem : ControllerECSBridgeSystem
     {
-        internal TrackPlayerPositionSystem(World world) : base(world) { }
+        private TrackPlayerPositionSystem(World world) : base(world) { }
     }
 }

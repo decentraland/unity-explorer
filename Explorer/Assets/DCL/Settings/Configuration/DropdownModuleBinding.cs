@@ -60,7 +60,6 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
             IAppArgs appParameters)
         {
@@ -100,7 +99,6 @@ namespace DCL.Settings.Configuration
 
                 DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
                     chatSettingsAsset,
-                    isTranslationChatEnabled,
                     eventBus),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))

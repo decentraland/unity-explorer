@@ -52,7 +52,9 @@ namespace Utility
             private readonly Action<T> handler;
 
             public Unsubscriber(EventBus bus, Action<T> handler)
-                => (this.bus, this.handler) = (bus, handler);
+            {
+                (this.bus, this.handler) = (bus, handler);
+            }
 
             public void Dispose()
             {

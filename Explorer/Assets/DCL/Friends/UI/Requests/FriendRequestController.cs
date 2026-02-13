@@ -46,7 +46,7 @@ namespace DCL.Friends.UI.Requests
         private CancellationTokenSource? showPreCancelToastCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public FriendRequestController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,

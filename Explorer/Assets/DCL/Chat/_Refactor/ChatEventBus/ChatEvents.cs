@@ -200,6 +200,16 @@ namespace DCL.Chat
         {
             public ChatState CurrentState;
         }
+
+        /// <summary>
+        ///     Event:          ToggleChatEvent
+        ///     Triggered By:   SidebarController
+        ///     When:           Signals the chat to toggle its state from Focused to minimized or vice versa.
+        ///     Subscribers:    ChatFsmController: Transitions the UI to the corresponding state.
+        /// </summary>
+        public struct ToggleChatEvent {}
+
+        public struct DeselectInputEvent { }
 #endregion
 
 #region Miscellaneous Events
@@ -226,6 +236,60 @@ namespace DCL.Chat
         ///     Subscribers:    ChatInputPresenter: ChatPlugin in order to open the explore panel (chat settings).
         /// </summary>
         public struct ClickableBlockedInputClickedEvent { }
+#endregion
+
+#region External Chat Request Events
+        /// <summary>
+        ///     Event:          InsertTextInChatRequestedEvent
+        ///     Triggered By:   External systems requesting to insert text into the chat input.
+        ///     When:           A request is made to add text to the current chat channel input field.
+        ///     Subscribers:    ChatInputPresenter: Inserts the text into the input field.
+        /// </summary>
+        public struct InsertTextInChatRequestedEvent
+        {
+            public string Text;
+        }
+
+        /// <summary>
+        ///     Event:          ClearAndInsertTextInChatRequestedEvent
+        ///     Triggered By:   External systems requesting to clear and insert text into the chat input.
+        ///     When:           A request is made to clear the input field and add new text.
+        ///     Subscribers:    ChatInputPresenter: Clears the input field and inserts the text.
+        /// </summary>
+        public struct ClearAndInsertTextInChatRequestedEvent
+        {
+            public string Text;
+        }
+
+        /// <summary>
+        ///     Event:          OpenPrivateConversationRequestedEvent
+        ///     Triggered By:   External systems requesting to open a private conversation.
+        ///     When:           A request is made to open and focus a private conversation in the chat.
+        ///     Subscribers:    Chat system: Opens the private conversation with the specified user.
+        /// </summary>
+        public struct OpenPrivateConversationRequestedEvent
+        {
+            public string UserId;
+        }
+
+        /// <summary>
+        ///     Event:          OpenCommunityConversationRequestedEvent
+        ///     Triggered By:   External systems requesting to open a community conversation.
+        ///     When:           A request is made to open and focus a community conversation in the chat.
+        ///     Subscribers:    Chat system: Opens the community conversation with the specified community.
+        /// </summary>
+        public struct OpenCommunityConversationRequestedEvent
+        {
+            public string CommunityId;
+        }
+
+        /// <summary>
+        ///     Event:          StartCallEvent
+        ///     Triggered By:   External systems requesting to start a call.
+        ///     When:           A request is made to start a call in the current conversation.
+        ///     Subscribers:    Voice chat system: Initiates a call in the current conversation.
+        /// </summary>
+        public struct StartCallEvent { }
 #endregion
     }
 }

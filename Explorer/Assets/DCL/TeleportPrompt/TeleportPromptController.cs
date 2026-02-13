@@ -25,7 +25,7 @@ namespace DCL.TeleportPrompt
         private ImageController? placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,

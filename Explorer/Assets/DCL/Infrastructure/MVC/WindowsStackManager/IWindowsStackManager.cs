@@ -7,7 +7,7 @@ namespace MVC
     {
         (IController controller, int orderInLayer) TopMostPopup { get; }
 
-        IController CurrentFullscreenController { get; }
+        IController? CurrentFullscreenController { get; }
 
         /// <summary>
         ///     For each sortingLayer there is a separate stack with a begin value for <see cref="CanvasOrdering.OrderInLayer" />
@@ -37,5 +37,7 @@ namespace MVC
         ///     Controller can be popped from the middle?
         /// </summary>
         PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true);
+
+        NonPersistentControllersInfo GetNonPersistentControllersInfo();
     }
 }

@@ -19,9 +19,9 @@ namespace DCL.SceneLoadingScreens
         private bool tipsParseSuccess;
         private bool temporalTipsParseSuccess;
 
-        public TipsFromFeatureFlagDecorator(ISceneTipsProvider source, FeatureFlagsConfiguration featureFlags)
+        public TipsFromFeatureFlagDecorator(ISceneTipsProvider source)
         {
-            this.featureFlags = featureFlags;
+            this.featureFlags = FeatureFlagsConfiguration.Instance;
             this.source = source;
         }
 

@@ -1,7 +1,6 @@
 ﻿using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using System.Threading;
-using DCL.Chat.EventBus;
 using System;
 using Utility;
 
@@ -11,8 +10,8 @@ namespace DCL.Chat.ChatCommands
     {
         public event Action<bool>? ChannelOpened;
 
-        private readonly IEventBus eventBus;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus eventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
 
@@ -23,8 +22,8 @@ namespace DCL.Chat.ChatCommands
         private CancellationTokenSource? oneOpAtATimeCts;
 
         public SelectChannelCommand(
-            IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus eventBus,
+            ChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
             CommunityUserStateService communityUserStateService,
@@ -75,7 +74,7 @@ namespace DCL.Chat.ChatCommands
 
                 currentChannelService.SetCurrentChannel(channel, userStateService);
 
-                eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
+                eventBus.RaiseChannelSelectedEvent(channel);
                 ChannelOpened?.Invoke(false);
             }
 
@@ -86,7 +85,7 @@ namespace DCL.Chat.ChatCommands
         private void SelectAndInsertAsync(ChatChannel.ChannelId channelId, string text, CancellationToken ct)
         {
             Execute(channelId, ct);
-            chatEventBus.ClearAndInsertText(text);
+            chatEventBus.RaiseClearAndInsertTextInChatRequestedEvent(text);
         }
 
         /// <summary>

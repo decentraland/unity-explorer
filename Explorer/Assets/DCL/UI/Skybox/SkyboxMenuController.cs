@@ -2,26 +2,22 @@ using Cysharp.Threading.Tasks;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.UI.Skybox
 {
-    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
+    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>
     {
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
-        private CancellationTokenSource skyboxMenuCts = new ();
+        private UniTaskCompletionSource? closeViewTask;
         private bool? pendingInteractableState;
-        private bool isRestrictedByScene = false;
+        private bool isRestrictedByScene;
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings, ISceneRestrictionBusController sceneRestrictionBusController) : base(viewFactory)
         {
@@ -33,29 +29,20 @@ namespace DCL.UI.Skybox
         public override void Dispose()
         {
             base.Dispose();
-            skyboxMenuCts.SafeCancelAndDispose();
 
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
             skyboxSettings.DayCycleChanged -= OnDayCycleChanged;
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
 
             if (!viewInstance) return;
-            viewInstance.CloseButton.onClick.RemoveAllListeners();
             viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
             viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            skyboxMenuCts.Cancel();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
-            await UniTask.WaitUntilCanceled(skyboxMenuCts.Token);
+            closeViewTask = new UniTaskCompletionSource();
+            await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
         protected override void OnViewInstantiated()
@@ -65,9 +52,7 @@ namespace DCL.UI.Skybox
             skyboxSettings.DayCycleChanged += OnDayCycleChanged;
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
 
-            viewInstance!.CloseButton.onClick.AddListener(OnClose);
-
-            viewInstance.TimeProgressionToggle.isOn = false;
+            viewInstance!.TimeProgressionToggle.isOn = false;
             viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
             viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
 
@@ -99,10 +84,9 @@ namespace DCL.UI.Skybox
                 skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
         }
 
-        protected override void OnBeforeViewShow()
+        protected override void OnViewClose()
         {
-            base.OnBeforeViewShow();
-            skyboxMenuCts = skyboxMenuCts.SafeRestart();
+            closeViewTask?.TrySetCanceled();
         }
 
         private void OnTimeOfDayChanged(float time)
@@ -113,17 +97,12 @@ namespace DCL.UI.Skybox
 
         private static string GetFormatedTime(float time)
         {
-            int totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
+            var totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
 
             int hours = totalMinutes / 60;
             int minutes = totalMinutes % 60;
 
             return $"{hours:00}:{minutes:00}";
-        }
-
-        private void OnClose()
-        {
-            skyboxMenuCts.Cancel();
         }
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
@@ -136,7 +115,7 @@ namespace DCL.UI.Skybox
 
         private void SetInteractable(bool isInteractable)
         {
-            if (viewInstance == null)
+            if (!viewInstance)
             {
                 pendingInteractableState = isInteractable;
                 return;

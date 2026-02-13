@@ -9,7 +9,7 @@ namespace DCL.UI.ConfirmationDialog
     public class ConfirmationDialogController : ControllerBase<ConfirmationDialogView, ConfirmationDialogParameter>
     {
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public ConfirmationDialogController(ViewFactoryMethod viewFactory,
             ProfileRepositoryWrapper profileRepositoryWrapper)

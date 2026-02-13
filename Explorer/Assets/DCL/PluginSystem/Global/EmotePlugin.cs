@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Systems;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -17,7 +16,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
-using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -31,6 +29,7 @@ using ECS.SceneLifeCycle;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -56,10 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private AudioSource? audioSourceReference;
-        private EmotesWheelController? emotesWheelController;
         private readonly bool localSceneDevelopment;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
@@ -67,6 +63,11 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly IEventBus emotesEventBus;
+
+        private AudioSource? audioSourceReference;
+        private EmotesWheelController? emotesWheelController;
+        private IDisposable? requestOpenEmoteWheelSubscription;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -84,13 +85,13 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             string builderContentURL,
             bool localSceneDevelopment,
-            ISharedSpaceManager sharedSpaceManager,
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             IDecentralandUrlsSource decentralandUrlsSource,
-            EntitiesAnalytics entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            IEventBus emotesEventBus)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -107,12 +108,12 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.localSceneDevelopment = localSceneDevelopment;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.builderCollectionsPreview = builderCollectionsPreview;
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;
+            this.emotesEventBus = emotesEventBus;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             audioClipsCache = new AudioClipsCache();
@@ -121,6 +122,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            requestOpenEmoteWheelSubscription?.Dispose();
             emotesWheelController?.Dispose();
         }
 
@@ -141,7 +143,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -177,11 +179,21 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
-                inputBlock, cursor, sharedSpaceManager);
-
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
+                inputBlock, cursor, mvcManager);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            requestOpenEmoteWheelSubscription = emotesEventBus.Subscribe<RequestToggleEmoteWheelEvent>(OnEmoteWheelShortcutPerformed);
+        }
+
+        private void OnEmoteWheelShortcutPerformed(RequestToggleEmoteWheelEvent _)
+        {
+            if (emotesWheelController == null) return;
+
+            if (emotesWheelController.State == ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
+            else
+                emotesWheelController.Close();
         }
 
         [Serializable]
@@ -208,11 +220,9 @@ namespace DCL.PluginSystem.Global
             /// Ordered list of base emote URNs.
             /// The order defines the default emote order for users with no equipped emotes.
             /// </summary>
-            [field: SerializeField]
-            public string[] BaseEmotes { get; private set; }
+            [field: SerializeField] public string[] BaseEmotes { get; private set; }
 
-            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
-                BaseEmotes.Select(s => new URN(s)).ToArray();
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() => BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

@@ -17,11 +17,11 @@ namespace DCL.Donations.UI
         [field: Space(5)]
         [field: SerializeField] private UserWalletAddressElement creatorAddressElement { get; set; } = null!;
 
-        private UserWalletAddressElementController? creatorAddressController;
+        private UserWalletAddressElementPresenter? creatorAddressController;
 
         private void Awake()
         {
-            creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
+            creatorAddressController = new UserWalletAddressElementPresenter(creatorAddressElement);
         }
 
         public void SetWaitingMessage(bool isThirdWeb)
@@ -29,8 +29,7 @@ namespace DCL.Donations.UI
             waitingMessageText.text = isThirdWeb ? WAITING_MESSAGE_THIRDWEB : WAITING_MESSAGE_BROWSER;
         }
 
-        public void ConfigurePanel(DonationPanelViewModel viewModel,
-            decimal donationAmount)
+        public void ConfigurePanel(DonationPanelViewModel viewModel, decimal donationAmount)
         {
             titleText.text = string.Format(TITLE_FORMAT, donationAmount);
 

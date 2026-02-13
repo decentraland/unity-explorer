@@ -20,37 +20,18 @@ namespace DCL.MarketplaceCredits
 
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement, IView, IPointerClickHandler
     {
-        public event Action OnAnyPlaceClick;
+        public event Action? OnAnyPlaceClick;
 
-        [field: SerializeField]
-        public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; }
-
-        [field: SerializeField]
-        public Button InfoLinkButton { get; private set; }
-
-        [field: SerializeField]
-        public InfoLinkButtonTooltipView InfoLinkButtonTooltip { get; private set; }
-
-        [field: SerializeField]
-        public Button CloseButton { get; private set; }
-
-        [field: SerializeField]
-        public MarketplaceCreditsWelcomeSubView WelcomeSubView { get; private set; }
-
-        [field: SerializeField]
-        public MarketplaceCreditsVerifyEmailSubView VerifyEmailSubView { get; private set; }
-
-        [field: SerializeField]
-        public MarketplaceCreditsGoalsOfTheWeekSubView GoalsOfTheWeekSubView { get; private set; }
-
-        [field: SerializeField]
-        public MarketplaceCreditsWeekGoalsCompletedSubView WeekGoalsCompletedSubView { get; private set; }
-
-        [field: SerializeField]
-        public MarketplaceCreditsProgramEndedSubView ProgramEndedSubView { get; private set; }
-
-        [field: SerializeField]
-        public WarningNotificationView ErrorNotification { get; private set; }
+        [field: SerializeField] public MarketplaceCreditsTotalCreditsWidgetView TotalCreditsWidget { get; private set; } = null!;
+        [field: SerializeField] public Button InfoLinkButton { get; private set; } = null!;
+        [field: SerializeField] public InfoLinkButtonTooltipView InfoLinkButtonTooltip { get; private set; } = null!;
+        [field: SerializeField] public Button CloseButton { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsWelcomeSubView WelcomeSubView { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsVerifyEmailSubView VerifyEmailSubView { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsGoalsOfTheWeekSubView GoalsOfTheWeekSubView { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsWeekGoalsCompletedSubView WeekGoalsCompletedSubView { get; private set; } = null!;
+        [field: SerializeField] public MarketplaceCreditsProgramEndedSubView ProgramEndedSubView { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView ErrorNotification { get; private set; } = null!;
 
         public void OnPointerClick(PointerEventData eventData) =>
             OnAnyPlaceClick?.Invoke();

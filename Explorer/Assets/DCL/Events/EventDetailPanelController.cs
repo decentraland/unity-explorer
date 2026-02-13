@@ -12,7 +12,7 @@ namespace DCL.Communities.EventInfo
     {
         private readonly EventCardActionsController eventCardActionsController;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly ThumbnailLoader? eventCardThumbnailLoader;
         private CancellationTokenSource panelCts = new ();

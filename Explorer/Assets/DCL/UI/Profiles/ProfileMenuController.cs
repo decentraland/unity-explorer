@@ -12,21 +12,28 @@ using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using Utility;
-using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.Profiles
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IControllerInSharedSpace<ProfileMenuView, ControllerNoData>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
-        private readonly ProfileSectionController profileSectionController;
-        private readonly SystemMenuController systemSectionController;
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly World world;
+        private readonly Entity playerEntity;
+        private readonly IWebBrowser webBrowser;
+        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly IProfileCache profileCache;
+        private readonly IPassportBridge passportBridge;
+        private readonly ProfileRepositoryWrapper profileDataProvider;
+        private ProfileSectionPresenter? profileSectionPresenter;
+        private SystemSectionPresenter? systemSectionPresenter;
 
         private CancellationTokenSource profileMenuCts = new ();
 
         public ProfileMenuController(
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -37,25 +44,41 @@ namespace DCL.UI.Profiles
             ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, profileDataProvider);
-            systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
-            systemSectionController.OnClosed += OnClose;
+            this.identityCache = identityCache;
+            this.world = world;
+            this.playerEntity = playerEntity;
+            this.webBrowser = webBrowser;
+            this.web3Authenticator = web3Authenticator;
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.profileCache = profileCache;
+            this.passportBridge = passportBridge;
+            this.profileDataProvider = profileDataProvider;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+            profileSectionPresenter = new ProfileSectionPresenter(viewInstance!.ProfileMenu, identityCache, profileDataProvider);
+            systemSectionPresenter = new SystemSectionPresenter(viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, passportBridge);
+            systemSectionPresenter.OnClosed += OnClose;
+        }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
+
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            viewInstance!.gameObject.SetActive(true);
+        }
+
+        protected override void OnViewClose()
         {
             profileMenuCts.Cancel();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(UniTask.WaitUntilCanceled(profileMenuCts.Token), UniTask.WaitUntilCanceled(ct));
         }
 
@@ -63,15 +86,7 @@ namespace DCL.UI.Profiles
         {
             base.OnBeforeViewShow();
             profileMenuCts = profileMenuCts.SafeRestart();
-            profileSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
-            systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileMenuCts.Token).Forget();
-        }
-
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-
-            viewInstance.CloseButton.onClick.AddListener(OnClose);
+            profileSectionPresenter!.SetupProfile(profileMenuCts.Token);
         }
 
         private void OnClose()
@@ -83,8 +98,8 @@ namespace DCL.UI.Profiles
         {
             base.Dispose();
             profileMenuCts.SafeCancelAndDispose();
-            profileSectionController.Dispose();
-            systemSectionController.Dispose();
+            profileSectionPresenter?.Dispose();
+            systemSectionPresenter?.Dispose();
         }
     }
 }

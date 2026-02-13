@@ -1,11 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.UI.SharedSpaceManager;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -20,30 +17,21 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
-        private CancellationTokenSource popupCts;
+        private CancellationTokenSource popupCts = new ();
         private UniTaskCompletionSource contextMenuTask = new ();
 
         public FriendSectionController(FriendsSectionView view,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator,
-            IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
+            IRealmNavigator realmNavigator) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.voiceChatOrchestrator = voiceChatOrchestrator;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -64,10 +52,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.CanUnHover = false;
 
             popupCts = popupCts.SafeRestart();
-            contextMenuTask?.TrySetResult();
+            contextMenuTask.TrySetResult();
 
             contextMenuTask = new UniTaskCompletionSource();
-            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
+            UniTask menuTask = UniTask.WhenAny(panelLifecycleTask!.Task, contextMenuTask.Task);
 
             ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
@@ -79,15 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override void ElementClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
 
-        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
-        {
-            OnOpenConversationAsync(elementViewUserProfile).Forget();
-        }
-
-        private async UniTaskVoid OnOpenConversationAsync(Profile.CompactInfo profile)
-        {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-            chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
-        }
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(elementViewUserProfile.Address);
     }
 }

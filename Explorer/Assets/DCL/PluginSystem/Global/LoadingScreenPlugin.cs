@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens;
@@ -24,7 +23,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ILoadingStatus loadingStatus;
-        private readonly FeatureFlagsConfiguration featureFlagsConfiguration;
 
         private readonly ElementBinding<string> currentStageBinding = new (string.Empty);
         private readonly ElementBinding<string> assetStateBinding = new (string.Empty);
@@ -36,8 +34,7 @@ namespace DCL.PluginSystem.Global
             AudioMixerVolumesController audioMixerVolumesController,
             IInputBlock inputBlock,
             IDebugContainerBuilder debugContainerBuilder,
-            ILoadingStatus loadingStatus,
-            FeatureFlagsConfiguration featureFlagsConfiguration)
+            ILoadingStatus loadingStatus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -45,7 +42,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.debugContainerBuilder = debugContainerBuilder;
             this.loadingStatus = loadingStatus;
-            this.featureFlagsConfiguration = featureFlagsConfiguration;
         }
 
         public void Dispose() { }
@@ -62,7 +58,7 @@ namespace DCL.PluginSystem.Global
             var unityLocalizationSceneTipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
                 settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
-            var tipsProvider = new TipsFromFeatureFlagDecorator(unityLocalizationSceneTipsProvider, featureFlagsConfiguration);
+            var tipsProvider = new TipsFromFeatureFlagDecorator(unityLocalizationSceneTipsProvider);
 
             await unityLocalizationSceneTipsProvider.InitializeAsync(ct);
 

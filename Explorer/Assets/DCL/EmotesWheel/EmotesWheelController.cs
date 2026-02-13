@@ -12,7 +12,6 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -22,7 +21,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IControllerInSharedSpace<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly SelfProfile selfProfile;
@@ -35,14 +34,13 @@ namespace DCL.EmotesWheel
         private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
+        private readonly IMVCManager mvcManager;
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
-        private readonly ISharedSpaceManager sharedSpaceManager;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             SelfProfile selfProfile,
@@ -53,7 +51,7 @@ namespace DCL.EmotesWheel
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
             ICursor cursor,
-            ISharedSpaceManager sharedSpaceManager)
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -65,7 +63,7 @@ namespace DCL.EmotesWheel
             this.inputBlock = inputBlock;
             emoteWheelInput = DCLInput.Instance.EmoteWheel;
             this.cursor = cursor;
-            this.sharedSpaceManager = sharedSpaceManager;
+            this.mvcManager = mvcManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
         }
@@ -78,17 +76,10 @@ namespace DCL.EmotesWheel
             UnregisterSlotsInput(emoteWheelInput);
         }
 
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            Close();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
-
         protected override void OnViewInstantiated()
         {
             viewInstance!.Closed += Close;
-            viewInstance.EditButton.onClick.AddListener(OpenBackpackAsync);
+            viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -140,8 +131,6 @@ namespace DCL.EmotesWheel
             closeViewTask = new UniTaskCompletionSource();
 
             UnblockShortcutToEmoteSlotsSetup();
-
-            ViewShowingComplete?.Invoke(this);
 
             await closeViewTask.Task;
         }
@@ -235,12 +224,12 @@ namespace DCL.EmotesWheel
         private void OpenBackpack(InputAction.CallbackContext context)
         {
             if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
-                OpenBackpackAsync();
+                OpenBackpack();
         }
 
-        private async void OpenBackpackAsync()
+        private void OpenBackpack()
         {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes), PanelsSharingSpace.Chat);
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
         }
 
         private void UnblockUnwantedInputs()
@@ -280,7 +269,7 @@ namespace DCL.EmotesWheel
             }
         }
 
-        private void Close() =>
+        public void Close() =>
             closeViewTask?.TrySetResult();
 
         private static string GetSlotInputName(int slot) =>

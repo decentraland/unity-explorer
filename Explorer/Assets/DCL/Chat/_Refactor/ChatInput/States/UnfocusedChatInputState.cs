@@ -1,6 +1,5 @@
 ﻿using MVC;
 using UnityEngine.EventSystems;
-using Utility;
 
 namespace DCL.Chat.ChatInput
 {
@@ -8,9 +7,9 @@ namespace DCL.Chat.ChatInput
     {
         private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
 
-        public UnfocusedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus)
+        public UnfocusedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, ChatEventBus eventBus)
         {
             this.stateMachine = stateMachine;
             this.view = view;
@@ -33,7 +32,7 @@ namespace DCL.Chat.ChatInput
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.RaiseFocusRequestedEvent();
         }
 
         public override void Exit()

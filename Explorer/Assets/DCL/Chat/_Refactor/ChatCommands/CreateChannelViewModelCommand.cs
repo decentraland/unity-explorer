@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
-using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -15,13 +14,12 @@ using DCL.VoiceChat;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class CreateChannelViewModelCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly ICommunityDataService communityDataService;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
@@ -30,7 +28,7 @@ namespace DCL.Chat.ChatCommands
         private readonly GetUserChatStatusCommand getUserChatStatusCommand;
 
         public CreateChannelViewModelCommand(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             ICommunityDataService communityDataService,
             ChatConfig.ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository,
@@ -120,10 +118,7 @@ namespace DCL.Chat.ChatCommands
 
             viewModel.Thumbnail = thumbnail;
 
-            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
-            {
-                ViewModel = viewModel,
-            });
+            eventBus.RaiseChannelUpdatedEvent(viewModel);
         }
 
         private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
@@ -153,10 +148,7 @@ namespace DCL.Chat.ChatCommands
                          .UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true));
             }
 
-            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
-            {
-                ViewModel = viewModel,
-            });
+            eventBus.RaiseChannelUpdatedEvent(viewModel);
         }
 
         private async UniTaskVoid FetchInitialStatusAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
@@ -167,10 +159,7 @@ namespace DCL.Chat.ChatCommands
 
             viewModel.IsOnline = status.IsConsideredOnline;
 
-            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
-            {
-                ViewModel = viewModel,
-            });
+            eventBus.RaiseChannelUpdatedEvent(viewModel);
         }
 
         public async UniTask UpdateCommunityThumbnailAsync(CommunityChannelViewModel vm, CancellationToken ct)
@@ -178,10 +167,7 @@ namespace DCL.Chat.ChatCommands
             var sprite = await getCommunityThumbnailCommand.ExecuteAsync(vm.ImageUrl, ct);
             if (ct.IsCancellationRequested) return;
             vm.Thumbnail = sprite;
-            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
-            {
-                ViewModel = vm
-            });
+            eventBus.RaiseChannelUpdatedEvent(vm);
         }
     }
 }

@@ -21,10 +21,8 @@ namespace DCL.MarketplaceCredits
         /// <summary>
         /// Parses string date to DateTime format
         /// </summary>
-        public static DateTime ParseDate(this string dateString)
-        {
-            return DateTime.Parse(dateString, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
-        }
+        private static DateTime ParseDate(this string dateString) =>
+            DateTime.Parse(dateString, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
 
         /// <summary>
         /// Get span from now to given date
@@ -95,10 +93,8 @@ namespace DCL.MarketplaceCredits
             return targetDate.ToString("MMMM d", CultureInfo.InvariantCulture);
         }
 
-        public static string FormatSeasonDate(string seasonDate)
-        {
-            return $"{seasonDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
-        }
+        public static string FormatSeasonDate(string seasonDate) =>
+            $"{seasonDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
 
         /// <summary>
         /// Formats the season date range in a human-readable format.
@@ -106,10 +102,8 @@ namespace DCL.MarketplaceCredits
         /// <param name="startDate">The start date of the season in ISO 8601 format.</param>
         /// <param name="endDate">The end date of the season in ISO 8601 format.</param>
         /// <returns>>A string representing the season date range in a human-readable format.</returns>
-        public static string FormatSeasonDateRange(string startDate, string endDate)
-        {
-            return $"{startDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
-        }
+        public static string FormatSeasonDateRange(string startDate, string endDate) =>
+            $"{startDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDate.ParseDate().ToString("MMMM dd", CultureInfo.InvariantCulture)}";
 
         /// <summary>
         /// Calculates the progress percentage of a goal based on the completed and total steps.
@@ -185,14 +179,14 @@ namespace DCL.MarketplaceCredits
         /// Checks if the user is allowed to use the feature based on the white list from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public static bool IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, string userId, CancellationToken ct)
+        public static bool IsUserAllowedToUseTheFeatureAsync(string userId, CancellationToken ct)
         {
-            if (!includeMarketplaceCredits)
-                return false;
+            if (string.IsNullOrEmpty(userId)) return false;
 
-            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS)) return false;
 
-            return !string.IsNullOrEmpty(userId) && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase));
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.WALLETS_VARIANT, out string? walletsForTestingMarketplaceCredits);
+            return string.IsNullOrEmpty(walletsForTestingMarketplaceCredits) || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

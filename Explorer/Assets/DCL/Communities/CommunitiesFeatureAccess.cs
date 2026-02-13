@@ -34,7 +34,7 @@ namespace DCL.Communities
         public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
         {
             //TODO REMOVE THIS!!!! HACK TO ENABLE COMMUNITIES ALL THE TIME
-            // P.s. it's safier to put defines here
+            // P.s. it's safer to put defines here
 #if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
             return true;
 #endif
@@ -62,29 +62,6 @@ namespace DCL.Communities
             }
 
             storedResult = cacheResult ? result : null;
-            return result;
-        }
-
-        public bool CanMembersCounterBeDisplayer()
-        {
-            if (storedMembersCounterResult != null)
-                return storedMembersCounterResult.Value;
-
-            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
-            storedMembersCounterResult = result;
-            return result;
-        }
-
-        public bool IsAnnouncementsFeatureEnabled()
-        {
-            if (storedAnnouncementsResult != null)
-                return storedAnnouncementsResult.Value;
-
-            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) ||
-                          (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) ||
-                          Application.isEditor;
-
-            storedAnnouncementsResult = result;
             return result;
         }
 

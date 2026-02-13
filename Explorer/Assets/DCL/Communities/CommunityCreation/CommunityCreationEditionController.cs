@@ -73,7 +73,7 @@ namespace DCL.Communities.CommunityCreation
 
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private class CommunityPlace
         {

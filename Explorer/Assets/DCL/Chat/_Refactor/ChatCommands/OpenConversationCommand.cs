@@ -2,7 +2,6 @@
 using DCL.Prefs;
 using System.Threading;
 using DCL.Web3.Identities;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
@@ -12,13 +11,13 @@ namespace DCL.Chat.ChatCommands
     /// </summary>
     public class OpenConversationCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IChatHistory chatHistory;
         private readonly SelectChannelCommand selectChannelCommand;
 
         public OpenConversationCommand(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IWeb3IdentityCache identityCache,
             IChatHistory chatHistory,
             SelectChannelCommand selectChannelCommand)
@@ -56,7 +55,7 @@ namespace DCL.Chat.ChatCommands
 
             selectChannelCommand.Execute(channelId, ct);
 
-            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.RaiseFocusRequestedEvent();
         }
 
         /// <summary>
@@ -66,7 +65,7 @@ namespace DCL.Chat.ChatCommands
         {
             if (identityCache.Identity == null) return;
 
-            string userSpecificKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
+            var userSpecificKey = string.Format(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, identityCache.Identity.Address);
 
             string allClosedCommunityChats = DCLPlayerPrefs.GetString(userSpecificKey, string.Empty);
             DCLPlayerPrefs.SetString(userSpecificKey, allClosedCommunityChats.Replace($"{communityId},", string.Empty));

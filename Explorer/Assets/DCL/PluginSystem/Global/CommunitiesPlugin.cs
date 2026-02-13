@@ -2,7 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.InWorldCamera;
 using DCL.Input;
 using DCL.Clipboard;
@@ -11,6 +11,7 @@ using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
+using DCL.ExplorePanel;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -20,8 +21,8 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
@@ -33,6 +34,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -53,8 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly RPCCommunitiesService rpcCommunitiesService;
         private readonly NotificationHandler notificationHandler;
         private readonly IProfileRepository profileRepository;
@@ -64,13 +65,13 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly DCLInput dclInput;
         private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
 
-        public CommunitiesPlugin(
-            IMVCManager mvcManager,
+        public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
@@ -85,8 +86,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
@@ -113,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.profileRepository = profileRepository;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -122,9 +121,13 @@ namespace DCL.PluginSystem.Global
             this.galleryEventBus = galleryEventBus;
             this.analytics = analytics;
             this.homePlaceEventBus = homePlaceEventBus;
+            dclInput = DCLInput.Instance;
             this.socialServiceEventBus = socialServiceEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
             notificationHandler = new NotificationHandler(realmNavigator);
+
+            dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformedAsync;
+            dclInput.Shortcuts.Events.performed += OnInputShortcutsEventsPerformedAsync;
         }
 
         public void Dispose()
@@ -133,6 +136,8 @@ namespace DCL.PluginSystem.Global
             communityCreationEditionController?.Dispose();
             notificationHandler.Dispose();
             rpcCommunitiesService.Dispose();
+            dclInput.Shortcuts.Places.performed -= OnInputShortcutsPlacesPerformedAsync;
+            dclInput.Shortcuts.Events.performed -= OnInputShortcutsEventsPerformedAsync;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -158,7 +163,6 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                sharedSpaceManager,
                 chatEventBus,
                 decentralandUrlsSource,
                 web3IdentityCache,
@@ -190,6 +194,13 @@ namespace DCL.PluginSystem.Global
 
             rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
+
+        private void OnInputShortcutsEventsPerformedAsync(InputAction.CallbackContext _) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Events)));
+
+
+        private void OnInputShortcutsPlacesPerformedAsync(InputAction.CallbackContext _) =>
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Places)));
     }
 
     [Serializable]
