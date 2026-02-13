@@ -1,5 +1,4 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -29,7 +28,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
 
-        public bool ScenesCommunicationIsIsolated => forceSceneIsolation;
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
 
         public bool MetadataIsDirty
         {
@@ -37,7 +36,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             {
                 CanBeDirty<Vector3> characterPosition = characterTransform.Position;
 
-                bool positionIsDirty = characterPosition.IsDirty;
+                bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;
 
                 if (!positionIsDirty)
                     return false;
@@ -64,29 +63,28 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public MetaData.Input GetMetadataInput() =>
             new (
                 realmData.RealmName,
-                characterTransform.Position.ToParcel()
+                realmData.SingleScene
+                    ? Vector2Int.zero
+                    : characterTransform.Position.ToParcel()
             );
 
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             // Places API is relevant for Genesis City only
-            //if (realmData.IsWorld())
-            //    return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
+            if (realmData.SingleScene)
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
 
             pointersList.Add(input.Parcel.ToInt2());
-            IURLBuilder urlBuilder = new URLBuilder();
 
-
-            URLAddress destination = urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.EntitiesActive)))
-                                               .AppendParameter(new URLParameter("world_name", "pastrami.dcl.eth")).Build();
+            string entitiesActiveEndpoint = realmData.IsGenesis() ? urlsSource.Url(DecentralandUrl.EntitiesActive) : string.Format(urlsSource.Url(DecentralandUrl.WorldEntitiesActive), realmData.RealmName);
 
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(destination)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(entitiesActiveEndpoint)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);

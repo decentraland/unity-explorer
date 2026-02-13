@@ -176,6 +176,8 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
+                DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
+
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
