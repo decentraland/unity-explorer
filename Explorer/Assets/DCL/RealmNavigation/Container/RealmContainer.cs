@@ -66,6 +66,7 @@ namespace DCL.RealmNavigation
                 appArgs,
                 urlsSource,
                 dclEnvironment,
+                staticContainer.WorldManifestProvider,
                 worldPermissionsService
             );
 

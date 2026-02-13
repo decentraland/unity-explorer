@@ -602,12 +602,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        parsedParcels:
-          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 3511243270148325472
       type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1056,6 +1050,14 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        ParsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

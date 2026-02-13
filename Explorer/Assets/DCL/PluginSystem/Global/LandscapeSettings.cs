@@ -13,12 +13,6 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(LandscapeSettings))] [field: Space]
         [field: SerializeField] public RealmPartitionSettingsAsset realmPartitionSettings;
         [field: SerializeField] public LandscapeDataRef landscapeData;
-        [field: SerializeField] public ParcelsRef parsedParcels;
 
-        [Serializable]
-        public class ParcelsRef : AssetReferenceT<ParcelData>
-        {
-            public ParcelsRef(string guid) : base(guid) { }
-        }
     }
 }
