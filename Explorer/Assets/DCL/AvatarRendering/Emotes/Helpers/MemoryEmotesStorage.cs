@@ -67,10 +67,9 @@ namespace DCL.AvatarRendering.Emotes
                     emotes.Add(convertedUrn, emote);
                 }
 
-                if (qualifiedForUnloading)
-                    if (!UpdateListedCachePriority(convertedUrn))
-                        cacheKeysDictionary[convertedUrn] =
-                            listedCacheKeys.AddLast((convertedUrn, MultithreadingUtility.FrameCount));
+                if (qualifiedForUnloading && !UpdateListedCachePriority(convertedUrn))
+                    cacheKeysDictionary[convertedUrn] =
+                        listedCacheKeys.AddLast((convertedUrn, MultithreadingUtility.FrameCount));
 
                 return emote;
             }
@@ -111,6 +110,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 return true;
             }
+
             return false;
         }
 
