@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Utility;

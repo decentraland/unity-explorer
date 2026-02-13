@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utility.Types;
 using System.Threading;
