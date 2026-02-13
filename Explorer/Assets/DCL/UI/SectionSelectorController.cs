@@ -79,11 +79,11 @@ namespace DCL.UI
 
         private void AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, T newSection, CancellationToken ct)
         {
+            panelClosing.Deactivate();
             panelOpening.Activate();
             panelOpening.ResetAnimator();
             panelOpening.Animate(UIAnimationHashes.IN);
             panelClosing.Animate(UIAnimationHashes.OUT);
-            panelClosing.Deactivate();
             previousSection = newSection;
         }
     }
