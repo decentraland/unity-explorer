@@ -162,9 +162,15 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
 
             if (includeDiscover)
+            {
                 viewInstance.placesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget());
+                viewInstance.eventsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget());
+            }
             else
+            {
                 viewInstance.placesButton.gameObject.SetActive(false);
+                viewInstance.eventsButton.gameObject.SetActive(false);
+            }
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;

@@ -24,6 +24,7 @@ namespace DCL.Places
         public event Action? SearchBarDeselected;
 
         public PlacesResultsView PlacesResultsView => placesResultsView;
+        public bool IsSearchBarFocused => searchBar.inputField.isFocused;
 
         private IObjectPool<PlaceCategoryButton> categoryButtonsPool = null!;
         private readonly List<KeyValuePair<string, PlaceCategoryButton>> currentCategories = new ();

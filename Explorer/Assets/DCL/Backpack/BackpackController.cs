@@ -120,7 +120,7 @@ namespace DCL.Backpack
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
-                realmData,
+                decentralandUrlsSource,
                 outfitsLogger);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
@@ -247,7 +247,6 @@ namespace DCL.Backpack
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
             backpackGridController.RequestPage(1, true);
-            backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
             while (!avatarShapeComponent.WearablePromise.IsConsumed)

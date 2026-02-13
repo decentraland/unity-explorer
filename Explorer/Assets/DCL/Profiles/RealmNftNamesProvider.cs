@@ -2,31 +2,32 @@ using CodeLess.Interfaces;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
 using DCL.WebRequests;
 using ECS;
 using System.Linq;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.Profiles
 {
     public partial class RealmNftNamesProvider : INftNamesProvider
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IRealmData realm;
-        private readonly URLBuilder urlBuilder = new ();
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public RealmNftNamesProvider(IWebRequestController webRequestController,
-            IRealmData realm)
+            IDecentralandUrlsSource urlsSource)
         {
             this.webRequestController = webRequestController;
-            this.realm = realm;
+            this.urlsSource = urlsSource;
         }
 
         public async UniTask<INftNamesProvider.PaginatedNamesResponse> GetAsync(Web3Address userId, int pageNumber, int pageSize, CancellationToken ct)
         {
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(realm.Ipfs.LambdasBaseUrl);
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.Lambdas, out URLBuilder urlBuilder);
+
             urlBuilder.AppendPath(new URLPath($"users/{userId}/names"));
             urlBuilder.AppendParameter(new URLParameter("pageNum", pageNumber.ToString()));
             urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));

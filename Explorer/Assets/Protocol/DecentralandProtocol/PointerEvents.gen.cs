@@ -66,6 +66,29 @@ namespace DCL.ECSComponents {
   ///
   /// It also supports simple visual feedback when interactions occur, by showing floating text.
   /// More sophisticated feedback requires the use of other components.
+  ///
+  /// Distance rules
+  /// --------------
+  /// PointerEvents can enforce interaction range using two independent distance checks:
+  ///
+  /// - Camera distance (`max_distance`): distance from the active camera to the target entity.
+  /// - Player distance (`max_player_distance`): distance from the avatar/player position to the target entity.
+  ///
+  /// How the interaction checks are combined:
+  ///
+  /// 1) Only `max_distance` is present
+  ///    - The interaction is allowed only if the camera distance is &lt;= `max_distance`.
+  ///
+  /// 2) Only `max_player_distance` is present
+  ///    - The interaction is allowed only if the player distance is &lt;= `max_player_distance`.
+  ///
+  /// 3) Both `max_distance` and `max_player_distance` are present
+  ///    - The interaction is allowed if ANY of the checks passes (OR logic):
+  ///      (camera distance &lt;= `max_distance`) OR (player distance &lt;= `max_player_distance`).
+  ///
+  /// 4) Neither `max_distance` nor `max_player_distance` is present
+  ///    - The system behaves as if `max_distance` were set to its default value (10),
+  ///      i.e., it uses the camera distance check with a threshold of 10.
   /// </summary>
   public sealed partial class PBPointerEvents : pb::IMessage<PBPointerEvents>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE

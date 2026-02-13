@@ -45,7 +45,7 @@ namespace ECS.StreamableLoading.Common.Components
         public Exception? Exception => exceptionData?.exception;
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T? asset, AssetSource source = AssetSource.NONE) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;
@@ -70,6 +70,15 @@ namespace ECS.StreamableLoading.Common.Components
             }
 
             exceptionData = (reportData, exception);
+        }
+
+        /// <summary>
+        ///     Logs exception if unsuccessful and it wasn't already logged
+        /// </summary>
+        public void TryLogException(ReportData? overrideReportData = null)
+        {
+            if (!Succeeded && exceptionData is { exception: not StreamableLoadingException or OperationCanceledException })
+                ReportHub.LogException(exceptionData.Value.exception, overrideReportData ?? exceptionData.Value.reportData);
         }
 
         public bool IsInitialized => Exception != null || Asset != null || Succeeded;

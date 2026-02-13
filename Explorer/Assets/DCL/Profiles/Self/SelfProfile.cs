@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
@@ -142,9 +141,19 @@ namespace DCL.Profiles.Self
             if (!updateAvatarInWorld)
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
                     false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+
+                if (savedProfile != null)
+                {
+                    profileCache.Set(savedProfile.UserId, savedProfile);
+                    copyOfOwnProfile?.Dispose();
+                    copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
+                }
+
+                return savedProfile;
             }
 
             // Update profile immediately to prevent UI inconsistencies
@@ -162,6 +171,7 @@ namespace DCL.Profiles.Self
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
+                profileCache.Set(savedProfile!.UserId, savedProfile);
                 UpdateAvatarInWorld(savedProfile!);
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();

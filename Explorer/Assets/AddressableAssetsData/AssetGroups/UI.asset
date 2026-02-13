@@ -81,7 +81,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 112ec96d4c89d41d68b03e4ba73992e9
-    m_Address: Assets/DCL/Communities/EventInfo/Prefabs/EventInfoPanel.prefab
+    m_Address: EventDetailPanel
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -305,6 +305,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f3a6cf0dfd5cc94cbd5225c88c7aa8b
+    m_Address: PlaceDetailPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f900819503d2412194e6de3e5a95ba0
     m_Address: Assets/DCL/Communities/CommunitiesCard/Prefabs/CommunityCard.prefab
     m_ReadOnly: 0
@@ -470,6 +475,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 780e6ed0fdb34194c92f8e560963b8f9
+    m_Address: Web3ConfirmationPopup
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 797a1eda92ffc43a093281ee7851ae71
     m_Address: Assets/DCL/Friends/Textures/Atlas.spriteatlasv2
     m_ReadOnly: 0
@@ -587,6 +597,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
     m_Address: RoomIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a64bc37fc09f340bd821a73ed1a9342a
+    m_Address: Assets/DCL/UI/Assets/ColorPicker.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

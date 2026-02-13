@@ -21,6 +21,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UserInAppInitializationFlow
@@ -114,11 +115,16 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
-                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
+                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
+                                                !appArgs.HasFlag(AppArgsFlags.AUTOPILOT);
 
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
+
+                // Only a human user can authenticate currently.
+                if (shouldShowAuthentication && appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
+                    Application.Quit(1);
 
                 if (shouldShowAuthentication)
                 {

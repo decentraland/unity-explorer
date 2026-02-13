@@ -51,7 +51,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundleManifest.Succeeded)
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
                 else
+                {
+                    assetBundleManifest.TryLogException();
                     entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
+                }
+
             }
         }
 

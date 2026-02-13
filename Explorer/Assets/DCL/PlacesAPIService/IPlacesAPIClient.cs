@@ -46,7 +46,9 @@ namespace DCL.PlacesAPIService
             IReadOnlyList<string>? names = null,
             bool? onlyPlaces = null,
             bool? onlyWorlds = null,
-            bool? onlyHighlighted = null);
+            bool? onlyHighlighted = null,
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null);
 
         UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct);
         UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null);

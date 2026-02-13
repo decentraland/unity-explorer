@@ -211,13 +211,18 @@ namespace DCL.ECSComponents
     {
         public bool IsDirty { get; set; }
     }
-    
+
     public partial class PBAvatarLocomotionSettings : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }
 
     public partial class PBAudioAnalysis : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBAssetLoad : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

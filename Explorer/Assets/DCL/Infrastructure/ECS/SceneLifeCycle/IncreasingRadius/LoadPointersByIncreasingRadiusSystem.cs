@@ -4,7 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using DCL.Landscape.Parcel;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -26,7 +26,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly IPartitionSettings partitionSettings;
-        private readonly LandscapeParcelData landscapeParcelData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private float[]? sqrDistances;
 
@@ -35,12 +35,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings, IPartitionSettings partitionSettings,
-            HashSet<Vector2Int> roadCoordinates, IRealmData realmData, LandscapeParcelData landscapeParcelData) : base(world, roadCoordinates, realmData)
+            HashSet<Vector2Int> roadCoordinates, IRealmData realmData,
+            IDecentralandUrlsSource urlsSource) : base(world, roadCoordinates, realmData)
         {
             this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
             this.realmPartitionSettings = realmPartitionSettings;
             this.partitionSettings = partitionSettings;
-            this.landscapeParcelData = landscapeParcelData;
+            this.urlsSource = urlsSource;
         }
 
         protected override void Update(float t)
@@ -67,6 +68,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         ///     as EntitiesActiveEndpoint is not supported by its content server
         /// </summary>
         [Query]
+        [All(typeof(RealmComponent))]
         [None(typeof(FixedScenePointers))]
         private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
@@ -97,7 +99,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    if (landscapeParcelData.EmptyParcels.Contains(parcelInfo.Parcel))
+                    if (!realmData.WorldManifest.GetOccupiedParcels().Contains(parcelInfo.Parcel))
                         // If parcel is empty skip request but mark as processed...
                         processedScenePointers.Value.Add(parcelInfo.Parcel);
                     else
@@ -139,7 +141,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input,
-                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistryEntitiesActive)),
+                        new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
                     volatileScenePointers.ActivePartitionComponent);
         }
 

@@ -65,7 +65,9 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.NONE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             string? category = null,
-            bool? withConnectedUsers = null)
+            bool? withConnectedUsers = null,
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -79,7 +81,9 @@ namespace DCL.PlacesAPIService
             return await client.GetDestinationsAsync(ct,
                 searchString: searchText, pagination: (pageNumber, pageSize),
                 sortByStr, sortDirectionStr, category, addRealmDetails: true,
-                withConnectedUsers: withConnectedUsers);
+                withConnectedUsers: withConnectedUsers,
+                onlySdk7: onlySdk7,
+                withLiveEvents: withLiveEvents);
         }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
@@ -175,8 +179,8 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
-            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null) =>
+            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, onlySdk7: onlySdk7, withLiveEvents: withLiveEvents);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
@@ -208,7 +212,9 @@ namespace DCL.PlacesAPIService
             int pageNumber = -1, int pageSize = -1,
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
-            bool? withConnectedUsers = null)
+            bool? withConnectedUsers = null,
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -223,7 +229,9 @@ namespace DCL.PlacesAPIService
                 pagination: pageNumber == -1 && pageSize == -1 ? null : (pageNumber, pageSize),
                 sortBy: sortByStr, sortDirection: sortDirectionStr, addRealmDetails: true,
                 onlyFavorites: true,
-                withConnectedUsers: withConnectedUsers);
+                withConnectedUsers: withConnectedUsers,
+                onlySdk7: onlySdk7,
+                withLiveEvents: withLiveEvents);
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)

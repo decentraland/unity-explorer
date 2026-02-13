@@ -1,15 +1,19 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.MapRenderer;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Threading;
 using Utility;
 
@@ -17,39 +21,44 @@ namespace DCL.Places
 {
     public class PlacesCardSocialActionsController
     {
+        public event Action<string>? PlaceSetAsHome;
+
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
-        private const string TWITTER_NEW_POST_LINK_TEXT_ARG_ID = "[TEXT]";
-        private const string TWITTER_NEW_POST_LINK_HASHTAGS_ARG_ID = "[HASHTAGS]";
-        private const string TWITTER_NEW_POST_LINK_URL_ARG_ID = "[URL]";
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
-        private const string JUMP_IN_GC_LINK_COORD_X_ARG_ID = "[COORD-X]";
-        private const string JUMP_IN_GC_LINK_COORD_Y_ARG_ID = "[COORD-Y]";
-        private const string JUMP_IN_WORLD_LINK_REALM_ARG_ID = "[REALM]";
 
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWebBrowser webBrowser;
         private readonly ISystemClipboard clipboard;
         private readonly IDecentralandUrlsSource dclUrlSource;
+        private readonly INavmapBus? navmapBus;
+        private readonly IMapPathEventBus? mapPathEventBus;
+        private readonly HomePlaceEventBus homePlaceEventBus;
 
         public PlacesCardSocialActionsController(
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             IWebBrowser webBrowser,
             ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource)
+            IDecentralandUrlsSource dclUrlSource,
+            INavmapBus? navmapBus,
+            IMapPathEventBus? mapPathEventBus,
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
             this.webBrowser = webBrowser;
             this.clipboard = clipboard;
             this.dclUrlSource = dclUrlSource;
+            this.navmapBus = navmapBus;
+            this.mapPathEventBus = mapPathEventBus;
+            this.homePlaceEventBus = homePlaceEventBus;
         }
 
-        public async UniTaskVoid LikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView, CancellationToken ct)
+        public async UniTaskVoid LikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView, CancellationToken ct)
         {
             var result = await placesAPIService.RatePlaceAsync(likeValue ? true : null, placeInfo.id, ct)
                                                .SuppressToResultAsync(ReportCategory.PLACES);
@@ -59,21 +68,25 @@ namespace DCL.Places
 
             if (!result.Success)
             {
-                placeCardView.SilentlySetLikeToggle(!likeValue);
+                placeCardView?.SilentlySetLikeToggle(!likeValue);
+                placeDetailPanelView?.SilentlySetLikeToggle(!likeValue);
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(LIKE_PLACE_ERROR_MESSAGE));
-
                 return;
             }
 
             if (likeValue)
             {
-                placeCardView.SilentlySetDislikeToggle(false);
+                placeCardView?.SilentlySetDislikeToggle(false);
+                placeDetailPanelView?.SilentlySetDislikeToggle(false);
                 placeInfo.user_dislike = false;
-                placeInfo.user_like = true;
             }
+
+            placeInfo.user_like = likeValue;
+            placeCardView?.SilentlySetLikeToggle(likeValue);
+            placeDetailPanelView?.SilentlySetLikeToggle(likeValue);
         }
 
-        public async UniTaskVoid DislikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView, CancellationToken ct)
+        public async UniTaskVoid DislikePlaceAsync(PlacesData.PlaceInfo placeInfo, bool dislikeValue, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView, CancellationToken ct)
         {
             var result = await placesAPIService.RatePlaceAsync(dislikeValue ? false : null, placeInfo.id, ct)
                                                .SuppressToResultAsync(ReportCategory.PLACES);
@@ -83,21 +96,25 @@ namespace DCL.Places
 
             if (!result.Success)
             {
-                placeCardView.SilentlySetDislikeToggle(!dislikeValue);
+                placeCardView?.SilentlySetDislikeToggle(!dislikeValue);
+                placeDetailPanelView?.SilentlySetDislikeToggle(!dislikeValue);
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(DISLIKE_PLACE_ERROR_MESSAGE));
-
                 return;
             }
 
             if (dislikeValue)
             {
-                placeCardView.SilentlySetLikeToggle(false);
-                placeInfo.user_dislike = true;
+                placeCardView?.SilentlySetLikeToggle(false);
+                placeDetailPanelView?.SilentlySetLikeToggle(false);
                 placeInfo.user_like = false;
             }
+
+            placeInfo.user_dislike = dislikeValue;
+            placeCardView?.SilentlySetDislikeToggle(dislikeValue);
+            placeDetailPanelView?.SilentlySetDislikeToggle(dislikeValue);
         }
 
-        public async UniTaskVoid UpdateFavoritePlaceAsync(PlacesData.PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView, CancellationToken ct)
+        public async UniTaskVoid UpdateFavoritePlaceAsync(PlacesData.PlaceInfo placeInfo, bool favoriteValue, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView, CancellationToken ct)
         {
             var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
                                                .SuppressToResultAsync(ReportCategory.PLACES);
@@ -107,11 +124,42 @@ namespace DCL.Places
 
             if (!result.Success)
             {
-                placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
+                placeCardView?.SilentlySetFavoriteToggle(!favoriteValue);
+                placeDetailPanelView?.SilentlySetFavoriteToggle(!favoriteValue);
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(FAVORITE_PLACE_ERROR_MESSAGE));
             }
 
             placeInfo.user_favorite = favoriteValue;
+            placeCardView?.SilentlySetFavoriteToggle(favoriteValue);
+            placeDetailPanelView?.SilentlySetFavoriteToggle(favoriteValue);
+        }
+
+        public void SetPlaceAsHome(PlacesData.PlaceInfo placeInfo, bool isHome, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView)
+        {
+            if (isHome)
+            {
+                if (!string.IsNullOrEmpty(placeInfo.world_name))
+                {
+                    homePlaceEventBus.SetAsHome(placeInfo.world_name);
+                }
+                else if (VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates))
+                {
+                    homePlaceEventBus.SetAsHome(coordinates);
+                }
+                else
+                {
+                    return;
+                }
+
+                PlaceSetAsHome?.Invoke(placeInfo.id);
+            }
+            else
+            {
+                homePlaceEventBus.UnsetHome();
+            }
+
+            placeCardView?.SilentlySetHomeToggle(isHome);
+            placeDetailPanelView?.SilentlySetHomeToggle(isHome);
         }
 
         public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
@@ -146,5 +194,11 @@ namespace DCL.Places
 
             return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y);
         }
+
+        public void StartNavigationToPlace(PlacesData.PlaceInfo placeInfo) =>
+            navmapBus?.SelectDestination(placeInfo);
+
+        public void ExitNavigationToPlace() =>
+            mapPathEventBus?.RemoveDestination();
     }
 }
