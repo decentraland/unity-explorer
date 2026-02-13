@@ -142,10 +142,12 @@ namespace DCL.PrivateWorlds.UI
 
         /// <summary>
         /// Enables or disables the confirm button during validation to prevent double-clicks.
+        /// When validation ends, restores interactable based on whether the password field has text.
         /// </summary>
         public void SetValidating(bool validating)
         {
-            passwordConfirmButton.interactable = !validating;
+            passwordConfirmButton.interactable = !validating &&
+                                                 !string.IsNullOrEmpty(passwordInputField?.text);
         }
 
         /// <summary>
@@ -175,9 +177,12 @@ namespace DCL.PrivateWorlds.UI
             SetPasswordInputOutlineError(false);
 
             if (wrongPasswordWarningObject != null)
-            {
                 wrongPasswordWarningObject.SetActive(false);
-            }
+
+            if (errorMessageText != null)
+                errorMessageText.gameObject.SetActive(false);
+
+            passwordConfirmButton.interactable = false;
         }
 
         private void SetPasswordInputOutlineError(bool isError)
@@ -221,12 +226,19 @@ namespace DCL.PrivateWorlds.UI
 
         private void OnPasswordValueChanged(string value)
         {
-            if (string.IsNullOrEmpty(value))
+            bool hasText = !string.IsNullOrEmpty(value);
+
+            if (!hasText)
             {
                 passwordInputField.contentType = TMP_InputField.ContentType.Password;
                 passwordInputField.ForceLabelUpdate();
+                wrongPasswordWarningObject.SetActive(false);
+                SetPasswordInputOutlineError(false);
+                if (errorMessageText != null)
+                    errorMessageText.gameObject.SetActive(false);
             }
 
+            passwordConfirmButton.interactable = hasText;
             UpdatePasswordVisibilityState();
         }
 
