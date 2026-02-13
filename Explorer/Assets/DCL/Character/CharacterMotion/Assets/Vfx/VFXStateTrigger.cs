@@ -9,7 +9,6 @@ public class VFXStateTrigger : StateMachineBehaviour
         if (vfx != null)
         {
             vfx.SendEvent("OnGliderStart");
-            Debug.Log("<color=cyan>VFX Started</color>");
         }
     }
 
@@ -19,7 +18,6 @@ public class VFXStateTrigger : StateMachineBehaviour
         if (vfx != null)
         {
             vfx.SendEvent("OnGliderEnd");
-            Debug.Log("<color=orange>VFX Stopped</color>");
         }
     }
 }
