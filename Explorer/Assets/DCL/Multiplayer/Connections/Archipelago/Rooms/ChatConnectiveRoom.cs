@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -173,8 +174,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTask CycleStepAsync(CancellationToken ct)
         {
-            if (CurrentState() is not IConnectiveRoom.State.Running)
+            if (CurrentState() is not IConnectiveRoom.State.Running
+                || room.Info.ConnectionState == ConnectionState.ConnDisconnected)
             {
+                // When local state is Running (we once were connected) but the actual room connection state is disconnected we reset the local state so we re-enter the connection flow
+                if (CurrentState() is IConnectiveRoom.State.Running)
+                    roomState.Set(IConnectiveRoom.State.Starting);
+
                 string connectionString = await ConnectionStringAsync(ct);
                 await TryConnectToRoomAsync(connectionString, ct);
             }
@@ -194,6 +200,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
+
+            // Disconnect first if we're reconnecting the same room, so that room.Assign works properly
+            if (room.assigned == roomInstance)
+                await room.ResetRoomAsync(token);
 
             Result connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 

@@ -83,6 +83,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     component.State = LoadingState.FinishedWithError;
                     component.RootGameObject = null;
                     eventsBuffer.Add(entity, component);
+                    result.TryLogException(GetReportData());
                     return;
                 }
 

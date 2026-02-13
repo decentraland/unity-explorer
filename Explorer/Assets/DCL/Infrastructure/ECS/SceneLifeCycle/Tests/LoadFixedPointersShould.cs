@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
+using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -38,7 +41,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
-            system = new LoadFixedPointersSystem(world, realmData);
+            system = new LoadFixedPointersSystem(world, realmData, new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY));
         }
 
         [Test]

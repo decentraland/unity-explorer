@@ -8,13 +8,16 @@ namespace DCL.WebRequests
 
         public bool Idempotent => false;
 
-        internal static GenericPostRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
+        internal static GenericPostRequest Initialize(in CommonArguments commonArguments, ref GenericPostArguments arguments) =>
+            new (CreateWebRequest(in commonArguments, ref arguments));
+
+        internal static UnityWebRequest CreateWebRequest(in CommonArguments commonArguments, ref GenericPostArguments arguments)
         {
             if (arguments.MultipartFormSections != null)
-                return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections));
+                return UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections);
 
             if (arguments.WWWForm != null)
-                return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm));
+                return UnityWebRequest.Post(commonArguments.URL, arguments.WWWForm);
 
             if (arguments.UploadHandler != null)
             {
@@ -22,10 +25,10 @@ namespace DCL.WebRequests
                 request.uploadHandler = arguments.UploadHandler.Value.CreateUploadHandler();
                 request.SetRequestHeader("Content-Type", arguments.ContentType);
                 request.downloadHandler = new DownloadHandlerBuffer();
-                return new GenericPostRequest(request);
+                return request;
             }
 
-            return new GenericPostRequest(UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType));
+            return UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType);
         }
 
         private GenericPostRequest(UnityWebRequest unityWebRequest)

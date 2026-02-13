@@ -1,4 +1,4 @@
-namespace Global.AppArgs
+﻿namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -12,6 +12,8 @@ namespace Global.AppArgs
         public const string SCENE_CONSOLE = "scene-console";
 
         public const string AUTOPILOT = "autopilot";
+        public const string AUTOPILOT_CSV = "csv";
+        public const string AUTOPILOT_SUMMARY = "summary";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
@@ -63,6 +65,8 @@ namespace Global.AppArgs
         public const string DISCOVER = "discover";
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
+
+        public const string NAME_COLOR_CHANGE = "name-color-change";
 
         public static class Multiplayer
         {
