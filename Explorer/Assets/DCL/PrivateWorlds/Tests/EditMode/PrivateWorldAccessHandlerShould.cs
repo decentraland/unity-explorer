@@ -93,15 +93,13 @@ namespace DCL.PrivateWorlds.Tests.EditMode
         [Test]
         public async Task ReturnsAllowedWhenPasswordCorrect()
         {
-            // Arrange
+            // Arrange — popup controller validates in-place and sets result when successful
             permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
                 .Returns(UniTask.FromResult(new WorldAccessCheckContext
                 {
                     Result = WorldAccessCheckResult.PasswordRequired,
                     AccessInfo = new WorldAccessInfo { OwnerAddress = "0xOwner" }
                 }));
-            permissionsService.ValidatePasswordAsync(WORLD_NAME, "correct", Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult(true));
             mvcManager.ShowAsync(Arg.Any<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
@@ -116,7 +114,6 @@ namespace DCL.PrivateWorlds.Tests.EditMode
 
             // Assert
             Assert.AreEqual(WorldAccessResult.Allowed, result);
-            permissionsService.Received(1).ValidatePasswordAsync(WORLD_NAME, "correct", Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -134,41 +131,6 @@ namespace DCL.PrivateWorlds.Tests.EditMode
                 {
                     var cmd = callInfo.Arg<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>();
                     cmd.InputData.Result = PrivateWorldPopupResult.Cancelled;
-                    return UniTask.CompletedTask;
-                });
-
-            // Act
-            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
-
-            // Assert
-            Assert.AreEqual(WorldAccessResult.PasswordCancelled, result);
-        }
-
-        [Test]
-        public async Task ReturnsCancelledAfterMaxPasswordAttempts()
-        {
-            // Arrange
-            permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult(new WorldAccessCheckContext
-                {
-                    Result = WorldAccessCheckResult.PasswordRequired,
-                    AccessInfo = new WorldAccessInfo { OwnerAddress = "0xOwner" }
-                }));
-            permissionsService.ValidatePasswordAsync(WORLD_NAME, "wrong", Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult(false));
-            var callCount = 0;
-            mvcManager.ShowAsync(Arg.Any<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>(), Arg.Any<CancellationToken>())
-                .Returns(callInfo =>
-                {
-                    var cmd = callInfo.Arg<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>();
-                    callCount++;
-                    if (callCount >= 3)
-                        cmd.InputData.Result = PrivateWorldPopupResult.Cancelled;
-                    else
-                    {
-                        cmd.InputData.Result = PrivateWorldPopupResult.PasswordSubmitted;
-                        cmd.InputData.EnteredPassword = "wrong";
-                    }
                     return UniTask.CompletedTask;
                 });
 
@@ -230,37 +192,5 @@ namespace DCL.PrivateWorlds.Tests.EditMode
             catch (OperationCanceledException) { /* expected */ }
         }
 
-        [Test]
-        public async Task HandlesExceptionDuringPasswordValidation()
-        {
-            // Arrange
-            permissionsService.CheckWorldAccessAsync(WORLD_NAME, Arg.Any<CancellationToken>())
-                .Returns(UniTask.FromResult(new WorldAccessCheckContext
-                {
-                    Result = WorldAccessCheckResult.PasswordRequired,
-                    AccessInfo = new WorldAccessInfo { OwnerAddress = "0xOwner" }
-                }));
-            permissionsService.ValidatePasswordAsync(WORLD_NAME, "test", Arg.Any<CancellationToken>())
-                .Returns(_ => UniTask.FromException<bool>(new Exception("Network error")));
-            mvcManager.ShowAsync(Arg.Any<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>(), Arg.Any<CancellationToken>())
-                .Returns(callInfo =>
-                {
-                    var cmd = callInfo.Arg<ShowCommand<PrivateWorldPopupView, PrivateWorldPopupParams>>();
-                    cmd.InputData.Result = PrivateWorldPopupResult.PasswordSubmitted;
-                    cmd.InputData.EnteredPassword = "test";
-                    return UniTask.CompletedTask;
-                });
-
-            // ReportHub.LogException emits two LogType.Exception entries (category prefix + exception);
-            // suppress them so the test runner does not treat them as failures.
-            LogAssert.ignoreFailingMessages = true;
-
-            // Act
-            var result = await handler.CheckAccessAsync(WORLD_NAME, null, CancellationToken.None);
-
-            // Assert
-            LogAssert.ignoreFailingMessages = false;
-            Assert.AreEqual(WorldAccessResult.CheckFailed, result);
-        }
     }
 }

@@ -68,9 +68,27 @@ namespace DCL.PrivateWorlds
         UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct);
 
         /// <summary>
-        /// Validates a password for a world. Returns true if the password is correct.
+        /// Validates a password for a world. Returns success and optional error message from the backend (e.g. max attempts exceeded).
         /// </summary>
-        UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct);
+        UniTask<ValidatePasswordResult> ValidatePasswordAsync(string worldName, string password, CancellationToken ct);
+    }
+
+    /// <summary>
+    /// Result of password validation. Backend may return an error message (e.g. max attempts exceeded).
+    /// </summary>
+    public readonly struct ValidatePasswordResult
+    {
+        public bool Success { get; }
+        public string? ErrorMessage { get; }
+
+        public ValidatePasswordResult(bool success, string? errorMessage = null)
+        {
+            Success = success;
+            ErrorMessage = errorMessage;
+        }
+
+        public static ValidatePasswordResult Ok => new (true);
+        public static ValidatePasswordResult Fail(string? errorMessage) => new (false, errorMessage);
     }
 
     /// <summary>
@@ -193,7 +211,7 @@ namespace DCL.PrivateWorlds
             }
         }
 
-        public async UniTask<bool> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
+        public async UniTask<ValidatePasswordResult> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
         {
             try
             {
@@ -212,15 +230,14 @@ namespace DCL.PrivateWorlds
                     .StatusCodeAsync();
 
                 ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {statusCode}");
-                // Only allow access on explicit success (2xx). 403 = wrong password; any other code or no response = invalid.
-                return statusCode >= 200 && statusCode < 300;
+                return statusCode >= 200 && statusCode < 300 ? ValidatePasswordResult.Ok : ValidatePasswordResult.Fail(null);
             }
             catch (UnityWebRequestException e)
             {
                 ReportHub.Log(ReportCategory.REALM,
                     $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {e.ResponseCode}, response: {e.Text}");
-                // No successful response (network error, timeout, 4xx, 5xx) => do not allow access
-                return false;
+                string? backendError = GetBackendErrorMessage(e);
+                return ValidatePasswordResult.Fail(backendError);
             }
             catch (OperationCanceledException)
             {
@@ -229,8 +246,43 @@ namespace DCL.PrivateWorlds
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}' failed: {e.Message}");
-                return false;
+                return ValidatePasswordResult.Fail(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Extracts a user-facing error message from the backend response.
+        /// - 403 (wrong password): return null so caller shows "Incorrect password. Please try again."
+        /// - 429 (too many attempts): show backend "error" message or fallback "Too many attempts. Try again later."
+        /// - Other: show backend JSON "error" field, raw body, or exception message.
+        /// </summary>
+        private static string? GetBackendErrorMessage(UnityWebRequestException e)
+        {
+            if (e.ResponseCode == 403)
+                return null; // caller shows standard "Incorrect password" message
+
+            if (!string.IsNullOrWhiteSpace(e.Text))
+            {
+                string trimmed = e.Text.Trim();
+                try
+                {
+                    var parsed = JsonConvert.DeserializeObject<BackendErrorResponse>(trimmed);
+                    if (!string.IsNullOrWhiteSpace(parsed?.Error))
+                        return parsed.Error;
+                }
+                catch { /* not JSON or missing field, fall through */ }
+
+                return trimmed;
+            }
+
+            return e.Message;
+        }
+
+        [Serializable]
+        private class BackendErrorResponse
+        {
+            [JsonProperty("error")]
+            public string? Error { get; set; }
         }
 
         /// <summary>

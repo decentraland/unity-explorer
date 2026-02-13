@@ -169,8 +169,8 @@ namespace DCL.PrivateWorlds.Testing
             try
             {
                 ReportHub.Log(ReportCategory.REALM, $"[ValidatePassword] World: {testWorldName}, password length: {password?.Length ?? 0}");
-                bool valid = await permissionsService!.ValidatePasswordAsync(testWorldName, password ?? string.Empty, ct);
-                ReportHub.Log(ReportCategory.REALM, $"[ValidatePassword] Result: {(valid ? "valid" : "invalid")}");
+                ValidatePasswordResult result = await permissionsService!.ValidatePasswordAsync(testWorldName, password ?? string.Empty, ct);
+                ReportHub.Log(ReportCategory.REALM, $"[ValidatePassword] Result: {(result.Success ? "valid" : "invalid")}{(result.ErrorMessage != null ? $", error: {result.ErrorMessage}" : "")}");
             }
             catch (OperationCanceledException)
             {

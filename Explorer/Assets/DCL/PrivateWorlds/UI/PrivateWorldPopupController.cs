@@ -1,9 +1,13 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.PrivateWorlds;
 using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.PrivateWorlds.UI
 {
@@ -16,17 +20,28 @@ namespace DCL.PrivateWorlds.UI
     public class PrivateWorldPopupController : ControllerBase<PrivateWorldPopupView, PrivateWorldPopupParams>, IBlocksChat
     {
         private readonly IInputBlock inputBlock;
+        private readonly IWorldPermissionsService worldPermissionsService;
+
+        private UniTaskCompletionSource closeTaskCompletionSource = new ();
+        private CancellationTokenSource? validateCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock)
-            : base(viewFactory)
+        public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock,
+            IWorldPermissionsService worldPermissionsService) : base(viewFactory)
         {
             this.inputBlock = inputBlock;
+            this.worldPermissionsService = worldPermissionsService;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance!.PasswordConfirmButton.onClick.AddListener(OnPasswordConfirmClicked);
         }
 
         protected override void OnBeforeViewShow()
         {
+            closeTaskCompletionSource = new UniTaskCompletionSource();
             viewInstance!.Configure(inputData);
         }
 
@@ -40,37 +55,85 @@ namespace DCL.PrivateWorlds.UI
 
         protected override void OnViewClose()
         {
+            validateCts?.SafeCancelAndDispose();
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             viewInstance?.ResetState();
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            int index = await UniTask.WhenAny(
-                viewInstance!.PasswordConfirmButton.OnClickAsync(ct),
-                viewInstance.PasswordCancelButton.OnClickAsync(ct),
-                viewInstance.InvitationConfirmButton.OnClickAsync(ct),
-                viewInstance.BackgroundCloseButton.OnClickAsync(ct)
-            );
-
-            if (index == 0)
+            if (inputData.Mode != PrivateWorldPopupMode.PasswordRequired)
             {
-                if (inputData.Mode == PrivateWorldPopupMode.PasswordRequired)
-                {
-                    inputData.Result = PrivateWorldPopupResult.PasswordSubmitted;
-                    inputData.EnteredPassword = viewInstance.EnteredPassword;
-                }
-                else
-                {
-                    inputData.Result = PrivateWorldPopupResult.Cancelled;
-                    inputData.EnteredPassword = null;
-                }
+                await UniTask.WhenAny(
+                    viewInstance!.InvitationConfirmButton.OnClickAsync(ct),
+                    viewInstance.BackgroundCloseButton.OnClickAsync(ct));
+                inputData.Result = PrivateWorldPopupResult.Cancelled;
+                inputData.EnteredPassword = null;
+                return;
             }
-            else
+
+            int index = await UniTask.WhenAny(
+                viewInstance!.PasswordCancelButton.OnClickAsync(ct),
+                viewInstance.BackgroundCloseButton.OnClickAsync(ct),
+                closeTaskCompletionSource.Task);
+
+            if (index < 2)
             {
                 inputData.Result = PrivateWorldPopupResult.Cancelled;
                 inputData.EnteredPassword = null;
             }
+        }
+
+        private void OnPasswordConfirmClicked()
+        {
+            if (inputData.Mode != PrivateWorldPopupMode.PasswordRequired)
+                return;
+            validateCts = validateCts.SafeRestart();
+            ValidatePasswordInternalAsync(validateCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ValidatePasswordInternalAsync(CancellationToken ct)
+        {
+            string password = viewInstance!.EnteredPassword;
+            viewInstance.SetValidating(true);
+
+            try
+            {
+                ValidatePasswordResult result = await worldPermissionsService.ValidatePasswordAsync(
+                    inputData.WorldName, password ?? string.Empty, ct);
+
+                viewInstance.SetValidating(false);
+
+                if (result.Success)
+                {
+                    inputData.Result = PrivateWorldPopupResult.PasswordSubmitted;
+                    inputData.EnteredPassword = password;
+                    closeTaskCompletionSource.TrySetResult();
+                    return;
+                }
+
+                string errorMsg = !string.IsNullOrWhiteSpace(result.ErrorMessage)
+                    ? result.ErrorMessage
+                    : "Incorrect password. Please try again.";
+                viewInstance.ShowPasswordError(errorMsg);
+            }
+            catch (OperationCanceledException)
+            {
+                viewInstance.SetValidating(false);
+            }
+            catch (Exception e)
+            {
+                viewInstance.SetValidating(false);
+                viewInstance.ShowPasswordError("An error occurred. Please try again.");
+                ReportHub.LogException(e, ReportCategory.REALM);
+            }
+        }
+
+        public override void Dispose()
+        {
+            validateCts?.SafeCancelAndDispose();
+            if (viewInstance != null)
+                viewInstance.PasswordConfirmButton.onClick.RemoveListener(OnPasswordConfirmClicked);
         }
     }
 }

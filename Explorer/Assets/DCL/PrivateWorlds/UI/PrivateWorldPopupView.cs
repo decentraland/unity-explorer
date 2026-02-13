@@ -23,6 +23,7 @@ namespace DCL.PrivateWorlds.UI
         [SerializeField] private TMP_InputField passwordInputField = null!;
         [SerializeField] private Image? passwordInputOutlineImage;
         [SerializeField] private GameObject wrongPasswordWarningObject = null!;
+        [SerializeField] private TMP_Text? errorMessageText;
 
         private static readonly Color PASSWORD_INPUT_ERROR_OUTLINE_COLOR = new (1f, 0.18f, 0.33f, 1f);
         private static readonly Color PASSWORD_INPUT_DEFAULT_OUTLINE_COLOR = new (0.988f, 0.988f, 0.988f, 1f);
@@ -99,9 +100,18 @@ namespace DCL.PrivateWorlds.UI
             {
                 wrongPasswordWarningObject.SetActive(true);
                 SetPasswordInputOutlineError(true);
+                if (errorMessageText != null)
+                {
+                    errorMessageText.text = errorMessage;
+                    errorMessageText.gameObject.SetActive(true);
+                }
             }
             else
+            {
                 SetPasswordInputOutlineError(false);
+                if (errorMessageText != null)
+                    errorMessageText.gameObject.SetActive(false);
+            }
         }
 
         private void ConfigureForAccessDenied()
@@ -128,6 +138,28 @@ namespace DCL.PrivateWorlds.UI
         public void ResetState()
         {
             ResetPasswordSection();
+        }
+
+        /// <summary>
+        /// Enables or disables the confirm button during validation to prevent double-clicks.
+        /// </summary>
+        public void SetValidating(bool validating)
+        {
+            passwordConfirmButton.interactable = !validating;
+        }
+
+        /// <summary>
+        /// Shows the password error in-place without resetting the password field.
+        /// </summary>
+        public void ShowPasswordError(string message)
+        {
+            wrongPasswordWarningObject.SetActive(true);
+            SetPasswordInputOutlineError(true);
+            if (errorMessageText != null)
+            {
+                errorMessageText.text = message;
+                errorMessageText.gameObject.SetActive(true);
+            }
         }
 
         private void ResetPasswordSection()

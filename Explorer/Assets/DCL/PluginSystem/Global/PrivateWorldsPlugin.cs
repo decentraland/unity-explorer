@@ -52,7 +52,10 @@ namespace DCL.PluginSystem.Global
                 PrivateWorldPopupView popupView = prefab.Value.GetComponent<PrivateWorldPopupView>()
                     .EnsureNotNull($"{nameof(PrivateWorldPopupView)} not found in the asset");
 
-                var popupController = new PrivateWorldPopupController(PrivateWorldPopupController.CreateLazily(popupView, null), inputBlock);
+                var popupController = new PrivateWorldPopupController(
+                    PrivateWorldPopupController.CreateLazily(popupView, null),
+                    inputBlock,
+                    worldPermissionsService);
                 mvcManager.RegisterController(popupController);
             }
 

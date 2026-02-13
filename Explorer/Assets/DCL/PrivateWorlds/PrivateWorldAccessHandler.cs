@@ -4,6 +4,8 @@ using DCL.PrivateWorlds.UI;
 using MVC;
 using System;
 using System.Threading;
+using DCL.PrivateWorlds.Testing;
+using UnityEngine;
 
 namespace DCL.PrivateWorlds
 {
@@ -13,8 +15,6 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public class PrivateWorldAccessHandler : IWorldAccessGate
     {
-        private const int MAX_PASSWORD_ATTEMPTS = 3;
-
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IMVCManager mvcManager;
         private readonly IWorldCommsSecret worldCommsSecret;
@@ -39,7 +39,6 @@ namespace DCL.PrivateWorlds
             try
             {
                 var context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-
                 return context.Result switch
                 {
                     WorldAccessCheckResult.Allowed => HandleAllowed(context),
@@ -88,34 +87,15 @@ namespace DCL.PrivateWorlds
 
         private async UniTask<WorldAccessResult> HandlePasswordRequiredAsync(string worldName, string? ownerAddress, CancellationToken ct)
         {
-            string? errorMessage = null;
+            var popupParams = new PrivateWorldPopupParams(worldName, PrivateWorldPopupMode.PasswordRequired, ownerAddress);
 
-            for (int attempt = 0; attempt < MAX_PASSWORD_ATTEMPTS; attempt++)
+            await mvcManager.ShowAsync(PrivateWorldPopupController.IssueCommand(popupParams), ct);
+
+            if (popupParams.Result == PrivateWorldPopupResult.PasswordSubmitted)
             {
-                var popupParams = new PrivateWorldPopupParams(worldName, PrivateWorldPopupMode.PasswordRequired, ownerAddress)
-                {
-                    ErrorMessage = errorMessage
-                };
-
-                await mvcManager.ShowAsync(PrivateWorldPopupController.IssueCommand(popupParams), ct);
-
-                if (popupParams.Result == PrivateWorldPopupResult.Cancelled)
-                    return WorldAccessResult.PasswordCancelled;
-
-                if (popupParams.Result == PrivateWorldPopupResult.PasswordSubmitted)
-                {
-                    bool valid = await worldPermissionsService.ValidatePasswordAsync(
-                        worldName, popupParams.EnteredPassword ?? string.Empty, ct);
-
-                    if (valid)
-                    {
-                        worldCommsSecret.Secret = popupParams.EnteredPassword;
-                        ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Password validated for '{worldName}', secret stored (length={popupParams.EnteredPassword?.Length ?? 0})");
-                        return WorldAccessResult.Allowed;
-                    }
-
-                    errorMessage = "Incorrect password. Please try again.";
-                }
+                worldCommsSecret.Secret = popupParams.EnteredPassword;
+                ReportHub.Log(ReportCategory.REALM, $"[PrivateWorldAccessHandler] Password validated for '{worldName}', secret stored (length={popupParams.EnteredPassword?.Length ?? 0})");
+                return WorldAccessResult.Allowed;
             }
 
             return WorldAccessResult.PasswordCancelled;

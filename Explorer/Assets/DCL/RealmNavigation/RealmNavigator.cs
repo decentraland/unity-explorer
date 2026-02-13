@@ -25,7 +25,6 @@ namespace DCL.RealmNavigation
     public class RealmNavigator : IRealmNavigator
     {
         private const int MAX_REALM_CHANGE_RETRIES = 3;
-        private const int PERMISSION_CHECK_TIMEOUT_SECONDS = 15;
         private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
             "Teleport is not allowed in local scene development mode";
         private const string PERMISSION_CHECK_FAILED_MESSAGE =
@@ -153,21 +152,12 @@ namespace DCL.RealmNavigation
 
             try
             {
-                // Short timeout as safety net for hung permission HTTP calls.
-                // The popup flow (password entry, access denied) is not subject to this timeout —
-                // it is only cancelled by the caller's ct (e.g., user navigating away).
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                timeoutCts.CancelAfter(TimeSpan.FromSeconds(PERMISSION_CHECK_TIMEOUT_SECONDS));
-
-                return await gate.CheckAccessAsync(worldName, null, timeoutCts.Token);
+                return await gate.CheckAccessAsync(worldName, null, ct);
             }
             catch (OperationCanceledException)
             {
                 if (ct.IsCancellationRequested)
                     return WorldAccessResult.PasswordCancelled;
-
-                // Timeout (not caller cancellation) — permission check hung
-                ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check timed out for '{worldName}'");
                 return WorldAccessResult.CheckFailed;
             }
         }

@@ -2873,6 +2873,7 @@ MonoBehaviour:
   passwordInputField: {fileID: 5606508522907202527}
   passwordInputOutlineImage: {fileID: 3326478271341785494}
   wrongPasswordWarningObject: {fileID: 7889654903446612753}
+  errorMessageText: {fileID: 8817625477380620337}
   passwordVisibilityToggleButton: {fileID: 1861698907944412279}
   passwordVisibleIcon: {fileID: 771255638131188436}
   passwordHiddenIcon: {fileID: 4938482166890824996}
