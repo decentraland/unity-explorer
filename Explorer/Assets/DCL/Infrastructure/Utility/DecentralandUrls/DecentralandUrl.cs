@@ -127,8 +127,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         BuilderApiNewsletter = 77,
         MetaTransactionServer = 78,
-        
+
         WorldContentServer = 79,
-        
+
+        WorldEntitiesActive = 80,
+
+
     }
 }
