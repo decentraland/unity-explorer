@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (intention.TryCancelByRequest<GetEmotesByPointersIntention, TrimmedEmotesResponse>(
+            if (intention.TryCancelByRequest<GetEmotesByPointersIntention, EmotesResolution>(
                     World!,
                     GetReportCategory(),
                     entity,

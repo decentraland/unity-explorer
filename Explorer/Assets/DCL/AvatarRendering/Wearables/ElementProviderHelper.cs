@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables
         {
             if (elementStorage.TryGetElement(pointer, out var element))
             {
-                // Emote could be in the storage but still loading their data. Wait until they finish loading.
+                // Element could be in the storage but still loading their data. Wait until they finish loading.
                 await UniTask.WaitWhile(() => element.IsLoading, cancellationToken: ct);
 
                 await UniTask.SwitchToMainThread();

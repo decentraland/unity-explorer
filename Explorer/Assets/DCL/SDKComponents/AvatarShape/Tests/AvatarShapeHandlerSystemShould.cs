@@ -386,7 +386,7 @@ namespace ECS.Unity.AvatarShape.Tests
             var promise = sdkAvatarShapeComponent.LocalSceneEmotePromise.Value;
             var exception = new StreamableLoadingException(LogType.Exception, "Emote loading failed");
             LogAssert.Expect(LogType.Exception, $"StreamableLoadingException: {exception.Message}");
-            var result = new StreamableLoadingResult<TrimmedEmotesResponse>(ReportData.UNSPECIFIED, exception);
+            var result = new StreamableLoadingResult<EmotesResolution>(ReportData.UNSPECIFIED, exception);
             globalWorld.Add(promise.Entity, result);
 
             system.Update(0);

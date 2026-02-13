@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             ref GetSceneEmoteFromRealmIntention intention,
             ref IPartitionComponent partitionComponent)
         {
-            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, TrimmedEmotesResponse>(
+            if (intention.TryCancelByRequest<GetSceneEmoteFromRealmIntention, EmotesResolution>(
                     World!,
                     GetReportCategory(),
                     entity,
