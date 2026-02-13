@@ -132,7 +132,7 @@ void InitializeBakedGIData(Varyings input, inout InputData inputData)
 #endif
 }
 
-void CalculateNormalFromHeightmap(float2 uv, out float3 normalWS, out float3 tangentWS, out float3 bitangentWS)
+void CalculateNormalFromHeightmap(float2 uv, float3 posWS, out float3 normalWS, out float3 tangentWS, out float3 bitangentWS)
 {
     float _Heightmap_TexelSize = 1.0f / 8192.0f;
     
@@ -176,18 +176,25 @@ void CalculateNormalFromHeightmap(float2 uv, out float3 normalWS, out float3 tan
     height7 = height7 * range + min;
     height8 = height8 * range + min;
     
-    // Sample occupancy
-    float fOccupancy0 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset0 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy1 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset1 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy2 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset2 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy3 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset3 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy4 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset4 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy5 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset5 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy6 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset6 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy7 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset7 * _Heightmap_TexelSize), 0).r;
-    float fOccupancy8 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, uv + (offset8 * _Heightmap_TexelSize), 0).r;
+    // Sample occupancy using the correct occupancy UV (not heightmap UV)
+    // The occupancy map uses a different coordinate system than the heightmap
+    float occupancyTexelSize = 1.0f / _OccupancyMapSize;
+    float2 occUV = ComputeOccupancyUV(posWS);
+    // Use parcel-sized offsets (one parcel = one texel in occupancy map)
+    float2 occOffset = float2(occupancyTexelSize, occupancyTexelSize);
 
-    float minValue = 175.0 / 255.0;
+    float fOccupancy0 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset0 * occOffset), 0).r;
+    float fOccupancy1 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset1 * occOffset), 0).r;
+    float fOccupancy2 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset2 * occOffset), 0).r;
+    float fOccupancy3 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset3 * occOffset), 0).r;
+    float fOccupancy4 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset4 * occOffset), 0).r;
+    float fOccupancy5 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset5 * occOffset), 0).r;
+    float fOccupancy6 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset6 * occOffset), 0).r;
+    float fOccupancy7 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset7 * occOffset), 0).r;
+    float fOccupancy8 = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occUV + (offset8 * occOffset), 0).r;
+
+    // Use the dynamic minValue from the CPU distance field, not a hardcoded value
+    float minValue = _MinDistOccupancy;
 
     fOccupancy0 = (fOccupancy0 <= minValue) ? 0.0f : (fOccupancy0 - minValue) / (1 - minValue);
     fOccupancy1 = (fOccupancy1 <= minValue) ? 0.0f : (fOccupancy1 - minValue) / (1 - minValue);
@@ -344,7 +351,7 @@ Varyings LitPassVertexSimple(Attributes input)
     float3 tangentWS;
     float3 bitangentWS;
     
-    CalculateNormalFromHeightmap(heightUV, normalWS, tangentWS, bitangentWS);
+    CalculateNormalFromHeightmap(heightUV, vertexInput.positionWS, normalWS, tangentWS, bitangentWS);
     normalInput.normalWS = normalWS;
     normalInput.tangentWS = tangentWS;
     normalInput.bitangentWS = bitangentWS;
