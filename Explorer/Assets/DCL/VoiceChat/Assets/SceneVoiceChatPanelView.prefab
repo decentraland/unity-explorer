@@ -130,7 +130,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300.98, y: -25}
+  m_AnchoredPosition: {x: 301.49, y: -25}
   m_SizeDelta: {x: 15, y: 14}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &1995924830243490229
@@ -428,6 +428,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -735,7 +736,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 388, y: -25}
-  m_SizeDelta: {x: 68.02, y: 16}
+  m_SizeDelta: {x: 67.51, y: 16}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &3301457837181114284
 CanvasRenderer:
@@ -803,6 +804,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -973,6 +975,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1102,6 +1105,8 @@ MonoBehaviour:
   <CommunityName>k__BackingField: {fileID: 5980085074987759608}
   <ParticipantCount>k__BackingField: {fileID: 93347387234092406}
   <JoinStreamButton>k__BackingField: {fileID: 2012364279694544160}
+  <CommunityThumbnail>k__BackingField: {fileID: 2538144234902903632}
+  <DefaultCommunitySprite>k__BackingField: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
 --- !u!114 &2012364279694544160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1264,6 +1269,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

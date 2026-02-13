@@ -80,7 +80,8 @@ namespace DCL.WebRequests.Analytics
             string templateUrl = urlsSource.Url(templateType);
 
             transactionName = string.Empty;
-            if (string.IsNullOrEmpty(templateUrl)) return false;
+
+            if (string.IsNullOrEmpty(templateUrl) || !SchemeIsValid(templateUrl, out _)) return false;
 
             if (!templateCache.TryGetValue(templateType, out TemplateData data))
             {
@@ -116,15 +117,19 @@ namespace DCL.WebRequests.Analytics
 
         private static string ExtractTargetFromTemplate(string templateUrl)
         {
-            int schemeEnd = templateUrl.IndexOf("://", StringComparison.Ordinal);
-
-            if (schemeEnd < 0)
+            if (!SchemeIsValid(templateUrl, out int schemeEnd))
                 return templateUrl;
 
             int hostStart = schemeEnd + 3;
             int pathStart = templateUrl.IndexOf('/', hostStart);
 
             return pathStart < 0 ? "/" : templateUrl[pathStart..];
+        }
+
+        private static bool SchemeIsValid(string url, out int schemeEnd)
+        {
+            schemeEnd = url.IndexOf("://", StringComparison.Ordinal);
+            return schemeEnd >= 0;
         }
 
         /// <summary>
@@ -142,9 +147,7 @@ namespace DCL.WebRequests.Analytics
                 return false;
             }
 
-            int schemeEnd = url.IndexOf("://", StringComparison.Ordinal);
-
-            if (schemeEnd < 0)
+            if (!SchemeIsValid(url, out int schemeEnd))
             {
                 parts = default(OpenTelemetryUrlParts);
                 return false;
