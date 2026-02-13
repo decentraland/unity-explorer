@@ -75,6 +75,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
+            CancelEmotesByGlidingQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World);
             CancelEmotesByDeletionQuery(World);
@@ -86,10 +87,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-        }
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
@@ -98,10 +97,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-        }
 
         /// <summary>
         /// Stops emote playback when smooth movement with duration is initiated.
@@ -109,17 +106,22 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerMoveToWithDurationIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
+
+        /// <summary>
+        /// Stops emote playback then the character is gliding.
+        /// </summary>
+        [Query]
+        private void CancelEmotesByGliding(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in GlideState glideState)
+        {
+            if (glideState.Value != GlideStateValue.PROP_CLOSED) StopEmote(ref emoteComponent, avatarView);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
-        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
-        }
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
@@ -294,10 +296,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
-        {
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent) =>
             characterController.enabled = !emoteComponent.IsPlayingEmote;
-        }
 
         [Query]
         private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
