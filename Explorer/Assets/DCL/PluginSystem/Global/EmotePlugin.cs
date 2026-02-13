@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private TimeSpan batchHeartbeat;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -134,6 +136,8 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
                 emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
 
+            BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
+
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
@@ -152,6 +156,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+
             IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
 
             // Initialize the embedded emote URN mapping for legacy emote conversion
@@ -191,6 +197,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

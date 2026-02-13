@@ -62,6 +62,7 @@ MonoBehaviour:
   - rid: 5190442831932031144
   - rid: 1221415613651484787
   - rid: 732305993255354462
+  - rid: 1709771649487732831
   references:
     version: 2
     RefIds:
@@ -414,6 +415,10 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 1709771649487732831
+      type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
+      data:
+        <BatchHeartbeatMs>k__BackingField: 100
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1001,6 +1006,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <BatchHeartbeatMs>k__BackingField: 100
         <BaseEmotes>k__BackingField:
         - urn:decentraland:off-chain:base-emotes:clap
         - urn:decentraland:off-chain:base-emotes:cry

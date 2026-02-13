@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -48,7 +49,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 }
 
                 world.Create(AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(world,
-                    new GetWearableDTOByPointersIntention(urns, default(CommonLoadingArguments)), PartitionComponent.TOP_PRIORITY), PartitionComponent.TOP_PRIORITY);
+                    new GetWearableDTOByPointersIntention(urns, new CommonLoadingArguments(URLAddress.FromString("test"))), PartitionComponent.TOP_PRIORITY), (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(delay));
@@ -62,7 +63,32 @@ namespace DCL.AvatarRendering.Wearables.Tests
             {
                 // One promise to replace individual promises
 
-                // Assert.That(world.GetEntities());
+                int entitiesCount = world.CountEntities(rootQuery);
+                Assert.That(entitiesCount, Is.EqualTo(1));
+
+                var entities = new Entity[1];
+                world.GetEntities(rootQuery, entities);
+
+                AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> rootPromise = world.Get<AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>>(entities[0]);
+                var expectedUrns = Enumerable.Range(0, 15).Select(i => new URN(i.ToString())).ToList();
+
+                Assert.That(rootPromise.LoadingIntention.Pointers, Is.EquivalentTo(expectedUrns));
+
+                entitiesCount = world.CountEntities(intentionQuery);
+                Assert.That(entitiesCount, Is.EqualTo(1));
+
+                world.GetEntities(intentionQuery, entities);
+                GetWearableDTOByPointersIntention intention = world.Get<GetWearableDTOByPointersIntention>(entities[0]);
+
+                Assert.That(intention.Pointers, Is.EquivalentTo(expectedUrns));
+            }
+            else
+            {
+                int entitiesCount = world.CountEntities(rootQuery);
+                Assert.That(entitiesCount, Is.EqualTo(3));
+
+                entitiesCount = world.CountEntities(intentionQuery);
+                Assert.That(entitiesCount, Is.EqualTo(3));
             }
         }
     }

@@ -18,6 +18,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Utility;
 
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
@@ -158,7 +159,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
-                new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: intention.CancellationTokenSource));
+                new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: CancellationTokenSource.CreateLinkedTokenSource(intention.CancellationTokenSource.Token)));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
 

@@ -19,9 +19,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
     {
         private readonly TimeSpan batchHeartbeat;
         private DateTime nextDispatch = DateTime.MinValue;
-        private readonly CancellationTokenSource cts = new ();
 
+        private readonly CancellationTokenSource cts = new ();
         private readonly IDecentralandUrlsSource urlsSource;
+
+        private BatchedPointersIntentions currentBatch = BatchedPointersIntentions.Create();
 
         protected BatchPointersSystemBase(World world, TimeSpan batchHeartbeat, IDecentralandUrlsSource urlsSource) : base(world)
         {
@@ -31,24 +33,28 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         protected override void Update(float t)
         {
+            // Gather intentions for the batch immediately so they are not processed individually
+            GatherIntentionsForBatchQuery(World, ref currentBatch);
+
             if (nextDispatch > DateTime.Now)
                 return;
 
-            var batchedIntentions = BatchedPointersIntentions.Create();
+            // The time is right - launch the batch
 
-            GatherIntentionsForBatchQuery(World, ref batchedIntentions);
-
-            if (batchedIntentions.Pointers.Count == 0)
-                batchedIntentions.Dispose();
+            if (currentBatch.Pointers.Count == 0)
+                currentBatch.Dispose();
             else
             {
                 // Create a new entity
-                World.Create(batchedIntentions, CreateAssetPromise(batchedIntentions, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: cts)));
+                World.Create(CreateAssetPromise(currentBatch, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: cts)));
 
                 // The batch will be finalized by FinalizeWearableLoadingSystemBase - no special actions are needed
             }
 
             nextDispatch = DateTime.Now + batchHeartbeat;
+
+            // Recreate the batch
+            currentBatch = BatchedPointersIntentions.Create();
         }
 
         protected abstract AssetPromise<TAsset, TIntention> CreateAssetPromise(in BatchedPointersIntentions batchedIntentions, CommonLoadingArguments commonLoadingArguments);

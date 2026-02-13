@@ -18,8 +18,8 @@ namespace DCL.AvatarRendering.Emotes.Load
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(GlobalDeferredLoadingSystem))] // It is executed before Deferred System to intercept promises
-    // Finalization systems will destroy the entity with promise
-    [UpdateBefore(typeof(FinalizeEmoteLoadingSystem))]
+    [UpdateBefore(typeof(LoadEmotesByPointersSystem))] // 2-in-1 system: Is both for loading and creation, so this system executes next frame before the loading actually kicks in
+    // LoadEmotesByPointersSystem: LoadSystemBase => LoadEmotesByPointersSystem: Create a promise => next frame => BatchEmotesDTOSystem: intercept => LoadEmotesByPointersSystem: LoadSystemBase processes the batched request
     public partial class BatchEmotesDTOSystem : BatchPointersSystemBase<GetEmotesDTOByPointersFromRealmIntention, EmotesDTOList>
     {
         internal BatchEmotesDTOSystem(World world, IDecentralandUrlsSource urlsSource, TimeSpan batchHeartbeat) : base(world, batchHeartbeat, urlsSource) { }

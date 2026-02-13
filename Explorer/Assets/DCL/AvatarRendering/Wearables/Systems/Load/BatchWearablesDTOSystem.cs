@@ -19,9 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(GlobalDeferredLoadingSystem))] // It is executed before Deferred System to intercept promises
-    // Finalization systems will destroy the entity with promise
-    [UpdateBefore(typeof(FinalizeAssetBundleWearableLoadingSystem))]
-    [UpdateBefore(typeof(FinalizeRawWearableLoadingSystem))]
+    [UpdateAfter(typeof(ResolveWearablePromisesSystem))] // And right after the promise is actually created
     public partial class BatchWearablesDTOSystem : BatchPointersSystemBase<GetWearableDTOByPointersIntention, WearablesDTOList>
     {
         internal BatchWearablesDTOSystem(World world, IDecentralandUrlsSource urlsSource, TimeSpan batchHeartbeat) : base(world, batchHeartbeat, urlsSource) { }

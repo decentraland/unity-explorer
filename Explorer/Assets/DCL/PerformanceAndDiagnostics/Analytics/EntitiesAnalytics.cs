@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Concurrent;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -29,6 +28,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void OnRequestFinished(int processedEntities)
             {
+                // TODO Add Max, Avg and Min batch size to the debug menu
+
                 failedEntities = count - processedEntities;
                 duration = (ulong)(DateTime.Now - startTime).TotalMilliseconds;
             }
