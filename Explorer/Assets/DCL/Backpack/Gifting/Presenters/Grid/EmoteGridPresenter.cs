@@ -11,7 +11,6 @@ using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
-using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -21,9 +20,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
     public class EmoteGridPresenter : GiftingGridPresenterBase<GiftItemViewModel>
     {
         private readonly IEmoteProvider emoteProvider;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IWearableStylingCatalog stylingCatalog;
-        private readonly IEmoteProvider.OrderOperation currentOrder = new("date", isAscendent: false);
+        private readonly IEmoteProvider.OrderOperation currentOrder = new("date", isAscending: false);
 
         public EmoteGridPresenter(
             GiftingGridView view,
@@ -33,7 +31,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IAvatarEquippedStatusProvider equippedStatusProvider,
             IPendingTransferService pendingTransferService,
             IEmoteProvider emoteProvider,
-            IWeb3IdentityCache identityCache,
             IWearableStylingCatalog stylingCatalog,
             IWearableStorage wearableStorage,
             IEmoteStorage  emoteStorage)
@@ -47,7 +44,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 emoteStorage)
         {
             this.emoteProvider = emoteProvider;
-            this.identityCache = identityCache;
             this.stylingCatalog = stylingCatalog;
 
             adapter.UseWearableStyling(stylingCatalog);
@@ -67,9 +63,9 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 name: search,
                 includeAmount: true);
 
-            var result = await emoteProvider.GetOwnedEmotesAsync(
-                ct,
+            var result = await emoteProvider.GetTrimmedByParamsAsync(
                 requestOptions,
+                ct,
                 pageEmotes);
 
             var giftables = new List<GiftableAvatarAttachment>(pageEmotes.Count);

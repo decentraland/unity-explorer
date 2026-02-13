@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 BodyShape currenBodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearableCategories.Categories.BODY_SHAPE)!.GetUrn());
 
-                await emoteProvider.GetEmotesAsync(urnRequest, currenBodyShape, ct, results);
+                await emoteProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
                 if (results != null)
                     foreach (var result in results)

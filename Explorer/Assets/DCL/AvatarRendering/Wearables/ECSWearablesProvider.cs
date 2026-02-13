@@ -10,7 +10,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Runtime.Wearables;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -139,7 +138,7 @@ namespace DCL.AvatarRendering.Wearables
 
             results.AddRange(result.Asset.Wearables);
 
-            return result.Asset.Wearables;
+            return results;
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)

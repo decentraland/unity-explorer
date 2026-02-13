@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Web3;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -26,9 +25,9 @@ namespace DCL.AvatarRendering.Emotes
             this.builderDTOsUrl = builderDTOsUrl;
         }
 
-        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetOwnedEmotesAsync(
-            CancellationToken ct,
+        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetTrimmedByParamsAsync(
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
+            CancellationToken ct,
             List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
@@ -43,8 +42,8 @@ namespace DCL.AvatarRendering.Emotes
 
                 var localBuffer = ListPool<IEmote>.Get();
 
-                await UniTask.WhenAll(GetEmotesAsync(pointers, BodyShape.MALE, ct, localBuffer),
-                    GetEmotesAsync(pointers, BodyShape.FEMALE, ct, localBuffer));
+                await UniTask.WhenAll(GetByPointersAsync(pointers, BodyShape.MALE, ct, localBuffer),
+                    GetByPointersAsync(pointers, BodyShape.FEMALE, ct, localBuffer));
 
                 foreach (var emote in localBuffer)
                     results.Add(emote);
@@ -63,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded emotes
-                    await source.GetOwnedEmotesAsync(ct, requestOptions, localBuffer,
+                    await source.GetTrimmedByParamsAsync(requestOptions, ct, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
                             builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
                             cancellationTokenSource: new CancellationTokenSource()
@@ -71,10 +70,10 @@ namespace DCL.AvatarRendering.Emotes
                         needsBuilderAPISigning: true);
                 }
 
-                if (requestOptions is { pageNum: not null, pageSize: not null })
+                if (requestOptions is { PageNum: not null, PageSize: not null })
                 {
-                    int pageIndex = requestOptions.pageNum.Value - 1;
-                    results.AddRange(localBuffer.Skip(pageIndex * requestOptions.pageSize.Value).Take(requestOptions.pageSize.Value));
+                    int pageIndex = requestOptions.PageNum.Value - 1;
+                    results.AddRange(localBuffer.Skip(pageIndex * requestOptions.PageSize.Value).Take(requestOptions.PageSize.Value));
                 }
                 else
                 {
@@ -88,10 +87,10 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             // Regular path without any "self-preview" element
-            return await source.GetOwnedEmotesAsync(ct, requestOptions, results);
+            return await source.GetTrimmedByParamsAsync(requestOptions, ct, results);
         }
 
-        public UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> results) =>
-            source.GetEmotesAsync(emoteIds, bodyShape, ct, results);
+        public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote>? results = null) =>
+            await source.GetByPointersAsync(emoteIds, bodyShape, ct, results);
     }
 }

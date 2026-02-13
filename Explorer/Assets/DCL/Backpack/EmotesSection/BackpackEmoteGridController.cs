@@ -153,8 +153,7 @@ namespace DCL.Backpack.EmotesSection
                 using var _ = ListPool<ITrimmedEmote>.Get(out var customOwnedEmotes);
                 customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
 
-                var result = await emoteProvider.GetOwnedEmotesAsync(
-                    ct,
+                var result = await emoteProvider.GetTrimmedByParamsAsync(
                     new IEmoteProvider.OwnedEmotesRequestOptions(
                         pageNum: pageNumber,
                         pageSize: CURRENT_PAGE_SIZE,
@@ -162,6 +161,7 @@ namespace DCL.Backpack.EmotesSection
                         orderOperation: currentOrder,
                         name: currentSearch
                     ),
+                    ct,
                     customOwnedEmotes
                 );
 
@@ -176,7 +176,7 @@ namespace DCL.Backpack.EmotesSection
                     using var scope = ListPool<IEmote>.Get(out var baseEmotes);
                     baseEmotes = baseEmotes.EnsureNotNull();
 
-                    await emoteProvider.GetEmotesAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
+                    await emoteProvider.GetByPointersAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
 
                     IEnumerable<IEmote> filteredEmotes = baseEmotes;
 
@@ -188,7 +188,7 @@ namespace DCL.Backpack.EmotesSection
 
                     filteredEmotes = currentOrder.By switch
                                      {
-                                         "name" => currentOrder.IsAscendent
+                                         "name" => currentOrder.IsAscending
                                              ? filteredEmotes.OrderBy(emote => emote.GetName())
                                              : filteredEmotes.OrderByDescending(emote => emote.GetName()),
                                          _ => filteredEmotes,

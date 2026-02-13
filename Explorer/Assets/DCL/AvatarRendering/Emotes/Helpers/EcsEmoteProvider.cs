@@ -39,9 +39,9 @@ namespace DCL.AvatarRendering.Emotes
             this.web3IdentityCache = web3IdentityCache;
         }
 
-        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetOwnedEmotesAsync(
-            CancellationToken ct,
+        public async UniTask<(IReadOnlyList<ITrimmedEmote> results, int totalAmount)> GetTrimmedByParamsAsync(
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
+            CancellationToken ct,
             List<ITrimmedEmote>? results = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false
@@ -51,26 +51,26 @@ namespace DCL.AvatarRendering.Emotes
             requestParameters.Add((TRIMMED, "true"));
             requestParameters.Add((INCLUDE_ENTITIES, "true"));
 
-            if (requestOptions.pageNum.HasValue)
-                requestParameters.Add((PAGE_NUMBER, requestOptions.pageNum.ToString()));
+            if (requestOptions.PageNum.HasValue)
+                requestParameters.Add((PAGE_NUMBER, requestOptions.PageNum.ToString()));
 
-            if (requestOptions.pageSize.HasValue)
-                requestParameters.Add((PAGE_SIZE, requestOptions.pageSize.ToString()));
+            if (requestOptions.PageSize.HasValue)
+                requestParameters.Add((PAGE_SIZE, requestOptions.PageSize.ToString()));
 
-            if (requestOptions.includeAmount ?? true)
+            if (requestOptions.IncludeAmount ?? true)
                 requestParameters.Add((INCLUDE_AMOUNT, "true"));
 
-            if (requestOptions.collectionId.HasValue)
-                requestParameters.Add((COLLECTION_ID, requestOptions.collectionId));
+            if (requestOptions.CollectionId.HasValue)
+                requestParameters.Add((COLLECTION_ID, requestOptions.CollectionId));
 
-            if (requestOptions.orderOperation.HasValue)
+            if (requestOptions.OrderOperation.HasValue)
             {
-                requestParameters.Add((ORDER_BY, requestOptions.orderOperation.Value.By));
-                requestParameters.Add((ORDER_DIRECTION, requestOptions.orderOperation.Value.IsAscendent ? "asc" : "desc"));
+                requestParameters.Add((ORDER_BY, requestOptions.OrderOperation.Value.By));
+                requestParameters.Add((ORDER_DIRECTION, requestOptions.OrderOperation.Value.IsAscending ? "asc" : "desc"));
             }
 
-            if(requestOptions.name != null)
-                requestParameters.Add((NAME, requestOptions.name));
+            if(requestOptions.Name != null)
+                requestParameters.Add((NAME, requestOptions.Name));
 
             results ??= new List<ITrimmedEmote>();
 
@@ -88,16 +88,23 @@ namespace DCL.AvatarRendering.Emotes
 
             if (needsBuilderAPISigning)
             {
+                // If it's a builder request, we need the full emote data so that ResolveBuilderEmotePromisesSystem can resolve the assets
                 List<URN> urns = promise.Result.Value.Asset.Emotes.Select(x => x.GetUrn()).ToList();
-                await UniTask.WhenAll(GetEmotesAsync(urns, BodyShape.MALE, ct, intention.FullResults.List),
-                    GetEmotesAsync(urns, BodyShape.FEMALE, ct, intention.FullResults.List));
+                await UniTask.WhenAll(GetByPointersAsync(urns, BodyShape.MALE, ct, intention.FullResults.List),
+                    GetByPointersAsync(urns, BodyShape.FEMALE, ct, intention.FullResults.List));
             }
 
             return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
         }
 
-        public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
+        public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(
+            IReadOnlyCollection<URN> emoteIds,
+            BodyShape bodyShape,
+            CancellationToken ct,
+            List<IEmote>? output = null)
         {
+            output ??= new List<IEmote>();
+
             output.Clear();
 
             GetEmotesByPointersIntention intention = EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, emoteIds);
@@ -105,13 +112,15 @@ namespace DCL.AvatarRendering.Emotes
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
-                return;
+                return output;
 
             if (!promise.Result.Value.Succeeded)
                 throw promise.Result.Value.Exception!;
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
             output.AddRange(emotes.Value);
+
+            return output;
         }
     }
 }
