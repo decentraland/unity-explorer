@@ -1,5 +1,17 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8812408551005184995
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60ada98b44ba9fd4397449f0df0452b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CharacterMotion::VFXStateTrigger
 --- !u!1102 &-6725984868599773039
 AnimatorState:
   serializedVersion: 6
@@ -13,7 +25,8 @@ AnimatorState:
   m_Transitions:
   - {fileID: 8890796274958947936}
   - {fileID: -3846395646926013638}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -8812408551005184995}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -133,7 +146,7 @@ AnimatorStateMachine:
     m_Position: {x: 310, y: 260, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -6725984868599773039}
-    m_Position: {x: 310, y: 180, z: 0}
+    m_Position: {x: 310, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -2339892492303936996}
     m_Position: {x: 590, y: 260, z: 0}
