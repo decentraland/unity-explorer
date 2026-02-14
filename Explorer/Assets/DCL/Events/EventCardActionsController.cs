@@ -18,6 +18,12 @@ namespace DCL.Events
 {
     public class EventCardActionsController
     {
+        public Action<IEventDTO>? EventSetAsInterested { get; set; }
+        public Action<IEventDTO>? AddEventToCalendarClicked { get; set; }
+        public Action<IEventDTO>? JumpedInEventPlace { get; set; }
+        public Action<IEventDTO>? EventShared { get; set; }
+        public Action<IEventDTO>? EventLinkCopied { get; set; }
+
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -58,13 +64,21 @@ namespace DCL.Events
             eventCardView?.UpdateInterestedButtonState(eventData.Attending);
             eventCardView?.UpdateVisuals();
             eventDetailPanelView?.UpdateInterestedButtonState(eventData.Attending);
+
+            EventSetAsInterested?.Invoke(eventData);
         }
 
-        public void AddEventToCalendar(IEventDTO eventData) =>
+        public void AddEventToCalendar(IEventDTO eventData)
+        {
             webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData));
+            AddEventToCalendarClicked?.Invoke(eventData);
+        }
 
-        public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart) =>
+        public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
+        {
             webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData, utcStart));
+            AddEventToCalendarClicked?.Invoke(eventData);
+        }
 
         public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
         {
@@ -72,15 +86,21 @@ namespace DCL.Events
                 realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), ct).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false).Forget();
+
+            JumpedInEventPlace?.Invoke(eventData);
         }
 
-        public void ShareEvent(IEventDTO eventData) =>
+        public void ShareEvent(IEventDTO eventData)
+        {
             webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData));
+            EventShared?.Invoke(eventData);
+        }
 
         public void CopyEventLink(IEventDTO eventData)
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+            EventLinkCopied?.Invoke(eventData);
         }
     }
 }

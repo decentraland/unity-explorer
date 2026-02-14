@@ -204,5 +204,18 @@
             public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
             public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
         }
+
+        public static class Events
+        {
+            public const string EVENTS_SECTION_OPENED = "events_section_opened";
+            public const string EVENTS_BY_DAY_OPENED = "events_by_day_opened";
+            public const string EVENT_CREATION_OPENED = "event_creation_opened";
+            public const string EVENT_CARD_CLICKED = "event_card_clicked";
+            public const string EVENT_SET_AS_INTERESTED = "event_set_as_interested";
+            public const string EVENT_ADDED_TO_CALENDAR = "event_added_to_calendar";
+            public const string EVENT_JUMPED_IN = "event_jumped_in";
+            public const string EVENT_SHARED = "event_shared";
+            public const string EVENT_LINK_COPIED = "event_link_copied";
+        }
     }
 }

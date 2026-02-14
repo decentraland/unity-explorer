@@ -9,6 +9,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -24,9 +25,12 @@ namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
+        public event Action<bool>? CreateEventButtonClicked;
+
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_MY_COMMUNITIES_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
 
+        public event Action? Activated;
         public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
         public event Action? GoToTodayClicked;
@@ -46,6 +50,7 @@ namespace DCL.Events
         private readonly EventsCalendarController eventsCalendarController;
         private readonly EventsByDayController eventsByDayController;
         private readonly EventsStateService eventsStateService;
+        private readonly EventsAnalytics eventsAnalytics;
 
         public EventsController(
             EventsView view,
@@ -59,7 +64,8 @@ namespace DCL.Events
             EventCardActionsController eventCardActionsController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            CommunitiesDataProvider communitiesDataProvider)
+            CommunitiesDataProvider communitiesDataProvider,
+            IAnalyticsController analytics)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -72,18 +78,20 @@ namespace DCL.Events
             eventsStateService = new EventsStateService();
             eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
+            eventsAnalytics = new EventsAnalytics(analytics, this, eventsCalendarController, eventCardActionsController);
 
             view.GoToTodayButtonClicked += OnGoToTodayButtonClicked;
-            view.CreateButtonClicked += GoToCreateEventPage;
+            view.CreateButtonClicked += OnCreateButtonClicked;
         }
 
         public void Dispose()
         {
             eventsCalendarController.Dispose();
             eventsByDayController.Dispose();
+            eventsAnalytics.Dispose();
 
             view.GoToTodayButtonClicked -= OnGoToTodayButtonClicked;
-            view.CreateButtonClicked -= GoToCreateEventPage;
+            view.CreateButtonClicked -= OnCreateButtonClicked;
         }
 
         public void Activate()
@@ -95,6 +103,7 @@ namespace DCL.Events
             view.SetViewActive(true);
             cursor.Unlock();
             OpenSection(EventsSection.CALENDAR);
+            Activated?.Invoke();
         }
 
         public void Deactivate()
@@ -182,7 +191,13 @@ namespace DCL.Events
         private void OnGoToTodayButtonClicked() =>
             GoToTodayClicked?.Invoke();
 
-        public void GoToCreateEventPage() =>
+        private void OnCreateButtonClicked() =>
+            GoToCreateEventPage(true);
+
+        public void GoToCreateEventPage(bool fromHeader)
+        {
             webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");
+            CreateEventButtonClicked?.Invoke(fromHeader);
+        }
     }
 }
