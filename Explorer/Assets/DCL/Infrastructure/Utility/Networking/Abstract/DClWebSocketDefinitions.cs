@@ -100,9 +100,7 @@ namespace Utility.Networking
 
     public class WebSocketException : Exception
     {
-//#if !UNITY_WEBGL
         private System.Net.WebSockets.WebSocketException inner;
-//#endif
 
         public WebSocketException()
         {
@@ -114,19 +112,19 @@ namespace Utility.Networking
             this.inner = inner;
         }
 
-        public WebSocketException(string message, Exception ex) 
+        public WebSocketException(string message, Exception ex)
             : this(new System.Net.WebSockets.WebSocketException(message, ex))
         {}
 
-        public WebSocketException(int closeStatus, string message) 
+        public WebSocketException(int closeStatus, string message)
             : this(new System.Net.WebSockets.WebSocketException(closeStatus, message))
         {}
 
-        public WebSocketException(string message) 
+        public WebSocketException(string message)
             : this(new System.Net.WebSockets.WebSocketException(message))
         {}
 
-        public WebSocketException(WebSocketError error, string message) 
+        public WebSocketException(WebSocketError error, string message)
             : this(new System.Net.WebSockets.WebSocketException((System.Net.WebSockets.WebSocketError) error, message))
         {}
 

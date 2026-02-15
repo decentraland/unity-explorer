@@ -24,7 +24,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using Temp.Helper.WebClient;
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
 using SceneRuntime.WebClient;
 #else
 using SceneRuntime.V8;
@@ -77,7 +77,9 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
             WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
 
-#if UNITY_WEBGL
+#if UNITY_EDITOR
+            IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
+#elif UNITY_WEBGL
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();

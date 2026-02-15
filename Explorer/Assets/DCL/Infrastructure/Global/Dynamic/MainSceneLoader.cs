@@ -474,7 +474,6 @@ namespace Global.Dynamic
             CancellationToken ct)
         {
 #if !UNITY_WEBGL
-
             //If Livekit is down, stop bootstrapping
             if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;

@@ -36,7 +36,7 @@ namespace SceneRuntime.Factory
 
         public IEnumerator<string> GetEnumerator()
         {
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
             // In WebGL, we can't use Directory.GetFiles, so use the hardcoded list
             return ((IEnumerable<string>)WEBGL_MODULE_NAMES).GetEnumerator();
 #else

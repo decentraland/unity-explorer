@@ -10,8 +10,8 @@ namespace Utility.Multithreading
 #else
         private readonly Dictionary<TKey, TValue> Inner;
 #endif
-        public TValue this[TKey key] 
-        { 
+        public TValue this[TKey key]
+        {
             get
             {
                 return Inner[key];

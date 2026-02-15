@@ -37,11 +37,7 @@ namespace DCL.UserInAppInitializationFlow
             RealmContainer realmContainer,
             IRealmNavigator realmNavigator,
             RealmNavigationContainer realmNavigationContainer,
-
-//#if !UNITY_WEBGL
             TerrainContainer terrainContainer,
-//#endif
-
             ILoadingScreen loadingScreen,
 #if !NO_LIVEKIT_MODE
             IHealthCheck liveKitHealthCheck,
@@ -87,7 +83,6 @@ namespace DCL.UserInAppInitializationFlow
 #if !UNITY_WEBGL
                 , loadLandscapeStartupOperation
 #endif
-
             };
 
 #if !UNITY_WEBGL

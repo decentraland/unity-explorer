@@ -51,29 +51,22 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
 
-//#if !UNITY_WEBGL
                 teleportIntent.Position = targetWorldPosition
                     .WithTerrainOffset(
                             landscape
                             .GetHeight(
-                                targetWorldPosition.x, 
+                                targetWorldPosition.x,
                                 targetWorldPosition.z
                                 )
                             );
-//#else
-//                teleportIntent.Position = targetWorldPosition;
-//#endif
-
             }
 
-//#if !UNITY_WEBGL
-            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) 
-            { 
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
+            {
                 teleportIntent.Position = ParcelMathHelper
                     .GetPositionByParcelPosition(parcel)
-                    .WithErrorCompensation(); 
+                    .WithErrorCompensation();
             }
-//#endif
 
             else
             {

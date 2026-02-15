@@ -226,7 +226,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         }
 
         private void RoomOnConnectionQualityChanged(
-                LKConnectionQuality quality, 
+                LKConnectionQuality quality,
                 LKParticipant participant)
         {
             ConnectionQualityChanged?.Invoke(quality, participant);

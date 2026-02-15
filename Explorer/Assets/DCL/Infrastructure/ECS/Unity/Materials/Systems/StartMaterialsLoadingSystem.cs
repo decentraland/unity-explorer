@@ -42,10 +42,10 @@ namespace ECS.Unity.Materials.Systems
 #endif
 
         public StartMaterialsLoadingSystem(
-                World world, 
-                DestroyMaterial destroyMaterial, 
-                ISceneData sceneData, 
-                int attemptsCount, 
+                World world,
+                DestroyMaterial destroyMaterial,
+                ISceneData sceneData,
+                int attemptsCount,
                 IPerformanceBudget capFrameTimeBudget
 
 #if !UNITY_WEBGL
