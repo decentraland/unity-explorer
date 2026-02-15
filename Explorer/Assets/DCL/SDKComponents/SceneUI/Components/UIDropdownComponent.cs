@@ -29,6 +29,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void Dispose()
         {
             this.UnregisterDropdownCallbacks();
+            DropdownField.UnregisterHoverStyleCallbacks();
         }
 
         internal void AnimateDropdownOpacity()

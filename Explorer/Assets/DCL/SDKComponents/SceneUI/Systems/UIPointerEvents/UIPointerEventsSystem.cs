@@ -141,6 +141,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();
+            uiTransformComponent.Transform.UnregisterHoverStyleCallbacks();
 
             if (World.Has<UiButtonComponent>(entity))
                 World.Remove<UiButtonComponent>(entity);

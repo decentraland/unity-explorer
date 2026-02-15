@@ -43,6 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void Dispose()
         {
             this.UnregisterInputCallbacks();
+            TextField.UnregisterHoverStyleCallbacks();
             Placeholder.Dispose();
         }
     }

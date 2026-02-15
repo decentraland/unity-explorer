@@ -439,51 +439,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
 #endif
         }
 
-        // UiDropdown, UiInput and UiButton detect the hover event, but their UiTransform has the styles effect.
-        // A struct and static callbacks are used to avoid allocations.
-        private readonly struct HoverStyleBehaviourData
-        {
-            public readonly VisualElement HoverEventTarget;
-            public readonly VisualElement UiTransform;
-            public readonly World World;
-            public readonly Entity Entity;
-            public readonly float BorderDarkenFactor;
-            public readonly float BackgroundDarkenFactor;
-
-            // Store original border colors from VisualElement to lerp back to on hover leave
-            public readonly Color OriginalBorderTopColor;
-            public readonly Color OriginalBorderRightColor;
-            public readonly Color OriginalBorderBottomColor;
-            public readonly Color OriginalBorderLeftColor;
-
-            public HoverStyleBehaviourData(
-                VisualElement hoverEventTarget,
-                VisualElement uiTransform,
-                World world,
-                Entity entity,
-                float borderDarkenFactor,
-                float backgroundDarkenFactor,
-                Color originalBorderTopColor,
-                Color originalBorderRightColor,
-                Color originalBorderBottomColor,
-                Color originalBorderLeftColor)
-            {
-                HoverEventTarget = hoverEventTarget;
-                UiTransform = uiTransform;
-                World = world;
-                Entity = entity;
-                BorderDarkenFactor = borderDarkenFactor;
-                BackgroundDarkenFactor = backgroundDarkenFactor;
-                OriginalBorderTopColor = originalBorderTopColor;
-                OriginalBorderRightColor = originalBorderRightColor;
-                OriginalBorderBottomColor = originalBorderBottomColor;
-                OriginalBorderLeftColor = originalBorderLeftColor;
-            }
-        }
-
-        private static readonly EventCallback<PointerEnterEvent, HoverStyleBehaviourData> HOVER_ENTER_CALLBACK = OnHoverEnter;
-        private static readonly EventCallback<PointerLeaveEvent, HoverStyleBehaviourData> HOVER_LEAVE_CALLBACK = OnHoverLeave;
-
         public static void ConfigureHoverStylesBehaviour(World world, Entity entity, in UITransformComponent uiTransformComponent, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
         {
             // Capture the current border colors from the VisualElement
@@ -493,7 +448,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             var borderBottomColor = transform.resolvedStyle.borderBottomColor;
             var borderLeftColor = transform.resolvedStyle.borderLeftColor;
 
-            var data = new HoverStyleBehaviourData(
+            var data = new Extensions.HoverStyleBehaviourData(
                 hoverEventTarget,
                 transform,
                 world,
@@ -505,56 +460,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 borderBottomColor,
                 borderLeftColor);
 
-            hoverEventTarget.RegisterCallback(HOVER_ENTER_CALLBACK, data);
-            hoverEventTarget.RegisterCallback(HOVER_LEAVE_CALLBACK, data);
-        }
-
-        private static void OnHoverEnter(PointerEnterEvent evt, HoverStyleBehaviourData behaviourData)
-        {
-            if (behaviourData.HoverEventTarget.hasDisabledPseudoState)
-                return;
-
-            if (behaviourData.BorderDarkenFactor > 0)
-            {
-                behaviourData.UiTransform.style.borderTopColor = Color.Lerp(behaviourData.OriginalBorderTopColor, Color.black, behaviourData.BorderDarkenFactor);
-                behaviourData.UiTransform.style.borderRightColor = Color.Lerp(behaviourData.OriginalBorderRightColor, Color.black, behaviourData.BorderDarkenFactor);
-                behaviourData.UiTransform.style.borderBottomColor = Color.Lerp(behaviourData.OriginalBorderBottomColor, Color.black, behaviourData.BorderDarkenFactor);
-                behaviourData.UiTransform.style.borderLeftColor = Color.Lerp(behaviourData.OriginalBorderLeftColor, Color.black, behaviourData.BorderDarkenFactor);
-            }
-
-            if (behaviourData.BackgroundDarkenFactor > 0)
-            {
-                // Get the background color from PBUiBackground if it exists, otherwise use default one
-                Color backgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
-                    ? pbUiBackground!.GetColor()
-                    : Color.white;
-
-                behaviourData.UiTransform.style.backgroundColor = Color.Lerp(backgroundColor, Color.black, behaviourData.BackgroundDarkenFactor);
-            }
-        }
-
-        private static void OnHoverLeave(PointerLeaveEvent evt, HoverStyleBehaviourData behaviourData)
-        {
-            if (evt.target != behaviourData.HoverEventTarget)
-                return; // detected on child
-
-            if (behaviourData.BorderDarkenFactor > 0)
-            {
-                behaviourData.UiTransform.style.borderTopColor = behaviourData.OriginalBorderTopColor;
-                behaviourData.UiTransform.style.borderRightColor = behaviourData.OriginalBorderRightColor;
-                behaviourData.UiTransform.style.borderBottomColor = behaviourData.OriginalBorderBottomColor;
-                behaviourData.UiTransform.style.borderLeftColor = behaviourData.OriginalBorderLeftColor;
-            }
-
-            if (behaviourData.BackgroundDarkenFactor > 0)
-            {
-                // Restore to the current PBUiBackground color if it exists, otherwise use default one
-                Color originalBackgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
-                    ? pbUiBackground!.GetColor()
-                    : Color.white;
-
-                behaviourData.UiTransform.style.backgroundColor = originalBackgroundColor;
-            }
+            hoverEventTarget.RegisterHoverStyleCallbacks(data);
         }
 
         private const float UI_TRANSFORM_DEFAULT_RADIUS = 10f;
