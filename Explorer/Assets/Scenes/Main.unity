@@ -388,7 +388,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: nickjam.dcl.eth
+    targetWorld: franfranfran.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
