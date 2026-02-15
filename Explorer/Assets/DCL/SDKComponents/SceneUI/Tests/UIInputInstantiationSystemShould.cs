@@ -81,9 +81,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
+
                 Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
                 Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextField.style.unityTextAlign);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextElement.style.unityTextAlign);
             }
         }
 
