@@ -8,6 +8,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -94,6 +95,13 @@ namespace DCL.AuthenticationScreenFlow
             loginCt = payload.ct;
             userEmail = payload.email;
 
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
+            {
+                SpanName = "LobbyNewAccountWait",
+                SpanOperation = "auth.lobby_new_account_wait",
+                Depth = 1,
+            });
+
             InitializeAvatarAsync().Forget();
 
             view.PrevRandomButton.interactable = false;
@@ -131,6 +139,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
+            SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
             characterPreviewController.OnHide();
 
             avatarHistory.Clear();

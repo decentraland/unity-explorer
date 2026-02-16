@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
@@ -60,6 +61,13 @@ namespace DCL.AuthenticationScreenFlow
             view.JumpIntoWorldButton.interactable = true;
             view.DiffAccountButton.interactable = true;
 
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
+            {
+                SpanName = "LobbyWait",
+                SpanOperation = "auth.lobby_wait",
+                Depth = 1,
+            });
+
             // splashScreen is destroyed after the first login
             if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
@@ -89,6 +97,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
+            SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+
             characterPreviewController.OnHide();
 
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
