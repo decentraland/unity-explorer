@@ -21,9 +21,11 @@ namespace DCL.PerformanceAndDiagnostics
     {
         public void StartSentryTransaction(TransactionData transactionData)
         {
-            ITransactionTracer transactionTracer = SentryTransactionManager.Instance.StartSentryTransaction(new TransactionContext(transactionData.TransactionName, transactionData.TransactionOperation));
+            ITransactionTracer? transactionTracer = StartSentryTransaction(
+                transactionData.TransactionName,
+                new TransactionContext(transactionData.TransactionName, transactionData.TransactionOperation));
 
-            if (transactionTracer.IsSampled is true)
+            if (transactionTracer is { IsSampled: true })
             {
                 if (transactionData.Tags != null)
                     transactionTracer.SetTags(transactionData.Tags);
