@@ -51,18 +51,20 @@ namespace DCL.AvatarRendering.Emotes
 
     public static class TrimmedEmoteDTOExtensions
     {
-        public static TrimmedEmoteDTO Convert(this EmoteDTO emoteDTO, string thumbnailHash)
-        {
-            return new TrimmedEmoteDTO
+        public static TrimmedEmoteDTO Convert(this EmoteDTO emoteDTO, string thumbnailHash) =>
+            new()
             {
                 id = emoteDTO.id, thumbnail = thumbnailHash, metadata = new TrimmedEmoteDTO.EmoteMetadataDto
                 {
-                    id = emoteDTO.metadata.id, rarity = emoteDTO.metadata.rarity, name = emoteDTO.metadata.name, emoteDataADR74 = new TrimmedEmoteDTO.EmoteMetadataDto.DataDto
+                    id = emoteDTO.metadata.id,
+                    rarity = emoteDTO.metadata.rarity,
+                    name = emoteDTO.metadata.name,
+                    emoteDataADR74 = new TrimmedEmoteDTO.EmoteMetadataDto.DataDto
                     {
-                        category = emoteDTO.metadata.data.category, representations = emoteDTO.metadata.data.representations
+                        category = emoteDTO.metadata.data?.category,
+                        representations = emoteDTO.metadata.data?.representations
                     }
                 }
             };
-        }
     }
 }
