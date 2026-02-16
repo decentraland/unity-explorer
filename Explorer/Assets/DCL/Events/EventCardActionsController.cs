@@ -70,13 +70,13 @@ namespace DCL.Events
 
         public void AddEventToCalendar(IEventDTO eventData)
         {
-            webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData));
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
         public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
         {
-            webBrowser.OpenUrl(EventUtilities.GetEventAddToCalendarLink(eventData, utcStart));
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
@@ -92,7 +92,7 @@ namespace DCL.Events
 
         public void ShareEvent(IEventDTO eventData)
         {
-            webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData));
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData)}&utm_source=explorer&utm_campaign=discover");
             EventShared?.Invoke(eventData);
         }
 

@@ -196,7 +196,7 @@ namespace DCL.Events
 
         public void GoToCreateEventPage(bool fromHeader)
         {
-            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");
+            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?utm_source=explorer&utm_campaign=discover");
             CreateEventButtonClicked?.Invoke(fromHeader);
         }
     }
