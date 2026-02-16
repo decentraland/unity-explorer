@@ -81,7 +81,7 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     var profileFetchSpan = new SpanData
                     {
-                        SpanName = "FetchProfileCached",
+                        SpanName = isCached ? "FetchProfileCached" : "FetchProfile",
                         SpanOperation = "auth.profile_fetch",
                         Depth = 1,
                     };
