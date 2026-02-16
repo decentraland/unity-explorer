@@ -90,11 +90,8 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (Exception e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                    view.Hide(SLIDE);
-                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    controller.CancelLoginProcess();
                 }
                 finally { view.ResendCodeButton.interactable = true; }
             }
@@ -186,11 +183,8 @@ namespace DCL.AuthenticationScreenFlow
                 }
                 catch (Exception e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                    view.Hide(SLIDE);
-                    machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    controller.CancelLoginProcess();
                 }
             }
         }
