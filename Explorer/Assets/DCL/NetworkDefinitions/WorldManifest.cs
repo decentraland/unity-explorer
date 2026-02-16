@@ -16,9 +16,8 @@ namespace ECS
         public int total;
         public SpawnCoordinateData spawn_coordinate;
         private NativeHashSet<int2> occupiedParcels;
-        private bool isEmpty;
+        public bool IsEmpty { get; private set; }
 
-        public bool IsEmpty => isEmpty;
 
         //Avoid the dealloaction of occupiedParcels
         //Used by Genesis to avoid losing the data on realm change
@@ -37,7 +36,7 @@ namespace ECS
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
                 occupiedParcels = ParseParcelStringsToSet(dto.occupied),
-                isEmpty = false,
+                IsEmpty = false,
                 persist = persist
             };
         }
@@ -49,7 +48,7 @@ namespace ECS
                 total = valueOccupiedParcels.Length,
                 spawn_coordinate = null,
                 occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
-                isEmpty = false,
+                IsEmpty = false,
                 persist = persist
             };
         }
@@ -86,7 +85,7 @@ namespace ECS
 
         public void Dispose()
         {
-            if (isEmpty) return;
+            if (IsEmpty) return;
             if (persist) return;
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
         }
@@ -96,7 +95,7 @@ namespace ECS
         public static WorldManifest Empty => new ()
         {
             occupiedParcels = EMPTY_SET,
-            isEmpty = true,
+            IsEmpty = true,
             spawn_coordinate = new SpawnCoordinateData()
         };
     }
