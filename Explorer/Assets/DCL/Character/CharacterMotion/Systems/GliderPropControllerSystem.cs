@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -104,15 +105,22 @@ namespace DCL.CharacterMotion.Systems
             // Remote players need specific cleanup when their synced glide state reports the glider has been closed
             // For local players we need to time it correctly and do it the same frame the state transition happens
             // (see HandleStateTransition for local player handling)
-            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED) CleanUpProp(entity, gliderProp);
+            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED)   CleanUpProp(entity, gliderProp);
         }
 
         private void CleanUpProp(Entity entity, in GliderProp gliderProp)
         {
             World.Remove<GliderProp>(entity);
 
-            propPool!.Release(gliderProp.View);
-            gliderProp.View.OnReturnedToPool();
+            ReleasePropAsync(gliderProp.View).Forget();
+        }
+
+        private async UniTask ReleasePropAsync(GliderPropView gliderProp)
+        {
+            await UniTask.Delay(1000);
+
+            propPool!.Release(gliderProp);
+            gliderProp.OnReturnedToPool();
         }
 
         [Query]
