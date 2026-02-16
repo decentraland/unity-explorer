@@ -9,6 +9,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
 using DCL.Settings;
 using DCL.UI;
@@ -16,6 +17,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +40,7 @@ namespace DCL.ExplorePanel
         private bool includeCommunities;
         private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IAnalyticsController analytics;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -76,7 +79,8 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             bool includeCameraReel,
             bool includeDiscover,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IAnalyticsController analytics)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -95,6 +99,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
             EventsController = eventsController;
+            this.analytics = analytics;
         }
 
         public override void Dispose()
@@ -164,8 +169,13 @@ namespace DCL.ExplorePanel
                     continue;
                 }
 
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
+                    {
+                        ToggleSection(isOn, tabSelector, section, true);
+
+                        if (isOn && section == ExploreSections.Events)
+                            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                    }
                 );
             }
 
@@ -204,6 +214,9 @@ namespace DCL.ExplorePanel
 
             BlockUnwantedInputs();
             RegisterHotkeys();
+
+            if (!inputData.IsSectionProvided && sectionToShow == ExploreSections.Events)
+                analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)

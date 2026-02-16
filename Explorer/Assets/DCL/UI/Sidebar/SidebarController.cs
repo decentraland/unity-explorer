@@ -15,6 +15,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls;
@@ -24,6 +25,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
 using ECS;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 using Utility;
@@ -51,6 +53,7 @@ namespace DCL.UI.Sidebar
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private bool includeMarketplaceCredits;
         private readonly bool includeDiscover;
+        private readonly IAnalyticsController analytics;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -79,7 +82,8 @@ namespace DCL.UI.Sidebar
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IAnalyticsController analytics)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -99,6 +103,7 @@ namespace DCL.UI.Sidebar
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.includeDiscover = includeDiscover;
+            this.analytics = analytics;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -164,7 +169,11 @@ namespace DCL.UI.Sidebar
             if (includeDiscover)
             {
                 viewInstance.placesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget());
-                viewInstance.eventsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget());
+                viewInstance.eventsButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget();
+                    analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "sidebar" } });
+                });
             }
             else
             {

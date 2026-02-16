@@ -11,6 +11,7 @@ using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly IAnalyticsController analytics;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -96,7 +98,8 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             IEventBus eventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            IAnalyticsController analytics)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -126,6 +129,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.analytics = analytics;
         }
 
         public void Dispose() { }
@@ -165,7 +169,8 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus
+                eventBus,
+                analytics
             ));
         }
 

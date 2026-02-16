@@ -2,6 +2,7 @@
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
+using UnityEngine.InputSystem;
 
 namespace DCL.Events
 {
@@ -23,7 +24,7 @@ namespace DCL.Events
             this.eventsCalendarController = eventsCalendarController;
             this.eventCardActionsController = eventCardActionsController;
 
-            eventsController.Activated += OnSectionActivated;
+            DCLInput.Instance.Shortcuts.Events.performed += OnEventsShortcutPerformed;
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.CreateEventButtonClicked += OnCreateEventButtonClicked;
             eventsCalendarController.EventCardClicked += OnEventCardClicked;
@@ -36,7 +37,7 @@ namespace DCL.Events
 
         public void Dispose()
         {
-            eventsController.Activated -= OnSectionActivated;
+            DCLInput.Instance.Shortcuts.Events.performed -= OnEventsShortcutPerformed;
             eventsController.SectionOpen -= OnSectionOpen;
             eventsController.CreateEventButtonClicked -= OnCreateEventButtonClicked;
             eventsCalendarController.EventCardClicked -= OnEventCardClicked;
@@ -47,8 +48,13 @@ namespace DCL.Events
             eventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
         }
 
-        private void OnSectionActivated() =>
-            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject());
+        private void OnEventsShortcutPerformed(InputAction.CallbackContext _)
+        {
+            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject
+            {
+                { "source", "shortcut" },
+            });
+        }
 
         private void OnSectionOpen(EventsSection section, DateTime fromDate)
         {

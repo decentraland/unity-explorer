@@ -30,7 +30,6 @@ namespace DCL.Events
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_MY_COMMUNITIES_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
 
-        public event Action? Activated;
         public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
         public event Action? GoToTodayClicked;
@@ -103,7 +102,6 @@ namespace DCL.Events
             view.SetViewActive(true);
             cursor.Unlock();
             OpenSection(EventsSection.CALENDAR);
-            Activated?.Invoke();
         }
 
         public void Deactivate()
