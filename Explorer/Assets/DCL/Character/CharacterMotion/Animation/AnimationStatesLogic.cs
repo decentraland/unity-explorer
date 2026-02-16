@@ -2,8 +2,10 @@
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility.Animations;
+using Random = UnityEngine.Random;
 
 namespace DCL.CharacterMotion.Animation
 {
@@ -65,7 +67,13 @@ namespace DCL.CharacterMotion.Animation
             view.SetAnimatorBool(AnimationHashes.GLIDING, states.GlideState is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING);
             view.SetAnimatorFloat(AnimationHashes.GLIDE_BLEND, states.GlideBlendValue);
 
-            if (jumpTriggered) view.SetAnimatorTrigger(AnimationHashes.JUMP);
+            if (jumpTriggered)
+            {
+                view.SetAnimatorTrigger(AnimationHashes.JUMP);
+
+                float jumpVariation = math.step(0.5f, Random.value);
+                view.SetAnimatorFloat(AnimationHashes.JUMP_VARIATION, jumpVariation);
+            }
             if (glidingTriggered) view.SetAnimatorTrigger(AnimationHashes.START_GLIDING);
         }
     }

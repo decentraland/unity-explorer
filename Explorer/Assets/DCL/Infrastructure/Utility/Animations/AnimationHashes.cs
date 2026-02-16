@@ -24,5 +24,6 @@ namespace Utility.Animations
         public static readonly int START_GLIDING = Animator.StringToHash("StartGliding");
         public static readonly int GLIDING = Animator.StringToHash("IsGliding");
         public static readonly int GLIDE_BLEND = Animator.StringToHash("GlideBlend");
+        public static readonly int JUMP_VARIATION = Animator.StringToHash("JumpVariation");
     }
 }
