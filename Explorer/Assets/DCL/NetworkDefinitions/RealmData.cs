@@ -115,11 +115,7 @@ namespace ECS
             NetworkId = networkId;
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
-
-            WorldManifest previous = WorldManifest;
             WorldManifest = worldManifest;
-            if (!previous.IsEmpty)
-                previous.Dispose();
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;
@@ -136,10 +132,7 @@ namespace ECS
         {
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
-            WorldManifest previous = WorldManifest;
-            WorldManifest = WorldManifest.Empty;
-            if (!previous.IsEmpty)
-                previous.Dispose();
+            WorldManifest.Dispose();
             realmType.Value = RealmKind.Uninitialized;
         }
 

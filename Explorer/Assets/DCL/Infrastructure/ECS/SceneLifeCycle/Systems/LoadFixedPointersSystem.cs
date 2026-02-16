@@ -2,18 +2,14 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Ipfs;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -163,7 +159,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         //Flag structure for clear querys
-        private struct FixedPointerRegistryPromise
+        internal struct FixedPointerRegistryPromise
         {
 
         }
