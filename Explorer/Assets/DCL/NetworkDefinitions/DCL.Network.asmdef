@@ -15,12 +15,14 @@
         "GUID:e0cd26848372d4e5c891c569017e11f1",
         "GUID:9887bf5401cdc9140916d3edbea10b69",
         "GUID:8baf705856414dad9a73b3f382f1bc8b",
-        "GUID:479525a7f2ececd499dc130b607f895f"
+        "GUID:479525a7f2ececd499dc130b607f895f",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],

@@ -17,10 +17,7 @@ namespace DCL.Profiles
         public override Profile.CompactInfo ReadJson(JsonReader reader, Type objectType, Profile.CompactInfo existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             var jToken = JToken.Load(reader);
-            Profile.CompactInfo compactInfo = ReadJson(jToken);
-
-            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jToken["thumbnailUrl"]?.Value<string>() ?? "");
-            return compactInfo;
+            return ReadJson(jToken);
         }
 
         public static Profile.CompactInfo ReadJson(JToken jObject)
