@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -87,6 +88,7 @@ namespace DCL.PluginSystem.Global
 
         private float startFadeDistanceDithering;
         private float endFadeDistanceDithering;
+        private IAvatarHighlightData highlightData;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
 
@@ -137,6 +139,7 @@ namespace DCL.PluginSystem.Global
         {
             startFadeDistanceDithering = settings.startFadeDistanceDithering;
             endFadeDistanceDithering = settings.endFadeDistanceDithering;
+            highlightData = await settings.OutlineSettingsRef.LoadAssetAsync();
 
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
@@ -158,8 +161,11 @@ namespace DCL.PluginSystem.Global
 
             var skinningStrategy = new ComputeShaderSkinning();
 
-            AvatarLoaderSystem.InjectToWorld(ref builder);
+            AvatarLoaderSystem.InjectToWorld(ref builder, highlightData);
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_HIGHLIGHT))
+                AvatarHighlightSystem.InjectToWorld(ref builder, highlightData);
 
             cacheCleaner.Register(avatarPoolRegistry);
             cacheCleaner.Register(computeShaderPool);
@@ -312,6 +318,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public NametagHolderRef NametagHolder { get; set; }
+
+            [field: SerializeField]
+            public StaticSettings.AvatarOutlineSettingsRef OutlineSettingsRef;
 
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 

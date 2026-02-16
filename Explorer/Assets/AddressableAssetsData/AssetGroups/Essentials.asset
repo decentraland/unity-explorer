@@ -100,13 +100,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 508289f0a6feab048964059d0534fdd7
-    m_Address: PlaceCategories
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 502bd975d08eca847807411acf6a73d2
-    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
+  - m_GUID: 508289f0a6feab048964059d0534fdd7
+    m_Address: PlaceCategories
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -327,6 +327,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f87c3e77ea2e0ec45b0ddef98bfeb066
     m_Address: Assets/DCL/Backpack/Gifting/Notifications/Prefab/GiftReceivedPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa8bec03ac49f9d44abac12af9e4aa39
+    m_Address: AvatarHighlight.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -70,6 +70,8 @@ namespace Global.AppArgs
 
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
 
+        public const string AVATAR_HIGHLIGHT = "avatar-highlight";
+
         public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";
         public const string CHAT_MESSAGE_BUFFER = "chat-message-buffer";
         public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
