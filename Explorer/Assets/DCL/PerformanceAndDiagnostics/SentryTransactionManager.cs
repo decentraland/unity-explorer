@@ -67,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (!sentryTransactions.TryGetValue(transactionKey, out ITransactionTracer transaction))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionKey}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(StartSpan)}) Transaction '{transactionKey}' not found when starting span '{spanData.SpanName}' (op: {spanData.SpanOperation}, depth: {spanData.Depth})");
                 return;
             }
 
@@ -78,7 +78,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) Transaction '{transactionName}' not found");
                 return;
             }
 
@@ -89,7 +89,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{key}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransaction)}) Transaction '{key}' not found (status: {finishWithStatus})");
                 return;
             }
 
@@ -100,7 +100,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (!sentryTransactions.TryGetValue(key, out ITransactionTracer transaction))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{key}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) Transaction '{key}' not found (error: {errorMessage})");
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace DCL.PerformanceAndDiagnostics
         {
             if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{key}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransactionWithError)}) Transaction '{key}' not found (error: {errorMessage})");
                 return;
             }
 
@@ -189,13 +189,13 @@ namespace DCL.PerformanceAndDiagnostics
 
             if (!transactionsSpans.TryGetValue(transaction, out Stack<ISpan> spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transaction.Name}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) No span stack found for transaction '{transaction.Name}'");
                 return;
             }
 
             if (spanStack.Count == 0)
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transaction.Name}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) Span stack is empty for transaction '{transaction.Name}' — nothing to close");
                 return;
             }
 
@@ -210,7 +210,7 @@ namespace DCL.PerformanceAndDiagnostics
 
             if (!transactionsSpans.TryRemove(transaction, out Stack<ISpan>? spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transaction.Name}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransaction)}) No span stack found for transaction '{transaction.Name}' (status: {finishWithStatus})");
                 return false;
             }
 
@@ -257,7 +257,7 @@ namespace DCL.PerformanceAndDiagnostics
 
             if (!transactionsSpans.TryRemove(transaction, out Stack<ISpan>? spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transaction.Name}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransactionWithError)}) No span stack found for transaction '{transaction.Name}' (error: {errorMessage})");
                 return;
             }
 
@@ -296,13 +296,13 @@ namespace DCL.PerformanceAndDiagnostics
 
             if (!transactionsSpans.TryGetValue(transactionTracer, out Stack<ISpan> spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionTracer.Name}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) No span stack found for transaction '{transactionTracer.Name}' (error: {errorMessage})");
                 return;
             }
 
             if (spanStack.Count == 0)
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionTracer.Name}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) Span stack is empty for transaction '{transactionTracer.Name}' — nothing to close (error: {errorMessage})");
                 return;
             }
 
@@ -341,7 +341,7 @@ namespace DCL.PerformanceAndDiagnostics
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionKey}' during application quit: {ex.Message}");
+                    ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(FinishAllTransactions)}) Error finishing transaction '{transactionKey.Name}' during application quit: {ex.Message}");
                 }
             }
         }
