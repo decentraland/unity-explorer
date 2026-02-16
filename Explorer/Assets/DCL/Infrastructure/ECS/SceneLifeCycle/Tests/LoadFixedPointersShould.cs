@@ -1,7 +1,6 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
-using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
@@ -20,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Unity.Mathematics;
 using UnityEngine.Networking;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -36,19 +36,25 @@ namespace ECS.SceneLifeCycle.Tests
             "urn:decentraland:entity:bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/",
         };
 
+        private IRealmData realmData;
+
         [SetUp]
         public void SetUp()
         {
-            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData = Substitute.For<IRealmData>();
             realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
-            realmData.WorldManifest.Returns(WorldManifest.Empty);
-            system = new LoadFixedPointersSystem(world, realmData, DecentralandUrlsSource.CreateForTest());
+
+            var urlsSource = Substitute.For<IDecentralandUrlsSource>();
+            urlsSource.Url(Arg.Any<DecentralandUrl>()).Returns("https://test.decentraland.org/");
+
+            system = new LoadFixedPointersSystem(world, realmData, urlsSource);
         }
 
         [Test]
-        public void CreatePromises()
+        public void CreateCatalystPromises()
         {
             Entity e = world.Create(new RealmComponent(new RealmData(new TestIpfsRealm(URNs))));
+            realmData.WorldManifest.Returns(WorldManifest.Empty);
 
             system.Update(0);
 
@@ -64,6 +70,35 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreidvur64pwmywtjobkfdr6xl6chgh2tdgbutclkyb4hcvwtk2lizii"), Is.True);
             Assert.That(fixedPointers.Promises.Any(p => p.LoadingIntention.IpfsPath.EntityId == "bafkreiff5m4wv2pm6n4muiyy7p6yrohsqqnaggwhvcb2lzbbwiogpgkl2i"), Is.True);
         }
+
+        [Test]
+        public void CreateWorldPromises()
+        {
+            // Arrange
+            var occupiedParcels = new[] { new int2(0, 0), new int2(1, 0), new int2(0, 1) };
+
+            Entity e = world.Create(new RealmComponent(new RealmData(new TestIpfsRealm(URNs))));
+            realmData.WorldManifest.Returns(WorldManifest.Create(occupiedParcels));
+            realmData.RealmName.Returns("test-world");
+
+            // Act
+            system.Update(0);
+
+            // Assert - FixedScenePointers with a list promise should exist
+            Assert.That(world.TryGet(e, out FixedScenePointers fixedPointers), Is.True);
+            Assert.That(fixedPointers.ListPromise, Is.Not.Null);
+
+            // The pointer list should contain all occupied parcels from the manifest
+            IReadOnlyList<int2> pointers = fixedPointers.ListPromise!.Value.LoadingIntention.Pointers;
+            Assert.That(pointers.Count, Is.EqualTo(occupiedParcels.Length));
+
+            foreach (int2 parcel in occupiedParcels)
+                Assert.That(pointers.Contains(parcel), Is.True);
+
+            // FixedPointerRegistryPromise flag should be present
+            Assert.That(world.TryGet(e, out LoadFixedPointersSystem.FixedPointerRegistryPromise _), Is.True);
+        }
+
 
         [Test]
         public async Task CreateSceneEntityFromLoadedPromises()

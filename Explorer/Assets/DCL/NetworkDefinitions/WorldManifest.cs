@@ -46,7 +46,7 @@ namespace ECS
             return new WorldManifest
             {
                 total = valueOccupiedParcels.Length,
-                spawn_coordinate = null,
+                spawn_coordinate = new SpawnCoordinateData(0,0),
                 occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
                 IsEmpty = false,
                 persist = persist
@@ -96,7 +96,7 @@ namespace ECS
         {
             occupiedParcels = EMPTY_SET,
             IsEmpty = true,
-            spawn_coordinate = new SpawnCoordinateData()
+            spawn_coordinate = new SpawnCoordinateData(0,0)
         };
     }
 
@@ -105,6 +105,12 @@ namespace ECS
     {
         public int x;
         public int y;
+
+        public SpawnCoordinateData(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
     }
 
     /// <summary>
