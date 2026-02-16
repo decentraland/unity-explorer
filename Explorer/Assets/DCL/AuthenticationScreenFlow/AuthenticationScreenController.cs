@@ -196,7 +196,6 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
@@ -211,7 +210,6 @@ namespace DCL.AuthenticationScreenFlow
                     fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
                 else
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
@@ -221,7 +219,6 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
