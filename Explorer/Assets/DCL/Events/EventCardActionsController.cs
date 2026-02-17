@@ -18,11 +18,11 @@ namespace DCL.Events
 {
     public class EventCardActionsController
     {
-        public Action<IEventDTO>? EventSetAsInterested { get; set; }
-        public Action<IEventDTO>? AddEventToCalendarClicked { get; set; }
-        public Action<IEventDTO>? JumpedInEventPlace { get; set; }
-        public Action<IEventDTO>? EventShared { get; set; }
-        public Action<IEventDTO>? EventLinkCopied { get; set; }
+        public event Action<IEventDTO>? EventSetAsInterested;
+        public event Action<IEventDTO>? AddEventToCalendarClicked;
+        public event Action<IEventDTO>? JumpedInEventPlace;
+        public event Action<IEventDTO>? EventShared;
+        public event Action<IEventDTO>? EventLinkCopied;
 
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";

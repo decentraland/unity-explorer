@@ -168,7 +168,11 @@ namespace DCL.UI.Sidebar
 
             if (includeDiscover)
             {
-                viewInstance.placesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget());
+                viewInstance.placesButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget();
+                    analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "sidebar" } });
+                });
                 viewInstance.eventsButton.onClick.AddListener(() =>
                 {
                     OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget();

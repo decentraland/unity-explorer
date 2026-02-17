@@ -173,8 +173,18 @@ namespace DCL.ExplorePanel
                     {
                         ToggleSection(isOn, tabSelector, section, true);
 
-                        if (isOn && section == ExploreSections.Events)
-                            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                        if (!isOn) return;
+
+                        switch (section)
+                        {
+                            case ExploreSections.Places:
+                                analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                                break;
+                            case ExploreSections.Events:
+                                analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                                break;
+                        }
+
                     }
                 );
             }
@@ -215,8 +225,16 @@ namespace DCL.ExplorePanel
             BlockUnwantedInputs();
             RegisterHotkeys();
 
-            if (!inputData.IsSectionProvided && sectionToShow == ExploreSections.Events)
-                analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+            if (inputData.IsSectionProvided)
+                return;
+
+            switch (sectionToShow)
+            {
+                case ExploreSections.Places:
+                    analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "start_menu" } }); break;
+                case ExploreSections.Events:
+                    analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } }); break;
+            }
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)

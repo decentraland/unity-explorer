@@ -48,32 +48,19 @@ namespace DCL.Events
             eventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
         }
 
-        private void OnEventsShortcutPerformed(InputAction.CallbackContext _)
-        {
-            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject
-            {
-                { "source", "shortcut" },
-            });
-        }
+        private void OnEventsShortcutPerformed(InputAction.CallbackContext _) =>
+            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "shortcut" } });
 
         private void OnSectionOpen(EventsSection section, DateTime fromDate)
         {
             if (section != EventsSection.EVENTS_BY_DAY)
                 return;
 
-            analytics.Track(AnalyticsEvents.Events.EVENTS_BY_DAY_OPENED, new JObject
-            {
-                { "date", fromDate.ToString("yyyy-MM-dd") },
-            });
+            analytics.Track(AnalyticsEvents.Events.EVENTS_BY_DAY_OPENED, new JObject { { "date", fromDate.ToString("yyyy-MM-dd") } });
         }
 
-        private void OnCreateEventButtonClicked(bool fromHeaderButton)
-        {
-            analytics.Track(AnalyticsEvents.Events.EVENT_CREATION_OPENED, new JObject
-            {
-                { "from_header_button", fromHeaderButton },
-            });
-        }
+        private void OnCreateEventButtonClicked(bool fromHeaderButton) =>
+            analytics.Track(AnalyticsEvents.Events.EVENT_CREATION_OPENED, new JObject { { "from_header_button", fromHeaderButton } });
 
         private void OnEventCardClicked(EventDTO eventInfo) =>
             analytics.Track(AnalyticsEvents.Events.EVENT_CARD_CLICKED, GetEventJObject(eventInfo));

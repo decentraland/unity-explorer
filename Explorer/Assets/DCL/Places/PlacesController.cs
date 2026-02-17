@@ -4,6 +4,7 @@ using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -29,6 +30,7 @@ namespace DCL.Places
         private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
         private readonly IInputBlock inputBlock;
+        private readonly PlacesAnalytics placesAnalytics;
 
         public PlacesController(
             PlacesView view,
@@ -43,7 +45,8 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IAnalyticsController analytics)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -54,6 +57,7 @@ namespace DCL.Places
             placesStateService = new PlacesStateService();
             placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
                 friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+            placesAnalytics = new PlacesAnalytics(analytics, placesResultsController, placesCardSocialActionsController);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -68,6 +72,7 @@ namespace DCL.Places
 
             placesStateService.Dispose();
             placesResultsController.Dispose();
+            placesAnalytics.Dispose();
         }
 
         public void Activate()
