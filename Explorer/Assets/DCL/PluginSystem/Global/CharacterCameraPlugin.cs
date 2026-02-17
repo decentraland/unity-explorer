@@ -13,11 +13,13 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
 using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;
 using ControlCinemachineVirtualCameraSystem = DCL.Character.CharacterCamera.Systems.ControlCinemachineVirtualCameraSystem;
 
@@ -61,6 +63,15 @@ namespace DCL.PluginSystem.Global
             providedCinemachinePreset = await assetsProvisioner.ProvideInstanceAsync(settings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
             cinemachineCameraAudioSettings = await assetsProvisioner.ProvideInstanceAsync(settings.cinemachineCameraAudioSettingsReference, Vector3.zero, Quaternion.identity, ct: ct);
             controlsSettingsAsset = settings.controlsSettingsAsset;
+
+            if (commandLineArgs.HasFlag("no-distance-sort"))
+            {
+                ReportHub.Log(ReportCategory.ALWAYS,
+                    "Disabling distance sort");
+
+                providedCinemachinePreset.Value.Brain.OutputCamera.opaqueSortMode
+                    = OpaqueSortMode.NoDistanceSort;
+            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
