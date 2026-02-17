@@ -46,7 +46,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((string email, CancellationToken ct) payload)
         {
-            currentState.Value = AuthStatus.VerificationInProgress;
+            currentState.Value = AuthStatus.VerificationRequested;
             email = payload.email;
             loginCt = payload.ct;
 

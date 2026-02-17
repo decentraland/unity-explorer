@@ -84,9 +84,12 @@
 
         public static class Authentication
         {
+            public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
+            public const string LOGIN_REQUESTED = "login_requested";
+
+
             public const string LOGGED_IN_CACHED = "logged_in_cached";
             public const string LOGGED_IN = "logged_in";
-            public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
             public const string OTP_VERIFICATION_SUCCESS = "otp_verification_success";
             public const string OTP_VERIFICATION_FAILURE = "otp_verification_failure";

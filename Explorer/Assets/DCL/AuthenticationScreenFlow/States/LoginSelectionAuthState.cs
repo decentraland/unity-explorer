@@ -46,6 +46,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter()
         {
+            currentState.Value = AuthStatus.LoginSelectionScreen;
+
             view.SetLoadingSpinnerVisibility(false);
 
             if (view.gameObject.activeSelf)
@@ -111,10 +113,10 @@ namespace DCL.AuthenticationScreenFlow
             {
                 case PopupType.NONE: break;
                 case PopupType.CONNECTION_ERROR:
-                    view!.ErrorPopupRoot.SetActive(true);
+                    view.ErrorPopupRoot.SetActive(true);
                     break;
                 case PopupType.RESTRICTED_USER:
-                    view!.RestrictedUserContainer.SetActive(true);
+                    view.RestrictedUserContainer.SetActive(true);
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(popupType), popupType, null);
             }
@@ -159,8 +161,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private void Login(LoginMethod method)
         {
-            controller.CurrentLoginMethod = method;
             compositeWeb3Provider.CurrentProvider = AuthProvider.Dapp;
+
+            controller.CurrentLoginMethod = method;
             currentState.Value = AuthStatus.LoginRequested;
 
             view.SetLoadingSpinnerVisibility(true);
@@ -169,8 +172,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OTPLogin()
         {
-            controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
+
+            controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
 
             view.Hide();
@@ -191,7 +195,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void CloseErrorPopup() =>
-            view!.ErrorPopupRoot.SetActive(false);
+            view.ErrorPopupRoot.SetActive(false);
 
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);

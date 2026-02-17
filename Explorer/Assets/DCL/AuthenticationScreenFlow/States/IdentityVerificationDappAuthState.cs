@@ -79,7 +79,7 @@ namespace DCL.AuthenticationScreenFlow
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
 
                 // Close auth spans before transitioning to profile fetching
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close CodeVerification
 
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close Web3Authentication
@@ -91,7 +91,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 CloseAuthSpansWithError("Login process was cancelled by user");
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
@@ -101,7 +101,7 @@ namespace DCL.AuthenticationScreenFlow
                 CloseAuthSpansWithError("Web3 signature expired during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
@@ -111,7 +111,7 @@ namespace DCL.AuthenticationScreenFlow
                 CloseAuthSpansWithError("Web3 signature validation failed", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
@@ -121,7 +121,7 @@ namespace DCL.AuthenticationScreenFlow
                 CloseAuthSpansWithError("Code verification failed during authentication", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
@@ -131,7 +131,7 @@ namespace DCL.AuthenticationScreenFlow
                 CloseAuthSpansWithError("Connection error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
@@ -141,7 +141,7 @@ namespace DCL.AuthenticationScreenFlow
                 CloseAuthSpansWithError("Unexpected error during authentication flow", e);
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
 
-                if (currentState.Value == AuthStatus.VerificationInProgress)
+                if (currentState.Value == AuthStatus.VerificationRequested)
                     view.Hide(SLIDE);
 
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
@@ -155,7 +155,7 @@ namespace DCL.AuthenticationScreenFlow
         private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
             compositeWeb3Provider.VerificationRequired -= ShowVerification;
-            currentState.Value = AuthStatus.VerificationInProgress;
+            currentState.Value = AuthStatus.VerificationRequested;
 
             controller.CurrentRequestID = data.requestId;
 
@@ -179,7 +179,7 @@ namespace DCL.AuthenticationScreenFlow
         private void CloseAuthSpansWithError(string errorMessage, Exception? exception = null)
         {
             // Close CodeVerification span if it was started
-            if (currentState.Value == AuthStatus.VerificationInProgress)
+            if (currentState.Value == AuthStatus.VerificationRequested)
                 SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
 
             // Close Web3Authentication span

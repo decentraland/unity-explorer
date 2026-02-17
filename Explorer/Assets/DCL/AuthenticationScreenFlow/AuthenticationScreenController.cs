@@ -34,15 +34,18 @@ namespace DCL.AuthenticationScreenFlow
     {
         public enum AuthStatus
         {
-            Init = 0,
+            None = 0,
 
-            LoginRequested = 1,
-            VerificationInProgress = 2,
-            FetchingProfile = 3,
-            LoggedIn = 4,
+            LoginSelectionScreen = 1,
+            LoginRequested = 2,
 
-            FetchingProfileCached = 5,
-            LoggedInCached = 6,
+            VerificationRequested = 3,
+
+            FetchingProfile = 4,
+            LoggedIn = 5,
+
+            FetchingProfileCached = 6,
+            LoggedInCached = 7,
         }
 
         internal const int ANIMATION_DELAY = 300;
@@ -73,7 +76,7 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.Init);
+        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
         public AuthProvider CurrentProvider => web3Authenticator.CurrentProvider;

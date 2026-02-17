@@ -33,6 +33,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             switch (state)
             {
+                case AuthStatus.LoginSelectionScreen:
+                    analytics.Track(Authentication.LOGIN_SELECTION_SCREEN);
+                    break;
+
                 // Triggers when the user is not logged in (login is requested)
                 // TODO: We should also track the auth Request UUID here to link the explorer_v2 event with the auth page view and login events.
                 case AuthStatus.LoginRequested:
@@ -44,7 +48,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     break;
 
                 // Triggered when the user tries to log in and is redirected to the authentication site
-                case AuthStatus.VerificationInProgress:
+                case AuthStatus.VerificationRequested:
                     analytics.Track(Authentication.VERIFICATION_REQUESTED, new JObject
                     {
                         { "requestID", controller.CurrentRequestID },
@@ -64,6 +68,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 // Triggers when the user is already logged in (has valid Identity)
                 case AuthStatus.LoggedInCached:
                     analytics.Track(Authentication.LOGGED_IN_CACHED, isInstant: true); break;
+                case AuthStatus.FetchingProfile: break;
+                case AuthStatus.FetchingProfileCached: break;
+                default: throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 
