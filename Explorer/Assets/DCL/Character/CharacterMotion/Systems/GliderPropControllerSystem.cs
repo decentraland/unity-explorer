@@ -1,20 +1,22 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Unity.GliderProp;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     public partial class GliderPropControllerSystem : BaseUnityLoopSystem
     {
         private const int PRE_ALLOCATED_PROP_COUNT = 4;
@@ -45,20 +47,31 @@ namespace DCL.CharacterMotion.Systems
         {
             int tick = tickEntity.GetPhysicsTickComponent(World).Tick;
 
-            CreatePropQuery(World);
+            LocalCreatePropQuery(World);
+            RemoteCreatePropQuery(World);
             UpdatePropAnimatorQuery(World);
             UpdateTrailQuery(World);
             HandleStateTransitionQuery(World, tick);
-            RemotePlayerCleanUpPropQuery(World);
-            ControlPropAudioQuery(World, t);
+            RemoteCleanUpPropQuery(World);
+            LocalUpdateEngineStateQuery(World, t);
+            RemoteUpdateEngineStateQuery(World, t);
+            CleanUpDestroyedAvatarsPropQuery(World);
         }
 
         [Query]
         [None(typeof(GliderProp))]
-        private void CreateProp(Entity entity, in CharacterAnimationComponent animationComponent, in IAvatarView avatarView)
+        private void LocalCreateProp(Entity entity, in GlideState glideState, in IAvatarView avatarView) =>
+            CreateProp(glideState.Value, entity, avatarView);
+
+        [Query]
+        [None(typeof(GliderProp), typeof(GlideState))]
+        private void RemoteCreateProp(Entity entity, in CharacterAnimationComponent animationComponent, in IAvatarView avatarView) =>
+            CreateProp(animationComponent.States.GlideState, entity, avatarView);
+
+        private void CreateProp(GlideStateValue glideState, Entity entity, IAvatarView avatarView)
         {
-            // We use the animation component value because that is synced across clients
-            if (animationComponent.States.GlideState != GlideStateValue.OPENING_PROP) return;
+            // Opening glider or already gliding but prop not spawned yet, spawn it
+            if (glideState != GlideStateValue.OPENING_PROP && glideState != GlideStateValue.GLIDING) return;
 
             var prop = propPool!.Get();
             prop.Animator.Rebind();
@@ -99,14 +112,17 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(CharacterController))]
-        private void RemotePlayerCleanUpProp(Entity entity, in GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
+        [None(typeof(GlideState))]
+        private void RemoteCleanUpProp(Entity entity, in GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
         {
-            // Remote players need specific cleanup when their synced glide state reports the glider has been closed
-            // For local players we need to time it correctly and do it the same frame the state transition happens
-            // (see HandleStateTransition for local player handling)
-            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED)   CleanUpProp(entity, gliderProp);
+            // Remote players need to be handled separately because they don't have a GlideState component
+            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED) CleanUpProp(entity, gliderProp);
         }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CleanUpDestroyedAvatarsProp(Entity entity, in GliderProp gliderProp) =>
+            CleanUpProp(entity, gliderProp);
 
         private void CleanUpProp(Entity entity, in GliderProp gliderProp)
         {
@@ -117,6 +133,7 @@ namespace DCL.CharacterMotion.Systems
 
         private async UniTask ReleasePropAsync(GliderPropView gliderProp)
         {
+            // Arbitrary delay to make sure the 'glider closing' sound is fully played (the audio source is attached to the prop)
             await UniTask.Delay(1000);
 
             propPool!.Release(gliderProp);
@@ -124,16 +141,23 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void ControlPropAudio([Data] float dt, in GlideState glideState, in GliderProp gliderProp, in CharacterRigidTransform rigidTransform)
+        private void LocalUpdateEngineState([Data] float dt, in CharacterAnimationComponent animationComponent, in GliderProp gliderProp, in CharacterRigidTransform rigidTransform) =>
+            UpdateEngineState(animationComponent.States.GlideState, gliderProp, rigidTransform.MoveVelocity.Velocity, dt);
+
+        [Query]
+        private void RemoteUpdateEngineState([Data] float dt, in CharacterAnimationComponent animationComponent, in GliderProp gliderProp, in InterpolationComponent interpolationComponent) =>
+            UpdateEngineState(animationComponent.States.GlideState, gliderProp, interpolationComponent.End.velocity, dt);
+
+        private void UpdateEngineState(in GlideStateValue glideState, in GliderProp gliderProp, in Vector3 velocity, float dt)
         {
-            if (glideState.Value != GlideStateValue.GLIDING)
+            if (glideState != GlideStateValue.GLIDING)
             {
                 gliderProp.View.UpdateEngineState(false, 0, dt);
                 return;
             }
 
-            // Given it's for audio playback purposes, this is an acceptable approximation that doesn't require sqrt
-            float engineLevel = Mathf.Max(Mathf.Abs(rigidTransform.MoveVelocity.XVelocity), Mathf.Abs(rigidTransform.MoveVelocity.ZVelocity));
+            // Given it's for audio playback and animation purposes, this is an acceptable approximation that doesn't require sqrt
+            float engineLevel = Mathf.Max(Mathf.Abs(velocity.x), Mathf.Abs(velocity.z));
             gliderProp.View.UpdateEngineState(true, engineLevel, dt);
         }
     }
