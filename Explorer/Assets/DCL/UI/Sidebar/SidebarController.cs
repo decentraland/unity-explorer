@@ -16,7 +16,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls;
@@ -28,7 +27,6 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using ECS;
 using MVC;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -58,7 +56,6 @@ namespace DCL.UI.Sidebar
         private bool includeMarketplaceCredits;
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IAnalyticsController analytics;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
@@ -66,6 +63,8 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForLiveEventsCts = new ();
 
         public event Action? HelpOpened;
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -89,8 +88,7 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             IEventBus eventBus,
-            HttpEventsApiService eventsApiService,
-            IAnalyticsController analytics)
+            HttpEventsApiService eventsApiService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -111,7 +109,6 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.includeDiscover = includeDiscover;
             this.eventsApiService = eventsApiService;
-            this.analytics = analytics;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -180,12 +177,12 @@ namespace DCL.UI.Sidebar
                 viewInstance.placesButton.onClick.AddListener(() =>
                 {
                     OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget();
-                    analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "sidebar" } });
+                    PlacesOpened?.Invoke();
                 });
                 viewInstance.eventsButton.onClick.AddListener(() =>
                 {
                     OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget();
-                    analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "sidebar" } });
+                    EventsOpened?.Invoke();
                 });
             }
             else

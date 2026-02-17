@@ -174,8 +174,7 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 decentralandUrls,
                 eventBus,
-                eventsApiService,
-                analytics
+                eventsApiService
             ));
         }
 
