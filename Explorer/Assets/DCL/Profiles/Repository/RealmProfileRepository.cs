@@ -41,8 +41,6 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
-        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
-
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             PublishIpfsEntityCommand publishIpfsEntityCommand,

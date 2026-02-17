@@ -79,6 +79,8 @@ namespace DCL.Profiles
                             intention.Ids.Remove(dto.UserId);
                             profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }
+
+                        profilesAnalytics.profilesDebug.AddBatchSample(result.Value.Count);
                     }
 
                     break;
@@ -100,6 +102,8 @@ namespace DCL.Profiles
                             intention.Ids.Remove(dto.UserId);
                             profileRepository.ResolveProfile(dto.UserId, dto, batched);
                         }
+
+                        profilesAnalytics.profilesDebug.AddBatchSample(result.Value.Count);
                     }
 
                     break;
