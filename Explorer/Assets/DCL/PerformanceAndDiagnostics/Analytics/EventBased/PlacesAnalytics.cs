@@ -1,4 +1,5 @@
-﻿using DCL.PerformanceAndDiagnostics.Analytics;
+﻿using DCL.ExplorePanel;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using Newtonsoft.Json.Linq;
 using System;
@@ -9,45 +10,50 @@ namespace DCL.Places
     public class PlacesAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly PlacesController placesController;
+        private readonly ExplorePanelController explorePanelController;
 
-        public PlacesAnalytics(IAnalyticsController analytics, PlacesController placesController)
+        public PlacesAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)
         {
             this.analytics = analytics;
-            this.placesController = placesController;
+            this.explorePanelController = explorePanelController;
 
-            DCLInput.Instance.Shortcuts.Places.performed += OnPlacesShortcutPerformed;
-            placesController.PlacesResultsController.PlacesSearched += OnPlacesSearched;
-            placesController.PlacesResultsController.PlacesFiltered += OnPlacesFiltered;
-            placesController.PlacesResultsController.PlaceClicked += OnPlaceClicked;
-            placesController.PlaceCardActionsController.PlaceSetAsLiked += OnPlaceSetAsLiked;
-            placesController.PlaceCardActionsController.PlaceSetAsDisliked += OnPlaceSetAsDisliked;
-            placesController.PlaceCardActionsController.PlaceSetAsFavorite += OnPlaceSetAsFavorite;
-            placesController.PlaceCardActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
-            placesController.PlaceCardActionsController.JumpedInPlace += OnJumpedInPlace;
-            placesController.PlaceCardActionsController.PlaceShared += OnPlaceShared;
-            placesController.PlaceCardActionsController.PlaceLinkCopied += OnPlaceLinkCopied;
-            placesController.PlaceCardActionsController.NavigationToPlaceStarted += OnNavigationToPlaceStarted;
+            DCLInput.Instance.Shortcuts.Places.performed += OnPlacesOpenedFromShortcut;
+            explorePanelController.PlacesOpened += OnPlacesOpenedFromStartMenu;
+            explorePanelController.PlacesController.PlacesResultsController.PlacesSearched += OnPlacesSearched;
+            explorePanelController.PlacesController.PlacesResultsController.PlacesFiltered += OnPlacesFiltered;
+            explorePanelController.PlacesController.PlacesResultsController.PlaceClicked += OnPlaceClicked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsLiked += OnPlaceSetAsLiked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsDisliked += OnPlaceSetAsDisliked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsFavorite += OnPlaceSetAsFavorite;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
+            explorePanelController.PlacesController.PlaceCardActionsController.JumpedInPlace += OnJumpedInPlace;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceShared += OnPlaceShared;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceLinkCopied += OnPlaceLinkCopied;
+            explorePanelController.PlacesController.PlaceCardActionsController.NavigationToPlaceStarted += OnNavigationToPlaceStarted;
         }
 
         public void Dispose()
         {
-            DCLInput.Instance.Shortcuts.Places.performed -= OnPlacesShortcutPerformed;
-            placesController.PlacesResultsController.PlacesSearched -= OnPlacesSearched;
-            placesController.PlacesResultsController.PlacesFiltered -= OnPlacesFiltered;
-            placesController.PlacesResultsController.PlaceClicked -= OnPlaceClicked;
-            placesController.PlaceCardActionsController.PlaceSetAsLiked -= OnPlaceSetAsLiked;
-            placesController.PlaceCardActionsController.PlaceSetAsDisliked -= OnPlaceSetAsDisliked;
-            placesController.PlaceCardActionsController.PlaceSetAsFavorite -= OnPlaceSetAsFavorite;
-            placesController.PlaceCardActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
-            placesController.PlaceCardActionsController.JumpedInPlace -= OnJumpedInPlace;
-            placesController.PlaceCardActionsController.PlaceShared -= OnPlaceShared;
-            placesController.PlaceCardActionsController.PlaceLinkCopied -= OnPlaceLinkCopied;
-            placesController.PlaceCardActionsController.NavigationToPlaceStarted -= OnNavigationToPlaceStarted;
+            DCLInput.Instance.Shortcuts.Places.performed -= OnPlacesOpenedFromShortcut;
+            explorePanelController.PlacesOpened -= OnPlacesOpenedFromStartMenu;
+            explorePanelController.PlacesController.PlacesResultsController.PlacesSearched -= OnPlacesSearched;
+            explorePanelController.PlacesController.PlacesResultsController.PlacesFiltered -= OnPlacesFiltered;
+            explorePanelController.PlacesController.PlacesResultsController.PlaceClicked -= OnPlaceClicked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsLiked -= OnPlaceSetAsLiked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsDisliked -= OnPlaceSetAsDisliked;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsFavorite -= OnPlaceSetAsFavorite;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
+            explorePanelController.PlacesController.PlaceCardActionsController.JumpedInPlace -= OnJumpedInPlace;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceShared -= OnPlaceShared;
+            explorePanelController.PlacesController.PlaceCardActionsController.PlaceLinkCopied -= OnPlaceLinkCopied;
+            explorePanelController.PlacesController.PlaceCardActionsController.NavigationToPlaceStarted -= OnNavigationToPlaceStarted;
         }
 
-        private void OnPlacesShortcutPerformed(InputAction.CallbackContext _) =>
+        private void OnPlacesOpenedFromShortcut(InputAction.CallbackContext _) =>
             analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "shortcut" } });
+
+        private void OnPlacesOpenedFromStartMenu() =>
+            analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "start_menu" } });
 
         private void OnPlacesSearched(string searchQuery, int resultsCount)
         {

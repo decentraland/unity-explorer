@@ -1,4 +1,5 @@
 ﻿using DCL.EventsApi;
+using DCL.ExplorePanel;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
@@ -9,39 +10,44 @@ namespace DCL.Events
     public class EventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly EventsController eventsController;
+        private readonly ExplorePanelController explorePanelController;
 
-        public EventsAnalytics(IAnalyticsController analytics, EventsController eventsController)
+        public EventsAnalytics(IAnalyticsController analytics, ExplorePanelController explorePanelController)
         {
             this.analytics = analytics;
-            this.eventsController = eventsController;
+            this.explorePanelController = explorePanelController;
 
-            DCLInput.Instance.Shortcuts.Events.performed += OnEventsShortcutPerformed;
-            eventsController.SectionOpen += OnSectionOpen;
-            eventsController.CreateEventButtonClicked += OnCreateEventButtonClicked;
-            eventsController.EventsCalendarController.EventCardClicked += OnEventCardClicked;
-            eventsController.EventCardActionsController.EventSetAsInterested += OnEventSetAsInterested;
-            eventsController.EventCardActionsController.AddEventToCalendarClicked += OnAddEventToCalendarClicked;
-            eventsController.EventCardActionsController.JumpedInEventPlace += OnJumpedInEventPlace;
-            eventsController.EventCardActionsController.EventShared += OnEventShared;
-            eventsController.EventCardActionsController.EventLinkCopied += OnEventLinkCopied;
+            DCLInput.Instance.Shortcuts.Events.performed += OnEventsOpenedFromShortcut;
+            explorePanelController.EventsOpened += OnEventsOpenedFromStartMenu;
+            explorePanelController.EventsController.SectionOpen += OnSectionOpen;
+            explorePanelController.EventsController.CreateEventButtonClicked += OnCreateEventButtonClicked;
+            explorePanelController.EventsController.EventsCalendarController.EventCardClicked += OnEventCardClicked;
+            explorePanelController.EventsController.EventCardActionsController.EventSetAsInterested += OnEventSetAsInterested;
+            explorePanelController.EventsController.EventCardActionsController.AddEventToCalendarClicked += OnAddEventToCalendarClicked;
+            explorePanelController.EventsController.EventCardActionsController.JumpedInEventPlace += OnJumpedInEventPlace;
+            explorePanelController.EventsController.EventCardActionsController.EventShared += OnEventShared;
+            explorePanelController.EventsController.EventCardActionsController.EventLinkCopied += OnEventLinkCopied;
         }
 
         public void Dispose()
         {
-            DCLInput.Instance.Shortcuts.Events.performed -= OnEventsShortcutPerformed;
-            eventsController.SectionOpen -= OnSectionOpen;
-            eventsController.CreateEventButtonClicked -= OnCreateEventButtonClicked;
-            eventsController.EventsCalendarController.EventCardClicked -= OnEventCardClicked;
-            eventsController.EventCardActionsController.EventSetAsInterested -= OnEventSetAsInterested;
-            eventsController.EventCardActionsController.AddEventToCalendarClicked -= OnAddEventToCalendarClicked;
-            eventsController.EventCardActionsController.JumpedInEventPlace -= OnJumpedInEventPlace;
-            eventsController.EventCardActionsController.EventShared -= OnEventShared;
-            eventsController.EventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
+            DCLInput.Instance.Shortcuts.Events.performed -= OnEventsOpenedFromShortcut;
+            explorePanelController.EventsOpened -= OnEventsOpenedFromStartMenu;
+            explorePanelController.EventsController.SectionOpen -= OnSectionOpen;
+            explorePanelController.EventsController.CreateEventButtonClicked -= OnCreateEventButtonClicked;
+            explorePanelController.EventsController.EventsCalendarController.EventCardClicked -= OnEventCardClicked;
+            explorePanelController.EventsController.EventCardActionsController.EventSetAsInterested -= OnEventSetAsInterested;
+            explorePanelController.EventsController.EventCardActionsController.AddEventToCalendarClicked -= OnAddEventToCalendarClicked;
+            explorePanelController.EventsController.EventCardActionsController.JumpedInEventPlace -= OnJumpedInEventPlace;
+            explorePanelController.EventsController.EventCardActionsController.EventShared -= OnEventShared;
+            explorePanelController.EventsController.EventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
         }
 
-        private void OnEventsShortcutPerformed(InputAction.CallbackContext _) =>
+        private void OnEventsOpenedFromShortcut(InputAction.CallbackContext _) =>
             analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "shortcut" } });
+
+        private void OnEventsOpenedFromStartMenu() =>
+            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
 
         private void OnSectionOpen(EventsSection section, DateTime fromDate)
         {

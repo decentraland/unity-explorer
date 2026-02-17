@@ -29,8 +29,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.cameraReelController = controller.CameraReelController;
             this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
             this.settingsController = controller.SettingsController;
-            this.eventsAnalytics = new EventsAnalytics(analytics, controller.EventsController);
-            this.placesAnalytics = new PlacesAnalytics(analytics, controller.PlacesController);
+            this.eventsAnalytics = new EventsAnalytics(analytics, controller);
+            this.placesAnalytics = new PlacesAnalytics(analytics, controller);
 
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;

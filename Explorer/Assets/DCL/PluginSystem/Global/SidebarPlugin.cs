@@ -169,8 +169,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus,
-                analytics
+                eventBus
             ));
         }
 

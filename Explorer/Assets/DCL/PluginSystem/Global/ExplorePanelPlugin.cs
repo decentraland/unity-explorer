@@ -571,8 +571,7 @@ namespace DCL.PluginSystem.Global
                     inputBlock,
                     includeCameraReel,
                     includeDiscover,
-                    sharedSpaceManager,
-                    analytics);
+                    sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

@@ -9,7 +9,6 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
 using DCL.Settings;
 using DCL.UI;
@@ -17,7 +16,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
 using MVC;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +38,6 @@ namespace DCL.ExplorePanel
         private bool includeCommunities;
         private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IAnalyticsController analytics;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -66,6 +63,9 @@ namespace DCL.ExplorePanel
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
+
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
@@ -79,8 +79,7 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             bool includeCameraReel,
             bool includeDiscover,
-            ISharedSpaceManager sharedSpaceManager,
-            IAnalyticsController analytics)
+            ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -99,7 +98,6 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
             EventsController = eventsController;
-            this.analytics = analytics;
         }
 
         public override void Dispose()
@@ -178,10 +176,10 @@ namespace DCL.ExplorePanel
                         switch (section)
                         {
                             case ExploreSections.Places:
-                                analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                                PlacesOpened?.Invoke();
                                 break;
                             case ExploreSections.Events:
-                                analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } });
+                                EventsOpened?.Invoke();
                                 break;
                         }
 
@@ -231,9 +229,11 @@ namespace DCL.ExplorePanel
             switch (sectionToShow)
             {
                 case ExploreSections.Places:
-                    analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "start_menu" } }); break;
+                    PlacesOpened?.Invoke();
+                    break;
                 case ExploreSections.Events:
-                    analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "start_menu" } }); break;
+                    EventsOpened?.Invoke();
+                    break;
             }
         }
 
