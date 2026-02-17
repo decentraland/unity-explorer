@@ -8,6 +8,8 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
+using Texture = Decentraland.Common.Texture;
+using static DCL.SDKComponents.SceneUI.Utils.Extensions;
 
 namespace DCL.SDKComponents.SceneUI.Tests
 {
@@ -295,6 +297,194 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(model.GetTextAlign(), input.TextElement.style.unityTextAlign.value);
 
             input.Dispose();
+        }
+
+        // --- Hover feedback with textured background tests ---
+
+        private const float BORDER_DARKEN = 0.22f;
+        private const float BACKGROUND_DARKEN = 0.1f;
+
+        private HoverStyleBehaviourData CreateHoverData(VisualElement hoverTarget = null, VisualElement uiTransform = null)
+        {
+            hoverTarget ??= visualElement;
+            uiTransform ??= visualElement;
+
+            return new HoverStyleBehaviourData(
+                hoverTarget,
+                uiTransform,
+                world,
+                entity,
+                BORDER_DARKEN,
+                BACKGROUND_DARKEN,
+                Color.gray,
+                Color.gray,
+                Color.gray,
+                Color.gray);
+        }
+
+        [Test]
+        public void HoverEnter_WithTexturedBackground_DarkenImageTintColor()
+        {
+            // Arrange
+            var bgColor = new Color4 { R = 0.8f, G = 0.2f, B = 0.2f, A = 1f };
+            world.Add(entity, new PBUiBackground
+            {
+                Color = bgColor,
+                Texture = new TextureUnion { Texture = new Texture { Src = "test-texture" } },
+            });
+            var data = CreateHoverData();
+
+            // Act
+            using var evt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(evt, data);
+
+            // Assert - should darken via unityBackgroundImageTintColor
+            Color expectedBase = new PBUiBackground { Color = bgColor }.GetColor();
+            Color expectedDarkened = Color.Lerp(expectedBase, Color.black, BACKGROUND_DARKEN);
+            Assert.AreEqual(new StyleColor(expectedDarkened), visualElement.style.unityBackgroundImageTintColor);
+        }
+
+        [Test]
+        public void HoverEnter_WithTexturedBackground_NotSetBackgroundColor()
+        {
+            // Arrange
+            world.Add(entity, new PBUiBackground
+            {
+                Color = new Color4 { R = 1f, G = 1f, B = 1f, A = 1f },
+                Texture = new TextureUnion { Texture = new Texture { Src = "test-texture" } },
+            });
+            var initialBgColor = visualElement.style.backgroundColor;
+            var data = CreateHoverData();
+
+            // Act
+            using var evt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(evt, data);
+
+            // Assert - backgroundColor must not be changed
+            Assert.AreEqual(initialBgColor, visualElement.style.backgroundColor);
+        }
+
+        [Test]
+        public void HoverLeave_WithTexturedBackground_RestoreImageTintColor()
+        {
+            // Arrange
+            var bgColor = new Color4 { R = 0.8f, G = 0.2f, B = 0.2f, A = 1f };
+            world.Add(entity, new PBUiBackground
+            {
+                Color = bgColor,
+                Texture = new TextureUnion { Texture = new Texture { Src = "test-texture" } },
+            });
+            var data = CreateHoverData();
+
+            // First trigger hover enter to darken
+            using var enterEvt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(enterEvt, data);
+
+            // Act - trigger hover leave
+            using var leaveEvt = PointerLeaveEvent.GetPooled();
+            leaveEvt.target = visualElement;
+            HOVER_LEAVE_CALLBACK.Invoke(leaveEvt, data);
+
+            // Assert - should restore unityBackgroundImageTintColor to original PBUiBackground color
+            Color expectedOriginal = new PBUiBackground { Color = bgColor }.GetColor();
+            Assert.AreEqual(new StyleColor(expectedOriginal), visualElement.style.unityBackgroundImageTintColor);
+        }
+
+        [Test]
+        public void HoverLeave_WithTexturedBackground_NotSetBackgroundColor()
+        {
+            // Arrange
+            world.Add(entity, new PBUiBackground
+            {
+                Color = new Color4 { R = 1f, G = 1f, B = 1f, A = 1f },
+                Texture = new TextureUnion { Texture = new Texture { Src = "test-texture" } },
+            });
+            var initialBgColor = visualElement.style.backgroundColor;
+            var data = CreateHoverData();
+
+            // Trigger hover enter then leave
+            using var enterEvt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(enterEvt, data);
+            using var leaveEvt = PointerLeaveEvent.GetPooled();
+            leaveEvt.target = visualElement;
+            HOVER_LEAVE_CALLBACK.Invoke(leaveEvt, data);
+
+            // Assert - backgroundColor must not be changed
+            Assert.AreEqual(initialBgColor, visualElement.style.backgroundColor);
+        }
+
+        [Test]
+        public void HoverEnter_WithNonTexturedBackground_DarkenBackgroundColor()
+        {
+            // Arrange - PBUiBackground without Texture
+            var bgColor = new Color4 { R = 0f, G = 0.5f, B = 1f, A = 1f };
+            world.Add(entity, new PBUiBackground { Color = bgColor });
+            var data = CreateHoverData();
+
+            // Act
+            using var evt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(evt, data);
+
+            // Assert - should darken via backgroundColor
+            Color expectedBase = new PBUiBackground { Color = bgColor }.GetColor();
+            Color expectedDarkened = Color.Lerp(expectedBase, Color.black, BACKGROUND_DARKEN);
+            Assert.AreEqual(new StyleColor(expectedDarkened), visualElement.style.backgroundColor);
+        }
+
+        [Test]
+        public void HoverLeave_WithNonTexturedBackground_RestoreBackgroundColor()
+        {
+            // Arrange - PBUiBackground without Texture
+            var bgColor = new Color4 { R = 0f, G = 0.5f, B = 1f, A = 1f };
+            world.Add(entity, new PBUiBackground { Color = bgColor });
+            var data = CreateHoverData();
+
+            // Trigger hover enter first
+            using var enterEvt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(enterEvt, data);
+
+            // Act - trigger hover leave
+            using var leaveEvt = PointerLeaveEvent.GetPooled();
+            leaveEvt.target = visualElement;
+            HOVER_LEAVE_CALLBACK.Invoke(leaveEvt, data);
+
+            // Assert - should restore backgroundColor to original PBUiBackground color
+            Color expectedOriginal = new PBUiBackground { Color = bgColor }.GetColor();
+            Assert.AreEqual(new StyleColor(expectedOriginal), visualElement.style.backgroundColor);
+        }
+
+        [Test]
+        public void HoverEnter_WithoutBackground_DarkenDefaultWhiteBackgroundColor()
+        {
+            // Arrange - no PBUiBackground component
+            var data = CreateHoverData();
+
+            // Act
+            using var evt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(evt, data);
+
+            // Assert - should darken white via backgroundColor
+            Color expectedDarkened = Color.Lerp(Color.white, Color.black, BACKGROUND_DARKEN);
+            Assert.AreEqual(new StyleColor(expectedDarkened), visualElement.style.backgroundColor);
+        }
+
+        [Test]
+        public void HoverLeave_WithoutBackground_RestoreDefaultWhiteBackgroundColor()
+        {
+            // Arrange - no PBUiBackground component
+            var data = CreateHoverData();
+
+            // Trigger hover enter first
+            using var enterEvt = PointerEnterEvent.GetPooled();
+            HOVER_ENTER_CALLBACK.Invoke(enterEvt, data);
+
+            // Act - trigger hover leave
+            using var leaveEvt = PointerLeaveEvent.GetPooled();
+            leaveEvt.target = visualElement;
+            HOVER_LEAVE_CALLBACK.Invoke(leaveEvt, data);
+
+            // Assert - should restore to default white
+            Assert.AreEqual(new StyleColor(Color.white), visualElement.style.backgroundColor);
         }
     }
 }

@@ -86,12 +86,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             if (behaviourData.BackgroundDarkenFactor > 0)
             {
-                // Get the background color from PBUiBackground if it exists, otherwise use default one
-                Color backgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
-                    ? pbUiBackground!.GetColor()
-                    : Color.white;
+                bool hasBackgroundComponent = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground);
+                Color baseColor = hasBackgroundComponent ? pbUiBackground!.GetColor() : Color.white;
+                Color darkenedColor = Color.Lerp(baseColor, Color.black, behaviourData.BackgroundDarkenFactor);
 
-                behaviourData.UiTransform.style.backgroundColor = Color.Lerp(backgroundColor, Color.black, behaviourData.BackgroundDarkenFactor);
+                // Set the correct style property depending on whether the background uses a texture
+                if (hasBackgroundComponent && pbUiBackground!.Texture != null)
+                    behaviourData.UiTransform.style.unityBackgroundImageTintColor = darkenedColor;
+                else
+                    behaviourData.UiTransform.style.backgroundColor = darkenedColor;
             }
         }
 
@@ -110,12 +113,14 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             if (behaviourData.BackgroundDarkenFactor > 0)
             {
-                // Restore to the current PBUiBackground color if it exists, otherwise use default one
-                Color originalBackgroundColor = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground)
-                    ? pbUiBackground!.GetColor()
-                    : Color.white;
+                bool hasBackgroundComponent = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground);
+                Color originalColor = hasBackgroundComponent ? pbUiBackground!.GetColor() : Color.white;
 
-                behaviourData.UiTransform.style.backgroundColor = originalBackgroundColor;
+                // Restore the correct style property depending on whether the background uses a texture
+                if (hasBackgroundComponent && pbUiBackground!.Texture != null)
+                    behaviourData.UiTransform.style.unityBackgroundImageTintColor = originalColor;
+                else
+                    behaviourData.UiTransform.style.backgroundColor = originalColor;
             }
         }
 
