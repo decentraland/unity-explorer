@@ -1,4 +1,5 @@
-﻿using DCL.Ipfs;
+﻿using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
@@ -16,12 +17,12 @@ namespace ECS.SceneLifeCycle.Components
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly IIpfsRealm IpfsRealm;
+        public readonly URLDomain ContentBaseUrl;
         public readonly SceneDefinitionComponent DefinitionComponent;
 
-        public GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent)
+        public GetSceneFacadeIntention(URLDomain contentBaseUrl, SceneDefinitionComponent definitionComponent)
         {
-            IpfsRealm = ipfsRealm;
+            ContentBaseUrl = contentBaseUrl;
             DefinitionComponent = definitionComponent;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
@@ -29,13 +30,13 @@ namespace ECS.SceneLifeCycle.Components
         }
 
         public bool Equals(GetSceneFacadeIntention other) =>
-            Equals(IpfsRealm, other.IpfsRealm) && Equals(DefinitionComponent.Definition, other.DefinitionComponent.Definition);
+            Equals(ContentBaseUrl, other.ContentBaseUrl) && Equals(DefinitionComponent.Definition, other.DefinitionComponent.Definition);
 
         public override bool Equals(object obj) =>
             obj is GetSceneFacadeIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IpfsRealm, DefinitionComponent.Definition);
+            HashCode.Combine(ContentBaseUrl, DefinitionComponent.Definition);
 
         public override string ToString() =>
             $"Get Scene Facade: {DefinitionComponent.Definition?.id}";

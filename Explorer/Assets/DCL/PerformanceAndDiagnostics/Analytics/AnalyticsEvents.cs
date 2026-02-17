@@ -1,4 +1,4 @@
-﻿namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     /// <summary>
     ///     IMPORTANT!!
@@ -16,6 +16,7 @@
             public const string ERROR = "error";
             public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
+            public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
         }
 
         public static class World
@@ -88,6 +89,9 @@
             public const string LOGGED_IN = "logged_in";
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
+            public const string OTP_VERIFICATION_SUCCESS = "otp_verification_success";
+            public const string OTP_VERIFICATION_FAILURE = "otp_verification_failure";
+            public const string OTP_RESEND = "otp_resend";
             public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
         }
 
@@ -117,6 +121,7 @@
             ///     The whole path to resolve an avatar:
             ///     <list type="bullet">
             ///         <item> wearables_count: total number of wearables equipped by the avatar </item>
+            ///         <item> visible_wearables_count: total number of not hidden wearables </item>
             ///         <item> new_pointers: the pointers number to request (not cached yet) </item>
             ///         <item> wearables_resolution_duration: time to load network objects</item>
             ///         <item> instantiation_duration: time passed from the wearables resolution to the avatar instantiation</item>

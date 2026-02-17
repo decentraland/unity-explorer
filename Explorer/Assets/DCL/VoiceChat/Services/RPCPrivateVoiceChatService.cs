@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.SocialService;
+using DCL.Web3.Identities;
 using System;
 using System.Threading;
 using Decentraland.SocialService.V2;
@@ -32,15 +33,18 @@ namespace DCL.VoiceChat.Services
         private const string GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST = "GetIncomingPrivateVoiceChatRequest";
 
         private readonly ISocialServiceEventBus socialServiceEventBus;
+        private readonly IWeb3IdentityCache identityCache;
         private CancellationTokenSource subscriptionCts = new ();
         private bool isServiceDisabled;
         private bool isListeningUpdatesFromServer;
 
         public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,
-            ISocialServiceEventBus socialServiceEventBus) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
+            ISocialServiceEventBus socialServiceEventBus,
+            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
         {
             this.socialServiceEventBus = socialServiceEventBus;
+            this.identityCache = identityCache;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
             {
@@ -71,8 +75,9 @@ namespace DCL.VoiceChat.Services
 
         private void OnTransportConnected()
         {
-            if (!isServiceDisabled)
-                TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            if (isServiceDisabled || identityCache.Identity == null) return;
+
+            TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
         }
 
         private void OnTransportClosed()
@@ -83,7 +88,8 @@ namespace DCL.VoiceChat.Services
 
         private void OnTransportReconnected()
         {
-            if (isServiceDisabled) return;
+            if (isServiceDisabled || identityCache.Identity == null) return;
+
             Reconnected?.Invoke();
             TrySubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
         }

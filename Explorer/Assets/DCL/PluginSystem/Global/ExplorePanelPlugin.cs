@@ -54,6 +54,7 @@ using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -118,6 +119,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IRealmData realmData;
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly IInputBlock inputBlock;
@@ -241,7 +243,8 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
-            ObjectProxy<IFriendsService> friendServiceProxy)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            PublishIpfsEntityCommand publishIpfsEntityCommand)
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -311,6 +314,7 @@ namespace DCL.PluginSystem.Global
             this.donationsService = donationsService;
             this.realmNavigator = realmNavigator;
             this.friendServiceProxy = friendServiceProxy;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
         }
 
         public void Dispose()
@@ -337,7 +341,7 @@ namespace DCL.PluginSystem.Global
 
             explorePanelNavmapBus.SetObject(navmapBus);
 
-            var outfitsRepository = new OutfitsRepository(realmData, nftNamesProvider);
+            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider);
 
             backpackSubPlugin = new BackpackSubPlugin(
                 featureFlags,
@@ -527,17 +531,17 @@ namespace DCL.PluginSystem.Global
                 placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
             mvcManager.RegisterController(placeDetailPanelController);
 
+            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);
+            var eventsThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
-            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager);
+            eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
+                eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendServiceProxy, communitiesDataProvider);
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
-                webRequestController,
-                clipboard,
-                webBrowser,
-                eventsApiService,
-                realmNavigator);
+                eventsThumbnailLoader,
+                eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
             ExplorePanelController explorePanelController = new

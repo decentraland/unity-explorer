@@ -217,7 +217,7 @@
 
 .nametag__badge-voice-chat {
     display: none;
-    width: 12px;
+    width: 13px;
     height: 12px;
     flex-direction: row;
     align-items: center;

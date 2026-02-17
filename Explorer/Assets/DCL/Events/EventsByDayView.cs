@@ -1,6 +1,8 @@
-﻿using DCL.EventsApi;
+﻿using DCL.Communities;
+using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
@@ -15,7 +17,7 @@ namespace DCL.Events
     {
         public event Action? BackButtonClicked;
         public event Action? GoToNextDayButtonClicked;
-        public event Action<EventDTO, PlacesData.PlaceInfo?>? EventCardClicked;
+        public event Action<EventDTO, PlacesData.PlaceInfo?, EventCardView>? EventCardClicked;
 
         [Header("Events Counter")]
         [SerializeField] private TMP_Text eventsCounter = null!;
@@ -29,6 +31,8 @@ namespace DCL.Events
 
         private EventsStateService eventsStateService = null!;
         private readonly List<string> currentEventsIds = new ();
+        private ThumbnailLoader? eventCardsThumbnailLoader;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -42,8 +46,15 @@ namespace DCL.Events
             goToNextDayButton.onClick.RemoveAllListeners();
         }
 
-        public void SetDependencies(EventsStateService stateService) =>
+        public void SetDependencies(
+            EventsStateService stateService,
+            ThumbnailLoader thumbnailLoader,
+            ProfileRepositoryWrapper profileRepoWrapper)
+        {
             this.eventsStateService = stateService;
+            this.eventCardsThumbnailLoader = thumbnailLoader;
+            this.profileRepositoryWrapper = profileRepoWrapper;
+        }
 
         public void SetEventsCounter(string text) =>
             eventsCounter.text = text;
@@ -92,7 +103,7 @@ namespace DCL.Events
 
             // Setup card data
             if (eventData != null)
-                cardView.Configure(eventData.EventInfo, eventData.PlaceInfo);
+                cardView.Configure(eventData.EventInfo, eventCardsThumbnailLoader!, eventData.PlaceInfo, eventData.FriendsConnectedToPlace, profileRepositoryWrapper, eventData.CommunityInfo);
 
             // Setup card events
             cardView.MainButtonClicked -= OnEventCardClicked;
@@ -107,7 +118,7 @@ namespace DCL.Events
             eventsLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            EventCardClicked?.Invoke(eventInfo, placeInfo);
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView) =>
+            EventCardClicked?.Invoke(eventInfo, placeInfo, eventCardView);
     }
 }
