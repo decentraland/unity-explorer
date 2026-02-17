@@ -34,7 +34,9 @@ namespace DCL.Events
         public event Action? EventsClosed;
         public event Action? GoToTodayClicked;
 
-        public  DateTime CurrentCalendarFromDate { get; set; }
+        public DateTime CurrentCalendarFromDate { get; set; }
+        public EventsCalendarController EventsCalendarController { get; }
+        public EventCardActionsController EventCardActionsController { get; }
 
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
@@ -46,10 +48,8 @@ namespace DCL.Events
 
         private bool isSectionActivated;
         private bool isFriendsAndCommunitiesLoaded;
-        private readonly EventsCalendarController eventsCalendarController;
         private readonly EventsByDayController eventsByDayController;
         private readonly EventsStateService eventsStateService;
-        private readonly EventsAnalytics eventsAnalytics;
 
         public EventsController(
             EventsView view,
@@ -73,11 +73,11 @@ namespace DCL.Events
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            EventCardActionsController = eventCardActionsController;
 
             eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
+            EventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
-            eventsAnalytics = new EventsAnalytics(analytics, this, eventsCalendarController, eventCardActionsController);
 
             view.GoToTodayButtonClicked += OnGoToTodayButtonClicked;
             view.CreateButtonClicked += OnCreateButtonClicked;
@@ -85,9 +85,8 @@ namespace DCL.Events
 
         public void Dispose()
         {
-            eventsCalendarController.Dispose();
+            EventsCalendarController.Dispose();
             eventsByDayController.Dispose();
-            eventsAnalytics.Dispose();
 
             view.GoToTodayButtonClicked -= OnGoToTodayButtonClicked;
             view.CreateButtonClicked -= OnCreateButtonClicked;

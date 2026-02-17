@@ -10,29 +10,21 @@ namespace DCL.Events
     {
         private readonly IAnalyticsController analytics;
         private readonly EventsController eventsController;
-        private readonly EventsCalendarController eventsCalendarController;
-        private readonly EventCardActionsController eventCardActionsController;
 
-        public EventsAnalytics(
-            IAnalyticsController analytics,
-            EventsController eventsController,
-            EventsCalendarController eventsCalendarController,
-            EventCardActionsController eventCardActionsController)
+        public EventsAnalytics(IAnalyticsController analytics, EventsController eventsController)
         {
             this.analytics = analytics;
             this.eventsController = eventsController;
-            this.eventsCalendarController = eventsCalendarController;
-            this.eventCardActionsController = eventCardActionsController;
 
             DCLInput.Instance.Shortcuts.Events.performed += OnEventsShortcutPerformed;
             eventsController.SectionOpen += OnSectionOpen;
             eventsController.CreateEventButtonClicked += OnCreateEventButtonClicked;
-            eventsCalendarController.EventCardClicked += OnEventCardClicked;
-            eventCardActionsController.EventSetAsInterested += OnEventSetAsInterested;
-            eventCardActionsController.AddEventToCalendarClicked += OnAddEventToCalendarClicked;
-            eventCardActionsController.JumpedInEventPlace += OnJumpedInEventPlace;
-            eventCardActionsController.EventShared += OnEventShared;
-            eventCardActionsController.EventLinkCopied += OnEventLinkCopied;
+            eventsController.EventsCalendarController.EventCardClicked += OnEventCardClicked;
+            eventsController.EventCardActionsController.EventSetAsInterested += OnEventSetAsInterested;
+            eventsController.EventCardActionsController.AddEventToCalendarClicked += OnAddEventToCalendarClicked;
+            eventsController.EventCardActionsController.JumpedInEventPlace += OnJumpedInEventPlace;
+            eventsController.EventCardActionsController.EventShared += OnEventShared;
+            eventsController.EventCardActionsController.EventLinkCopied += OnEventLinkCopied;
         }
 
         public void Dispose()
@@ -40,12 +32,12 @@ namespace DCL.Events
             DCLInput.Instance.Shortcuts.Events.performed -= OnEventsShortcutPerformed;
             eventsController.SectionOpen -= OnSectionOpen;
             eventsController.CreateEventButtonClicked -= OnCreateEventButtonClicked;
-            eventsCalendarController.EventCardClicked -= OnEventCardClicked;
-            eventCardActionsController.EventSetAsInterested -= OnEventSetAsInterested;
-            eventCardActionsController.AddEventToCalendarClicked -= OnAddEventToCalendarClicked;
-            eventCardActionsController.JumpedInEventPlace -= OnJumpedInEventPlace;
-            eventCardActionsController.EventShared -= OnEventShared;
-            eventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
+            eventsController.EventsCalendarController.EventCardClicked -= OnEventCardClicked;
+            eventsController.EventCardActionsController.EventSetAsInterested -= OnEventSetAsInterested;
+            eventsController.EventCardActionsController.AddEventToCalendarClicked -= OnAddEventToCalendarClicked;
+            eventsController.EventCardActionsController.JumpedInEventPlace -= OnJumpedInEventPlace;
+            eventsController.EventCardActionsController.EventShared -= OnEventShared;
+            eventsController.EventCardActionsController.EventLinkCopied -= OnEventLinkCopied;
         }
 
         private void OnEventsShortcutPerformed(InputAction.CallbackContext _) =>

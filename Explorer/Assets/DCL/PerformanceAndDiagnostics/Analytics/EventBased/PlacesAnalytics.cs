@@ -9,46 +9,41 @@ namespace DCL.Places
     public class PlacesAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
-        private readonly PlacesResultsController placesResultsController;
-        private readonly PlacesCardSocialActionsController placeCardActionsController;
+        private readonly PlacesController placesController;
 
-        public PlacesAnalytics(
-            IAnalyticsController analytics,
-            PlacesResultsController placesResultsController,
-            PlacesCardSocialActionsController placeCardActionsController)
+        public PlacesAnalytics(IAnalyticsController analytics, PlacesController placesController)
         {
             this.analytics = analytics;
-            this.placesResultsController = placesResultsController;
-            this.placeCardActionsController = placeCardActionsController;
+            this.placesController = placesController;
 
             DCLInput.Instance.Shortcuts.Places.performed += OnPlacesShortcutPerformed;
-            placesResultsController.PlacesSearched += OnPlacesSearched;
-            placesResultsController.PlacesFiltered += OnPlacesFiltered;
-            placesResultsController.PlaceClicked += OnPlaceClicked;
-            placeCardActionsController.PlaceSetAsLiked += OnPlaceSetAsLiked;
-            placeCardActionsController.PlaceSetAsDisliked += OnPlaceSetAsDisliked;
-            placeCardActionsController.PlaceSetAsFavorite += OnPlaceSetAsFavorite;
-            placeCardActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
-            placeCardActionsController.JumpedInPlace += OnJumpedInPlace;
-            placeCardActionsController.PlaceShared += OnPlaceShared;
-            placeCardActionsController.PlaceLinkCopied += OnPlaceLinkCopied;
-            placeCardActionsController.NavigationToPlaceStarted += OnNavigationToPlaceStarted;
+            placesController.PlacesResultsController.PlacesSearched += OnPlacesSearched;
+            placesController.PlacesResultsController.PlacesFiltered += OnPlacesFiltered;
+            placesController.PlacesResultsController.PlaceClicked += OnPlaceClicked;
+            placesController.PlaceCardActionsController.PlaceSetAsLiked += OnPlaceSetAsLiked;
+            placesController.PlaceCardActionsController.PlaceSetAsDisliked += OnPlaceSetAsDisliked;
+            placesController.PlaceCardActionsController.PlaceSetAsFavorite += OnPlaceSetAsFavorite;
+            placesController.PlaceCardActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
+            placesController.PlaceCardActionsController.JumpedInPlace += OnJumpedInPlace;
+            placesController.PlaceCardActionsController.PlaceShared += OnPlaceShared;
+            placesController.PlaceCardActionsController.PlaceLinkCopied += OnPlaceLinkCopied;
+            placesController.PlaceCardActionsController.NavigationToPlaceStarted += OnNavigationToPlaceStarted;
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.Places.performed -= OnPlacesShortcutPerformed;
-            placesResultsController.PlacesSearched -= OnPlacesSearched;
-            placesResultsController.PlacesFiltered -= OnPlacesFiltered;
-            placesResultsController.PlaceClicked -= OnPlaceClicked;
-            placeCardActionsController.PlaceSetAsLiked -= OnPlaceSetAsLiked;
-            placeCardActionsController.PlaceSetAsDisliked -= OnPlaceSetAsDisliked;
-            placeCardActionsController.PlaceSetAsFavorite -= OnPlaceSetAsFavorite;
-            placeCardActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
-            placeCardActionsController.JumpedInPlace -= OnJumpedInPlace;
-            placeCardActionsController.PlaceShared -= OnPlaceShared;
-            placeCardActionsController.PlaceLinkCopied -= OnPlaceLinkCopied;
-            placeCardActionsController.NavigationToPlaceStarted -= OnNavigationToPlaceStarted;
+            placesController.PlacesResultsController.PlacesSearched -= OnPlacesSearched;
+            placesController.PlacesResultsController.PlacesFiltered -= OnPlacesFiltered;
+            placesController.PlacesResultsController.PlaceClicked -= OnPlaceClicked;
+            placesController.PlaceCardActionsController.PlaceSetAsLiked -= OnPlaceSetAsLiked;
+            placesController.PlaceCardActionsController.PlaceSetAsDisliked -= OnPlaceSetAsDisliked;
+            placesController.PlaceCardActionsController.PlaceSetAsFavorite -= OnPlaceSetAsFavorite;
+            placesController.PlaceCardActionsController.PlaceSetAsHome -= OnPlaceSetAsHome;
+            placesController.PlaceCardActionsController.JumpedInPlace -= OnJumpedInPlace;
+            placesController.PlaceCardActionsController.PlaceShared -= OnPlaceShared;
+            placesController.PlaceCardActionsController.PlaceLinkCopied -= OnPlaceLinkCopied;
+            placesController.PlaceCardActionsController.NavigationToPlaceStarted -= OnNavigationToPlaceStarted;
         }
 
         private void OnPlacesShortcutPerformed(InputAction.CallbackContext _) =>
