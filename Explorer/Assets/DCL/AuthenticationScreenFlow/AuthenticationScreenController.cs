@@ -41,10 +41,10 @@ namespace DCL.AuthenticationScreenFlow
 
             VerificationRequested = 3,
 
-            FetchingProfile = 4,
+            ProfileFetching = 4,
             LoggedIn = 5,
 
-            FetchingProfileCached = 6,
+            ProfileFetchingCached = 6,
             LoggedInCached = 7,
         }
 

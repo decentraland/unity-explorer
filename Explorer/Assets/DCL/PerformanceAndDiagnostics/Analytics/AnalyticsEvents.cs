@@ -84,17 +84,25 @@
 
         public static class Authentication
         {
+            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
+
+            // 1. LOGIN SELECTION SCREEN
             public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";
 
-
-            public const string LOGGED_IN_CACHED = "logged_in_cached";
-            public const string LOGGED_IN = "logged_in";
+            // 2. IDENTITY VERIFICATION SCREEN
             public const string VERIFICATION_REQUESTED = "verification_requested";
             public const string OTP_VERIFICATION_SUCCESS = "otp_verification_success";
             public const string OTP_VERIFICATION_FAILURE = "otp_verification_failure";
             public const string OTP_RESEND = "otp_resend";
-            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
+
+            // 3. PROFILE FETCHING
+            public const string PROFILE_FETCHING = "profile_fetching";
+            public const string PROFILE_FETCHING_CACHED = "profile_fetching_cached";
+
+            // 4. LOBBY
+            public const string LOGGED_IN = "logged_in";
+            public const string LOGGED_IN_CACHED = "logged_in_cached";
         }
 
         public static class Friends
