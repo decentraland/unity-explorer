@@ -145,7 +145,7 @@ namespace DCL.AuthenticationScreenFlow
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
-            bool enableEmailOTP = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
+            bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);

@@ -165,9 +165,10 @@ namespace DCL.Profiles
                    && AreStringsEquivalent(Profession, profile.Profession)
                    && Birthdate == profile.Birthdate
                    && Version == profile.Version
-                   && AreLinksSame(links, profile.links);
+                   && AreLinksSame(links, profile.links)
+                   && ClaimedNameColor == profile.ClaimedNameColor;
         }
-        
+
         private static bool AreStringsEquivalent(string? a, string? b) =>
             (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || a == b;
 

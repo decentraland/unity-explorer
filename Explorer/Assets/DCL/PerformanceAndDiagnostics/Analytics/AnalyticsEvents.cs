@@ -1,4 +1,4 @@
-﻿namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     /// <summary>
     ///     IMPORTANT!!
@@ -16,6 +16,7 @@
             public const string ERROR = "error";
             public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
+            public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
         }
 
         public static class World

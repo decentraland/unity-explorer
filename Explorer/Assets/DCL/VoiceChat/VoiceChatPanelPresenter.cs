@@ -33,7 +33,7 @@ namespace DCL.VoiceChat
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
-            
+
             var voiceChatPanelResizePresenter = new VoiceChatPanelResizePresenter(view.VoiceChatPanelResizeView, voiceChatOrchestrator);
             presenterScope.Add(voiceChatPanelResizePresenter);
 
@@ -43,7 +43,7 @@ namespace DCL.VoiceChat
             var communitiesVoiceChatController = new CommunityVoiceChatPresenter(view.CommunityVoiceChatView, participantEntryView, profileDataProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, communityDataProvider, imageControllerProvider);
             presenterScope.Add(communitiesVoiceChatController);
 
-            var sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator);
+            var sceneVoiceChatController = new SceneVoiceChatPresenter(view.SceneVoiceChatPanelView, voiceChatOrchestrator, imageControllerProvider);
             presenterScope.Add(sceneVoiceChatController);
 
             voiceChatPanelState = voiceChatOrchestrator.CurrentVoiceChatPanelState;
