@@ -71,13 +71,14 @@ namespace DCL.AvatarRendering.Emotes
 
             var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!promise.Result.HasValue)
-                return (results, 0);
+            ct.ThrowIfCancellationRequested();
 
-            if (!promise.Result.Value.Succeeded)
-                throw promise.Result.Value.Exception!;
+            if (promise.Result == null) return (results, 0);
+            if (!promise.Result.HasValue) return (results, 0);
+            if (!promise.Result!.Value.Succeeded) return (results, 0);
 
-            return (promise.Result.Value.Asset.Emotes, promise.Result.Value.Asset.TotalAmount);
+            return (promise.Result.Value.Asset.Emotes,
+                promise.Result.Value.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(
