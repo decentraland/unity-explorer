@@ -242,7 +242,8 @@ namespace DCL.PerformanceAndDiagnostics
                 return;
             }
 
-            while (spanStack.Count >= depth)
+            // Stack count is depth+1 (depth 0 => count 1), so close while current depth >= target.
+            while (spanStack.Count > depth)
             {
                 ISpan span = spanStack.Pop();
                 span.Finish();
@@ -268,7 +269,8 @@ namespace DCL.PerformanceAndDiagnostics
 
             int closedSpans = 0;
 
-            while (spanStack.Count >= depth)
+            // Stack count is depth+1 (depth 0 => count 1), so close while current depth >= target.
+            while (spanStack.Count > depth)
             {
                 ISpan span = spanStack.Pop();
                 FinishSpanWithError(span, errorMessage, exception);

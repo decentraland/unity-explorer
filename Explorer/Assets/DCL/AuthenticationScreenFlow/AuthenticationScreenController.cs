@@ -169,7 +169,6 @@ namespace DCL.AuthenticationScreenFlow
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
                 fsm.AddStates(
-                    new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
                     otpVerificationState,
                     new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
                 );
