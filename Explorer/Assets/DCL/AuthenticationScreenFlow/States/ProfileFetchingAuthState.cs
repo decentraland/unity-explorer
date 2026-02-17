@@ -98,8 +98,8 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "FetchProfileCached" : "FetchProfile",
-                        SpanOperation = "auth.profile_fetch",
+                        SpanName = isCached ? "ProfileFetchingCached" : "ProfileFetching",
+                        SpanOperation = "auth.profile_fetching",
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
 

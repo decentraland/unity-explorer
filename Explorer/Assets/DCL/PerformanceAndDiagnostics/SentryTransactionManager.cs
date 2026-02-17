@@ -96,6 +96,17 @@ namespace DCL.PerformanceAndDiagnostics
             SentryTransactionManager.Instance.EndSpanOnDepth(transaction, depth);
         }
 
+        public void EndSpanOnDepthWithError(T transactionName, int depth, string errorMessage, Exception? exception = null)
+        {
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) Transaction '{transactionName}' not found (depth: {depth}, error: {errorMessage})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndSpanOnDepthWithError(transaction, depth, errorMessage, exception);
+        }
+
         public void EndTransaction(T key, SpanStatus finishWithStatus = SpanStatus.Ok)
         {
             if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
@@ -238,6 +249,40 @@ namespace DCL.PerformanceAndDiagnostics
             }
         }
 
+        public void EndSpanOnDepthWithError(ITransactionTracer transactionTracer, int depth, string errorMessage, Exception? exception = null)
+        {
+            if (!transactionTracer.IsSampled.GetValueOrDefault())
+                return;
+
+            if (depth < 1)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) Invalid depth '{depth}' for transaction '{transactionTracer.Name}'. Depth must be >= 1");
+                return;
+            }
+
+            if (!transactionsSpans.TryGetValue(transactionTracer, out Stack<ISpan> spanStack))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) No span stack found for transaction '{transactionTracer.Name}' (depth: {depth}, error: {errorMessage})");
+                return;
+            }
+
+            int closedSpans = 0;
+
+            while (spanStack.Count >= depth)
+            {
+                ISpan span = spanStack.Pop();
+                FinishSpanWithError(span, errorMessage, exception);
+                closedSpans++;
+            }
+
+            if (closedSpans > 0 && sentryTransactionErrors.TryGetValue(transactionTracer, out int currentErrorCount))
+            {
+                int errorsCount = currentErrorCount + closedSpans;
+                sentryTransactionErrors[transactionTracer] = errorsCount;
+                transactionTracer.SetTag(ERROR_COUNT, errorsCount.ToString());
+            }
+        }
+
         public bool EndTransaction(ITransactionTracer transaction, SpanStatus finishWithStatus = SpanStatus.Ok)
         {
             if (!transaction.IsSampled.GetValueOrDefault())
@@ -342,20 +387,24 @@ namespace DCL.PerformanceAndDiagnostics
             }
 
             ISpan currentSpan = spanStack.Pop();
+            FinishSpanWithError(currentSpan, errorMessage, exception);
+        }
 
-            currentSpan.SetTag("status", "error");
-            currentSpan.SetTag(ERROR_MESSAGE_TAG, errorMessage);
+        private static void FinishSpanWithError(ISpan span, string errorMessage, Exception? exception = null)
+        {
+            span.SetTag("status", "error");
+            span.SetTag(ERROR_MESSAGE_TAG, errorMessage);
 
             if (exception != null)
             {
-                currentSpan.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
-                currentSpan.SetTag(ERROR_EXCEPTION_MESSAGE_TAG, exception.Message);
-                currentSpan.SetTag(ERROR_STACK_TAG, exception.StackTrace);
-                currentSpan.Finish(exception, SpanStatus.InternalError);
+                span.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
+                span.SetTag(ERROR_EXCEPTION_MESSAGE_TAG, exception.Message);
+                span.SetTag(ERROR_STACK_TAG, exception.StackTrace);
+                span.Finish(exception, SpanStatus.InternalError);
             }
             else
             {
-                currentSpan.Finish(SpanStatus.UnknownError);
+                span.Finish(SpanStatus.UnknownError);
             }
         }
 

@@ -32,10 +32,10 @@ namespace DCL.AuthenticationScreenFlow
 
         public virtual void Exit()
         {
-            if (spanErrorInfo != null)
+            if (spanErrorInfo is { } error)
+                SentryTransactionNameMapping.Instance.EndSpanOnDepthWithError(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH, error.message, error.exception);
+            else
                 SentryTransactionNameMapping.Instance.EndSpanOnDepth(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH);
-
-            // else SentryTransactionNameMapping.Instance.EndCurrentSpanOnDepthWithError(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH, spanErrorInfo.errorMessage, spanErrorInfo.exception);
         }
 
         private string GetDefaultSpanName()
