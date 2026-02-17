@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
             // and if it does, we use it, otherwise we use the realm's base url
             var contentBaseUrl = ipfsPath.BaseUrl.IsEmpty
-                ? intention.IpfsRealm.ContentBaseUrl
+                ? intention.ContentBaseUrl
                 : ipfsPath.BaseUrl;
 
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);

@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Communities;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
@@ -59,7 +59,7 @@ namespace DCL.Places
         [SerializeField] private Button exitNavigationButton = null!;
 
         [Header("Configuration")]
-        [SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration = null!;
+        [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
 
         [Header("Categories")]
         [SerializeField] private GameObject categoriesModule = null!;
@@ -178,8 +178,7 @@ namespace DCL.Places
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
             liveTag.SetActive(placeInfo.live);
 
-            VectorUtilities.TryParseVector2Int(placeInfo.base_position, out var coordinates);
-            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);
 
             LoadFriendsThumbnailsAsync(friends, cancellationToken).Forget();

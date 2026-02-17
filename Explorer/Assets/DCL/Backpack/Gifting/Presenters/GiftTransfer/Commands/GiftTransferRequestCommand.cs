@@ -1,9 +1,10 @@
-﻿using System.Threading;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Views;
+using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Utility;
 
@@ -19,23 +20,31 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         private readonly IGiftTransferService giftTransferService;
         private readonly IWeb3IdentityCache  web3IdentityCache;
         private readonly IPendingTransferService pendingTransferService;
+        private readonly ICompositeWeb3Provider web3Provider;
         
         public GiftTransferRequestCommand(IEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             IGiftTransferService giftTransferService,
-            IPendingTransferService pendingTransferService)
+            IPendingTransferService pendingTransferService,
+            ICompositeWeb3Provider web3Provider)
         {
             this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.giftTransferService = giftTransferService;
             this.pendingTransferService = pendingTransferService;
+            this.web3Provider = web3Provider;
         }
+
+        public string GetWaitingMessage() =>
+            web3Provider.IsThirdWebOTP
+                ? GiftingTextIds.WaitingForWalletMessageThirdWeb
+                : GiftingTextIds.WaitingForWalletMessage;
 
         public async UniTask<GiftTransferResult> ExecuteAsync(GiftTransferParams data, CancellationToken ct)
         {
             eventBus.Publish(new GiftingEvents.GiftTransferProgress(data.giftUrn,
                 GiftingEvents.GiftTransferPhase.Authorizing,
-                GiftingTextIds.WaitingForWalletMessage
+                GetWaitingMessage()
             ));
 
             var identity = web3IdentityCache.Identity;

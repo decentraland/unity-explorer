@@ -19,7 +19,8 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using Global.Dynamic.LaunchModes;
+using ECS.SceneLifeCycle.Realm;
+using DCL.Utility;
 
 namespace PortableExperiences.Controller
 {
@@ -108,14 +109,15 @@ namespace PortableExperiences.Controller
             var realmData = new RealmData();
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
+                new IpfsRealm(portableExperiencePath,
                     result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                WorldManifest.Empty
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
