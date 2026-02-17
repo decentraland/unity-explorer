@@ -77,7 +77,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewView.transform.SetAsFirstSibling();
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
-            characterPreviewController.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController.Initialize(profile.Avatar, CharacterPreviewUtils.AUTH_SCREEN_PREVIEW_POSITION);
             characterPreviewController.OnBeforeShow();
             characterPreviewController.OnShow();
 
