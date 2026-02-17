@@ -39,7 +39,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     break;
 
                 // Triggered WHEN the user press one of the login buttons in the Login Selection Screen
-                // TODO: We should also track the auth Request UUID here to link the explorer_v2 event with the auth page view and login events.
                 case AuthStatus.LoginRequested:
                     analytics.Track(Authentication.LOGIN_REQUESTED, new JObject
                     {
