@@ -86,7 +86,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         {
             float startTime = Time.realtimeSinceStartup;
 
-            while (Time.realtimeSinceStartup - startTime < 60f)
+            while (Time.realtimeSinceStartup - startTime < 90f)
             {
                 await WriteSampleAsync();
                 await UniTask.Yield();
