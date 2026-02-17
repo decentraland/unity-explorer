@@ -99,7 +99,7 @@ namespace DCL.Backpack
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
-            breadcrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            breadcrumbController = new BackpackBreadCrumbController(mvcManager, view.BreadCrumbView, eventBus, commandBus, categoryIcons, hairColors, eyesColors, bodyshapeColors);
 
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;

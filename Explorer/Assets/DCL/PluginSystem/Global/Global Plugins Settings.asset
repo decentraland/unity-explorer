@@ -62,6 +62,7 @@ MonoBehaviour:
   - rid: 5190442831932031144
   - rid: 1221415613651484787
   - rid: 732305993255354462
+  - rid: 7426570530121056350
   references:
     version: 2
     RefIds:
@@ -172,7 +173,7 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <ColorToggle>k__BackingField:
-            m_AssetGUID: 
+            m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
             m_SubObjectName: 
             m_SubObjectType: 
             m_SubObjectGUID: 
@@ -568,6 +569,18 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <ColorToggle>k__BackingField:
+          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <NameColors>k__BackingField:
+          m_AssetGUID: 502bd975d08eca847807411acf6a73d2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
@@ -584,12 +597,6 @@ MonoBehaviour:
         realmPartitionSettings: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        parsedParcels:
-          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1033,6 +1040,14 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
+        <CoreWebRequestsBudget>k__BackingField: 15
+        <SceneWebRequestsBudget>k__BackingField: 5
+        ParsedParcels:
+          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1123,6 +1138,21 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 7426570530121056350
+      type: {class: ColorPickerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ColorPickerPrefab:
+          m_AssetGUID: a64bc37fc09f340bd821a73ed1a9342a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ColorTogglePrefab:
+          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
