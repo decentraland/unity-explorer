@@ -328,10 +328,18 @@ Shader "DCL/DCL_Toon"
             
             // -------------------------------------
             // Lightweight Pipeline keywords
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // WebGPU: skip shadow variants - TextureSampleType::Depth vs Float mismatch (fixed in Unity 6000.3.8+)
+            #if defined(SHADER_API_WEBGPU)
+                #pragma multi_compile _
+                #pragma multi_compile _ _ADDITIONAL_LIGHTS
+                #pragma multi_compile_fragment _
+                #pragma multi_compile_fragment _
+            #else
+                #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+                #pragma multi_compile _ _ADDITIONAL_LIGHTS
+                #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+                #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #endif
             #pragma multi_compile _ _FORWARD_PLUS
 
             //#pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE

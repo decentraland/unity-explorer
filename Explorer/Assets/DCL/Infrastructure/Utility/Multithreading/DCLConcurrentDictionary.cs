@@ -12,14 +12,8 @@ namespace Utility.Multithreading
 #endif
         public TValue this[TKey key]
         {
-            get
-            {
-                return Inner[key];
-            }
-            set
-            {
-                Inner[key] = value;
-            }
+            get => Inner[key];
+            set => Inner[key] = value;
         }
 
         public int Count => Inner.Count;
@@ -46,33 +40,33 @@ namespace Utility.Multithreading
 
         public void Add(TKey key, TValue value)
         {
+#if !UNITY_WEBGL
+            Inner.AddOrGet(key, value);
+#else
             Inner.Add(key, value);
+#endif
         }
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
+#if !UNITY_WEBGL
+            Inner.AddOrGet(item.Key, item.Value);
+#else
             Inner.Add(item.Key, item.Value);
+#endif
         }
 
-        public bool Contains(KeyValuePair<TKey, TValue> item)
-        {
-            return ((ICollection<KeyValuePair<TKey, TValue>>)Inner).Contains(item);
-        }
+        public bool Contains(KeyValuePair<TKey, TValue> item) =>
+            ((ICollection<KeyValuePair<TKey, TValue>>)Inner).Contains(item);
 
-        public bool ContainsKey(TKey key)
-        {
-            return Inner.ContainsKey(key);
-        }
+        public bool ContainsKey(TKey key) =>
+            Inner.ContainsKey(key);
 
-        public bool Remove(KeyValuePair<TKey, TValue> item)
-        {
-            return ((ICollection<KeyValuePair<TKey, TValue>>)Inner).Remove(item);
-        }
+        public bool Remove(KeyValuePair<TKey, TValue> item) =>
+            ((ICollection<KeyValuePair<TKey, TValue>>)Inner).Remove(item);
 
-        public bool Remove(TKey key)
-        {
-            return Inner.Remove(key);
-        }
+        public bool Remove(TKey key) =>
+            Inner.Remove(key, out TValue _);
 
         public bool TryRemove(TKey key, out TValue value)
         {

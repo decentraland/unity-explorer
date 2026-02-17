@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
+using Temp.Helper.WebClient;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.SceneBoundsChecker;
 using System;
@@ -52,6 +53,7 @@ namespace ECS.Unity.GLTFContainer
                             string shaderName = mat.shader != null ? mat.shader.name : null;
                             if (shaderName != null && (shaderName.Contains("Error") || shaderName.Contains("Hidden")))
                             {
+                                WebGLDebugLog.Log("GLTFContainer.ShaderReplace", $"'{shaderName}' -> 'DCL/Scene'", $"assetHash={assetHash} renderer={renderer.name} material={mat.name}");
                                 mat.shader = sceneShader;
                             }
                         }

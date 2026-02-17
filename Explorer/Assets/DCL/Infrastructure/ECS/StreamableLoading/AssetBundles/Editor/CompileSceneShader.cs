@@ -1,3 +1,4 @@
+using DCL.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -88,7 +89,7 @@ namespace DCL.Rendering.Menus
 
         private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, string shaderBaseFolder, bool forceRecompile = false)
         {
-            string platformSuffix = "";//PlatformUtils.GetCurrentPlatform();
+            string platformSuffix = PlatformUtils.GetCurrentPlatform();
             bundleName += platformSuffix;
 
             // Try multiple paths in order of preference:
@@ -222,13 +223,12 @@ namespace DCL.Rendering.Menus
             for (var i = 0; i < buildInput.Length; i++)
                 buildInput[i].addressableNames = buildInput[i].assetNames.Select(Path.GetFileName).ToArray();
 
-            BuildTarget bt = BuildTarget.WebGL;
-            /*platformSuffix switch
-                                               {
-                                                   "_windows" => BuildTarget.StandaloneWindows64,
-                                                   "_mac" => BuildTarget.StandaloneOSX,
-                                                   _ => BuildTarget.WebGL,
-                                               };*/
+            BuildTarget bt = platformSuffix switch
+                             {
+                                 "_windows" => BuildTarget.StandaloneWindows64,
+                                 "_mac" => BuildTarget.StandaloneOSX,
+                                 _ => BuildTarget.WebGL,
+                             };
 
             BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(bt);
 
