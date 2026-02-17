@@ -269,7 +269,7 @@ namespace DCL.AuthenticationScreenFlow
         private void UpdateCharacterPreview(Avatar newAvatar)
         {
             newUserProfile.Avatar = newAvatar;
-            characterPreviewController.Initialize(newAvatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController.Initialize(newAvatar, CharacterPreviewUtils.AUTH_SCREEN_PREVIEW_POSITION);
             characterPreviewController.OnBeforeShow();
             characterPreviewController.OnShow();
         }
