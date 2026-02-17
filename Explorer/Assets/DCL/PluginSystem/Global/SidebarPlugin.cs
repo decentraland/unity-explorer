@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.ChatStates;
 using DCL.Chat.History;
+using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IAnalyticsController analytics;
 
         public SidebarPlugin(
@@ -99,6 +101,7 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
+            HttpEventsApiService eventsApiService,
             IAnalyticsController analytics)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -129,6 +132,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.eventsApiService = eventsApiService;
             this.analytics = analytics;
         }
 
@@ -170,6 +174,7 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 decentralandUrls,
                 eventBus,
+                eventsApiService,
                 analytics
             ));
         }

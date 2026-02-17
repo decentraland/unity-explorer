@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Diagnostics;
 using DCL.Events;
+using DCL.EventsApi;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -16,6 +18,8 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using Newtonsoft.Json.Linq;
 using System;
@@ -40,6 +44,7 @@ namespace DCL.ExplorePanel
         private bool includeCommunities;
         private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly HttpEventsApiService eventsApiService;
         private readonly IAnalyticsController analytics;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
@@ -49,6 +54,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
+        private CancellationTokenSource checkForLiveEventsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -80,6 +86,7 @@ namespace DCL.ExplorePanel
             bool includeCameraReel,
             bool includeDiscover,
             ISharedSpaceManager sharedSpaceManager,
+            HttpEventsApiService eventsApiService,
             IAnalyticsController analytics)
             : base(viewFactory)
         {
@@ -99,6 +106,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
             EventsController = eventsController;
+            this.eventsApiService = eventsApiService;
             this.analytics = analytics;
         }
 
@@ -109,6 +117,7 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
@@ -130,6 +139,7 @@ namespace DCL.ExplorePanel
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            viewInstance!.SetLiveEventsCounter(0);
         }
 
         private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
@@ -224,6 +234,9 @@ namespace DCL.ExplorePanel
 
             BlockUnwantedInputs();
             RegisterHotkeys();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            CheckForLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
 
             if (inputData.IsSectionProvided)
                 return;
@@ -376,6 +389,7 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
 
             UnblockUnwantedInputs();
             UnRegisterHotkeys();
@@ -427,6 +441,17 @@ namespace DCL.ExplorePanel
                     // Cancellations ignored
                 }
             }
+        }
+
+        private async UniTaskVoid CheckForLiveEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
         }
     }
 
