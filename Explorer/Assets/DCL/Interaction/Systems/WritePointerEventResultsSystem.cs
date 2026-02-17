@@ -87,7 +87,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents![validIndex]!;
                 PBPointerEvents.Types.Info info = entry.EventInfo!;
 
-                RaycastHit raycastHit = raycastHitPool.Get()!;
+                RaycastHit raycastHit = raycastHitPool.Get();
                 raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
 
                 //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.

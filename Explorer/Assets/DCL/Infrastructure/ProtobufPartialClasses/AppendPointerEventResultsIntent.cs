@@ -89,14 +89,15 @@ namespace DCL.ECSComponents
         /// <summary>
         ///     Adds hover input if the entry is qualified for listening to it
         ///     <para>
-        ///         Entry is qualified if the expected Button is "Pointer" or "Any", and event type is corresponding "HoverEnter"/"HoverExit"
+        ///         Entry is qualified if the expected Button is "Pointer" or "Any", and event type is corresponding "HoverEnter"/"HoverLeave"
+        ///         or "ProximityEnter/ProximityLeave"
         ///     </para>
         /// </summary>
-        public void TryAppendHoverInput(PointerEventType? hoverEventType, in PBPointerEvents.Types.Entry entry, int entryIndex)
+        public void TryAppendEnterOrLeaveInput(PointerEventType? eventType, in PBPointerEvents.Types.Entry entry, int entryIndex)
         {
-            if (!hoverEventType.HasValue) return;
+            if (!eventType.HasValue) return;
 
-            if (entry.EventType == hoverEventType.Value
+            if (entry.EventType == eventType.Value
                 && entry.EventInfo.Button is InputAction.IaPointer or InputAction.IaAny
                )
                 AddValidIndex((byte)entryIndex);

@@ -14,10 +14,10 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
             // Entity died or PointerEvents component was removed, nothing to do
             if (!world.IsAlive(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference) ||
-                !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
+                !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents? pbPointerEvents))
                 return;
 
-            TryAppendHoverInput(ref pbPointerEvents, in raycastResultForSceneEntities, PointerEventType.PetHoverLeave);
+            TryAppendHoverInput(ref pbPointerEvents!, in raycastResultForSceneEntities, PointerEventType.PetHoverLeave);
         }
 
         private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PointerEventType type)
@@ -29,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
                 if (!InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)) continue;
 
-                pbPointerEvents.AppendPointerEventResultsIntent.TryAppendHoverInput(type, pointerEvent, i);
+                pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(type, pointerEvent, i);
             }
         }
 

@@ -79,7 +79,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            resultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, entry, 3);
+            resultsIntent.TryAppendEnterOrLeaveInput(PointerEventType.PetHoverEnter, entry, 3);
 
             Assert.AreEqual(1, resultsIntent.ValidIndicesCount());
             Assert.AreEqual(3, resultsIntent.ValidIndexAt(0));
@@ -101,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            resultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, entry, 3);
+            resultsIntent.TryAppendEnterOrLeaveInput(PointerEventType.PetHoverEnter, entry, 3);
 
             Assert.AreEqual(0, resultsIntent.ValidIndicesCount());
         }

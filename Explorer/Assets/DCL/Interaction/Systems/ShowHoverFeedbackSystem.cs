@@ -77,8 +77,23 @@ namespace DCL.Interaction.HoverCanvas.Systems
                 }
 
                 hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);
-                hoverCanvasInstance.SetPosition(cursorPositionPercent);
+
+                Vector2 position = hoverFeedbackComponent.ScreenPositionOverride.HasValue
+                    ? GetPositionPercent(hoverFeedbackComponent.ScreenPositionOverride.Value)
+                    : cursorPositionPercent;
+                hoverCanvasInstance.SetPosition(position);
             }
+        }
+
+        private Vector2 GetPositionPercent(Vector2 screenPosition)
+        {
+            Vector2 newPosition = Vector2Int.zero;
+
+            // 0,0 is the center of the screen
+            newPosition.x = (screenPosition.x - (Screen.width * 0.5f)) / Screen.width * 100f;
+            newPosition.y = (screenPosition.y - (Screen.height * 0.5f)) / Screen.height * 100f;
+
+            return newPosition;
         }
     }
 }
