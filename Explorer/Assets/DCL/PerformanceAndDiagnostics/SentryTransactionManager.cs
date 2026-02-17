@@ -85,6 +85,17 @@ namespace DCL.PerformanceAndDiagnostics
             SentryTransactionManager.Instance.EndCurrentSpan(transaction);
         }
 
+        public void EndSpanOnDepth(T transactionName, int depth)
+        {
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) Transaction '{transactionName}' not found (depth: {depth})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndSpanOnDepth(transaction, depth);
+        }
+
         public void EndTransaction(T key, SpanStatus finishWithStatus = SpanStatus.Ok)
         {
             if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
@@ -201,6 +212,30 @@ namespace DCL.PerformanceAndDiagnostics
 
             ISpan currentSpan = spanStack.Pop();
             currentSpan.Finish();
+        }
+
+        public void EndSpanOnDepth(ITransactionTracer transaction, int depth)
+        {
+            if (!transaction.IsSampled.GetValueOrDefault())
+                return;
+
+            if (depth < 1)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) Invalid depth '{depth}' for transaction '{transaction.Name}'. Depth must be >= 1");
+                return;
+            }
+
+            if (!transactionsSpans.TryGetValue(transaction, out Stack<ISpan> spanStack))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) No span stack found for transaction '{transaction.Name}' (depth: {depth})");
+                return;
+            }
+
+            while (spanStack.Count >= depth)
+            {
+                ISpan span = spanStack.Pop();
+                span.Finish();
+            }
         }
 
         public bool EndTransaction(ITransactionTracer transaction, SpanStatus finishWithStatus = SpanStatus.Ok)

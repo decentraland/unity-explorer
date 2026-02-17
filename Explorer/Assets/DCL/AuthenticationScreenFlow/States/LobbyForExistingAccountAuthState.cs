@@ -97,14 +97,13 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
-            SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
             characterPreviewController.OnHide();
 
             view.JumpIntoWorldButton.onClick.RemoveAllListeners();
             view.DiffAccountButton.onClick.RemoveAllListeners();
 
             loginCt = CancellationToken.None;
+            base.Exit();
         }
 
         private void OnDiffAccountButtonClicked()

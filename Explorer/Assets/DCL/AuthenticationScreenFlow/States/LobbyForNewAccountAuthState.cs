@@ -139,8 +139,6 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
-            SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
             characterPreviewController.OnHide();
 
             avatarHistory.Clear();
@@ -165,6 +163,7 @@ namespace DCL.AuthenticationScreenFlow
             view.TermsOfUse.SetIsOnWithoutNotify(false);
 
             view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
+            base.Exit();
         }
 
         private void OpenClickableURL(string url) =>

@@ -58,6 +58,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             RestoreResolutionAndScreenMode();
             view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
+            base.Exit();
         }
 
         private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)

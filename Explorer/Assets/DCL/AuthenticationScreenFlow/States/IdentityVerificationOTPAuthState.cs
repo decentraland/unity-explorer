@@ -68,6 +68,7 @@ namespace DCL.AuthenticationScreenFlow
 
             email = string.Empty;
             loginCt = CancellationToken.None;
+            base.Exit();
         }
 
         private void ResendOtp()

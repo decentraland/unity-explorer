@@ -105,6 +105,7 @@ namespace DCL.AuthenticationScreenFlow
 
             // ThirdWeb
             view.EmailInputField.Submitted -= OTPLogin;
+            base.Exit();
         }
 
         public void Enter(PopupType popupType)

@@ -50,6 +50,7 @@ namespace DCL.AuthenticationScreenFlow
         public override void Exit()
         {
             view.CancelButton.onClick.RemoveAllListeners();
+            base.Exit();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
