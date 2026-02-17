@@ -24,4 +24,21 @@ namespace DCL.AvatarRendering.Loading
             List<TElement>? results = null);
     }
 
+    public static class IElementsProviderQueryParams
+    {
+        public const string PAGE_NUMBER = "pageNum";
+        public const string PAGE_SIZE = "pageSize";
+        public const string TRIMMED = "trimmed";
+        public const string INCLUDE_AMOUNT = "includeAmount";
+        public const string ORDER_BY = "orderBy";
+        public const string ORDER_DIRECTION = "direction";
+        public const string NAME = "name";
+
+        public static class Values
+        {
+            public const string ASCENDING = "asc";
+            public const string DESCENDING = "desc";
+        }
+    }
+
 }

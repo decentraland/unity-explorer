@@ -25,13 +25,12 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IWebRequestController webRequestController,
             IStreamableCache<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention> cache,
             IRealmData realmData,
-            URLSubdirectory lambdaSubdirectory,
             URLSubdirectory wearablesSubdirectory,
             IDecentralandUrlsSource urlsSource,
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             string? builderContentURL = null
-        ) : base(world, cache, trimmedWearableStorage, wearableStorage, realmData, lambdaSubdirectory, wearablesSubdirectory,
+        ) : base(world, cache, trimmedWearableStorage, wearableStorage, realmData, wearablesSubdirectory,
             webRequestController,"wearable", urlsSource, builderContentURL: builderContentURL)
         {
         }

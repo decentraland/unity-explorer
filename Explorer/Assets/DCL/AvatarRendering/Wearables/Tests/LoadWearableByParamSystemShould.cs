@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             realmData.Configured.Returns(true);
 
             return new LoadTrimmedWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(), trimmedWearableStorage);
+                URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(), trimmedWearableStorage);
         }
 
         protected override void AssertSuccess(TrimmedWearablesResponse asset)

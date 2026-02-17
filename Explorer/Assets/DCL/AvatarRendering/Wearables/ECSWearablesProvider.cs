@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -22,21 +23,12 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ECSWearablesProvider : IWearablesProvider
     {
-        private const string PAGE_NUMBER = "pageNum";
-        private const string PAGE_SIZE = "pageSize";
         private const string NETWORK = "network";
-        private const string INCLUDE_AMOUNT = "includeAmount";
         private const string CATEGORY = "category";
-        private const string ORDER_BY = "orderBy";
         private const string COLLECTION_TYPE = "collectionType";
-        private const string ORDER_DIRECTION = "direction";
-        private const string SEARCH = "name";
-        private const string ASCENDING = "ASC";
-        private const string DESCENDING = "DESC";
         private const string ON_CHAIN_COLLECTION_TYPE = "on-chain";
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
-        private const string TRIMMED = "trimmed";
         private const string IS_SMART_WEARABLE = "isSmartWearable";
 
         private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
@@ -60,21 +52,21 @@ namespace DCL.AvatarRendering.Wearables
             bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
-            requestParameters.Add((PAGE_NUMBER, parameters.PageNumber.ToString()));
-            requestParameters.Add((PAGE_SIZE, parameters.PageSize.ToString()));
-            requestParameters.Add((TRIMMED, "true"));
+            requestParameters.Add((IElementsProviderQueryParams.PAGE_NUMBER, parameters.PageNumber.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.PAGE_SIZE, parameters.PageSize.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.TRIMMED, "true"));
 
             if (!string.IsNullOrEmpty(parameters.Network))
                 requestParameters.Add((NETWORK, parameters.Network));
 
             if (parameters.IncludeAmount ?? true)
-                requestParameters.Add((INCLUDE_AMOUNT, "true"));
+                requestParameters.Add((IElementsProviderQueryParams.INCLUDE_AMOUNT, "true"));
 
             if (!string.IsNullOrEmpty(parameters.Category))
                 requestParameters.Add((CATEGORY, parameters.Category));
 
-            requestParameters.Add((ORDER_BY, parameters.SortingField.ToString()));
-            requestParameters.Add((ORDER_DIRECTION, GetDirectionParamValue(parameters.OrderBy)));
+            requestParameters.Add((IElementsProviderQueryParams.ORDER_BY, parameters.SortingField.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.ORDER_DIRECTION, GetDirectionParamValue(parameters.OrderBy)));
 
             if (EnumUtils.HasFlag(parameters.CollectionType, IWearablesProvider.CollectionType.Base))
                 requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
@@ -89,7 +81,7 @@ namespace DCL.AvatarRendering.Wearables
                 requestParameters.Add((IS_SMART_WEARABLE, "true"));
 
             if (!string.IsNullOrEmpty(parameters.Name))
-                requestParameters.Add((SEARCH, parameters.Name));
+                requestParameters.Add((IElementsProviderQueryParams.NAME, parameters.Name));
 
             results ??= new List<ITrimmedWearable>();
 
@@ -147,9 +139,9 @@ namespace DCL.AvatarRendering.Wearables
             {
                 case IWearablesProvider.OrderBy.Ascending:
                 default:
-                    return ASCENDING;
+                    return IElementsProviderQueryParams.Values.ASCENDING;
                 case IWearablesProvider.OrderBy.Descending:
-                    return DESCENDING;
+                    return IElementsProviderQueryParams.Values.DESCENDING;
             }
         }
 

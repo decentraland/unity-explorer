@@ -25,9 +25,9 @@ namespace DCL.AvatarRendering.Wearables
     public class WearablePlugin : IDCLGlobalPluginWithoutSettings
     {
         //Should be taken from the catalyst
-        private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
+
         private readonly string builderContentURL;
         private readonly IWebRequestController webRequestController;
         private readonly bool builderCollectionsPreview;
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables
         {
             LoadTrimmedWearablesByParamSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>(false, false),
-                realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
+                realmData, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
                 trimmedWearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);

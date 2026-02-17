@@ -32,11 +32,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         where TFullAvatarElement : IAvatarAttachment<TFullAvatarElementDTO>, TAvatarElement
     {
         private static readonly ArrayPool<URN> ARRAY_POOL = ArrayPool<URN>.Create(25, 2);
+        private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
 
         private readonly ITrimmedAvatarElementStorage<TAvatarElement, TAvatarElementDTO> trimmedAvatarElementStorage;
         private readonly IAvatarElementStorage<TFullAvatarElement, TFullAvatarElementDTO> avatarElementStorage;
         private readonly IRealmData realmData;
-        private readonly URLSubdirectory lambdaSubdirectory;
         private readonly URLSubdirectory elementSubdirectory;
         private readonly IWebRequestController webRequestController;
         private readonly string? builderContentURL;
@@ -51,7 +51,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             ITrimmedAvatarElementStorage<TAvatarElement, TAvatarElementDTO> trimmedAvatarElementStorage,
             IAvatarElementStorage<TFullAvatarElement, TFullAvatarElementDTO> avatarElementStorage,
             IRealmData realmData,
-            URLSubdirectory lambdaSubdirectory,
             URLSubdirectory elementSubdirectory,
             IWebRequestController webRequestController,
             string expectedBuilderItemType,
@@ -63,7 +62,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             this.trimmedAvatarElementStorage = trimmedAvatarElementStorage;
             this.avatarElementStorage = avatarElementStorage;
             this.realmData = realmData;
-            this.lambdaSubdirectory = lambdaSubdirectory;
             this.elementSubdirectory = elementSubdirectory;
             this.webRequestController = webRequestController;
             this.builderContentURL = builderContentURL;
@@ -85,7 +83,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
             else
             {
-                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas)), lambdaSubdirectory)
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas)), EXPLORER_SUBDIRECTORY)
                           .AppendSubDirectory(URLSubdirectory.FromString(userID))
                           .AppendSubDirectory(elementSubdirectory);
             }

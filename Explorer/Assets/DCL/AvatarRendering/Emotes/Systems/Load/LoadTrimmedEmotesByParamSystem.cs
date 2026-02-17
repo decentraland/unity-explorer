@@ -24,17 +24,16 @@ namespace DCL.AvatarRendering.Emotes.Load
             IStreamableCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention> cache,
             IEmoteStorage emoteStorage,
             ITrimmedEmoteStorage trimmedEmoteStorage,
-            URLSubdirectory lambdaSubdirectory,
             URLSubdirectory emotesSubdirectory,
             IDecentralandUrlsSource urlsSource,
             string? builderContentURL = null
-        ) : base(world, cache, trimmedEmoteStorage, emoteStorage, realmData, lambdaSubdirectory, emotesSubdirectory,
+        ) : base(world, cache, trimmedEmoteStorage, emoteStorage, realmData, emotesSubdirectory,
             webRequestController,"emote", urlsSource, builderContentURL: builderContentURL)
         {
         }
 
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedEmoteDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<TrimmedEmoteDTO.LambdaResponse>(WRJsonParser.Unity);
+            await adapter.CreateFromJson<TrimmedEmoteDTO.LambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);

@@ -41,8 +41,8 @@ namespace DCL.PluginSystem.Global
 {
     public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
     {
-        private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
         private static readonly URLSubdirectory EMOTES_COMPLEMENT_URL = URLSubdirectory.FromString("/emotes/");
+        private static readonly URLSubdirectory EMOTES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Emotes/");
 
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteStorage emoteStorage;
@@ -132,17 +132,15 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
-
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
+                emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics);
 
             LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
-                emoteStorage, trimmedEmoteStorage, EXPLORER_SUBDIRECTORY, EMOTES_COMPLEMENT_URL,
+                emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
                 decentralandUrlsSource, builderContentURL);
 
             if(builderCollectionsPreview)
@@ -154,7 +152,7 @@ namespace DCL.PluginSystem.Global
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
-            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
