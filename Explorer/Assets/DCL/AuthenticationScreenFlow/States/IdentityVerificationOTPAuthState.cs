@@ -103,7 +103,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
-                machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (email, identity, false, ct));
             }
             catch (OperationCanceledException e)
             {

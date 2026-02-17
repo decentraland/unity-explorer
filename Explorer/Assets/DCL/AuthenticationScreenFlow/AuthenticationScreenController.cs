@@ -169,7 +169,7 @@ namespace DCL.AuthenticationScreenFlow
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
                 fsm.AddStates(
-                    new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
+                    new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
                     otpVerificationState,
                     new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
                 );
@@ -208,7 +208,7 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
+                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, true, ct));
                 else
                 {
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);

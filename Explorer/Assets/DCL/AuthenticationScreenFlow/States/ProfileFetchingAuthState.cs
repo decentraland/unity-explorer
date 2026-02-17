@@ -17,7 +17,7 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
+    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
@@ -37,11 +37,10 @@ namespace DCL.AuthenticationScreenFlow
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
-
             this.selfProfile = selfProfile;
         }
 
-        public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
+        public void Enter(ProfileFetchingPayload payload)
         {
             base.Enter();
             profileFetchException = null;
@@ -49,7 +48,7 @@ namespace DCL.AuthenticationScreenFlow
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
+            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsCached, payload.Ct).Forget();
         }
 
         public override void Exit()
@@ -68,7 +67,7 @@ namespace DCL.AuthenticationScreenFlow
                                     Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
-                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException)
+                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)
                     ReportHub.LogException(profileFetchException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
@@ -76,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
         {
             SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
@@ -87,7 +86,7 @@ namespace DCL.AuthenticationScreenFlow
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
             else
@@ -99,14 +98,28 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "ProfileFetchCached" : "ProfileFetch",
+                        SpanName = isCached ? "FetchProfileCached" : "FetchProfile",
                         SpanOperation = "auth.profile_fetch",
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
 
-                    Profile? profile = await FetchProfileAsync(ct);
+                    Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                    machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                    if (profile != null)
+                    {
+                        // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+                        profile.IsDirty = true;
+                        // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
+                        profile.HasConnectedWeb3 = true;
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                    }
+                    else if (!string.IsNullOrEmpty(email)) // in case of OTP flow we create new Profile and proceed
+                    {
+                        profile = CreateRandomProfile(identity.Address.ToString());
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
+                    }
+                    else
+                        throw new ProfileNotFoundException();
                 }
                 catch (OperationCanceledException e)
                 {
@@ -126,18 +139,27 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private async UniTask<Profile> FetchProfileAsync(CancellationToken ct)
+        private Profile CreateRandomProfile(string identityAddress)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            var profile = Profile.NewRandomProfile(identityAddress);
+            profile.HasClaimedName = false;
+            profile.Description = string.Empty;
+            profile.Country = string.Empty;
+            profile.EmploymentStatus = string.Empty;
+            profile.Gender = string.Empty;
+            profile.Pronouns = string.Empty;
+            profile.RelationshipStatus = string.Empty;
+            profile.SexualOrientation = string.Empty;
+            profile.Language = string.Empty;
+            profile.Profession = string.Empty;
+            profile.RealName = string.Empty;
+            profile.Hobbies = string.Empty;
+            profile.TutorialStep = 0;
+            profile.Version = 0;
 
-            if (profile == null)
-                throw new ProfileNotFoundException();
-
-            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+            profile.HasConnectedWeb3 = true;
             profile.IsDirty = true;
 
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
             return profile;
         }
 
@@ -157,6 +179,30 @@ namespace DCL.AuthenticationScreenFlow
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
+        }
+    }
+
+    public struct ProfileFetchingPayload
+    {
+        public readonly string Email;
+        public readonly IWeb3Identity Identity;
+        public readonly bool IsCached;
+        public CancellationToken Ct;
+
+        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        {
+            this.Email = email;
+            this.Identity = identity;
+            this.IsCached = isCached;
+            this.Ct = ct;
+        }
+
+        public ProfileFetchingPayload(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        {
+            this.Email = string.Empty;
+            this.Identity = identity;
+            this.IsCached = isCached;
+            this.Ct = ct;
         }
     }
 }

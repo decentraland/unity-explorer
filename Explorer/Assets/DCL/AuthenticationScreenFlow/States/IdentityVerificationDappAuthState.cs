@@ -96,7 +96,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 compositeWeb3Provider.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
-                machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (identity, false, ct));
             }
             catch (OperationCanceledException e)
             {
