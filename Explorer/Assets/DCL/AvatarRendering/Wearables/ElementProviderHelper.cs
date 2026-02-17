@@ -48,14 +48,13 @@ namespace DCL.AvatarRendering.Wearables
 
                 await elementProvider.GetByPointersAsync(urnRequest, currenBodyShape, ct, results);
 
-                if (results != null)
-                    foreach (var result in results)
-                        if (result.GetUrn() == pointer)
-                        {
-                            await UniTask.SwitchToMainThread();
-                            onElementFetched(result);
-                            return;
-                        }
+                foreach (var result in results)
+                    if (result.GetUrn() == pointer)
+                    {
+                        await UniTask.SwitchToMainThread();
+                        onElementFetched(result);
+                        return;
+                    }
 
                 ReportHub.LogError(reportData, $"Couldn't fetch element of type {typeof(TElement)} for pointer: {pointer}");
             }
