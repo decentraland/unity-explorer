@@ -26,6 +26,8 @@ namespace DCL.AuthenticationScreenFlow
         private string email;
         private CancellationToken loginCt;
 
+        private Exception? loginException;
+
         public IdentityVerificationOTPAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
@@ -47,6 +49,7 @@ namespace DCL.AuthenticationScreenFlow
         public void Enter((string email, CancellationToken ct) payload)
         {
             base.Enter();
+            loginException = null;
 
             currentState.Value = AuthStatus.VerificationRequested;
             email = payload.email;
@@ -58,46 +61,38 @@ namespace DCL.AuthenticationScreenFlow
             // Listeners
             view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
             view.ResendCodeButton.onClick.AddListener(ResendOtp);
-            view.InputField.CodeEntered += OnEntered;
+            view.InputField.CodeEntered += OnOTPEntered;
         }
 
         public override void Exit()
         {
+            if (loginException == null)
+                view.Hide(OUT);
+            else
+            {
+                view.Hide(SLIDE);
+
+                spanErrorInfo = loginException switch
+                {
+                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
+                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
+                    CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
+                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
+                };
+
+                if (loginException is not OperationCanceledException)
+                    ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
+            }
+
             // Listeners
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();
-            view.InputField.CodeEntered -= OnEntered;
+            view.InputField.CodeEntered -= OnOTPEntered;
 
             email = string.Empty;
             loginCt = CancellationToken.None;
             base.Exit();
-        }
-
-        private void ResendOtp()
-        {
-            ResendOtpAsync(loginCt).Forget();
-            return;
-
-            async UniTaskVoid ResendOtpAsync(CancellationToken ct)
-            {
-                view.ResendCodeButton.interactable = false;
-
-                try
-                {
-                    await compositeWeb3Provider.ResendOtpAsync(ct);
-                    OTPResend?.Invoke();
-                    view.InputField.Clear();
-                }
-                catch (OperationCanceledException)
-                { /* Expected on cancellation */
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    controller.CancelLoginProcess();
-                }
-                finally { view.ResendCodeButton.interactable = true; }
-            }
         }
 
         private async UniTaskVoid AuthenticateAsync(string email, CancellationToken ct)
@@ -106,66 +101,38 @@ namespace DCL.AuthenticationScreenFlow
             {
                 controller.CurrentRequestID = string.Empty;
 
-                var web3AuthSpan = new SpanData
-                {
-                    SpanName = "Web3Authentication",
-                    SpanOperation = "auth.web3_login",
-                    Depth = 1,
-                };
-
-                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, web3AuthSpan);
-
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
-
-                // Close Web3Authentication span before transitioning to profile fetching
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                view.Hide(OUT);
                 machine.Enter<ProfileFetchingOTPAuthState, (string email, IWeb3Identity identity, bool isCached, CancellationToken ct)>((email, identity, false, ct));
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e)
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-
-                view.Hide(SLIDE);
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (SignatureExpiredException e)
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature expired during authentication", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                view.Hide(SLIDE);
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Web3SignatureException e)
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Web3 signature validation failed", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                view.Hide(SLIDE);
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (CodeVerificationException e)
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Code verification failed during authentication", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                view.Hide(SLIDE);
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Exception e)
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Unexpected error during authentication flow", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                view.Hide(SLIDE);
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
         }
 
-        private void OnEntered(string otp)
+        private void OnOTPEntered(string otp)
         {
             OnOtpEnteredAsync(loginCt).Forget();
             return;
@@ -200,6 +167,33 @@ namespace DCL.AuthenticationScreenFlow
                 view.InputField.SetSuccess();
             else
                 view.InputField.SetFailure();
+        }
+
+        private void ResendOtp()
+        {
+            ResendOtpAsync(loginCt).Forget();
+            return;
+
+            async UniTaskVoid ResendOtpAsync(CancellationToken ct)
+            {
+                view.ResendCodeButton.interactable = false;
+
+                try
+                {
+                    await compositeWeb3Provider.ResendOtpAsync(ct);
+                    OTPResend?.Invoke();
+                    view.InputField.Clear();
+                }
+                catch (OperationCanceledException)
+                { /* Expected on cancellation */
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    controller.CancelLoginProcess();
+                }
+                finally { view.ResendCodeButton.interactable = true; }
+            }
         }
     }
 }
