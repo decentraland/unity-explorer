@@ -401,6 +401,7 @@ namespace DCL.AuthenticationScreenFlow
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
 
                     view.Hide(UIAnimationHashes.SLIDE);
                     fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
@@ -425,7 +426,10 @@ namespace DCL.AuthenticationScreenFlow
             catch (OperationCanceledException)
             { /* Ignore cancellation */
             }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+            }
         }
     }
 }
