@@ -86,6 +86,26 @@ namespace DCL.SDKComponents.Tween.Components
                                            .SetAutoKill(false).Pause();
                     break;
 
+                case PBTween.ModeOneofCase.TransformTween:
+                    var subSequence = DOTween.Sequence();
+                    subSequence.Join(
+                        transform.DOLocalMove(pbTween.TransformTween.PositionEnd, durationInSeconds)
+                            .From(pbTween.TransformTween.PositionStart, false)
+                            .SetAutoKill(false).Pause()
+                    );
+                    subSequence.Join(
+                        transform.DOLocalRotateQuaternion(pbTween.TransformTween.RotationEnd.ToUnityQuaternion(), durationInSeconds)
+                            .From(pbTween.TransformTween.RotationStart.ToUnityQuaternion(), false)
+                            .SetAutoKill(false).Pause()
+                    );
+                    subSequence.Join(
+                        transform.DOScale(pbTween.TransformTween.ScaleEnd, durationInSeconds)
+                            .From(pbTween.TransformTween.ScaleStart, false)
+                            .SetAutoKill(false).Pause()
+                    );
+                    returnTween = subSequence.SetAutoKill(false).Pause();
+                    break;
+
                 case PBTween.ModeOneofCase.TextureMove:
                     if (material != null)
                     {

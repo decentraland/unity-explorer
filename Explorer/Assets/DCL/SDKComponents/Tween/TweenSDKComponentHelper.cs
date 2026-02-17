@@ -242,7 +242,11 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+            if (sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.TransformTween)
+                SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isInCurrentScene);
+            else
+                UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+
             WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 

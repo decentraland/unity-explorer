@@ -168,7 +168,8 @@ namespace DCL.SDKComponents.Tween
         private bool IsTransformTween(PBTween.ModeOneofCase mode)
         {
             return mode == PBTween.ModeOneofCase.Move || mode == PBTween.ModeOneofCase.Rotate || mode == PBTween.ModeOneofCase.Scale ||
-                   mode == PBTween.ModeOneofCase.MoveContinuous || mode == PBTween.ModeOneofCase.RotateContinuous;
+                   mode == PBTween.ModeOneofCase.MoveContinuous || mode == PBTween.ModeOneofCase.RotateContinuous ||
+                   mode == PBTween.ModeOneofCase.TransformTween;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
