@@ -5,6 +5,7 @@ using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
@@ -30,7 +31,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits(),
                     buildData.EnsureNotNull(),
-                    DCLVersion.Mock()
+                    DCLVersion.Mock(),
+                    null
                 ),
                 new LoadingStatus(),
                 new RealmData(),

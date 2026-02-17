@@ -47,18 +47,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         private readonly IAnalyticsController controller;
-        private readonly EntitiesAnalyticsDebug analyticsDebug;
+        public readonly EntitiesAnalyticsDebug AnalyticsDebug;
 
         public EntitiesAnalytics(IAnalyticsController controller, EntitiesAnalyticsDebug analyticsDebug)
         {
             this.controller = controller;
-            this.analyticsDebug = analyticsDebug;
+            AnalyticsDebug = analyticsDebug;
 
             analyticsDebug.Add(AnalyticsEvents.Endpoints.AVATAR_ATTACHMENT_RETRIEVED)
                           .Add(AnalyticsEvents.Endpoints.SCENE_ENTITIES_RETRIEVED);
         }
 
         public RequestEnvelope Track(string eventName, int count) =>
-            new (eventName, count, controller, analyticsDebug.GetOrDefault(eventName));
+            new (eventName, count, controller, AnalyticsDebug.GetOrDefault(eventName));
     }
 }

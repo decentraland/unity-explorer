@@ -142,6 +142,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            AnalyticsContainer analyticsContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
             RealmData realmData,
             IAssetsProvisioner assetsProvisioner,
@@ -159,7 +160,6 @@ namespace Global
             ISystemMemoryCap memoryCap,
             VolumeBus volumeBus,
             bool enableAnalytics,
-            IAnalyticsController analyticsController,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             DecentralandEnvironment environment,
@@ -191,7 +191,7 @@ namespace Global
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsContainer.Controller, web3IdentityProvider) : new LoadingStatus();
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -212,7 +212,7 @@ namespace Global
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
-            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsController, container.DebugContainerBuilder);
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 

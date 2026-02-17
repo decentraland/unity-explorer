@@ -260,7 +260,7 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
-                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -277,7 +277,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;

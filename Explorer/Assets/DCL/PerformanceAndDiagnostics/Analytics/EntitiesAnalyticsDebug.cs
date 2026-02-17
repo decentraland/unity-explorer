@@ -7,13 +7,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class EntitiesAnalyticsDebug
     {
-        private readonly DebugWidgetBuilder? widget;
+        public readonly DebugWidgetBuilder? Widget;
 
         private readonly Dictionary<string, BatchesCounter> counters = new ();
 
         public EntitiesAnalyticsDebug(DebugWidgetBuilder? widget)
         {
-            this.widget = widget;
+            Widget = widget;
         }
 
         public BatchesCounter? GetOrDefault(string categoryName) =>
@@ -21,13 +21,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public EntitiesAnalyticsDebug Add(string categoryName)
         {
-            if (widget != null)
+            if (Widget != null)
             {
                 var counter = new BatchesCounter();
 
-                widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Min)}", new DebugIntFieldDef(counter.Min));
-                widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Avg)}", new DebugIntFieldDef(counter.Avg));
-                widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Max)}", new DebugIntFieldDef(counter.Max));
+                Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Min)}", new DebugIntFieldDef(counter.Min));
+                Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Avg)}", new DebugIntFieldDef(counter.Avg));
+                Widget.AddControlWithLabel($"{categoryName}: Batch.{nameof(BatchesCounter.Max)}", new DebugIntFieldDef(counter.Max));
 
                 counters.Add(categoryName, counter);
             }
@@ -37,7 +37,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public class BatchesCounter
         {
-            public readonly ElementBinding<int> Min = new (0);
+            public readonly ElementBinding<int> Min = new (int.MaxValue);
             public readonly ElementBinding<int> Avg = new (0);
             public readonly ElementBinding<int> Max = new (0);
 
@@ -47,7 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void AddSample(int batchSize)
             {
                 samplesCount++;
-                batchSize += batchSize;
+                batchesSum += batchSize;
 
                 Min.Value = Mathf.Min(Min.Value, batchSize);
                 Max.Value = Mathf.Max(Max.Value, batchSize);
