@@ -24,6 +24,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileFetchingAuthView view;
+        private Exception? profileFetchException;
 
         public ProfileFetchingAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -43,6 +44,7 @@ namespace DCL.AuthenticationScreenFlow
         public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
             base.Enter();
+            profileFetchException = null;
 
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
@@ -52,68 +54,73 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Exit()
         {
+            if (profileFetchException == null)
+                view.Hide(OUT);
+            else
+            {
+                view.Hide(SLIDE);
+
+                spanErrorInfo = profileFetchException switch
+                                {
+                                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                                    ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
+                                    NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
+                                    Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
+                                };
+
+                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException)
+                    ReportHub.LogException(profileFetchException, new ReportData(ReportCategory.AUTHENTICATION));
+            }
+
             view.CancelButton.onClick.RemoveAllListeners();
             base.Exit();
         }
 
         private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
         {
-            var identityValidationSpan = new SpanData
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
-                SpanName = "IdentityValidation",
-                SpanOperation = "auth.identity_validation",
-                Depth = 1,
-            };
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, identityValidationSpan);
+                SpanName = "IdentityAuthorization",
+                SpanOperation = "auth.identity_authorization",
+                Depth = STATE_SPAN_DEPTH + 1,
+            });
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                view.Hide(SLIDE);
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
             else
             {
-                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
-
-                // Close IdentityValidation span before starting profile fetch
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
 
                 try
                 {
-                    var profileFetchSpan = new SpanData
+                    SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = isCached ? "FetchProfileCached" : "FetchProfile",
+                        SpanName = isCached ? "ProfileFetchCached" : "ProfileFetch",
                         SpanOperation = "auth.profile_fetch",
-                        Depth = 1,
-                    };
-
-                    SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, profileFetchSpan);
+                        Depth =  STATE_SPAN_DEPTH + 1,
+                    });
 
                     Profile? profile = await FetchProfileAsync(ct);
-                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
 
-                    view.Hide(OUT);
                     machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (ProfileNotFoundException e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (Exception e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
                 }
             }
