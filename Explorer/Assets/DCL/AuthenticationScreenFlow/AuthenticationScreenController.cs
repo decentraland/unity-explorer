@@ -79,7 +79,6 @@ namespace DCL.AuthenticationScreenFlow
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
-        public AuthProvider CurrentProvider => web3Authenticator.CurrentProvider;
 
         public event Action DiscordButtonClicked;
         public event Action<string, bool> OTPVerified;

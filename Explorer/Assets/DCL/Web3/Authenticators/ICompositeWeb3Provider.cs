@@ -53,22 +53,12 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         /// Currently selected authentication method
         /// </summary>
-        AuthProvider CurrentProvider { get; set; }
-
-        /// <summary>
-        /// Event fired when the authentication method changes
-        /// </summary>
-        event Action<AuthProvider>? OnMethodChanged;
+        AuthProvider CurrentProvider { set; }
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected
         /// </summary>
         bool IsThirdWebOTP { get; }
-
-        /// <summary>
-        /// Returns true if Dapp Wallet method is currently selected
-        /// </summary>
-        bool IsDappWallet { get; }
 
         /// <summary>
         ///     Sets the callback that will be invoked when a transaction requires user confirmation.

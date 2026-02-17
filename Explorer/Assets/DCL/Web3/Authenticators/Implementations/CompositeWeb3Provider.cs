@@ -20,22 +20,6 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
-        private AuthProvider currentProvider = AuthProvider.Dapp;
-
-        public AuthProvider CurrentProvider
-        {
-            get => currentProvider;
-
-            set
-            {
-                if (currentProvider != value)
-                {
-                    currentProvider = value;
-                    OnMethodChanged?.Invoke(value);
-                }
-            }
-        }
-
         // IDappVerificationHandler - delegates to dappAuth
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
         {
@@ -43,13 +27,11 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        public event Action<AuthProvider>? OnMethodChanged;
-        public bool IsThirdWebOTP => currentProvider == AuthProvider.ThirdWeb;
-        public bool IsDappWallet => currentProvider == AuthProvider.Dapp;
+        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
+        public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator CurrentAuthenticator => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
-
-        private IEthereumApi CurrentEthereumApi => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
@@ -66,7 +48,7 @@ namespace DCL.Web3.Authenticators
         // IWeb3Authenticator
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            IWeb3Identity identity = await CurrentAuthenticator.LoginAsync(payload, ct);
+            IWeb3Identity identity = await currentAuthenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
             analytics.Identify(identity);
             return identity;
@@ -75,13 +57,9 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             analytics.Identify(null);
-            await CurrentAuthenticator.LogoutAsync(ct);
+            await currentAuthenticator.LogoutAsync(ct);
             identityCache.Clear();
         }
-
-        // IDappVerificationHandler - only dappAuth supports this
-        public void CancelCurrentWeb3Operation() =>
-            dappAuth.CancelCurrentWeb3Operation();
 
         // IOtpAuthenticator - only thirdWebAuth supports these
         public UniTask SubmitOtpAsync(string otp, CancellationToken ct = default) =>
@@ -104,7 +82,7 @@ namespace DCL.Web3.Authenticators
 
         // IEthereumApi
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
-            CurrentEthereumApi.SendAsync(request, source, ct);
+            currentEthereumApi.SendAsync(request, source, ct);
 
         public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback)
         {

@@ -13,10 +13,5 @@ namespace DCL.Web3.Authenticators
         ///     Always invoked on the main thread.
         /// </summary>
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
-
-        /// <summary>
-        ///     Cancels the current Web3 operation (e.g., waiting for browser signature).
-        /// </summary>
-        public void CancelCurrentWeb3Operation();
     }
 }
