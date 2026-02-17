@@ -11,6 +11,8 @@ namespace DCL.AuthenticationScreenFlow
 
         protected readonly AuthenticationScreenView viewInstance;
 
+        protected SpanErrorInfo? spanErrorInfo;
+
         protected AuthStateBase(AuthenticationScreenView viewInstance)
         {
             this.viewInstance = viewInstance;
@@ -18,6 +20,8 @@ namespace DCL.AuthenticationScreenFlow
 
         protected void Enter()
         {
+            spanErrorInfo = null;
+
             SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
                 SpanName = GetDefaultSpanName(),
@@ -28,7 +32,9 @@ namespace DCL.AuthenticationScreenFlow
 
         public virtual void Exit()
         {
-            SentryTransactionNameMapping.Instance.EndSpanOnDepth(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH);
+            if(spanErrorInfo != null)
+                SentryTransactionNameMapping.Instance.EndSpanOnDepth(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH);
+            // else SentryTransactionNameMapping.Instance.EndCurrentSpanOnDepthWithError(LOADING_TRANSACTION_NAME, STATE_SPAN_DEPTH, spanErrorInfo.errorMessage, spanErrorInfo.exception);
         }
 
         private string GetDefaultSpanName()
@@ -40,6 +46,18 @@ namespace DCL.AuthenticationScreenFlow
             return typeName.EndsWith(SUFFIX, StringComparison.Ordinal)
                 ? typeName[..^SUFFIX.Length]
                 : typeName;
+        }
+
+        protected struct SpanErrorInfo
+        {
+            public string message;
+            public Exception exception;
+
+            public SpanErrorInfo(string message, Exception exception = null)
+            {
+                this.message = message;
+                this.exception = exception;
+            }
         }
     }
 }
