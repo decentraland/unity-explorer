@@ -230,6 +230,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true);
                 foreach (EventDTO eventDto in events)
                 {
+                    if (eventDto.world)
+                        return;
+                    
                     Vector2Int coords = new Vector2Int(eventDto.x, eventDto.y);
                     if (markers.ContainsKey(coords))
                         continue;

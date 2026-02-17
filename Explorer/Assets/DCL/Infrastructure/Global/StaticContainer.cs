@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -14,7 +13,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
-using DCL.Landscape.Parcel;
+using DCL.Ipfs;
 using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -50,18 +49,19 @@ using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SDKComponents.SkyboxTime;
-using DCL.SmartWearables;
+using DCL.Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.AppArgs;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using System.Buffers;
-using UnityEngine;
+using DCL.UI;
+using ECS.Unity.AssetLoad.Cache;
+using Global.Dynamic;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
@@ -77,13 +77,13 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
-        public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
-        public readonly LandscapeParcelData LandscapeParcelData = new ();
 
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }
+        public RealmData RealmData { get; private set; }
+        public PublishIpfsEntityCommand PublishIpfsEntityCommand { get; private set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
@@ -116,14 +116,16 @@ namespace Global
         public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public SmartWearableCache SmartWearableCache { get; private set; }
+        public ImageControllerProvider ImageControllerProvider { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
-        public LandscapeParcelController LandscapeParcelController { get; private set; }
+        public WorldManifestProvider WorldManifestProvider { get; private set; }
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
+        public AssetPreLoadCache AssetPreLoadCache { get; private set; }
 
         public void Dispose()
         {
@@ -140,6 +142,7 @@ namespace Global
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IDecentralandUrlsSource decentralandUrlsSource,
+            RealmData realmData,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IDebugContainerBuilder debugContainerBuilder,
@@ -164,13 +167,14 @@ namespace Global
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
-            SentryTransactionManager.Initialize(new SentryTransactionManager());
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
             var container = new StaticContainer();
 
+            container.RealmData = realmData;
+            container.PublishIpfsEntityCommand = new PublishIpfsEntityCommand(web3IdentityProvider, webRequestsContainer.WebRequestController, decentralandUrlsSource, realmData);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
@@ -202,9 +206,12 @@ namespace Global
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
 
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
+            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
-            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.RealmData, analyticsController, container.DebugContainerBuilder);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsController, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
@@ -220,6 +227,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
+            container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
@@ -296,6 +304,7 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
+                new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
@@ -307,11 +316,10 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.LandscapeParcelController = new LandscapeParcelController(
+            container.WorldManifestProvider = new WorldManifestProvider(
                     assetsProvisioner,
-                    new LandscapeParcelService(webRequestsContainer.WebRequestController,
-                        environment.Equals(DecentralandEnvironment.Zone)),
-                    container.LandscapeParcelData
+                    container.WebRequestsContainer.WebRequestController,
+                    staticSettings.ParsedParcels
                 );
 
             return (container, true);

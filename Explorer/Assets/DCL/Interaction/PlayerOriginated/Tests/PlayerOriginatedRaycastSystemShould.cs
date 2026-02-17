@@ -34,8 +34,11 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             entityCollidersGlobalCache = Substitute.For<IEntityCollidersGlobalCache>();
 
+            Entity playerEntity = world.Create();
+            world.Add(playerEntity, Vector3.zero);
+
             system = new PlayerOriginatedRaycastSystem(world, pointer, entityCollidersGlobalCache,
-                playerInteractionEntity = new PlayerInteractionEntity(world.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities()), world), 1000);
+                playerInteractionEntity = new PlayerInteractionEntity(world.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities()), world, playerEntity), 1000);
 
             var cameraGo = new GameObject("Camera GO");
             cameraGo.transform.ResetLocalTRS();

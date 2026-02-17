@@ -30,21 +30,26 @@ namespace DCL.FeatureFlags
 
             SetFeatureStates(new Dictionary<FeatureId, bool>
             {
-                [FeatureId.CAMERA_REEL] = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor,
-                [FeatureId.FRIENDS] = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment,
-                [FeatureId.FRIENDS_USER_BLOCKING] = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)),
-                [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
-                [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
+                [FeatureId.CAMERA_REEL] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CAMERA_REEL, featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || Application.isEditor),
+                [FeatureId.FRIENDS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || Application.isEditor) && !localSceneDevelopment,
+                [FeatureId.FRIENDS_USER_BLOCKING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_USER_BLOCKING, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING)),
+                [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_ONLINE_STATUS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS), requireDebug: false),
+                [FeatureId.PROFILE_NAME_EDITOR] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PROFILE_NAME_EDITOR, featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || Application.isEditor),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
-                [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT),
-                [FeatureId.CHAT_MESSAGE_BUFFER] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG),
-                [FeatureId.HEAD_SYNC] = featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.HEAD_SYNC)) || Application.isEditor,
-                [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC),
+                [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_RATE_LIMIT, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT)),
+                [FeatureId.CHAT_MESSAGE_BUFFER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_BUFFER, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG)),
+                [FeatureId.HEAD_SYNC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HEAD_SYNC, featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || Application.isEditor),
+                [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.STOP_ON_DUPLICATE_IDENTITY, featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY)),
+                [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PRIVATE_CHAT_REQUIRES_TOPIC, featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC)),
+                [FeatureId.DONATIONS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DONATIONS_UI, featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS)),
+                [FeatureId.FORCE_BACKFACE_CULLING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FORCE_BACKFACE_CULLING, featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING), requireDebug: false),
+                [FeatureId.NAME_COLOR_CHANGE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.NAME_COLOR_CHANGE, featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || Application.isEditor),
+                [FeatureId.EMAIL_OTP_AUTH] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
-            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
+            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || Application.isEditor));
             SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
         }
 
@@ -143,6 +148,11 @@ namespace DCL.FeatureFlags
         CHAT_MESSAGE_RATE_LIMIT,
         CHAT_MESSAGE_BUFFER,
         HEAD_SYNC,
+        STOP_ON_DUPLICATE_IDENTITY,
         PRIVATE_CHAT_REQUIRES_TOPIC,
+        DONATIONS,
+        FORCE_BACKFACE_CULLING,
+        NAME_COLOR_CHANGE,
+        EMAIL_OTP_AUTH
     }
 }

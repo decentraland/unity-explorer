@@ -1,4 +1,4 @@
-﻿namespace Global.AppArgs
+namespace Global.AppArgs
 {
     public static class AppArgsFlags
     {
@@ -11,6 +11,9 @@
 
         public const string SCENE_CONSOLE = "scene-console";
 
+        public const string AUTOPILOT = "autopilot";
+        public const string AUTOPILOT_CSV = "csv";
+        public const string AUTOPILOT_SUMMARY = "summary";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
@@ -38,6 +41,7 @@
         public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
         public const string VOICE_CHAT = "voice-chat";
+        public const string DONATIONS_UI = "donations-ui";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
         public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
@@ -59,6 +63,17 @@
         public const string HEAD_SYNC = "head-sync";
 
         public const string DISCOVER = "discover";
+
+        public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
+
+        public const string NAME_COLOR_CHANGE = "name-color-change";
+
+        public const string EMAIL_OTP_AUTH = "email-otp-auth";
+
+        public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";
+        public const string CHAT_MESSAGE_BUFFER = "chat-message-buffer";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
 
         public static class Multiplayer
         {

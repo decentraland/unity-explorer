@@ -6,7 +6,6 @@ using DCL.Input.Component;
 using DCL.MarketplaceCredits.Fields;
 using DCL.Profiles.Self;
 using System;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Utility;
 
@@ -14,7 +13,6 @@ namespace DCL.MarketplaceCredits.Sections
 {
     public class MarketplaceCreditsWelcomeSubController : IDisposable
     {
-        private static readonly Regex EMAIL_PATTERN_REGEX = new (@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", RegexOptions.Compiled);
 
         private readonly MarketplaceCreditsWelcomeSubView subView;
         private readonly MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView;
@@ -58,9 +56,8 @@ namespace DCL.MarketplaceCredits.Sections
             this.inputBlock = inputBlock;
 
             subView.LearnMoreLinkButton.onClick.AddListener(OpenLearnMoreLink);
-            subView.StartWithEmailButton.onClick.AddListener(RegisterInTheProgramWithNewEmail);
+            subView.EmailLogin.Submitted += RegisterInTheProgramWithNewEmail;
             subView.StartButton.onClick.AddListener(RegisterInTheProgramWithExistingEmail);
-            subView.EmailInput.onValueChanged.AddListener(OnEmailInputValueChanged);
         }
 
         public void OpenSection()
@@ -70,15 +67,12 @@ namespace DCL.MarketplaceCredits.Sections
 
             fetchProgramRegistrationInfoCts = fetchProgramRegistrationInfoCts.SafeRestart();
             LoadProgramRegistrationInfoAsync(fetchProgramRegistrationInfoCts.Token).Forget();
-
-            subView.CleanEmailInput();
-            OnEmailInputValueChanged(subView.EmailInput.text);
-            CheckStartWithEmailButtonState();
         }
 
         public void CloseSection()
         {
             subView.gameObject.SetActive(false);
+
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
             // We need to cancel the operation, otherwise after it finishes, it will disable the input, even if the ui is closed already,
             // making it impossible to move the avatar again
@@ -88,9 +82,8 @@ namespace DCL.MarketplaceCredits.Sections
         public void Dispose()
         {
             subView.LearnMoreLinkButton.onClick.RemoveListener(OpenLearnMoreLink);
-            subView.StartWithEmailButton.onClick.RemoveListener(RegisterInTheProgramWithNewEmail);
+            subView.EmailLogin.Submitted -= RegisterInTheProgramWithNewEmail;
             subView.StartButton.onClick.RemoveListener(RegisterInTheProgramWithExistingEmail);
-            subView.EmailInput.onValueChanged.RemoveListener(OnEmailInputValueChanged);
             fetchProgramRegistrationInfoCts.SafeCancelAndDispose();
             registerInTheProgramCts.SafeCancelAndDispose();
         }
@@ -123,14 +116,14 @@ namespace DCL.MarketplaceCredits.Sections
         {
             registerInTheProgramCts = registerInTheProgramCts.SafeRestart();
             RegisterInTheProgramWithNewEmailAsync(
-                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailInput.text : currentCreditsProgramProgress.user.email,
+                string.IsNullOrEmpty(currentCreditsProgramProgress.user.email) ? subView.EmailLogin.Text : currentCreditsProgramProgress.user.email,
                 registerInTheProgramCts.Token).Forget();
         }
 
         private async UniTaskVoid RegisterInTheProgramWithNewEmailAsync(string email, CancellationToken ct)
         {
             const string ERROR_MESSAGE = "An error occurred. Please enter your email and try again.";
-            
+
             try
             {
                 subView.SetAsLoading(true);
@@ -199,7 +192,7 @@ namespace DCL.MarketplaceCredits.Sections
 
         private void RedirectToSection(bool ignoreHasUserStartedProgramFlag = false)
         {
-            subView.IsEmailLoginActive = false;
+            subView.SetEmailLoginVisibility(isVisible: false);
             totalCreditsWidgetView.SetCredits(MarketplaceCreditsUtils.FormatTotalCredits(currentCreditsProgramProgress.credits.available));
             totalCreditsWidgetView.SetDaysToExpire(MarketplaceCreditsUtils.FormatCreditsExpireIn(currentCreditsProgramProgress.credits.expiresIn));
             totalCreditsWidgetView.SetDaysToExpireVisible(currentCreditsProgramProgress.credits.available > 0);
@@ -219,7 +212,7 @@ namespace DCL.MarketplaceCredits.Sections
             // NON-REGISTERED USER FLOW
             if (!currentCreditsProgramProgress.IsUserEmailRegistered())
             {
-                subView.IsEmailLoginActive = true;
+                subView.SetEmailLoginVisibility(isVisible: true);
                 inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
                 totalCreditsWidgetView.gameObject.SetActive(false);
                 return;
@@ -252,16 +245,6 @@ namespace DCL.MarketplaceCredits.Sections
         private void OpenLearnMoreLink() =>
             webBrowser.OpenUrl(MarketplaceCreditsMenuController.WEEKLY_REWARDS_INFO_LINK);
 
-        private void OnEmailInputValueChanged(string email)
-        {
-            CheckStartWithEmailButtonState();
-            subView.ShowEmailError(!string.IsNullOrEmpty(email) && !IsValidEmail(email));
-        }
 
-        private void CheckStartWithEmailButtonState() =>
-            subView.SetStartWithEmailButtonInteractable(IsValidEmail(subView.EmailInput.text));
-
-        private static bool IsValidEmail(string email) =>
-            !string.IsNullOrEmpty(email) && EMAIL_PATTERN_REGEX.IsMatch(email);
     }
 }

@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -119,7 +120,7 @@ namespace DCL.Backpack
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
-                realmData,
+                decentralandUrlsSource,
                 outfitsLogger);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
@@ -246,7 +247,6 @@ namespace DCL.Backpack
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
             backpackGridController.RequestPage(1, true);
-            backpackEmoteGridController.RequestAndFillEmotes(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
 
             while (!avatarShapeComponent.WearablePromise.IsConsumed)
@@ -257,15 +257,18 @@ namespace DCL.Backpack
 
             if (ct.IsCancellationRequested) return;
 
-            backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearableCategories.Categories.HAIR));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearableCategories.Categories.EYES));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearableCategories.Categories.BODY_SHAPE));
-            backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
-            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, false));
+            var wearables = new List<string>(avatar.Wearables.Count);
+            foreach (var w in avatar.Wearables) wearables.Add(w.Shorten());
 
-            foreach (URN w in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten(), false));
+            var command = new BackpackEquipOutfitCommand(
+                avatar.BodyShape.Value,
+                wearables,
+                avatar.EyesColor,
+                avatar.HairColor,
+                avatar.SkinColor,
+                avatar.ForceRender
+            );
+            backpackCommandBus.SendCommand(command);
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
             {

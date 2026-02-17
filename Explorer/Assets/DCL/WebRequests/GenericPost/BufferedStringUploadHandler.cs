@@ -21,33 +21,75 @@ namespace DCL.WebRequests
         private static readonly byte[] FALSE_BYTES = Encoding.UTF8.GetBytes("false");
         private static readonly byte[] NULL_BYTES = Encoding.UTF8.GetBytes("null");
 
-        public BufferedStringUploadHandler(int initialCapacity = 1024)
+        /// <summary>
+        ///     When <see cref="CreateUploadHandler" /> is called, buffer can't be accessed anymore, but until the web request is disposed of
+        ///     the data is still valid
+        /// </summary>
+        private unsafe byte* preservedBufferPtr;
+
+        private int preservedBufferLength;
+
+        public unsafe BufferedStringUploadHandler(int initialCapacity = 1024)
         {
             buffer = new NativeList<byte>(initialCapacity, Allocator.Persistent);
+            preservedBufferPtr = null;
+            preservedBufferLength = 0;
         }
 
         /// <summary>
         ///     Sets the buffer as the upload data.
-        ///     Call this after building your JSON. <br/>
+        ///     Call this after building your JSON. <br />
         ///     UploadHandler will dispose the created underlying buffer
         /// </summary>
-        public UploadHandlerRaw CreateUploadHandler() =>
-            new (buffer.AsArray(), true);
+        public unsafe UploadHandlerRaw CreateUploadHandler()
+        {
+            ThrowIfDisposed();
+
+            // Create a NativeArray copy that actually owns the memory with Persistent allocator (the same allocator the NativeList was created with)
+            NativeArray<byte> array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(buffer.GetUnsafePtr(), buffer.Length, Allocator.Persistent);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
+#endif
+
+            preservedBufferPtr = buffer.GetUnsafePtr();
+            preservedBufferLength = buffer.Length;
+
+            // NativeList contains an underlying UnsafeList which is allocated on heap and referenced by a pointer
+            // It contains several fields apart from the byte* so they won't be deallocated automatically by UploadHandler
+            UnsafeList<byte>* listData = buffer.GetUnsafeList();
+            AllocatorManager.Free(listData -> Allocator, listData);
+
+            // Buffer is no longer valid and can't be used
+            buffer = default(NativeList<byte>);
+
+            return new UploadHandlerRaw(array, true);
+        }
 
         /// <summary>
         ///     Writes a single byte to the buffer.
         /// </summary>
-        public void WriteByte(byte value) =>
-            buffer.Add(value);
+        public void WriteByte(byte value)
+        {
+            ThrowIfDisposed();
 
-        public void WriteChar(char value) =>
+            buffer.Add(value);
+        }
+
+        public void WriteChar(char value)
+        {
+            ThrowIfDisposed();
+
             buffer.Add((byte)value);
+        }
 
         /// <summary>
         ///     Writes a byte array to the buffer.
         /// </summary>
         public unsafe void WriteBytes(ReadOnlySpan<byte> bytes)
         {
+            ThrowIfDisposed();
+
             fixed (byte* bp = bytes) { buffer.AddRange(bp, bytes.Length); }
         }
 
@@ -58,6 +100,8 @@ namespace DCL.WebRequests
         {
             if (string.IsNullOrEmpty(value))
                 return;
+
+            ThrowIfDisposed();
 
             int byteCount = Encoding.UTF8.GetByteCount(value);
             int startIndex = buffer.Length;
@@ -75,6 +119,8 @@ namespace DCL.WebRequests
         /// </summary>
         public void WriteJsonString(string value)
         {
+            ThrowIfDisposed();
+
             WriteChar('"');
 
             if (!string.IsNullOrEmpty(value))
@@ -147,10 +193,7 @@ namespace DCL.WebRequests
             Span<byte> tempBuffer = stackalloc byte[4];
             int bytesWritten = Encoding.UTF8.GetBytes(stackalloc char[] { c }, tempBuffer);
 
-            fixed (byte* bp = tempBuffer)
-            {
-                buffer.AddRange(bp, bytesWritten);
-            }
+            fixed (byte* bp = tempBuffer) { buffer.AddRange(bp, bytesWritten); }
         }
 
         /// <summary>
@@ -164,6 +207,8 @@ namespace DCL.WebRequests
         /// </summary>
         public void WriteInt(int value)
         {
+            ThrowIfDisposed();
+
             // Handle special case where -value would overflow
             if (value == int.MinValue)
             {
@@ -185,7 +230,7 @@ namespace DCL.WebRequests
 
             // Calculate number of digits
             int temp = value;
-            int digitCount = 0;
+            var digitCount = 0;
 
             while (temp > 0)
             {
@@ -210,6 +255,8 @@ namespace DCL.WebRequests
         /// </summary>
         public void WriteLong(long value)
         {
+            ThrowIfDisposed();
+
             // Handle special case where -value would overflow
             if (value == long.MinValue)
             {
@@ -230,7 +277,7 @@ namespace DCL.WebRequests
             }
 
             long temp = value;
-            int digitCount = 0;
+            var digitCount = 0;
 
             while (temp > 0)
             {
@@ -252,27 +299,48 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Writes a boolean as "true" or "false" to the buffer.
         /// </summary>
-        public void WriteBool(bool value) =>
+        public void WriteBool(bool value)
+        {
+            ThrowIfDisposed();
+
             WriteBytes(value ? TRUE_BYTES : FALSE_BYTES);
+        }
 
         /// <summary>
         ///     Writes "null" to the buffer.
         /// </summary>
-        public void WriteNull() =>
+        public void WriteNull()
+        {
+            ThrowIfDisposed();
+
             WriteBytes(NULL_BYTES);
+        }
 
         /// <summary>
         ///     Resets the buffer position to start over.
         /// </summary>
-        public void Clear() =>
+        public void Clear()
+        {
+            ThrowIfDisposed();
+
             buffer.Clear();
+        }
 
-        /// <summary>
-        ///     Gets the current buffer size in bytes.
-        /// </summary>
-        public int Length => buffer.Length;
+        public override unsafe string ToString()
+        {
+            if (preservedBufferPtr != null)
+                return Encoding.UTF8.GetString(preservedBufferPtr, preservedBufferLength);
 
-        public override unsafe string ToString() =>
-            Encoding.UTF8.GetString(buffer.GetUnsafePtr(), Length);
+            if (buffer.IsCreated)
+                return Encoding.UTF8.GetString(buffer.GetUnsafePtr(), buffer.Length);
+
+            throw new ObjectDisposedException(nameof(buffer));
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (!buffer.IsCreated)
+                throw new ObjectDisposedException(nameof(buffer));
+        }
     }
 }

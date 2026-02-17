@@ -18,21 +18,21 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.NotificationsBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
@@ -77,7 +76,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-
+        private readonly ImageControllerProvider imageControllerProvider;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -86,7 +85,6 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
@@ -117,14 +115,14 @@ namespace DCL.PluginSystem.Global
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
@@ -156,6 +154,7 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.imageControllerProvider = imageControllerProvider;
         }
 
         public void Dispose()
@@ -167,14 +166,14 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
         {
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+            ColorPresetsSO nameColors = await assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.NameColors, ct);
 
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
@@ -185,6 +184,7 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 categoryIconsMapping,
                 characterPreviewEventBus,
+                profileChangesBus,
                 mvcManager,
                 selfProfile,
                 world,
@@ -193,7 +193,6 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 decentralandUrlsSource,
                 badgesAPIClient,
-                webRequestController,
                 inputBlock,
                 remoteMetadata,
                 cameraReelStorageService,
@@ -220,7 +219,9 @@ namespace DCL.PluginSystem.Global
                 galleryEventBus,
                 systemClipboard,
                 passportSettings.CameraReelGalleryMessages,
-                communitiesDataProvider
+                communitiesDataProvider,
+                imageControllerProvider,
+                nameColors
             );
 
             mvcManager.RegisterController(passportController);
@@ -252,9 +253,6 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; }
 
             [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; }
-
-            [field: SerializeField]
             public int GridLayoutFixedColumnCount { get; private set; }
 
             [field: SerializeField]
@@ -265,6 +263,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceGameObject NameEditorPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; }
 
             [field: SerializeField]
             public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; }

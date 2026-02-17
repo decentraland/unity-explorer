@@ -22,10 +22,19 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags
+        {
+            "Queue"="Transparent"
+            "IgnoreProjector"="True"
+            "RenderType"="Transparent"
+            "PreviewType"="Plane"
+        }
         LOD 100
         Pass
         {
+            Blend SrcAlpha OneMinusSrcAlpha
+            Cull Off
+            ZWrite Off
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -35,12 +44,14 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 color : COLOR;
             };
 
             struct v2f
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
+                float4 color : COLOR;
             };
 
             sampler2D _OverlayTex;
@@ -91,6 +102,7 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
+                o.color = v.color;
                 return o;
             }
 
@@ -125,6 +137,9 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
                 float glowMask = 1.0 - smoothstep(1.0, 1.0 + _GlowSmoothness, glowDist);
                 float4 glow = _GlowColor * glowMask * _GlowStrength;
                 result.rgb += glow.rgb * glow.a;
+
+                // Respect UI CanvasGroup / Graphic color alpha (CanvasRenderer drives vertex color)
+                result.a *= i.color.a;
                 return result;
             }
             ENDCG

@@ -102,7 +102,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             Entity scene = World.Create(definitionComponent, PartitionComponent.TOP_PRIORITY);
-            CreateSceneFacadePromise.Execute(World, scene, ipfs, definitionComponent, PartitionComponent.TOP_PRIORITY);
+            CreateSceneFacadePromise.Execute(World, scene, ipfs.ContentBaseUrl, definitionComponent, PartitionComponent.TOP_PRIORITY);
 
             World.Set(realm, new SmartWearablePreviewScene { Value = scene });
         }

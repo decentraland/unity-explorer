@@ -10,6 +10,8 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -37,7 +39,7 @@ namespace DCL.AvatarRendering.Emotes.Load
     public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesByPointersFromRealmIntention, EmoteDTO>
     {
         private readonly IEmoteStorage emoteStorage;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -46,13 +48,14 @@ namespace DCL.AvatarRendering.Emotes.Load
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
-            IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory
+            IDecentralandUrlsSource urlsSource,
+            URLSubdirectory customStreamingSubdirectory,
+            EntitiesAnalytics entitiesAnalytics
         )
-            : base(world, cache, webRequestController)
+            : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -107,8 +110,8 @@ namespace DCL.AvatarRendering.Emotes.Load
             RepoolableList<IEmote> resolvedEmotesTmp)
         {
             HashSet<URN> successfulPointers = intention.SuccessfulPointers;
-            // Keep only successful emotes in the result list
-            resolvedEmotesTmp.List.RemoveAll(emote => !successfulPointers.Contains(emote.GetUrn()));
+            // Keep only successful emotes in the result list (also remove emotes with unresolved DTO)
+            resolvedEmotesTmp.List.RemoveAll(emote => emote.DTO?.Metadata == null || !successfulPointers.Contains(emote.GetUrn()));
 
             World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp, resolvedEmotesTmp.List.Count)));
         }
@@ -126,6 +129,13 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
+                // Skip emotes with unresolved DTO - treat as failed
+                if (emote.DTO?.Metadata == null)
+                {
+                    emotesWithResponse++;
+                    continue;
+                }
+
                 if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } || emote.Model is { Exception: not null })
                 {
                     emotesWithResponse++;
@@ -168,7 +178,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesByPointersFromRealmIntention(convertedPointers,
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)
+                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))
                 ),
                 partitionComponent
             );
@@ -258,7 +268,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     continue;
 
                 urlBuilder.Clear();
-                urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
+                urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
