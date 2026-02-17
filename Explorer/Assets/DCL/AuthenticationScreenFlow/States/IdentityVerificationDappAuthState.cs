@@ -47,6 +47,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
+            base.Enter();
+
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();

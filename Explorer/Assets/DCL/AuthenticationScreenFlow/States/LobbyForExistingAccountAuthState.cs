@@ -57,16 +57,11 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             view.JumpIntoWorldButton.interactable = true;
             view.DiffAccountButton.interactable = true;
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
-            {
-                SpanName = "LobbyWait",
-                SpanOperation = "auth.lobby_wait",
-                Depth = 1,
-            });
 
             // splashScreen is destroyed after the first login
             if (splashScreen != null)

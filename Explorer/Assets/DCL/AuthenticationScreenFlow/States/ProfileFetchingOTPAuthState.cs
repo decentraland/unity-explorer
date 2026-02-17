@@ -41,6 +41,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((string email, IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 

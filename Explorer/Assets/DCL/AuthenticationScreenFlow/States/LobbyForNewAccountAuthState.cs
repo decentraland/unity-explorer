@@ -84,23 +84,12 @@ namespace DCL.AuthenticationScreenFlow
             view.OnViewHidden += ReparentCharacterPreview;
         }
 
-        private void ReparentCharacterPreview()
-        {
-            characterPreviewView.transform.SetParent(viewInstance.transform);
-            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
-        }
-
         public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             userEmail = payload.email;
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
-            {
-                SpanName = "LobbyNewAccountWait",
-                SpanOperation = "auth.lobby_new_account_wait",
-                Depth = 1,
-            });
 
             InitializeAvatarAsync().Forget();
 
@@ -164,6 +153,12 @@ namespace DCL.AuthenticationScreenFlow
 
             view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
             base.Exit();
+        }
+
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
         private void OpenClickableURL(string url) =>

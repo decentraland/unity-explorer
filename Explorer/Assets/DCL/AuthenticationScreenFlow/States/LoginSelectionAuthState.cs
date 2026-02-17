@@ -44,8 +44,9 @@ namespace DCL.AuthenticationScreenFlow
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
         }
 
-        public void Enter()
+        public new void Enter()
         {
+            base.Enter();
             currentState.Value = AuthStatus.LoginSelectionScreen;
 
             view.SetLoadingSpinnerVisibility(false);
