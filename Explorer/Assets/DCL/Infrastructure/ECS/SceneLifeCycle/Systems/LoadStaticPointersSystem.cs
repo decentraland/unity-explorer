@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < result.Asset.Value.Count; i++)
                     {
                         SceneEntityDefinition definition = result.Asset.Value[i];
-                        var path = new IpfsPath(definition.id, URLDomain.EMPTY);
+                        var path = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
                         CreateSceneEntity(definition, path);
                     }
                 }

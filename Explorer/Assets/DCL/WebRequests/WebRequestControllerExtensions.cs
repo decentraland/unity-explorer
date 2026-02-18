@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
-using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.Dumper;
@@ -228,8 +227,5 @@ namespace DCL.WebRequests
             ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
-
-        public static IWebRequestController WithDump(this IWebRequestController origin, DebugMetricsAnalyticsHandler analyticsContainer, WebRequestDumpAnalyticsHandler dumpAnalyticsHandler) =>
-            new WebRequestDumpRecorder(origin, analyticsContainer, dumpAnalyticsHandler);
     }
 }

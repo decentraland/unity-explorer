@@ -166,7 +166,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Length == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))), processedScenePointers.Value);
                 }
             }
             else

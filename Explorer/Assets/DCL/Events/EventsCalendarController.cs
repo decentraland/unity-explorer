@@ -20,6 +20,8 @@ namespace DCL.Events
 {
     public class EventsCalendarController : IDisposable
     {
+        public event Action<EventDTO>? EventCardClicked;
+
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
 
         private readonly EventsCalendarView view;
@@ -118,9 +120,12 @@ namespace DCL.Events
         private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
         {
             if (string.IsNullOrEmpty(eventInfo.id))
-                eventsController.GoToCreateEventPage();
+                eventsController.GoToCreateEventPage(false);
             else
+            {
                 mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+                EventCardClicked?.Invoke(eventInfo);
+            }
         }
 
         private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView)

@@ -174,7 +174,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
