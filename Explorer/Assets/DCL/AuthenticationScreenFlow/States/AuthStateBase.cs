@@ -51,10 +51,10 @@ namespace DCL.AuthenticationScreenFlow
 
         protected struct SpanErrorInfo
         {
-            public string message;
-            public Exception exception;
+            internal string message;
+            internal Exception? exception;
 
-            public SpanErrorInfo(string message, Exception exception = null)
+            internal SpanErrorInfo(string message, Exception? exception = null)
             {
                 this.message = message;
                 this.exception = exception;
