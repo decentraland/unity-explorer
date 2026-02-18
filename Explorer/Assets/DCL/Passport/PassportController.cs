@@ -555,14 +555,13 @@ namespace DCL.Passport
                 Profile? profile = await selfProfile.ProfileAsync(ct);
                 if (profile != null)
                 {
-                    profile.ClaimedNameColor = colorPickerController?.CurrentColor;
-
+                    profile.ClaimedNameColor = colorPickerController.CurrentColor;
                     try
                     {
                         Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
 
                         if (updatedProfile != null)
-                             profileChangesBus.PushUpdate(updatedProfile);
+                            profileChangesBus.PushUpdate(updatedProfile);
                     }
                     catch (IdenticalProfileUpdateException) { }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
