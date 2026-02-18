@@ -46,12 +46,20 @@ namespace Utility.Multithreading
 
         public void Add(TKey key, TValue value)
         {
+#if UNITY_WEBGL
             Inner.Add(key, value);
+#else
+            Inner.TryAdd(key, value);
+#endif
         }
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
+#if UNITY_WEBGL
             Inner.Add(item.Key, item.Value);
+#else
+            Inner.TryAdd(item.Key, item.Value);
+#endif
         }
 
         public bool Contains(KeyValuePair<TKey, TValue> item)
@@ -71,7 +79,11 @@ namespace Utility.Multithreading
 
         public bool Remove(TKey key)
         {
+#if UNITY_WEBGL
             return Inner.Remove(key);
+#else
+            return Inner.TryRemove(key, out _);
+#endif
         }
 
         public bool TryRemove(TKey key, out TValue value)
