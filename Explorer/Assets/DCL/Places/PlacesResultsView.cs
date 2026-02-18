@@ -20,7 +20,7 @@ namespace DCL.Places
 {
     public class PlacesResultsView : MonoBehaviour
     {
-        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
+        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.03f;
 
         public event Action? BackButtonClicked;
         public event Action? ExplorePlacesClicked;
