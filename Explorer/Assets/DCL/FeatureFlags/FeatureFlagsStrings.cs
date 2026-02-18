@@ -24,6 +24,7 @@ namespace DCL.FeatureFlags
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
+        public const string USE_GATEWAY = "use-gateway";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
         public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
