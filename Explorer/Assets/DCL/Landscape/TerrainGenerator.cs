@@ -81,6 +81,7 @@ namespace DCL.Landscape
             ref NativeList<int2> emptyParcels, ref NativeHashSet<int2>.ReadOnly ownedParcels,
             LandscapeData landscapeData)
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:84"); // SPECIAL_DEBUG_LINE_STATEMENT
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
@@ -92,14 +93,17 @@ namespace DCL.Landscape
             boundariesGenerator = new TerrainBoundariesGenerator(factory, ParcelSize);
 
             isInitialized = true;
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:96"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
 
         public void Dispose()
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:101"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (!isInitialized) return;
 
             if (TerrainRoot != null)
                 UnityObjectUtils.SafeDestroy(TerrainRoot);
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:106"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
 
         public int GetChunkSize() =>
@@ -107,6 +111,7 @@ namespace DCL.Landscape
 
         public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:114"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (!isInitialized) return;
 
             if (TerrainRoot != null)
@@ -115,9 +120,11 @@ namespace DCL.Landscape
             // TODO is it necessary to yield?
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:123"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (landscapeData.RenderTrees)
                 Trees!.Show();
 
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:127"); // SPECIAL_DEBUG_LINE_STATEMENT
             IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
@@ -125,8 +132,10 @@ namespace DCL.Landscape
 
         public void Hide()
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:135"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (!isInitialized) return;
 
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:138"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (TerrainRoot != null && TerrainRoot.gameObject.activeSelf)
             {
                 TerrainRoot.gameObject.SetActive(false);
@@ -135,11 +144,13 @@ namespace DCL.Landscape
 
                 IsTerrainShown = false;
             }
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:147"); // SPECIAL_DEBUG_LINE_STATEMENT
         }
 
         public async UniTask GenerateGenesisTerrainAndShowAsync(AsyncLoadProcessReport? processReport = null,
             CancellationToken cancellationToken = default)
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:153"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (!isInitialized) return;
 
             var worldModel = new WorldModel(ownedParcels);
@@ -488,6 +499,7 @@ namespace DCL.Landscape
         public static float GetParcelNoiseHeight(float x, float z, NativeArray<byte> occupancyMapData,
             int occupancyMapSize, int parcelSize, int occupancyFloor, float maxHeight)
         {
+UnityEngine.Debug.Log("CALLED TerrainGenerator.cs:502"); // SPECIAL_DEBUG_LINE_STATEMENT
             float occupancy;
 
             if (occupancyMapSize > 0)

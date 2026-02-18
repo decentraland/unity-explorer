@@ -33,6 +33,9 @@ namespace DCL.Infrastructure
 
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"Build and Start: Begin");
 
+            // To free memory
+            KillProcesses();
+
             ReadAndIncrementBuildIndex(INDEX_BUILD_PATH, out int incrementedIndex);
 
             int targetPort = START_PORT + incrementedIndex;
@@ -48,14 +51,21 @@ namespace DCL.Infrastructure
         [MenuItem("Decentraland/WebGL/Stop Server and Browser")]
         public static void StopServerAndBrowser()
         {
-            Process_Kill(SERVER_PID_FILE);
-            Process_Kill(CHROME_PID_FILE);
+            KillProcesses();
+            ReportHub.Log(ReportCategory.UNSPECIFIED, "StopServerAndBrowser finished");
         }
 
         [MenuItem("Decentraland/WebGL/Clear Builds Directory")]
         public static void ClearBuildsDirectory()
         {
             Directory.Delete(BUILDS_FOLDER, true);
+            ReportHub.Log(ReportCategory.UNSPECIFIED, "ClearBuildsDirectory finished");
+        }
+
+        private static void KillProcesses()
+        {
+            Process_Kill(SERVER_PID_FILE);
+            Process_Kill(CHROME_PID_FILE);
         }
 
         private static void Build(string buildFolder)
