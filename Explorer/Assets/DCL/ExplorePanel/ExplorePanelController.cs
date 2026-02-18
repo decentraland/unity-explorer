@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Diagnostics;
 using DCL.Events;
+using DCL.EventsApi;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -15,6 +17,8 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -38,6 +42,7 @@ namespace DCL.ExplorePanel
         private bool includeCommunities;
         private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly HttpEventsApiService eventsApiService;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -46,6 +51,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
+        private CancellationTokenSource checkForLiveEventsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -63,8 +69,8 @@ namespace DCL.ExplorePanel
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public event Action? PlacesOpened;
-        public event Action? EventsOpened;
+        public event Action? PlacesOpenedFromStartMenu;
+        public event Action? EventsOpenedFromStartMenu;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -79,7 +85,8 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             bool includeCameraReel,
             bool includeDiscover,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            HttpEventsApiService eventsApiService)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -98,6 +105,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
             EventsController = eventsController;
+            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
@@ -107,6 +115,7 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
@@ -128,6 +137,7 @@ namespace DCL.ExplorePanel
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            viewInstance!.SetLiveEventsCounter(0);
         }
 
         private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
@@ -176,10 +186,10 @@ namespace DCL.ExplorePanel
                         switch (section)
                         {
                             case ExploreSections.Places:
-                                PlacesOpened?.Invoke();
+                                PlacesOpenedFromStartMenu?.Invoke();
                                 break;
                             case ExploreSections.Events:
-                                EventsOpened?.Invoke();
+                                EventsOpenedFromStartMenu?.Invoke();
                                 break;
                         }
 
@@ -223,16 +233,21 @@ namespace DCL.ExplorePanel
             BlockUnwantedInputs();
             RegisterHotkeys();
 
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+
             if (inputData.IsSectionProvided)
                 return;
 
+            // Only triggers OpenedFromStartMenu events if IsSectionProvided is false.
+            // This means that the section has not opened by shortcut nor sidebar.
             switch (sectionToShow)
             {
                 case ExploreSections.Places:
-                    PlacesOpened?.Invoke();
+                    PlacesOpenedFromStartMenu?.Invoke();
                     break;
                 case ExploreSections.Events:
-                    EventsOpened?.Invoke();
+                    EventsOpenedFromStartMenu?.Invoke();
                     break;
             }
         }
@@ -376,6 +391,7 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
 
             UnblockUnwantedInputs();
             UnRegisterHotkeys();
@@ -427,6 +443,17 @@ namespace DCL.ExplorePanel
                     // Cancellations ignored
                 }
             }
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
         }
     }
 
