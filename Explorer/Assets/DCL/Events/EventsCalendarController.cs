@@ -235,7 +235,8 @@ namespace DCL.Events
                     for (var i = 0; i < numberOfDays; i++)
                     {
                         // Live events are always shown on the calendar
-                        if (eventInfo.live && fromDate.Date == DateTime.Today && i == 0)
+                        bool isTodayColumn = i == 0;
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn)
                         {
                             eventsGroupedByDay.Value[i].Add(eventInfo);
                             break;

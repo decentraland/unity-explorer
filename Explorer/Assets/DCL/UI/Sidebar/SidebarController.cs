@@ -303,7 +303,7 @@ namespace DCL.UI.Sidebar
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
 
             checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
-            CheckForLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -343,7 +343,7 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
-        private async UniTaskVoid CheckForLiveEventsAsync(CancellationToken ct)
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
             {
