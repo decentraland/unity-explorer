@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CidkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdHdlZW4ucHJvdG8SG2Rl",
             "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxohZGVjZW50cmFsYW5kL2NvbW1v",
-            "bi92ZWN0b3JzLnByb3RvIpIGCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
+            "bi92ZWN0b3JzLnByb3RvIq4GCgdQQlR3ZWVuEhAKCGR1cmF0aW9uGAEgASgC",
             "EkQKD2Vhc2luZ19mdW5jdGlvbhgCIAEoDjIrLmRlY2VudHJhbGFuZC5zZGsu",
             "Y29tcG9uZW50cy5FYXNpbmdGdW5jdGlvbhIxCgRtb3ZlGAMgASgLMiEuZGVj",
             "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLk1vdmVIABI1CgZyb3RhdGUYBCAB",
@@ -38,72 +38,73 @@ namespace DCL.ECSComponents {
             "b250aW51b3VzSAASRgoPbW92ZV9jb250aW51b3VzGAogASgLMisuZGVjZW50",
             "cmFsYW5kLnNkay5jb21wb25lbnRzLk1vdmVDb250aW51b3VzSAASVQoXdGV4",
             "dHVyZV9tb3ZlX2NvbnRpbnVvdXMYCyABKAsyMi5kZWNlbnRyYWxhbmQuc2Rr",
-            "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVDb250aW51b3VzSAASOwoJdHJhbnNm",
-            "b3JtGAwgASgLMiYuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlRyYW5z",
-            "Zm9ybUgAElAKFHRyYW5zZm9ybV9jb250aW51b3VzGA0gASgLMjAuZGVjZW50",
-            "cmFsYW5kLnNkay5jb21wb25lbnRzLlRyYW5zZm9ybUNvbnRpbnVvdXNIABIU",
-            "CgdwbGF5aW5nGAYgASgISAGIAQESGQoMY3VycmVudF90aW1lGAcgASgCSAKI",
-            "AQFCBgoEbW9kZUIKCghfcGxheWluZ0IPCg1fY3VycmVudF90aW1lIo4BCgRN",
-            "b3ZlEisKBXN0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
-            "b3IzEikKA2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9y",
-            "MxIbCg5mYWNlX2RpcmVjdGlvbhgDIAEoCEgAiAEBQhEKD19mYWNlX2RpcmVj",
-            "dGlvbiJmCgZSb3RhdGUSLgoFc3RhcnQYASABKAsyHy5kZWNlbnRyYWxhbmQu",
-            "Y29tbW9uLlF1YXRlcm5pb24SLAoDZW5kGAIgASgLMh8uZGVjZW50cmFsYW5k",
-            "LmNvbW1vbi5RdWF0ZXJuaW9uIl8KBVNjYWxlEisKBXN0YXJ0GAEgASgLMhwu",
-            "ZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEikKA2VuZBgCIAEoCzIcLmRl",
-            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yMyLJAgoJVHJhbnNmb3JtEjQKDnBv",
-            "c2l0aW9uX3N0YXJ0GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
-            "b3IzEjIKDHBvc2l0aW9uX2VuZBgCIAEoCzIcLmRlY2VudHJhbGFuZC5jb21t",
-            "b24uVmVjdG9yMxI3Cg5yb3RhdGlvbl9zdGFydBgDIAEoCzIfLmRlY2VudHJh",
-            "bGFuZC5jb21tb24uUXVhdGVybmlvbhI1Cgxyb3RhdGlvbl9lbmQYBCABKAsy",
-            "Hy5kZWNlbnRyYWxhbmQuY29tbW9uLlF1YXRlcm5pb24SMQoLc2NhbGVfc3Rh",
-            "cnQYBSABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSLwoJc2Nh",
-            "bGVfZW5kGAYgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzIsUB",
-            "CgtUZXh0dXJlTW92ZRIrCgVzdGFydBgBIAEoCzIcLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uVmVjdG9yMhIpCgNlbmQYAiABKAsyHC5kZWNlbnRyYWxhbmQuY29t",
-            "bW9uLlZlY3RvcjISTAoNbW92ZW1lbnRfdHlwZRgDIAEoDjIwLmRlY2VudHJh",
-            "bGFuZC5zZGsuY29tcG9uZW50cy5UZXh0dXJlTW92ZW1lbnRUeXBlSACIAQFC",
-            "EAoOX21vdmVtZW50X3R5cGUiVQoQUm90YXRlQ29udGludW91cxIyCglkaXJl",
-            "Y3Rpb24YASABKAsyHy5kZWNlbnRyYWxhbmQuY29tbW9uLlF1YXRlcm5pb24S",
-            "DQoFc3BlZWQYAiABKAIiUAoOTW92ZUNvbnRpbnVvdXMSLwoJZGlyZWN0aW9u",
-            "GAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEg0KBXNwZWVk",
-            "GAIgASgCItIBChNUcmFuc2Zvcm1Db250aW51b3VzEjgKEnBvc2l0aW9uX2Rp",
-            "cmVjdGlvbhgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxI7",
-            "ChJyb3RhdGlvbl9kaXJlY3Rpb24YAiABKAsyHy5kZWNlbnRyYWxhbmQuY29t",
-            "bW9uLlF1YXRlcm5pb24SNQoPc2NhbGVfZGlyZWN0aW9uGAMgASgLMhwuZGVj",
-            "ZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEg0KBXNwZWVkGAQgASgCIrcBChVU",
-            "ZXh0dXJlTW92ZUNvbnRpbnVvdXMSLwoJZGlyZWN0aW9uGAEgASgLMhwuZGVj",
-            "ZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IyEg0KBXNwZWVkGAIgASgCEkwKDW1v",
-            "dmVtZW50X3R5cGUYAyABKA4yMC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
-            "dHMuVGV4dHVyZU1vdmVtZW50VHlwZUgAiAEBQhAKDl9tb3ZlbWVudF90eXBl",
-            "KjUKE1RleHR1cmVNb3ZlbWVudFR5cGUSDgoKVE1UX09GRlNFVBAAEg4KClRN",
-            "VF9USUxJTkcQASrnBAoORWFzaW5nRnVuY3Rpb24SDQoJRUZfTElORUFSEAAS",
-            "EQoNRUZfRUFTRUlOUVVBRBABEhIKDkVGX0VBU0VPVVRRVUFEEAISDwoLRUZf",
-            "RUFTRVFVQUQQAxIRCg1FRl9FQVNFSU5TSU5FEAQSEgoORUZfRUFTRU9VVFNJ",
-            "TkUQBRIPCgtFRl9FQVNFU0lORRAGEhEKDUVGX0VBU0VJTkVYUE8QBxISCg5F",
-            "Rl9FQVNFT1VURVhQTxAIEg8KC0VGX0VBU0VFWFBPEAkSFAoQRUZfRUFTRUlO",
-            "RUxBU1RJQxAKEhUKEUVGX0VBU0VPVVRFTEFTVElDEAsSEgoORUZfRUFTRUVM",
-            "QVNUSUMQDBITCg9FRl9FQVNFSU5CT1VOQ0UQDRIUChBFRl9FQVNFT1VUQk9V",
-            "TkNFEA4SEQoNRUZfRUFTRUJPVU5DRRAPEhIKDkVGX0VBU0VJTkNVQklDEBAS",
-            "EwoPRUZfRUFTRU9VVENVQklDEBESEAoMRUZfRUFTRUNVQklDEBISEgoORUZf",
-            "RUFTRUlOUVVBUlQQExITCg9FRl9FQVNFT1VUUVVBUlQQFBIQCgxFRl9FQVNF",
-            "UVVBUlQQFRISCg5FRl9FQVNFSU5RVUlOVBAWEhMKD0VGX0VBU0VPVVRRVUlO",
-            "VBAXEhAKDEVGX0VBU0VRVUlOVBAYEhEKDUVGX0VBU0VJTkNJUkMQGRISCg5F",
-            "Rl9FQVNFT1VUQ0lSQxAaEg8KC0VGX0VBU0VDSVJDEBsSEQoNRUZfRUFTRUlO",
-            "QkFDSxAcEhIKDkVGX0VBU0VPVVRCQUNLEB0SDwoLRUZfRUFTRUJBQ0sQHkIU",
-            "qgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "LmNvbXBvbmVudHMuVGV4dHVyZU1vdmVDb250aW51b3VzSAASSQoRbW92ZV9y",
+            "b3RhdGVfc2NhbGUYDCABKAsyLC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVu",
+            "dHMuTW92ZVJvdGF0ZVNjYWxlSAASXgocbW92ZV9yb3RhdGVfc2NhbGVfY29u",
+            "dGludW91cxgNIAEoCzI2LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5N",
+            "b3ZlUm90YXRlU2NhbGVDb250aW51b3VzSAASFAoHcGxheWluZxgGIAEoCEgB",
+            "iAEBEhkKDGN1cnJlbnRfdGltZRgHIAEoAkgCiAEBQgYKBG1vZGVCCgoIX3Bs",
+            "YXlpbmdCDwoNX2N1cnJlbnRfdGltZSKOAQoETW92ZRIrCgVzdGFydBgBIAEo",
+            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIpCgNlbmQYAiABKAsy",
+            "HC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSGwoOZmFjZV9kaXJlY3Rp",
+            "b24YAyABKAhIAIgBAUIRCg9fZmFjZV9kaXJlY3Rpb24iZgoGUm90YXRlEi4K",
+            "BXN0YXJ0GAEgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9u",
+            "EiwKA2VuZBgCIAEoCzIfLmRlY2VudHJhbGFuZC5jb21tb24uUXVhdGVybmlv",
+            "biJfCgVTY2FsZRIrCgVzdGFydBgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21t",
+            "b24uVmVjdG9yMxIpCgNlbmQYAiABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9u",
+            "LlZlY3RvcjMizwIKD01vdmVSb3RhdGVTY2FsZRI0Cg5wb3NpdGlvbl9zdGFy",
+            "dBgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIyCgxwb3Np",
+            "dGlvbl9lbmQYAiABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMS",
+            "NwoOcm90YXRpb25fc3RhcnQYAyABKAsyHy5kZWNlbnRyYWxhbmQuY29tbW9u",
+            "LlF1YXRlcm5pb24SNQoMcm90YXRpb25fZW5kGAQgASgLMh8uZGVjZW50cmFs",
+            "YW5kLmNvbW1vbi5RdWF0ZXJuaW9uEjEKC3NjYWxlX3N0YXJ0GAUgASgLMhwu",
+            "ZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEi8KCXNjYWxlX2VuZBgGIAEo",
+            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMyLFAQoLVGV4dHVyZU1v",
+            "dmUSKwoFc3RhcnQYASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3Rv",
+            "cjISKQoDZW5kGAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3Iy",
+            "EkwKDW1vdmVtZW50X3R5cGUYAyABKA4yMC5kZWNlbnRyYWxhbmQuc2RrLmNv",
+            "bXBvbmVudHMuVGV4dHVyZU1vdmVtZW50VHlwZUgAiAEBQhAKDl9tb3ZlbWVu",
+            "dF90eXBlIlUKEFJvdGF0ZUNvbnRpbnVvdXMSMgoJZGlyZWN0aW9uGAEgASgL",
+            "Mh8uZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9uEg0KBXNwZWVkGAIg",
+            "ASgCIlAKDk1vdmVDb250aW51b3VzEi8KCWRpcmVjdGlvbhgBIAEoCzIcLmRl",
+            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxINCgVzcGVlZBgCIAEoAiLYAQoZ",
+            "TW92ZVJvdGF0ZVNjYWxlQ29udGludW91cxI4ChJwb3NpdGlvbl9kaXJlY3Rp",
+            "b24YASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSOwoScm90",
+            "YXRpb25fZGlyZWN0aW9uGAIgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5R",
+            "dWF0ZXJuaW9uEjUKD3NjYWxlX2RpcmVjdGlvbhgDIAEoCzIcLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uVmVjdG9yMxINCgVzcGVlZBgEIAEoAiK3AQoVVGV4dHVy",
+            "ZU1vdmVDb250aW51b3VzEi8KCWRpcmVjdGlvbhgBIAEoCzIcLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uVmVjdG9yMhINCgVzcGVlZBgCIAEoAhJMCg1tb3ZlbWVu",
+            "dF90eXBlGAMgASgOMjAuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlRl",
+            "eHR1cmVNb3ZlbWVudFR5cGVIAIgBAUIQCg5fbW92ZW1lbnRfdHlwZSo1ChNU",
+            "ZXh0dXJlTW92ZW1lbnRUeXBlEg4KClRNVF9PRkZTRVQQABIOCgpUTVRfVElM",
+            "SU5HEAEq5wQKDkVhc2luZ0Z1bmN0aW9uEg0KCUVGX0xJTkVBUhAAEhEKDUVG",
+            "X0VBU0VJTlFVQUQQARISCg5FRl9FQVNFT1VUUVVBRBACEg8KC0VGX0VBU0VR",
+            "VUFEEAMSEQoNRUZfRUFTRUlOU0lORRAEEhIKDkVGX0VBU0VPVVRTSU5FEAUS",
+            "DwoLRUZfRUFTRVNJTkUQBhIRCg1FRl9FQVNFSU5FWFBPEAcSEgoORUZfRUFT",
+            "RU9VVEVYUE8QCBIPCgtFRl9FQVNFRVhQTxAJEhQKEEVGX0VBU0VJTkVMQVNU",
+            "SUMQChIVChFFRl9FQVNFT1VURUxBU1RJQxALEhIKDkVGX0VBU0VFTEFTVElD",
+            "EAwSEwoPRUZfRUFTRUlOQk9VTkNFEA0SFAoQRUZfRUFTRU9VVEJPVU5DRRAO",
+            "EhEKDUVGX0VBU0VCT1VOQ0UQDxISCg5FRl9FQVNFSU5DVUJJQxAQEhMKD0VG",
+            "X0VBU0VPVVRDVUJJQxAREhAKDEVGX0VBU0VDVUJJQxASEhIKDkVGX0VBU0VJ",
+            "TlFVQVJUEBMSEwoPRUZfRUFTRU9VVFFVQVJUEBQSEAoMRUZfRUFTRVFVQVJU",
+            "EBUSEgoORUZfRUFTRUlOUVVJTlQQFhITCg9FRl9FQVNFT1VUUVVJTlQQFxIQ",
+            "CgxFRl9FQVNFUVVJTlQQGBIRCg1FRl9FQVNFSU5DSVJDEBkSEgoORUZfRUFT",
+            "RU9VVENJUkMQGhIPCgtFRl9FQVNFQ0lSQxAbEhEKDUVGX0VBU0VJTkJBQ0sQ",
+            "HBISCg5FRl9FQVNFT1VUQkFDSxAdEg8KC0VGX0VBU0VCQUNLEB5CFKoCEURD",
+            "TC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TextureMovementType), typeof(global::DCL.ECSComponents.EasingFunction), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "RotateContinuous", "MoveContinuous", "TextureMoveContinuous", "Transform", "TransformContinuous", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBTween), global::DCL.ECSComponents.PBTween.Parser, new[]{ "Duration", "EasingFunction", "Move", "Rotate", "Scale", "TextureMove", "RotateContinuous", "MoveContinuous", "TextureMoveContinuous", "MoveRotateScale", "MoveRotateScaleContinuous", "Playing", "CurrentTime" }, new[]{ "Mode", "Playing", "CurrentTime" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Move), global::DCL.ECSComponents.Move.Parser, new[]{ "Start", "End", "FaceDirection" }, new[]{ "FaceDirection" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Rotate), global::DCL.ECSComponents.Rotate.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Scale), global::DCL.ECSComponents.Scale.Parser, new[]{ "Start", "End" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.Transform), global::DCL.ECSComponents.Transform.Parser, new[]{ "PositionStart", "PositionEnd", "RotationStart", "RotationEnd", "ScaleStart", "ScaleEnd" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.MoveRotateScale), global::DCL.ECSComponents.MoveRotateScale.Parser, new[]{ "PositionStart", "PositionEnd", "RotationStart", "RotationEnd", "ScaleStart", "ScaleEnd" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMove), global::DCL.ECSComponents.TextureMove.Parser, new[]{ "Start", "End", "MovementType" }, new[]{ "MovementType" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.RotateContinuous), global::DCL.ECSComponents.RotateContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.MoveContinuous), global::DCL.ECSComponents.MoveContinuous.Parser, new[]{ "Direction", "Speed" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TransformContinuous), global::DCL.ECSComponents.TransformContinuous.Parser, new[]{ "PositionDirection", "RotationDirection", "ScaleDirection", "Speed" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.MoveRotateScaleContinuous), global::DCL.ECSComponents.MoveRotateScaleContinuous.Parser, new[]{ "PositionDirection", "RotationDirection", "ScaleDirection", "Speed" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.TextureMoveContinuous), global::DCL.ECSComponents.TextureMoveContinuous.Parser, new[]{ "Direction", "Speed", "MovementType" }, new[]{ "MovementType" }, null, null, null)
           }));
     }
@@ -225,11 +226,11 @@ namespace DCL.ECSComponents {
         case ModeOneofCase.TextureMoveContinuous:
           TextureMoveContinuous = other.TextureMoveContinuous.Clone();
           break;
-        case ModeOneofCase.Transform:
-          Transform = other.Transform.Clone();
+        case ModeOneofCase.MoveRotateScale:
+          MoveRotateScale = other.MoveRotateScale.Clone();
           break;
-        case ModeOneofCase.TransformContinuous:
-          TransformContinuous = other.TransformContinuous.Clone();
+        case ModeOneofCase.MoveRotateScaleContinuous:
+          MoveRotateScaleContinuous = other.MoveRotateScaleContinuous.Clone();
           break;
       }
 
@@ -353,27 +354,27 @@ namespace DCL.ECSComponents {
       }
     }
 
-    /// <summary>Field number for the "transform" field.</summary>
-    public const int TransformFieldNumber = 12;
+    /// <summary>Field number for the "move_rotate_scale" field.</summary>
+    public const int MoveRotateScaleFieldNumber = 12;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.Transform Transform {
-      get { return modeCase_ == ModeOneofCase.Transform ? (global::DCL.ECSComponents.Transform) mode_ : null; }
+    public global::DCL.ECSComponents.MoveRotateScale MoveRotateScale {
+      get { return modeCase_ == ModeOneofCase.MoveRotateScale ? (global::DCL.ECSComponents.MoveRotateScale) mode_ : null; }
       set {
         mode_ = value;
-        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.Transform;
+        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.MoveRotateScale;
       }
     }
 
-    /// <summary>Field number for the "transform_continuous" field.</summary>
-    public const int TransformContinuousFieldNumber = 13;
+    /// <summary>Field number for the "move_rotate_scale_continuous" field.</summary>
+    public const int MoveRotateScaleContinuousFieldNumber = 13;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::DCL.ECSComponents.TransformContinuous TransformContinuous {
-      get { return modeCase_ == ModeOneofCase.TransformContinuous ? (global::DCL.ECSComponents.TransformContinuous) mode_ : null; }
+    public global::DCL.ECSComponents.MoveRotateScaleContinuous MoveRotateScaleContinuous {
+      get { return modeCase_ == ModeOneofCase.MoveRotateScaleContinuous ? (global::DCL.ECSComponents.MoveRotateScaleContinuous) mode_ : null; }
       set {
         mode_ = value;
-        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.TransformContinuous;
+        modeCase_ = value == null ? ModeOneofCase.None : ModeOneofCase.MoveRotateScaleContinuous;
       }
     }
 
@@ -444,8 +445,8 @@ namespace DCL.ECSComponents {
       RotateContinuous = 9,
       MoveContinuous = 10,
       TextureMoveContinuous = 11,
-      Transform = 12,
-      TransformContinuous = 13,
+      MoveRotateScale = 12,
+      MoveRotateScaleContinuous = 13,
     }
     private ModeOneofCase modeCase_ = ModeOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -485,8 +486,8 @@ namespace DCL.ECSComponents {
       if (!object.Equals(RotateContinuous, other.RotateContinuous)) return false;
       if (!object.Equals(MoveContinuous, other.MoveContinuous)) return false;
       if (!object.Equals(TextureMoveContinuous, other.TextureMoveContinuous)) return false;
-      if (!object.Equals(Transform, other.Transform)) return false;
-      if (!object.Equals(TransformContinuous, other.TransformContinuous)) return false;
+      if (!object.Equals(MoveRotateScale, other.MoveRotateScale)) return false;
+      if (!object.Equals(MoveRotateScaleContinuous, other.MoveRotateScaleContinuous)) return false;
       if (Playing != other.Playing) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CurrentTime, other.CurrentTime)) return false;
       if (ModeCase != other.ModeCase) return false;
@@ -506,8 +507,8 @@ namespace DCL.ECSComponents {
       if (modeCase_ == ModeOneofCase.RotateContinuous) hash ^= RotateContinuous.GetHashCode();
       if (modeCase_ == ModeOneofCase.MoveContinuous) hash ^= MoveContinuous.GetHashCode();
       if (modeCase_ == ModeOneofCase.TextureMoveContinuous) hash ^= TextureMoveContinuous.GetHashCode();
-      if (modeCase_ == ModeOneofCase.Transform) hash ^= Transform.GetHashCode();
-      if (modeCase_ == ModeOneofCase.TransformContinuous) hash ^= TransformContinuous.GetHashCode();
+      if (modeCase_ == ModeOneofCase.MoveRotateScale) hash ^= MoveRotateScale.GetHashCode();
+      if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) hash ^= MoveRotateScaleContinuous.GetHashCode();
       if (HasPlaying) hash ^= Playing.GetHashCode();
       if (HasCurrentTime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CurrentTime);
       hash ^= (int) modeCase_;
@@ -573,13 +574,13 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(90);
         output.WriteMessage(TextureMoveContinuous);
       }
-      if (modeCase_ == ModeOneofCase.Transform) {
+      if (modeCase_ == ModeOneofCase.MoveRotateScale) {
         output.WriteRawTag(98);
-        output.WriteMessage(Transform);
+        output.WriteMessage(MoveRotateScale);
       }
-      if (modeCase_ == ModeOneofCase.TransformContinuous) {
+      if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) {
         output.WriteRawTag(106);
-        output.WriteMessage(TransformContinuous);
+        output.WriteMessage(MoveRotateScaleContinuous);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -635,13 +636,13 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(90);
         output.WriteMessage(TextureMoveContinuous);
       }
-      if (modeCase_ == ModeOneofCase.Transform) {
+      if (modeCase_ == ModeOneofCase.MoveRotateScale) {
         output.WriteRawTag(98);
-        output.WriteMessage(Transform);
+        output.WriteMessage(MoveRotateScale);
       }
-      if (modeCase_ == ModeOneofCase.TransformContinuous) {
+      if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) {
         output.WriteRawTag(106);
-        output.WriteMessage(TransformContinuous);
+        output.WriteMessage(MoveRotateScaleContinuous);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -680,11 +681,11 @@ namespace DCL.ECSComponents {
       if (modeCase_ == ModeOneofCase.TextureMoveContinuous) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(TextureMoveContinuous);
       }
-      if (modeCase_ == ModeOneofCase.Transform) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Transform);
+      if (modeCase_ == ModeOneofCase.MoveRotateScale) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(MoveRotateScale);
       }
-      if (modeCase_ == ModeOneofCase.TransformContinuous) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(TransformContinuous);
+      if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(MoveRotateScaleContinuous);
       }
       if (HasPlaying) {
         size += 1 + 1;
@@ -759,17 +760,17 @@ namespace DCL.ECSComponents {
           }
           TextureMoveContinuous.MergeFrom(other.TextureMoveContinuous);
           break;
-        case ModeOneofCase.Transform:
-          if (Transform == null) {
-            Transform = new global::DCL.ECSComponents.Transform();
+        case ModeOneofCase.MoveRotateScale:
+          if (MoveRotateScale == null) {
+            MoveRotateScale = new global::DCL.ECSComponents.MoveRotateScale();
           }
-          Transform.MergeFrom(other.Transform);
+          MoveRotateScale.MergeFrom(other.MoveRotateScale);
           break;
-        case ModeOneofCase.TransformContinuous:
-          if (TransformContinuous == null) {
-            TransformContinuous = new global::DCL.ECSComponents.TransformContinuous();
+        case ModeOneofCase.MoveRotateScaleContinuous:
+          if (MoveRotateScaleContinuous == null) {
+            MoveRotateScaleContinuous = new global::DCL.ECSComponents.MoveRotateScaleContinuous();
           }
-          TransformContinuous.MergeFrom(other.TransformContinuous);
+          MoveRotateScaleContinuous.MergeFrom(other.MoveRotateScaleContinuous);
           break;
       }
 
@@ -868,21 +869,21 @@ namespace DCL.ECSComponents {
             break;
           }
           case 98: {
-            global::DCL.ECSComponents.Transform subBuilder = new global::DCL.ECSComponents.Transform();
-            if (modeCase_ == ModeOneofCase.Transform) {
-              subBuilder.MergeFrom(Transform);
+            global::DCL.ECSComponents.MoveRotateScale subBuilder = new global::DCL.ECSComponents.MoveRotateScale();
+            if (modeCase_ == ModeOneofCase.MoveRotateScale) {
+              subBuilder.MergeFrom(MoveRotateScale);
             }
             input.ReadMessage(subBuilder);
-            Transform = subBuilder;
+            MoveRotateScale = subBuilder;
             break;
           }
           case 106: {
-            global::DCL.ECSComponents.TransformContinuous subBuilder = new global::DCL.ECSComponents.TransformContinuous();
-            if (modeCase_ == ModeOneofCase.TransformContinuous) {
-              subBuilder.MergeFrom(TransformContinuous);
+            global::DCL.ECSComponents.MoveRotateScaleContinuous subBuilder = new global::DCL.ECSComponents.MoveRotateScaleContinuous();
+            if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) {
+              subBuilder.MergeFrom(MoveRotateScaleContinuous);
             }
             input.ReadMessage(subBuilder);
-            TransformContinuous = subBuilder;
+            MoveRotateScaleContinuous = subBuilder;
             break;
           }
         }
@@ -980,21 +981,21 @@ namespace DCL.ECSComponents {
             break;
           }
           case 98: {
-            global::DCL.ECSComponents.Transform subBuilder = new global::DCL.ECSComponents.Transform();
-            if (modeCase_ == ModeOneofCase.Transform) {
-              subBuilder.MergeFrom(Transform);
+            global::DCL.ECSComponents.MoveRotateScale subBuilder = new global::DCL.ECSComponents.MoveRotateScale();
+            if (modeCase_ == ModeOneofCase.MoveRotateScale) {
+              subBuilder.MergeFrom(MoveRotateScale);
             }
             input.ReadMessage(subBuilder);
-            Transform = subBuilder;
+            MoveRotateScale = subBuilder;
             break;
           }
           case 106: {
-            global::DCL.ECSComponents.TransformContinuous subBuilder = new global::DCL.ECSComponents.TransformContinuous();
-            if (modeCase_ == ModeOneofCase.TransformContinuous) {
-              subBuilder.MergeFrom(TransformContinuous);
+            global::DCL.ECSComponents.MoveRotateScaleContinuous subBuilder = new global::DCL.ECSComponents.MoveRotateScaleContinuous();
+            if (modeCase_ == ModeOneofCase.MoveRotateScaleContinuous) {
+              subBuilder.MergeFrom(MoveRotateScaleContinuous);
             }
             input.ReadMessage(subBuilder);
-            TransformContinuous = subBuilder;
+            MoveRotateScaleContinuous = subBuilder;
             break;
           }
         }
@@ -1788,16 +1789,16 @@ namespace DCL.ECSComponents {
 
   }
 
-  public sealed partial class Transform : pb::IMessage<Transform>
+  public sealed partial class MoveRotateScale : pb::IMessage<MoveRotateScale>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<Transform> _parser = new pb::MessageParser<Transform>(() => new Transform());
+    private static readonly pb::MessageParser<MoveRotateScale> _parser = new pb::MessageParser<MoveRotateScale>(() => new MoveRotateScale());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Transform> Parser { get { return _parser; } }
+    public static pb::MessageParser<MoveRotateScale> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1813,7 +1814,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Transform() {
+    public MoveRotateScale() {
       OnConstruction();
     }
 
@@ -1821,7 +1822,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Transform(Transform other) : this() {
+    public MoveRotateScale(MoveRotateScale other) : this() {
       positionStart_ = other.positionStart_ != null ? other.positionStart_.Clone() : null;
       positionEnd_ = other.positionEnd_ != null ? other.positionEnd_.Clone() : null;
       rotationStart_ = other.rotationStart_ != null ? other.rotationStart_.Clone() : null;
@@ -1833,8 +1834,8 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Transform Clone() {
-      return new Transform(this);
+    public MoveRotateScale Clone() {
+      return new MoveRotateScale(this);
     }
 
     /// <summary>Field number for the "position_start" field.</summary>
@@ -1912,12 +1913,12 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as Transform);
+      return Equals(other as MoveRotateScale);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Transform other) {
+    public bool Equals(MoveRotateScale other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -2055,7 +2056,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Transform other) {
+    public void MergeFrom(MoveRotateScale other) {
       if (other == null) {
         return;
       }
@@ -2989,16 +2990,16 @@ namespace DCL.ECSComponents {
 
   }
 
-  public sealed partial class TransformContinuous : pb::IMessage<TransformContinuous>
+  public sealed partial class MoveRotateScaleContinuous : pb::IMessage<MoveRotateScaleContinuous>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<TransformContinuous> _parser = new pb::MessageParser<TransformContinuous>(() => new TransformContinuous());
+    private static readonly pb::MessageParser<MoveRotateScaleContinuous> _parser = new pb::MessageParser<MoveRotateScaleContinuous>(() => new MoveRotateScaleContinuous());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<TransformContinuous> Parser { get { return _parser; } }
+    public static pb::MessageParser<MoveRotateScaleContinuous> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3014,7 +3015,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public TransformContinuous() {
+    public MoveRotateScaleContinuous() {
       OnConstruction();
     }
 
@@ -3022,7 +3023,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public TransformContinuous(TransformContinuous other) : this() {
+    public MoveRotateScaleContinuous(MoveRotateScaleContinuous other) : this() {
       positionDirection_ = other.positionDirection_ != null ? other.positionDirection_.Clone() : null;
       rotationDirection_ = other.rotationDirection_ != null ? other.rotationDirection_.Clone() : null;
       scaleDirection_ = other.scaleDirection_ != null ? other.scaleDirection_.Clone() : null;
@@ -3032,8 +3033,8 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public TransformContinuous Clone() {
-      return new TransformContinuous(this);
+    public MoveRotateScaleContinuous Clone() {
+      return new MoveRotateScaleContinuous(this);
     }
 
     /// <summary>Field number for the "position_direction" field.</summary>
@@ -3087,12 +3088,12 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as TransformContinuous);
+      return Equals(other as MoveRotateScaleContinuous);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(TransformContinuous other) {
+    public bool Equals(MoveRotateScaleContinuous other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -3204,7 +3205,7 @@ namespace DCL.ECSComponents {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(TransformContinuous other) {
+    public void MergeFrom(MoveRotateScaleContinuous other) {
       if (other == null) {
         return;
       }

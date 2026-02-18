@@ -33,15 +33,15 @@ namespace DCL.SDKComponents.Tween.Components
                     return GetContinuousVector3Tweener(transform ? transform.localPosition : Vector3.zero, pbTween.MoveContinuous.Direction.ToUnityVector(), pbTween.MoveContinuous.Speed);
                 case PBTween.ModeOneofCase.TextureMoveContinuous:
                     return GetContinuousVector2Tweener(textureStart ?? Vector2.zero, pbTween.TextureMoveContinuous.Direction.ToUnityVector(), pbTween.TextureMoveContinuous.Speed);
-                case PBTween.ModeOneofCase.TransformTween:
+                case PBTween.ModeOneofCase.Transform:
                     return GetTransformTweener(
                         transform!,
-                        pbTween.TransformTween.PositionStart,
-                        pbTween.TransformTween.PositionEnd,
-                        pbTween.TransformTween.RotationStart.ToUnityQuaternion(),
-                        pbTween.TransformTween.RotationEnd.ToUnityQuaternion(),
-                        pbTween.TransformTween.ScaleStart,
-                        pbTween.TransformTween.ScaleEnd,
+                        pbTween.Transform.PositionStart,
+                        pbTween.Transform.PositionEnd,
+                        pbTween.Transform.RotationStart.ToUnityQuaternion(),
+                        pbTween.Transform.RotationEnd.ToUnityQuaternion(),
+                        pbTween.Transform.ScaleStart,
+                        pbTween.Transform.ScaleEnd,
                         durationInSeconds);
                 case PBTween.ModeOneofCase.None:
                 default:
