@@ -242,7 +242,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            if (sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.MoveRotateScale)
+            if (sdkTweenComponent.TweenMode is PBTween.ModeOneofCase.MoveRotateScale or PBTween.ModeOneofCase.MoveRotateScaleContinuous)
                 SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isInCurrentScene);
             else
                 UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
@@ -271,7 +271,8 @@ namespace DCL.SDKComponents.Tween
         private static bool IsTweenContinuous(in PBTween pbTween) =>
             pbTween.ModeCase == PBTween.ModeOneofCase.RotateContinuous ||
             pbTween.ModeCase == PBTween.ModeOneofCase.MoveContinuous ||
-            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous;
+            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous ||
+            pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScaleContinuous;
 
         private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
             pbTween.Duration > 0

@@ -57,6 +57,57 @@ namespace DCL.SDKComponents.Tween.Components
             sequence.Pause();
         }
 
+        public void InitializeContinuous(Transform transform,
+            Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection,
+            float speed)
+        {
+            sequence?.Kill();
+            finished = false;
+
+            Vector3 posDir = positionDirection.normalized;
+            Vector3 scaleDir = scaleDirection.normalized;
+            float absSpeed = Mathf.Abs(speed);
+            float sign = speed >= 0 ? 1f : -1f;
+
+            Vector3 startPos = transform.localPosition;
+            Quaternion startRot = transform.localRotation;
+            Vector3 startScale = transform.localScale;
+
+            Vector3 rotAxis = (rotationDirection * Vector3.up).normalized;
+            if (rotAxis.sqrMagnitude < 1e-6f)
+                rotAxis = Vector3.up;
+
+            float secondsPerRevolution = 360f / Mathf.Max(absSpeed, 0.0001f);
+
+            sequence = DOTween.Sequence();
+            sequence.Pause();
+
+            sequence.Join(
+                DOVirtual.Float(0f, 1f, 1f, v =>
+                {
+                    transform.localPosition = startPos + posDir * (sign * absSpeed * v);
+                }).SetLoops(-1, LoopType.Incremental)
+            );
+
+            sequence.Join(
+                DOVirtual.Float(0f, 360f, secondsPerRevolution, v =>
+                {
+                    transform.localRotation = Quaternion.AngleAxis(sign * v, rotAxis) * startRot;
+                }).SetLoops(-1, LoopType.Restart)
+            );
+
+            sequence.Join(
+                DOVirtual.Float(0f, 1f, 1f, v =>
+                {
+                    transform.localScale = startScale + scaleDir * (sign * absSpeed * v);
+                }).SetLoops(-1, LoopType.Incremental)
+            );
+
+            sequence.SetAutoKill(false);
+            sequence.OnComplete(onCompleteCallback);
+            sequence.Pause();
+        }
+
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
             sequence?.SetEase(ease).SetAutoKill(false).OnComplete(onCompleteCallback).Goto(tweenModelCurrentTime, isPlaying);

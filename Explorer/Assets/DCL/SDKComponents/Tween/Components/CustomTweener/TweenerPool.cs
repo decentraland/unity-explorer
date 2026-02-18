@@ -43,6 +43,13 @@ namespace DCL.SDKComponents.Tween.Components
                         pbTween.MoveRotateScale.ScaleStart,
                         pbTween.MoveRotateScale.ScaleEnd,
                         durationInSeconds);
+                case PBTween.ModeOneofCase.MoveRotateScaleContinuous:
+                    return GetContinuousTransformTweener(
+                        transform!,
+                        pbTween.MoveRotateScaleContinuous.PositionDirection.ToUnityVector(),
+                        pbTween.MoveRotateScaleContinuous.RotationDirection.ToUnityQuaternion(),
+                        pbTween.MoveRotateScaleContinuous.ScaleDirection.ToUnityVector(),
+                        pbTween.MoveRotateScaleContinuous.Speed);
                 case PBTween.ModeOneofCase.None:
                 default:
                     throw new ArgumentException($"No Tweener defined for tween mode: {pbTween.ModeCase}");
@@ -99,6 +106,15 @@ namespace DCL.SDKComponents.Tween.Components
         {
             TransformTweener tweener = transformTweenerPool.Get();
             tweener.Initialize(transform, positionStart, positionEnd, rotationStart, rotationEnd, scaleStart, scaleEnd, durationInSeconds);
+            return tweener;
+        }
+
+        private TransformTweener GetContinuousTransformTweener(Transform transform,
+            Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection,
+            float speed)
+        {
+            TransformTweener tweener = transformTweenerPool.Get();
+            tweener.InitializeContinuous(transform, positionDirection, rotationDirection, scaleDirection, speed);
             return tweener;
         }
 

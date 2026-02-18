@@ -169,7 +169,7 @@ namespace DCL.SDKComponents.Tween
         {
             return mode == PBTween.ModeOneofCase.Move || mode == PBTween.ModeOneofCase.Rotate || mode == PBTween.ModeOneofCase.Scale ||
                    mode == PBTween.ModeOneofCase.MoveContinuous || mode == PBTween.ModeOneofCase.RotateContinuous ||
-                   mode == PBTween.ModeOneofCase.MoveRotateScale;
+                   mode == PBTween.ModeOneofCase.MoveRotateScale || mode == PBTween.ModeOneofCase.MoveRotateScaleContinuous;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
