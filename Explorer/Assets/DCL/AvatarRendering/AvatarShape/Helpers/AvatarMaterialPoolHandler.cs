@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using Utility;
 
@@ -59,6 +60,10 @@ namespace DCL.AvatarRendering.AvatarShape
                                      TextureArrayConstants.FACIAL_SHADER => TextureArrayConstants.SHADERID_DCL_FACIAL_FEATURES,
                                      _ => TextureArrayConstants.SHADERID_DCL_PBR,
                                  };
+
+                // #region agent log
+                WebGLDebugLog.Log("AvatarMaterialPoolHandler.ToonShader", $"material shader->poolID", $"shader={material.shader?.name ?? "null"} -> id={materialID} (2=Toon 3=Facial 1=PBR)", "H1,H5");
+                // #endregion
 
                 materialDictionary.Add(materialID, materialSetup);
             }

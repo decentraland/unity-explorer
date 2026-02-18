@@ -20,6 +20,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using Temp.Helper.WebClient;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
@@ -214,6 +215,12 @@ namespace DCL.PluginSystem.Global
         {
             Material toonMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct)).Value;
             Material faceFeatureMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct)).Value;
+
+            // #region agent log
+            WebGLDebugLog.Log("AvatarPlugin.ToonShader", $"CelShadingMaterial loaded", $"shader={(toonMaterial.shader != null ? toonMaterial.shader.name : "null")} mat={toonMaterial.name}", "H1");
+            var toonShader = UnityEngine.Shader.Find("DCL/DCL_Toon");
+            WebGLDebugLog.Log("AvatarPlugin.ToonShader", $"Shader.Find(DCL/DCL_Toon)", toonShader != null ? "FOUND" : "NULL", "H3");
+            // #endregion
 
 #if UNITY_EDITOR
 

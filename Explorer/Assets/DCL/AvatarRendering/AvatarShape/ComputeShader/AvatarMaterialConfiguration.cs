@@ -1,8 +1,9 @@
-﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using Runtime.Wearables;
+using Temp.Helper.WebClient;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -50,7 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             (avatarMaterial, slots, shaderId) = TrySetupFacialFeature(meshRenderer, poolHandler, avatarShapeComponent, facialFeatures, out bool isFacialFeature);
 
             if (!isFacialFeature)
-                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler);
+                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler, meshRenderer.name);
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
@@ -62,11 +63,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private static (Material avatarMaterial, TextureArraySlot?[] slots, int shaderId) SetupRegularMaterial(
-            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler)
+            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler, string? rendererName = null)
         {
             int shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
+
+            // #region agent log
+            WebGLDebugLog.Log("AvatarMaterialConfiguration.ToonShader", "SetupRegularMaterial assigned", $"avatarMat.shader={avatarMaterial.shader?.name ?? "null"} orig.shader={originalMaterial.shader?.name ?? "null"} renderer={rendererName}", "H4");
+            // #endregion
 
             var baseColor = originalMaterial.GetColor(BASE_COLOR);
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
