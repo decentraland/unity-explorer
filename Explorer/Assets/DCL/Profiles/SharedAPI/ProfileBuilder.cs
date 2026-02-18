@@ -15,6 +15,7 @@ namespace DCL.Profiles
         private Color hairColor;
         private Color skinColor;
         private Color userNameColor;
+        private Color? claimedNameColor;
         private IReadOnlyCollection<URN>? emotes;
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
@@ -78,6 +79,7 @@ namespace DCL.Profiles
             hasClaimedName = profile.HasClaimedName;
             hasConnectedWeb3 = profile.HasConnectedWeb3;
             userNameColor = profile.UserNameColor;
+            claimedNameColor = profile.ClaimedNameColor;
 
             return this;
         }
@@ -165,6 +167,7 @@ namespace DCL.Profiles
             profile.GetCompact().HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.GetCompact().UserNameColor = userNameColor;
+            profile.GetCompact().ClaimedNameColor = claimedNameColor;
 
             var avatar = new Avatar();
             profile.Avatar = avatar;
