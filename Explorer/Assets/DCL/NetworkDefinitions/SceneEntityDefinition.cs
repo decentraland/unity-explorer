@@ -7,6 +7,7 @@ namespace DCL.Ipfs
     public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata>
     {
         private string? logSceneName;
+        private SceneFastLookup? SceneLookup;
 
         public SceneEntityDefinition() { }
 
@@ -25,5 +26,17 @@ namespace DCL.Ipfs
 
             return false;
         }
+
+        public bool Contains(int x, int y)
+        {
+            if(SceneLookup.HasValue)
+                return SceneLookup.Value.Contains(x, y);
+
+            SceneLookup = new SceneFastLookup(metadata.scene.DecodedParcels);
+            return SceneLookup.Value.Contains(x, y);
+        }
+
+        public bool Contains(Vector2Int parcel) =>
+            Contains(parcel.x, parcel.y);
     }
 }

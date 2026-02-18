@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
                         IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
                         //We are gonna load into the first loaded scene as startup
-                        fixedScenePointers.StartupScene ??= result.Asset;
+                        fixedScenePointers.SceneResults.Add(result.Asset);
 
                         for (var j = 0; j < parcels.Count; j++)
                             processedScenePointers.Value.Add(parcels[j].ToInt2());
@@ -99,25 +99,21 @@ namespace ECS.SceneLifeCycle.Systems
 
             fixedScenePointers.AllPromisesResolved = true;
 
-            Vector2Int spawnCoordinate = new Vector2Int(realmData.WorldManifest.spawn_coordinate.x,
-                realmData.WorldManifest.spawn_coordinate.y);
-
             if (result.Succeeded)
             {
                 IReadOnlyList<SceneEntityDefinition> definitions = result.Asset.Value;
                 for (var i = 0; i < definitions.Count; i++)
                 {
                     SceneEntityDefinition definition = definitions[i];
+                    fixedScenePointers.SceneResults.Add(definition);
                     var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
                     CreateSceneEntity(definition, ipfsPath);
                     IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
 
                     for (var j = 0; j < parcels.Count; j++)
-                    {
                         processedScenePointers.Value.Add(parcels[j].ToInt2());
-                        if (parcels[j] == spawnCoordinate)
-                            fixedScenePointers.StartupScene = definition;
-                    }
+
+
                 }
             }
         }
