@@ -766,7 +766,7 @@ namespace Global.Dynamic
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
-                    staticContainer.SmartWearableCache),
+                    staticContainer.SmartWearableCache, eventsApiService),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
