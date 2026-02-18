@@ -22,12 +22,11 @@ namespace DCL.RealmNavigation
             // Wait for all pointers resolution, they should be resolved at start-up
 
             var resolved = false;
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null!;
             SceneEntityDefinition? startupScene = null;
 
             while (!resolved)
             {
-                ReadFixedRealmQuery(World, ref resolved, ref result, ref startupScene);
+                ReadFixedRealmQuery(World, ref resolved, ref startupScene);
                 await UniTask.Yield(ct);
             }
 
@@ -35,16 +34,13 @@ namespace DCL.RealmNavigation
         }
 
         [Query]
-        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result,
+        private void ReadFixedRealm([Data] ref bool resolved,
             [Data] ref SceneEntityDefinition startupScene, in FixedScenePointers fixedScenePointers)
         {
             resolved = fixedScenePointers.AllPromisesResolved;
 
             if (resolved)
-            {
-                result = fixedScenePointers.Promises;
                 startupScene = fixedScenePointers.StartupScene;
-            }
         }
     }
 }
