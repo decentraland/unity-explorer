@@ -15,6 +15,8 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using System;
+using UnityEngine;
 using Utility;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
@@ -71,10 +73,17 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
             playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, scenesCache);
+            scenesCache.CurrentParcel.OnUpdate += UpdateCurrentSceneAnalyticsMetadata;
+        }
+
+        private void UpdateCurrentSceneAnalyticsMetadata(Vector2Int currentParcel)
+        {
+            UnityEngine.CrashReportHandler.CrashReportHandler.SetUserMetadata("position", currentParcel.ToString());
         }
 
         public void Dispose()
         {
+            scenesCache.CurrentParcel.OnUpdate -= UpdateCurrentSceneAnalyticsMetadata;
             walkedDistanceAnalytics.Dispose();
             playerParcelChangedAnalytics.Dispose();
         }
