@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
 
-        public bool ScenesCommunicationIsIsolated => !realmData.Configured || forceSceneIsolation || !realmData.ScenesAreFixed;
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.Configured || !realmData.ScenesAreFixed;
 
         public bool MetadataIsDirty
         {
@@ -73,12 +73,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
-            if (!realmData.Configured)
-                return Result<MetaData>.ErrorResult("RealmData has not been configured yet");
-
-            // Places API is relevant for Genesis City only. For worlds, skip gatekeeper — comms go through worlds-content-server.
+            // Places API is relevant for Genesis City only.
             if (realmData.IsWorld())
-                return Result<MetaData>.SuccessResult(new MetaData(null, Vector2Int.zero, input));
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);

@@ -13,6 +13,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 {
     public class FixedConnectiveRoom : ConnectiveRoom
     {
+        /// <summary>
+        /// We need to send something in the secret field for the world comms handshake, otherwise the handshake fails. This is a fallback value that allows the handshake to proceed even if the secret is missing.
+        /// The handshake will still succeed if the secret is present, but this ensures that it doesn't fail outright if it's not.
+        /// This is the case when we change world permissions to password protected, but the world comms secret is not set so that we get 403 (which is expected) instead of 502
+        /// </summary>
+        private const string MISSING_SECRET_FALLBACK = "__missing_secret__";
+
         private readonly IWebRequestController webRequests;
         private readonly ICurrentAdapterAddress currentAdapterAddress;
         private readonly IWeb3IdentityCache identityCache;
@@ -47,7 +54,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
             string metadata = BuildMetadata();
-            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"FixedRoom POST to {adapterUrl} with metadata: {metadata}");
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
@@ -57,10 +63,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
         private string BuildMetadata()
         {
-            string? secret = worldCommsSecret?.Secret;
-
-            if (string.IsNullOrEmpty(secret))
-                return FixedMetadata.Default.ToJson();
+            string secret = string.IsNullOrEmpty(worldCommsSecret?.Secret)
+                                ? MISSING_SECRET_FALLBACK
+                                : worldCommsSecret!.Secret!;
 
             var metadata = new FixedMetadataWithSecret
             {

@@ -3,15 +3,25 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.PrivateWorlds;
 using DCL.WebRequests;
+using ECS;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
     public class GateKeeperSceneRoom : ConnectiveRoom
     {
+        /// <summary>
+        /// We need to send something in the secret field for the world comms handshake, otherwise the handshake fails. This is a fallback value that allows the handshake to proceed even if the secret is missing.
+        /// The handshake will still succeed if the secret is present, but this ensures that it doesn't fail outright if it's not.
+        /// This is the case when we change world permissions to password protected, but the world comms secret is not set so that we get 403 (which is expected) instead of 502
+        /// </summary>
+        private const string MISSING_SECRET_FALLBACK = "__missing_secret__";
+
         private class Activatable : ActivatableConnectiveRoom, IGateKeeperSceneRoom
         {
             private readonly GateKeeperSceneRoom origin;
@@ -52,6 +62,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private readonly IWebRequestController webRequests;
         private readonly GateKeeperSceneRoomOptions options;
+        private readonly IWorldCommsSecret? worldCommsSecret;
 
         private event Action? CurrentSceneRoomConnected;
         private event Action? CurrentSceneRoomDisconnected;
@@ -62,11 +73,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            GateKeeperSceneRoomOptions options
+            GateKeeperSceneRoomOptions options,
+            IWorldCommsSecret? worldCommsSecret = null
         )
         {
             this.webRequests = webRequests;
             this.options = options;
+            this.worldCommsSecret = worldCommsSecret;
         }
 
         public IGateKeeperSceneRoom AsActivatable() =>
@@ -181,24 +194,85 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
-            string json = meta.ToJson();
+            bool isWorld = options.RealmData.IsWorld();
+            string url = isWorld ? string.Format(options.WorldCommsUrl, meta.realmName) : options.AdapterUrl;
+            string json = isWorld ? BuildWorldMetadata() : meta.ToJson();
+            bool hasSecret = !string.IsNullOrEmpty(worldCommsSecret?.Secret);
+            int secretLength = worldCommsSecret?.Secret?.Length ?? 0;
 
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"GateKeeper POST to {url} with body: {json}");
+            if (isWorld)
+                ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"GateKeeper world handshake diagnostics: realm={meta.realmName}, sceneId={meta.sceneId ?? "null"}, secretPresent={hasSecret}, secretLength={secretLength}");
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, json, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
-            string connectionString = response.adapter;
+            bool preferFixedAdapter = isWorld;
+            string preferredAdapter = preferFixedAdapter ? response.fixedAdapter : response.adapter;
+            string fallbackAdapter = preferFixedAdapter ? response.adapter : response.fixedAdapter;
+            bool usedFixedAdapter = preferFixedAdapter ? !string.IsNullOrEmpty(preferredAdapter) : string.IsNullOrEmpty(preferredAdapter);
+            string connectionString = string.IsNullOrEmpty(preferredAdapter) ? fallbackAdapter : preferredAdapter;
+
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException($"Connection string is empty for url {url}. adapter='{response.adapter}', fixedAdapter='{response.fixedAdapter}'");
+
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER)
+                     .Log($"GateKeeper response mapping: isWorld={isWorld}, selectedField={(usedFixedAdapter ? "fixedAdapter" : "adapter")}, adapterPresent={!string.IsNullOrEmpty(response.adapter)}, fixedAdapterPresent={!string.IsNullOrEmpty(response.fixedAdapter)}");
+
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
+        }
+
+        private string BuildWorldMetadata()
+        {
+            string secret = string.IsNullOrEmpty(worldCommsSecret?.Secret)
+                                ? MISSING_SECRET_FALLBACK
+                                : worldCommsSecret!.Secret!;
+
+            var metadata = new FixedMetadataWithSecret
+            {
+                intent = "dcl:explorer:comms-handshake",
+                signer = "dcl:explorer",
+                isGuest = false,
+                secret = secret,
+            };
+
+            return JsonUtility.ToJson(metadata);
         }
 
         [Serializable]
         private struct AdapterResponse
         {
             public string adapter;
+            public string fixedAdapter;
+        }
+
+        [Serializable]
+        private struct FixedMetadata
+        {
+            public static FixedMetadata Default = new ()
+            {
+                intent = "dcl:explorer:comms-handshake",
+                signer = "dcl:explorer",
+                isGuest = false,
+            };
+
+            public string intent;
+            public string signer;
+            public bool isGuest;
+
+            public string ToJson() =>
+                JsonUtility.ToJson(this)!;
+        }
+
+        [Serializable]
+        private struct FixedMetadataWithSecret
+        {
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
         }
     }
 }

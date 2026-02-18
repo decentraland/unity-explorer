@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
@@ -54,13 +56,30 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         /// <returns>True if all rooms connected correctly</returns>
         public async UniTask<bool> StartAsync()
         {
-            (bool, bool, bool) result = await UniTask.WhenAll(
-                archipelagoIslandRoom.StartIfNotAsync(),
-                gateKeeperSceneRoom.StartIfNotAsync(),
-                chatRoom.StartIfNotAsync());
+            var stopwatch = Stopwatch.StartNew();
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log("RoomHub.StartAsync begin");
 
-            return result is { Item1: true, Item2: true, Item3: true };
+            UniTask<bool> islandStartTask = archipelagoIslandRoom.StartIfNotAsync();
+            UniTask<bool> gateKeeperStartTask = gateKeeperSceneRoom.StartIfNotAsync();
+            UniTask<bool> chatStartTask = chatRoom.StartIfNotAsync();
+
+            bool islandStarted = await islandStartTask;
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"RoomHub.StartAsync island={islandStarted} t={stopwatch.ElapsedMilliseconds}ms {RoomStateSnapshot("island", archipelagoIslandRoom)}");
+
+            bool gateKeeperStarted = await gateKeeperStartTask;
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"RoomHub.StartAsync gateKeeper={gateKeeperStarted} t={stopwatch.ElapsedMilliseconds}ms {RoomStateSnapshot("gateKeeper", gateKeeperSceneRoom)}");
+
+            bool chatStarted = await chatStartTask;
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"RoomHub.StartAsync chat={chatStarted} t={stopwatch.ElapsedMilliseconds}ms {RoomStateSnapshot("chat", chatRoom)}");
+
+            bool allStarted = islandStarted && gateKeeperStarted && chatStarted;
+            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"RoomHub.StartAsync end allStarted={allStarted} total={stopwatch.ElapsedMilliseconds}ms");
+
+            return allStarted;
         }
+
+        private static string RoomStateSnapshot(string roomName, IConnectiveRoom room) =>
+            $"[{roomName}: state={room.CurrentState().ToStringNonAlloc()}, attempt={room.AttemptToConnectState.ToStringNonAlloc()}, health={room.CurrentConnectionLoopHealth.ToStringNonAlloc()}]";
 
         /// <summary>
         ///     We stop all rooms when logging out as we need to change profiles.

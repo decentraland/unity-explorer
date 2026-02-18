@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -20,25 +23,38 @@ namespace DCL.PrivateWorlds.Testing
     {
         private const string PERMISSION_CHECK_FAILED_MESSAGE =
             "Could not verify world permissions. You may experience access issues.";
+        private const string PROBE_REPORT_CATEGORY = ReportCategory.MULTIPLAYER;
 
         [Header("Test Configuration")]
         [SerializeField] private string testWorldName = "yourname.dcl.eth";
+        [SerializeField] private string testSceneId = "main";
+        [SerializeField] private string testRoomId = "world-dev-yourname.dcl.eth";
         [SerializeField] private string testWrongPassword = "wrong";
         [SerializeField] private string testCorrectPassword = "abc123";
+        [SerializeField] private string testAdapterToCast = "";
 
         private IWorldPermissionsService? permissionsService;
         private IMVCManager? mvcManager;
         private IWorldAccessGate? worldAccessGate;
+        private IWebRequestController? webRequestController;
+        private IDecentralandUrlsSource? urlsSource;
         private CancellationTokenSource? cts;
 
         /// <summary>
         /// Initialize the test trigger with required services.
         /// </summary>
-        public void Initialize(IWorldPermissionsService permissionsService, IMVCManager mvcManager, IWorldAccessGate worldAccessGate)
+        public void Initialize(
+            IWorldPermissionsService permissionsService,
+            IMVCManager mvcManager,
+            IWorldAccessGate worldAccessGate,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             this.permissionsService = permissionsService;
             this.mvcManager = mvcManager;
             this.worldAccessGate = worldAccessGate;
+            this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
             ReportHub.Log(ReportCategory.REALM, "PrivateWorldsTestTrigger initialized");
         }
 
@@ -343,5 +359,170 @@ namespace DCL.PrivateWorlds.Testing
             NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
             ReportHub.Log(ReportCategory.REALM, "CheckFailed toast triggered. Verify the toast appears.");
         }
+
+        [ContextMenu("Test - World Comms")]
+        public void TestWorldCommsEndpoint()
+        {
+            if (!ValidateWorldServerDependencies())
+                return;
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            string metadata = BuildHandshakeMetadata(testCorrectPassword);
+            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldComms), testWorldName);
+            ProbeSignedEndpointAsync(url, metadata, "WorldComms", cts.Token).Forget();
+        }
+
+        [ContextMenu("Test - World Scene Comms")]
+        public void TestWorldSceneCommsEndpoint()
+        {
+            if (!ValidateWorldServerDependencies())
+                return;
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            string metadata = BuildHandshakeMetadata(testCorrectPassword);
+            string url = $"{GetWorldContentServerBaseUrl()}/worlds/{testWorldName}/scenes/{testSceneId}/comms";
+            ProbeSignedEndpointAsync(url, metadata, "WorldSceneComms", cts.Token).Forget();
+        }
+
+        [ContextMenu("Test - Get Comms Adapter {roomId}")]
+        public void TestGetCommsAdapterByRoomIdEndpoint()
+        {
+            if (!ValidateWorldServerDependencies())
+                return;
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            string metadata = BuildHandshakeMetadata(string.Empty);
+            string url = $"{GetWorldContentServerBaseUrl()}/get-comms-adapter/{testRoomId}";
+            ProbeSignedEndpointAsync(url, metadata, "GetCommsAdapterByRoomId", cts.Token).Forget();
+        }
+
+        [ContextMenu("Test - Cast Adapter {roomId}")]
+        public void TestCastAdapterByRoomIdEndpoint()
+        {
+            if (!ValidateWorldServerDependencies())
+                return;
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            CastAdapterByRoomIdAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid CastAdapterByRoomIdAsync(CancellationToken ct)
+        {
+            try
+            {
+                string url = $"{GetWorldContentServerBaseUrl()}/cast-adapter/{testRoomId}";
+                string metadata = BuildHandshakeMetadata(string.Empty);
+                string payload = string.IsNullOrWhiteSpace(testAdapterToCast)
+                                     ? "{}"
+                                     : $"{{\"adapter\":\"{EscapeJsonString(testAdapterToCast)}\"}}";
+
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:CastAdapterByRoomId] POST {url}");
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:CastAdapterByRoomId] metadata={metadata}");
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:CastAdapterByRoomId] payload={payload}");
+
+                var request = webRequestController!
+                             .SignedFetchPostAsync(
+                                  new CommonArguments(URLAddress.FromString(url), RetryPolicy.NONE, timeout: 30),
+                                  GenericPostArguments.CreateJson(payload),
+                                  metadata,
+                                  ct);
+
+                string body = await request.StoreTextAsync();
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:CastAdapterByRoomId] success, body={body}");
+            }
+            catch (UnityWebRequestException e)
+            {
+                ReportHub.LogError(PROBE_REPORT_CATEGORY,
+                    $"[WorldCommsProbe:CastAdapterByRoomId] status={e.ResponseCode}, error={e.Message}, body={e.Text}");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(PROBE_REPORT_CATEGORY, "[WorldCommsProbe:CastAdapterByRoomId] cancelled");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:CastAdapterByRoomId] unexpected error: {ex.Message}");
+            }
+        }
+
+        private async UniTaskVoid ProbeSignedEndpointAsync(string url, string metadata, string probeName, CancellationToken ct)
+        {
+            try
+            {
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] POST {url}");
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] metadata={metadata}");
+
+                var request = webRequestController!
+                             .SignedFetchPostAsync(
+                                  new CommonArguments(URLAddress.FromString(url), RetryPolicy.NONE, timeout: 30),
+                                  metadata,
+                                  ct);
+
+                string body = await request.StoreTextAsync();
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] success, body={body}");
+            }
+            catch (UnityWebRequestException e)
+            {
+                ReportHub.LogError(PROBE_REPORT_CATEGORY,
+                    $"[WorldCommsProbe:{probeName}] status={e.ResponseCode}, error={e.Message}, body={e.Text}");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] cancelled");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] unexpected error: {ex.Message}");
+            }
+        }
+
+        private bool ValidateWorldServerDependencies()
+        {
+            if (webRequestController == null || urlsSource == null)
+            {
+                ReportHub.LogError(PROBE_REPORT_CATEGORY,
+                    "PrivateWorldsTestTrigger: WebRequestController/UrlsSource not initialized. Call Initialize() first.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private string GetWorldContentServerBaseUrl()
+        {
+            string worldCommsTemplate = urlsSource!.Url(DecentralandUrl.WorldComms);
+            string suffix = "/worlds/{0}/comms";
+
+            int index = worldCommsTemplate.IndexOf(suffix, StringComparison.OrdinalIgnoreCase);
+            if (index >= 0)
+                return worldCommsTemplate.Substring(0, index);
+
+            // Fallback for unexpected template formats
+            return worldCommsTemplate.Replace("/worlds/{0}/comms", string.Empty).TrimEnd('/');
+        }
+
+        private static string BuildHandshakeMetadata(string passwordOrEmpty)
+        {
+            if (string.IsNullOrEmpty(passwordOrEmpty))
+                return "{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
+
+            return
+                $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(passwordOrEmpty)}\"}}";
+        }
+
+        private static string EscapeJsonString(string value) =>
+            value.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 }

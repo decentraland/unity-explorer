@@ -15,6 +15,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
+using ECS;
 using Global.AppArgs;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
 
             var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser());
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), new IRealmData.Fake());
 
             new GateKeeperSceneRoom(
                     webRequests,

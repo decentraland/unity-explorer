@@ -2,10 +2,12 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
 using DCL.PrivateWorlds.Testing;
+using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -25,19 +27,25 @@ namespace DCL.PluginSystem.Global
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IWorldPermissionsService worldPermissionsService,
             IWorldAccessGate worldAccessGate,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.worldPermissionsService = worldPermissionsService;
             this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
+            this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
         }
 
         public void Dispose() { }
@@ -60,7 +68,7 @@ namespace DCL.PluginSystem.Global
             }
 
 #if UNITY_EDITOR
-            SpawnPrivateWorldsTestTrigger(worldPermissionsService, mvcManager, worldAccessGate);
+            SpawnPrivateWorldsTestTrigger(worldPermissionsService, mvcManager, worldAccessGate, webRequestController, urlsSource);
 #endif
         }
 
@@ -68,11 +76,13 @@ namespace DCL.PluginSystem.Global
         private static void SpawnPrivateWorldsTestTrigger(
             IWorldPermissionsService permissionsService,
             IMVCManager mvcManager,
-            IWorldAccessGate worldAccessGate)
+            IWorldAccessGate worldAccessGate,
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource)
         {
             var testTriggerGo = new GameObject("[DEBUG] PrivateWorldsTestTrigger");
             var testTrigger = testTriggerGo.AddComponent<PrivateWorldsTestTrigger>();
-            testTrigger.Initialize(permissionsService, mvcManager, worldAccessGate);
+            testTrigger.Initialize(permissionsService, mvcManager, worldAccessGate, webRequestController, urlsSource);
         }
 #endif
 
