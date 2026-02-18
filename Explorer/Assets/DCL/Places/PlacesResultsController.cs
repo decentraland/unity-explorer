@@ -29,8 +29,6 @@ namespace DCL.Places
         public event Action<PlacesFilters>? PlacesFiltered;
         public event Action<PlacesData.PlaceInfo, PlaceCardView, int, PlacesFilters>? PlaceClicked;
 
-        private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
-        private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
@@ -83,8 +81,9 @@ namespace DCL.Places
             this.placesCardSocialActionsController = placesCardSocialActionsController;
 
             view.BackButtonClicked += OnBackButtonClicked;
+            view.ExplorePlacesClicked += OnExplorePlacesClicked;
+            view.GetANameClicked += GetANameClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
-            view.MyPlacesResultsEmptySubTextClicked += MyPlacesResultsEmptySubTextClicked;
             view.PlaceLikeToggleChanged += OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged += OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged += OnPlaceFavoriteToggleChanged;
@@ -104,8 +103,9 @@ namespace DCL.Places
         public void Dispose()
         {
             view.BackButtonClicked -= OnBackButtonClicked;
+            view.ExplorePlacesClicked -= OnExplorePlacesClicked;
+            view.GetANameClicked -= GetANameClicked;
             view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
-            view.MyPlacesResultsEmptySubTextClicked -= MyPlacesResultsEmptySubTextClicked;
             view.PlaceLikeToggleChanged -= OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged -= OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged -= OnPlaceFavoriteToggleChanged;
@@ -125,27 +125,18 @@ namespace DCL.Places
         private void OnBackButtonClicked() =>
             placesController.OpenSection(sectionOpenedBeforeSearching, force: true);
 
+        private void OnExplorePlacesClicked() =>
+            placesController.OpenSection(PlacesSection.BROWSE, force: true, resetCategory: true);
+
+        private void GetANameClicked() =>
+            webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+
         private void TryLoadMorePlaces()
         {
             if (isPlacesGridLoadingItems || placesStateService.CurrentPlaces.Count >= currentPlacesTotalAmount)
                 return;
 
             LoadPlaces(currentPlacesPageNumber + 1);
-        }
-
-        private void MyPlacesResultsEmptySubTextClicked(string id)
-        {
-            switch (id)
-            {
-                case GET_A_NAME_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
-                    break;
-                case CREATOR_HUB_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.CreatorHub);
-                    break;
-            }
-
-            view.PlayOnLinkClickAudio();
         }
 
         private void OnPlaceLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)

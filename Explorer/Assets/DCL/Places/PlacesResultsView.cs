@@ -23,8 +23,9 @@ namespace DCL.Places
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
         public event Action? BackButtonClicked;
+        public event Action? ExplorePlacesClicked;
+        public event Action? GetANameClicked;
         public event Action? PlacesGridScrollAtTheBottom;
-        public Action<string>? MyPlacesResultsEmptySubTextClicked;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceLikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceDislikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceFavoriteToggleChanged;
@@ -52,10 +53,12 @@ namespace DCL.Places
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private GameObject favoritesResultsEmptyContainer = null!;
         [SerializeField] private GameObject myPlacesResultsEmptyContainer = null!;
-        [SerializeField] private TMP_Text myPlacesResultsEmptySubText = null!;
         [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
+        [SerializeField] private Button explorePlacesFromEmptySearchButton = null!;
+        [SerializeField] private Button explorePlacesFromEmptyFavoritesButton = null!;
+        [SerializeField] private Button getANameButton = null!;
 
         [Header("Configuration")]
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
@@ -68,7 +71,9 @@ namespace DCL.Places
         {
             placesResultsBackButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
             placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-            myPlacesResultsEmptySubText.ConvertUrlsToClickeableLinks(OnMyPlacesResultsEmptySubTextClicked);
+            explorePlacesFromEmptySearchButton.onClick.AddListener(() => ExplorePlacesClicked?.Invoke());
+            explorePlacesFromEmptyFavoritesButton.onClick.AddListener(() => ExplorePlacesClicked?.Invoke());
+            getANameButton.onClick.AddListener(() => GetANameClicked?.Invoke());
 
             contextMenu = new GenericContextMenu(placeCardContextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: placeCardContextMenuConfiguration.VerticalPadding, elementsSpacing: placeCardContextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => PlaceShareButtonClicked?.Invoke(lastClickedPlaceCtx!)))
@@ -233,8 +238,5 @@ namespace DCL.Places
 
             PlacesGridScrollAtTheBottom?.Invoke();
         }
-
-        private void OnMyPlacesResultsEmptySubTextClicked(string id) =>
-            MyPlacesResultsEmptySubTextClicked?.Invoke(id);
     }
 }
