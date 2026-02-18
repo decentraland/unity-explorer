@@ -1,11 +1,11 @@
 ﻿using DCL.ExplorePanel;
-using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Places;
 using DCL.PlacesAPIService;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine.InputSystem;
 
-namespace DCL.Places
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class PlacesAnalytics : IDisposable
     {

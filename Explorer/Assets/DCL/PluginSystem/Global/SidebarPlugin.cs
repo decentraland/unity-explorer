@@ -12,7 +12,6 @@ using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBus;
 using DCL.Passport;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -70,7 +69,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IAnalyticsController analytics;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -101,8 +99,7 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
-            HttpEventsApiService eventsApiService,
-            IAnalyticsController analytics)
+            HttpEventsApiService eventsApiService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -133,7 +130,6 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
             this.eventsApiService = eventsApiService;
-            this.analytics = analytics;
         }
 
         public void Dispose() { }
