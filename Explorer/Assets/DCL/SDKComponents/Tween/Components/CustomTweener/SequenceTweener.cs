@@ -86,21 +86,21 @@ namespace DCL.SDKComponents.Tween.Components
                                            .SetAutoKill(false).Pause();
                     break;
 
-                case PBTween.ModeOneofCase.Transform:
+                case PBTween.ModeOneofCase.MoveRotateScale:
                     var subSequence = DOTween.Sequence();
                     subSequence.Join(
-                        transform.DOLocalMove(pbTween.Transform.PositionEnd, durationInSeconds)
-                            .From(pbTween.Transform.PositionStart, false)
+                        transform.DOLocalMove(pbTween.MoveRotateScale.PositionEnd, durationInSeconds)
+                            .From(pbTween.MoveRotateScale.PositionStart, false)
                             .SetAutoKill(false).Pause()
                     );
                     subSequence.Join(
-                        transform.DOLocalRotateQuaternion(pbTween.Transform.RotationEnd.ToUnityQuaternion(), durationInSeconds)
-                            .From(pbTween.Transform.RotationStart.ToUnityQuaternion(), false)
+                        transform.DOLocalRotateQuaternion(pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion(), durationInSeconds)
+                            .From(pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion(), false)
                             .SetAutoKill(false).Pause()
                     );
                     subSequence.Join(
-                        transform.DOScale(pbTween.Transform.ScaleEnd, durationInSeconds)
-                            .From(pbTween.Transform.ScaleStart, false)
+                        transform.DOScale(pbTween.MoveRotateScale.ScaleEnd, durationInSeconds)
+                            .From(pbTween.MoveRotateScale.ScaleStart, false)
                             .SetAutoKill(false).Pause()
                     );
                     returnTween = subSequence.SetAutoKill(false).Pause();
