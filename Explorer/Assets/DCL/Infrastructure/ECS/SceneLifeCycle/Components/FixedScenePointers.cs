@@ -1,4 +1,5 @@
-﻿using DCL.Ipfs;
+using System;
+using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
@@ -12,16 +13,30 @@ namespace ECS.SceneLifeCycle.Components
     {
         public readonly AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] Promises;
 
+        /// <summary>
+        ///     When set, fixed scenes are loaded via GetSceneDefinitionList (e.g. world manifest occupied parcels).
+        /// </summary>
+        public readonly AssetPromise<SceneDefinitions, GetSceneDefinitionList>? ListPromise;
+
         // Quick path to avoid an iteration
         public bool AllPromisesResolved;
 
-        public int EmptyParcelsLastProcessedIndex;
+        public SceneEntityDefinition? StartupScene;
 
         public FixedScenePointers(AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises)
         {
             Promises = promises;
+            ListPromise = null;
             AllPromisesResolved = false;
-            EmptyParcelsLastProcessedIndex = 0;
+            StartupScene = null;
+        }
+
+        public FixedScenePointers(AssetPromise<SceneDefinitions, GetSceneDefinitionList> listPromise)
+        {
+            Promises = Array.Empty<AssetPromise<SceneEntityDefinition, GetSceneDefinition>>();
+            ListPromise = listPromise;
+            AllPromisesResolved = false;
+            StartupScene = null;
         }
     }
 }

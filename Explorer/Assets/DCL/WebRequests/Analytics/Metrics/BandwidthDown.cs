@@ -14,11 +14,11 @@ namespace DCL.WebRequests.Analytics.Metrics
         public override ulong GetMetric() =>
             bandwidth;
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
         }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public override void OnRequestEnded<T>(T request, TimeSpan duration)
         {
             if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
             {
