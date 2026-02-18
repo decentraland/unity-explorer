@@ -19,12 +19,12 @@ namespace DCL.WebRequests
 
         public bool Idempotent => true;
 
-        internal static GetAssetBundleWebRequest Initialize(in CommonArguments commonArguments, GetAssetBundleArguments arguments, bool disableABCache)
+        internal static GetAssetBundleWebRequest Initialize(string url, GetAssetBundleArguments arguments, bool disableABCache)
         {
             UnityWebRequest unityWebRequest =
                 arguments.CacheHash.HasValue && !disableABCache
-                    ? UnityWebRequestAssetBundle.GetAssetBundle(commonArguments.URL, arguments.CacheHash.Value)
-                    : UnityWebRequestAssetBundle.GetAssetBundle(commonArguments.URL);
+                    ? UnityWebRequestAssetBundle.GetAssetBundle(url, arguments.CacheHash.Value)
+                    : UnityWebRequestAssetBundle.GetAssetBundle(url);
 
             ((DownloadHandlerAssetBundle)unityWebRequest.downloadHandler).autoLoadAssetBundle = arguments.AutoLoadAssetBundle;
 

@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -97,7 +98,7 @@ namespace DCL.WebRequests
 
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
         {
-            TWebRequest request = initializeRequest(CommonArguments, ref args);
+            TWebRequest request = initializeRequest(CommonArguments.URL, ref args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
             AssignTimeout(unityWebRequest);
