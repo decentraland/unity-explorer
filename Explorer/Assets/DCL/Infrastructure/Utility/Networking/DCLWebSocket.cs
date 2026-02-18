@@ -10,12 +10,11 @@ namespace Utility.Networking
 #if UNITY_WEBGL && !UNITY_EDITOR
         private DCL.WebSockets.JS.WebGLWebSocket ws = new ();
 #else
-
         private System.Net.WebSockets.ClientWebSocket ws = new ();
 #endif
 
 
-        public WebSocketState State 
+        public WebSocketState State
         {
             get
             {
