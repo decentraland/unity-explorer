@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace DCL.Settings.Utils
+namespace Plugins.NativeWindowManager
 {
-    public static class ResolutionUtils
+    internal static class ResolutionUtils
     {
-        public static List<Resolution> GetAvailableResolutions() {
-
-            List<Resolution> resolutions = new ();
+        public static List<Vector2Int> GetAvailableResolutions()
+        {
+            List<Vector2Int> resolutions = new ();
 
             for (int index = Screen.resolutions.Length - 1; index >= 0; index--)
             {
@@ -30,8 +30,8 @@ namespace DCL.Settings.Utils
 
                 // Exclude possible duplicates
                 // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
-                if (resolutions.Any(res => res.height == resolution.height
-                                           && res.width == resolution.width))
+                if (resolutions.Any(res => res.x == resolution.height
+                                           && res.y == resolution.width))
                     continue;
 
                 AddResolution(resolution);
@@ -53,11 +53,33 @@ namespace DCL.Settings.Utils
 
             void AddResolution(Resolution resolution)
             {
-                resolutions.Add(resolution);
+                resolutions.Add(new Vector2Int(resolution.width, resolution.height));
             }
         }
 
-        public static bool IsResolutionCompatibleWithAspectRatio(float resolutionWidth, float resolutionHeight, float aspectRatioWidth, float aspectRatioHeight)
+        public static Vector2Int GetDefaultResolution()
+        {
+            var possibleResolutions = GetAvailableResolutions();
+
+            int defaultIndex = 0;
+
+            for (var index = 0; index < possibleResolutions.Count; index++)
+            {
+                var resolution = possibleResolutions[index];
+
+                if (!IsDefaultResolution(resolution))
+                    continue;
+
+                defaultIndex = index;
+                break;
+            }
+
+            var defaultResolution = possibleResolutions[defaultIndex];
+
+            return new Vector2Int(defaultResolution.x, defaultResolution.y);
+        }
+
+        private static bool IsResolutionCompatibleWithAspectRatio(float resolutionWidth, float resolutionHeight, float aspectRatioWidth, float aspectRatioHeight)
         {
             const float EPSILON = 0.0001f;
             float resolutionAspectRatioValue = GetAspectRatioValue(resolutionWidth, resolutionHeight);
@@ -65,28 +87,9 @@ namespace DCL.Settings.Utils
             return Mathf.Abs(resolutionAspectRatioValue - aspectRationValueToCheck) <= EPSILON;
         }
 
-        public static string FormatResolutionDropdownOption(Resolution resolution)
-        {
-            int width = resolution.width;
-            int height = resolution.height;
-
-            int tempWidth = width;
-            int tempHeight = height;
-
-            while (height != 0)
-            {
-                int rest = width % height;
-                width = height;
-                height = rest;
-            }
-
-            var aspectRationString = $"{tempWidth / width}:{tempHeight / width}";
-            return $"{resolution.width}x{resolution.height} ({aspectRationString})";
-        }
-
         // By design, the default resolution should be a 1080p resolution with a 16:9 aspect ratio
-        public static bool IsDefaultResolution(Resolution resolution) =>
-            resolution.height == 1080 && IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16.0f, 9.0f);
+        public static bool IsDefaultResolution(Vector2Int resolution) =>
+            resolution.y == 1080 && IsResolutionCompatibleWithAspectRatio(resolution.x, resolution.y, 16.0f, 9.0f);
 
         private static float GetAspectRatioValue(float width, float height) =>
             width / height;

@@ -57,7 +57,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IScreenModeController screenModeController;
         private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
@@ -82,7 +81,6 @@ namespace DCL.PluginSystem.Global
             ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController,
             ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -103,7 +101,6 @@ namespace DCL.PluginSystem.Global
             this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.screenModeController = screenModeController;
             this.imageControllerProvider = imageControllerProvider;
         }
 
@@ -195,8 +192,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand,
-                screenModeController
+                giftTransferRequestCommand
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController

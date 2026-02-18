@@ -1,96 +1,117 @@
-﻿using DCL.Prefs;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Settings.ModuleViews;
-using DCL.Settings.Utils;
-using DCL.Utilities;
-using Global.AppArgs;
-using System;
+using Plugins.NativeWindowManager;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class ResolutionSettingsController : SettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly List<Resolution> possibleResolutions = new ();
-        private readonly UpscalingController upscalingController;
-        private readonly IAppArgs appParameters;
+        private readonly List<Vector2Int> possibleResolutions = new ();
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController, IAppArgs appParameters)
+        public ResolutionSettingsController(SettingsDropdownModuleView view)
         {
             this.view = view;
-            this.upscalingController = upscalingController;
-            this.appParameters = appParameters;
 
-            LoadResolutionOptions();
-
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
-            else
-            {
-                //When running multiple instances from local scene, the last one opened will set the resolution to the lowest available
-                bool isLocalScene = appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE);
-                int startIndex = isLocalScene ? possibleResolutions.Count - 1 : 0;
-                int endIndex = isLocalScene ? -1 : possibleResolutions.Count;
-                int step = isLocalScene ? -1 : 1;
-
-                for (int index = startIndex; index != endIndex; index += step)
-                {
-                    Resolution resolution = possibleResolutions[index];
-
-                    if (!ResolutionUtils.IsDefaultResolution(resolution))
-                        continue;
-
-                    view.DropdownView.Dropdown.value = index;
-                    break;
-                }
-            }
+            RefreshResolutionOptions(NativeWindowManager.FullScreenEnabled);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettingsOnChange);
-            SetResolutionSettings(view.DropdownView.Dropdown.value, true);
+
+            NativeWindowManager.CurrentResolutionChanged += OnCurrentResolutionChanged;
+            NativeWindowManager.FullScreenChanged += OnFullScreenChanged;
+
+            view.SetInteractable(!Application.isEditor && NativeWindowManager.FullScreenEnabled);
+            OnCurrentResolutionChanged(NativeWindowManager.CurrentResolution);
+        }
+
+        private void OnFullScreenChanged(bool enabled)
+        {
+            SetViewInteractable(enabled);
+            RefreshResolutionOptions(enabled);
+        }
+
+        private void OnCurrentResolutionChanged(Vector2Int resolution)
+        {
+            if (!NativeWindowManager.FullScreenEnabled)
+            {
+                view.DropdownView.Dropdown.options[0].text = FormatResolutionDropdownOption(resolution, false);
+                view.DropdownView.Dropdown.RefreshShownValue();
+            }
         }
 
         private void SetResolutionSettingsOnChange(int index)
         {
-            SetResolutionSettings(index, false);
+            NativeWindowManager.FullScreenResolution = possibleResolutions[index];
         }
 
-        private void LoadResolutionOptions()
+        private void RefreshResolutionOptions(bool fullScreenEnabled)
         {
             view.DropdownView.Dropdown.options.Clear();
 
-            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
-
-            for (int i = 0; i < possibleResolutions.Count; i++)
+            if (fullScreenEnabled)
             {
-                Resolution resolution = possibleResolutions[i];
-                view.DropdownView.Dropdown.options.Add(
-                    new TMP_Dropdown.OptionData
-                    {
-                        text = ResolutionUtils.FormatResolutionDropdownOption(resolution)
-                    }
-                );
+                possibleResolutions.AddRange(NativeWindowManager.AvailableResolutions);
+                var currentResolution = NativeWindowManager.FullScreenResolution;
+
+                var currentResolutionIndex = -1;
+
+                for (int i = 0; i < possibleResolutions.Count; i++)
+                {
+                    Vector2Int resolution = possibleResolutions[i];
+
+                    if (resolution == currentResolution)
+                        currentResolutionIndex = i;
+
+                    view.DropdownView.Dropdown.options.Add(
+                        new TMP_Dropdown.OptionData
+                        {
+                            text = FormatResolutionDropdownOption(resolution, true)
+                        }
+                    );
+                }
+
+                view.DropdownView.Dropdown.SetValueWithoutNotify(currentResolutionIndex);
             }
+            else
+            {
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = FormatResolutionDropdownOption(NativeWindowManager.CurrentResolution, false) });
+            }
+
+            view.DropdownView.Dropdown.RefreshShownValue();
         }
 
-        private void SetResolutionSettings(int index, bool isInitialSetup)
+        private static string FormatResolutionDropdownOption(Vector2Int resolution, bool includeAspectRatio)
         {
-            if (appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE) && isInitialSetup)
-                return;
+            int width = resolution.x;
+            int height = resolution.y;
 
-            Resolution targetResolution = index < 0 || index >= possibleResolutions.Count ? WindowModeUtils.GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode);
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
-            upscalingController.ResolutionChanged(targetResolution);
+            int tempWidth = width;
+            int tempHeight = height;
+
+            while (height != 0)
+            {
+                int rest = width % height;
+                width = height;
+                height = rest;
+            }
+
+            if (includeAspectRatio)
+            {
+                var aspectRationString = $"{tempWidth / width}:{tempHeight / width}";
+                return $"{resolution.x}x{resolution.y} ({aspectRationString})";
+            }
+
+            return $"{resolution.x}x{resolution.y}";
         }
 
         public override void Dispose()
         {
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetResolutionSettingsOnChange);
+            NativeWindowManager.CurrentResolutionChanged -= OnCurrentResolutionChanged;
+            NativeWindowManager.FullScreenChanged -= OnFullScreenChanged;
         }
     }
 }

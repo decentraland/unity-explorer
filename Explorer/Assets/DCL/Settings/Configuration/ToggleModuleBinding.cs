@@ -63,7 +63,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
-                ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance, appParameters),
+                ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

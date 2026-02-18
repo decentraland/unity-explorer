@@ -59,9 +59,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
-        private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -100,7 +98,6 @@ namespace DCL.AuthenticationScreenFlow
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource)
@@ -119,12 +116,9 @@ namespace DCL.AuthenticationScreenFlow
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
 
         public override void Dispose()
@@ -157,7 +151,7 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, buildData.InstallSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
             );
 
