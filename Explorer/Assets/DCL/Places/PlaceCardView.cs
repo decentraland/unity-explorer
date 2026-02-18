@@ -137,6 +137,7 @@ namespace DCL.Places
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
             liveTag.SetActive(placeInfo.live);
+            featuredTag.SetActive(placeInfo.highlighted);
 
             bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
             friendsConnected.root.SetActive(showFriendsConnected);
@@ -153,16 +154,6 @@ namespace DCL.Places
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friends[i];
                     friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
-                }
-            }
-
-            featuredTag.SetActive(false);
-            foreach (string category in placeInfo.categories)
-            {
-                if (category.Equals(FEATURED_CATEGORY, StringComparison.OrdinalIgnoreCase))
-                {
-                    featuredTag.SetActive(true);
-                    break;
                 }
             }
 
