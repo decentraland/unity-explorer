@@ -463,14 +463,14 @@ namespace Global.Dynamic
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
-            bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
-            bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
-            bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool includeCameraReel = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CAMERA_REEL, featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || Application.isEditor);
+            bool includeFriends = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || Application.isEditor) && !localSceneDevelopment;
+            bool includeUserBlocking = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_USER_BLOCKING, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING));
             bool includeTranslationChat = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED);
-            bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
+            bool isNameEditorEnabled = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PROFILE_NAME_EDITOR, featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || Application.isEditor);
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
-            bool includeBannedUsersFromScene = featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.BANNED_USERS_FROM_SCENE)) || Application.isEditor;
-            bool includeDiscover = featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.DISCOVER)) || Application.isEditor;
+            bool includeBannedUsersFromScene = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BANNED_USERS_FROM_SCENE, featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || Application.isEditor);
+            bool includeDiscover = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || Application.isEditor);
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
