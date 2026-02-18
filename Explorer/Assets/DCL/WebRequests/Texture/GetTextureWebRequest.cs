@@ -76,7 +76,8 @@ namespace DCL.WebRequests
                     if (data == null)
                         throw new Exception("Texture content is empty");
 
-                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false,
+                        linear: webRequest.textureType == TextureType.NormalMap);
 
                     if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
                 }
