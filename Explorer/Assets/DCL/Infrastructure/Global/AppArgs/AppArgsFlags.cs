@@ -66,6 +66,15 @@ namespace Global.AppArgs
 
         public const string FORCE_BACKFACE_CULLING = "force-backface-culling";
 
+        public const string NAME_COLOR_CHANGE = "name-color-change";
+
+        public const string EMAIL_OTP_AUTH = "email-otp-auth";
+
+        public const string CHAT_MESSAGE_RATE_LIMIT = "chat-message-rate-limit";
+        public const string CHAT_MESSAGE_BUFFER = "chat-message-buffer";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
