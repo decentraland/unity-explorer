@@ -57,6 +57,8 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
 
         public event Action? HelpOpened;
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -163,8 +165,16 @@ namespace DCL.UI.Sidebar
 
             if (includeDiscover)
             {
-                viewInstance.placesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget());
-                viewInstance.eventsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget());
+                viewInstance.placesButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget();
+                    PlacesOpened?.Invoke();
+                });
+                viewInstance.eventsButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget();
+                    EventsOpened?.Invoke();
+                });
             }
             else
             {

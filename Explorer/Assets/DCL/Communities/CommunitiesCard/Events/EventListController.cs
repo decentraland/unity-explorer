@@ -70,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
 
-            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}";
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -109,7 +109,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData.Event));
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData.Event)}&utm_source=explorer&utm_campaign=communities");
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {
