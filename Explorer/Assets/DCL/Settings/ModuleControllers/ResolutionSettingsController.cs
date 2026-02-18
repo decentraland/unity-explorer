@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -82,7 +83,7 @@ namespace DCL.Settings.ModuleControllers
 
             Resolution targetResolution = index < 0 || index >= possibleResolutions.Count ? WindowModeUtils.GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
             FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
+            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode);
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
             upscalingController.ResolutionChanged(targetResolution);
         }

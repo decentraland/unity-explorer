@@ -31,8 +31,7 @@ namespace DCL.Settings.Utils
                 // Exclude possible duplicates
                 // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
                 if (resolutions.Any(res => res.height == resolution.height
-                                           && res.width == resolution.width
-                                           && ((int)Math.Round(res.refreshRateRatio.value)).Equals((int)Math.Round(resolution.refreshRateRatio.value))))
+                                           && res.width == resolution.width))
                     continue;
 
                 AddResolution(resolution);
@@ -82,7 +81,7 @@ namespace DCL.Settings.Utils
             }
 
             var aspectRationString = $"{tempWidth / width}:{tempHeight / width}";
-            return $"{resolution.width}x{resolution.height} ({aspectRationString}) {resolution.refreshRate} Hz";
+            return $"{resolution.width}x{resolution.height} ({aspectRationString})";
         }
 
         // By design, the default resolution should be a 1080p resolution with a 16:9 aspect ratio

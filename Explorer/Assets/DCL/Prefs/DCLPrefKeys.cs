@@ -49,7 +49,7 @@ namespace DCL.Prefs
         public const string SETTINGS_RESOLUTION = "Settings_Resolution";
         public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
-        public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
+        public const string SETTINGS_FULLSCREEN = "Settings_Fullscreen";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";

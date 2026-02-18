@@ -8,7 +8,7 @@ namespace DCL.Settings.Utils
     {
         private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
         private const int MAX_WINDOWED_WIDTH = 2560;
-        private const FullScreenMode DEFAULT_SCREEN_MODE = FullScreenMode.FullScreenWindow;
+        private const bool DEFAULT_FULL_SCREEN = true;
 
         /// <summary>
         /// Sets the game to windowed mode with appropriate resolution adjustments.
@@ -22,7 +22,7 @@ namespace DCL.Settings.Utils
             int targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
             int targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
 
-            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed, current.refreshRateRatio);
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed);
         }
 
         public static Resolution GetTargetResolution(List<Resolution> possibleResolutions)
@@ -63,14 +63,8 @@ namespace DCL.Settings.Utils
             if (isAppArgWindowedMode)
                 return FullScreenMode.Windowed;
 
-            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE) ? GetSavedScreenMode() : DEFAULT_SCREEN_MODE;
-
-            FullScreenMode GetSavedScreenMode()
-            {
-                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
-                return FullscreenModeUtils.Modes[index];
-            }
+            bool isFullScreen = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FULLSCREEN) ? DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN) : DEFAULT_FULL_SCREEN;
+            return isFullScreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
         }
     }
 }
-
