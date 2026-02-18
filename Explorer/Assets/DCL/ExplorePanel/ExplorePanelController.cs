@@ -69,8 +69,8 @@ namespace DCL.ExplorePanel
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public event Action? PlacesOpened;
-        public event Action? EventsOpened;
+        public event Action? PlacesOpenedFromStartMenu;
+        public event Action? EventsOpenedFromStartMenu;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -186,10 +186,10 @@ namespace DCL.ExplorePanel
                         switch (section)
                         {
                             case ExploreSections.Places:
-                                PlacesOpened?.Invoke();
+                                PlacesOpenedFromStartMenu?.Invoke();
                                 break;
                             case ExploreSections.Events:
-                                EventsOpened?.Invoke();
+                                EventsOpenedFromStartMenu?.Invoke();
                                 break;
                         }
 
@@ -234,18 +234,20 @@ namespace DCL.ExplorePanel
             RegisterHotkeys();
 
             checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
-            CheckForLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
 
             if (inputData.IsSectionProvided)
                 return;
 
+            // Only triggers OpenedFromStartMenu events if IsSectionProvided is false.
+            // This means that the section has not opened by shortcut nor sidebar.
             switch (sectionToShow)
             {
                 case ExploreSections.Places:
-                    PlacesOpened?.Invoke();
+                    PlacesOpenedFromStartMenu?.Invoke();
                     break;
                 case ExploreSections.Events:
-                    EventsOpened?.Invoke();
+                    EventsOpenedFromStartMenu?.Invoke();
                     break;
             }
         }
@@ -443,7 +445,7 @@ namespace DCL.ExplorePanel
             }
         }
 
-        private async UniTaskVoid CheckForLiveEventsAsync(CancellationToken ct)
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
         {
             Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
                                                                                      .SuppressToResultAsync(ReportCategory.EVENTS);
