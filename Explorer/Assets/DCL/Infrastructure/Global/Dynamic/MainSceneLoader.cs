@@ -168,7 +168,10 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            NativeWindowManager.Initialize(applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS), applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE));
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             World world = World.Create();
 

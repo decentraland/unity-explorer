@@ -6,6 +6,10 @@ using UnityEngine;
 
 namespace Plugins.NativeWindowManager
 {
+    /// <summary>
+    /// Handles switching between fullscreen and windowed mode,
+    /// and changing resolutions.
+    /// </summary>
     public static class NativeWindowManager
     {
         private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
@@ -16,14 +20,24 @@ namespace Plugins.NativeWindowManager
         private const int MIN_WIDTH = 640;
         private const int MIN_HEIGHT = 480;
 
+        /// <summary>
+        /// Fires when the current resolution (Screen.width/height) changes.
+        /// </summary>
         public static event Action<Vector2Int> CurrentResolutionChanged
         {
             add => resolutionListener.ResolutionChanged += value;
             remove => resolutionListener.ResolutionChanged -= value;
         }
 
+        /// <summary>
+        /// Fires when the fullscreen state changes.
+        /// </summary>
         public static event Action<bool> FullScreenChanged;
 
+        /// <summary>
+        /// Gets or sets the fullscreen resolution.
+        /// </summary>
+        /// <exception cref="NotSupportedException">Thrown if called in window mode.</exception>
         public static Vector2Int FullScreenResolution
         {
             get => DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.SETTINGS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
@@ -38,14 +52,24 @@ namespace Plugins.NativeWindowManager
             }
         }
 
+        /// <summary>
+        /// Gets the current resolution (Screen.width/height) as a Vector2Int.
+        /// </summary>
         public static Vector2Int CurrentResolution => new (Screen.width, Screen.height);
 
+        /// <summary>
+        /// Enables or disables fullscreen mode (borderless).
+        /// </summary>
         public static bool FullScreenEnabled
         {
             get => Screen.fullScreenMode == FullScreenMode.FullScreenWindow;
             set => EnableFullscreen(value);
         }
 
+        /// <summary>
+        /// Returns a list of all available resolutions that can be used in
+        /// fullscreen mode.
+        /// </summary>
         public static List<Vector2Int> AvailableResolutions => ResolutionUtils.GetAvailableResolutions();
 
         private static bool initialized;
@@ -54,11 +78,17 @@ namespace Plugins.NativeWindowManager
 
         private static ResolutionListener resolutionListener;
 
-        public static void Initialize(bool disableConstraints, bool windowedModeRequested)
+        /// <summary>
+        /// Initializes the window manager.
+        /// </summary>
+        /// <param name="disableConstraints">If constraints should be disabled in window mode.</param>
+        /// <param name="windowedModeRequested">If window mode was specifically requested via app args.</param>
+        /// <param name="isLocalScene">If we're running a local scene.</param>
+        public static void Initialize(bool disableConstraints, bool windowedModeRequested, bool isLocalScene)
         {
             disableWindowConstraints = disableConstraints;
 
-            if (windowedModeRequested)
+            if (windowedModeRequested || isLocalScene)
                 EnableFullscreen(false, false);
             else if (!FullScreenEnabled)
                 ApplyConstraints(true);
@@ -66,21 +96,40 @@ namespace Plugins.NativeWindowManager
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
 
-            //             //When running multiple instances from local scene, the last one opened will set the resolution to the lowest available
-            // bool isLocalScene = appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE);
-            // int startIndex = isLocalScene ? possibleResolutions.Count - 1 : 0;
-            // int endIndex = isLocalScene ? -1 : possibleResolutions.Count;
-            // int step = isLocalScene ? -1 : 1;
-            //
-            // for (int index = startIndex; index != endIndex; index += step)
-            // {
-            //     Resolution resolution = possibleResolutions[index];
-            //
-            //     if (!ResolutionUtils.IsDefaultResolution(resolution))
-            //         continue;
-            //
-            //     view.DropdownView.Dropdown.value = index;
-            //     break;
+            if (isLocalScene)
+                FullScreenResolution = ResolutionUtils.GetDefaultResolution();
+        }
+
+        /// <summary>
+        /// Requests a temporary window mode.
+        /// </summary>
+        public static void RequestTemporaryWindowMode()
+        {
+            if (Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
+            {
+                wasFullScreenBeforeRequest = false;
+                return;
+            }
+
+            wasFullScreenBeforeRequest = true;
+
+            Resolution current = Screen.currentResolution;
+
+            var targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
+            var targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
+
+            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed);
+        }
+
+        /// <summary>
+        /// Reverts a temporary window mode request, unless we were previously
+        /// already in window mode.
+        /// </summary>
+        public static void TryRevertTemporaryWindowMode()
+        {
+            if (!wasFullScreenBeforeRequest || Screen.fullScreenMode == FullScreenMode.FullScreenWindow) return;
+
+            Screen.SetResolution(FullScreenResolution.x, FullScreenResolution.y, FullScreenMode.FullScreenWindow);
         }
 
         private static void EnableFullscreen(bool enabled, bool store = true)
@@ -102,31 +151,6 @@ namespace Plugins.NativeWindowManager
 
             if (store)
                 DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, enabled);
-        }
-
-        public static void RequestTemporaryWindowMode()
-        {
-            if (Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
-            {
-                wasFullScreenBeforeRequest = false;
-                return;
-            }
-
-            wasFullScreenBeforeRequest = true;
-
-            Resolution current = Screen.currentResolution;
-
-            var targetWidth = Mathf.Min((int)(current.width * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT), MAX_WINDOWED_WIDTH);
-            var targetHeight = (int)(current.height * WINDOWED_RESOLUTION_RESIZE_COEFFICIENT);
-
-            Screen.SetResolution(targetWidth, targetHeight, FullScreenMode.Windowed);
-        }
-
-        public static void TryRevertTemporaryWindowMode()
-        {
-            if (!wasFullScreenBeforeRequest || Screen.fullScreenMode == FullScreenMode.FullScreenWindow) return;
-
-            Screen.SetResolution(FullScreenResolution.x, FullScreenResolution.y, FullScreenMode.FullScreenWindow);
         }
 
         private static void ApplyConstraints(bool enabled)
