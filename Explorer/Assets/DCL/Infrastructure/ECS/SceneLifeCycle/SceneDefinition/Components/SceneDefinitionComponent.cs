@@ -6,6 +6,7 @@ using Org.BouncyCastle.Utilities.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 using Utility;
 
@@ -26,7 +27,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public int InternalJobIndex { get; set; }
 
-        private readonly SceneFastLookup SceneLookup;
 
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;
@@ -47,7 +47,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneGeometry = sceneGeometry;
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
-            SceneLookup = new SceneFastLookup(parcels);
 
             EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, SceneLoadingMemoryConstants.MAX_SCENE_SIZE);
             EstimatedMemoryUsageForLODMB = (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.LOD_REDUCTION) + (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.QUALITY_REDUCTED_LOD_REDUCTION);
@@ -56,10 +55,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         //Used in hot path to avoid additional getters
         public readonly bool Contains(int x, int y) =>
-            SceneLookup.Contains(x, y);
+            Definition.Contains(x, y);
 
         public bool Contains(Vector2Int parcel) =>
-            SceneLookup.Contains(parcel.x, parcel.y);
+            Definition.Contains(parcel);
     }
 
     public static class SceneDefinitionComponentFactory
