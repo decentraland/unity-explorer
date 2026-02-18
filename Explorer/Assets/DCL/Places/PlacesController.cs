@@ -4,7 +4,6 @@ using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -46,8 +45,7 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus,
-            IAnalyticsController analytics)
+            HomePlaceEventBus homePlaceEventBus)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();

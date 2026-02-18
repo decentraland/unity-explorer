@@ -9,7 +9,6 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -63,8 +62,7 @@ namespace DCL.Events
             EventCardActionsController eventCardActionsController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            CommunitiesDataProvider communitiesDataProvider,
-            IAnalyticsController analytics)
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();

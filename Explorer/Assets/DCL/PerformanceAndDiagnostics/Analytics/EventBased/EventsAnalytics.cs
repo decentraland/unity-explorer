@@ -1,11 +1,11 @@
-﻿using DCL.EventsApi;
+﻿using DCL.Events;
+using DCL.EventsApi;
 using DCL.ExplorePanel;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine.InputSystem;
 
-namespace DCL.Events
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class EventsAnalytics : IDisposable
     {
