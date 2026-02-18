@@ -167,7 +167,7 @@ namespace DCL.Profiles
             profile.GetCompact().HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.GetCompact().UserNameColor = userNameColor;
-            profile.GetCompact().ClaimedNameColor = claimedNameColor;
+            profile.ClaimedNameColor = claimedNameColor;
 
             var avatar = new Avatar();
             profile.Avatar = avatar;
