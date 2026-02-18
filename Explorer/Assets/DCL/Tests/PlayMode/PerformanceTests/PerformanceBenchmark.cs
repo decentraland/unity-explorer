@@ -65,7 +65,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             reportScope!.Mock.When(x => x.LogException(Arg.Any<Exception>(),
                              Arg.Is<ReportData>(data => data.Category == ReportCategory.GENERIC_WEB_REQUEST), Arg.Any<Object?>()))
-                        .Do(x => Debug.LogException(x.Arg<Exception>()));
+                        .Do(x => Debug.unityLogger.LogException(x.Arg<Exception>()));
         }
 
         protected void CreateController(int concurrency, bool disableABCache = false, DecentralandEnvironment env = DecentralandEnvironment.Zone, bool ktxEnabled = true, bool useGateway = false)
