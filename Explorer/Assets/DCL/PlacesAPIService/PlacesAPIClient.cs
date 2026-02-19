@@ -283,9 +283,9 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
         {
-            var url = $"{baseWorldsURL}?names={placeId}";
+            var url = $"{basePlacesURL}?positions={coord}&names={realmName}";
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
@@ -303,7 +303,7 @@ namespace DCL.PlacesAPIService
 
 
             if (!response.ok)
-                throw new NotAPlaceException(placeId);
+                throw new NotAPlaceException(coord);
 
             // At this moment WR is already disposed
             return response;
