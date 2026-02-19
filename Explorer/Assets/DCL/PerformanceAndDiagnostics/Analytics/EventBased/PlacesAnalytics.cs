@@ -79,7 +79,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             analytics.Track(AnalyticsEvents.Places.PLACE_CARD_CLICKED, new JObject
             {
-                GetEventJObject(placeInfo),
+                { "place_id", placeInfo.id },
+                { "place_name", placeInfo.title },
+                { "place_coords", string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name },
+                { "highlighted", placeInfo.highlighted },
                 { "from_section", filtersApplied.Section.ToString().ToLower() },
                 { "search_query", filtersApplied.SearchText },
                 { "results_count", resultsCount },

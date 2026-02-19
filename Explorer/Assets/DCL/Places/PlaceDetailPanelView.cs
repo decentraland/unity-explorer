@@ -35,8 +35,11 @@ namespace DCL.Places
         [SerializeField] private ImageView placeThumbnailImage = null!;
         [SerializeField] private Sprite defaultPlaceThumbnail = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private GameObject creatorContainer = null!;
         [SerializeField] private ProfilePictureView creatorThumbnail = null!;
+        [SerializeField] private Button openPassportButton = null!;
         [SerializeField] private TMP_Text creatorNameText = null!;
+        [SerializeField] private TMP_Text creatorWalletText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
         [SerializeField] private PlaceCardTagWithTooltip liveTagWithTooltip = null!;
@@ -99,6 +102,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? JumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? StartNavigationButtonClicked;
         public event Action? ExitNavigationButtonClicked;
+        public event Action<string>? OpenPassportClicked;
 
         private readonly UniTask[] closeTasks = new UniTask[2];
 
@@ -118,6 +122,7 @@ namespace DCL.Places
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
             startNavigationButton.onClick.AddListener(() => StartNavigationButtonClicked?.Invoke(currentPlaceInfo));
             exitNavigationButton.onClick.AddListener(() => ExitNavigationButtonClicked?.Invoke());
+            openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
 
             contextMenu = new GenericContextMenu(placeCardContextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: placeCardContextMenuConfiguration.VerticalPadding, elementsSpacing: placeCardContextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => ShareButtonClicked?.Invoke(currentPlaceInfo)))
@@ -166,8 +171,12 @@ namespace DCL.Places
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
+            creatorContainer.SetActive(false);
             creatorThumbnail.gameObject.SetActive(false);
-            creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
+            creatorNameText.text = placeInfo.contact_name;
+            creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
+            creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
+            creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
@@ -248,8 +257,17 @@ namespace DCL.Places
                         cancellationToken);
 
                     creatorThumbnail.gameObject.SetActive(creatorProfileThumbnail.Value.Sprite != null);
+
+                    if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
+                    {
+                        creatorNameText.text = creatorProfile.Value.Name;
+                        creatorNameText.gameObject.SetActive(true);
+                        creatorWalletText.gameObject.SetActive(false);
+                    }
                 }
             }
+
+            creatorContainer.SetActive(true);
         }
 
         public void SilentlySetLikeToggle(bool isOn)

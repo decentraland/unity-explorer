@@ -528,7 +528,7 @@ namespace DCL.PluginSystem.Global
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
             placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
-                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, mvcManager);
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);

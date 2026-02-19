@@ -3,6 +3,7 @@ using DCL.Communities;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
+using DCL.Passport;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using MVC;
@@ -21,6 +22,7 @@ namespace DCL.Places
         private readonly INavmapBus navmapBus;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IMVCManager mvcManager;
 
         private string currentNavigationPlaceId = string.Empty;
 
@@ -33,7 +35,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             INavmapBus navmapBus,
             IMapPathEventBus mapPathEventBus,
-            HomePlaceEventBus homePlaceEventBus) : base(viewFactory)
+            HomePlaceEventBus homePlaceEventBus,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
@@ -41,6 +44,7 @@ namespace DCL.Places
             this.navmapBus = navmapBus;
             this.mapPathEventBus = mapPathEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.mvcManager = mvcManager;
         }
 
         protected override void OnViewInstantiated()
@@ -54,6 +58,7 @@ namespace DCL.Places
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
             viewInstance.StartNavigationButtonClicked += OnStartNavigationButtonClicked;
             viewInstance.ExitNavigationButtonClicked += OnExitNavigationButtonClicked;
+            viewInstance.OpenPassportClicked += OnOpenPassportClicked;
             navmapBus.OnDestinationSelected += OnNavmapBusDestinationSelected;
             mapPathEventBus.OnRemovedDestination += OnMapPathEventBusRemovedDestination;
         }
@@ -93,6 +98,7 @@ namespace DCL.Places
             viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
             viewInstance.StartNavigationButtonClicked -= OnStartNavigationButtonClicked;
             viewInstance.ExitNavigationButtonClicked -= OnExitNavigationButtonClicked;
+            viewInstance.OpenPassportClicked -= OnOpenPassportClicked;
             navmapBus.OnDestinationSelected -= OnNavmapBusDestinationSelected;
             mapPathEventBus.OnRemovedDestination -= OnMapPathEventBusRemovedDestination;
         }
@@ -157,6 +163,14 @@ namespace DCL.Places
         {
             placesCardSocialActionsController.ExitNavigationToPlace();
             viewInstance!.SetNavigation(false);
+        }
+
+        private void OnOpenPassportClicked(string userAddress)
+        {
+            if (string.IsNullOrEmpty(userAddress))
+                return;
+
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userAddress)), CancellationToken.None).Forget();
         }
 
         private void OnNavmapBusDestinationSelected(PlacesData.PlaceInfo placeInfo) =>
