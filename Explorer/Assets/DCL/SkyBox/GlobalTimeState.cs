@@ -5,7 +5,6 @@ namespace DCL.SkyBox
         private readonly SkyboxSettingsAsset settings;
         private readonly InterpolateTimeOfDayState transition;
         private float refreshAccumulatedTime;
-        private float globalTimeOfDay;
         private bool isTransitioning;
 
         public GlobalTimeState(SkyboxSettingsAsset settings,
@@ -13,7 +12,6 @@ namespace DCL.SkyBox
         {
             this.settings = settings;
             this.transition = transition;
-            globalTimeOfDay = settings.TimeOfDayNormalized;
         }
 
         public bool Applies() =>
@@ -23,7 +21,7 @@ namespace DCL.SkyBox
         public void Enter()
         {
             refreshAccumulatedTime = 0f;
-            settings.TargetTimeOfDayNormalized = globalTimeOfDay;
+            settings.TargetTimeOfDayNormalized = settings.GlobalTimeOfDayNormalized;
             settings.IsDayCycleEnabled = true;
             isTransitioning = true;
 
@@ -43,18 +41,12 @@ namespace DCL.SkyBox
                 isTransitioning = false;
             }
 
-            globalTimeOfDay += dt * settings.FullCycleSpeed;
-
-            while (globalTimeOfDay >= 1f)
-                globalTimeOfDay -= 1f;
-
             refreshAccumulatedTime += dt;
 
-            if (refreshAccumulatedTime >= settings.RefreshInterval)
-            {
-                settings.TimeOfDayNormalized = globalTimeOfDay;
-                refreshAccumulatedTime = 0f;
-            }
+            if (refreshAccumulatedTime < settings.RefreshInterval) return;
+
+            settings.TimeOfDayNormalized = settings.GlobalTimeOfDayNormalized;
+            refreshAccumulatedTime -= settings.RefreshInterval;
         }
 
         public void Exit()

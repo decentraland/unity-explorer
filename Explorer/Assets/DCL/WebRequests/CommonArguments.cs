@@ -11,6 +11,9 @@ namespace DCL.WebRequests
         /// </summary>
         public const int DEFAULT_TIMEOUT = 0;
 
+        /// <summary>
+        ///     It's an input original URL which can be transformed further in Web Requests - related systems
+        /// </summary>
         public readonly URLAddress URL;
 
         public readonly int Timeout;

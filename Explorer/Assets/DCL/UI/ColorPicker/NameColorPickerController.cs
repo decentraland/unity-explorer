@@ -12,6 +12,9 @@ namespace DCL.UI
 {
     public class NameColorPickerController : IDisposable
     {
+        public event Action<Color> OnColorChanged;
+        public event Action OnColorPickerClosed;
+
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileChangesBus profileChangesBus;
@@ -20,8 +23,7 @@ namespace DCL.UI
         private Color currentColor;
         private CancellationTokenSource saveCancellationToken;
 
-        public event Action<Color> OnColorChanged;
-        public event Action OnColorPickerClosed;
+        public Color CurrentColor => currentColor;
 
         public NameColorPickerController(
             IMVCManager mvcManager,
@@ -74,37 +76,9 @@ namespace DCL.UI
             mvcManager.ShowAsync(ColorPickerController.IssueCommand(data))
                       .ContinueWith(() =>
                        {
-                           Save();
                            OnColorPickerClosed?.Invoke();
                        })
                       .Forget();
-        }
-
-        private void Save()
-        {
-            saveCancellationToken = saveCancellationToken.SafeRestart();
-            SaveAsync(saveCancellationToken.Token).Forget();
-            return;
-
-            async UniTaskVoid SaveAsync(CancellationToken ct)
-            {
-                Profile? profile = await selfProfile.ProfileAsync(ct);
-
-                if (profile != null)
-                {
-                    profile.ClaimedNameColor = currentColor;
-
-                    try
-                    {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
-
-                        if (updatedProfile != null)
-                             profileChangesBus.PushUpdate(updatedProfile);
-                    }
-                    catch (IdenticalProfileUpdateException) { }
-                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-                }
-            }
         }
     }
 }

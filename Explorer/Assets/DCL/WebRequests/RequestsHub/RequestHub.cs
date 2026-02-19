@@ -37,6 +37,7 @@ namespace DCL.WebRequests.RequestsHub
 
         public RequestHub(IDecentralandUrlsSource urlsSource, bool disableABCache = false)
         {
+            UrlsSource = urlsSource;
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
 
@@ -47,16 +48,21 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericPostArguments, GenericPatchRequest>(mutableMap, GenericPatchRequest.Initialize);
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, ref GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(arguments, abArgs, disableABCache || WebRequestsDebugControl.DisableCache));
+            Add(mutableMap, (string url, ref GetAssetBundleArguments abArgs) => GetAssetBundleWebRequest.Initialize(url, abArgs, disableABCache || WebRequestsDebugControl.DisableCache));
             Add<GenericGetArguments, PartialDownloadRequest>(mutableMap, PartialDownloadRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, ref GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, urlsSource, ktxEnabled));
+            Add(mutableMap, (string url, ref GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(url, specificArguments, urlsSource, ktxEnabled));
         }
 
-        private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
+        public IDecentralandUrlsSource UrlsSource { get; }
+
+        private void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)
             where T: struct
             where TWebRequest: struct, ITypedWebRequest
         {
-            map.Add(Key.NewKey<T, TWebRequest>(), requestDelegate);
+            InitializeRequest<T, TWebRequest> invokeWithTransformedUrl
+                = (string url, ref T arguments) => requestDelegate.Invoke(UrlsSource.TransformUrl(url), ref arguments);
+
+            map.Add(Key.NewKey<T, TWebRequest>(), invokeWithTransformedUrl);
         }
 
         public InitializeRequest<T, TWebRequest> RequestDelegateFor<T, TWebRequest>()
