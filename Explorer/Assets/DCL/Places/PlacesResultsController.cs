@@ -210,6 +210,16 @@ namespace DCL.Places
         {
             isPlacesGridLoadingItems = true;
 
+            if (pageNumber == 0)
+            {
+                placesStateService.ClearPlaces();
+                view.ClearPlacesResults(currentFilters.Section);
+                view.SetPlacesGridAsLoading(true);
+                view.SetPlacesCounterActive(false);
+            }
+            else
+                view.SetPlacesGridLoadingMoreActive(true);
+
             if (!allFriendsLoaded)
             {
                 List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
@@ -223,16 +233,6 @@ namespace DCL.Places
                 placesStateService.SetLiveEvents(liveEvents);
                 liveEventsLoaded = true;
             }
-
-            if (pageNumber == 0)
-            {
-                placesStateService.ClearPlaces();
-                view.ClearPlacesResults(currentFilters.Section);
-                view.SetPlacesGridAsLoading(true);
-                view.SetPlacesCounterActive(false);
-            }
-            else
-                view.SetPlacesGridLoadingMoreActive(true);
 
             Profile? ownProfile = await selfProfile.ProfileAsync(ct);
             if (ownProfile == null)
@@ -338,7 +338,7 @@ namespace DCL.Places
                 PlacesFiltered?.Invoke(currentFilters);
             }
 
-            view.SetPlacesCounterActive(true);
+            view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.BROWSE || !string.IsNullOrEmpty(currentFilters.SearchText));
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)

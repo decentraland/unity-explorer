@@ -17,7 +17,7 @@ namespace DCL.Places
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
         private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
-        private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
+        private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -40f;
 
         public event Action<PlacesFilters>? AnyFilterChanged;
         public event Action? SearchBarSelected;
