@@ -195,7 +195,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             bool isWorld = options.RealmData.IsWorld();
-            string url = isWorld ? string.Format(options.WorldCommsUrl, meta.realmName) : options.AdapterUrl;
+            string url = isWorld ? string.Format(options.WorldCommsSceneAdapterUrl, meta.realmName, meta.sceneId) : options.AdapterUrl;
             string json = isWorld ? BuildWorldMetadata() : meta.ToJson();
             bool hasSecret = !string.IsNullOrEmpty(worldCommsSecret?.Secret);
             int secretLength = worldCommsSecret?.Secret?.Length ?? 0;

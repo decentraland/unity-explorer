@@ -25,9 +25,12 @@ namespace DCL.PrivateWorlds.Testing
             "Could not verify world permissions. You may experience access issues.";
         private const string PROBE_REPORT_CATEGORY = ReportCategory.MULTIPLAYER;
 
+        private const string MISSING_SECRET_FALLBACK = "__missing_secret__";
+
         [Header("Test Configuration")]
         [SerializeField] private string testWorldName = "yourname.dcl.eth";
-        [SerializeField] private string testSceneId = "main";
+        [Tooltip("Scene entity ID (IPFS hash from COMMS_SCENE_HANDLER logs, e.g. bafkreib6uef7drqguiafjani5lrau37v6iilwo2nwuls7xqzndobp2lznq for blackhole.dcl.eth)")]
+        [SerializeField] private string testSceneId = "bafkreib6uef7drqguiafjani5lrau37v6iilwo2nwuls7xqzndobp2lznq";
         [SerializeField] private string testRoomId = "world-dev-yourname.dcl.eth";
         [SerializeField] private string testWrongPassword = "wrong";
         [SerializeField] private string testCorrectPassword = "abc123";
@@ -386,8 +389,23 @@ namespace DCL.PrivateWorlds.Testing
             cts = new CancellationTokenSource();
 
             string metadata = BuildHandshakeMetadata(testCorrectPassword);
-            string url = $"{GetWorldContentServerBaseUrl()}/worlds/{testWorldName}/scenes/{testSceneId}/comms";
+            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsSceneAdapter), testWorldName, testSceneId);
             ProbeSignedEndpointAsync(url, metadata, "WorldSceneComms", cts.Token).Forget();
+        }
+
+        [ContextMenu("Test - World Scene Comms (No Secret)")]
+        public void TestWorldSceneCommsNoSecretEndpoint()
+        {
+            if (!ValidateWorldServerDependencies())
+                return;
+
+            cts?.Cancel();
+            cts?.Dispose();
+            cts = new CancellationTokenSource();
+
+            string metadata = BuildHandshakeMetadata(MISSING_SECRET_FALLBACK);
+            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsSceneAdapter), testWorldName, testSceneId);
+            ProbeSignedEndpointAsync(url, metadata, "WorldSceneCommsNoSecret", cts.Token).Forget();
         }
 
         [ContextMenu("Test - Get Comms Adapter {roomId}")]
@@ -462,7 +480,9 @@ namespace DCL.PrivateWorlds.Testing
             try
             {
                 ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] POST {url}");
-                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] metadata={metadata}");
+                ReportHub.Log(PROBE_REPORT_CATEGORY, $"[WorldCommsProbe:{probeName}] body={metadata}");
+                ReportHub.Log(PROBE_REPORT_CATEGORY,
+                    "[WorldCommsProbe] For Postman: Method=POST, use the URL and body above. Copy the x-identity-auth-chain-0, x-identity-auth-chain-1, x-identity-auth-chain-2 headers from the GENERIC_WEB_REQUEST log lines emitted when this request is sent.");
 
                 var request = webRequestController!
                              .SignedFetchPostAsync(

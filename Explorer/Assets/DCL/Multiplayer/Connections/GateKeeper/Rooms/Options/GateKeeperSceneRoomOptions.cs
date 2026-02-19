@@ -13,6 +13,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
         public string AdapterUrl { get; }
         public string WorldCommsUrl { get; }
+        public string WorldCommsSceneAdapterUrl { get; }
         public IRealmData RealmData { get; }
 
         public GateKeeperSceneRoomOptions(
@@ -33,6 +34,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
                                       };
 
             WorldCommsUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldComms);
+            WorldCommsSceneAdapterUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldCommsSceneAdapter);
 
             if (appArgs.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? overrideUrl)
                 && !string.IsNullOrEmpty(overrideUrl))

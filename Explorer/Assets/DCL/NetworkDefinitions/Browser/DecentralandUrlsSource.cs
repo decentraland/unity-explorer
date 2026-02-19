@@ -157,6 +157,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.WorldPermissions => $"https://worlds-content-server.decentraland.{ENV}/world/{{0}}/permissions",
                 DecentralandUrl.WorldComms => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/comms",
+                DecentralandUrl.WorldCommsSceneAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
                 DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",

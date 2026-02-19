@@ -73,9 +73,14 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
-            // Places API is relevant for Genesis City only.
+            // Single-scene world: derive sceneId from first scene URN for POST /worlds/{worldName}/scenes/{sceneId}/comms.
             if (realmData.IsWorld())
-                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
+            {
+                string? sceneId = null;
+                if (realmData.Ipfs.SceneUrns is { Count: > 0 } sceneUrns)
+                    sceneId = IpfsHelper.ParseUrn(sceneUrns[0]).EntityId;
+                return Result<MetaData>.SuccessResult(new MetaData(sceneId, Vector2Int.zero, input));
+            }
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);

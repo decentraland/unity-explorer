@@ -128,6 +128,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         MetaTransactionServer = 78,
         
         WorldPermissions = 79,
-        WorldComms = 80
+        WorldComms = 80,
+        WorldCommsSceneAdapter = 81
     }
 }
