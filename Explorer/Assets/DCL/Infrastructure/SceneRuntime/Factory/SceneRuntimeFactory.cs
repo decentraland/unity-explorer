@@ -17,7 +17,7 @@ using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
 
 // ReSharper disable once RedundantUsingDirective
 using SceneRuntime.WebClient;
@@ -105,7 +105,7 @@ namespace SceneRuntime.Factory
 #endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
             // WebClient JavaScript engine uses native interop which requires the main thread
             await UniTask.SwitchToMainThread();
             return new WebClientSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
