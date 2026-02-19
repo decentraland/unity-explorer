@@ -35,7 +35,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
-        [SerializeField] private PlaceCardTagWithTooltip liveTagWithTooltip = null!;
+        [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -62,7 +62,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
-                public PlaceCardTagWithTooltip tooltip;
+                public HoverableTooltip tooltip;
             }
         }
 

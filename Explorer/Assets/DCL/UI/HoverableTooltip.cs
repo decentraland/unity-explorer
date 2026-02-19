@@ -2,9 +2,9 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.Places
+namespace DCL.UI
 {
-    public class PlaceCardTagWithTooltip : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class HoverableTooltip : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField] private GameObject tooltip = null!;
         [SerializeField] private TMP_Text text = null!;
@@ -15,10 +15,10 @@ namespace DCL.Places
         public void Configure(string tooltipText) =>
             text.text = tooltipText;
 
-        public void OnPointerEnter(PointerEventData eventData) =>
+        public void OnPointerEnter(PointerEventData _) =>
             tooltip.SetActive(true);
 
-        public void OnPointerExit(PointerEventData eventData) =>
+        public void OnPointerExit(PointerEventData _) =>
             tooltip.SetActive(false);
     }
 }
