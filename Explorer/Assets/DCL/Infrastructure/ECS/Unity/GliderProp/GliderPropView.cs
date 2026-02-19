@@ -110,7 +110,7 @@ namespace ECS.Unity.GliderProp
             AudioSources.Moving.volume = smoothedEngineLevel * FullSpeedMaxVolume * overallEngineVolume;
         }
 
-        public void OnReturnedToPool()
+        public void PrepareForNextActivation()
         {
             OpenAnimationCompleted = false;
             CloseAnimationCompleted = false;

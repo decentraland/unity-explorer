@@ -6,4 +6,8 @@ namespace DCL.CharacterMotion.Components
     {
         public GliderPropView View;
     }
+
+    public struct GliderPropEnabled
+    {
+    }
 }
