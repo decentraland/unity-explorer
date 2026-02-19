@@ -89,10 +89,9 @@ namespace DCL.Interaction.Systems
                     newEntityIsSelected,
                     out bool isAtDistance);
 
-                hoverStateComponent.AssignCollider(collider!, isAtDistance);
+                    hoverStateComponent.AssignCollider(collider!, isAtDistance, hoverFeedbackComponent.ScreenPositionOverride == null);
             }
 
-            // TODO (Maurizio) change this to remove raycastResultForSceneEntities
             if (candidateForHoverLeaveIsValid)
                 ResetPreviousEntity(in raycastResultForSceneEntities, in proximityResultForSceneEntities, in previousEntityInfo);
         }
@@ -265,6 +264,7 @@ namespace DCL.Interaction.Systems
             isAtDistance = false;
             bool highlightEnabled = true;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
+            Vector2? screenPositionOverride = null;
 
             pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
 
@@ -297,9 +297,8 @@ namespace DCL.Interaction.Systems
                 }
 
                 // Try Append Hover Feedback
-                hoverFeedbackComponent.ScreenPositionOverride = interactionType == InteractionType.Proximity
-                    ? GetColliderCenterScreenPosition(proximityResultForSceneEntities.Collider!)
-                    : null;
+                if (interactionType == InteractionType.Proximity)
+                    screenPositionOverride = GetColliderCenterScreenPosition(proximityResultForSceneEntities.Collider!);
 
                 if (info.HasHoverText && !string.IsNullOrEmpty(info.HoverText))
                     HoverFeedbackUtils.TryAppendHoverFeedback(
@@ -308,6 +307,8 @@ namespace DCL.Interaction.Systems
                         ref hoverFeedbackComponent,
                         anyInputInfo.AnyButtonIsPressed);
             }
+
+            hoverFeedbackComponent.ScreenPositionOverride = screenPositionOverride;
 
             if (highlightEnabled)
                 HighlightNewEntity(entityInfo, isAtDistance);

@@ -39,10 +39,10 @@
     border-bottom-left-radius: 8px;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
-    border-left-color: rgba(255, 255, 255, 0.3);
-    border-right-color: rgba(255, 255, 255, 0.3);
-    border-top-color: rgba(255, 255, 255, 0.3);
-    border-bottom-color: rgba(255, 255, 255, 0.3);
+    /*border-left-color: rgba(255, 255, 255, 1);*/
+    /*border-right-color: rgba(255, 255, 255, 1);*/
+    /*border-top-color: rgba(255, 255, 255, 1);*/
+    /*border-bottom-color: rgba(255, 255, 255, 1);*/
     border-top-width: 2px;
     border-right-width: 2px;
     border-bottom-width: 2px;
@@ -100,7 +100,7 @@
 }
 
 .tooltipKeyLabel {
-    color: rgb(255, 255, 255);
+    color: rgb(255, 116, 57);
     -unity-text-align: middle-center;
     font-size: 13px;
     -unity-font-style: bold;
@@ -110,4 +110,67 @@
     min-height: 0;
     margin-right: 2px;
     margin-left: 2px;
+}
+
+.tooltip-canvas {
+    position: absolute;
+}
+
+.tooltip {
+    position: absolute;
+    transform-origin: center;
+    translate: -50% -50%;
+}
+
+.slot-center {
+    left: 0;
+    top: 0;
+    translate: -50% -50%;
+}
+
+.slot-mid-top {
+    left: 0;
+    top: 0;
+    translate: 0 -80px;
+}
+
+.slot-bottom {
+    left: 0;
+    top: 0;
+    translate: 0 80px;
+}
+
+.slot-left {
+    right: 120px;
+    top: 0;
+}
+
+.slot-right {
+    left: 150px;
+    top: 50%;
+    translate: 0 -50%;
+}
+
+.slot-top-left {
+    left: -120px;
+    top: -60px;
+    translate: -100% 0;
+}
+
+.slot-top-right {
+    left: 120px;
+    top: -60px;
+    translate: 0 0;
+}
+
+.slot-bottom-left {
+    left: -120px;
+    top: 60px;
+    translate: -100% -100%;
+}
+
+.slot-bottom-right {
+    left: 120px;
+    top: 60px;
+    translate: 0 -100%;
 }

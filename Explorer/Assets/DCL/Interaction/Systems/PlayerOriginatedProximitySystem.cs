@@ -88,9 +88,17 @@ namespace DCL.Interaction.Systems
             ref ProximityResultForSceneEntities proximityResultForSceneEntities = ref playerInteractionEntity.ProximityResultForSceneEntities;
             proximityResultForSceneEntities.Reset();
 
-            Collider[] buffer = collidersBufferPool.Get();
+            // TODO (Maurizio) remove after tests
+#if UNITY_EDITOR
+            DrawFOV(
+                playerControllerCenterPosition,
+                playerFlatForward,
+                PROXIMITY_DEFAULT_MAX_DISTANCE,
+                Mathf.Acos(fovAngleCosThres) * Mathf.Rad2Deg
+            );
+#endif
 
-            uint highestPriority = 0;
+            Collider[] buffer = collidersBufferPool.Get();
 
             try
             {
@@ -100,6 +108,11 @@ namespace DCL.Interaction.Systems
                     buffer,
                     PhysicsLayers.PLAYER_PROXIMITY_MASK
                 );
+
+                // if (hitCount == 0)
+                //     return;
+
+                uint highestPriority = 0;
 
                 for (int i = 0; i < hitCount; i++)
                 {
@@ -119,19 +132,11 @@ namespace DCL.Interaction.Systems
                     Vector3 toTargetDir = toTargetVec / distanceToPlayer; // Normalization
                     Vector3 flatToTarget = Vector3.ProjectOnPlane(toTargetDir, Vector3.up).normalized;
 
-                    // TODO (Maurizio) remove after tests
-#if UNITY_EDITOR
-                    DrawFOV(
-                        playerControllerCenterPosition,
-                        playerFlatForward,
-                        PROXIMITY_DEFAULT_MAX_DISTANCE,
-                        Mathf.Acos(fovAngleCosThres) * Mathf.Rad2Deg
-                    );
-#endif
-
                     // Skip if outside horizontal FOV
                     if (Vector3.Dot(playerFlatForward, flatToTarget) < fovAngleCosThres)
                         continue;
+
+                    // TODO (Maurizio) maybe check for MaxPlayerDistance? among events
 
                     // Skip if we already have a higher priority result
                     uint priorityCandidate = GetHighestPriority(pointerEvents!);
@@ -142,8 +147,6 @@ namespace DCL.Interaction.Systems
                     if (priorityCandidate == highestPriority
                         && distanceToPlayer >= proximityResultForSceneEntities.DistanceToPlayer)
                         continue;
-
-                    //TODO (Maurizio) maybe we should exclude interactable objects from hit?
 
                     bool hasHit = Physics.Raycast(
                         playerControllerCenterPosition,
@@ -218,7 +221,7 @@ namespace DCL.Interaction.Systems
         }
 
 #if UNITY_EDITOR
-        void DrawFOV(Vector3 origin, Vector3 flatForward, float maxDistance, float fovAngle)
+        private void DrawFOV(Vector3 origin, Vector3 flatForward, float maxDistance, float fovAngle)
         {
             int segments = 20; // smoothness of arc
             float halfFov = fovAngle;
@@ -234,14 +237,14 @@ namespace DCL.Interaction.Systems
             Debug.DrawLine(origin, origin + (rightDir * maxDistance), Color.blue);
 
             // Draw arc
-            Vector3 prevPoint = origin + leftDir * maxDistance;
+            Vector3 prevPoint = origin + (leftDir * maxDistance);
 
             for (int i = 1; i <= segments; i++)
             {
                 float lerp = i / (float)segments;
                 float angle = Mathf.Lerp(-halfFov, halfFov, lerp);
                 Vector3 dir = Quaternion.AngleAxis(angle, Vector3.up) * flatForward;
-                Vector3 nextPoint = origin + dir * maxDistance;
+                Vector3 nextPoint = origin + (dir * maxDistance);
 
                 Debug.DrawLine(prevPoint, nextPoint, Color.blue);
                 prevPoint = nextPoint;

@@ -60,6 +60,10 @@ namespace DCL.Interaction.HoverCanvas.Systems
 
             if (hoverFeedbackComponent.Enabled)
             {
+                bool isProximity = hoverFeedbackComponent.ScreenPositionOverride.HasValue;
+
+                hoverCanvasInstance.UpdateLayout(hoverFeedbackComponent.Tooltips.Count, isProximity);
+
                 for (var i = 0; i < hoverFeedbackComponent.Tooltips.Count; i++)
                 {
                     HoverFeedbackComponent.Tooltip tooltipInfo = hoverFeedbackComponent.Tooltips[i];
@@ -76,10 +80,8 @@ namespace DCL.Interaction.HoverCanvas.Systems
                     hoverCanvasInstance.SetTooltip(tooltipInfo.Text, actionKeyText, iconClass, i);
                 }
 
-                hoverCanvasInstance.SetTooltipsCount(hoverFeedbackComponent.Tooltips.Count);
-
-                Vector2 position = hoverFeedbackComponent.ScreenPositionOverride.HasValue
-                    ? GetPositionPercent(hoverFeedbackComponent.ScreenPositionOverride.Value)
+                Vector2 position = isProximity
+                    ? GetPositionPercent(hoverFeedbackComponent.ScreenPositionOverride!.Value)
                     : cursorPositionPercent;
                 hoverCanvasInstance.SetPosition(position);
             }

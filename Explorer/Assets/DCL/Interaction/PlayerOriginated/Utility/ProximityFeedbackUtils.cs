@@ -24,8 +24,6 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                 PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
                 PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
 
-                if (!InteractionInputUtils.IsQualifiedByDistance(proximityResultForSceneEntities, info)) continue;
-
                 pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(PointerEventType.PetProximityLeave, pointerEvent, i);
             }
         }
