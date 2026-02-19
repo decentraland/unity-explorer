@@ -13,7 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -133,51 +132,58 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
-                var requestIsNotFulfilled = true;
-
-                // if the request is cached wait for it
-                // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intentionId, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                while (true)
                 {
-                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Hit (Ongoing Request) for: {intention.CommonArguments.URL}");
-                    
-                    // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
-                    state.AcquiredBudget?.Release();
-
-                    OngoingRequestResult<TAsset> ongoingRequestResult;
-
-                    // if the cached request is cancelled it does not mean failure for the new intent
-                    (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
-
-                    //Temporarily disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
-
-                    result = ongoingRequestResult.Result;
-
-                    if (requestIsNotFulfilled)
+                    // If there's an ongoing request for the same intention, piggyback on it
+                    if (cache.OngoingRequests.SyncTryGetValue(intentionId,
+                            out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                     {
-                        // Assert the recursion possibility
-                        // At this point the request should never be ongoing
-                        if (cache.OngoingRequests.SyncRemove(intentionId))
+                        ReportHub.Log(ReportCategory.STREAMABLE_LOADING,
+                            $"[Cache] Hit (Ongoing Request) for: {intention.CommonArguments.URL}");
 
-                            // Break the flow instead of trying to continue - we have to find and fix the origin of the issue
-                            throw new StreamableLoadingException(LogType.Exception, $"Execution of {intentionId} caused recursion");
+                        // Release budget immediately - if we don't and many bundles with sequential
+                        // dependencies are loaded, it will deadlock
+                        state.AcquiredBudget?.Release();
 
-                        await FlowAsync(entity, source, intention, state, partition, intentionId, disposalCt);
+                        OngoingRequestResult<TAsset> ongoingRequestResult;
+                        bool isCancelled;
+
+                        (isCancelled, ongoingRequestResult) =
+                            await cachedSource.Task.SuppressCancellationThrow();
+
+                        //Temporarily disabled as we don't have partial loading integrated
+                        //SynchronizePartialData(state, ongoingRequestResult);
+
+                        result = ongoingRequestResult.Result;
+
+                        if (isCancelled)
+
+                            // The ongoing request was cancelled. Another waiter may have already
+                            // started a new CacheableFlowAsync for the same intention.
+                            // Re-check OngoingRequests to piggyback on it, or fall through
+                            // to start our own if none exists.
+                            continue;
+
+                        // Got a valid result from the ongoing request
+                        break;
+                    }
+
+                    // If the given URL failed irrecoverably just return the failure
+                    if (cache.IrrecoverableFailures.TryGetValue(intentionId,
+                            out StreamableLoadingResult<TAsset>? failure))
+                    {
+                        result = failure;
                         return;
                     }
-                }
 
-                // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intentionId, out StreamableLoadingResult<TAsset>? failure))
-                {
-                    result = failure;
-                    return;
-                }
+                    // No ongoing request - start our own cacheable flow
+                    result = await CacheableFlowAsync(intention, state, partition, intentionId,
+                        CancellationTokenSource.CreateLinkedTokenSource(
+                                                    intention.CommonArguments.CancellationToken, disposalCt)
+                                               .Token);
 
-                // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
-                if (requestIsNotFulfilled)
-                    result = await CacheableFlowAsync(intention, state, partition, intentionId, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    break;
+                }
 
                 if (!result.HasValue)
 
@@ -388,7 +394,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             return result is { Succeeded: false, IsInitialized: true }
                 ? SetIrrecoverableFailure(intention,
-                intentionId, result.Value) : result;
+                    intentionId, result.Value)
+                : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention,
