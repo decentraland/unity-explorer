@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             {
                 CanBeDirty<Vector3> characterPosition = characterTransform.Position;
 
-                bool positionIsDirty = !realmData.ScenesAreFixed && characterPosition.IsDirty;
+                bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;
 
                 if (!positionIsDirty)
                     return false;
@@ -63,7 +63,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public MetaData.Input GetMetadataInput() =>
             new (
                 realmData.RealmName,
-                realmData.IsWorld()
+                realmData.SingleScene
                     ? Vector2Int.zero
                     : characterTransform.Position.ToParcel()
             );
@@ -71,7 +71,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             // Places API is relevant for Genesis City only
-            if (realmData.IsWorld())
+            if (realmData.SingleScene)
                 return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, Vector2Int.zero, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
@@ -79,10 +79,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             pointersList.Add(input.Parcel.ToInt2());
 
+            string entitiesActiveEndpoint = realmData.IsGenesis() ? urlsSource.Url(DecentralandUrl.EntitiesActive) : string.Format(urlsSource.Url(DecentralandUrl.WorldEntitiesActive), realmData.RealmName);
+
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(entitiesActiveEndpoint)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);

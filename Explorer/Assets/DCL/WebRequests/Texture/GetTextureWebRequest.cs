@@ -35,10 +35,10 @@ namespace DCL.WebRequests
         public static CreateTextureOp CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point) =>
             new (wrapMode, filterMode);
 
-        internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
+        internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
             bool useKtx = textureArguments.UseKtx && ktxEnabled;
-            string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(commonArguments.URL)) : commonArguments.URL;
+            string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
             return new GetTextureWebRequest(webRequest, requestUrl, textureArguments.TextureType);
@@ -76,7 +76,8 @@ namespace DCL.WebRequests
                     if (data == null)
                         throw new Exception("Texture content is empty");
 
-                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false,
+                        linear: webRequest.textureType == TextureType.NormalMap);
 
                     if (!texture.LoadImage(data)) { throw new Exception($"Failed to load image from data: {webRequest.url}"); }
                 }

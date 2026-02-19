@@ -205,5 +205,34 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
             public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
         }
+
+        public static class Events
+        {
+            public const string EVENTS_SECTION_OPENED = "events_section_opened";
+            public const string EVENTS_BY_DAY_OPENED = "events_by_day_opened";
+            public const string EVENT_CREATION_OPENED = "event_creation_opened";
+            public const string EVENT_CARD_CLICKED = "event_card_clicked";
+            public const string EVENT_SET_AS_INTERESTED = "event_set_as_interested";
+            public const string EVENT_ADDED_TO_CALENDAR = "event_added_to_calendar";
+            public const string EVENT_JUMPED_IN = "event_jumped_in";
+            public const string EVENT_SHARED = "event_shared";
+            public const string EVENT_LINK_COPIED = "event_link_copied";
+        }
+
+        public static class Places
+        {
+            public const string PLACES_SECTION_OPENED = "places_section_opened";
+            public const string PLACES_SEARCHED = "places_searched";
+            public const string PLACES_FILTERED = "places_filtered";
+            public const string PLACE_CARD_CLICKED = "place_card_clicked";
+            public const string PLACE_SET_AS_LIKED = "place_set_as_liked";
+            public const string PLACE_SET_AS_DISLIKED = "place_set_as_disliked";
+            public const string PLACE_SET_AS_FAVORITE = "place_set_as_favorite";
+            public const string PLACE_SET_AS_HOME = "place_set_as_home";
+            public const string PLACE_JUMPED_IN = "place_jumped_in";
+            public const string PLACE_SHARED = "place_shared";
+            public const string PLACE_LINK_COPIED = "place_link_copied";
+            public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
+        }
     }
 }
