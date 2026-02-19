@@ -21,6 +21,7 @@ namespace DCL.FeatureFlags
 
         public bool IsEnabled(string id) =>
             result.flags.GetValueOrDefault(id, false);
+        public bool IsEmpty => result.IsEmpty;
 
         public bool IsEnabled(string id, string variantId)
         {

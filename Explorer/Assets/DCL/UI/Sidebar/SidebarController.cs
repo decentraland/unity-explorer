@@ -67,6 +67,8 @@ namespace DCL.UI.Sidebar
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
 
         public event Action? HelpOpened;
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
 
         public SidebarController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -157,7 +159,7 @@ namespace DCL.UI.Sidebar
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(isFriendsFeatureEnabled);
             viewInstance.cameraReelButton.gameObject.SetActive(isCameraReelFeatureEnabled);
             viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
-            viewInstance.placesButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
 
             SubscribeToEvents();
@@ -331,8 +333,16 @@ namespace DCL.UI.Sidebar
         private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
         private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
         private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
-        private void OnPlacesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Places);
-        private void OnEventsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Events);
+        private void OnPlacesButtonClicked()
+        {
+            PlacesOpened?.Invoke();
+            OpenExplorePanelInSection(ExploreSections.Places);
+        }
+        private void OnEventsButtonClicked()
+        {
+            EventsOpened?.Invoke();
+            OpenExplorePanelInSection(ExploreSections.Events);
+        }
 
         private void OnBackpackButtonClicked()
         {

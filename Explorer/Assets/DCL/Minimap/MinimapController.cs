@@ -285,15 +285,16 @@ namespace DCL.Minimap
             {
                 try
                 {
-                    PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(previousParcelPosition, favoriteCancellationToken.Token);
+                    PlacesData.PlaceInfo? info = realmData.ScenesAreFixed
+                        ? await GetWorldInfoAsync(realmData.RealmName, ct)
+                        : await GetPlaceInfoAsync(previousParcelPosition, ct);
 
-                    if (placeInfo == null)
+                    if (info == null)
                     {
                         viewInstance!.favoriteButton.SetButtonState(false, false);
                         return;
                     }
-
-                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, value, ct);
+                    await placesAPIService.SetPlaceFavoriteAsync(info.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
                 catch (OperationCanceledException) { }
@@ -436,11 +437,17 @@ namespace DCL.Minimap
             if (realmData.ScenesAreFixed)
             {
                 viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-                viewInstance!.favoriteButton.SetButtonState(false, false);
 
                 PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(realmData.RealmName, ct);
                 if (worldInfo != null)
+                {
+                    viewInstance!.favoriteButton.SetButtonState(worldInfo.user_favorite);
                     placesAPIService.AddRecentlyVisitedPlace(worldInfo.id);
+                }
+                else
+                {
+                    viewInstance!.favoriteButton.SetButtonState(false, false);
+                }
             }
             else
             {

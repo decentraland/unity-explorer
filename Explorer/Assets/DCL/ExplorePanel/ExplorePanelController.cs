@@ -61,6 +61,9 @@ namespace DCL.ExplorePanel
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
+
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
@@ -155,8 +158,23 @@ namespace DCL.ExplorePanel
                     continue;
                 }
 
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
+                    {
+                        ToggleSection(isOn, tabSelector, section, true);
+
+                        if (!isOn) return;
+
+                        switch (section)
+                        {
+                            case ExploreSections.Places:
+                                PlacesOpened?.Invoke();
+                                break;
+                            case ExploreSections.Events:
+                                EventsOpened?.Invoke();
+                                break;
+                        }
+
+                    }
                 );
             }
 
@@ -191,6 +209,19 @@ namespace DCL.ExplorePanel
 
             BlockUnwantedInputs();
             RegisterHotkeys();
+
+            if (inputData.IsSectionProvided)
+                return;
+
+            switch (sectionToShow)
+            {
+                case ExploreSections.Places:
+                    PlacesOpened?.Invoke();
+                    break;
+                case ExploreSections.Events:
+                    EventsOpened?.Invoke();
+                    break;
+            }
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)

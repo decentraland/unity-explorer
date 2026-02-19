@@ -51,7 +51,9 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.SwitchVisibility(false);
 
                 if (!genesisTerrain.IsTerrainGenerated)
-                    await genesisTerrain.GenerateGenesisTerrainAndShowAsync(processReport: landscapeLoadReport,
+                    await genesisTerrain.GenerateGenesisTerrainAndShowAsync(
+                        realmController.RealmData.WorldManifest,
+                        processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
                     await genesisTerrain.ShowAsync(landscapeLoadReport);
@@ -63,7 +65,7 @@ namespace Global.Dynamic.Landscapes
                 if (realmController.RealmData.IsLocalScene())
                     await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
                 else
-                    await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
+                    await GenerateFixedScenesTerrainAsync(realmController.RealmData.WorldManifest, landscapeLoadReport, ct);
             }
 
             TerrainLoaded?.Invoke(CurrentTerrain);
@@ -111,10 +113,16 @@ namespace Global.Dynamic.Landscapes
             }
         }
 
-        private async UniTask GenerateFixedScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        private async UniTask GenerateFixedScenesTerrainAsync(WorldManifest worldManifest, AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
                 return;
+
+            if (!worldManifest.IsEmpty)
+            {
+                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
+                return;
+            }
 
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 

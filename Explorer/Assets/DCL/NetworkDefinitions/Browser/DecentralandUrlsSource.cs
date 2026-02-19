@@ -12,7 +12,25 @@ namespace DCL.Browser.DecentralandUrls
     //TODO test urls
     public class DecentralandUrlsSource : IDecentralandUrlsSource
     {
-        private const string ENV = "{ENV}";
+        protected enum CacheBehaviour
+        {
+            /// <summary>
+            ///     URL is static and can be safely cached
+            /// </summary>
+            STATIC = 0,
+
+            /// <summary>
+            ///     URL should be invalidated upon realm change
+            /// </summary>
+            REALM_DEPENDENT = 1,
+
+            /// <summary>
+            ///     URL can't be cached if FF are not yet configured
+            /// </summary>
+            FEATURE_FLAGS_DEPENDENT = 2,
+        }
+
+        protected const string ENV = "{ENV}";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
         private readonly DecentralandEnvironment environment;
@@ -59,24 +77,45 @@ namespace DCL.Browser.DecentralandUrls
         public static DecentralandUrlsSource CreateForTest(DecentralandEnvironment environment, ILaunchMode launchMode) =>
             new (environment, new IRealmData.Fake(), launchMode);
 
+        public string Probe(DecentralandUrl decentralandUrl)
+        {
+            UrlData rawUrl = RawUrl(decentralandUrl);
+
+            return rawUrl.ToString().Replace(ENV, decentralandDomain);
+        }
+
         public string Url(DecentralandUrl decentralandUrl)
         {
             const string REALM_DEPENDENT = "<REALM_DEPENDENT>";
+            const string FEATURE_FLAG_DEPENDENT = "<FEATURE_FLAG_DEPENDENT>";
 
             if (!cache.TryGetValue(decentralandUrl, out UrlData urlData))
             {
                 urlData = RawUrl(decentralandUrl);
 
-                if (urlData.Caching == CacheBehaviour.REALM_DEPENDENT && !realmData.Configured)
-                    return REALM_DEPENDENT;
+                switch (urlData.Caching)
+                {
+                    case CacheBehaviour.REALM_DEPENDENT when !realmData.Configured:
+                        return REALM_DEPENDENT;
 
-                urlData = new UrlData(urlData.Caching, urlData.Url!.Replace(ENV, decentralandDomain));
+                    case CacheBehaviour.FEATURE_FLAGS_DEPENDENT when FeatureFlagsConfiguration.Instance.IsEmpty:
+                        return urlData.Url ?? FEATURE_FLAG_DEPENDENT;
 
-                cache[decentralandUrl] = urlData;
+                    default:
+                        urlData = new UrlData(urlData.Caching, urlData.Url!.Replace(ENV, decentralandDomain));
+                        cache[decentralandUrl] = urlData;
+                        break;
+                }
             }
 
             return urlData.Url!;
         }
+
+        public virtual string TransformUrl(string originalUrl) =>
+            originalUrl;
+
+        public virtual string GetOriginalUrl(string url) =>
+            url;
 
         public string GetHostnameForFeatureFlag() =>
             launchMode.CurrentMode switch
@@ -96,7 +135,7 @@ namespace DCL.Browser.DecentralandUrls
                 cache.Remove(url);
         }
 
-        private UrlData RawUrl(DecentralandUrl decentralandUrl) =>
+        protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
                 DecentralandUrl.SupportLink => $"https://decentraland.{ENV}/help/",
@@ -154,7 +193,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistryVersion => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
-                DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
+                DecentralandUrl.WorldServer => $"https://worlds-content-server.decentraland.{ENV}/world",
+                DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/contents/",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
                 DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
@@ -169,7 +209,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ActiveCommunityVoiceChats => $"https://social-api.decentraland.{ENV}/v1/community-voice-chats/active",
                 DecentralandUrl.Support => $"https://docs.decentraland.{ENV}/player/support/",
                 DecentralandUrl.CreatorHub => $"https://decentraland.{ENV}/create/",
-                DecentralandUrl.ManaUsdRateApiUrl => $"https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
+                DecentralandUrl.ManaUsdRateApiUrl => "https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
 
@@ -177,6 +217,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                    realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
+
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
@@ -187,7 +230,7 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 
-        private readonly struct UrlData
+        protected readonly struct UrlData
         {
             public readonly CacheBehaviour Caching;
             public readonly string? Url;
@@ -206,19 +249,6 @@ namespace DCL.Browser.DecentralandUrls
 
             public override string ToString() =>
                 Url ?? "<NOT_CONFIGURED>";
-        }
-
-        private enum CacheBehaviour
-        {
-            /// <summary>
-            ///     URL is static and can be safely cached
-            /// </summary>
-            STATIC = 0,
-
-            /// <summary>
-            ///     URL should be invalidated upon realm change
-            /// </summary>
-            REALM_DEPENDENT = 1,
         }
     }
 }

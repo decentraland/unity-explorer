@@ -1,4 +1,4 @@
-﻿using DCL.Ipfs;
+using DCL.Ipfs;
 using DCL.Utilities;
 using System;
 using System.Text;
@@ -24,6 +24,11 @@ namespace ECS
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
         public bool Configured { get; private set; }
+
+        /// <summary>
+        ///     World manifest from asset-bundle-registry (occupied parcels, spawn coordinate, total). Null when not fetched or not applicable.
+        /// </summary>
+        public WorldManifest WorldManifest { get; private set; }
 
         public IReadonlyReactiveProperty<RealmKind> RealmType => realmType;
 
@@ -54,15 +59,17 @@ namespace ECS
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
             Hostname = string.Empty;
+            WorldManifest = WorldManifest.Empty;
         }
 
+        //Testing purposes
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false, WorldManifest.Empty);
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment)
+            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest)
         {
             IsDirty = true;
             Configured = true;
@@ -74,6 +81,7 @@ namespace ECS
             NetworkId = networkId;
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
+            WorldManifest = worldManifest;
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;
@@ -90,6 +98,7 @@ namespace ECS
         {
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
+            WorldManifest.Dispose();
             realmType.Value = RealmKind.Uninitialized;
         }
 

@@ -17,12 +17,10 @@ namespace ECS.SceneLifeCycle.Components
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly URLDomain ContentBaseUrl;
         public readonly SceneDefinitionComponent DefinitionComponent;
 
-        public GetSceneFacadeIntention(URLDomain contentBaseUrl, SceneDefinitionComponent definitionComponent)
+        public GetSceneFacadeIntention(SceneDefinitionComponent definitionComponent)
         {
-            ContentBaseUrl = contentBaseUrl;
             DefinitionComponent = definitionComponent;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
@@ -30,13 +28,13 @@ namespace ECS.SceneLifeCycle.Components
         }
 
         public bool Equals(GetSceneFacadeIntention other) =>
-            Equals(ContentBaseUrl, other.ContentBaseUrl) && Equals(DefinitionComponent.Definition, other.DefinitionComponent.Definition);
+            Equals(DefinitionComponent.Definition, other.DefinitionComponent.Definition);
 
         public override bool Equals(object obj) =>
             obj is GetSceneFacadeIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(ContentBaseUrl, DefinitionComponent.Definition);
+            HashCode.Combine(DefinitionComponent.Definition);
 
         public override string ToString() =>
             $"Get Scene Facade: {DefinitionComponent.Definition?.id}";

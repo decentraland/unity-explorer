@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -7,6 +7,7 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -25,6 +26,7 @@ using System.Threading;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -61,10 +63,10 @@ namespace Global.Dynamic
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-        private readonly URLDomain assetBundleRegistry;
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
+        private readonly WorldManifestProvider worldManifestProvider;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -99,7 +101,8 @@ namespace Global.Dynamic
             bool isLocalSceneDevelopment,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
-            DecentralandEnvironment environment)
+            DecentralandEnvironment environment,
+            WorldManifestProvider worldManifestProvider)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -116,6 +119,7 @@ namespace Global.Dynamic
             this.appArgs = appArgs;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
+            this.worldManifestProvider = worldManifestProvider;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -134,6 +138,7 @@ namespace Global.Dynamic
             {
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
 
@@ -144,7 +149,8 @@ namespace Global.Dynamic
                     ResolveCommsAdapter(result),
                     result.comms?.protocol ?? "v3",
                     hostname,
-                    isLocalSceneDevelopment
+                    isLocalSceneDevelopment,
+                    worldManifest
                 );
 
                 // Add the realm component
@@ -172,14 +178,6 @@ namespace Global.Dynamic
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
                 throw new RealmChangeException($"Failed to connect to '{url}'", e);
             }
-        }
-
-        public async UniTask RestartRealmAsync(CancellationToken ct)
-        {
-            if (!CurrentDomain.HasValue)
-                throw new Exception("Cannot restart realm, no valid domain set. First call SetRealmAsync(domain)");
-
-            await SetRealmAsync(CurrentDomain.Value, ct);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>

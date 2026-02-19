@@ -163,6 +163,7 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 categoryIconsMapping,
                 characterPreviewEventBus,
+                profileChangesBus,
                 mvcManager,
                 selfProfile,
                 world,
