@@ -306,7 +306,7 @@ namespace Global
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
                 new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
-                new SDKPhysicsImpulsePlugin(globalWorld, playerEntity),
+                new SDKExternalPhysicsPlugin(globalWorld, playerEntity),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);

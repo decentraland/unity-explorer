@@ -15,13 +15,13 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
-    public partial class SDKPhysicsImpulseSystems : BaseUnityLoopSystem
+    public partial class SDKExternalPhysicsSystems : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
         private readonly Entity globalPlayerEntity;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        internal SDKPhysicsImpulseSystems(World world, World globalWorld, Entity globalPlayerEntity, ISceneStateProvider sceneStateProvider) : base(world)
+        internal SDKExternalPhysicsSystems(World world, World globalWorld, Entity globalPlayerEntity, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;

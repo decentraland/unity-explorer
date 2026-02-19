@@ -7,18 +7,18 @@ using System.Collections.Generic;
 
 namespace DCL.SDKComponents.PhysicsImpulse.Systems
 {
-    public class SDKPhysicsImpulsePlugin : IDCLWorldPluginWithoutSettings
+    public class SDKExternalPhysicsPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly World globalWorld;
         private readonly Entity globalPlayerEntity;
 
-        public SDKPhysicsImpulsePlugin(World globalWorld, Entity globalPlayerEntity)
+        public SDKExternalPhysicsPlugin(World globalWorld, Entity globalPlayerEntity)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            SDKPhysicsImpulseSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.SceneStateProvider);
+            SDKExternalPhysicsSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.SceneStateProvider);
     }
 }
