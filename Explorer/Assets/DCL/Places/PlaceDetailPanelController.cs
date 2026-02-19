@@ -1,11 +1,14 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -21,6 +24,7 @@ namespace DCL.Places
         private readonly INavmapBus navmapBus;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private string currentNavigationPlaceId = string.Empty;
 
@@ -33,7 +37,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             INavmapBus navmapBus,
             IMapPathEventBus mapPathEventBus,
-            HomePlaceEventBus homePlaceEventBus) : base(viewFactory)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService) : base(viewFactory)
         {
             this.thumbnailLoader = thumbnailLoader;
             this.profileRepository = profileRepository;
@@ -41,6 +46,7 @@ namespace DCL.Places
             this.navmapBus = navmapBus;
             this.mapPathEventBus = mapPathEventBus;
             this.homePlaceEventBus = homePlaceEventBus;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         protected override void OnViewInstantiated()
@@ -71,6 +77,9 @@ namespace DCL.Places
                 homePlaceEventBus: homePlaceEventBus);
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
+
+            if (!string.IsNullOrEmpty(inputData.PlaceData.world_name))
+                CheckWorldAccessAsync(inputData.PlaceData.world_name, panelCts.Token).Forget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -107,6 +116,21 @@ namespace DCL.Places
                 creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
 
             await viewInstance!.SetCreatorThumbnailAsync(creatorProfile, ct);
+        }
+
+        private async UniTaskVoid CheckWorldAccessAsync(string worldName, CancellationToken ct)
+        {
+            try
+            {
+                WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
+                viewInstance!.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"[PlaceDetailPanelController] Failed to check world access for '{worldName}': {e.Message}");
+                viewInstance!.SetWorldAccessState(WorldAccessCheckResult.CheckFailed);
+            }
         }
 
         private void OnLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue)

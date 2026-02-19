@@ -10,11 +10,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
     public readonly struct GateKeeperSceneRoomOptions
     {
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; }
+        public IRealmData RealmData { get; }
 
         private readonly string? overrideAdapterURL;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IRealmData realmData;
 
         public GateKeeperSceneRoomOptions(
             ILaunchMode launchMode,
@@ -25,6 +25,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             IRealmData realmData
         )
         {
+            RealmData = realmData;
             SceneRoomMetaDataSource = launchMode.CurrentMode switch
                                       {
                                           LaunchMode.Play => play,
@@ -34,7 +35,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
             this.launchMode = launchMode;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.realmData = realmData;
 
             if (appArgs.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? overrideUrl)
                 && !string.IsNullOrEmpty(overrideUrl))
@@ -53,13 +53,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
             if (launchMode.CurrentMode == LaunchMode.Play)
             {
-                if (realmData.IsWorld() && !realmData.SingleScene)
-                    return string.Format(decentralandUrlsSource.Url(DecentralandUrl.WorldCommsAdapter), realmData.RealmName, sceneID);
+                if (RealmData.IsWorld() && !RealmData.SingleScene)
+                    return string.Format(decentralandUrlsSource.Url(DecentralandUrl.WorldCommsAdapter), RealmData.RealmName, sceneID);
             }
 
-            //Default
             return decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
         }
-
     }
 }

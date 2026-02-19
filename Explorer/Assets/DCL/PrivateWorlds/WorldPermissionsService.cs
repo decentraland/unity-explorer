@@ -1,0 +1,337 @@
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using Newtonsoft.Json;
+using System;
+using System.Threading;
+
+namespace DCL.PrivateWorlds
+{
+    /// <summary>
+    /// Result of checking world access permissions.
+    /// </summary>
+    public enum WorldAccessCheckResult
+    {
+        /// <summary>
+        /// User is allowed to access the world.
+        /// </summary>
+        Allowed,
+
+        /// <summary>
+        /// World requires a password to enter.
+        /// </summary>
+        PasswordRequired,
+
+        /// <summary>
+        /// User is not on the allow-list and not in any allowed community.
+        /// </summary>
+        AccessDenied,
+
+        /// <summary>
+        /// Failed to fetch permissions, should fallback to server-side check.
+        /// </summary>
+        CheckFailed
+    }
+
+    /// <summary>
+    /// Contains the result of an access check along with additional context.
+    /// </summary>
+    public class WorldAccessCheckContext
+    {
+        public WorldAccessCheckResult Result { get; set; }
+        public WorldAccessInfo? AccessInfo { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    /// <summary>
+    /// Interface for the world permissions service.
+    /// </summary>
+    public interface IWorldPermissionsService
+    {
+        /// <summary>
+        /// Fetches and checks if the current user has access to a world.
+        /// </summary>
+        /// <param name="worldName">The world name (e.g., "my-world.dcl.eth")</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Access check result with context</returns>
+        UniTask<WorldAccessCheckContext> CheckWorldAccessAsync(string worldName, CancellationToken ct);
+
+        /// <summary>
+        /// Fetches the raw permissions data for a world.
+        /// </summary>
+        /// <param name="worldName">The world name</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Parsed world access info</returns>
+        UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct);
+
+        /// <summary>
+        /// Validates a password for a world. Returns success and optional error message from the backend (e.g. max attempts exceeded).
+        /// </summary>
+        UniTask<ValidatePasswordResult> ValidatePasswordAsync(string worldName, string password, CancellationToken ct);
+    }
+
+    /// <summary>
+    /// Result of password validation. Backend may return an error message (e.g. max attempts exceeded).
+    /// </summary>
+    public readonly struct ValidatePasswordResult
+    {
+        public bool Success { get; }
+        public string? ErrorMessage { get; }
+
+        public ValidatePasswordResult(bool success, string? errorMessage = null)
+        {
+            Success = success;
+            ErrorMessage = errorMessage;
+        }
+
+        public static ValidatePasswordResult Ok => new (true);
+        public static ValidatePasswordResult Fail(string? errorMessage) => new (false, errorMessage);
+    }
+
+    /// <summary>
+    /// Abstraction for checking if the current user is a member of a community.
+    /// Implemented by an adapter that uses CommunitiesDataProvider (avoids DCL.PrivateWorlds referencing DCL.Social).
+    /// </summary>
+    public interface ICommunityMembershipChecker
+    {
+        /// <summary>
+        /// Returns true if the current user is a member of the given community (role != none).
+        /// </summary>
+        UniTask<bool> IsMemberOfCommunityAsync(string communityId, CancellationToken ct);
+    }
+
+    /// <summary>
+    /// Service for fetching and checking world access permissions.
+    /// </summary>
+    public class WorldPermissionsService : IWorldPermissionsService
+    {
+        private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
+
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ICommunityMembershipChecker? communityMembershipChecker;
+
+        public WorldPermissionsService(
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunityMembershipChecker? communityMembershipChecker = null)
+        {
+            this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
+            this.web3IdentityCache = web3IdentityCache;
+            this.communityMembershipChecker = communityMembershipChecker;
+        }
+
+        public async UniTask<WorldAccessCheckContext> CheckWorldAccessAsync(string worldName, CancellationToken ct)
+        {
+            var context = new WorldAccessCheckContext();
+
+            try
+            {
+                WorldAccessInfo? accessInfo = await GetWorldPermissionsAsync(worldName, ct);
+
+                if (accessInfo == null)
+                {
+                    context.Result = WorldAccessCheckResult.CheckFailed;
+                    context.ErrorMessage = "Failed to fetch world permissions";
+                    return context;
+                }
+
+                context.AccessInfo = accessInfo;
+
+                switch (accessInfo.AccessType)
+                {
+                    case WorldAccessType.Unrestricted:
+                        context.Result = WorldAccessCheckResult.Allowed;
+                        break;
+
+                    case WorldAccessType.SharedSecret:
+                        string? currentWallet = web3IdentityCache.Identity?.Address;
+                        if (!string.IsNullOrEmpty(currentWallet) &&
+                            currentWallet.Equals(accessInfo.OwnerAddress, StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Result = WorldAccessCheckResult.Allowed;
+                        }
+                        else
+                        {
+                            context.Result = WorldAccessCheckResult.PasswordRequired;
+                        }
+                        break;
+
+                    case WorldAccessType.AllowList:
+                        bool hasAccess = await CheckAllowListAccessAsync(accessInfo, ct);
+                        context.Result = hasAccess ? WorldAccessCheckResult.Allowed : WorldAccessCheckResult.AccessDenied;
+                        break;
+
+                    default:
+                        context.Result = WorldAccessCheckResult.Allowed;
+                        break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"Failed to check world permissions for '{worldName}': {e.Message}");
+                context.Result = WorldAccessCheckResult.CheckFailed;
+                context.ErrorMessage = e.Message;
+            }
+
+            return context;
+        }
+
+        public virtual async UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct)
+        {
+            try
+            {
+                string baseUrl = urlsSource.Url(DecentralandUrl.WorldPermissions);
+                string url = string.Format(baseUrl, worldName);
+
+                var response = await webRequestController
+                    .GetAsync(new CommonArguments(URLAddress.FromString(url)), ct, ReportCategory.REALM)
+                    .CreateFromJson<WorldPermissionsResponse>(WRJsonParser.Newtonsoft);
+
+                return WorldAccessInfo.FromResponse(response);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"Failed to fetch world permissions for '{worldName}': {e.Message}");
+                return null;
+            }
+        }
+
+        public async UniTask<ValidatePasswordResult> ValidatePasswordAsync(string worldName, string password, CancellationToken ct)
+        {
+            try
+            {
+                string baseUrl = urlsSource.Url(DecentralandUrl.WorldComms);
+                string url = string.Format(baseUrl, worldName);
+
+                string metadata = $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(password)}\"}}";
+
+                var commonArguments = new CommonArguments(
+                    URLAddress.FromString(url),
+                    RetryPolicy.NONE,
+                    timeout: VALIDATE_PASSWORD_TIMEOUT_SECONDS);
+
+                long statusCode = await webRequestController
+                    .SignedFetchPostAsync(commonArguments, metadata, ct)
+                    .StatusCodeAsync();
+
+                ReportHub.Log(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {statusCode}");
+                return statusCode >= 200 && statusCode < 300 ? ValidatePasswordResult.Ok : ValidatePasswordResult.Fail(null);
+            }
+            catch (UnityWebRequestException e)
+            {
+                ReportHub.Log(ReportCategory.REALM,
+                    $"[WorldPermissionsService] ValidatePassword for '{worldName}': status {e.ResponseCode}, response: {e.Text}");
+                string? backendError = GetBackendErrorMessage(e);
+                return ValidatePasswordResult.Fail(backendError);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"[WorldPermissionsService] ValidatePassword for '{worldName}' failed: {e.Message}");
+                return ValidatePasswordResult.Fail(e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Extracts a user-facing error message from the backend response.
+        /// - 403 (wrong password): return null so caller shows "Incorrect password. Please try again."
+        /// - 429 (too many attempts): show backend "error" message or fallback "Too many attempts. Try again later."
+        /// - Other: show backend JSON "error" field, raw body, or exception message.
+        /// </summary>
+        private static string? GetBackendErrorMessage(UnityWebRequestException e)
+        {
+            if (e.ResponseCode == 403)
+                return null; // caller shows standard "Incorrect password" message
+
+            if (!string.IsNullOrWhiteSpace(e.Text))
+            {
+                string trimmed = e.Text.Trim();
+                try
+                {
+                    var parsed = JsonConvert.DeserializeObject<BackendErrorResponse>(trimmed);
+                    if (!string.IsNullOrWhiteSpace(parsed?.Error))
+                        return parsed.Error;
+                }
+                catch { /* not JSON or missing field, fall through */ }
+
+                return trimmed;
+            }
+
+            return e.Message;
+        }
+
+        [Serializable]
+        private class BackendErrorResponse
+        {
+            [JsonProperty("error")]
+            public string? Error { get; set; }
+        }
+
+        /// <summary>
+        /// Escapes a string for safe embedding in a JSON value using Newtonsoft.
+        /// </summary>
+        private static string EscapeJsonString(string value)
+        {
+            // JsonConvert.ToString returns a quoted string like "the\"value", so trim the outer quotes
+            string quoted = JsonConvert.ToString(value);
+            return quoted.Substring(1, quoted.Length - 2);
+        }
+
+        private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
+        {
+            // Check if current user's wallet is in the allow list
+            string? currentWallet = web3IdentityCache.Identity?.Address;
+
+            if (!string.IsNullOrEmpty(currentWallet))
+            {
+                if (accessInfo.IsWalletAllowed(currentWallet))
+                    return true;
+
+                // Owner always has access
+                if (currentWallet.Equals(accessInfo.OwnerAddress, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            if (communityMembershipChecker != null && accessInfo.AllowedCommunities.Count > 0)
+            {
+                foreach (string communityId in accessInfo.AllowedCommunities)
+                {
+                    try
+                    {
+                        if (await communityMembershipChecker.IsMemberOfCommunityAsync(communityId, ct))
+                            return true;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogWarning(ReportCategory.REALM,
+                            $"Failed to check community membership for '{communityId}': {e.Message}");
+                    }
+                }
+            }
+
+            return false;
+        }
+    }
+}

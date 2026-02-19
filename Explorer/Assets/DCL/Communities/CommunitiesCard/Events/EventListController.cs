@@ -44,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly string createEventFormat;
 
         private CommunityData? communityData = null;
@@ -69,6 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
 
@@ -148,7 +150,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (!string.IsNullOrWhiteSpace(eventData.Place.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventCardOperationsCts.Token, default, eventData.Place.world_name).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(eventData.Place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
         }

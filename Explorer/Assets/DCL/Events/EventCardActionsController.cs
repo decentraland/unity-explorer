@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -31,17 +32,20 @@ namespace DCL.Events
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public EventCardActionsController(
             HttpEventsApiService eventsApiService,
             IWebBrowser webBrowser,
             IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard)
+            ISystemClipboard clipboard,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.eventsApiService = eventsApiService;
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public async UniTaskVoid SetEventAsInterestedAsync(IEventDTO eventData, EventCardView? eventCardView, EventDetailPanelView? eventDetailPanelView, CancellationToken ct)
@@ -83,7 +87,7 @@ namespace DCL.Events
         public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
         {
             if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), ct).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), ct).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false).Forget();
 

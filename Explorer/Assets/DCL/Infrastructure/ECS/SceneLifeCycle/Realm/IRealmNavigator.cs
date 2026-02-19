@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utility.Types;
 using System;
@@ -15,7 +15,27 @@ namespace ECS.SceneLifeCycle.Realm
         NotReachable,
         LocalSceneDevelopmentBlocked,
         UnauthorizedWorldAccess,
-        Timeout
+        Timeout,
+
+        /// <summary>
+        /// World requires a password to access.
+        /// </summary>
+        PasswordRequired,
+
+        /// <summary>
+        /// User cancelled the password entry.
+        /// </summary>
+        PasswordCancelled,
+
+        /// <summary>
+        /// User is not on the allow-list for this world.
+        /// </summary>
+        WhitelistAccessDenied,
+
+        /// <summary>
+        /// User is not a member of any allowed community for this world.
+        /// </summary>
+        CommunityAccessDenied
     }
 
     public static class ChangeRealmErrors
@@ -29,6 +49,11 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
                 ChangeRealmError.Timeout => TaskError.Timeout,
+                ChangeRealmError.PasswordRequired => TaskError.MessageError,
+                ChangeRealmError.PasswordCancelled => TaskError.Cancelled,
+                ChangeRealmError.WhitelistAccessDenied => TaskError.MessageError,
+                ChangeRealmError.CommunityAccessDenied => TaskError.MessageError,
+                ChangeRealmError.UnauthorizedWorldAccess => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
@@ -43,7 +68,13 @@ namespace ECS.SceneLifeCycle.Realm
             };
 
         public static bool IsRecoverable(this ChangeRealmError error) =>
-            error is ChangeRealmError.SameRealm or ChangeRealmError.NotReachable or ChangeRealmError.LocalSceneDevelopmentBlocked;
+            error is ChangeRealmError.SameRealm
+                or ChangeRealmError.NotReachable
+                or ChangeRealmError.LocalSceneDevelopmentBlocked
+                or ChangeRealmError.PasswordRequired
+                or ChangeRealmError.PasswordCancelled
+                or ChangeRealmError.WhitelistAccessDenied
+                or ChangeRealmError.CommunityAccessDenied;
     }
 
     public interface IRealmNavigator
@@ -63,7 +94,7 @@ namespace ECS.SceneLifeCycle.Realm
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            bool isWorld = false
+            string? worldName = null
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);

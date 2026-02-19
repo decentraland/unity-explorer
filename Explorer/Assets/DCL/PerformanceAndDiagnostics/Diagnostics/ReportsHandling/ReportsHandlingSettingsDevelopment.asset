@@ -638,6 +638,14 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS_INTERNAL
       Severity: 1
+    - Category: REALM
+      Severity: 3
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 3
+    - Category: GENERIC_WEB_REQUEST
+      Severity: 3
+    - Category: MULTIPLAYER
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1

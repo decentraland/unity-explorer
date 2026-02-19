@@ -1,10 +1,11 @@
-﻿using DCL.Browser;
+using DCL.Browser;
 using DCL.Communities;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -45,7 +46,8 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -55,8 +57,19 @@ namespace DCL.Places
             PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this,
+                placesAPIService, 
+                placesStateService,
+                placesCategories,
+                selfProfile,
+                webBrowser,
+                friendServiceProxy,
+                profileRepositoryWrapper,
+                mvcManager,
+                thumbnailLoader,
+                placesCardSocialActionsController,
+                homePlaceEventBus,
+                worldPermissionsService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

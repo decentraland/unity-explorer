@@ -120,6 +120,7 @@ using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.Settings.ScreenMode;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
+using DCL.PrivateWorlds;
 using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -341,7 +342,12 @@ namespace Global.Dynamic
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
-
+            var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var communityMembershipChecker = new CommunityMembershipCheckerAdapter(communitiesDataProvider);
+            IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                identityCache,
+                communityMembershipChecker);
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, bootstrapContainer.DecentralandUrlsSource), builderDTOsURL.Value);
 
@@ -365,17 +371,26 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment);
+                bootstrapContainer.Environment,
+                worldPermissionsService);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
-            var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource, appArgs, staticContainer.RealmData);
+            var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
+                bootstrapContainer.DecentralandUrlsSource,
+                playSceneMetaDataSource,
+                localDevelopmentMetaDataSource,
+                appArgs,
+                staticContainer.RealmData);
+            
+            var worldCommsSecret = new WorldCommsSecret();
 
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, gateKeeperSceneRoomOptions)
-               .AsActivatable();
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
+                    gateKeeperSceneRoomOptions,
+                    worldCommsSecret) .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -385,7 +400,8 @@ namespace Global.Dynamic
                 new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
-                staticContainer.WebRequestsContainer.WebRequestController
+                staticContainer.WebRequestsContainer.WebRequestController,
+                worldCommsSecret
             );
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
@@ -483,6 +499,9 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
+            
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, worldCommsSecret);
+            realmNavigatorContainer.WorldAccessGateProxy.SetObject(worldAccessGate);
 
             MapRendererContainer? mapRendererContainer =
                 await MapRendererContainer
@@ -638,8 +657,6 @@ namespace Global.Dynamic
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
-            var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
-
             var communitiesDataService = new CommunityDataService(chatHistory,
                 mvcManager,
                 communitiesEventBus,
@@ -671,7 +688,8 @@ namespace Global.Dynamic
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
-                communitiesDataProvider);
+                communitiesDataProvider,
+                bootstrapContainer.DecentralandUrlsSource);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -768,6 +786,16 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
                     staticContainer.SmartWearableCache, eventsApiService),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
+                new PrivateWorldsPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    worldPermissionsService,
+                    worldAccessGate,
+                    staticContainer.InputBlock,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.RealmData,
+                    realmNavigator),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,
@@ -896,7 +924,8 @@ namespace Global.Dynamic
                     donationsService,
                     realmNavigator,
                     friendServiceProxy,
-                    staticContainer.PublishIpfsEntityCommand
+                    staticContainer.PublishIpfsEntityCommand,
+                    worldPermissionsService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1101,7 +1130,8 @@ namespace Global.Dynamic
                     friendsCacheProxy,
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
-                    voiceChatContainer.VoiceChatOrchestrator
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.DecentralandUrlsSource
                 );
 
                 globalPlugins.Add(friendsContainer);
@@ -1184,7 +1214,8 @@ namespace Global.Dynamic
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.Analytics!,
                     homePlaceEventBus,
-                    socialServiceEventBus));
+                    socialServiceEventBus,
+                    worldPermissionsService));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

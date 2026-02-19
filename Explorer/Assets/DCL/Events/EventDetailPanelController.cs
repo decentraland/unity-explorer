@@ -1,16 +1,37 @@
 using Cysharp.Threading.Tasks;
 using DCL.Events;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Browser;
+using DCL.Clipboard;
+using DCL.CommunicationData.URLHelpers;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.EventInfo
 {
     public class EventDetailPanelController : ControllerBase<EventDetailPanelView, EventDetailPanelParameter>
     {
+        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
+        private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
+        
         private readonly EventCardActionsController eventCardActionsController;
+        private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -19,12 +40,24 @@ namespace DCL.Communities.EventInfo
         private CancellationTokenSource eventCardOperationsCts = new ();
 
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
+            IWebRequestController webRequestController,
+            ISystemClipboard clipboard,
+            IWebBrowser webBrowser,
+            HttpEventsApiService eventsApiService,
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController)
             : base(viewFactory)
         {
             eventCardThumbnailLoader = thumbnailLoader;
             this.eventCardActionsController = eventCardActionsController;
+            this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
+            this.eventsApiService = eventsApiService;
+            this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
         }
 
         public override void Dispose()
@@ -82,6 +115,11 @@ namespace DCL.Communities.EventInfo
         {
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
             eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
+
+            if (eventData.World)
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventCardOperationsCts.Token, default, eventData.Server).Forget();
+            else
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
         }
 
         private void OnInterestedButtonClicked(IEventDTO eventData)

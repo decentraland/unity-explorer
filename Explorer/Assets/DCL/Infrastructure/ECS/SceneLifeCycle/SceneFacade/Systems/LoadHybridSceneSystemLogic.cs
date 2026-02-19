@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -13,17 +13,18 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly URLDomain GOERLI_CONTENT_URL = URLDomain.FromString("https://sdk-team-cdn.decentraland.org/ipfs/");
         private static readonly URLDomain GENESIS_CONTENT_URL = URLDomain.FromString("https://peer.decentraland.org/content/contents/");
-        private static readonly URLDomain WORLDS_CONTENT_URL = URLDomain.FromString("https://worlds-content-server.decentraland.org/contents/");
         private readonly HybridSceneContentServer hybridSceneContentServer;
         private readonly URLDomain hybridSceneContentServerDomain;
         private readonly string world;
+        private readonly string? worldContentServerBaseUrl;
         private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams) : base(webRequestController, assetBundleURL)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams, URLDomain worldContentServerContentsUrl, string worldContentServerBaseUrl) : base(webRequestController, assetBundleURL)
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
+            this.worldContentServerBaseUrl = worldContentServerBaseUrl;
 
             switch (hybridSceneContentServer)
             {
@@ -34,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
                     hybridSceneContentServerDomain = GENESIS_CONTENT_URL;
                     break;
                 case HybridSceneContentServer.World:
-                    hybridSceneContentServerDomain = WORLDS_CONTENT_URL;
+                    hybridSceneContentServerDomain = worldContentServerContentsUrl;
                     break;
             }
         }
@@ -47,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
             hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
 
             if (await hybridSceneHashedContent.TryGetRemoteSceneIDAsync(hybridSceneContentServerDomain,
-                    hybridSceneContentServer, definition.metadata.scene.DecodedBase, world, reportCategory))
+                    hybridSceneContentServer, definition.metadata.scene.DecodedBase, world, reportCategory, worldContentServerBaseUrl))
             {
                 await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain,
                     reportCategory);

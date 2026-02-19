@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
@@ -47,18 +47,22 @@ namespace SceneRunner.Scene
 
     public class GetHashWorld : IGetHash
     {
+        private const string DEFAULT_WORLD_CONTENT_SERVER_BASE = "https://worlds-content-server.decentraland.org/world";
         private readonly string world;
+        private readonly string worldContentServerBaseUrl;
 
-        public GetHashWorld(string world)
+        public GetHashWorld(string world, string? worldContentServerBaseUrl = null)
         {
             this.world = world;
+            this.worldContentServerBaseUrl = worldContentServerBaseUrl ?? DEFAULT_WORLD_CONTENT_SERVER_BASE;
         }
 
         public async UniTask<(bool, string)> TryGetHashAsync(IWebRequestController webRequestController, URLDomain contentDomain, Vector2Int coordinate, ReportData reportCategory)
         {
             try
             {
-                var getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString($"https://worlds-content-server.decentraland.org/world/{world}/about")), new CancellationToken(), reportCategory)
+                var aboutUrl = $"{worldContentServerBaseUrl.TrimEnd('/')}/{world}/about";
+                var getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString(aboutUrl)), new CancellationToken(), reportCategory)
                     .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (string? contentDefinition in getAbout.configurations.scenesUrn)

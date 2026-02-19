@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -23,6 +23,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -66,6 +67,7 @@ namespace Global.Dynamic
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
+        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly WorldManifestProvider worldManifestProvider;
 
         private GlobalWorld? globalWorld;
@@ -102,7 +104,8 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider)
+            WorldManifestProvider worldManifestProvider,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -120,6 +123,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
             this.worldManifestProvider = worldManifestProvider;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -206,6 +210,13 @@ namespace Global.Dynamic
             catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
 
             return statusCode != 401;
+        }
+
+        private static string ExtractCommsAdapterUrl(string input)
+        {
+            const string MARKER = "https";
+            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
+            return index >= 0 ? input.Substring(index) : string.Empty;
         }
 
         public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
@@ -360,7 +371,10 @@ namespace Global.Dynamic
             string hostname;
 
             if (about.configurations.realmName.IsEns())
-                hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
+            {
+                var uri = new Uri(realm.Value);
+                hostname = $"{uri.Host}{uri.AbsolutePath}";
+            }
             else
                 hostname = about.comms == null
 
@@ -379,13 +393,6 @@ namespace Global.Dynamic
 
             //"offline property like in previous implementation"
             return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
-        }
-
-        private static string ExtractCommsAdapterUrl(string input)
-        {
-            const string MARKER = "https";
-            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
-            return index >= 0 ? input.Substring(index) : string.Empty;
         }
     }
 }

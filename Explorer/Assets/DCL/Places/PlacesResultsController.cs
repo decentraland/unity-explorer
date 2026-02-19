@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Communities;
 using DCL.Diagnostics;
@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
@@ -45,6 +46,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IMVCManager mvcManager;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -69,7 +71,8 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.view = view;
             this.placesController = placesController;
@@ -81,6 +84,7 @@ namespace DCL.Places
             this.friendServiceProxy = friendServiceProxy;
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
+            this.worldPermissionsService = worldPermissionsService;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
@@ -97,7 +101,7 @@ namespace DCL.Places
             placesController.PlacesClosed += UnloadPlaces;
             placesCardSocialActionsController.PlaceSetAsHome += OnPlaceSetAsHome;
 
-            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper, homePlaceEventBus);
+            view.SetDependencies(placesStateService, thumbnailLoader, profileRepositoryWrapper, homePlaceEventBus, worldPermissionsService);
             view.InitializePlacesGrid();
         }
 

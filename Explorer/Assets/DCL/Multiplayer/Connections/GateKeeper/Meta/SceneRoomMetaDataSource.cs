@@ -28,12 +28,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
 
-        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.Configured || !realmData.ScenesAreFixed;
 
         public bool MetadataIsDirty
         {
             get
             {
+                if (!realmData.Configured)
+                    return false;
+
                 CanBeDirty<Vector3> characterPosition = characterTransform.Position;
 
                 bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;

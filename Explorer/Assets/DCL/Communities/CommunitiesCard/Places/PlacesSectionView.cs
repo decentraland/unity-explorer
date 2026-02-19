@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Places;
+using DCL.PrivateWorlds;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
@@ -55,6 +56,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, PlaceCardView>? ElementMainButtonClicked;
 
         private HomePlaceEventBus? homePlaceEventBus;
+        private IWorldPermissionsService worldPermissionsService = null!;
 
         private SectionFetchData<PlaceData> placesInfo = null!;
         private bool canModify;
@@ -76,6 +78,9 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void SetDependencies(HomePlaceEventBus homeEventBus) =>
             this.homePlaceEventBus = homeEventBus;
+
+        public void SetWorldPermissionsService(IWorldPermissionsService service) =>
+            worldPermissionsService = service;
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
@@ -147,6 +152,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo),
                 placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name),
                 (placeInfo, cardView) => ElementMainButtonClicked?.Invoke(placeInfo, cardView));
+
+            if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name))
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfo.PlaceInfo.world_name, elementView, elementView.WorldAccessCancellationToken).Forget();
 
             if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();

@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using ECS.SceneLifeCycle.Realm;
@@ -18,12 +19,14 @@ namespace DCL.Communities
         private const string EVENT_CREATED_POSITION_KEY = "position";
 
         private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource eventStartsCts = new ();
 
-        public NotificationHandler(IRealmNavigator realmNavigator)
+        public NotificationHandler(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.EVENTS_STARTED, EventStartSoonClicked);
         }
@@ -55,7 +58,7 @@ namespace DCL.Communities
             }
 
             if (worldName != null)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl()), eventStartsCts.Token, position).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventStartsCts.Token, position, worldName).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(position, eventStartsCts.Token, false).Forget();
         }
