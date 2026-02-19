@@ -7,6 +7,7 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,6 +41,9 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public WarningNotificationView? WarningNotificationView { get; private set; }
 
+        [field: SerializeField]
+        public TMP_Text LiveEventsCounterText { get; private set; } = null!;
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig? BackgroundMusic { get; private set; }
@@ -61,6 +65,12 @@ namespace DCL.ExplorePanel
             UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             return CanvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+        }
+
+        public void SetLiveEventsCounter(int count)
+        {
+            LiveEventsCounterText.text = count.ToString();
+            LiveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
         }
     }
 
