@@ -87,7 +87,7 @@ namespace DCL.Events
         public void JumpInEvent(IEventDTO eventData, CancellationToken ct)
         {
             if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer))), ct).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), ct).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false).Forget();
 

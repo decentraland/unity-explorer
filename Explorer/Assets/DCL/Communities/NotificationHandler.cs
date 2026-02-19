@@ -58,7 +58,7 @@ namespace DCL.Communities
             }
 
             if (worldName != null)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer))), eventStartsCts.Token, position, worldName).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventStartsCts.Token, position, worldName).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(position, eventStartsCts.Token, false).Forget();
         }

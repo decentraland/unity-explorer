@@ -178,7 +178,7 @@ namespace DCL.Places
         public void JumpInPlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct)
         {
             if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldContentServer))),
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl(dclUrlSource.Url(DecentralandUrl.WorldServer))),
                     ct,
                     default, placeInfo.world_name).Forget();
             else

@@ -793,7 +793,9 @@ namespace Global.Dynamic
                     worldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    bootstrapContainer.DecentralandUrlsSource),
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.RealmData,
+                    realmNavigator),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,

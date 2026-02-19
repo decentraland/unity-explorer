@@ -15,7 +15,7 @@ namespace DCL.CommunicationData.URLHelpers
 
         /// <summary>
         /// Builds the world URL for the given ENS using the environment-aware base URL
-        /// (e.g. from IDecentralandUrlsSource.Url(DecentralandUrl.WorldContentServer)).
+        /// (e.g. from IDecentralandUrlsSource.Url(DecentralandUrl.WorldServer)).
         /// </summary>
         public static string ConvertEnsToWorldUrl(this ENS ens, string worldContentServerBaseUrl)
         {

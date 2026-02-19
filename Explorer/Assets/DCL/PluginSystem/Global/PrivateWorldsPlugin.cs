@@ -8,6 +8,8 @@ using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
 using DCL.PrivateWorlds.Testing;
 using DCL.WebRequests;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -19,6 +21,7 @@ namespace DCL.PluginSystem.Global
     /// Plugin for Private Worlds feature. Registers popup controller and spawns test trigger.
     /// The handler (PrivateWorldAccessHandler) is created in DynamicWorldContainer.
     /// Chat minimization on popup show is handled by IBlocksChat on the popup controller.
+    /// When in a world, a permission guard periodically checks access and teleports to Genesis Plaza if denied.
     /// </summary>
     public class PrivateWorldsPlugin : IDCLGlobalPlugin<PrivateWorldsPlugin.PrivateWorldsSettings>
     {
@@ -29,6 +32,10 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly IRealmData realmData;
+        private readonly IRealmNavigator realmNavigator;
+
+        private PrivateWorldPermissionGuard? permissionGuard;
 
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,
@@ -37,7 +44,9 @@ namespace DCL.PluginSystem.Global
             IWorldAccessGate worldAccessGate,
             IInputBlock inputBlock,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -46,14 +55,19 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
         }
 
-        public void Dispose() { }
+        public void Dispose() =>
+            permissionGuard?.Dispose();
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
+            permissionGuard = new PrivateWorldPermissionGuard(realmData, worldPermissionsService, realmNavigator);
+
             if (settings.PrivateWorldPopup != null)
             {
                 ProvidedAsset<GameObject> prefab = await assetsProvisioner.ProvideMainAssetAsync(settings.PrivateWorldPopup, ct: ct);

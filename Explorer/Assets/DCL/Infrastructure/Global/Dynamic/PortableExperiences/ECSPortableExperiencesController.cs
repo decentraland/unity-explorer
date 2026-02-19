@@ -83,7 +83,7 @@ namespace PortableExperiences.Controller
             string worldUrl = string.Empty;
 
             if (ens.IsValid)
-                worldUrl = ens.ConvertEnsToWorldUrl(urlsSources.Url(DecentralandUrl.WorldContentServer));
+                worldUrl = ens.ConvertEnsToWorldUrl(urlsSources.Url(DecentralandUrl.WorldServer));
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 

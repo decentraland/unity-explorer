@@ -117,7 +117,7 @@ namespace DCL.Communities.EventInfo
             eventCardActionsController.JumpInEvent(eventData, eventCardOperationsCts.Token);
 
             if (eventData.World)
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer))), eventCardOperationsCts.Token, default, eventData.Server).Forget();
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventCardOperationsCts.Token, default, eventData.Server).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
         }

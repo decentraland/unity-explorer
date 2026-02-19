@@ -57,8 +57,19 @@ namespace DCL.Places
             PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this,
+                placesAPIService, 
+                placesStateService,
+                placesCategories,
+                selfProfile,
+                webBrowser,
+                friendServiceProxy,
+                profileRepositoryWrapper,
+                mvcManager,
+                thumbnailLoader,
+                placesCardSocialActionsController,
+                homePlaceEventBus,
+                worldPermissionsService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

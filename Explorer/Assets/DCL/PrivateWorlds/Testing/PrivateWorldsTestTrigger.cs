@@ -389,7 +389,7 @@ namespace DCL.PrivateWorlds.Testing
             cts = new CancellationTokenSource();
 
             string metadata = BuildHandshakeMetadata(testCorrectPassword);
-            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsSceneAdapter), testWorldName, testSceneId);
+            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsAdapter), testWorldName, testSceneId);
             ProbeSignedEndpointAsync(url, metadata, "WorldSceneComms", cts.Token).Forget();
         }
 
@@ -404,7 +404,7 @@ namespace DCL.PrivateWorlds.Testing
             cts = new CancellationTokenSource();
 
             string metadata = BuildHandshakeMetadata(MISSING_SECRET_FALLBACK);
-            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsSceneAdapter), testWorldName, testSceneId);
+            string url = string.Format(urlsSource!.Url(DecentralandUrl.WorldCommsAdapter), testWorldName, testSceneId);
             ProbeSignedEndpointAsync(url, metadata, "WorldSceneCommsNoSecret", cts.Token).Forget();
         }
 
