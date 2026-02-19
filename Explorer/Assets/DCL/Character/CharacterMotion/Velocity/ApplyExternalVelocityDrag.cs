@@ -25,6 +25,9 @@ namespace DCL.Character.CharacterMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, float dt)
         {
+            // safety net - external velocity should be always zero
+            characterPhysics.ExternalVelocity.y = 0f;
+
             // Additive damping: environment is always present, ground contact adds on top
             float damping = characterPhysics.IsGrounded
                 ? settings.ExternalEnvDrag + settings.ExternalGroundFriction
