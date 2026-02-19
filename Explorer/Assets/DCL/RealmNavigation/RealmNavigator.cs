@@ -68,15 +68,12 @@ namespace DCL.RealmNavigation
             this.landscape = landscape;
         }
 
-        private bool CheckIsNewRealm(URLDomain realm)
+        public bool IsAlreadyOnRealm(URLDomain realm)
         {
             if (!realmController.RealmData.Configured)
-                return true;
-
-            if (realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
 
-            return true;
+            return realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl;
         }
 
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
@@ -91,9 +88,6 @@ namespace DCL.RealmNavigation
 
             if (realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
-
-            if (CheckIsNewRealm(realm) == false)
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
@@ -185,6 +179,8 @@ namespace DCL.RealmNavigation
                 return opResult;
             };
         }
+
+
 
         public void RemoveCameraSamplingData()
         {

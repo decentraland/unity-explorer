@@ -11,7 +11,6 @@ namespace ECS.SceneLifeCycle.Realm
     {
         MessageError,
         ChangeCancelled,
-        SameRealm,
         NotReachable,
         LocalSceneDevelopmentBlocked,
         UnauthorizedWorldAccess,
@@ -25,7 +24,6 @@ namespace ECS.SceneLifeCycle.Realm
             {
                 ChangeRealmError.MessageError => TaskError.MessageError,
                 ChangeRealmError.ChangeCancelled => TaskError.Cancelled,
-                ChangeRealmError.SameRealm => TaskError.MessageError,
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
                 ChangeRealmError.Timeout => TaskError.Timeout,
@@ -42,8 +40,6 @@ namespace ECS.SceneLifeCycle.Realm
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
-        public static bool IsRecoverable(this ChangeRealmError error) =>
-            error is ChangeRealmError.SameRealm or ChangeRealmError.NotReachable or ChangeRealmError.LocalSceneDevelopmentBlocked;
     }
 
     public interface IRealmNavigator
@@ -67,6 +63,8 @@ namespace ECS.SceneLifeCycle.Realm
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
+
+        bool IsAlreadyOnRealm(URLDomain realm);
 
         void RemoveCameraSamplingData();
     }

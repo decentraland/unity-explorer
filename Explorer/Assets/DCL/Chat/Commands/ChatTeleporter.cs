@@ -40,38 +40,17 @@ namespace DCL.Chat.Commands
             };
         }
 
-        /// <summary>
-        /// Parses the realm and teleports the player to it, with an optional target position.
-        /// </summary>
-        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int? targetPosition, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct)
         {
-            string realmAddress;
-            bool isWorld = false;
+            ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
-            if (realm.StartsWith("https"))
-                realmAddress = realm;
-            else if (!paramUrls.TryGetValue(realm, out realmAddress))
-            {
-                // Dont modify realms like your.world.eth
-                if (!realm.IsEns()
-                    // Convert realms like olavra => olavra.dcl.eth
-                    && !realm.EndsWith(WORLD_SUFFIX))
-                {
-                    realm += WORLD_SUFFIX;
-                }
+            if(!ValidEnvironment(realmURL, out string errorMessage))
+                return errorMessage;
 
-                realmAddress = GetWorldAddress(realm);
-                isWorld = true;
-            }
+            if (realmNavigator.IsAlreadyOnRealm(realmURL))
+                return $"🟡 You are already in {realm}!";
 
-            var realmURL = URLDomain.FromString(realmAddress!);
-
-            var environmentValidationResult = environmentValidator.ValidateTeleport(realmURL.ToString());
-
-            if (!environmentValidationResult.Success)
-                return environmentValidationResult.ErrorMessage!;
-
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default, isWorld);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -81,7 +60,6 @@ namespace DCL.Chat.Commands
             return error.State switch
                    {
                        ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
-                       ChangeRealmError.SameRealm => $"🟡 You are already in {realm}!",
                        ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
                        ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
                        ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
@@ -90,6 +68,85 @@ namespace DCL.Chat.Commands
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
+
+        /// <summary>
+        /// Parses the realm and teleports the player to it, with an optional target position.
+        /// </summary>
+        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct)
+        {
+            ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
+
+            if(!ValidEnvironment(realmURL, out string errorMessage))
+                return errorMessage;
+
+            if(realmNavigator.IsAlreadyOnRealm(realmURL))
+                return await TeleportToParcelAsync(targetPosition, true, ct);
+
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld);
+
+            if (result.Success)
+                return $"🟢 Welcome to the {realm} world!";
+
+            var error = result.Error!.Value;
+
+            return error.State switch
+                   {
+                       ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
+                       ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
+                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
+                       ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
+                       ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
+        }
+
+        private bool ValidEnvironment(URLDomain realmURL, out string errorMessage)
+        {
+            var environmentValidationResult = environmentValidator.ValidateTeleport(realmURL.ToString());
+            errorMessage = "";
+
+            if (!environmentValidationResult.Success)
+            {
+                errorMessage = environmentValidationResult.ErrorMessage;
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ExtractWorldData(string realm, out URLDomain realmURL, out bool isWorld)
+        {
+            // 1) Already a URL => not a world
+            if (realm.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+            {
+                realmURL = URLDomain.FromString(realm);
+                isWorld = false;
+                return;
+            }
+
+            // 2) Known param URL => not a world
+            if (paramUrls.TryGetValue(realm, out string realmAddress))
+            {
+                realmURL = URLDomain.FromString(realmAddress);
+                isWorld = false;
+                return;
+            }
+
+            // 3) Otherwise, treat as world and resolve address
+            string worldName = realm;
+
+            // Don't modify ENS names like your.world.eth
+            // Convert short names like olavra => olavra.dcl.eth
+            if (!worldName.IsEns() && !worldName.EndsWith(WORLD_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                worldName += WORLD_SUFFIX;
+
+            string worldAddress = GetWorldAddress(worldName);
+
+            realmURL = URLDomain.FromString(worldAddress);
+            isWorld = true;
+        }
+
 
         /// <summary>
         /// Teleports the player to a parcel.
