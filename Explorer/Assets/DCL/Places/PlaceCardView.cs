@@ -35,7 +35,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
-        [SerializeField] private PlaceLiveEventTag liveTag = null!;
+        [SerializeField] private PlaceCardTagWithTooltip liveTagWithTooltip = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -62,6 +62,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public PlaceCardTagWithTooltip tooltip;
             }
         }
 
@@ -153,12 +154,13 @@ namespace DCL.Places
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friends[i];
                     friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
                 }
             }
 
-            liveTag.gameObject.SetActive(placeInfo.live);
+            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
             if (liveEvent != null)
-                liveTag.Configure(liveEvent.Value);
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 

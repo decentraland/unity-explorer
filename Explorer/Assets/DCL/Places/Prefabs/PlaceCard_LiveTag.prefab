@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1321290098987813001}
   - component: {fileID: 1013013862646204263}
   - component: {fileID: 2866559387031508025}
-  - component: {fileID: 8146094014775056827}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -138,18 +137,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &8146094014775056827
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 559213214353489415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2588328804152494823
 GameObject:
   m_ObjectHideFlags: 0
@@ -161,7 +148,6 @@ GameObject:
   - component: {fileID: 8673012931882142199}
   - component: {fileID: 2745556104725259885}
   - component: {fileID: 1195321150819150420}
-  - component: {fileID: 2062292909385977609}
   m_Layer: 5
   m_Name: LiveEventText
   m_TagString: Untagged
@@ -288,18 +274,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &2062292909385977609
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2588328804152494823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3312360430194941027
 GameObject:
   m_ObjectHideFlags: 0
@@ -311,7 +285,6 @@ GameObject:
   - component: {fileID: 7847292631385534549}
   - component: {fileID: 8263434774602010381}
   - component: {fileID: 2806947684912462853}
-  - component: {fileID: 2301409139119557861}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -376,18 +349,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2301409139119557861
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3312360430194941027}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &4046469966047863744
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,7 +360,6 @@ GameObject:
   - component: {fileID: 4930347895196186188}
   - component: {fileID: 7454821569346189429}
   - component: {fileID: 8389750291907774631}
-  - component: {fileID: 5626175622434661964}
   - component: {fileID: 8956724768338752294}
   - component: {fileID: 4087810909516107584}
   - component: {fileID: 3140352272050789527}
@@ -468,18 +428,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &5626175622434661964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4046469966047863744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &8956724768338752294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -554,7 +502,6 @@ GameObject:
   - component: {fileID: 4234563839343021041}
   - component: {fileID: 8818159908566236790}
   - component: {fileID: 7964377651376802814}
-  - component: {fileID: 654829866639708811}
   - component: {fileID: 2281298602367811138}
   - component: {fileID: 6900863293600320146}
   m_Layer: 5
@@ -584,7 +531,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 64, y: 26}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8818159908566236790
 CanvasRenderer:
@@ -624,18 +571,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2.8
---- !u!114 &654829866639708811
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4333866257545855334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &2281298602367811138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -668,5 +603,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 449e6f2ac962463a858cf34e0e603696, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Places.PlaceLiveEventTag
-  liveEventTooltip: {fileID: 4046469966047863744}
-  liveEventText: {fileID: 1195321150819150420}
+  tooltip: {fileID: 4046469966047863744}
+  text: {fileID: 1195321150819150420}

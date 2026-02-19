@@ -39,7 +39,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text creatorNameText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
-        [SerializeField] private PlaceLiveEventTag liveTag = null!;
+        [SerializeField] private PlaceCardTagWithTooltip liveTagWithTooltip = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
         [SerializeField] private TMP_Text descriptionText = null!;
@@ -81,6 +81,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public PlaceCardTagWithTooltip tooltip;
             }
         }
 
@@ -179,9 +180,9 @@ namespace DCL.Places
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
 
-            liveTag.gameObject.SetActive(placeInfo.live);
+            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
             if (liveEvent != null)
-                liveTag.Configure(liveEvent.Value);
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
 
             bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);
@@ -212,6 +213,7 @@ namespace DCL.Places
                     bool friendExists = i < friendProfiles.Count;
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friendProfiles[i];
+                    friendsConnected.thumbnails[i].tooltip.Configure(friendInfo.Name);
 
                     friendsProfileThumbnails[i].SetLoading(friendInfo.UserNameColor);
                     if (!string.IsNullOrEmpty(friendInfo.FaceSnapshotUrl))
