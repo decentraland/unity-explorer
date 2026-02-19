@@ -42,6 +42,7 @@ namespace DCL.CharacterMotion.Systems
             EnablePropQuery(World);
             HandleStateTransitionQuery(World, tick);
             DisablePropQuery(World);
+            CleanUpDestroyedAvatarsPropQuery(World);
 
             // Visualization
             UpdatePropAnimatorQuery(World);
@@ -86,6 +87,11 @@ namespace DCL.CharacterMotion.Systems
 
             DisablePropDelayedAsync(entity, gliderProp.View).Forget();
         }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CleanUpDestroyedAvatarsProp(in GliderProp gliderProp) =>
+            Object.Destroy(gliderProp.View.gameObject);
 
         private async UniTask DisablePropDelayedAsync(Entity entity, GliderPropView view)
         {
