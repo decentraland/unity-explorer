@@ -437,11 +437,11 @@ namespace DCL.VoiceChat
         {
             if (participant == null || existingState == null) return;
 
-            string identity = participant.Value.Identity;
-
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
+            string identity = participant.Identity;
             ParticipantCallMetadata? metadata = ParseParticipantMetadata(participant.Identity, participant.Metadata);
 #else
+            string identity = participant.Value.Identity;
             ParticipantCallMetadata? metadata = ParseParticipantMetadata(identity, participant.Value.Metadata);
 #endif
 

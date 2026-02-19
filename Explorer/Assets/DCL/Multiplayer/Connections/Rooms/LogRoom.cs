@@ -11,7 +11,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 #endif
@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe { get; }
         public IRoomInfo Info { get; }
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
         public ILocalTracks LocalTracks { get; }
@@ -74,13 +74,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             DataPipe = new LogDataPipe(origin.DataPipe);
             Info = new LogRoomInfo(origin.Info);
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
             LocalTracks = new LogLocalTracks(origin.LocalTracks);
 #endif
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
             this.origin.TrackPublished += OriginOnTrackPublished;
@@ -143,7 +143,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         private void OriginOnTrackUnmuted(TrackPublication publication, LKParticipant participant)
         {
             ReportHub
