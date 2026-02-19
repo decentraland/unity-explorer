@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -18,18 +19,29 @@ namespace DCL.CharacterMotion.Systems
     [UpdateInGroup(typeof(AvatarGroup))]
     public partial class GliderPropControllerSystem : BaseUnityLoopSystem
     {
+        private const int PRE_ALLOCATED_PROP_COUNT = 4;
+
         private readonly CharacterMotionSettings.GlidingSettings glidingSettings;
         private readonly GameObject gliderPrefab;
+        private readonly IComponentPoolsRegistry poolsRegistry;
+
+        private GameObjectPool<GliderPropView>? propPool;
         private SingleInstanceEntity tickEntity;
 
-        public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab) : base(world)
+        public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.glidingSettings = glidingSettings;
             this.gliderPrefab = gliderPrefab;
+            this.poolsRegistry = poolsRegistry;
         }
 
-        public override void Initialize() =>
+        public override void Initialize()
+        {
+            propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+            propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
+
             tickEntity = World.CachePhysicsTick();
+        }
 
         protected override void Update(float t)
         {
@@ -56,7 +68,7 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
         private void CreateProp(Entity entity, IAvatarView avatarView)
         {
-            var prop = Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>();
+            var prop = propPool!.Get();
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;
@@ -88,11 +100,6 @@ namespace DCL.CharacterMotion.Systems
             DisablePropDelayedAsync(entity, gliderProp.View).Forget();
         }
 
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void CleanUpDestroyedAvatarsProp(in GliderProp gliderProp) =>
-            Object.Destroy(gliderProp.View.gameObject);
-
         private async UniTask DisablePropDelayedAsync(Entity entity, GliderPropView view)
         {
             // Arbitrary delay to make sure the 'glider closing' sound is fully played (the audio source is attached to the prop)
@@ -101,6 +108,14 @@ namespace DCL.CharacterMotion.Systems
             if (!World.IsAlive(entity) || World.Has<GliderPropEnabled>(entity)) return;
 
             view.gameObject.SetActive(false);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CleanUpDestroyedAvatarsProp(in GliderProp gliderProp)
+        {
+            gliderProp.View.PrepareForNextActivation();
+            propPool!.Release(gliderProp.View);
         }
 
         [Query]

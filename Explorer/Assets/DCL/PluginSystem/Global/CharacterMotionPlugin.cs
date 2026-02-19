@@ -100,7 +100,7 @@ namespace DCL.PluginSystem.Global
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
             GroundDistanceSystem.InjectToWorld(ref builder);
-            GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab);
+            GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
         }
     }
 }
