@@ -65,11 +65,24 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             WebGLDebugLog.Log("AB.Load", "start", $"hash={intention.Hash} url={intention.CommonArguments.URL.Value}");
 
-            AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
-                    suppressErrors: true); // Suppress errors because here we have our own error handling
+            AssetBundle? assetBundle = null;
+            AssetBundleLoadingResult? assetBundleResult = null;
 
-            AssetBundle? assetBundle = assetBundleResult.AssetBundle;
+#if UNITY_WEBGL
+            if (ShaderBundlePreloader.TryGetPreloadedBundle(intention.Hash ?? "", out AssetBundle? preloaded))
+            {
+                assetBundle = preloaded;
+                WebGLDebugLog.Log("AB.Load", "preloaded", $"hash={intention.Hash}");
+            }
+#endif
+
+            if (assetBundle == null)
+            {
+                assetBundleResult = await webRequestController
+                    .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
+                        suppressErrors: true); // Suppress errors because here we have our own error handling
+                assetBundle = assetBundleResult.Value.AssetBundle;
+            }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
@@ -77,8 +90,9 @@ namespace ECS.StreamableLoading.AssetBundles
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
             {
-                WebGLDebugLog.LogWarning("AB.Load", "failed (null bundle)", $"hash={intention.Hash} error={assetBundleResult.DataProcessingError}");
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
+                string error = assetBundleResult?.DataProcessingError ?? "unknown";
+                WebGLDebugLog.LogWarning("AB.Load", "failed (null bundle)", $"hash={intention.Hash} error={error}");
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {error}");
             }
 
             try

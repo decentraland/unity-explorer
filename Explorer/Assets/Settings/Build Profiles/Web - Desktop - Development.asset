@@ -41,6 +41,7 @@ MonoBehaviour:
   m_PreloadedShaders:
   - {fileID: 20000000, guid: 622e919733c115b40bf276cf626d2211, type: 2}
   - {fileID: 20000000, guid: 5cdf6711ee9677f488992eeacb9b08a9, type: 2}
+  - {fileID: 20000000, guid: 6ce2513ef52770e48bb210879e4ba7bf, type: 2}
   m_PreloadShadersBatchTimeLimit: -1
   m_ShaderBuildSettings:
     keywordDeclarationOverrides: []
@@ -1178,7 +1179,7 @@ MonoBehaviour:
         m_CodeOptimization: 4
         m_WebGLClientBrowserPath: C:/Program Files/Google/Chrome/Application/chrome.exe
         m_WebGLClientBrowserType: 4
-        m_WebGLTextureSubtarget: 0
+        m_WebGLTextureSubtarget: 1
 --- !u!114 &3042370548755700802
 MonoBehaviour:
   m_ObjectHideFlags: 3

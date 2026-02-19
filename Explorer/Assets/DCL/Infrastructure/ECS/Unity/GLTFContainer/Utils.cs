@@ -52,14 +52,7 @@ namespace ECS.Unity.GLTFContainer
                             
                             string shaderName = mat.shader != null ? mat.shader.name : null;
                             if (shaderName != null && (shaderName.Contains("Error") || shaderName.Contains("Hidden")))
-                            {
-                                WebGLDebugLog.Log("GLTFContainer.ShaderReplace", $"'{shaderName}' -> 'DCL/Scene'", $"assetHash={assetHash} renderer={renderer.name} material={mat.name}", "H2");
                                 mat.shader = sceneShader;
-                            }
-                            // #region agent log
-                            else if (shaderName != null && shaderName.Contains("Toon", StringComparison.OrdinalIgnoreCase))
-                                WebGLDebugLog.Log("GLTFContainer.ShaderReplace", "Toon shader in GLTFContainer (unexpected)", $"shader={shaderName} assetHash={assetHash} renderer={renderer.name}", "H2");
-                            // #endregion
                         }
                     }
                 }

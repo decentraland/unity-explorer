@@ -65,13 +65,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private static (Material avatarMaterial, TextureArraySlot?[] slots, int shaderId) SetupRegularMaterial(
             Material originalMaterial, IAvatarMaterialPoolHandler poolHandler, string? rendererName = null)
         {
+            // #region agent log
+            string origShader = originalMaterial.shader != null ? originalMaterial.shader.name : "null";
+            var mainTex = originalMaterial.GetTexture(TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE);
+            WebGLDebugLog.Log("AvatarMaterialConfiguration.SetupRegularMaterial", "orig material", $"shader={origShader} _BaseMap={(mainTex != null ? "OK" : "NULL")} renderer={rendererName}", "H2,H3");
+            // #endregion
+
             int shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
-
-            // #region agent log
-            WebGLDebugLog.Log("AvatarMaterialConfiguration.ToonShader", "SetupRegularMaterial assigned", $"avatarMat.shader={avatarMaterial.shader?.name ?? "null"} orig.shader={originalMaterial.shader?.name ?? "null"} renderer={rendererName}", "H4");
-            // #endregion
 
             var baseColor = originalMaterial.GetColor(BASE_COLOR);
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
@@ -90,6 +92,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 ConfigureTransparent(originalMaterial, avatarMaterial, baseColor);
 
             TextureArraySlot?[] slots = poolMaterialSetup.TextureArrayContainer.SetTexturesFromOriginalMaterial(originalMaterial, avatarMaterial);
+            // #region agent log
+            var mainTexArr = avatarMaterial.GetTexture(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER);
+            WebGLDebugLog.Log("AvatarMaterialConfiguration.SetupRegularMaterial", "final", $"renderer={rendererName} _MainTexArr={mainTexArr?.name ?? "null"} _MainTexArr_ID={avatarMaterial.GetInteger(TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX)}", "H5");
+            // #endregion
             return (avatarMaterial, slots, shaderId);
         }
 
@@ -129,6 +135,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 if (meshRenderer.name.EndsWith(suffix))
                 {
                     result = true;
+                    // #region agent log
+                    int texCount = facialFeatures.Value.TryGetValue(category, out var texDict) ? texDict.Count : 0;
+                    WebGLDebugLog.Log("AvatarMaterialConfiguration.TrySetupFacialFeature", "facial", $"renderer={meshRenderer.name} category={category} texCount={texCount}", "H4");
+                    // #endregion
                     return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndexUsed);
                 }
             }

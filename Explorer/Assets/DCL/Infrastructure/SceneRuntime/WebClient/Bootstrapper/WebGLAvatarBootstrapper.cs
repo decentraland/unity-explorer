@@ -44,6 +44,7 @@ using Utility;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
+#if false // Not used — project uses normal bootstrapper (MainSceneLoader/DynamicWorldContainer)
     /// <summary>
     ///     Minimal bootstrapper that loads a single in-world avatar (no scene, no JS).
     ///     Use in Editor or WebGL to test avatar shaders without the full game flow.
@@ -344,4 +345,5 @@ namespace SceneRuntime.WebClient.Bootstrapper
             enabled = false;
         }
     }
+#endif
 }

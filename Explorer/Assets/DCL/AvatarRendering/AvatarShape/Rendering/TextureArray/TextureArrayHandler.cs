@@ -1,4 +1,5 @@
-﻿using DCL.Optimization.Pools;
+using DCL.Optimization.Pools;
+using DCL.Utility;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private readonly IReadOnlyDictionary<TextureArrayKey, Texture>? defaultTextures;
 
-        private readonly string domain;
+        internal readonly string domain;
 
         /// <summary>
         /// Used for Avatar texture arrays
@@ -105,7 +106,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (defaultTextures!.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                 {
                     var defaultSlot = slotHandler.GetNextFreeSlot();
-                    Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    CopyDefaultTextureToArray(defaultTexture, defaultSlot, resolution);
                 }
             }
 
@@ -145,7 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                     {
                         var defaultSlot = slotHandler.GetNextFreeSlot();
-                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                        CopyDefaultTextureToArray(defaultTexture, defaultSlot, resolution);
                     }
                 }
             }
@@ -191,5 +192,28 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureFormat GetTextureFormat() =>
             textureFormat;
 
+        /// <summary>
+        ///     Graphics.CopyTexture requires matching formats. When array is RGBA32 and default is compressed (BC7/DXT),
+        ///     convert first. When array is DXT, defaults must be DXT (WebGLTextureSubtarget.DXT build).
+        /// </summary>
+        private void CopyDefaultTextureToArray(Texture defaultTexture, TextureArraySlot defaultSlot, Vector2Int resolution)
+        {
+            if (defaultTexture is Texture2D tex2d && tex2d.format != textureFormat && textureFormat == TextureFormat.RGBA32)
+            {
+                Texture2D converted = TextureUtilities.EnsureRGBA32Format(tex2d, resolution.x);
+                try
+                {
+                    Graphics.CopyTexture(converted, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                }
+                finally
+                {
+                    Object.Destroy(converted);
+                }
+            }
+            else
+            {
+                Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+            }
+        }
     }
 }

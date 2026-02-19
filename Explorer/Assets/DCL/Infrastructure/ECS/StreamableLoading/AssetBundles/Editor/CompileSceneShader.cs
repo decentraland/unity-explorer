@@ -36,6 +36,11 @@ namespace DCL.Rendering.Menus
             "DCL_Toon.shader", "DCL_ToonVariants.shadervariants"
         };
 
+        private static readonly string[] DCL_AVATAR_FACIAL_SHADER_ASSET_NAMES =
+        {
+            "DCL_Avatar_Facial_Features.shader"
+        };
+
         // Add file extensions to copy when copying shader folder
         private static readonly string[] SHADER_FILE_EXTENSIONS =
         {
@@ -72,16 +77,156 @@ namespace DCL.Rendering.Menus
             CompileTheSceneShader("dcl/universal render pipeline/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
         }
 
-        [MenuItem("Decentraland/Shaders/Compile \"DCL_Toon\" Shader Variants")]
+        [MenuItem("Decentraland/Shaders/Compile \"DCL_Toon\" Shader Variants (includes Facial Features)")]
         public static void CompileDCLToonShaderMenuItem()
         {
-            CompileTheSceneShader("dcl/toon_ignore", DCL_TOON_SHADER_ASSET_NAMES, "DCL_Toon", "Avatar");
+            CompileAvatarShaders("dcl/toon_ignore", forceRecompile: false);
         }
 
-        [MenuItem("Decentraland/Shaders/Force Recompile \"DCL_Toon\" Shader Variants")]
+        [MenuItem("Decentraland/Shaders/Force Recompile \"DCL_Toon\" Shader Variants (includes Facial Features)")]
         public static void ForceRecompileDCLToonMenuItem()
         {
-            CompileTheSceneShader("dcl/toon_ignore", DCL_TOON_SHADER_ASSET_NAMES, "DCL_Toon", "Avatar", forceRecompile: true);
+            CompileAvatarShaders("dcl/toon_ignore", forceRecompile: true);
+        }
+
+        /// <summary>
+        /// Builds the avatar shader bundle (toon_ignore) with both DCL_Toon and DCL_Avatar_Facial_Features.
+        /// </summary>
+        private static void CompileAvatarShaders(string bundleName, bool forceRecompile)
+        {
+            var (platformSuffix, buildTarget) = GetPlatformForAssetBundle();
+            bundleName += platformSuffix;
+
+            const string shaderBaseFolder = "Avatar";
+            var shaderGroups = new[]
+            {
+                ("DCL_Toon", DCL_TOON_SHADER_ASSET_NAMES),
+                ("DCL_Avatar_Facial_Features", DCL_AVATAR_FACIAL_SHADER_ASSET_NAMES),
+            };
+
+            var searchPaths = new List<string>
+            {
+                $"Assets/DCL/Shaders/{shaderBaseFolder}/",
+                $"Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/{shaderBaseFolder}/",
+                $"Packages/com.decentraland.unity-shared-dependencies-local/Runtime/Shaders/{shaderBaseFolder}/",
+            };
+
+            string? packagePath = GetPackagePath("com.decentraland.unity-shared-dependencies");
+            if (!string.IsNullOrEmpty(packagePath))
+                searchPaths.Add(Path.Combine(packagePath, $"Runtime/Shaders/{shaderBaseFolder}/"));
+
+            var allAssetPaths = new List<string>();
+            var importers = new List<AssetImporter>();
+
+            foreach ((string subfolder, string[] assetNames) in shaderGroups)
+            {
+                string? shaderPath = null;
+                foreach (string basePath in searchPaths)
+                {
+                    string path = Path.Combine(basePath, subfolder);
+                    if (!Directory.Exists(path)) continue;
+
+                    bool hasAllFiles = assetNames.All(a => File.Exists(Path.Combine(path, a)));
+                    if (hasAllFiles)
+                    {
+                        shaderPath = path;
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(shaderPath))
+                {
+                    Debug.LogError($"Could not find shader files for {subfolder}. Searched in:\n" + string.Join("\n", searchPaths.Select(p => Path.Combine(p, subfolder))));
+                    return;
+                }
+
+                foreach (string asset in assetNames)
+                {
+                    string fullAssetPath = Path.Combine(shaderPath, asset).Replace('\\', '/');
+                    var importer = AssetImporter.GetAtPath(fullAssetPath);
+                    if (importer == null)
+                    {
+                        Debug.LogError($"Could not get importer for asset: {fullAssetPath}");
+                        continue;
+                    }
+
+                    if (forceRecompile)
+                    {
+                        ReimportShaderIncludes(shaderPath);
+                        AssetDatabase.ImportAsset(fullAssetPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+                        importer = AssetImporter.GetAtPath(fullAssetPath);
+                    }
+
+                    importer.SetAssetBundleNameAndVariant(bundleName, "");
+                    importer.SaveAndReimport();
+                    importers.Add(importer);
+                    allAssetPaths.Add(fullAssetPath);
+                }
+            }
+
+            if (importers.Count == 0)
+            {
+                Debug.LogError("No assets were successfully marked for bundling.");
+                return;
+            }
+
+            if (forceRecompile)
+            {
+                Shader sceneShader = Shader.Find("Scene");
+                if (sceneShader != null)
+                    ShaderUtil.ClearShaderMessages(sceneShader);
+                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                Shader.WarmupAllShaders();
+            }
+
+            if (!Directory.Exists(ASSET_BUNDLE_DIRECTORY))
+                Directory.CreateDirectory(ASSET_BUNDLE_DIRECTORY);
+
+            string outputPath = Path.Combine(ASSET_BUNDLE_DIRECTORY, bundleName);
+            string? outputDir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
+                Directory.CreateDirectory(outputDir);
+
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+
+            BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(buildTarget);
+            var parameters = new BundleBuildParameters(buildTarget, group, ASSET_BUNDLE_DIRECTORY)
+            {
+                AppendHash = false,
+                BundleCompression = BuildCompression.Uncompressed,
+                DisableVisibleSubAssetRepresentations = true,
+                UseCache = !forceRecompile,
+            };
+
+            var buildInput = new[]
+            {
+                new AssetBundleBuild
+                {
+                    assetBundleName = bundleName,
+                    assetNames = allAssetPaths.ToArray(),
+                    addressableNames = allAssetPaths.Select(Path.GetFileName).ToArray(),
+                },
+            };
+
+            var result = ContentPipeline.BuildAssetBundles(parameters, new BundleBuildContent(buildInput), out _);
+
+            if (result == ReturnCode.Success)
+                Debug.Log($"Avatar shader bundle built successfully: {bundleName}");
+            else
+                Debug.LogError($"Asset bundle build failed with code: {result}");
+
+            foreach (AssetImporter assetImporter in importers)
+                assetImporter.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+            AssetDatabase.RemoveUnusedAssetBundleNames();
+            AssetDatabase.Refresh();
+
+            if (File.Exists(outputPath))
+                Debug.Log($"Bundle created: {outputPath} ({new FileInfo(outputPath).Length} bytes)");
+            else
+                Debug.LogWarning($"Bundle file not found after build: {outputPath}");
         }
 
         private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, bool forceRecompile = false) =>

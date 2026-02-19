@@ -37,6 +37,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Common;
@@ -148,7 +149,6 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
-        // #region agent log
         private static void LogInit(string location, string message, bool? splashNull, bool? globalPluginNull, bool? staticSettingsNull)
         {
             string splash = splashNull == null ? "-" : (splashNull.Value ? "null" : "ok");
@@ -156,7 +156,6 @@ namespace Global.Dynamic
             string ss = staticSettingsNull == null ? "-" : (staticSettingsNull.Value ? "null" : "ok");
             WebGLDebugLog.Log(location, message, $"splash={splash} globalPlugin={gp} staticSettings={ss}");
         }
-        // #endregion
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
@@ -230,6 +229,10 @@ namespace Global.Dynamic
             // #endregion
             WebGLDebugLog.Log("MainSceneLoader.cs:208");
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
+
+#if UNITY_WEBGL
+            await ShaderBundlePreloader.PreloadAsync(ct);
+#endif
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             WebGLDebugLog.Log("MainSceneLoader.cs:212");

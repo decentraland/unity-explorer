@@ -75,6 +75,7 @@ using Utility;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
+#if false // Not used — project uses normal bootstrapper (MainSceneLoader/DynamicWorldContainer)
     public class WebGLSceneBootstrapper : MonoBehaviour
     {
         [SerializeField] private Camera MainCamera;
@@ -434,6 +435,9 @@ namespace SceneRuntime.WebClient.Bootstrapper
             {
                 // No feature-flag config in WebGL; all features disabled
                 FeaturesRegistry.InitializeEmpty();
+
+                // Preload shader bundles before any GLTF/wearable bundles so materials deserialize with correct shaders
+                await PreloadShaderBundlesAsync();
 
                 // Check for world parameter first (e.g., ?world=olavra.dcl.eth)
                 string? worldName = GetWorldFromQueryString();
@@ -828,11 +832,17 @@ namespace SceneRuntime.WebClient.Bootstrapper
         }
 
         /// <summary>
-        /// Preloads shader bundles from StreamingAssets so they're available when GLTF Asset Bundles load.
+        /// Preloads shader bundles from StreamingAssets so they're available when GLTF and wearable Asset Bundles load.
+        /// Must run before any asset bundles that reference these shaders (e.g. wearables reference DCL_Toon).
         /// </summary>
         private async UniTask PreloadShaderBundlesAsync()
         {
-            string[] shaderBundles = { "dcl/universal render pipeline/lit_ignore"};
+            string[] shaderBundles =
+            {
+                "dcl/scene_ignore",
+                "dcl/universal render pipeline/lit_ignore",
+                "dcl/toon_ignore",
+            };
             string streamingAssetsPath = Application.streamingAssetsPath;
 
             foreach (string bundleName in shaderBundles)
@@ -955,4 +965,5 @@ namespace SceneRuntime.WebClient.Bootstrapper
             public ISystemClipboard SystemClipboard { get; set; } = null!;
         }
     }
+#endif
 }

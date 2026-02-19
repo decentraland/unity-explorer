@@ -61,10 +61,6 @@ namespace DCL.AvatarRendering.AvatarShape
                                      _ => TextureArrayConstants.SHADERID_DCL_PBR,
                                  };
 
-                // #region agent log
-                WebGLDebugLog.Log("AvatarMaterialPoolHandler.ToonShader", $"material shader->poolID", $"shader={material.shader?.name ?? "null"} -> id={materialID} (2=Toon 3=Facial 1=PBR)", "H1,H5");
-                // #endregion
-
                 materialDictionary.Add(materialID, materialSetup);
             }
         }
