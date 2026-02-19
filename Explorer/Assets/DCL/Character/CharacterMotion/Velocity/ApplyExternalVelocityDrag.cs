@@ -6,8 +6,9 @@ using UnityEngine;
 namespace DCL.Character.CharacterMotion
 {
     /// <summary>
-    ///     Applies damping to ExternalVelocity (horizontal only) using a linear (viscous) drag model.
-    ///     Vertical external forces are handled by ApplyGravity via effective gravity.
+    ///     Applies damping to ExternalVelocity using a linear (viscous) drag model.
+    ///     Horizontal: from both impulses and continuous forces (forces write only XZ).
+    ///     Vertical: from impulses only (continuous vertical forces go through ApplyGravity via effective gravity).
     ///     <para>
     ///         Physical model: dv/dt = - damping · v (velocity-proportional resistance).
     ///         Discrete form: v *= (1 - damping · dt).
@@ -25,9 +26,6 @@ namespace DCL.Character.CharacterMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, float dt)
         {
-            // safety net - external velocity should be always zero
-            characterPhysics.ExternalVelocity.y = 0f;
-
             // Additive damping: environment is always present, ground contact adds on top
             float damping = characterPhysics.IsGrounded
                 ? settings.ExternalEnvDrag + settings.ExternalGroundFriction
@@ -39,6 +37,10 @@ namespace DCL.Character.CharacterMotion
             // Snap to zero when below a threshold to avoid asymptotic creep
             if (characterPhysics.ExternalVelocity.sqrMagnitude < MIN_VELOCITY_THRESHOLD * MIN_VELOCITY_THRESHOLD)
                 characterPhysics.ExternalVelocity = Vector3.zero;
+
+            // Zero vertical component on ground to prevent bounce after landing from an impulse
+            if (characterPhysics.IsGrounded)
+                characterPhysics.ExternalVelocity.y = 0f;
         }
     }
 }

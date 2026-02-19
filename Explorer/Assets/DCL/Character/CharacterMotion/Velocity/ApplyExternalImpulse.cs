@@ -16,35 +16,18 @@ namespace DCL.Character.CharacterMotion
                 return;
             }
 
-            // Δv = J / m (instant velocity change)
-            Vector3 deltaVelocity = characterPhysics.ExternalImpulse / settings.CharacterMass;
+            // Vertical component decays via drag and is zeroed on landing by ApplyExternalVelocityDrag.
+            Vector3 deltaVelocity = characterPhysics.ExternalImpulse / settings.CharacterMass; // Δv = J / m (instant velocity change)
+            characterPhysics.ExternalVelocity += deltaVelocity;
 
-            // Horizontal → ExternalVelocity (decays via drag)
-            characterPhysics.ExternalVelocity.x += deltaVelocity.x;
-            characterPhysics.ExternalVelocity.z += deltaVelocity.z;
-            // Vertical → GravityVelocity (same channel as jump and gravity — single vertical physics model)
-            characterPhysics.GravityVelocity.y += deltaVelocity.y;
-
-            if (deltaVelocity.y > 0f)
+            if (characterPhysics.ExternalImpulse.y > 0f)
                 characterPhysics.IsGrounded = false;
 
-            ClampHorizontally(settings, characterPhysics);
+            // Clamp to max external velocity
+            if (characterPhysics.ExternalVelocity.sqrMagnitude > settings.MaxExternalVelocity * settings.MaxExternalVelocity)
+                characterPhysics.ExternalVelocity = characterPhysics.ExternalVelocity.normalized * settings.MaxExternalVelocity;
 
             characterPhysics.ExternalImpulse = Vector3.zero;
-        }
-
-        private static void ClampHorizontally(ICharacterControllerSettings settings, CharacterRigidTransform characterPhysics)
-        {
-            float hSqr = (characterPhysics.ExternalVelocity.x * characterPhysics.ExternalVelocity.x)
-                         + (characterPhysics.ExternalVelocity.z * characterPhysics.ExternalVelocity.z);
-
-            float maxSqr = settings.MaxExternalVelocity * settings.MaxExternalVelocity;
-            if (hSqr > maxSqr)
-            {
-                float scale = settings.MaxExternalVelocity / Mathf.Sqrt(hSqr);
-                characterPhysics.ExternalVelocity.x *= scale;
-                characterPhysics.ExternalVelocity.z *= scale;
-            }
         }
     }
 }
