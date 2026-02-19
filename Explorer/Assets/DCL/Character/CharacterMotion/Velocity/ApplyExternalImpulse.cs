@@ -3,14 +3,12 @@ using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.CharacterMotion
+namespace DCL.Character.CharacterMotion
 {
     public static class ApplyExternalImpulse
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(
-            ICharacterControllerSettings settings,
-            ref CharacterRigidTransform characterPhysics)
+        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics)
         {
             if (characterPhysics.ExternalImpulse.sqrMagnitude < float.Epsilon)
             {
@@ -21,18 +19,32 @@ namespace DCL.CharacterMotion
             // Δv = J / m (instant velocity change)
             Vector3 deltaVelocity = characterPhysics.ExternalImpulse / settings.CharacterMass;
 
-            characterPhysics.ExternalVelocity += deltaVelocity;
+            // Horizontal → ExternalVelocity (decays via drag)
+            characterPhysics.ExternalVelocity.x += deltaVelocity.x;
+            characterPhysics.ExternalVelocity.z += deltaVelocity.z;
+            // Vertical → GravityVelocity (same channel as jump and gravity — single vertical physics model)
+            characterPhysics.GravityVelocity.y += deltaVelocity.y;
 
-            // Clamp to max external velocity
-            if (characterPhysics.ExternalVelocity.sqrMagnitude > settings.MaxExternalVelocity * settings.MaxExternalVelocity)
-                characterPhysics.ExternalVelocity = characterPhysics.ExternalVelocity.normalized * settings.MaxExternalVelocity;
-
-            // Unground if impulse has upward component
-            if (characterPhysics.ExternalImpulse.y > 0)
+            if (deltaVelocity.y > 0f)
                 characterPhysics.IsGrounded = false;
 
-            // Clear impulse accumulator for next frame
+            ClampHorizontally(settings, characterPhysics);
+
             characterPhysics.ExternalImpulse = Vector3.zero;
+        }
+
+        private static void ClampHorizontally(ICharacterControllerSettings settings, CharacterRigidTransform characterPhysics)
+        {
+            float hSqr = (characterPhysics.ExternalVelocity.x * characterPhysics.ExternalVelocity.x)
+                         + (characterPhysics.ExternalVelocity.z * characterPhysics.ExternalVelocity.z);
+
+            float maxSqr = settings.MaxExternalVelocity * settings.MaxExternalVelocity;
+            if (hSqr > maxSqr)
+            {
+                float scale = settings.MaxExternalVelocity / Mathf.Sqrt(hSqr);
+                characterPhysics.ExternalVelocity.x *= scale;
+                characterPhysics.ExternalVelocity.z *= scale;
+            }
         }
     }
 }

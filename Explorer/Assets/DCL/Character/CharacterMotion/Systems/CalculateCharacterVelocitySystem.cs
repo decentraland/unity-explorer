@@ -2,9 +2,11 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Velocity;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -13,9 +15,8 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using DCL.AvatarRendering.DemoScripts.Components;
 
-namespace DCL.CharacterMotion.Systems
+namespace DCL.Character.CharacterMotion.Systems
 {
     /// <summary>
     ///     Entry point to calculate everything that affects character's velocity
@@ -175,14 +176,16 @@ namespace DCL.CharacterMotion.Systems
             // Apply velocity multiplier based on walls
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
-            // Apply vertical velocity
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
-            ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
-            ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
-
-            // External forces
+            // External forces (must run before gravity so ExternalAcceleration.y is available)
             ApplyExternalImpulse.Execute(settings, ref rigidTransform);
             ApplyExternalForce.Execute(settings, ref rigidTransform, dt);
+
+            // Vertical velocity (jump + gravity with effective gravity from external forces)
+            ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
+            ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
+
+            // Drag
+            ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
             ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)

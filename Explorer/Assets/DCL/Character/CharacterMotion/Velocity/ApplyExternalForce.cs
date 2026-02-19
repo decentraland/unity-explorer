@@ -3,15 +3,12 @@ using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.CharacterMotion
+namespace DCL.Character.CharacterMotion
 {
     public static class ApplyExternalForce
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(
-            ICharacterControllerSettings settings,
-            ref CharacterRigidTransform characterPhysics,
-            float deltaTime)
+        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, float dt)
         {
             if (characterPhysics.ExternalForce.sqrMagnitude < float.Epsilon)
             {
@@ -20,22 +17,31 @@ namespace DCL.CharacterMotion
                 return;
             }
 
-            // a = F / m
-            characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass;
+            // Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y
+            characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass; // a = F / m
+            characterPhysics.ExternalVelocity += characterPhysics.ExternalAcceleration * dt; // v += a * dt
 
-            // v += a * dt
-            characterPhysics.ExternalVelocity += characterPhysics.ExternalAcceleration * deltaTime;
+            // Vertical component is handled by the gravity channel — keep ExternalVelocity horizontal-only
+            characterPhysics.ExternalVelocity.y = 0f;
 
-            // Clamp to max external velocity
-            if (characterPhysics.ExternalVelocity.sqrMagnitude > settings.MaxExternalVelocity * settings.MaxExternalVelocity)
-                characterPhysics.ExternalVelocity = characterPhysics.ExternalVelocity.normalized * settings.MaxExternalVelocity;
+            // Clamp horizontal external velocity
+            ClampHorizontally(settings, characterPhysics);
 
-            // Unground if force has upward component
-            if (characterPhysics.ExternalForce.y > 0)
-                characterPhysics.IsGrounded = false;
-
-            // Clear force accumulator for next frame
             characterPhysics.ExternalForce = Vector3.zero;
+        }
+
+        private static void ClampHorizontally(ICharacterControllerSettings settings, CharacterRigidTransform characterPhysics)
+        {
+            float hSqr = (characterPhysics.ExternalVelocity.x * characterPhysics.ExternalVelocity.x)
+                         + (characterPhysics.ExternalVelocity.z * characterPhysics.ExternalVelocity.z);
+
+            float maxSqr = settings.MaxExternalVelocity * settings.MaxExternalVelocity;
+            if (hSqr > maxSqr)
+            {
+                float scale = settings.MaxExternalVelocity / Mathf.Sqrt(hSqr);
+                characterPhysics.ExternalVelocity.x *= scale;
+                characterPhysics.ExternalVelocity.z *= scale;
+            }
         }
     }
 }
