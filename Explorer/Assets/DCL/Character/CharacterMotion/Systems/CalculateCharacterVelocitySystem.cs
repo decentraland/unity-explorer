@@ -193,7 +193,8 @@ namespace DCL.Character.CharacterMotion.Systems
             else
                 ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
 
-            ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
+            if (!settings.EnableCharacterRotationBySlope)
+                ApplySlopeConditionalRotation.Execute(ref rigidTransform, in settings);
         }
     }
 }
