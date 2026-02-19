@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.Emotes
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
-            TrimmedModel = new StreamableLoadingResult<TrimmedEmoteDTO>(model.Asset!.Convert(this.GetThumbnail().Value));
+            TrimmedModel = new StreamableLoadingResult<TrimmedEmoteDTO>(model.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
             IsLoading = isLoading;
         }
 
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public bool IsOnChain() =>
-            IsOnChain(id: this.GetUrn().ToString());
+            IsOnChain(id: ((IAvatarAttachment)this).GetUrn().ToString());
 
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");
@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public override string ToString() =>
-            $"Emote({DTO.GetHash()} | {this.GetUrn()})";
+            $"Emote({DTO.GetHash()} | {((IAvatarAttachment)this).GetUrn()})";
 
         public bool IsLooping() =>
             //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded

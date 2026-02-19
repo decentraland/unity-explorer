@@ -3,7 +3,6 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -19,49 +18,123 @@ namespace DCL.AvatarRendering.Loading.Components
         void SetAmount(int amount);
 
         // IThumbnailAttachment implementation
-        URLPath IThumbnailAttachment.GetThumbnail()
+
+        public new string GetHash() =>
+            DTO.GetHash();
+
+        public new AssetBundleManifestVersion? GetAssetBundleManifestVersion() =>
+            DTO.assetBundleManifestVersion;
+
+        public new string? GetContentDownloadUrl() =>
+            DTO.ContentDownloadUrl;
+
+        public new string? GetEntityId() =>
+            DTO.id;
+
+        public bool IsUnisex() =>
+            DTO.Metadata.AbstractData.representations.Length > 1;
+
+        public new URN GetUrn() =>
+            DTO.Metadata.id;
+
+        string IThumbnailAttachment.GetHash() => GetHash();
+
+        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() => GetAssetBundleManifestVersion();
+
+        string? IThumbnailAttachment.GetContentDownloadUrl() => GetContentDownloadUrl();
+
+        string? IThumbnailAttachment.GetEntityId() => GetEntityId();
+
+        URN IThumbnailAttachment.GetUrn() => GetUrn();
+
+        public string GetCategory() =>
+            DTO.Metadata.AbstractData.category;
+
+        public string GetDescription() =>
+            DTO.Metadata.description;
+
+        public bool IsThirdParty() =>
+            GetUrn().IsThirdPartyCollection();
+
+        public string GetName(string langCode = "en")
+        {
+            string result = DTO.Metadata.name;
+
+            if (DTO.Metadata.i18n == null)
+                return result;
+
+            for (var i = 0; i < DTO.Metadata.i18n.Length; i++)
+            {
+                if (DTO.Metadata.i18n[i].code != langCode)
+                    continue;
+
+                result = DTO.Metadata.i18n[i].text;
+                break;
+            }
+
+            return result;
+        }
+
+        public string GetRarity()
+        {
+            const string DEFAULT_RARITY = "base";
+            string result = DTO.Metadata?.rarity ?? DEFAULT_RARITY;
+            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
+        }
+
+        public new URLPath GetThumbnail()
         {
             const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
+
             string thumbnailHash = DTO.Metadata.thumbnail;
 
-            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && DTO.content != null)
-            {
-                for (int i = 0; i < DTO.content.Length; i++)
-                {
-                    if (DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
-                    {
-                        thumbnailHash = DTO.content[i].hash;
-                        break;
-                    }
-                }
-            }
+            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && TryGetContentHashByKey(THUMBNAIL_DEFAULT_KEY, out string? hash))
+                thumbnailHash = hash!;
 
             return new URLPath(thumbnailHash!);
         }
 
-        URN IThumbnailAttachment.GetUrn()
+        URLPath IThumbnailAttachment.GetThumbnail() => GetThumbnail();
+
+        public bool TryGetMainFileHash(BodyShape bodyShape, out string? hash)
         {
-            return DTO.Metadata.id;
+            if (DTO.Metadata?.AbstractData?.representations == null)
+            {
+                hash = null;
+                return false;
+            }
+
+            // The length of arrays is small, so O(N) complexity is fine
+            // Avoid iterator allocations with "for" loop
+            for (var i = 0; i < DTO.Metadata.AbstractData.representations.Length; i++)
+            {
+                var representation = DTO.Metadata.AbstractData.representations[i];
+
+                for (var id = 0; id < representation.bodyShapes.Length; id++)
+                    if (Equals(representation.bodyShapes[id], (string)bodyShape))
+                        return TryGetContentHashByKey(representation.mainFile, out hash);
+            }
+
+            hash = null;
+            return false;
         }
 
-        string IThumbnailAttachment.GetHash()
+        public bool TryGetContentHashByKey(string key, out string? hash)
         {
-            return DTO.GetHash();
-        }
+            if (DTO.content != null)
+            {
+                for (var i = 0; i < DTO.content.Length; i++)
+                    if (DTO.content[i].file == key)
+                    {
+                        hash = DTO.content[i].hash;
+                        return true;
+                    }
+            }
+            else
+                ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {DTO.Metadata.id}");
 
-        AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion()
-        {
-            return DTO.assetBundleManifestVersion;
-        }
-
-        string? IThumbnailAttachment.GetContentDownloadUrl()
-        {
-            return DTO.ContentDownloadUrl;
-        }
-
-        string? IThumbnailAttachment.GetEntityId()
-        {
-            return DTO.id;
+            hash = null;
+            return false;
         }
     }
 
@@ -82,108 +155,5 @@ namespace DCL.AvatarRendering.Loading.Components
             Model = new StreamableLoadingResult<TModelDTO>(modelDTO);
             UpdateLoadingStatus(false);
         }
-    }
-
-    public static class AvatarAttachmentExtensions
-    {
-        public static bool IsUnisex(this IAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.AbstractData.representations.Length > 1;
-
-        public static URN GetUrn(this IAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.id;
-
-        public static string GetCategory(this IAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.AbstractData.category;
-
-        public static string GetDescription(this IAvatarAttachment avatarAttachment) =>
-            avatarAttachment.DTO.Metadata.description;
-
-        public static bool IsThirdParty(this IAvatarAttachment avatarAttachment) =>
-            avatarAttachment.GetUrn().IsThirdPartyCollection();
-
-        public static string GetName(this IAvatarAttachment avatarAttachment, string langCode = "en")
-        {
-            string result = avatarAttachment.DTO.Metadata.name;
-
-            if (avatarAttachment.DTO.Metadata.i18n == null)
-                return result;
-
-            for (var i = 0; i < avatarAttachment.DTO.Metadata.i18n.Length; i++)
-            {
-                if (avatarAttachment.DTO.Metadata.i18n[i].code != langCode)
-                    continue;
-
-                result = avatarAttachment.DTO.Metadata.i18n[i].text;
-                break;
-            }
-
-            return result;
-        }
-
-        public static string GetRarity(this IAvatarAttachment avatarAttachment)
-        {
-            const string DEFAULT_RARITY = "base";
-            string result = avatarAttachment.DTO.Metadata?.rarity ?? DEFAULT_RARITY;
-            return string.IsNullOrEmpty(result) ? DEFAULT_RARITY : result;
-        }
-
-        public static URLPath GetThumbnail(this IAvatarAttachment avatarAttachment)
-        {
-            const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
-            AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
-
-            string thumbnailHash = wearableDTO.Metadata.thumbnail;
-
-            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY && avatarAttachment.TryGetContentHashByKey(THUMBNAIL_DEFAULT_KEY, out string? hash))
-                thumbnailHash = hash!;
-
-            return new URLPath(thumbnailHash!);
-        }
-
-        public static bool TryGetMainFileHash(this IAvatarAttachment avatarAttachment, BodyShape bodyShape, out string? hash)
-        {
-            AvatarAttachmentDTO dto = avatarAttachment.DTO;
-
-            if (dto.Metadata?.AbstractData?.representations == null)
-            {
-                hash = null;
-                return false;
-            }
-
-            // The length of arrays is small, so O(N) complexity is fine
-            // Avoid iterator allocations with "for" loop
-            for (var i = 0; i < dto.Metadata.AbstractData.representations.Length; i++)
-            {
-                var representation = dto.Metadata.AbstractData.representations[i];
-
-                for (var id = 0; id < representation.bodyShapes.Length; id++)
-                    if (Equals(representation.bodyShapes[id], (string)bodyShape))
-                        return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
-            }
-
-            hash = null;
-            return false;
-        }
-
-        public static bool TryGetContentHashByKey(this IAvatarAttachment avatarAttachment, string key, out string? hash)
-        {
-            AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
-
-            if (wearableDTO.content != null)
-            {
-                for (var i = 0; i < wearableDTO.content.Length; i++)
-                    if (wearableDTO.content[i].file == key)
-                    {
-                        hash = wearableDTO.content[i].hash;
-                        return true;
-                    }
-            }
-            else
-                ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {avatarAttachment.DTO.Metadata.id}");
-
-            hash = null;
-            return false;
-        }
-
     }
 }

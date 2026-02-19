@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = this.GetUrn().ToString();
+            var id = ((IAvatarAttachment)this).GetUrn().ToString();
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Model = result;
-            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(this.GetThumbnail().Value));
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;

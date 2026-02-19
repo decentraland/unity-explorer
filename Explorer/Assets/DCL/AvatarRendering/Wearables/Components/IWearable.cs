@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
@@ -40,52 +40,44 @@ namespace DCL.AvatarRendering.Wearables.Components
         public static IWearable NewEmpty() =>
             new Wearable();
 
-        string ITrimmedWearable.GetRarity() =>
-            ((IAvatarAttachment)this).GetRarity();
+        new int Amount { get; set; }
 
-        string ITrimmedWearable.GetCategory() =>
+        new void SetAmount(int amount);
+
+        new string GetCategory() =>
             ((IAvatarAttachment)this).GetCategory();
 
-        string ITrimmedWearable.GetName() =>
+        new string GetRarity() =>
+            ((IAvatarAttachment)this).GetRarity();
+
+        new string GetName() =>
             ((IAvatarAttachment)this).GetName();
 
-        // Resolve ambiguity: IWearable inherits IThumbnailAttachment through both IAvatarAttachment and ITrimmedAvatarAttachment
-        // Use IAvatarAttachment implementation as the most specific one by implementing directly using DTO
-        URLPath IThumbnailAttachment.GetThumbnail()
-        {
-            const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
-            string thumbnailHash = DTO.Metadata.thumbnail;
+        new URLPath GetThumbnail() =>
+            ((IAvatarAttachment)this).GetThumbnail();
 
-            if (thumbnailHash != THUMBNAIL_DEFAULT_KEY || DTO.content == null) return new URLPath(thumbnailHash!);
+        new URN GetUrn() =>
+            ((IAvatarAttachment)this).GetUrn();
 
-            for (int i = 0; i < DTO.content.Length; i++)
-                if (DTO.content[i].file == THUMBNAIL_DEFAULT_KEY)
-                {
-                    thumbnailHash = DTO.content[i].hash;
-                    break;
-                }
-
-            return new URLPath(thumbnailHash);
-        }
+        URLPath IThumbnailAttachment.GetThumbnail() =>
+            ((IAvatarAttachment)this).GetThumbnail();
 
         URN IThumbnailAttachment.GetUrn() =>
-            DTO.Metadata.id;
+            ((IAvatarAttachment)this).GetUrn();
 
         string IThumbnailAttachment.GetHash() =>
-            DTO.GetHash();
+            ((IAvatarAttachment)this).GetHash();
 
         AssetBundleManifestVersion? IThumbnailAttachment.GetAssetBundleManifestVersion() =>
-            DTO.assetBundleManifestVersion;
+            ((IAvatarAttachment)this).GetAssetBundleManifestVersion();
 
         string? IThumbnailAttachment.GetContentDownloadUrl() =>
-            DTO.ContentDownloadUrl;
+            ((IAvatarAttachment)this).GetContentDownloadUrl();
 
         string? IThumbnailAttachment.GetEntityId() =>
-            DTO.id;
+            ((IAvatarAttachment)this).GetEntityId();
 
         UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
-
-            // This is set in ResolveAvatarAttachmentThumbnailSystem after being loaded by LoadAssetBundleSystem
             WaitForThumbnailImplAsync(this, checkInterval, ct);
 
         private static async UniTask<Sprite> WaitForThumbnailImplAsync(IThumbnailAttachment attachment, int checkInterval, CancellationToken ct)
