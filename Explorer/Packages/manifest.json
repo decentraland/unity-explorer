@@ -7,15 +7,18 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+
+    "com.dcl.gpui-assets": "file:/Users/nickkhalow/Projects/unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets",
+    "com.gurbu.gpui-pro": "file:/Users/nickkhalow/Projects/unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro",
+    "com.gurbu.gpui-pro.terrain": "file:/Users/nickkhalow/Projects/unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
+
+
     "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#chore/rust-audio-for-mac-intel",
     "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
     "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src#f3dd251c7837cc2d844e1c07e741177a53676064",
     "com.decentraland.unity-shared-dependencies": "git@github.com:decentraland/unity-shared-dependencies.git",
-    "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
-    "com.gurbu.gpui-pro.terrain": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
     "com.mackysoft.serializereference-extensions": "1.3.1",
     "com.nickkhalow.chrome-devtool-protocol-unity": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
     "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",

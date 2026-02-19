@@ -87,8 +87,9 @@ namespace DCL.PluginSystem.Global
             {
                 await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-                GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
-                    treesProfile, out treeRendererKeys[prototypeIndex]);
+                var result = await GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
+                    treesProfile);
+                treeRendererKeys[prototypeIndex] = result.rendererKey;
 
                 ReportHub.Log(ReportCategory.LANDSCAPE, $"LandscapePlugin: Registered Renderer Key {treeRendererKeys[prototypeIndex]} for prototype {prototypeIndex} ({treePrototypes[prototypeIndex].asset.name})");
             }
