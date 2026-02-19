@@ -68,7 +68,8 @@ namespace DCL.Places
                 thumbnailLoader: thumbnailLoader,
                 cancellationToken: panelCts.Token,
                 friends: inputData.ConnectedFriends,
-                homePlaceEventBus: homePlaceEventBus);
+                homePlaceEventBus: homePlaceEventBus,
+                liveEvent: inputData.LiveEvent);
 
             SetCreatorThumbnailAsync(panelCts.Token).Forget();
         }

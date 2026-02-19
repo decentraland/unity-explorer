@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -38,7 +39,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text creatorNameText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
-        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private PlaceLiveEventTag liveTag = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
         [SerializeField] private TMP_Text descriptionText = null!;
@@ -156,7 +157,8 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             CancellationToken cancellationToken,
             List<Profile.CompactInfo>? friends = null,
-            HomePlaceEventBus? homePlaceEventBus = null)
+            HomePlaceEventBus? homePlaceEventBus = null,
+            EventDTO? liveEvent = null)
         {
             currentPlaceInfo = placeInfo;
             mainScroll.verticalNormalizedPosition = 1;
@@ -176,7 +178,10 @@ namespace DCL.Places
             parcelsText.text = placeInfo.Positions.Length.ToString();
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
-            liveTag.SetActive(placeInfo.live);
+
+            liveTag.gameObject.SetActive(placeInfo.live);
+            if (liveEvent != null)
+                liveTag.Configure(liveEvent.Value);
 
             bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);

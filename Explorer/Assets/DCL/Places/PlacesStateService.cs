@@ -1,4 +1,5 @@
-﻿using DCL.PlacesAPIService;
+﻿using DCL.EventsApi;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
@@ -13,15 +14,18 @@ namespace DCL.Places
         {
             public readonly PlacesData.PlaceInfo PlaceInfo;
             public readonly List<Profile.CompactInfo> ConnectedFriends;
+            public readonly EventDTO? LiveEvent;
 
-            public PlaceInfoWithConnectedFriends(PlacesData.PlaceInfo placeInfo, List<Profile.CompactInfo> connectedFriends)
+            public PlaceInfoWithConnectedFriends(PlacesData.PlaceInfo placeInfo, List<Profile.CompactInfo> connectedFriends, EventDTO? liveEvent = null)
             {
                 PlaceInfo = placeInfo;
                 ConnectedFriends = connectedFriends;
+                LiveEvent = liveEvent;
             }
         }
 
         private List<Profile.CompactInfo> allFriends { get; } = new();
+        private List<EventDTO> liveEvents { get; } = new();
 
         public PlaceInfoWithConnectedFriends GetPlaceInfoById(string placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
@@ -40,7 +44,9 @@ namespace DCL.Places
                     }
                 }
 
-                CurrentPlaces[place.id] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace);
+                TryGetLiveEventByPlaceId(place.id, out EventDTO? liveEventAssociatedToPlace);
+
+                CurrentPlaces[place.id] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, liveEventAssociatedToPlace);
             }
         }
 
@@ -55,6 +61,15 @@ namespace DCL.Places
 
         public void ClearAllFriends() =>
             allFriends.Clear();
+
+        public void SetLiveEvents(List<EventDTO> events)
+        {
+            liveEvents.Clear();
+            liveEvents.AddRange(events);
+        }
+
+        public void ClearLiveEvents() =>
+            liveEvents.Clear();
 
         public void Dispose() =>
             ClearPlaces();
@@ -71,6 +86,21 @@ namespace DCL.Places
             }
 
             friendProfile = default(Profile.CompactInfo);
+            return false;
+        }
+
+        private bool TryGetLiveEventByPlaceId(string placeId, out EventDTO? eventInfo)
+        {
+            foreach (var liveEvent in liveEvents)
+            {
+                if (!liveEvent.place_id.Equals(placeId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                eventInfo = liveEvent;
+                return true;
+            }
+
+            eventInfo = null;
             return false;
         }
     }

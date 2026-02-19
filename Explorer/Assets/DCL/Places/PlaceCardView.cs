@@ -1,4 +1,5 @@
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -20,7 +21,6 @@ namespace DCL.Places
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
-        private const string FEATURED_CATEGORY = "featured";
 
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
@@ -35,7 +35,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
-        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private PlaceLiveEventTag liveTag = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -124,7 +124,7 @@ namespace DCL.Places
             loadingThumbnailCts.SafeCancelAndDispose();
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false)
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false, EventDTO? liveEvent = null)
         {
             currentPlaceInfo = placeInfo;
 
@@ -136,7 +136,6 @@ namespace DCL.Places
             onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
-            liveTag.SetActive(placeInfo.live);
             featuredTag.SetActive(placeInfo.highlighted);
 
             bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
@@ -156,6 +155,10 @@ namespace DCL.Places
                     friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
                 }
             }
+
+            liveTag.gameObject.SetActive(placeInfo.live);
+            if (liveEvent != null)
+                liveTag.Configure(liveEvent.Value);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 

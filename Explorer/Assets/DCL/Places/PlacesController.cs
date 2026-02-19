@@ -1,5 +1,6 @@
 ﻿using DCL.Browser;
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
@@ -45,7 +46,8 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -56,7 +58,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

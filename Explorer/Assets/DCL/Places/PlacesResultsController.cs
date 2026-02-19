@@ -2,6 +2,7 @@
 using DCL.Browser;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -30,6 +31,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo, PlaceCardView, int, PlacesFilters>? PlaceClicked;
 
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
+        private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error getting live events. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
 
@@ -43,6 +45,7 @@ namespace DCL.Places
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IMVCManager mvcManager;
+        private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -50,6 +53,7 @@ namespace DCL.Places
         private int currentPlacesTotalAmount;
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
         private bool allFriendsLoaded;
+        private bool liveEventsLoaded;
 
         private CancellationTokenSource? loadPlacesCts;
         private CancellationTokenSource? placeCardOperationsCts;
@@ -67,7 +71,8 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             this.placesController = placesController;
@@ -79,6 +84,7 @@ namespace DCL.Places
             this.friendServiceProxy = friendServiceProxy;
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
+            this.eventsApiService = eventsApiService;
 
             view.BackButtonClicked += OnBackButtonClicked;
             view.ExplorePlacesClicked += OnExplorePlacesClicked;
@@ -175,7 +181,7 @@ namespace DCL.Places
         private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
-            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends))).Forget();
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends, placeInfoWithConnectedFriends.LiveEvent))).Forget();
             PlaceClicked?.Invoke(placeInfo, placeCardView, currentPlacesTotalAmount, currentFilters);
         }
 
@@ -209,6 +215,13 @@ namespace DCL.Places
                 List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
                 placesStateService.SetAllFriends(allFriends);
                 allFriendsLoaded = true;
+            }
+
+            if (!liveEventsLoaded)
+            {
+                List<EventDTO> liveEvents = await GetLiveEventsAsync(ct);
+                placesStateService.SetLiveEvents(liveEvents);
+                liveEventsLoaded = true;
             }
 
             if (pageNumber == 0)
@@ -366,7 +379,9 @@ namespace DCL.Places
             view.ClearPlacesResults(null);
             placesStateService.ClearPlaces();
             placesStateService.ClearAllFriends();
+            placesStateService.ClearLiveEvents();
             allFriendsLoaded = false;
+            liveEventsLoaded = false;
         }
 
         private void OnPlaceSetAsHome(PlacesData.PlaceInfo placeInfo) =>
@@ -393,6 +408,25 @@ namespace DCL.Places
             }
 
             return result.Value.Friends.ToList();
+        }
+
+        private async UniTask<List<EventDTO>> GetLiveEventsAsync(CancellationToken ct)
+        {
+            var emptyResult = new List<EventDTO>();
+
+            Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested)
+                return emptyResult;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
+                return emptyResult;
+            }
+
+            return result.Value.ToList();
         }
     }
 }

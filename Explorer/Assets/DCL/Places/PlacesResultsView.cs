@@ -174,7 +174,8 @@ namespace DCL.Places
                 thumbnailLoader: placesCardsThumbnailLoader!,
                 friends: placeInfoWithConnectedFriends.ConnectedFriends,
                 profileRepositoryWrapper,
-                isHome);
+                isHome,
+                liveEvent: placeInfoWithConnectedFriends.LiveEvent);
 
             // Setup card events
             cardView.SubscribeToInteractions(
