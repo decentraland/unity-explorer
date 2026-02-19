@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -9,11 +8,8 @@ using DCL.Utility.Exceptions;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using Microsoft.ClearScript;
 using System;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -23,7 +19,7 @@ namespace DCL.RealmNavigation.TeleportOperations
     public abstract class TeleportToSpawnPointOperationBase<TParams> : ILoadingOperation<TParams> where TParams: ILoadingOperationParams
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly IGlobalRealmController realmController;
+        protected readonly IGlobalRealmController realmController;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly string reportCategory;
@@ -101,12 +97,6 @@ namespace DCL.RealmNavigation.TeleportOperations
         {
             //Wait for all scenes definition to be fetched before trying to teleport
             await realmController.WaitForFixedScenePromisesAsync(ct);
-
-            // If the WorldManifest defines an explicit spawn coordinate, always use it
-            // (e.g. worlds with a fixed or curated spawn point)
-            WorldManifest manifest = realmController.RealmData.WorldManifest;
-            if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                parcelToTeleport = new Vector2Int(spawn.x, spawn.y);
 
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);

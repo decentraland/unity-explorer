@@ -50,7 +50,7 @@ namespace DCL.Chat.Commands
             if (realmNavigator.IsAlreadyOnRealm(realmURL))
                 return $"🟡 You are already in {realm}!";
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -82,7 +82,7 @@ namespace DCL.Chat.Commands
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
                 return await TeleportToParcelAsync(targetPosition, true, ct);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
