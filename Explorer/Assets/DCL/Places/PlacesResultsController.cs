@@ -274,7 +274,7 @@ namespace DCL.Places
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
+                    var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually

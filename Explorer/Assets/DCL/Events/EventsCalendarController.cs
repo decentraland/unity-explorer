@@ -188,7 +188,7 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)
@@ -253,7 +253,7 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)

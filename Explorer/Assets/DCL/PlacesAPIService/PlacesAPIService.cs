@@ -173,8 +173,11 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
-            await client.GetPlacesByIdsAsync(placeIds, ct, withConnectedUsers);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
+            await client.GetPlacesByIdsAsync(placeIds, ct);
+
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
+            await client.GetDestinationsByIdsAsync(placeIds, ct, withConnectedUsers);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
