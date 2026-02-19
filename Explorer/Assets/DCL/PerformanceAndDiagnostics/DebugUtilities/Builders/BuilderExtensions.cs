@@ -33,6 +33,16 @@ namespace DCL.DebugUtilities
             return builder;
         }
 
+        public static DebugWidgetBuilder AddFloatFieldWithConfirmation(this DebugWidgetBuilder builder, float defaultValue, string buttonName, Action<float> onClick)
+        {
+            var binding = new ElementBinding<float>(defaultValue);
+            var floatFieldDef = new DebugFloatFieldDef(binding);
+
+            var buttonDef = new DebugButtonDef(buttonName, () => onClick?.Invoke(binding.Value));
+            builder.AddControl(floatFieldDef, buttonDef);
+            return builder;
+        }
+
         public static DebugWidgetBuilder AddStringFieldWithConfirmation(this DebugWidgetBuilder builder, string defaultValue, string buttonName, Action<string> onClick)
         {
             var binding = new ElementBinding<string>(defaultValue);
@@ -104,7 +114,7 @@ namespace DCL.DebugUtilities
             var marker = new DebugSetOnlyLabelDef(binding);
             return builder.AddControl(marker, null);
         }
-        
-        
+
+
     }
 }

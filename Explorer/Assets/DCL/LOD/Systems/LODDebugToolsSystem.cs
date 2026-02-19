@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
@@ -23,6 +24,7 @@ namespace DCL.LOD.Systems
 
         private readonly Material[] failedMaterials;
         private static readonly Shader failedMaterialShader = Shader.Find("Universal Render Pipeline/Lit");
+        private bool lodRenderersDisabled;
 
         public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, int lodLevel) : base(world)
         {
@@ -53,6 +55,41 @@ namespace DCL.LOD.Systems
                 {
                     color = lodSettingsAsset.LODDebugColors[i]
                 };
+            }
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnLODRenderersDisabledChanged += OnLODRenderersDisabledFromDebugPanel;
+        }
+
+        protected override void OnDispose()
+        {
+            VisualDebugSettings.OnLODRenderersDisabledChanged -= OnLODRenderersDisabledFromDebugPanel;
+        }
+
+        private void OnLODRenderersDisabledFromDebugPanel(bool disabled)
+        {
+            lodRenderersDisabled = disabled;
+            SetLODRenderersVisibilityQuery(World, disabled);
+        }
+
+        [Query]
+        private void SetLODRenderersVisibility([Data] bool disabled, ref SceneLODInfo sceneLODInfo)
+        {
+            if (!sceneLODInfo.IsInitialized() || sceneLODInfo.metadata.LodGroup == null)
+                return;
+
+            LODGroup lodGroup = sceneLODInfo.metadata.LodGroup;
+            UnityEngine.LOD[] lods = lodGroup.GetLODs();
+
+            foreach (UnityEngine.LOD lod in lods)
+            {
+                if (lod.renderers == null) continue;
+
+                foreach (Renderer renderer in lod.renderers)
+                {
+                    if (renderer != null)
+                        renderer.enabled = !disabled;
+                }
             }
         }
 

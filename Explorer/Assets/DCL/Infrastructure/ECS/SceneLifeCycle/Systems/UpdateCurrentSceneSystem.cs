@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
@@ -42,6 +43,12 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneRelativePositionBinding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
+        private bool sceneVisible = true;
+        private bool shadowsDisabled;
+        private Light? directionalLight;
+        private LightShadows? originalShadowType;
+        private readonly Dictionary<Material, int> originalCullValues = new ();
+        private readonly Dictionary<Renderer, ShadowCastingMode> originalShadowModes = new ();
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
@@ -82,8 +89,127 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Global Pos:", globalPositionBinding)
                          .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
                          .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
+                         .AddToggleField("Scene Visible:", OnSceneVisibleToggle, sceneVisible)
+                         .AddToggleField("Backface Culling:", OnBackfaceCullingToggle, backfaceCulling)
+                         .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnLimitShadowCasters)
+                         .AddSingleButton("Restore Shadow Casters", OnRestoreShadowCasters)
+                         .AddToggleField("Disable Shadows:", OnDisableShadowsToggle, shadowsDisabled)
                          .AddSingleButton("Backface debugger", PaintBackFaceMaterials);
             this.debugBuilder = debugBuilder;
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnSceneRendererVisibleChanged += OnSceneRendererVisibleFromDebugPanel;
+            VisualDebugSettings.OnBackfaceCullingChanged += OnBackfaceCullingFromDebugPanel;
+            VisualDebugSettings.OnShadowLimiterChanged += OnShadowLimiterFromDebugPanel;
+            VisualDebugSettings.OnShadowsDisabledChanged += OnShadowsDisabledFromDebugPanel;
+        }
+
+        private void OnSceneRendererVisibleFromDebugPanel(bool visible)
+        {
+            sceneVisible = visible;
+            ApplySceneVisibility();
+        }
+
+        private void OnBackfaceCullingFromDebugPanel(bool enabled)
+        {
+            backfaceCulling = enabled;
+            ApplyBackfaceCulling();
+        }
+
+        private void OnShadowLimiterFromDebugPanel(int maxShadowCasters)
+        {
+            OnLimitShadowCasters(maxShadowCasters);
+        }
+
+        private void OnShadowsDisabledFromDebugPanel(bool disabled)
+        {
+            shadowsDisabled = disabled;
+            ApplyShadowsDisabled();
+        }
+
+        private void ApplyShadowsDisabled()
+        {
+            // Find the main directional light
+            if (directionalLight == null)
+            {
+                GameObject lightObject = GameObject.Find("Directional Light");
+                if (lightObject != null)
+                    directionalLight = lightObject.GetComponent<Light>();
+            }
+
+            if (directionalLight != null)
+            {
+                if (shadowsDisabled)
+                {
+                    if (!originalShadowType.HasValue)
+                        originalShadowType = directionalLight.shadows;
+
+                    directionalLight.shadows = LightShadows.None;
+                }
+                else
+                {
+                    if (originalShadowType.HasValue)
+                        directionalLight.shadows = originalShadowType.Value;
+                }
+            }
+        }
+
+        private void ApplySceneVisibility()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                    renderer.enabled = sceneVisible;
+            }
+        }
+
+        private void ApplyBackfaceCulling()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
+            }
         }
 
 
@@ -135,9 +261,175 @@ namespace ECS.SceneLifeCycle.Systems
             scenesCache.SetCurrentScene(currentActiveScene);
         }
 
+        private void OnSceneVisibleToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            sceneVisible = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            // Get the scene container transform and toggle all renderers
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                    renderer.enabled = sceneVisible;
+            }
+        }
+
+        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            backfaceCulling = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            // Store original value and set to Front (cull front faces, show back faces)
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            // Restore original value
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
+            }
+        }
+
+        private void OnLimitShadowCasters(int maxShadowCasters)
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                int shadowCasterCount = 0;
+
+                foreach (Renderer renderer in renderers)
+                {
+                    if (renderer.shadowCastingMode == ShadowCastingMode.Off)
+                        continue;
+
+                    // Store original value if not already stored
+                    if (!originalShadowModes.ContainsKey(renderer))
+                        originalShadowModes[renderer] = renderer.shadowCastingMode;
+
+                    if (maxShadowCasters < 0 || shadowCasterCount < maxShadowCasters)
+                    {
+                        // Keep shadow casting enabled (restore if previously disabled)
+                        renderer.shadowCastingMode = originalShadowModes[renderer];
+                        shadowCasterCount++;
+                    }
+                    else
+                    {
+                        // Disable shadow casting
+                        renderer.shadowCastingMode = ShadowCastingMode.Off;
+                    }
+                }
+            }
+        }
+
+        private void OnRestoreShadowCasters()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    if (originalShadowModes.TryGetValue(renderer, out ShadowCastingMode originalMode))
+                        renderer.shadowCastingMode = originalMode;
+                }
+
+                originalShadowModes.Clear();
+            }
+        }
+
+        private void OnDisableShadowsToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            shadowsDisabled = evt.newValue;
+
+            // Find the main directional light
+            if (directionalLight == null)
+            {
+                GameObject lightObject = GameObject.Find("Directional Light");
+                if (lightObject != null)
+                {
+                    directionalLight = lightObject.GetComponent<Light>();
+                }
+            }
+
+            if (directionalLight != null)
+            {
+                if (shadowsDisabled)
+                {
+                    // Store original shadow type and disable shadows
+                    if (!originalShadowType.HasValue)
+                        originalShadowType = directionalLight.shadows;
+
+                    directionalLight.shadows = LightShadows.None;
+                }
+                else
+                {
+                    // Restore original shadow type
+                    if (originalShadowType.HasValue)
+                        directionalLight.shadows = originalShadowType.Value;
+                }
+            }
+        }
+
         protected override void OnDispose()
         {
             Object.Destroy(sceneBoundsCube);
+
+            // Unsubscribe from centralized visual debug settings
+            VisualDebugSettings.OnSceneRendererVisibleChanged -= OnSceneRendererVisibleFromDebugPanel;
+            VisualDebugSettings.OnBackfaceCullingChanged -= OnBackfaceCullingFromDebugPanel;
+            VisualDebugSettings.OnShadowLimiterChanged -= OnShadowLimiterFromDebugPanel;
+            VisualDebugSettings.OnShadowsDisabledChanged -= OnShadowsDisabledFromDebugPanel;
         }
 
         private void RefreshSceneDebugInfo()

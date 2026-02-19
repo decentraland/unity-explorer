@@ -1,6 +1,7 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
@@ -33,11 +34,20 @@ namespace DCL.Rendering.GPUInstancing.Systems
                         .SetVisibilityBinding(visibilityBinding)
                         .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled)
                         .AddFloatSliderField("EnvDist ScaleFactor", scaleFactor, 0, 1);
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnRoadsEnabledChanged += OnRoadsEnabledFromDebugPanel;
+        }
+
+        private void OnRoadsEnabledFromDebugPanel(bool enabled)
+        {
+            service.IsEnabled = enabled;
         }
 
         protected override void OnDispose()
         {
             settings.RenderDistScaleFactor = settingsScaleFactor;
+            VisualDebugSettings.OnRoadsEnabledChanged -= OnRoadsEnabledFromDebugPanel;
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)

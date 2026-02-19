@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -34,6 +35,43 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             sceneParticipantsHub = this.gateKeeperSceneRoom.Room().Participants;
 
             AllLocalRoomsRemoteParticipantIdentities();
+
+            // Subscribe to centralized visual debug settings
+            VisualDebugSettings.OnLivekitRoomsActiveChanged += OnLivekitRoomsActiveChangedFromDebugPanel;
+        }
+
+        private void OnLivekitRoomsActiveChangedFromDebugPanel(bool active)
+        {
+            if (active)
+                ActivateLocalRoomsAsync().Forget();
+            else
+                DeactivateLocalRoomsAsync().Forget();
+        }
+
+        private UniTask ActivateLocalRoomsAsync()
+        {
+            if (archipelagoIslandRoom is IActivatableConnectiveRoom activatableIsland &&
+                gateKeeperSceneRoom is IActivatableConnectiveRoom activatableScene)
+            {
+                return UniTask.WhenAll(
+                    activatableIsland.ActivateAsync(),
+                    activatableScene.ActivateAsync()
+                );
+            }
+            return UniTask.CompletedTask;
+        }
+
+        private UniTask DeactivateLocalRoomsAsync()
+        {
+            if (archipelagoIslandRoom is IActivatableConnectiveRoom activatableIsland &&
+                gateKeeperSceneRoom is IActivatableConnectiveRoom activatableScene)
+            {
+                return UniTask.WhenAll(
+                    activatableIsland.DeactivateAsync(),
+                    activatableScene.DeactivateAsync()
+                );
+            }
+            return UniTask.CompletedTask;
         }
 
         public IRoom IslandRoom() =>

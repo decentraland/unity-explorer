@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -50,10 +51,44 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaFactory = mediaFactory;
             this.audioFadeSpeed = audioFadeSpeed;
             this.flipMaterial = flipMaterial;
+
+            // Subscribe to video players paused event
+            VisualDebugSettings.OnVideoPlayersPausedChanged += OnVideoPlayersPausedChanged;
+        }
+
+        protected override void OnDispose()
+        {
+            VisualDebugSettings.OnVideoPlayersPausedChanged -= OnVideoPlayersPausedChanged;
+        }
+
+        private void OnVideoPlayersPausedChanged(bool paused)
+        {
+            if (paused)
+                PauseAllVideoPlayersQuery(World);
+            else
+                ResumeAllVideoPlayersQuery(World);
+        }
+
+        [Query]
+        private void PauseAllVideoPlayers(ref MediaPlayerComponent mediaPlayer)
+        {
+            if (mediaPlayer.IsPlaying)
+                mediaPlayer.MediaPlayer.Pause();
+        }
+
+        [Query]
+        private void ResumeAllVideoPlayers(ref MediaPlayerComponent mediaPlayer)
+        {
+            if (mediaPlayer.MediaPlayer.IsPaused)
+                mediaPlayer.MediaPlayer.Play();
         }
 
         protected override void Update(float t)
         {
+            // Early return if video players are paused via debug settings
+            if (VisualDebugSettings.VideoPlayersPaused)
+                return;
+
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);

@@ -113,6 +113,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.CharacterCamera;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -294,6 +295,7 @@ namespace Global.Dynamic
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
+            VisualDebugSettings.MainUICanvas = mainUIView.GetComponent<Canvas>();
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 

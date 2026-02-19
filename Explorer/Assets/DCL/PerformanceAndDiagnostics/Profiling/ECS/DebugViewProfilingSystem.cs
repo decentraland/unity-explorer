@@ -1,6 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -15,6 +17,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
+using UnityEngine.UIElements;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -99,7 +102,7 @@ namespace DCL.Profiling.ECS
                 var version = new ElementBinding<string>(dclVersion.Version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
-                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                           ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddControl(new AverageFpsBannerDef(avgDisplayData = new ElementBinding<AverageFpsBannerData>(default)), null)
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
@@ -117,7 +120,29 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("CPU MainThread:", cpuMainThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU RenderThread:", cpuRenderThreadFrameTime = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("CPU MainThread PresentWait:", cpuMainThreadPresentWaitTime = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty));
+                            .AddCustomMarker("Bottleneck:", bottleneck = new ElementBinding<string>(string.Empty))
+
+                             // Visual Debug Settings - Centralized toggles for quick debugging
+                            .AddToggleField("Disable Minimap Camera", OnMinimapCameraDisabledChange, false)
+                            .AddToggleField("Disable Scene Renderers", OnSceneRenderersDisabledChange, false)
+                            .AddToggleField("Enable Backface Culling", OnBackfaceCullingChange, false)
+                            .AddIntFieldWithConfirmation(-1, "Limit Shadow Casters", OnShadowLimiterChange)
+                            .AddToggleField("Disable Shadows", OnShadowsDisabledChange, false)
+                            .AddToggleField("Disable Landscape", OnDisableLandscapeChanged, false)
+                            .AddToggleField("Disable Ground", OnDisableGroundChanged, false)
+                            .AddToggleField("Disable Trees", OnDisableTreesChanged, false)
+                            .AddToggleField("Disable Grass", OnDisableGrassChanged, false)
+                            .AddToggleField("Disable Satellite", OnDisableSatelliteChanged, false)
+                            .AddToggleField("Disable Roads", OnRoadsDisabledChange, false)
+                            .AddToggleField("Disable Livekit Rooms", OnLivekitRoomsDisabledChange, false)
+                            .AddToggleField("Disable LOD Renderers", OnLODRenderersDisabledChange, false)
+                            .AddToggleField("Disable Main UI", OnDisableMainUIChanged, false)
+                            .AddToggleField("Pause Video Players", OnVideoPlayersPausedChange, false)
+                            .AddToggleField("Avatar Ghost Renderer", OnShowAvatarGhostRendererChange, false)
+                            .AddFloatFieldWithConfirmation(QualitySettings.meshLodThreshold, "Mesh LOD Threshold", newValue =>
+                             {
+                                 QualitySettings.meshLodThreshold = newValue;
+                             });
 
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY)
@@ -356,6 +381,112 @@ namespace DCL.Profiling.ECS
                               };
 
             elementBinding.Value = frameTimeInMS == 0 ? "collecting.." : $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
+        }
+
+        // Visual Debug Settings callbacks
+        private void OnMinimapCameraDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.MinimapCameraDisabled = evt.newValue;
+        }
+
+        private void OnSceneRenderersDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.SceneRendererVisible = !evt.newValue;
+        }
+
+        private void OnBackfaceCullingChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.BackfaceCullingEnabled = evt.newValue;
+        }
+
+        private void OnShadowLimiterChange(int value)
+        {
+            VisualDebugSettings.ShadowLimiterValue = value;
+        }
+
+        private void OnShadowsDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.ShadowsDisabled = evt.newValue;
+        }
+
+        private void OnDisableLandscapeChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableLandscape = evt.newValue;
+        }
+
+        private void OnDisableGroundChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableGround = evt.newValue;
+        }
+
+        private void OnDisableTreesChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableTrees = evt.newValue;
+        }
+
+        private void OnDisableGrassChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableGrass = evt.newValue;
+        }
+
+        private void OnDisableSatelliteChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableSatellite = evt.newValue;
+        }
+
+        private void OnRoadsDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.RoadsEnabled = !evt.newValue;
+        }
+
+        private void OnLivekitRoomsDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.LivekitRoomsActive = !evt.newValue;
+        }
+
+        private void OnLODRenderersDisabledChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.LODRenderersDisabled = evt.newValue;
+        }
+
+        private void OnDisableMainUIChanged(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.DisableMainUI = evt.newValue;
+        }
+
+        private void OnVideoPlayersPausedChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.VideoPlayersPaused = evt.newValue;
+        }
+
+        private void OnShowAvatarGhostRendererChange(ChangeEvent<bool> evt)
+        {
+            VisualDebugSettings.ShowAvatarGhostRenderer = evt.newValue;
+            ToggleAvatarGhostRenderers(evt.newValue);
+        }
+
+        private static void ToggleAvatarGhostRenderers(bool showGhostOnly)
+        {
+            AvatarBase[] avatarBases = UnityEngine.Object.FindObjectsOfType<AvatarBase>();
+
+            foreach (AvatarBase avatarBase in avatarBases)
+            {
+                // Toggle GhostRenderer visibility
+                if (avatarBase.GhostRenderer != null)
+                    avatarBase.GhostRenderer.SetActive(showGhostOnly);
+
+                // Toggle all other renderers (body + wearables)
+                Renderer[] renderers = avatarBase.GetComponentsInChildren<Renderer>();
+
+                foreach (Renderer renderer in renderers)
+                {
+                    // Skip renderers that are part of the GhostRenderer
+                    if (avatarBase.GhostRenderer != null && renderer.transform.IsChildOf(avatarBase.GhostRenderer.transform))
+                        continue;
+
+                    renderer.enabled = !showGhostOnly;
+                }
+            }
         }
     }
 }
