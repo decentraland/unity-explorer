@@ -114,7 +114,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Walk"",
                     ""type"": ""Button"",
                     ""id"": ""02f953aa-479c-44b1-9404-0183ccceec6a"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -195,7 +195,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ActionButton6"",
                     ""type"": ""Button"",
                     ""id"": ""fa22490d-fdc6-434b-a3bf-05997bd4e1c6"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -244,24 +244,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Impulse"",
-                    ""type"": ""Button"",
-                    ""id"": ""a1b2c3d4-e5f6-7890-abcd-ef1234567890"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ExternalForce"",
-                    ""type"": ""Button"",
-                    ""id"": ""c3d4e5f6-a7b8-9012-cdef-345678901234"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -273,28 +255,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Jump"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""4ffcefc2-581d-410a-89d9-f32a5a74c733"",
-                    ""path"": ""<Keyboard>/j"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Impulse"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c9868e03-b6ef-461f-ac87-06ddb5905994"",
-                    ""path"": ""<Keyboard>/q"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ExternalForce"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -1590,7 +1550,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ControllerClick"",
                     ""type"": ""Button"",
                     ""id"": ""cc9b5f82-208f-4948-bfd9-76cb744e5a1b"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2330,7 +2290,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Controls"",
                     ""type"": ""Button"",
                     ""id"": ""ff9cdfbe-b880-4633-aaae-c5b3849d7f08"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -3886,28 +3846,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Walk"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b2c3d4e5-f6a7-8901-bcde-f23456789012"",
-                    ""path"": ""<Keyboard>/k"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Impulse"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""d4e5f6a7-b8c9-0123-def4-567890123456"",
-                    ""path"": ""<Keyboard>/j"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ExternalForce"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -3967,8 +3905,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionRight = m_Player.FindAction("ActionRight", throwIfNotFound: true);
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
         m_Player_Any = m_Player.FindAction("Any", throwIfNotFound: true);
-        m_Player_Impulse = m_Player.FindAction("Impulse", throwIfNotFound: true);
-        m_Player_ExternalForce = m_Player.FindAction("ExternalForce", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -4178,8 +4114,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionRight;
     private readonly InputAction m_Player_ActionLeft;
     private readonly InputAction m_Player_Any;
-    private readonly InputAction m_Player_Impulse;
-    private readonly InputAction m_Player_ExternalForce;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -4260,14 +4194,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Any => m_Wrapper.m_Player_Any;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Impulse".
-        /// </summary>
-        public InputAction @Impulse => m_Wrapper.m_Player_Impulse;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/ExternalForce".
-        /// </summary>
-        public InputAction @ExternalForce => m_Wrapper.m_Player_ExternalForce;
-        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -4344,12 +4270,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Any.started += instance.OnAny;
             @Any.performed += instance.OnAny;
             @Any.canceled += instance.OnAny;
-            @Impulse.started += instance.OnImpulse;
-            @Impulse.performed += instance.OnImpulse;
-            @Impulse.canceled += instance.OnImpulse;
-            @ExternalForce.started += instance.OnExternalForce;
-            @ExternalForce.performed += instance.OnExternalForce;
-            @ExternalForce.canceled += instance.OnExternalForce;
         }
 
         /// <summary>
@@ -4412,12 +4332,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Any.started -= instance.OnAny;
             @Any.performed -= instance.OnAny;
             @Any.canceled -= instance.OnAny;
-            @Impulse.started -= instance.OnImpulse;
-            @Impulse.performed -= instance.OnImpulse;
-            @Impulse.canceled -= instance.OnImpulse;
-            @ExternalForce.started -= instance.OnExternalForce;
-            @ExternalForce.performed -= instance.OnExternalForce;
-            @ExternalForce.canceled -= instance.OnExternalForce;
         }
 
         /// <summary>
@@ -6238,20 +6152,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAny(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Impulse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnImpulse(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "ExternalForce" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnExternalForce(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.

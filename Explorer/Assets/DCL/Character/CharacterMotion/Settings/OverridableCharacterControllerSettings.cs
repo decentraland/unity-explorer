@@ -317,18 +317,6 @@ namespace DCL.CharacterMotion.Settings
             set => impl.StepOffset = value;
         }
 
-        public float ImpulseForce
-        {
-            get => impl.ImpulseForce;
-            set => impl.ImpulseForce = value;
-        }
-
-        public Vector3 ImpulseDirection
-        {
-            get => impl.ImpulseDirection;
-            set => impl.ImpulseDirection = value;
-        }
-
         public float CharacterMass
         {
             get => impl.CharacterMass;

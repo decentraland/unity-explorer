@@ -81,10 +81,8 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
-        
+
         // Impulse / External Velocity settings
-        float ImpulseForce { get; set; }
-        Vector3 ImpulseDirection { get; set; }
         float CharacterMass { get; set; }
         float ExternalEnvDrag { get; set; }
         float ExternalGroundFriction { get; set; }

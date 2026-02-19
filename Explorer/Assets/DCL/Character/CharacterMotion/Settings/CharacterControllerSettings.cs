@@ -53,7 +53,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        
+
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
         [field: SerializeField] public float MoveAnimBlendMaxJogSpeed { get; private set; } = 3f;
@@ -93,9 +93,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKRemotePlayersDistance { get; set; } = 10;
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
-        
-        [field: SerializeField] [field: Header("Impulse / External Velocity")] public float ImpulseForce { get; set; } = 10f;
-        [field: SerializeField] public Vector3 ImpulseDirection { get; set; } = Vector3.forward;
+
+        [field: Header("Impulse / External Velocity")]
         [field: SerializeField] public float CharacterMass { get; set; } = 1f;
         [field: SerializeField] public float ExternalEnvDrag { get; set; } = 0.5f;
         [field: SerializeField] public float ExternalGroundFriction { get; set; } = 4f;
