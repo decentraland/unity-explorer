@@ -76,7 +76,7 @@ namespace ECS
                     return false;
 
                 if (RealmType.Value is RealmKind.LocalScene)
-                    return true;
+                    return false;
 
                 //TODO: Worlds that use the Genesis discoverability.
                 //For now, all worlds and their scenes are fetched on startup
