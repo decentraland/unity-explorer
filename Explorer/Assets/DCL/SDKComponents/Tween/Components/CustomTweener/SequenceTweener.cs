@@ -87,24 +87,27 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
 
                 case PBTween.ModeOneofCase.MoveRotateScale:
-                    var subSequence = DOTween.Sequence();
-                    subSequence.Join(
-                        transform.DOLocalMove(pbTween.MoveRotateScale.PositionEnd, durationInSeconds)
-                            .From(pbTween.MoveRotateScale.PositionStart, false)
-                            .SetAutoKill(false).Pause()
-                    );
-                    subSequence.Join(
-                        transform.DOLocalRotateQuaternion(pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion(), durationInSeconds)
-                            .From(pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion(), false)
-                            .SetAutoKill(false).Pause()
-                    );
-                    subSequence.Join(
-                        transform.DOScale(pbTween.MoveRotateScale.ScaleEnd, durationInSeconds)
-                            .From(pbTween.MoveRotateScale.ScaleStart, false)
-                            .SetAutoKill(false).Pause()
-                    );
-                    returnTween = subSequence.SetAutoKill(false).Pause();
+                {
+                    // Avoid nested Sequences: DOTween doesn't reliably re-evaluate
+                    // From() values on tweens inside a nested Sequence when the parent
+                    // Sequence advances to that step. A single DOVirtual.Float drives
+                    // all three properties through its callback instead.
+                    Vector3 posStart = pbTween.MoveRotateScale.PositionStart;
+                    Vector3 posEnd = pbTween.MoveRotateScale.PositionEnd;
+                    var rotStart = pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion();
+                    var rotEnd = pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion();
+                    Vector3 scaleStart = pbTween.MoveRotateScale.ScaleStart;
+                    Vector3 scaleEnd = pbTween.MoveRotateScale.ScaleEnd;
+
+                    returnTween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
+                    {
+                        transform.localPosition = Vector3.Lerp(posStart, posEnd, t);
+                        transform.localRotation = Quaternion.Slerp(rotStart, rotEnd, t);
+                        transform.localScale = Vector3.Lerp(scaleStart, scaleEnd, t);
+                    })
+                    .SetAutoKill(false).Pause();
                     break;
+                }
 
                 case PBTween.ModeOneofCase.TextureMove:
                     if (material != null)
