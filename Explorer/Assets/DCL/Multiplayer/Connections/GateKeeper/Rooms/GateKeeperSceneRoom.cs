@@ -194,32 +194,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            bool isWorld = options.RealmData.IsWorld();
-            string url = isWorld ? string.Format(options.WorldCommsSceneAdapterUrl, meta.realmName, meta.sceneId) : options.AdapterUrl;
-            string json = isWorld ? BuildWorldMetadata() : meta.ToJson();
-            bool hasSecret = !string.IsNullOrEmpty(worldCommsSecret?.Secret);
-            int secretLength = worldCommsSecret?.Secret?.Length ?? 0;
-
-            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"GateKeeper POST to {url} with body: {json}");
-            if (isWorld)
-                ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"GateKeeper world handshake diagnostics: realm={meta.realmName}, sceneId={meta.sceneId ?? "null"}, secretPresent={hasSecret}, secretLength={secretLength}");
+            string url = options.GetAdapterURL(meta.sceneId);
+            string json = meta.ToJson();
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, json, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-
-            bool preferFixedAdapter = isWorld;
-            string preferredAdapter = preferFixedAdapter ? response.fixedAdapter : response.adapter;
-            string fallbackAdapter = preferFixedAdapter ? response.adapter : response.fixedAdapter;
-            bool usedFixedAdapter = preferFixedAdapter ? !string.IsNullOrEmpty(preferredAdapter) : string.IsNullOrEmpty(preferredAdapter);
-            string connectionString = string.IsNullOrEmpty(preferredAdapter) ? fallbackAdapter : preferredAdapter;
-
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException($"Connection string is empty for url {url}. adapter='{response.adapter}', fixedAdapter='{response.fixedAdapter}'");
-
-            ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER)
-                     .Log($"GateKeeper response mapping: isWorld={isWorld}, selectedField={(usedFixedAdapter ? "fixedAdapter" : "adapter")}, adapterPresent={!string.IsNullOrEmpty(response.adapter)}, fixedAdapterPresent={!string.IsNullOrEmpty(response.fixedAdapter)}");
-
+            string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }

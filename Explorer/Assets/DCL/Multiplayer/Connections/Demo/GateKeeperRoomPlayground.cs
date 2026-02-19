@@ -49,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), realmData);
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), new RealmData());
 
             new GateKeeperSceneRoom(
                     webRequests,

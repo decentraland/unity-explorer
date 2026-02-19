@@ -5,6 +5,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,6 +28,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public Button InWorldCameraButton { get; private set; }
         [field: SerializeField] internal Button placesButton { get; private set; }
         [field: SerializeField] internal Button eventsButton { get; private set; }
+        [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; }
         [field: SerializeField] internal Button communitiesButton { get; private set; }
         [field: SerializeField] internal Button mapButton { get; private set; }
         [field: SerializeField] internal Button backpackButton { get; private set; }
@@ -91,6 +93,12 @@ namespace DCL.UI.Sidebar
         public void SetAutoHideSidebarStatus(bool value)
         {
             AutohideStatusChanged?.Invoke(value);
+        }
+
+        public void SetLiveEventsCounter(int count)
+        {
+            liveEventsCounterText.text = count.ToString();
+            liveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
         }
     }
 }

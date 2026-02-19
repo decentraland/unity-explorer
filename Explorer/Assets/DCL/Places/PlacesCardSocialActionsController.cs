@@ -22,7 +22,14 @@ namespace DCL.Places
 {
     public class PlacesCardSocialActionsController
     {
-        public event Action<string>? PlaceSetAsHome;
+        public event Action<PlacesData.PlaceInfo>? PlaceSetAsLiked;
+        public event Action<PlacesData.PlaceInfo>? PlaceSetAsDisliked;
+        public event Action<PlacesData.PlaceInfo>? PlaceSetAsFavorite;
+        public event Action<PlacesData.PlaceInfo>? PlaceSetAsHome;
+        public event Action<PlacesData.PlaceInfo>? JumpedInPlace;
+        public event Action<PlacesData.PlaceInfo>? PlaceShared;
+        public event Action<PlacesData.PlaceInfo>? PlaceLinkCopied;
+        public event Action<PlacesData.PlaceInfo>? NavigationToPlaceStarted;
 
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
@@ -80,6 +87,7 @@ namespace DCL.Places
                 placeCardView?.SilentlySetDislikeToggle(false);
                 placeDetailPanelView?.SilentlySetDislikeToggle(false);
                 placeInfo.user_dislike = false;
+                PlaceSetAsLiked?.Invoke(placeInfo);
             }
 
             placeInfo.user_like = likeValue;
@@ -108,6 +116,7 @@ namespace DCL.Places
                 placeCardView?.SilentlySetLikeToggle(false);
                 placeDetailPanelView?.SilentlySetLikeToggle(false);
                 placeInfo.user_like = false;
+                PlaceSetAsDisliked?.Invoke(placeInfo);
             }
 
             placeInfo.user_dislike = dislikeValue;
@@ -133,6 +142,9 @@ namespace DCL.Places
             placeInfo.user_favorite = favoriteValue;
             placeCardView?.SilentlySetFavoriteToggle(favoriteValue);
             placeDetailPanelView?.SilentlySetFavoriteToggle(favoriteValue);
+
+            if (favoriteValue)
+                PlaceSetAsFavorite?.Invoke(placeInfo);
         }
 
         public void SetPlaceAsHome(PlacesData.PlaceInfo placeInfo, bool isHome, PlaceCardView? placeCardView, PlaceDetailPanelView? placeDetailPanelView)
@@ -152,7 +164,7 @@ namespace DCL.Places
                     return;
                 }
 
-                PlaceSetAsHome?.Invoke(placeInfo.id);
+                PlaceSetAsHome?.Invoke(placeInfo);
             }
             else
             {
@@ -171,6 +183,8 @@ namespace DCL.Places
                     default, placeInfo.world_name).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, ct, false).Forget();
+
+            JumpedInPlace?.Invoke(placeInfo);
         }
 
         public void SharePlace(PlacesData.PlaceInfo placeInfo)
@@ -179,6 +193,8 @@ namespace DCL.Places
             var twitterLink = string.Format(dclUrlSource.Url(DecentralandUrl.TwitterNewPostLink), description, "DCLPlace", GetPlaceCopyLink(placeInfo));
 
             webBrowser.OpenUrl(twitterLink);
+
+            PlaceShared?.Invoke(placeInfo);
         }
 
         public void CopyPlaceLink(PlacesData.PlaceInfo placeInfo)
@@ -186,6 +202,8 @@ namespace DCL.Places
             clipboard.Set(GetPlaceCopyLink(placeInfo));
 
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
+
+            PlaceLinkCopied?.Invoke(placeInfo);
         }
 
         private string GetPlaceCopyLink(PlacesData.PlaceInfo place)
@@ -198,8 +216,11 @@ namespace DCL.Places
             return string.Format(dclUrlSource.Url(DecentralandUrl.JumpInGenesisCityLink), coordinates.x, coordinates.y);
         }
 
-        public void StartNavigationToPlace(PlacesData.PlaceInfo placeInfo) =>
+        public void StartNavigationToPlace(PlacesData.PlaceInfo placeInfo)
+        {
             navmapBus?.SelectDestination(placeInfo);
+            NavigationToPlaceStarted?.Invoke(placeInfo);
+        }
 
         public void ExitNavigationToPlace() =>
             mapPathEventBus?.RemoveDestination();

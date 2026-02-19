@@ -17,9 +17,9 @@ namespace DCL.WebRequests.Analytics.Metrics
 
         public abstract ulong GetMetric();
 
-        public abstract void OnRequestStarted(ITypedWebRequest request, DateTime startTime);
+        public abstract void OnRequestStarted<T>(T request, DateTime startTime) where T: ITypedWebRequest;
 
-        public abstract void OnRequestEnded(ITypedWebRequest request, TimeSpan duration);
+        public abstract void OnRequestEnded<T>(T request, TimeSpan duration) where T: ITypedWebRequest;
 
         public virtual void CreateDebugMenu(DebugWidgetBuilder? builder, IWebRequestsAnalyticsContainer.RequestType requestType)
         {

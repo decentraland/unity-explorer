@@ -27,7 +27,7 @@ namespace DCL.Chat.Commands
         {
             this.realmNavigator = realmNavigator;
             this.environmentValidator = environmentValidator;
-            worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer));
+            worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
 
             paramUrls = new Dictionary<string, string>
             {

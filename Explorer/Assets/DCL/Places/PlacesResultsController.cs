@@ -26,6 +26,10 @@ namespace DCL.Places
 {
     public class PlacesResultsController : IDisposable
     {
+        public event Action<string, int>? PlacesSearched;
+        public event Action<PlacesFilters>? PlacesFiltered;
+        public event Action<PlacesData.PlaceInfo, PlaceCardView, int, PlacesFilters>? PlaceClicked;
+
         private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
         private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
@@ -185,6 +189,7 @@ namespace DCL.Places
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
             mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends))).Forget();
+            PlaceClicked?.Invoke(placeInfo, placeCardView, currentPlacesTotalAmount, currentFilters);
         }
 
         private void OnFiltersChanged(PlacesFilters filters)
@@ -302,27 +307,35 @@ namespace DCL.Places
             }
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
-                view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
-            else switch (currentFilters.Section)
             {
-                case PlacesSection.BROWSE when currentFilters.CategoryId != null:
+                view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
+                PlacesSearched?.Invoke(currentFilters.SearchText, placesResult.Value.Total);
+            }
+            else
+            {
+                switch (currentFilters.Section)
                 {
-                    string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                    view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
-                    break;
+                    case PlacesSection.BROWSE when currentFilters.CategoryId != null:
+                    {
+                        string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
+                        view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
+                        break;
+                    }
+                    case PlacesSection.BROWSE:
+                        view.SetPlacesCounter("All");
+                        break;
+                    case PlacesSection.RECENTLY_VISITED:
+                        view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
+                        break;
+                    case PlacesSection.FAVORITES:
+                        view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
+                        break;
+                    case PlacesSection.MY_PLACES:
+                        view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
+                        break;
                 }
-                case PlacesSection.BROWSE:
-                    view.SetPlacesCounter("All");
-                    break;
-                case PlacesSection.RECENTLY_VISITED:
-                    view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
-                    break;
-                case PlacesSection.FAVORITES:
-                    view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
-                    break;
-                case PlacesSection.MY_PLACES:
-                    view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
-                    break;
+
+                PlacesFiltered?.Invoke(currentFilters);
             }
 
             view.SetPlacesCounterActive(true);
@@ -369,8 +382,8 @@ namespace DCL.Places
             allFriendsLoaded = false;
         }
 
-        private void OnPlaceSetAsHome(string newPlaceAsHomeId) =>
-            view.RefreshOldPlaceAsHome(newPlaceAsHomeId);
+        private void OnPlaceSetAsHome(PlacesData.PlaceInfo placeInfo) =>
+            view.RefreshOldPlaceAsHome(placeInfo.id);
 
         private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
         {
