@@ -68,8 +68,6 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
             else
             {
-                WebGLDebugLog.Log($"[AB-Loading] Creating promise for GLTF: src={sdkComponent.Src}, hash={hash}");
-
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
                 var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
 

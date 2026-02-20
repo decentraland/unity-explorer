@@ -21,10 +21,9 @@ namespace ECS.SceneLifeCycle.Reporting
 
         public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
         {
-            // #region agent log
             bool inCache = scenesCache.Contains(parcel);
             WebGLDebugLog.Log("SceneReadinessReportQueue.Enqueue", inCache ? "shortcut" : "queued", $"parcel=({parcel.x},{parcel.y}) inCache={inCache}", "H2");
-            // #endregion
+
             // Shortcut
             if (inCache)
             {

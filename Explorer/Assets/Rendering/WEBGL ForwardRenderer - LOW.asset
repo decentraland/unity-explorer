@@ -94,8 +94,10 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures: []
-  m_RendererFeatureMap: 
+  m_RendererFeatures:
+  - {fileID: 7376293350957255207}
+  - {fileID: 5811054413736895171}
+  m_RendererFeatureMap: 270ae2aeb8db5d66c3e240753303a550
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -192,6 +194,22 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
+--- !u!114 &5811054413736895171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bd5c64af15e426a932a23d627f2d07f, type: 3}
+  m_Name: RenderFeature_ObjectHighlight
+  m_EditorClassIdentifier: ObjectHighlight::DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight.RenderFeature_ObjectHighlight
+  m_Active: 1
+  highlightInputMaterial: {fileID: 0}
+  highlightInputBlurMaterial: {fileID: 0}
+  highlightOutputMaterial: {fileID: 0}
 --- !u!114 &6840260418858268937
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,6 +266,19 @@ MonoBehaviour:
     enable: 0
     range: 500
     cellSize: 0.25
+--- !u!114 &7376293350957255207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f09f39579534653887b8ee087826266, type: 3}
+  m_Name: RendererFeature_AvatarOutline
+  m_EditorClassIdentifier: RendererFeature_AvatarOutline::DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline.RendererFeature_AvatarOutline
+  m_Active: 1
 --- !u!114 &9093958971299302173
 MonoBehaviour:
   m_ObjectHideFlags: 0

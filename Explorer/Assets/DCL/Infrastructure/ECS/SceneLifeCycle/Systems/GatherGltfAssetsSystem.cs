@@ -90,11 +90,9 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
-                    WebGLDebugLog.Log("GatherGltfAssetsSystem", "TryDequeue false, Conclude", $"parcelsCount={sceneData.Parcels?.Count ?? 0}", "H6");
                     Conclude();
                     return;
                 }
-                WebGLDebugLog.Log("GatherGltfAssetsSystem", "TryDequeue true", $"parcelsCount={sceneData.Parcels?.Count ?? 0}", "H6");
 
                 concluded = true;
 
