@@ -3,7 +3,6 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts;
 using DCL.Web3.Chains;
 using System;
-using UnityEngine;
 
 namespace DCL.Web3.Identities
 {
@@ -64,6 +63,18 @@ namespace DCL.Web3.Identities
                     .WithReport(ReportCategory.PROFILE)
                     .Log($"Web3Identity AuthChain requested: {origin.AuthChain}");
                 return origin.AuthChain;
+            }
+        }
+
+        public IWeb3Identity.Web3IdentitySource Source
+        {
+            get
+            {
+                ReportHub
+                   .WithReport(ReportCategory.PROFILE)
+                   .Log($"Web3Identity Source requested: {origin.Source}");
+
+                return origin.Source;
             }
         }
 

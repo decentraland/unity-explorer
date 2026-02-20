@@ -44,7 +44,8 @@ namespace DCL.Web3.Authenticators
                 new Web3Address(signer),
                 ephemeralAccount,
                 expiration,
-                authChain
+                authChain,
+                IWeb3Identity.Web3IdentitySource.None
             ).AsUniTaskResult<IWeb3Identity>();
         }
 
