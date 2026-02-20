@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Networking;
 
-namespace DCL.WebRequests.GenericDelete
+namespace DCL.WebRequests
 {
     public readonly struct GenericDeleteRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
@@ -8,11 +8,9 @@ namespace DCL.WebRequests.GenericDelete
 
         public bool Idempotent => false;
 
-        internal static GenericDeleteRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
+        internal static GenericDeleteRequest Initialize(string url, ref GenericPostArguments arguments)
         {
-            UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null
-                ? UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)!
-                : UnityWebRequest.Post(commonArguments.URL, arguments.PostData, arguments.ContentType)!;
+            UnityWebRequest unityWebRequest = GenericPostRequest.CreateWebRequest(url, ref arguments);
 
             unityWebRequest.method = "DELETE";
 

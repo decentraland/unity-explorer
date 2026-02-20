@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             foreach (Collider entityCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask);
+                    entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
@@ -105,7 +105,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
             {
                 PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask);
+                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
             }
         }
 
@@ -114,13 +114,13 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             foreach (Collider entityCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
             {
                 PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask);
+                    entityCollider, TriggerAreaEventType.TaetExit, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
             }
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         }
 
         private void PropagateResultComponent(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, Transform triggerAreaTransform,
-            Collider triggerEntityCollider, TriggerAreaEventType eventType, ColliderLayer areaLayerMask)
+            Collider triggerEntityCollider, TriggerAreaEventType eventType, ColliderLayer areaLayerMask, uint incrementalTick)
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
@@ -158,7 +158,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             var resultComponent = triggerAreaResultPool.Get();
             resultComponent.EventType = eventType;
             resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-            resultComponent.Timestamp = sceneStateProvider.TickNumber;
+            resultComponent.Timestamp = incrementalTick;
             resultComponent.TriggeredEntityPosition = triggerAreaTransform.localPosition.ToProtoVector();
             resultComponent.TriggeredEntityRotation = triggerAreaTransform.localRotation.ToProtoQuaternion();
 
@@ -185,7 +185,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     pbTriggerAreaResult.TriggeredEntityPosition = data.result.TriggeredEntityPosition;
                     pbTriggerAreaResult.Trigger = data.result.Trigger;
                 },
-                triggerAreaCRDTEntity, (int)sceneStateProvider.TickNumber, (resultComponent, sceneStateProvider.TickNumber)
+                triggerAreaCRDTEntity, (int)incrementalTick, (resultComponent, incrementalTick)
             );
 
             triggerAreaResultTriggerPool.Release(resultComponent.Trigger);

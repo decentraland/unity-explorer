@@ -17,7 +17,7 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
-        internal static PartialDownloadRequest Initialize(in CommonArguments commonArguments, GenericGetArguments arguments) =>
-            new (UnityWebRequest.Get(commonArguments.URL));
+        internal static PartialDownloadRequest Initialize(string url, ref GenericGetArguments arguments) =>
+            new (UnityWebRequest.Get(url));
     }
 }

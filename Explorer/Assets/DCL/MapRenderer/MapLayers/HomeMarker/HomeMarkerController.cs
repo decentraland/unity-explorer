@@ -18,29 +18,31 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 	public class HomeMarkerController : MapLayerControllerBase, IMapLayerController, IZoomScalingLayer
 	{
 		internal delegate IHomeMarker HomeMarkerBuilder(Transform parent);
-		
+
 		private readonly HomeMarkerBuilder builder;
 		private readonly INavmapBus navmapBus;
 		private readonly IPlacesAPIService placesAPIService;
 		private readonly IEventBus analyticsEventBus;
 
 		public Vector2Int? CurrentCoordinates { get; private set; }
+		public string? CurrentWorldName { get; private set; }
 		private IHomeMarker homeMarker;
 		private CancellationTokenSource highlightCt = new();
 		private CancellationTokenSource deHighlightCt = new();
 		private CancellationTokenSource placesCts = new();
 
-		public bool HomeIsSet => CurrentCoordinates.HasValue;
+		public bool HomeIsSet => CurrentCoordinates.HasValue || !string.IsNullOrEmpty(CurrentWorldName);
+		public bool IsWorldHome => !string.IsNullOrEmpty(CurrentWorldName);
 		public bool ZoomBlocked { get; set; }
-		
+
 		internal HomeMarkerController(
 			HomeMarkerBuilder builder,
-			Transform instantiationParent, 
-			ICoordsUtils coordsUtils, 
+			Transform instantiationParent,
+			ICoordsUtils coordsUtils,
 			IMapCullingController cullingController,
 			INavmapBus navmapBus,
 			IPlacesAPIService placesAPIService,
-			IEventBus analyticsEventBus) 
+			IEventBus analyticsEventBus)
 			: base(instantiationParent, coordsUtils, cullingController)
 		{
 			this.builder = builder;
@@ -52,7 +54,12 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		internal void Initialize()
 		{
 			homeMarker = builder(instantiationParent);
-			SetMarker(Deserialize());
+
+			string? worldName = DeserializeWorldName();
+			if (!string.IsNullOrEmpty(worldName))
+				SetWorldMarker(worldName);
+			else
+				SetMarker(Deserialize());
 		}
 
 		protected override void DisposeImpl()
@@ -62,16 +69,35 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			placesCts.SafeCancelAndDispose();
 			homeMarker.Dispose();
 		}
-		
+
 		public static Vector2Int? Deserialize()
 		{
 			if (!HasSerializedPosition())
 				return null;
-			
+
 			return DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, Vector2Int.zero);
 		}
 
 		public static bool HasSerializedPosition() => DCLPlayerPrefs.HasVectorKey(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+
+		public static string? DeserializeWorldName()
+		{
+			if (!HasSerializedWorldName())
+				return null;
+
+			return DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+		}
+
+		public static bool HasSerializedWorldName()
+		{
+			if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.MAP_HOME_WORLD_NAME))
+				return false;
+
+			string value = DCLPlayerPrefs.GetString(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+			return !string.IsNullOrEmpty(value);
+		}
+
+		public static bool HasSerializedHome() => HasSerializedWorldName() || HasSerializedPosition();
 
 		internal static void Serialize(Vector2Int? coordinates)
 		{
@@ -84,16 +110,40 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.MAP_HOME_MARKER_DATA, coordinates.Value);
 		}
 
+		internal static void SerializeWorldName(string? worldName)
+		{
+			if (string.IsNullOrEmpty(worldName))
+			{
+				DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
+				return;
+			}
+
+			DCLPlayerPrefs.SetString(DCLPrefKeys.MAP_HOME_WORLD_NAME, worldName);
+		}
+
 		public void SetMarker(Vector2Int? coordinates)
 		{
 			homeMarker.SetActive(coordinates.HasValue);
 			CurrentCoordinates = coordinates;
+			CurrentWorldName = null;
 
 			if (CurrentCoordinates.HasValue)
 				homeMarker.SetPosition(coordsUtils.CoordsToPositionWithOffset(CurrentCoordinates.Value));
-			
+
 			Serialize(CurrentCoordinates);
-			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates));
+			SerializeWorldName(null);
+			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(CurrentCoordinates, null));
+		}
+
+		public void SetWorldMarker(string? worldName)
+		{
+			homeMarker.SetActive(false);
+			CurrentCoordinates = null;
+			CurrentWorldName = worldName;
+
+			Serialize(null);
+			SerializeWorldName(worldName);
+			analyticsEventBus.Publish(new HomeMarkerEvents.MessageHomePositionChanged(null, worldName));
 		}
 
 		public UniTask InitializeAsync(CancellationToken cancellationToken) =>
@@ -101,18 +151,18 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 
 		public UniTask EnableAsync(CancellationToken cancellationToken)
 		{
-			if(HomeIsSet)
+			if(HomeIsSet && !IsWorldHome)
 				homeMarker.SetActive(true);
-			
+
 			return UniTask.CompletedTask;
 		}
 
 		public UniTask Disable(CancellationToken cancellationToken)
 		{
 			homeMarker.SetActive(false);
-			
+
 			mapCullingController.StopTracking(homeMarker);
-			
+
 			return UniTask.CompletedTask;
 		}
 
@@ -128,14 +178,14 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			homeMarker.ResetToBaseScale();
 		}
-		
+
 		public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
 		{
 			mapMarker = null;
-			
+
 			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
 				return false;
-    
+
 			mapMarker = homeMarker;
 			highlightCt = highlightCt.SafeRestart();
 			homeMarker.AnimateSelectionAsync(highlightCt.Token);
@@ -146,7 +196,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		{
 			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
 				return false;
-			
+
 			deHighlightCt = deHighlightCt.SafeRestart();
 			homeMarker.AnimateDeSelectionAsync(deHighlightCt.Token);
 			return true;
@@ -155,7 +205,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 		public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
 		{
 			mapRenderMarker = null;
-			
+
 			if (gameObject.GetInstanceID() != homeMarker.MarkerObject.gameObject.GetInstanceID())
 				return false;
 
@@ -171,7 +221,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			try
 			{
 				placesCts = placesCts.SafeRestart();
-				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(coords.Value, placesCts.Token) 
+				PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(coords.Value, placesCts.Token)
 				                                  ?? new PlacesData.PlaceInfo(coords.Value);
 				if (placesCts.IsCancellationRequested)
 					return;
@@ -182,7 +232,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 			{
 				ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerController: Error while fetching place info" + e);
 			}
-			
+
 		}
 	}
 }

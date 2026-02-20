@@ -1,31 +1,54 @@
-﻿using DCL.Browser;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Communities;
+using DCL.Communities.CommunitiesDataProvider;
+using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Friends;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using MVC;
 using System;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
+        public event Action<bool>? CreateEventButtonClicked;
+
+        private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
+        private const string GET_MY_COMMUNITIES_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
+
         public event Action<EventsSection, DateTime>? SectionOpen;
         public event Action? EventsClosed;
+        public event Action? GoToTodayClicked;
 
-        public  DateTime CurrentCalendarFromDate { get; set; }
+        public DateTime CurrentCalendarFromDate { get; set; }
+        public EventsCalendarController EventsCalendarController { get; }
+        public EventCardActionsController EventCardActionsController { get; }
 
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private bool isSectionActivated;
-        private readonly EventsCalendarController eventsCalendarController;
+        private bool isFriendsAndCommunitiesLoaded;
         private readonly EventsByDayController eventsByDayController;
+        private readonly EventsStateService eventsStateService;
 
         public EventsController(
             EventsView view,
@@ -34,26 +57,36 @@ namespace DCL.Events
             IPlacesAPIService placesAPIService,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.friendServiceProxy = friendServiceProxy;
+            this.communitiesDataProvider = communitiesDataProvider;
+            EventCardActionsController = eventCardActionsController;
 
-            EventsStateService eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
-            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager);
+            eventsStateService = new EventsStateService();
+            EventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
+            eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
 
+            view.GoToTodayButtonClicked += OnGoToTodayButtonClicked;
             view.CreateButtonClicked += OnCreateButtonClicked;
         }
 
         public void Dispose()
         {
-            eventsCalendarController.Dispose();
+            EventsCalendarController.Dispose();
             eventsByDayController.Dispose();
 
+            view.GoToTodayButtonClicked -= OnGoToTodayButtonClicked;
             view.CreateButtonClicked -= OnCreateButtonClicked;
         }
 
@@ -65,7 +98,6 @@ namespace DCL.Events
             isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
-
             OpenSection(EventsSection.CALENDAR);
         }
 
@@ -74,6 +106,9 @@ namespace DCL.Events
             isSectionActivated = false;
             view.SetViewActive(false);
             EventsClosed?.Invoke();
+            eventsStateService.ClearAllFriends();
+            eventsStateService.ClearMyCommunities();
+            isFriendsAndCommunitiesLoaded = false;
         }
 
         public void Animate(int triggerId) =>
@@ -93,7 +128,71 @@ namespace DCL.Events
             SectionOpen?.Invoke(section, fromDate ?? todayAtTheBeginningOfTheDay);
         }
 
+        public async UniTask RefreshFriendsAndCommunitiesDataAsync(CancellationToken ct)
+        {
+            if (isFriendsAndCommunitiesLoaded)
+                return;
+
+            await GetAllFriendsAsync(ct);
+            await GetMyCommunitiesAsync(ct);
+
+            isFriendsAndCommunitiesLoaded = true;
+        }
+
+        private async UniTask GetAllFriendsAsync(CancellationToken ct)
+        {
+            if (!friendServiceProxy.Configured)
+                return;
+
+            var result = await friendServiceProxy.StrictObject
+                                                 .GetFriendsAsync(0, 1000, ct)
+                                                 .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_FRIENDS_ERROR_MESSAGE));
+                return;
+            }
+
+            eventsStateService.SetAllFriends(result.Value.Friends.ToList());
+        }
+
+        private async UniTask GetMyCommunitiesAsync(CancellationToken ct)
+        {
+            var result = await communitiesDataProvider.GetUserCommunitiesAsync(
+                                                           name: string.Empty,
+                                                           onlyMemberOf: true,
+                                                           pageNumber: 1,
+                                                           elementsPerPage: 1000,
+                                                           ct: ct,
+                                                           includeRequestsReceivedPerCommunity: true)
+                                                      .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_MY_COMMUNITIES_ERROR_MESSAGE));
+                return;
+            }
+
+            eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
+        }
+
+        private void OnGoToTodayButtonClicked() =>
+            GoToTodayClicked?.Invoke();
+
         private void OnCreateButtonClicked() =>
-            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");
+            GoToCreateEventPage(true);
+
+        public void GoToCreateEventPage(bool fromHeader)
+        {
+            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?utm_source=explorer&utm_campaign=discover");
+            CreateEventButtonClicked?.Invoke(fromHeader);
+        }
     }
 }

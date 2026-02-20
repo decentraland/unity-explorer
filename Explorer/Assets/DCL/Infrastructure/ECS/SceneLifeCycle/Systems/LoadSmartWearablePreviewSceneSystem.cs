@@ -5,6 +5,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -26,10 +27,12 @@ namespace ECS.SceneLifeCycle.Systems
         private static readonly ISet<long> IGNORE_ERROR_CODES = new HashSet<long> { 404 };
 
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
 
-        public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController) : base(world)
+        public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource) : base(world)
         {
             this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
         }
 
         protected override void Update(float t)
@@ -94,7 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
                                   .Select(PreviewWearablesResponse.WearableContent.ToContentDefinition)
                                   .ToArray(),
             };
-            var ipfsPath = new IpfsPath(definition.id!, URLDomain.EMPTY);
+            var ipfsPath = new IpfsPath(definition.id!, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
 
             // NOTICE that when creating the scene we do NOT mark it as a PX because we are running it as a normal scene
             SceneDefinitionComponent definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath);
@@ -102,7 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             Entity scene = World.Create(definitionComponent, PartitionComponent.TOP_PRIORITY);
-            CreateSceneFacadePromise.Execute(World, scene, ipfs, definitionComponent, PartitionComponent.TOP_PRIORITY);
+            CreateSceneFacadePromise.Execute(World, scene, definitionComponent, PartitionComponent.TOP_PRIORITY);
 
             World.Set(realm, new SmartWearablePreviewScene { Value = scene });
         }

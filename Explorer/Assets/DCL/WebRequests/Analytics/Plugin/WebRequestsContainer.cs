@@ -2,72 +2,68 @@ using CDPBridges;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.Prefs;
+using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.Dumper;
 using DCL.WebRequests.RequestsHub;
 using System;
-using Utility.Multithreading;
-using Utility.Storage;
+using System.Threading;
+using UnityEngine;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsContainer : IDisposable
+    public class WebRequestsContainer : DCLGlobalContainer<WebRequestsContainer.Settings>
     {
-        public IWebRequestController WebRequestController { get; }
+        private DebugWidgetBuilder? widget;
 
-        public IWebRequestController SceneWebRequestController { get; }
+        private DebugMetricsAnalyticsHandler debugMetricsAnalyticsHandler;
 
-        public WebRequestsAnalyticsContainer AnalyticsContainer { get; }
+        public IWebRequestController WebRequestController { get; private set; }
 
-        public ChromeDevtoolProtocolClient ChromeDevtoolProtocolClient { get; }
+        public IWebRequestController SceneWebRequestController { get; private set; }
 
-        private readonly DebugWidgetBuilder? widget;
+        public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; }
 
-        private WebRequestsContainer(
-            IWebRequestController webRequestController,
-            IWebRequestController sceneWebRequestController,
-            WebRequestsAnalyticsContainer analyticsContainer,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
-            DebugWidgetBuilder? widget)
-        {
-            WebRequestController = webRequestController;
-            AnalyticsContainer = analyticsContainer;
-            ChromeDevtoolProtocolClient = chromeDevtoolProtocolClient;
-            this.widget = widget;
-            SceneWebRequestController = sceneWebRequestController;
-        }
+        public ChromeDevToolHandler ChromeDevToolHandler { get; private set; }
+
+        private WebRequestsContainer() { }
+
+        public override void Dispose() =>
+            WebRequestsDumper.Instance.AnalyticsHandler = null;
 
         public WebRequestsPlugin CreatePlugin(bool isLocalSceneDevelopment)
         {
-            AnalyticsContainer
-               .BuildUpDebugWidget(isLocalSceneDevelopment)
-               .AddTrackedMetric<ActiveCounter>()
-               .AddTrackedMetric<Total>()
-               .AddTrackedMetric<TotalFailed>()
-               .AddTrackedMetric<BandwidthDown>()
-               .AddTrackedMetric<BandwidthUp>()
-               .AddTrackedMetric<ServeTimeSmallFileAverage>()
-               .AddTrackedMetric<ServeTimePerMBAverage>()
-               .AddTrackedMetric<FillRateAverage>()
-               .AddTrackedMetric<TimeToFirstByteAverage>()
-               .Build();
-
-            widget?.AddSingleButton("Open Chrome DevTools", () =>
+            if (widget != null)
             {
-                BridgeStartResult result = ChromeDevtoolProtocolClient.StartAndOpen();
-                string? errorMessage = ErrorMessageFromBridgeResult(result);
+                debugMetricsAnalyticsHandler.BuildUpDebugWidget(isLocalSceneDevelopment)
+                                            .AddTrackedMetric<ActiveCounter>()
+                                            .AddTrackedMetric<Total>()
+                                            .AddTrackedMetric<TotalFailed>()
+                                            .AddTrackedMetric<BandwidthDown>()
+                                            .AddTrackedMetric<BandwidthUp>()
+                                            .AddTrackedMetric<ServeTimeSmallFileAverage>()
+                                            .AddTrackedMetric<ServeTimePerMBAverage>()
+                                            .AddTrackedMetric<FillRateAverage>()
+                                            .AddTrackedMetric<TimeToFirstByteAverage>()
+                                            .Build();
 
-                if (errorMessage != null)
-                    NotificationsBusController
-                       .Instance
-                       .AddNotification(new ServerErrorNotification(errorMessage));
-            });
+                widget.AddSingleButton("Open Chrome DevTools", () =>
+                {
+                    BridgeStartResult result = ChromeDevToolHandler.StartAndOpen();
+                    string? errorMessage = ErrorMessageFromBridgeResult(result);
+
+                    if (errorMessage != null)
+                        NotificationsBusController
+                           .Instance
+                           .AddNotification(new ServerErrorNotification(errorMessage));
+                });
+            }
 
             return new WebRequestsPlugin(AnalyticsContainer);
         }
@@ -88,120 +84,149 @@ namespace DCL.WebRequests.Analytics
             return message;
         }
 
-        public static WebRequestsContainer Create(
+        public static async UniTask<WebRequestsContainer> CreateAsync(
+            IPluginSettingsContainer pluginSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
-            ChromeDevtoolProtocolClient chromeDevtoolProtocolClient,
-            int coreBudget,
-            int sceneBudget
+            ChromeDevToolHandler chromeDevtoolProtocolHandler,
+            SentrySampler? sentrySampler,
+            CancellationToken ct
         )
         {
-            var options = new ArtificialDelayOptions.ElementBindingOptions();
+            var container = new WebRequestsContainer();
 
-            DebugWidgetBuilder? widget = debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS);
-
-            var analyticsContainer = new WebRequestsAnalyticsContainer(widget);
-
-            WebRequestsDumper.Instance.AnalyticsContainer = analyticsContainer;
-
-            var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
-
-            var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
-
-            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
-            var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
-
-            var requestHub = new RequestHub(urlsSource);
-
-            IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(coreBudget, coreAvailableBudget))
-                                                            .WithDump(analyticsContainer)
-                                                            .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                                            .WithArtificialDelay(options);
-
-            IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, chromeDevtoolProtocolClient, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
-                                                             .WithDump(analyticsContainer)
-                                                             .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                                                             .WithArtificialDelay(options);
-
-            CreateStressTestUtility();
-            CreateWebRequestDelayUtility();
-            CreateWebRequestsMetricsDebugUtility();
-
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer, chromeDevtoolProtocolClient, widget);
-
-            void CreateWebRequestsMetricsDebugUtility()
+            await container.InitializeContainerAsync<WebRequestsContainer, Settings>(pluginSettingsContainer, ct, container =>
             {
-                debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS)
-                                    ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
-                                          DebugLongMarkerDef.Unit.NoFormat)
-                                     .AddMarker("Requests complete", requestCompleteDebugMetric,
-                                          DebugLongMarkerDef.Unit.NoFormat)
-                                     .AddMarker("Core budget", coreAvailableBudget,
-                                          DebugLongMarkerDef.Unit.NoFormat)
-                                     .AddMarker("Scene budget", sceneAvailableBudget,
-                                          DebugLongMarkerDef.Unit.NoFormat);
-            }
+                var options = new ArtificialDelayOptions.ElementBindingOptions();
 
-            void CreateWebRequestDelayUtility()
-            {
-                debugContainerBuilder
-                   .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DELAY)
-                  ?.AddControlWithLabel(
-                        "Use Artificial Delay",
-                        new DebugToggleDef(options.Enable)
-                    )
-                   .AddControlWithLabel(
-                        "Artificial Delay Seconds",
-                        new DebugFloatFieldDef(options.Delay)
-                    );
-            }
+                DebugWidgetBuilder? widget = debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS);
 
-            void CreateStressTestUtility()
-            {
-                var stressTestUtility = new WebRequestStressTestUtility(coreWebRequestController);
+                int coreBudget = container.settings.CoreWebRequestsBudget;
+                int sceneBudget = container.settings.SceneWebRequestsBudget;
 
-                var count = new ElementBinding<int>(50);
-                var retriesCount = new ElementBinding<int>(3);
-                var delayBetweenRequests = new ElementBinding<float>(0);
+                SentryWebRequestHandler? sentryWebRequestHandler = null;
 
-                debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_STRESS_TEST)
-                                    ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
-                                     .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
-                                     .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
-                                     .AddControl(
-                                          new DebugButtonDef("Start Success",
-                                              () =>
-                                              {
-                                                  stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, false,
-                                                                        delayBetweenRequests.Value)
-                                                                   .Forget();
-                                              }),
-                                          new DebugButtonDef("Start Failure",
-                                              () =>
-                                              {
-                                                  stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, true,
-                                                                        delayBetweenRequests.Value)
-                                                                   .Forget();
-                                              }),
-                                          new DebugHintDef("Concurrent"))
-                                     .AddControl(
-                                          new DebugButtonDef("Start Success",
-                                              () =>
-                                              {
-                                                  stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, false,
-                                                                        delayBetweenRequests.Value)
-                                                                   .Forget();
-                                              }),
-                                          new DebugButtonDef("Start Failure",
-                                              () =>
-                                              {
-                                                  stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, true,
-                                                                        delayBetweenRequests.Value)
-                                                                   .Forget();
-                                              }),
-                                          new DebugHintDef("Sequential"));
-            }
+                if (sentrySampler != null)
+                {
+                    var sentryWebRequestSampler = new SentryWebRequestSampler(urlsSource, container.settings.UrlsToSample, coreBudget);
+                    sentrySampler.Add(sentryWebRequestSampler);
+
+                    sentryWebRequestHandler = new SentryWebRequestHandler(sentryWebRequestSampler);
+                }
+
+                var debugHandler = new DebugMetricsAnalyticsHandler(widget);
+                container.debugMetricsAnalyticsHandler = debugHandler;
+                var dumpHandler = new WebRequestDumpAnalyticsHandler(debugHandler);
+
+                WebRequestsDumper.Instance.AnalyticsHandler = dumpHandler;
+
+                var analyticsContainer = new WebRequestsAnalyticsContainer(sentryWebRequestHandler, dumpHandler, debugHandler, chromeDevtoolProtocolHandler);
+
+                var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
+
+                var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
+
+                var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
+                var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
+
+                var requestHub = new RequestHub(urlsSource);
+
+                IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget))
+                                                                .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                                                .WithArtificialDelay(options);
+
+                IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
+                                                                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                                                 .WithArtificialDelay(options);
+
+                CreateStressTestUtility();
+                CreateWebRequestDelayUtility();
+                CreateWebRequestsMetricsDebugUtility();
+
+                container.widget = widget;
+                container.WebRequestController = coreWebRequestController;
+                container.SceneWebRequestController = sceneWebRequestController;
+                container.AnalyticsContainer = analyticsContainer;
+                container.ChromeDevToolHandler = chromeDevtoolProtocolHandler;
+
+                return UniTask.CompletedTask;
+
+                void CreateWebRequestsMetricsDebugUtility()
+                {
+                    debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS)
+                                        ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
+                                              DebugLongMarkerDef.Unit.NoFormat)
+                                         .AddMarker("Requests complete", requestCompleteDebugMetric,
+                                              DebugLongMarkerDef.Unit.NoFormat)
+                                         .AddMarker("Core budget", coreAvailableBudget,
+                                              DebugLongMarkerDef.Unit.NoFormat)
+                                         .AddMarker("Scene budget", sceneAvailableBudget,
+                                              DebugLongMarkerDef.Unit.NoFormat);
+                }
+
+                void CreateWebRequestDelayUtility()
+                {
+                    debugContainerBuilder
+                       .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DELAY)
+                      ?.AddControlWithLabel(
+                            "Use Artificial Delay",
+                            new DebugToggleDef(options.Enable)
+                        )
+                       .AddControlWithLabel(
+                            "Artificial Delay Seconds",
+                            new DebugFloatFieldDef(options.Delay)
+                        );
+                }
+
+                void CreateStressTestUtility()
+                {
+                    var stressTestUtility = new WebRequestStressTestUtility(coreWebRequestController);
+
+                    var count = new ElementBinding<int>(50);
+                    var retriesCount = new ElementBinding<int>(3);
+                    var delayBetweenRequests = new ElementBinding<float>(0);
+
+                    debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_STRESS_TEST)
+                                        ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
+                                         .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
+                                         .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
+                                         .AddControl(
+                                              new DebugButtonDef("Start Success",
+                                                  () =>
+                                                  {
+                                                      stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, false,
+                                                                            delayBetweenRequests.Value)
+                                                                       .Forget();
+                                                  }),
+                                              new DebugButtonDef("Start Failure",
+                                                  () =>
+                                                  {
+                                                      stressTestUtility.StartConcurrentAsync(count.Value, retriesCount.Value, true,
+                                                                            delayBetweenRequests.Value)
+                                                                       .Forget();
+                                                  }),
+                                              new DebugHintDef("Concurrent"))
+                                         .AddControl(
+                                              new DebugButtonDef("Start Success",
+                                                  () =>
+                                                  {
+                                                      stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, false,
+                                                                            delayBetweenRequests.Value)
+                                                                       .Forget();
+                                                  }),
+                                              new DebugButtonDef("Start Failure",
+                                                  () =>
+                                                  {
+                                                      stressTestUtility.StartSequentialAsync(count.Value, retriesCount.Value, true,
+                                                                            delayBetweenRequests.Value)
+                                                                       .Forget();
+                                                  }),
+                                              new DebugHintDef("Sequential"));
+                }
+            });
+
+            return container;
         }
 
         public void SetKTXEnabled(bool enabled)
@@ -211,7 +236,14 @@ namespace DCL.WebRequests.Analytics
             SceneWebRequestController.RequestHub.SetKTXEnabled(enabled);
         }
 
-        public void Dispose() =>
-            WebRequestsDumper.Instance.AnalyticsContainer = null;
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+            [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+
+            [field: SerializeField]
+            public SentryWebRequestSampler.SentryTransactionConfiguration[] UrlsToSample { get; private set; } = Array.Empty<SentryWebRequestSampler.SentryTransactionConfiguration>();
+        }
     }
 }

@@ -16,6 +16,7 @@ namespace ECS.SceneLifeCycle.Tests
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
         public URLDomain AssetBundleRegistryEntitiesActive { get; }
+        public URLDomain EntitiesBaseUrl => throw new NotSupportedException();
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
@@ -29,9 +30,6 @@ namespace ECS.SceneLifeCycle.Tests
             AssetBundleRegistryEntitiesActive = URLDomain.FromString($"{ContentBaseUrl.Value}ActiveEntitiesByPointer.json");
             LambdasBaseUrl = URLDomain.EMPTY;
         }
-
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
-            throw new NotSupportedException();
 
         public string GetFileHash(byte[] file) =>
             file.IpfsHashV1();

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility;
 using ECS.SceneLifeCycle.Realm;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl.Names;
 using System;
 using System.Threading;
@@ -30,7 +30,7 @@ namespace Global.Dynamic.RealmUrl
                        InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
                        InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
                        InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer) + "/" + realmLaunchSettings.TargetWorld,
+                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldServer) + "/" + realmLaunchSettings.TargetWorld,
                        InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                        InitialRealm.Custom => await CustomRealmAsync(ct),
                        _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),

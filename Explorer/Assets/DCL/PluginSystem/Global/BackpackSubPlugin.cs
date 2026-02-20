@@ -264,8 +264,7 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 appArgs,
                 inWorldWarningNotificationView,
-                profileChangesBus,
-                realmData
+                profileChangesBus
             );
 
             backpackController = new BackpackController(

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -6,6 +7,7 @@ using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PlacesAPIService;
 using DCL.Optimization.Pools;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using MVC;
@@ -18,6 +20,8 @@ namespace DCL.Events
 {
     public class EventsCalendarController : IDisposable
     {
+        public event Action<EventDTO>? EventCardClicked;
+
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
 
         private readonly EventsCalendarView view;
@@ -26,8 +30,10 @@ namespace DCL.Events
         private readonly IPlacesAPIService placesAPIService;
         private readonly EventsStateService eventsStateService;
         private readonly IMVCManager mvcManager;
+        private readonly EventCardActionsController eventCardActionsController;
 
         private CancellationTokenSource? loadEventsCts;
+        private CancellationTokenSource? eventCardOperationsCts;
 
         private static readonly ListObjectPool<List<EventDTO>> EVENTS_GROUPED_BY_DAY_POOL = new (defaultCapacity: 5);
 
@@ -37,7 +43,10 @@ namespace DCL.Events
             HttpEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
             EventsStateService eventsStateService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            EventCardActionsController eventCardActionsController,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.view = view;
             this.eventsController = eventsController;
@@ -45,15 +54,22 @@ namespace DCL.Events
             this.placesAPIService = placesAPIService;
             this.eventsStateService = eventsStateService;
             this.mvcManager = mvcManager;
+            this.eventCardActionsController = eventCardActionsController;
 
-            view.SetDependencies(eventsStateService);
+            view.SetDependencies(eventsStateService, thumbnailLoader, profileRepositoryWrapper);
             view.InitializeEventsLists();
 
             eventsController.SectionOpen += OnSectionOpened;
             eventsController.EventsClosed += OnSectionClosed;
+            eventsController.GoToTodayClicked += OnGoToTodayClicked;
             view.DaysRangeChanged += OnDaysRangeChanged;
             view.DaySelectorButtonClicked += OnDaySelectorButtonClicked;
             view.EventCardClicked += OnEventCardClicked;
+            view.EventInterestedButtonClicked += OnEventInterestedButtonClicked;
+            view.EventAddToCalendarButtonClicked += OnEventAddToCalendarButtonClicked;
+            view.EventJumpInButtonClicked += OnEventJumpInButtonClicked;
+            view.EventShareButtonClicked += OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
 
         public void Dispose()
@@ -63,11 +79,18 @@ namespace DCL.Events
 
             eventsController.SectionOpen -= OnSectionOpened;
             eventsController.EventsClosed -= OnSectionClosed;
+            eventsController.GoToTodayClicked -= OnGoToTodayClicked;
             view.DaysRangeChanged -= OnDaysRangeChanged;
             view.DaySelectorButtonClicked -= OnDaySelectorButtonClicked;
             view.EventCardClicked -= OnEventCardClicked;
+            view.EventInterestedButtonClicked -= OnEventInterestedButtonClicked;
+            view.EventAddToCalendarButtonClicked -= OnEventAddToCalendarButtonClicked;
+            view.EventJumpInButtonClicked -= OnEventJumpInButtonClicked;
+            view.EventShareButtonClicked -= OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
 
             loadEventsCts?.SafeCancelAndDispose();
+            eventCardOperationsCts?.SafeCancelAndDispose();
         }
 
         private void OnSectionOpened(EventsSection section, DateTime fromDate)
@@ -82,6 +105,9 @@ namespace DCL.Events
         private void OnSectionClosed() =>
             UnloadEvents();
 
+        private void OnGoToTodayClicked() =>
+            eventsController.OpenSection(EventsSection.CALENDAR);
+
         private void OnDaysRangeChanged(DateTime fromDate, int numberOfDays)
         {
             eventsController.CurrentCalendarFromDate = fromDate;
@@ -91,8 +117,37 @@ namespace DCL.Events
         private void OnDaySelectorButtonClicked(DateTime date) =>
             eventsController.OpenSection(EventsSection.EVENTS_BY_DAY, date);
 
-        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo) =>
-            mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo))).Forget();
+        private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
+        {
+            if (string.IsNullOrEmpty(eventInfo.id))
+                eventsController.GoToCreateEventPage(false);
+            else
+            {
+                mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+                EventCardClicked?.Invoke(eventInfo);
+            }
+        }
+
+        private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.SetEventAsInterestedAsync(eventInfo, eventCardView, null, eventCardOperationsCts.Token).Forget();
+        }
+
+        private void OnEventAddToCalendarButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.AddEventToCalendar(eventInfo);
+
+        private void OnEventJumpInButtonClicked(EventDTO eventInfo)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+            eventCardActionsController.JumpInEvent(eventInfo, eventCardOperationsCts.Token);
+        }
+
+        private void OnEventShareButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.ShareEvent(eventInfo);
+
+        private void OnEventCopyLinkButtonClicked(EventDTO eventInfo) =>
+            eventCardActionsController.CopyEventLink(eventInfo);
 
         private void LoadEvents(DateTime fromDate, int numberOfDays)
         {
@@ -100,22 +155,30 @@ namespace DCL.Events
             LoadEventsAsync(fromDate, numberOfDays, loadEventsCts.Token).Forget();
         }
 
-        private void UnloadEvents() =>
+        private void UnloadEvents()
+        {
             view.ClearAllEvents();
+            view.ClearHighlightedEvents();
+        }
 
         private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
         {
-            view.SetDaysSelectorActive(false);
+            view.SetHighlightedCarousel(null);
+            view.SetupDaysSelector(fromDate, 5, triggerEvent: false, deactivateArrows: true);
             view.SetAsLoading(true);
 
-            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 1, ct)
+            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
+
+            Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 10, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
                 return;
 
+            var showHighlightedBanner = false;
             if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
             {
+                showHighlightedBanner = true;
                 eventsStateService.AddEvents(highlightedEventsResult.Value, clearCurrentEvents: true);
 
                 List<string> placesIds = new ();
@@ -132,17 +195,8 @@ namespace DCL.Events
                     eventsStateService.AddPlaces(placesResponse.Value.Data, clearCurrentPlaces: true);
             }
 
-            var showHighlightedBanner = false;
-            view.SetHighlightedBanner(null, null);
-            if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
-            {
-                showHighlightedBanner = true;
-                var eventData = eventsStateService.GetEventDataById(highlightedEventsResult.Value[0].id);
-                view.SetHighlightedBanner(eventData!.EventInfo, eventData.PlaceInfo);
-            }
-
+            view.SetHighlightedCarousel(highlightedEventsResult.Value);
             view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
-            view.SetDaysSelectorActive(true);
         }
 
         private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)
@@ -150,9 +204,9 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.ToUniversalTime();
+            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
-            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, ct)
+            Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
@@ -180,6 +234,14 @@ namespace DCL.Events
 
                     for (var i = 0; i < numberOfDays; i++)
                     {
+                        // Live events are always shown on the calendar
+                        bool isTodayColumn = i == 0;
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn)
+                        {
+                            eventsGroupedByDay.Value[i].Add(eventInfo);
+                            break;
+                        }
+
                         if (eventLocalDate.Date == fromDate.AddDays(i))
                         {
                             eventsGroupedByDay.Value[i].Add(eventInfo);
@@ -199,19 +261,9 @@ namespace DCL.Events
             }
 
             for (var i = 0; i < eventsGroupedByDay.Value.Count; i++)
-            {
-                AddEmptyEventCards(eventsGroupedByDay.Value[i]);
                 view.SetEvents(eventsGroupedByDay.Value[i], i, true);
-            }
 
             view.SetAsLoading(false);
-        }
-
-        private static void AddEmptyEventCards(List<EventDTO> eventsList)
-        {
-            int amountOfEmptyEvents = eventsList.Count <= 1 ? 3 : 1;
-            for (var i = 0; i < amountOfEmptyEvents; i++)
-                eventsList.Add(new EventDTO { id = "EMPTY_EVENT" });
         }
     }
 }

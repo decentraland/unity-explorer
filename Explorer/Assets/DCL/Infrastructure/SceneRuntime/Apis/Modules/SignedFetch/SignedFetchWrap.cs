@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
