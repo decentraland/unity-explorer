@@ -113,8 +113,17 @@ namespace DCL.Landscape.Systems
             int sideVertexCount = landscapeData.terrainData.parcelSize + 1;
             int meshVertexCount = sideVertexCount * sideVertexCount;
 
-            var vertices = new NativeArray<GroundColliderVertex>(meshVertexCount * dirtyParcels.Count,
-                Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            int verticesCount = meshVertexCount * dirtyParcels.Count;
+            if (verticesCount == 0)
+            {
+                return;
+            }
+
+            using var vertices = new NativeArray<GroundColliderVertex>(
+                    verticesCount,
+                    Allocator.TempJob,
+                    NativeArrayOptions.UninitializedMemory);
+
 
             var generateColliderVerticesJob = new GenerateColliderVertices()
             {
@@ -136,8 +145,6 @@ namespace DCL.Landscape.Systems
                 parcelData.Mesh.SetVertexBufferData(vertices, i * meshVertexCount, 0, meshVertexCount,
                     0, MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontRecalculateBounds);
             }
-
-            vertices.Dispose();
 
             var meshes = new NativeArray<int>(dirtyParcels.Count, Allocator.TempJob,
                 NativeArrayOptions.UninitializedMemory);
