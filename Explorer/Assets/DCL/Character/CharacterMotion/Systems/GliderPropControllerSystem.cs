@@ -64,6 +64,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [Any(typeof(CharacterController), typeof(InterpolationComponent))]
         [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
         private void CreateProp(Entity entity, IAvatarView avatarView)
         {
