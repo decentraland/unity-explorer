@@ -103,7 +103,7 @@ namespace DCL.Chat.ChatServices
 
             foreach (ICommunityMemberData memberData in response.data.results)
             {
-                if ((!string.IsNullOrEmpty(localPlayerAddress) && memberData.Address == localPlayerAddress) || (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address)))
+                if (web3IdentityCache.Identity?.Address == localPlayerAddress)
                     continue;
 
                 if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address))
