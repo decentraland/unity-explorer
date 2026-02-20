@@ -24,7 +24,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly GameObject gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
 
-        //private GameObjectPool<GliderPropView>? propPool;
+        private GameObjectPool<GliderPropView>? propPool;
         private SingleInstanceEntity tickEntity;
 
         public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -36,8 +36,16 @@ namespace DCL.CharacterMotion.Systems
 
         public override void Initialize()
         {
-            // propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
-            // propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
+            // When playing in editor we want to be able to toggle pooling while in play mode so we always create the pool
+#if !UNITY_EDITOR
+            if (glidingSettings.EnablePropPooling)
+            {
+#endif
+                propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+                propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
+#if !UNITY_EDITOR
+            }
+#endif
 
             tickEntity = World.CachePhysicsTick();
         }
@@ -68,7 +76,9 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
         private void CreateProp(Entity entity, IAvatarView avatarView)
         {
-            var prop = Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>();//propPool!.Get();
+            var prop = glidingSettings.EnablePropPooling
+                ? propPool!.Get()
+                : Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>();
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;
@@ -104,10 +114,15 @@ namespace DCL.CharacterMotion.Systems
         [All(typeof(DeleteEntityIntention))]
         private void CleanUpDestroyedAvatarsProp(ref GliderProp gliderProp)
         {
-            //gliderProp.View.PrepareForNextActivation();
-            //propPool!.Release(gliderProp.View);
-
-            Object.Destroy(gliderProp.View.gameObject);
+            if (glidingSettings.EnablePropPooling)
+            {
+                gliderProp.View.PrepareForNextActivation();
+                propPool!.Release(gliderProp.View);
+            }
+            else
+            {
+                Object.Destroy(gliderProp.View.gameObject);
+            }
         }
 
         [Query]

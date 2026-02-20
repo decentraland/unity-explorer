@@ -22,6 +22,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public AssetReferenceT<GameObject> PropPrefab { get; private set; }
 
+            [field:SerializeField]
+            public bool EnablePropPooling { get; private set; }
+
             [field: SerializeField]
             public float TrailVelocityThreshold { get; private set; } = 1;
         }
