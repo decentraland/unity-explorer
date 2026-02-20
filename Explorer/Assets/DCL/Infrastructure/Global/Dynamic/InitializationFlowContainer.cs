@@ -76,6 +76,7 @@ namespace DCL.UserInAppInitializationFlow
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
+
             var loadingOperations = new List<IStartupOperation>()
             {
 
@@ -83,11 +84,8 @@ namespace DCL.UserInAppInitializationFlow
                 blocklistCheckStartupOperation,
 #endif
                 loadPlayerAvatarStartupOperation,
+                loadLandscapeStartupOperation,
                 teleportStartupOperation
-#if !UNITY_WEBGL
-                , loadLandscapeStartupOperation
-#endif
-
             };
 
 #if !UNITY_WEBGL
