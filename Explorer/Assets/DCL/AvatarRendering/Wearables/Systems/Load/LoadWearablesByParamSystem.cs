@@ -94,12 +94,15 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected sealed override async UniTask<StreamableLoadingResult<WearablesResponse>> FlowInternalAsync(GetWearableByParamIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
+            try
+            {
             if (!realmData.Configured)
-                WebGLDebugLog.Log("[LoadWearablesByParam] Waiting for realm configured...");
+                WebGLDebugLog.Log("LoadWearablesByParam", "Waiting for realm configured...");
             await realmData.WaitConfiguredAsync();
-            WebGLDebugLog.Log("[LoadWearablesByParam] Realm configured, proceeding with wearable load");
+            WebGLDebugLog.Log("LoadWearablesByParam", "Realm configured, proceeding with wearable load", $"userId={intention.UserID}");
 
             var url = BuildUrlFromIntention(in intention);
+            WebGLDebugLog.Log("LoadWearablesByParam", "Request URL", url.Value);
 
             if (intention.NeedsBuilderAPISigning)
             {
@@ -122,6 +125,10 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                             GetReportCategory()
                         )
                     );
+
+                WebGLDebugLog.Log("LoadWearablesByParam", "Lambda response received", $"TotalAmount={lambdaResponse.TotalAmount} PageCount={lambdaResponse.Page?.Count ?? 0}");
+                if (lambdaResponse.TotalAmount == 0)
+                    WebGLDebugLog.LogWarning("LoadWearablesByParam", "Lambda returned 0 wearables", $"url={url.Value}");
 
                 var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, ct);
 
@@ -146,7 +153,15 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
                 }
             }
 
-            return new StreamableLoadingResult<WearablesResponse>(AssetFromPreparedIntention(in intention));
+            var result = AssetFromPreparedIntention(in intention);
+            WebGLDebugLog.Log("LoadWearablesByParam", "Wearables load completed", $"userId={intention.UserID} resultCount={result.Wearables?.Count ?? 0}");
+            return new StreamableLoadingResult<WearablesResponse>(result);
+            }
+            catch (Exception ex)
+            {
+                WebGLDebugLog.LogError("LoadWearablesByParam", "Wearables load failed", ex.ToString());
+                throw;
+            }
         }
 
         private async UniTask<AssetBundlesVersions> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TrimmedWearableDTO>> lambdaResponse, CancellationToken ct)

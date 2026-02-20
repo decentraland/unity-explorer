@@ -6,6 +6,7 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -15,8 +16,10 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
+using DCL.Quality;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.Utility.Types;
 using DCL.Web3;
 using DCL.WebRequests.Analytics;
@@ -35,6 +38,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering.Universal;
 
 namespace SceneRuntime.WebClient.Bootstrapper
 {
@@ -417,6 +421,45 @@ namespace SceneRuntime.WebClient.Bootstrapper
             public void SetCurrentScene(ISceneFacade? sceneFacade) { }
 
             public void UpdateCurrentParcel(Vector2Int newParcel) { }
+        }
+
+        /// <summary>Stub IRendererFeaturesCache for avatar-only bootstrapper (no outline/quality features).</summary>
+        public class StubRendererFeaturesCache : IRendererFeaturesCache
+        {
+            public void Dispose() { }
+
+            public T? GetRendererFeature<T>() where T : ScriptableRendererFeature => null;
+        }
+
+        /// <summary>Stub IUserBlockingCache for avatar-only bootstrapper (no blocking).</summary>
+        public class StubUserBlockingCache : IUserBlockingCache
+        {
+            private static readonly ReadOnlyHashSet<string> EmptySet = new (new HashSet<string>());
+
+            public ReadOnlyHashSet<string> BlockedUsers => EmptySet;
+            public ReadOnlyHashSet<string> BlockedByUsers => EmptySet;
+            public bool HideChatMessages { get; set; }
+            public bool UserIsBlocked(string userId) => false;
+        }
+
+        /// <summary>IIpfsRealm that uses production DCL URLs so wearable/avatar loading can resolve and fetch from decentraland.org.</summary>
+        public class ProductionDclIpfsRealm : IIpfsRealm
+        {
+            private static readonly URLDomain Lambdas = URLDomain.FromString("https://peer.decentraland.org/lambdas/");
+            private static readonly URLDomain AbCdn = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+            private static readonly URLDomain Content = URLDomain.FromString("https://content.decentraland.org/");
+
+            public URLDomain CatalystBaseUrl => Lambdas;
+            public URLDomain ContentBaseUrl => Content;
+            public URLDomain LambdasBaseUrl => Lambdas;
+            public IReadOnlyList<string> SceneUrns => Array.Empty<string>();
+            public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
+            public URLDomain AssetBundleRegistry => AbCdn;
+
+            public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
+                throw new NotSupportedException();
+
+            public string GetFileHash(byte[] file) => file.IpfsHashV1();
         }
     }
 }

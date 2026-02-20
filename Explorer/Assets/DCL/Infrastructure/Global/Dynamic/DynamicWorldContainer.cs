@@ -450,7 +450,12 @@ namespace Global.Dynamic
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
+#if UNITY_EDITOR
+            // LiveKit Room uses WebGL native bridge (JSRef) which doesn't exist in Editor; use null room for chat.
+            IActivatableConnectiveRoom chatRoom = new ActivatableConnectiveRoom(IConnectiveRoom.Null.INSTANCE);
+#else
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+#endif
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
@@ -554,9 +559,7 @@ namespace Global.Dynamic
                 realmContainer,
                 realmNavigatorForInit,
                 realmNavigatorContainer,
-//#if !UNITY_WEBGL
                 terrainContainer,
-//#endif
                 loadingScreen,
 #if !NO_LIVEKIT_MODE
                 livekitHealthCheck,

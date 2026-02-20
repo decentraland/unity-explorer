@@ -30,7 +30,7 @@ namespace Global.AppArgs
         {
             ParseApplicationParameters(args);
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
             ParseWebGLUrlQuery();
 #endif
 
@@ -40,7 +40,7 @@ namespace Global.AppArgs
             LogArguments();
         }
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
         /// <summary>
         /// On WebGL, read ?world=... from the page URL and set realm so we connect to
         /// https://worlds-content-server.decentraland.org/world/{world}/about

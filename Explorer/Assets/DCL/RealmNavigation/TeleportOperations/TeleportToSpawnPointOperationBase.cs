@@ -43,7 +43,7 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct)
         {
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
             float worldX = (parcel.x * 16f) + 8f;
             float worldZ = (parcel.y * 16f) + 8f;
             WebGLDebugLog.Log("TeleportStartupOperation", "TeleportToSpawnPoint", $"parcel=({parcel.x},{parcel.y}) worldPos=({worldX:F1},{worldZ:F1})");

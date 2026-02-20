@@ -30,6 +30,11 @@ namespace DCL.Rendering.Menus
             "Lit.shader", "LitVariants.shadervariants"
         };
 
+        private static readonly string[] DCL_TOON_SHADER_ASSET_NAMES =
+        {
+            "DCL_Toon.shader", "DCL_ToonVariants.shadervariants"
+        };
+
         // Add file extensions to copy when copying shader folder
         private static readonly string[] SHADER_FILE_EXTENSIONS =
         {
@@ -66,7 +71,22 @@ namespace DCL.Rendering.Menus
             CompileTheSceneShader("dcl/universal render pipeline/lit_ignore", URP_LIT_SHADER_ASSET_NAMES, "URP", forceRecompile: true);
         }
 
-        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, bool forceRecompile = false)
+        [MenuItem("Decentraland/Shaders/Compile \"DCL_Toon\" Shader Variants")]
+        public static void CompileDCLToonShaderMenuItem()
+        {
+            CompileTheSceneShader("dcl/toon_ignore", DCL_TOON_SHADER_ASSET_NAMES, "DCL_Toon", "Avatar");
+        }
+
+        [MenuItem("Decentraland/Shaders/Force Recompile \"DCL_Toon\" Shader Variants")]
+        public static void ForceRecompileDCLToonMenuItem()
+        {
+            CompileTheSceneShader("dcl/toon_ignore", DCL_TOON_SHADER_ASSET_NAMES, "DCL_Toon", "Avatar", forceRecompile: true);
+        }
+
+        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, bool forceRecompile = false) =>
+            CompileTheSceneShader(bundleName, ASSET_NAMES, shaderSubfolder, "Scene", forceRecompile);
+
+        private static void CompileTheSceneShader(string bundleName, string[] ASSET_NAMES, string shaderSubfolder, string shaderBaseFolder, bool forceRecompile = false)
         {
             string platformSuffix = "";//PlatformUtils.GetCurrentPlatform();
             bundleName += platformSuffix;
@@ -80,20 +100,20 @@ namespace DCL.Rendering.Menus
             List<string> searchPaths = new List<string>
             {
                 // Check if shaders have been copied to Assets for local editing
-                $"Assets/DCL/Shaders/Scene/{shaderSubfolder}/",
+                $"Assets/DCL/Shaders/{shaderBaseFolder}/{shaderSubfolder}/",
 
                 // Check embedded/local package in Packages folder
-                $"Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/Scene/{shaderSubfolder}/",
+                $"Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/{shaderBaseFolder}/{shaderSubfolder}/",
 
                 // Check if package has been made local/embedded
-                $"Packages/com.decentraland.unity-shared-dependencies-local/Runtime/Shaders/Scene/{shaderSubfolder}/",
+                $"Packages/com.decentraland.unity-shared-dependencies-local/Runtime/Shaders/{shaderBaseFolder}/{shaderSubfolder}/",
             };
 
             // Also check the dynamic package path
             string packagePath = GetPackagePath("com.decentraland.unity-shared-dependencies");
             if (!string.IsNullOrEmpty(packagePath))
             {
-                searchPaths.Add(Path.Combine(packagePath, $"Runtime/Shaders/Scene/{shaderSubfolder}/"));
+                searchPaths.Add(Path.Combine(packagePath, $"Runtime/Shaders/{shaderBaseFolder}/{shaderSubfolder}/"));
             }
 
             // Find the first valid path
@@ -447,6 +467,42 @@ namespace DCL.Rendering.Menus
             }
             Debug.Log($"Total URP shader files copied: {fileCount}");
             Debug.Log("The URP shaders (Lit, Unlit, etc.) are now available for local editing.");
+        }
+
+        [MenuItem("Decentraland/Shaders/Copy Only DCL_Toon Shaders Folder to Assets")]
+        public static void CopyDCLToonShaderFolderToAssets()
+        {
+            string packagePath = GetPackagePath("com.decentraland.unity-shared-dependencies");
+            if (string.IsNullOrEmpty(packagePath))
+            {
+                Debug.LogError("Could not find package 'com.decentraland.unity-shared-dependencies'");
+                return;
+            }
+
+            // Copy entire Avatar folder so DCL_Toon includes (e.g. ../DCL_AvatarDither.hlsl) are available
+            string sourceAvatarFolder = Path.Combine(packagePath, "Runtime/Shaders/Avatar");
+            string targetAvatarFolder = "Assets/DCL/Shaders/Avatar";
+
+            if (!Directory.Exists(sourceAvatarFolder))
+            {
+                Debug.LogError($"Source Avatar shader directory not found: {sourceAvatarFolder}");
+                return;
+            }
+
+            CopyDirectory(sourceAvatarFolder, targetAvatarFolder, true);
+
+            AssetDatabase.Refresh();
+
+            Debug.Log($"Successfully copied Avatar shaders (DCL_Toon, DCL_Avatar_Facial_Features, etc.) from:\n{sourceAvatarFolder}\nto:\n{targetAvatarFolder}");
+            Debug.Log("Run 'Decentraland > Shaders > Add DCL_Toon Variants to Collection' then 'Compile DCL_Toon Shader Variants' to build the bundle.");
+
+            int fileCount = 0;
+            foreach (var ext in SHADER_FILE_EXTENSIONS)
+            {
+                var files = Directory.GetFiles(targetAvatarFolder, $"*{ext}", SearchOption.AllDirectories);
+                fileCount += files.Length;
+            }
+            Debug.Log($"Total Avatar shader files copied: {fileCount}");
         }
 
         /// <summary>

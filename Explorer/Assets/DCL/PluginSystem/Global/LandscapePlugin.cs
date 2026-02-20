@@ -1,5 +1,3 @@
-//#if !UNITY_WEBGL
-
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -146,5 +144,3 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
-
-//#endif

@@ -48,12 +48,12 @@ namespace ECS.Unity.Materials.Tests
             system = new StartMaterialsLoadingSystem(
                     world,
                     destroyMaterial = Substitute.For<DestroyMaterial>(),
-                    sceneData = Substitute.For<ISceneData>(), 
-                    ATTEMPTS_COUNT, 
+                    sceneData = Substitute.For<ISceneData>(),
+                    ATTEMPTS_COUNT,
                     releasablePerformanceBudget
 
 #if !UNITY_WEBGL
-                    , 
+                    ,
                     new MockMediaFactory()
 #endif
 

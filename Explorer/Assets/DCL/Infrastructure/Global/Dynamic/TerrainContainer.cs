@@ -1,6 +1,4 @@
-﻿//#if !UNITY_WEBGL
-
-using DCL.DebugUtilities;
+﻿using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -52,5 +50,3 @@ namespace Global.Dynamic
         }
     }
 }
-
-//#endif

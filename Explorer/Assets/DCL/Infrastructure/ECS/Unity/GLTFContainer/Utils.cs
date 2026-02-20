@@ -35,9 +35,9 @@ namespace ECS.Unity.GLTFContainer
                 instance.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
 
-                // Remap error shader materials to DCL Lit shader (WebGL shader stripping workaround)
-                var dclLitShader = Shader.Find("DCL/Universal Render Pipeline/Lit");
-                if (dclLitShader != null)
+                // Remap error shader materials to DCL Scene shader (used by all platforms)
+                var sceneShader = Shader.Find("DCL/Scene");
+                if (sceneShader != null)
                 {
                     foreach (var renderer in instanceRenderers.Value)
                     {
@@ -52,7 +52,7 @@ namespace ECS.Unity.GLTFContainer
                             string shaderName = mat.shader != null ? mat.shader.name : null;
                             if (shaderName != null && (shaderName.Contains("Error") || shaderName.Contains("Hidden")))
                             {
-                                mat.shader = dclLitShader;
+                                mat.shader = sceneShader;
                             }
                         }
                     }

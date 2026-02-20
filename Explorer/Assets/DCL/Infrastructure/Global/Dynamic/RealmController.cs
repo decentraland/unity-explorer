@@ -139,7 +139,7 @@ namespace Global.Dynamic
             {
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 // Unity JsonParser sometimes NREs on WebGL
-#if UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Newtonsoft);
 #else
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);

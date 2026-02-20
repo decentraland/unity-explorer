@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DCL_ToonVariants
+  m_Shaders:
+  - first: {fileID: 4800000, guid: 230ed600befd04d46a0adb162f7886d7, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+      - keywords: 
+        passType: 2
+      - keywords: 
+        passType: 5
+      - keywords: 
+        passType: 8
+      - keywords: 
+        passType: 13
+      - keywords: INSTANCING_ON
+        passType: 0
+      - keywords: INSTANCING_ON
+        passType: 2
+      - keywords: INSTANCING_ON
+        passType: 5
+      - keywords: INSTANCING_ON
+        passType: 8
+      - keywords: INSTANCING_ON
+        passType: 13
+      - keywords: _OUTLINE_NML
+        passType: 2
+      - keywords: _OUTLINE_POS
+        passType: 2
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _MAIN_LIGHT_SHADOWS_CASCADE
+        passType: 2
+      - keywords: FOG_EXP _ADDITIONAL_LIGHTS _ADDITIONAL_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 2
