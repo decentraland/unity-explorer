@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine.UIElements;
@@ -45,6 +46,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             newTransform.InitializeAsChild(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
             canvas.rootVisualElement.Add(newTransform.Transform);
+
+            UiElementUtils.ClearDefaultInteractiveStyles(newTransform.Transform);
 
             World.Add(entity, newTransform);
         }

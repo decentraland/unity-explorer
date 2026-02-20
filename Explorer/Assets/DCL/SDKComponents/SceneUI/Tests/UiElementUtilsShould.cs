@@ -185,6 +185,27 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreNotEqual(new StyleColor(Color.white), visualElement.style.backgroundColor);
         }
 
+        // --- ClearDefaultInteractiveStyles tests ---
+
+        [Test]
+        public void ClearDefaultInteractiveStylesResetsOverflowBackgroundAndBorders()
+        {
+            // Arrange - apply default interactive styles (overflow, background, border radius/width/color)
+            var pbUiTransform = new PBUiTransform();
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, visualElement);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(world, entity, visualElement);
+
+            // Act
+            UiElementUtils.ClearDefaultInteractiveStyles(visualElement);
+
+            // Assert - all reset so they do not leak when transform is reused from pool
+            Assert.AreEqual(StyleKeyword.Null, visualElement.style.overflow.keyword);
+            Assert.AreEqual(StyleKeyword.Null, visualElement.style.backgroundColor.keyword);
+            Assert.AreEqual(StyleKeyword.Undefined, visualElement.style.borderTopLeftRadius.keyword);
+            Assert.AreEqual(StyleKeyword.Undefined, visualElement.style.borderTopWidth.keyword);
+            Assert.AreEqual(StyleKeyword.Undefined, visualElement.style.borderTopColor.keyword);
+        }
+
         // --- SetupUIDropdownComponent selectedIndex tests ---
 
         [Test]

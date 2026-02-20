@@ -527,5 +527,28 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             uiTransform.style.backgroundColor = new StyleColor(Color.white);
         }
+
+        /// <summary>
+        /// Clears the default interactive styles (overflow, background, default borders) applied by
+        /// <see cref="ApplyDefaultUiTransformValues"/> and <see cref="ApplyDefaultUiBackgroundValues"/>.
+        /// Called when returning the UITransform to the pool so values do not leak to the next use.
+        /// </summary>
+        public static void ClearDefaultInteractiveStyles(VisualElement uiTransform)
+        {
+            uiTransform.style.overflow = new StyleEnum<Overflow>(StyleKeyword.Null);
+            uiTransform.style.backgroundColor = new StyleColor(StyleKeyword.Null);
+            uiTransform.style.borderBottomLeftRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomRightRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopLeftRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopRightRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderRightWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderLeftWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderTopColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderRightColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderLeftColor = new StyleColor(StyleKeyword.Undefined);
+        }
     }
 }
