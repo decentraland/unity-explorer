@@ -34,12 +34,15 @@ namespace DCL.Places
         private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error getting live events. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
+        private const string SEARCH_COUNTER_TITLE = "Results for '{0}' {1}";
+        private const string RECENT_VISITED_COUNTER_TITLE = "Recent {0}";
+        private const string FAVORITES_COUNTER_TITLE = "Favorites {0}";
+        private const string MY_PLACES_COUNTER_TITLE = "My Places {0}";
 
         private readonly PlacesResultsView view;
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly PlaceCategoriesSO placesCategories;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
@@ -63,7 +66,6 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -78,7 +80,6 @@ namespace DCL.Places
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
-            this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.friendServiceProxy = friendServiceProxy;
@@ -215,7 +216,23 @@ namespace DCL.Places
                 placesStateService.ClearPlaces();
                 view.ClearPlacesResults(currentFilters.Section);
                 view.SetPlacesGridAsLoading(true);
-                view.SetPlacesCounterActive(false);
+                view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.BROWSE || !string.IsNullOrEmpty(currentFilters.SearchText));
+
+                if (!string.IsNullOrEmpty(currentFilters.SearchText))
+                    view.SetPlacesCounter(string.Format(SEARCH_COUNTER_TITLE, currentFilters.SearchText, string.Empty), showBackButton: true);
+                else
+                    switch (currentFilters.Section)
+                    {
+                        case PlacesSection.RECENTLY_VISITED:
+                            view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, string.Empty));
+                            break;
+                        case PlacesSection.FAVORITES:
+                            view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, string.Empty));
+                            break;
+                        case PlacesSection.MY_PLACES:
+                            view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, string.Empty));
+                            break;
+                    }
             }
             else
                 view.SetPlacesGridLoadingMoreActive(true);
@@ -308,37 +325,27 @@ namespace DCL.Places
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
-                view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
+                view.SetPlacesCounter(string.Format(SEARCH_COUNTER_TITLE, currentFilters.SearchText, $"({placesResult.Value.Total})"), showBackButton: true);
                 PlacesSearched?.Invoke(currentFilters.SearchText, placesResult.Value.Total);
             }
             else
             {
                 switch (currentFilters.Section)
                 {
-                    case PlacesSection.BROWSE when currentFilters.CategoryId != null:
-                    {
-                        string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                        view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
-                        break;
-                    }
-                    case PlacesSection.BROWSE:
-                        view.SetPlacesCounter("All");
-                        break;
                     case PlacesSection.RECENTLY_VISITED:
-                        view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                     case PlacesSection.FAVORITES:
-                        view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                     case PlacesSection.MY_PLACES:
-                        view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                 }
 
                 PlacesFiltered?.Invoke(currentFilters);
             }
 
-            view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.BROWSE || !string.IsNullOrEmpty(currentFilters.SearchText));
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)

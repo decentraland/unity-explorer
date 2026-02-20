@@ -57,7 +57,7 @@ namespace DCL.Places
             PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
                 friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
@@ -91,7 +91,7 @@ namespace DCL.Places
 
         public void Deactivate()
         {
-            // Must be before setting the view inactive or the focus state will be false regardless
+            // Must be before setting the view inactive, or the focus state will be false regardless
             if (view.IsSearchBarFocused)
                 RestoreShortcutsInput();
 
