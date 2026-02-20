@@ -34,6 +34,12 @@ namespace ECS
         bool Configured { get; }
         bool IsDirty { get; }
 
+        /// <summary>
+        ///     World manifest that describes the world state
+        /// </summary>
+        WorldManifest WorldManifest { get; }
+        bool SingleScene { get;  }
+
         class Fake : IRealmData
         {
             public IIpfsRealm Ipfs { get; }
@@ -47,6 +53,8 @@ namespace ECS
             public bool IsLocalSceneDevelopment { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
+            public WorldManifest WorldManifest { get; }
+            public bool SingleScene { get; }
 
             public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3",
                 string hostname = "realm-provider.decentraland.org") : this(
@@ -66,6 +74,7 @@ namespace ECS
                 CommsAdapter = commsAdapter;
                 Protocol = protocol;
                 Hostname = hostname;
+                WorldManifest = WorldManifest.Empty;
             }
         }
     }

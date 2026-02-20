@@ -19,6 +19,7 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using ECS.SceneLifeCycle.Realm;
 using DCL.Utility;
 
 namespace PortableExperiences.Controller
@@ -115,7 +116,8 @@ namespace PortableExperiences.Controller
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                WorldManifest.Empty
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);

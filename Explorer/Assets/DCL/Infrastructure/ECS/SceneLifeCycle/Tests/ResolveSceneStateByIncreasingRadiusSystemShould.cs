@@ -70,7 +70,7 @@ namespace ECS.SceneLifeCycle.Tests
             sceneLoadingLimit.SetEnabled(true);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY), sceneLoadingLimit);
+            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, sceneLoadingLimit);
 
             realmComponent = new RealmComponent(realmData);
             world.Create(realmComponent, new VolatileScenePointers());

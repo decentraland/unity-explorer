@@ -64,7 +64,8 @@ namespace DCL.RealmNavigation
                 localSceneDevelopment,
                 appArgs,
                 urlsSource,
-                dclEnvironment
+                dclEnvironment,
+                staticContainer.WorldManifestProvider
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

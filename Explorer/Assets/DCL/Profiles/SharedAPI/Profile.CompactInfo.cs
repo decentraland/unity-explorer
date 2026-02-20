@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.Web3;
 using ECS.StreamableLoading.Common.Components;
@@ -37,6 +38,12 @@ namespace DCL.Profiles
             set => compact.HasClaimedName = value;
         }
 
+        public Color? ClaimedNameColor
+        {
+            get => compact.ClaimedNameColor;
+            set => compact.ClaimedNameColor = value;
+        }
+
         public string? WalletId => compact.WalletId;
         public string ValidatedName => compact.ValidatedName;
         public string UnclaimedName => compact.UnclaimedName;
@@ -54,26 +61,23 @@ namespace DCL.Profiles
             private string userId;
             private bool hasClaimedName;
 
+            /// <summary>
+            ///     The custom color selected by users with claimed names for their username display
+            /// </summary>
+            private Color? claimedNameColor;
+
             // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
             public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
-            public CompactInfo(string userId) : this()
-            {
-                UserId = userId;
-            }
+            public CompactInfo(string userId) : this(userId, "", false, "", null) { }
 
-            public CompactInfo(string userId, string name) : this()
+            public CompactInfo(string userId, string name, bool hasClaimedName = false, string faceUrl = "", Color? claimedNameColor = null) : this()
             {
-                UserId = userId;
-                Name = name;
-            }
-
-            public CompactInfo(string userId, string name, bool hasClaimedName, string faceUrl) : this()
-            {
-                UserId = userId;
-                Name = name;
+                this.name = name;
+                UpdateUserId(userId, true);
                 HasClaimedName = hasClaimedName;
-                FaceSnapshotUrl = URLAddress.FromString(faceUrl);
+                FaceSnapshotUrl = string.IsNullOrEmpty(faceUrl) ? default(URLAddress) : URLAddress.FromString(faceUrl);
+                this.claimedNameColor = claimedNameColor;
             }
 
             public void Clear()
@@ -91,12 +95,7 @@ namespace DCL.Profiles
             {
                 get => userId;
 
-                set
-                {
-                    userId = value;
-                    Address = new Web3Address(value);
-                    GenerateAndValidateName();
-                }
+                set => UpdateUserId(value, true);
             }
 
             /// <summary>
@@ -112,6 +111,28 @@ namespace DCL.Profiles
                 {
                     name = value;
                     GenerateAndValidateName();
+                }
+            }
+
+            /// <summary>
+            ///     The custom color for users with claimed names. When set, overrides the default username color.
+            ///     Can only be set if the user has a claimed name.
+            /// </summary>
+            public Color? ClaimedNameColor
+            {
+                get => claimedNameColor;
+
+                set
+                {
+                    if (!hasClaimedName)
+                    {
+                        ReportHub.LogWarning(ReportCategory.PROFILE, "Cannot set claimed name color for a user without a claimed name");
+                        return;
+                    }
+
+                    claimedNameColor = value;
+                    if (value != null)
+                        UserNameColor = value.Value;
                 }
             }
 
@@ -156,6 +177,15 @@ namespace DCL.Profiles
             ///     The Display Name with @ before it. Cached here to avoid re-allocations.
             /// </summary>
             public string MentionName { get; private set; }
+
+            private void UpdateUserId(string value, bool generateAndValidateName = true)
+            {
+                userId = value;
+                Address = new Web3Address(value);
+
+                if (generateAndValidateName)
+                    GenerateAndValidateName();
+            }
 
             private void GenerateAndValidateName()
             {
@@ -231,7 +261,10 @@ namespace DCL.Profiles
                     MentionName = new string(mentionBuffer);
                 }
 
-                UserNameColor = NameColorHelper.GetNameColor(DisplayName);
+                if (claimedNameColor.HasValue)
+                    UserNameColor = claimedNameColor.Value;
+                else
+                    UserNameColor = NameColorHelper.GetNameColor(DisplayName);
             }
 
             public bool Equals(CompactInfo other) =>

@@ -1,4 +1,7 @@
-﻿using DCL.Ipfs;
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
 using System;
 using System.Text;
@@ -15,7 +18,7 @@ namespace ECS
         private readonly ReactiveProperty<RealmKind> realmType = new (RealmKind.Uninitialized);
 
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
-        private bool scenesAreFixed;
+        private bool hasSceneURNs;
 
         public string RealmName { get; private set; }
         public int NetworkId { get; private set; }
@@ -24,6 +27,33 @@ namespace ECS
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
         public bool Configured { get; private set; }
+
+        /// <summary>
+        ///     World manifest from asset-bundle-registry (occupied parcels, spawn coordinate, total). Null when not fetched or not applicable.
+        /// </summary>
+        public WorldManifest WorldManifest { get; private set; }
+
+        public bool SingleScene
+        {
+            get
+            {
+                Validate();
+
+                if (RealmType.Value is RealmKind.GenesisCity)
+                    return false;
+
+                if (RealmType.Value is RealmKind.LocalScene)
+                    return true;
+
+                //World Analysis
+                //Means that this is a single scene world or that this world does not have access to the
+                //a gatekeeper per room
+                if(WorldManifest.IsEmpty)
+                    return true;
+
+                return false;
+            }
+        }
 
         public IReadonlyReactiveProperty<RealmKind> RealmType => realmType;
 
@@ -41,7 +71,16 @@ namespace ECS
             get
             {
                 Validate();
-                return scenesAreFixed;
+
+                if (RealmType.Value is RealmKind.GenesisCity)
+                    return false;
+
+                if (RealmType.Value is RealmKind.LocalScene)
+                    return true;
+
+                //TODO: Worlds that use the Genesis discoverability.
+                //For now, all worlds and their scenes are fetched on startup
+                return true;
             }
         }
 
@@ -54,30 +93,33 @@ namespace ECS
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
             Hostname = string.Empty;
+            WorldManifest = WorldManifest.Empty;
         }
 
+        //Testing purposes
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false, WorldManifest.Empty);
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment)
+            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest)
         {
             IsDirty = true;
             Configured = true;
             RealmName = realmName;
-            scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
+            hasSceneURNs = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
             Protocol = protocol;
             NetworkId = networkId;
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
+            WorldManifest = worldManifest;
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;
-            else if (!scenesAreFixed)
+            else if (!hasSceneURNs)
                 realmType.Value = RealmKind.GenesisCity;
             else
                 realmType.Value = RealmKind.World;
@@ -90,6 +132,7 @@ namespace ECS
         {
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
+            WorldManifest.Dispose();
             realmType.Value = RealmKind.Uninitialized;
         }
 
