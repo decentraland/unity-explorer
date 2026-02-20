@@ -1,0 +1,67 @@
+name: Claude Review (On QA Approval)
+on:
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: claude-qa-review-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+  
+jobs:
+  review-on-qa-approval:
+    if: |
+      ${{ github.event.review.state == 'approved' &&
+      !contains(github.event.pull_request.labels.*.name, 'no QA needed') &&
+      !contains(github.event.pull_request.labels.*.name, 'no review') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check if reviewer is in QA team
+        id: check-team
+        run: |
+          MEMBER=$(gh api \
+            /orgs/${{ github.repository_owner }}/teams/qa/memberships/${{ github.event.review.user.login }} \
+            --jq '.state' 2>/dev/null || echo "not_found")
+          echo "is_member=$([[ "$MEMBER" == "active" ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+
+      - name: Checkout repository
+        if: steps.check-team.outputs.is_member == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Review (QA Approval Triggered)
+        if: steps.check-team.outputs.is_member == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "10"
+          direct_prompt: |
+            This PR has been approved by QA and requires automated analysis focused on actionable improvements only.
+            Review Focus
+            Identify and report ONLY issues that require fixes:
+            1. Code quality violations per CLAUDE.md standards
+            2. Bugs or potential runtime errors
+            3. Security vulnerabilities
+            4. Performance issues
+            5. Bad practices or anti-patterns
+            6. Missing error handling
+            7. Unclear or problematic logic
+            Response Format
+            For each issue found:
+            1. Location: File and line number
+            2. Problem: What is wrong (be specific)
+            3. Fix: Exact change needed
+            4. Why: Brief explanation of the impact
+            What NOT to Include
+            1. Praise for correct code
+            2. General observations about what works well
+            3. Style preferences that don't violate standards
+            4. Suggestions that are "nice-to-have" rather than necessary
+            Focus entirely on what needs to be changed to make this PR production-ready.
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pull_request_review,mcp__github__get_pull_request_diff"
