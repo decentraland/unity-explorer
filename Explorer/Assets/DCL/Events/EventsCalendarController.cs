@@ -229,17 +229,18 @@ namespace DCL.Events
                 eventsStateService.AddEvents(eventsResult.Value);
 
                 List<string> placesIds = new ();
+                List<EventDTO> liveEventsPriorToToday = new ();
                 foreach (EventDTO eventInfo in eventsResult.Value)
                 {
                     DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
 
                     for (var i = 0; i < numberOfDays; i++)
                     {
-                        // Live events are always shown on the calendar
+                        // Live events prior to today have to be also shown on the calendar
                         bool isTodayColumn = i == 0;
-                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn)
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn && eventLocalDate.Date < fromDate)
                         {
-                            eventsGroupedByDay.Value[i].Add(eventInfo);
+                            liveEventsPriorToToday.Add(eventInfo);
                             break;
                         }
 
@@ -252,6 +253,20 @@ namespace DCL.Events
 
                     if (!string.IsNullOrEmpty(eventInfo.place_id))
                         placesIds.Add(eventInfo.place_id);
+                }
+
+                // Live events prior to today have to be placed after the today's live events
+                if (liveEventsPriorToToday.Count > 0)
+                {
+                    var todayLiveEventsCount = 0;
+                    foreach (EventDTO eventInfo in eventsGroupedByDay.Value[0])
+                    {
+                        if (eventInfo.live)
+                            todayLiveEventsCount++;
+                    }
+
+                    foreach (EventDTO liveEventInfo in liveEventsPriorToToday)
+                        eventsGroupedByDay.Value[0].Insert(todayLiveEventsCount++, liveEventInfo);
                 }
 
                 Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
