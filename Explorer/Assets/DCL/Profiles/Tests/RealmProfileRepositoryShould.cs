@@ -40,7 +40,7 @@ namespace DCL.Profiles.Tests
         {
             webRequestController = Substitute.For<IWebRequestController>();
             profileCache = Substitute.For<IProfileCache>();
-            repository = new RealmProfileRepository(webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()), IAnalyticsController.Null), false);
+            repository = new RealmProfileRepository(webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false);
 
             dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }

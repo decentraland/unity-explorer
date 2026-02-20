@@ -9,7 +9,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Utility;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -25,7 +24,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
 
-namespace DCL.AvatarRendering.Wearables.Systems.Load
+namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]

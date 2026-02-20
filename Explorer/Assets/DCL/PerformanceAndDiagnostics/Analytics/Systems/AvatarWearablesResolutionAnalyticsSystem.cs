@@ -40,7 +40,7 @@ namespace DCL.Analytics.Systems
                 // If we don't save it here this information will be destroyed with the promise itself
                 GetWearablesByPointersIntention intent = World.Get<GetWearablesByPointersIntention>(avatarShapeComponent.WearablePromise.Entity);
                 avatarAnalytics.MissingPointersCounter = intent.MissingPointersCount;
-                avatarAnalytics.VisibleWearablesCount = intent.HideWearablesResolution.VisibleWearables?.Count ?? 0;
+                avatarAnalytics.VisibleWearablesCount = intent.HideWearablesResolution.VisibleWearablesCount;
             }
         }
     }

@@ -91,7 +91,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 if (!combinedHidingList.Contains(wearable.GetCategory()))
                     visibleWearables.Add(wearable);
 
-            hideWearablesResolution.VisibleWearables = visibleWearables;
+            hideWearablesResolution.SetVisibleWearables(visibleWearables);
             hideWearablesResolution.HiddenCategories = combinedHidingList;
         }
 

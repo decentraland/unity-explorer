@@ -44,7 +44,7 @@ namespace DCL.RealmNavigation
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
-            IAnalyticsController analytics = bootstrapContainer.Analytics.EnsureNotNull();
+            IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
             {
@@ -79,7 +79,7 @@ namespace DCL.RealmNavigation
 
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, bootstrapContainer.Analytics!,
+                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, analytics,
                     realmChangeOperations, teleportInSameRealmOperation),
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
             };

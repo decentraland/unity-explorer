@@ -5,16 +5,13 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.Views;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utility;
-using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
@@ -24,7 +21,6 @@ using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -40,8 +36,7 @@ namespace Global.Dynamic
     {
         private IReportsHandlingSettings reportHandlingSettings;
 
-        public bool EnableAnalytics { get; private set; }
-        public WebRequestsContainer WebRequestsContainer { get; private set; }
+        public bool EnableAnalytics => Analytics.Enabled;
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
         public IWebBrowser WebBrowser { get; private set; }
@@ -50,11 +45,11 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
-        public IAnalyticsController? Analytics { get; private set; }
+        public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings;
-        public IAppArgs ApplicationParametersParser { get; private set; }
+        public IAppArgs AppArgs { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
@@ -101,7 +96,7 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
-                ApplicationParametersParser = applicationParametersParser,
+                AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
                 Environment = decentralandEnvironment
@@ -118,14 +113,8 @@ namespace Global.Dynamic
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, ct);
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-                (container.Bootstrap, container.Analytics) = CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
-
-                if (container.EnableAnalytics)
-                {
-                    container.Analytics!.Initialize(container.IdentityCache.Identity);
-                    CrashDetector.Initialize(container.Analytics);
-                }
+                container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -137,8 +126,9 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static (IBootstrap, IAnalyticsController) CreateBootstrapperAsync(
+        private static async UniTask<IBootstrap> CreateBootstrapperAsync(
             DebugSettings.DebugSettings debugSettings,
+            DebugUtilitiesContainer debugUtilitiesContainer,
             IAppArgs appArgs,
             SplashScreen splashScreen,
             RealmUrls realmUrls,
@@ -146,74 +136,36 @@ namespace Global.Dynamic
             IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
             WebRequestsContainer webRequestsContainer,
-            BootstrapSettings bootstrapSettings,
+            IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             World world,
             BuildData buildData,
             DCLVersion dclVersion,
             CancellationToken ct)
         {
-            container.EnableAnalytics = bootstrapSettings.AnalyticsConfig.Mode != AnalyticsMode.DISABLED;
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, container.IdentityCache, realmLaunchSettings, debugUtilitiesContainer.Builder, buildData, settingsContainer, dclVersion, ct);
+            container.Analytics = analyticsContainer;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
                 new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController), world)
             {
-                EnableAnalytics = container.EnableAnalytics,
+                EnableAnalytics = analyticsContainer.Enabled,
             };
 
-            if (container.EnableAnalytics)
-            {
-                LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
-                IAnalyticsService service = CreateAnalyticsService(
-                    bootstrapSettings.AnalyticsConfig,
-                    launcherTraits,
-                    container.ApplicationParametersParser,
-                    realmLaunchSettings.CurrentMode is DCL.Utility.LaunchMode.LocalSceneDevelopment,
-                    ct);
+            if (analyticsContainer.Enabled)
+                return new BootstrapAnalyticsDecorator(coreBootstrap, analyticsContainer.Controller);
 
-                var analyticsController = new AnalyticsController(service, appArgs, bootstrapSettings.AnalyticsConfig, launcherTraits, buildData, dclVersion);
-                var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
-
-                return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
-            }
-
-            return (coreBootstrap, IAnalyticsController.Null);
+            return coreBootstrap;
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, bool isLocalSceneDevelopment, CancellationToken token)
-        {
-            // Avoid Segment analytics for: Unity Editor or Debug Mode (except when in Local Scene Development mode)
-#if !UNITY_EDITOR
-            if (!args.HasDebugFlag() || isLocalSceneDevelopment)
-                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token);
-#endif
 
-            return analyticsConfig.Mode switch
-                   {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
-                       AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
-                       AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
-                       _ => throw new ArgumentOutOfRangeException(),
-                   };
-        }
-
-        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
-        {
-            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
-                   .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
-
-            // Fall back to debug if segment is not configured
-            ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
-            return new DebugAnalyticsService();
-        }
 
         private static ICompositeWeb3Provider CreateWeb3Dependencies(
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IWeb3AccountFactory web3AccountFactory,
             IWeb3IdentityCache identityCache,
             IWebBrowser webBrowser,
-            BootstrapContainer container,
+            AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment dclEnvironment,
             IAppArgs appArgs)
@@ -247,8 +199,7 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache,
-                container.Analytics ?? IAnalyticsController.Null);
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache, container.Controller);
 
             return result;
         }
@@ -290,7 +241,6 @@ namespace Global.Dynamic
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AnalyticsConfiguration AnalyticsConfig;
         [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsDevelopment { get; private set; }
         [field: SerializeField] public ReportsHandlingSettings ReportHandlingSettingsProduction { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }

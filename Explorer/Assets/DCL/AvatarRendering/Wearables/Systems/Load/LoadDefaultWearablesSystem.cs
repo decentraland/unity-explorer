@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
@@ -19,9 +18,8 @@ using ECS.StreamableLoading.Common.Components;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace DCL.AvatarRendering.Wearables.Systems.Load
+namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))] // It is updated first so other systems can depend on it asap
     [LogCategory(ReportCategory.WEARABLE)]

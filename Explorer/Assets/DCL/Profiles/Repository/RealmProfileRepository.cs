@@ -26,8 +26,6 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
-        private readonly int batchMaxSize;
-
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesAnalytics profilesAnalytics;
@@ -42,8 +40,6 @@ namespace DCL.Profiles
         private readonly List<ProfilesBatchRequest> pendingBatches = new (10);
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
-
-        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,

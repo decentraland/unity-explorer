@@ -34,6 +34,7 @@ using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -79,13 +80,18 @@ namespace Global.Tests.PlayMode
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
 
+            IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
+
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, new BuildData(), globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                analyticsContainer,
                 dclUrls,
                 new RealmData(),
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
-                Substitute.For<IDebugContainerBuilder>(),
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
+                debugBuilder,
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -97,7 +103,6 @@ namespace Global.Tests.PlayMode
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,
-                Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 DecentralandEnvironment.Org,

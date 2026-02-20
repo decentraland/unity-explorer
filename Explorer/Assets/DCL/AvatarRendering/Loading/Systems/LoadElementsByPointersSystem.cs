@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 bodyBuilder.Append(wearablesToRequest[i].LowerCaseUrn());
                 bodyBuilder.Append('\"');
 
-                if (i != wearablesToRequest.Count - 1)
+                if (i != endIndex - 1)
                     bodyBuilder.Append(",");
             }
 
