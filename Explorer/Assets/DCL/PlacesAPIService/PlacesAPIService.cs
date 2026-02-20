@@ -114,23 +114,17 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string realmName, CancellationToken ct)
         {
-            string coordToString = $"{coords.x},{coords.y}";
-            string placeId = $"{coordToString},{realmName}";
+            if (!AreCoordinatesWithinBounds(coords))
+                return null;
 
-            if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
-                return placeInfo;
-
-            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync(coordToString, realmName, ct);
+            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
 
             if (!response.ok)
                 return null;
 
             if (response.data.Count == 0)
                 return null;
-
             PlacesData.PlaceInfo place = response.data[0];
-            TryCachePlace(place);
-
             return place;
         }
 
