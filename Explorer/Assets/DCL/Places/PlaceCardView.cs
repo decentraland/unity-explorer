@@ -37,6 +37,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
         [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
+        [SerializeField] private GameObject headerGradient = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -164,6 +165,9 @@ namespace DCL.Places
             liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
             if (liveEvent != null)
                 liveTagWithTooltip.Configure(liveEvent.Value.name);
+
+            bool anyTagShowedInTheHeader = liveTagWithTooltip.gameObject.activeSelf || onlineMembersContainer.activeSelf || friendsConnected.root.activeSelf || featuredTag.activeSelf;
+            headerGradient.SetActive(anyTagShowedInTheHeader);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
