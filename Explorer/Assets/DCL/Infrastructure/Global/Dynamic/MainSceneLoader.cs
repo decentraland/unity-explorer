@@ -42,6 +42,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Newtonsoft.Json.Linq;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
@@ -176,7 +177,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -371,6 +372,25 @@ namespace Global.Dynamic
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+
+            var specsProperties = new JObject
+            {
+                ["meets_requirements"] = hasMinimumSpecs,
+            };
+
+            foreach (SpecResult result in minimumSpecsGuard.Results)
+            {
+                string categoryKey = result.Category.ToString().ToLowerInvariant();
+                specsProperties[$"{categoryKey}_met"] = result.IsMet;
+
+                if (!result.IsMet)
+                {
+                    specsProperties[$"{categoryKey}_required"] = result.Required;
+                    specsProperties[$"{categoryKey}_actual"] = result.Actual;
+                }
+            }
+
+            analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 

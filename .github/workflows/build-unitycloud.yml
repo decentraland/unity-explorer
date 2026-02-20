@@ -133,7 +133,13 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
-  cancel-in-progress: true
+  cancel-in-progress: >-
+    ${{
+      github.event_name != 'pull_request' ||
+      github.event.action != 'labeled' ||
+      github.event.label.name == 'force-build' ||
+      github.event.label.name == 'clean-build'
+    }}
 
 jobs:
   prebuild:

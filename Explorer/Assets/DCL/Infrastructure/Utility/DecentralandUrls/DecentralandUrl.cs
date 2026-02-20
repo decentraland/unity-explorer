@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Blocklist = 54,
 
-        WorldContentServer = 55,
+        WorldServer = 55,
 
         Servers = 56,
 
@@ -124,7 +124,17 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Content = 75,
         EntitiesDeployment = 76,
 
+
         BuilderApiNewsletter = 77,
         MetaTransactionServer = 78,
+
+        WorldContentServer = 79,
+
+        WorldEntitiesActive = 80,
+        WorldCommsAdapter = 81,
+
+
+
+
     }
 }
