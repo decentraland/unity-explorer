@@ -64,6 +64,7 @@ namespace DCL.FeatureFlags
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
+        public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
 
         public static class Endpoints
         {

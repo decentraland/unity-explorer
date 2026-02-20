@@ -1,10 +1,10 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Ipfs;
+using DCL.Profiles;
 using Decentraland.Common;
 using ECS;
 using ECS.Prioritization.Components;
@@ -52,9 +52,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             IRealmData realmData = Substitute.For<IRealmData>();
             IIpfsRealm ipfsRealm = Substitute.For<IIpfsRealm>();
+            IAvatarHighlightData highlightData = Substitute.For<IAvatarHighlightData>();
+
             ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
             realmData.Ipfs.Returns(ipfsRealm);
-            system = new AvatarLoaderSystem(world);
+            system = new AvatarLoaderSystem(world, highlightData);
 
             fakePointers = new List<URN>();
             fakePointers.Add(BODY_SHAPE_MALE);
@@ -119,6 +121,37 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Should be different ids, because the promise was cancelled and a new one was created
             Assert.That(world.IsAlive(originalPromise), Is.False);
             Assert.AreNotEqual(avatarShapeComponent.WearablePromise.Entity, originalPromise);
+        }
+
+        [Test]
+        public void AddAvatarHighlightComponentWhenCreatingAvatarFromSDKComponent()
+        {
+            // Arrange
+            Entity entity = world.Create(pbAvatarShape, PartitionComponent.TOP_PRIORITY);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(world.Has<AvatarHighlightComponent>(entity), Is.True);
+            AvatarHighlightComponent highlightComponent = world.Get<AvatarHighlightComponent>(entity);
+            Assert.That(highlightComponent.Opacity, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void AddAvatarHighlightComponentWhenCreatingAvatarFromProfile()
+        {
+            ProfileBuilder builder = new ProfileBuilder().WithUserId(FAKE_ID);
+            // Arrange
+            Entity entity = world.Create(builder.Build(), PartitionComponent.TOP_PRIORITY);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(world.Has<AvatarHighlightComponent>(entity), Is.True);
+            AvatarHighlightComponent highlightComponent = world.Get<AvatarHighlightComponent>(entity);
+            Assert.That(highlightComponent.Opacity, Is.EqualTo(0));
         }
     }
 }

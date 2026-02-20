@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
+using DCL.Interaction.Raycast;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
@@ -80,6 +81,7 @@ namespace SceneRunner.ECSWorld
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
+            ResetRaycastResultSystem.InjectToWorld(ref builder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

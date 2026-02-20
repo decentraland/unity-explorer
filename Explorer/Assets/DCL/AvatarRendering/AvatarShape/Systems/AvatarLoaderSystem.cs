@@ -28,7 +28,12 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        internal AvatarLoaderSystem(World world) : base(world) { }
+        private readonly IAvatarHighlightData highlightData;
+
+        internal AvatarLoaderSystem(World world, IAvatarHighlightData highlightData) : base(world)
+        {
+            this.highlightData = highlightData;
+        }
 
         protected override void Update(float t)
         {
@@ -52,6 +57,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
                 pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
+            World.Add(entity, new AvatarHighlightComponent());
         }
 
         [Query]
@@ -60,6 +66,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
+            World.Add(entity, new AvatarHighlightComponent());
         }
 
         [Query]
