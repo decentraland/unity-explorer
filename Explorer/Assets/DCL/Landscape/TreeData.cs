@@ -154,6 +154,19 @@ namespace DCL.Landscape
 
         public async UniTask LoadAsync(string treeFilePath)
         {
+            // File stream is not supported on webgl
+#if UNITY_WEBGL
+            if (treeIndices.IsCreated)
+                treeIndices.Dispose();
+
+            if (treeInstances.IsCreated)
+                treeInstances.Dispose();
+
+            treeIndices = new NativeArray<int>(0, Allocator.Persistent);
+            treeInstances = new NativeArray<TreeInstanceData>(0, Allocator.Persistent);
+            return;
+#endif
+
             try
             {
                 await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,

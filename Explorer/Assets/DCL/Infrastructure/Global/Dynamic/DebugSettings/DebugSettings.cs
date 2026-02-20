@@ -42,7 +42,7 @@ namespace Global.Dynamic.DebugSettings
                 showSplash = true,
                 showAuthentication = true,
                 showLoading = true,
-                enableLandscape = false,
+                enableLandscape = true,
                 enableLOD = false,
                 enableVersionUpdateGuard = false,
                 portableExperiencesEnsToLoad = null,

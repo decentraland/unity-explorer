@@ -1,3 +1,5 @@
+#if UNITY_WEBGL && !UNITY_EDITOR
+
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -239,3 +241,5 @@ namespace SceneRuntime.WebClient
         }
     }
 }
+
+#endif

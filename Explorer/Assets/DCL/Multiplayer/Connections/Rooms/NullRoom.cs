@@ -5,7 +5,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Streaming.Audio;
 #endif
 
@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => NullDataPipe.INSTANCE;
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
         public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;

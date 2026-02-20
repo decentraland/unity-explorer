@@ -9,7 +9,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 #endif
@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
         private readonly InteriorLocalTracks localTracks = new ();
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
         public ILocalTracks LocalTracks => localTracks;
@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event Room.MetaDelegate? RoomMetadataChanged;
         public event Room.SidDelegate? RoomSidChanged;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -169,7 +169,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
             localTracks.Assign(room.LocalTracks);
@@ -178,7 +178,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || UNITY_EDITOR
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -199,8 +199,8 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
 
-#if !UNITY_WEBGL
-            previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
+#if !UNITY_WEBGL || UNITY_EDITOR
+       previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
             previous.TrackUnpublished -= RoomOnTrackUnpublished;
@@ -232,43 +232,43 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
-#if !UNITY_WEBGL
-        private void RoomOnTrackUnmuted(TrackPublication publication, Participant participant)
+#if !UNITY_WEBGL || UNITY_EDITOR
+        private void RoomOnTrackUnmuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackUnmuted?.Invoke(publication, participant);
         }
 
-        private void RoomOnTrackMuted(TrackPublication publication, Participant participant)
+        private void RoomOnTrackMuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackMuted?.Invoke(publication, participant);
         }
 
-        private void RoomOnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void RoomOnTrackUnsubscribed(global::LiveKit.Rooms.Tracks.ITrack track, global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackUnsubscribed?.Invoke(track, publication, participant);
         }
 
-        private void RoomOnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void RoomOnTrackSubscribed(global::LiveKit.Rooms.Tracks.ITrack track, global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackSubscribed?.Invoke(track, publication, participant);
         }
 
-        private void RoomOnTrackUnpublished(TrackPublication publication, Participant participant)
+        private void RoomOnTrackUnpublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackUnpublished?.Invoke(publication, participant);
         }
 
-        private void RoomOnTrackPublished(TrackPublication publication, Participant participant)
+        private void RoomOnTrackPublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackPublished?.Invoke(publication, participant);
         }
 
-        private void RoomOnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        private void RoomOnLocalTrackUnpublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             LocalTrackUnpublished?.Invoke(publication, participant);
         }
 
-        private void RoomOnLocalTrackPublished(TrackPublication publication, Participant participant)
+        private void RoomOnLocalTrackPublished(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             LocalTrackPublished?.Invoke(publication, participant);
         }

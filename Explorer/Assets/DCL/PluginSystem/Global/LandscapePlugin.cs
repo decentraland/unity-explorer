@@ -107,8 +107,15 @@ namespace DCL.PluginSystem.Global
             int[] treeRendererKeys = new int[treePrototypes.Length];
 
             for (int prototypeIndex = 0; prototypeIndex < treePrototypes.Length; prototypeIndex++)
-                GPUICoreAPI.RegisterRenderer(landscape.Root, treePrototypes[prototypeIndex].asset,
-                    treesProfile, out treeRendererKeys[prototypeIndex]);
+            {
+                UnityEngine.GameObject prefab = treePrototypes[prototypeIndex].asset;
+
+                UnityEngine.Object root = landscape.Root;
+
+                var result = await GPUICoreAPI.RegisterRenderer(root, prefab, treesProfile);
+                treeRendererKeys[prototypeIndex] = result.rendererKey;
+
+            }
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys,
                 ref emptyParcelsRef, ref ownedParcelsRef, landscapeData.Value);

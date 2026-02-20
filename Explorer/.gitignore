@@ -87,3 +87,7 @@ Assets/Resources/PerformanceTestRunSettings.*
 
 # Disk caching 
 DiskCache/
+
+#WebGL daemon
+chrome_pid.txt
+server_pid.txt
