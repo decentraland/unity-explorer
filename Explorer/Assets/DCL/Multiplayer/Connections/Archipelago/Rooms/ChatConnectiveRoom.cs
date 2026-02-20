@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using LiveKit.Proto;
-using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -24,20 +23,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-
-            Room().ConnectionUpdated += OnConnectionUpdated;
-        }
-
-        public new void Dispose()
-        {
-            Room().ConnectionUpdated -= OnConnectionUpdated;
-            base.Dispose();
-        }
-
-        private void OnConnectionUpdated(IRoom room1, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
-        {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && CurrentState() == IConnectiveRoom.State.Running)
-                DisconnectCurrentRoomAsync(false, CancellationToken.None).Forget();
         }
 
         public async UniTask ActivateAsync()
@@ -66,7 +51,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
-            if (CurrentState() is not IConnectiveRoom.State.Running)
+            if (CurrentState() is not IConnectiveRoom.State.Running // CurrentState will be != Running at start, so we need to connect
+                || Room().Info.ConnectionState == ConnectionState.ConnDisconnected) // If the room was running but our connection was lost at some point, we need to reconnect
             {
                 string connectionString = await ConnectionStringAsync(token);
                 await TryConnectToRoomAsync(connectionString, token);
