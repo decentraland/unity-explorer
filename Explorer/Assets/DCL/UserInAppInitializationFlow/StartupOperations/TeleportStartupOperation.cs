@@ -5,8 +5,10 @@ using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
 using DCL.Utility.Types;
+using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -25,7 +27,16 @@ namespace DCL.UserInAppInitializationFlow
             this.startParcel = startParcel;
         }
 
-        public override UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct) =>
-            InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+        public override UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
+        {
+            // If the WorldManifest defines an explicit spawn coordinate, always use it
+            // (e.g. worlds with a fixed or curated spawn point)
+            WorldManifest manifest = realmController.RealmData.WorldManifest;
+            if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
+                return InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+
+            return InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+
+        }
     }
 }
