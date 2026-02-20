@@ -207,9 +207,9 @@ MonoBehaviour:
   m_Name: RenderFeature_ObjectHighlight
   m_EditorClassIdentifier: ObjectHighlight::DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight.RenderFeature_ObjectHighlight
   m_Active: 1
-  highlightInputMaterial: {fileID: 0}
-  highlightInputBlurMaterial: {fileID: 0}
-  highlightOutputMaterial: {fileID: 0}
+  highlightInputMaterial: {fileID: 2100000, guid: 55a3f55bb348e95418783121e0b8ce1e, type: 2}
+  highlightInputBlurMaterial: {fileID: 2100000, guid: c7d4b82b1c0428c4d815890b615064eb, type: 2}
+  highlightOutputMaterial: {fileID: 2100000, guid: 1015f0654e3a1524aa9c0f38ed24692b, type: 2}
 --- !u!114 &6840260418858268937
 MonoBehaviour:
   m_ObjectHideFlags: 0
