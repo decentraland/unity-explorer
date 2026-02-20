@@ -188,7 +188,20 @@ namespace Global.Dynamic
         public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
         {
             const string SIGN_METADATA = "{\"intent\": \"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
-            ServerAbout about = await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM).CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+            ServerAbout about;
+            try
+            {
+                about = await webRequestController
+                             .GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM)
+                             .CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to resolve world '/about' for '{realm}': {e.Message}");
+                return false;
+            }
 
             string commsAdapterUrl = ExtractCommsAdapterUrl(about.comms?.adapter ?? string.Empty);
 
@@ -206,6 +219,12 @@ namespace Global.Dynamic
                                                        .StatusCodeAsync();
             }
             catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to verify world access for '{realm}' via comms adapter: {e.Message}");
+                return false;
+            }
 
             return statusCode >= 200 && statusCode < 300;
         }
