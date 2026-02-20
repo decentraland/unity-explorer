@@ -58,7 +58,11 @@ namespace DCL.Infrastructure
         [MenuItem("Decentraland/WebGL/Clear Builds Directory")]
         public static void ClearBuildsDirectory()
         {
-            Directory.Delete(BUILDS_FOLDER, true);
+            if (Directory.Exists(BUILDS_FOLDER))
+            {
+                Directory.Delete(BUILDS_FOLDER, true);
+            }
+
             ReportHub.Log(ReportCategory.UNSPECIFIED, "ClearBuildsDirectory finished");
         }
 
