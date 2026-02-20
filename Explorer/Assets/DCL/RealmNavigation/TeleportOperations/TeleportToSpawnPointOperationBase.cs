@@ -9,11 +9,9 @@ using DCL.Utility.Exceptions;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using Microsoft.ClearScript;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -23,7 +21,7 @@ namespace DCL.RealmNavigation.TeleportOperations
     public abstract class TeleportToSpawnPointOperationBase<TParams> : ILoadingOperation<TParams> where TParams: ILoadingOperationParams
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly IGlobalRealmController realmController;
+        protected readonly IGlobalRealmController realmController;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly string reportCategory;
@@ -40,11 +38,11 @@ namespace DCL.RealmNavigation.TeleportOperations
             this.reportCategory = reportCategory;
         }
 
-        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct)
+        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
-            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel);
+            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride);
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
@@ -62,7 +60,8 @@ namespace DCL.RealmNavigation.TeleportOperations
         private async UniTask<EnumResult<TaskError>> InitializeTeleportToSpawnPointAsync(
             AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct,
-            Vector2Int parcelToTeleport
+            Vector2Int parcelToTeleport,
+            bool allowsPositionOverride = false
         )
         {
             bool isWorld = realmController.RealmData.IsWorld();
@@ -71,7 +70,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             try
             {
                 if (isWorld)
-                    waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+                    waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, allowsPositionOverride, ct);
                 else
                     waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             }
@@ -96,17 +95,44 @@ namespace DCL.RealmNavigation.TeleportOperations
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(
             Vector2Int parcelToTeleport,
             AsyncLoadProcessReport processReport,
+            bool allowsPositionOverride,
             CancellationToken ct
         )
         {
             //Wait for all scenes definition to be fetched before trying to teleport
-            await realmController.WaitForFixedScenePromisesAsync(ct);
+            List<SceneEntityDefinition> scenes = await realmController.WaitForFixedScenePromisesAsync(ct);
 
-            // If the WorldManifest defines an explicit spawn coordinate, always use it
-            // (e.g. worlds with a fixed or curated spawn point)
             WorldManifest manifest = realmController.RealmData.WorldManifest;
-            if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                parcelToTeleport = new Vector2Int(spawn.x, spawn.y);
+            if (!manifest.IsEmpty)
+            {
+                // If the WorldManifest defines an explicit spawn coordinate,
+                // use it when its allowed by the teleport params (meaning that no explicit coordinate has been defined)
+                // It will always be in bound
+                if (allowsPositionOverride)
+                    parcelToTeleport = new Vector2Int(manifest.spawn_coordinate.x, manifest.spawn_coordinate.y);
+                else
+                {
+                    if (!manifest.IsParcelInsideBoundaries(parcelToTeleport.x, parcelToTeleport.y))
+                        parcelToTeleport = scenes[0].metadata.scene.DecodedBase;
+                }
+            }
+            else
+            {
+                bool isSceneContained = false;
+                // Check if result contains the requested parcel.
+                foreach (var sceneEntityDefinition in scenes)
+                {
+                    if (sceneEntityDefinition.Contains(parcelToTeleport))
+                    {
+                        isSceneContained = true;
+                        break;
+                    }
+                }
+
+                // If no parcel is present on any scene, teleport to the first Decoded Base
+                if (!isSceneContained)
+                    parcelToTeleport = scenes[0].metadata.scene.DecodedBase;
+            }
 
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
