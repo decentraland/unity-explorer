@@ -1,0 +1,266 @@
+﻿// MeshVoxelization.compute
+#pragma kernel VoxelizeTriangles
+#pragma kernel ClassifyCells
+
+// ============================================================================
+// SHARED DATA
+// ============================================================================
+
+struct Triangle
+{
+    float3 v0;
+    float3 v1;
+    float3 v2;
+};
+
+// Input: mesh triangles
+StructuredBuffer<Triangle> triangles;
+int triangleCount;
+
+// Output: voxel grid (0 = empty, 1 = intersects surface)
+RWStructuredBuffer<uint> voxelGrid;
+
+// Grid properties
+int gridResolution;
+float3 gridMin;
+float3 gridMax;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+int GetVoxelIndex(uint3 coord)  // Changed parameter type
+{
+    return int(coord.x + coord.y * gridResolution + coord.z * gridResolution * gridResolution);
+}
+
+int3 GetVoxelCoord(uint3 coord)  // Helper if needed
+{
+    return int3(coord);
+}
+
+float3 GetVoxelCenter(int3 coord)
+{
+    float3 cellSize = (gridMax - gridMin) / float(gridResolution);
+    return gridMin + (float3(coord) + 0.5) * cellSize;
+}
+
+float3 GetVoxelMin(int3 coord)
+{
+    float3 cellSize = (gridMax - gridMin) / float(gridResolution);
+    return gridMin + float3(coord) * cellSize;
+}
+
+float3 GetVoxelMax(int3 coord)
+{
+    float3 cellSize = (gridMax - gridMin) / float(gridResolution);
+    return gridMin + float3(coord + 1) * cellSize;
+}
+
+// ============================================================================
+// TRIANGLE-AABB INTERSECTION TEST (Möller Algorithm)
+// Based on: "Fast 3D Triangle-Box Overlap Testing" by Tomas Akenine-Möller
+// ============================================================================
+
+bool PlaneBoxOverlap(float3 normal, float3 vert, float3 maxbox)
+{
+    float3 vmin, vmax;
+    
+    // X component
+    if (normal.x > 0.0)
+    {
+        vmin.x = -maxbox.x - vert.x;
+        vmax.x = maxbox.x - vert.x;
+    }
+    else
+    {
+        vmin.x = maxbox.x - vert.x;
+        vmax.x = -maxbox.x - vert.x;
+    }
+    
+    // Y component
+    if (normal.y > 0.0)
+    {
+        vmin.y = -maxbox.y - vert.y;
+        vmax.y = maxbox.y - vert.y;
+    }
+    else
+    {
+        vmin.y = maxbox.y - vert.y;
+        vmax.y = -maxbox.y - vert.y;
+    }
+    
+    // Z component
+    if (normal.z > 0.0)
+    {
+        vmin.z = -maxbox.z - vert.z;
+        vmax.z = maxbox.z - vert.z;
+    }
+    else
+    {
+        vmin.z = maxbox.z - vert.z;
+        vmax.z = -maxbox.z - vert.z;
+    }
+    
+    if (dot(normal, vmin) > 0.0) return false;
+    if (dot(normal, vmax) >= 0.0) return true;
+    
+    return false;
+}
+
+bool AxisTestX01(float a, float b, float fa, float fb, float3 v0, float3 v2, float3 boxhalfsize)
+{
+    float p0 = a * v0.y - b * v0.z;
+    float p2 = a * v2.y - b * v2.z;
+    float minVal = (p0 < p2) ? p0 : p2;
+    float maxVal = (p0 < p2) ? p2 : p0;
+    float rad = fa * boxhalfsize.y + fb * boxhalfsize.z;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool AxisTestX2(float a, float b, float fa, float fb, float3 v0, float3 v1, float3 boxhalfsize)
+{
+    float p0 = a * v0.y - b * v0.z;
+    float p1 = a * v1.y - b * v1.z;
+    float minVal = (p0 < p1) ? p0 : p1;
+    float maxVal = (p0 < p1) ? p1 : p0;
+    float rad = fa * boxhalfsize.y + fb * boxhalfsize.z;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool AxisTestY02(float a, float b, float fa, float fb, float3 v0, float3 v2, float3 boxhalfsize)
+{
+    float p0 = -a * v0.x + b * v0.z;
+    float p2 = -a * v2.x + b * v2.z;
+    float minVal = (p0 < p2) ? p0 : p2;
+    float maxVal = (p0 < p2) ? p2 : p0;
+    float rad = fa * boxhalfsize.x + fb * boxhalfsize.z;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool AxisTestY1(float a, float b, float fa, float fb, float3 v0, float3 v1, float3 boxhalfsize)
+{
+    float p0 = -a * v0.x + b * v0.z;
+    float p1 = -a * v1.x + b * v1.z;
+    float minVal = (p0 < p1) ? p0 : p1;
+    float maxVal = (p0 < p1) ? p1 : p0;
+    float rad = fa * boxhalfsize.x + fb * boxhalfsize.z;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool AxisTestZ12(float a, float b, float fa, float fb, float3 v1, float3 v2, float3 boxhalfsize)
+{
+    float p1 = a * v1.x - b * v1.y;
+    float p2 = a * v2.x - b * v2.y;
+    float minVal = (p2 < p1) ? p2 : p1;
+    float maxVal = (p2 < p1) ? p1 : p2;
+    float rad = fa * boxhalfsize.x + fb * boxhalfsize.y;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool AxisTestZ0(float a, float b, float fa, float fb, float3 v0, float3 v1, float3 boxhalfsize)
+{
+    float p0 = a * v0.x - b * v0.y;
+    float p1 = a * v1.x - b * v1.y;
+    float minVal = (p0 < p1) ? p0 : p1;
+    float maxVal = (p0 < p1) ? p1 : p0;
+    float rad = fa * boxhalfsize.x + fb * boxhalfsize.y;
+    return !(minVal > rad || maxVal < -rad);
+}
+
+bool TriangleAABBIntersect(float3 boxcenter, float3 boxhalfsize, Triangle tri)
+{
+    // Move everything so box is at origin
+    float3 v0 = tri.v0 - boxcenter;
+    float3 v1 = tri.v1 - boxcenter;
+    float3 v2 = tri.v2 - boxcenter;
+    
+    // Compute triangle edges
+    float3 e0 = v1 - v0;
+    float3 e1 = v2 - v1;
+    float3 e2 = v0 - v2;
+    
+    // Test axes from cross products
+    float fex = abs(e0.x);
+    float fey = abs(e0.y);
+    float fez = abs(e0.z);
+    if (!AxisTestX01(e0.z, e0.y, fez, fey, v0, v2, boxhalfsize)) return false;
+    if (!AxisTestY02(e0.z, e0.x, fez, fex, v0, v2, boxhalfsize)) return false;
+    if (!AxisTestZ12(e0.y, e0.x, fey, fex, v1, v2, boxhalfsize)) return false;
+    
+    fex = abs(e1.x);
+    fey = abs(e1.y);
+    fez = abs(e1.z);
+    if (!AxisTestX01(e1.z, e1.y, fez, fey, v0, v2, boxhalfsize)) return false;
+    if (!AxisTestY02(e1.z, e1.x, fez, fex, v0, v2, boxhalfsize)) return false;
+    if (!AxisTestZ0(e1.y, e1.x, fey, fex, v0, v1, boxhalfsize)) return false;
+    
+    fex = abs(e2.x);
+    fey = abs(e2.y);
+    fez = abs(e2.z);
+    if (!AxisTestX2(e2.z, e2.y, fez, fey, v0, v1, boxhalfsize)) return false;
+    if (!AxisTestY1(e2.z, e2.x, fez, fex, v0, v1, boxhalfsize)) return false;
+    if (!AxisTestZ12(e2.y, e2.x, fey, fex, v1, v2, boxhalfsize)) return false;
+    
+    // Test overlap in each axis using built-in min/max functions
+    float3 vmin = min(min(v0, v1), v2);
+    float3 vmax = max(max(v0, v1), v2);
+    
+    if (vmin.x > boxhalfsize.x || vmax.x < -boxhalfsize.x) return false;
+    if (vmin.y > boxhalfsize.y || vmax.y < -boxhalfsize.y) return false;
+    if (vmin.z > boxhalfsize.z || vmax.z < -boxhalfsize.z) return false;
+    
+    // Test triangle plane
+    float3 normal = cross(e0, e1);
+    if (!PlaneBoxOverlap(normal, v0, boxhalfsize)) return false;
+    
+    return true;
+}
+
+// ============================================================================
+// KERNEL 1: VOXELIZE TRIANGLES
+// Test each voxel against all triangles
+// ============================================================================
+
+// In VoxelizeTriangles kernel:
+[numthreads(8,8,8)]
+void VoxelizeTriangles(uint3 id : SV_DispatchThreadID)
+{
+    if (any(id >= (uint)gridResolution)) return;
+    
+    int voxelIndex = GetVoxelIndex(id);
+    
+    float3 cellSize = (gridMax - gridMin) / float(gridResolution);
+    float3 voxelCenter = GetVoxelCenter(id);
+    float3 voxelHalfSize = cellSize * 0.5;
+    
+    // Test against all triangles
+    bool intersects = false;
+    for (uint i = 0; i < (uint)triangleCount; i++)  // Changed: int i -> uint i, added cast
+    {
+        if (TriangleAABBIntersect(voxelCenter, voxelHalfSize, triangles[i]))
+        {
+            intersects = true;
+            break;
+        }
+    }
+    
+    voxelGrid[voxelIndex] = intersects ? 1u : 0u;
+}
+
+// ============================================================================
+// KERNEL 2: CLASSIFY CELLS (Optional - for debugging)
+// Mark cells as: 0=empty, 1=surface, 2=inside (future use)
+// ============================================================================
+
+// In ClassifyCells kernel:
+[numthreads(8,8,8)]
+void ClassifyCells(uint3 id : SV_DispatchThreadID)
+{
+    if (any(id >= (uint)gridResolution)) return;  // Added cast
+    
+    int voxelIndex = GetVoxelIndex(id);
+    
+    // For now, just keep surface classification
+    // Future: implement ray-casting or flood-fill for inside detection
+}
