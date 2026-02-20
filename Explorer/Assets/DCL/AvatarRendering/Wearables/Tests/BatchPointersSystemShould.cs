@@ -13,12 +13,16 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
     public class BatchPointersSystemShould : UnitySystemTestBase<BatchWearablesDTOSystem>
     {
+        private static readonly QueryDescription ROOT_QUERY = new QueryDescription().WithAll<AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>>();
+        private static readonly QueryDescription INTENTION_QUERY = new QueryDescription().WithAll<GetWearableDTOByPointersIntention>();
+
         [SetUp]
         public void SetUp()
         {
@@ -29,9 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         }
 
         [Test]
-        [TestCase(3, true)]
-        [TestCase(0.5f, false)]
-        public async Task RespectHeartbeatAsync(float delay, bool created)
+        public async Task DispatchTheBatchAsync()
         {
             system!.Update(0);
 
@@ -52,44 +54,66 @@ namespace DCL.AvatarRendering.Wearables.Tests
                     new GetWearableDTOByPointersIntention(urns, new CommonLoadingArguments(URLAddress.FromString("test"))), PartitionComponent.TOP_PRIORITY), (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(delay));
+            await Task.Delay(TimeSpan.FromSeconds(3));
 
             system!.Update(0);
 
-            QueryDescription rootQuery = new QueryDescription().WithAll<AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>>();
-            QueryDescription intentionQuery = new QueryDescription().WithAll<GetWearableDTOByPointersIntention>();
+            // One promise to replace individual promises
 
-            if (created)
+            int entitiesCount = world.CountEntities(ROOT_QUERY);
+            Assert.That(entitiesCount, Is.EqualTo(1));
+
+            var entities = new Entity[1];
+            world.GetEntities(ROOT_QUERY, entities);
+
+            AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> rootPromise = world.Get<AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>>(entities[0]);
+            var expectedUrns = Enumerable.Range(0, 15).Select(i => new URN(i.ToString())).ToList();
+
+            Assert.That(rootPromise.LoadingIntention.Pointers, Is.EquivalentTo(expectedUrns));
+
+            entitiesCount = world.CountEntities(INTENTION_QUERY);
+            Assert.That(entitiesCount, Is.EqualTo(1));
+
+            world.GetEntities(INTENTION_QUERY, entities);
+            GetWearableDTOByPointersIntention intention = world.Get<GetWearableDTOByPointersIntention>(entities[0]);
+
+            Assert.That(intention.Pointers, Is.EquivalentTo(expectedUrns));
+        }
+
+        [Test]
+        public void CancelAndDestroyOriginalPromises()
+        {
+            system!.Update(0);
+
+            var count = 0;
+
+            var cts = new List<CancellationTokenSource>();
+
+            for (var i = 1; i < 4; i++)
             {
-                // One promise to replace individual promises
+                var urns = new List<URN>();
 
-                int entitiesCount = world.CountEntities(rootQuery);
-                Assert.That(entitiesCount, Is.EqualTo(1));
+                for (var j = 0; j < 5; j++)
+                {
+                    urns.Add(new URN(count.ToString()));
 
-                var entities = new Entity[1];
-                world.GetEntities(rootQuery, entities);
+                    count++;
+                }
 
-                AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> rootPromise = world.Get<AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>>(entities[0]);
-                var expectedUrns = Enumerable.Range(0, 15).Select(i => new URN(i.ToString())).ToList();
+                var intention = new GetWearableDTOByPointersIntention(urns, new CommonLoadingArguments(URLAddress.FromString("test")));
 
-                Assert.That(rootPromise.LoadingIntention.Pointers, Is.EquivalentTo(expectedUrns));
+                cts.Add(intention.CancellationTokenSource);
 
-                entitiesCount = world.CountEntities(intentionQuery);
-                Assert.That(entitiesCount, Is.EqualTo(1));
-
-                world.GetEntities(intentionQuery, entities);
-                GetWearableDTOByPointersIntention intention = world.Get<GetWearableDTOByPointersIntention>(entities[0]);
-
-                Assert.That(intention.Pointers, Is.EquivalentTo(expectedUrns));
+                world.Create(AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(world,
+                    intention, PartitionComponent.TOP_PRIORITY), (IPartitionComponent)PartitionComponent.TOP_PRIORITY);
             }
-            else
-            {
-                int entitiesCount = world.CountEntities(rootQuery);
-                Assert.That(entitiesCount, Is.EqualTo(3));
 
-                entitiesCount = world.CountEntities(intentionQuery);
-                Assert.That(entitiesCount, Is.EqualTo(3));
-            }
+            system!.Update(0);
+
+            Assert.That(cts.All(c => c.IsCancellationRequested), Is.True);
+
+            Assert.That(world.CountEntities(ROOT_QUERY), Is.EqualTo(0));
+            Assert.That(world.CountEntities(INTENTION_QUERY), Is.EqualTo(0));
         }
     }
 }
