@@ -1,15 +1,16 @@
+#if UNITY_EDITOR
 using Cysharp.Threading.Tasks;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace DCL.PrivateWorlds.Testing
@@ -91,19 +92,12 @@ namespace DCL.PrivateWorlds.Testing
 
                 var permissions = await permissionsService!.GetWorldPermissionsAsync(testWorldName, ct);
 
-                if (permissions != null)
-                {
-                    ReportHub.Log(ReportCategory.REALM, $"World Permissions Result:\n" +
-                        $"  AccessType: {permissions.AccessType}\n" +
-                        $"  OwnerAddress: {permissions.OwnerAddress ?? "N/A"}\n" +
-                        $"  RequiresPassword: {permissions.AccessType == WorldAccessType.SharedSecret}\n" +
-                        $"  AllowedWallets Count: {permissions.AllowedWallets.Count}\n" +
-                        $"  AllowedCommunities Count: {permissions.AllowedCommunities.Count}");
-                }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.REALM, $"No permissions found for world: {testWorldName}");
-                }
+                ReportHub.Log(ReportCategory.REALM, $"World Permissions Result:\n" +
+                    $"  AccessType: {permissions.AccessType}\n" +
+                    $"  OwnerAddress: {permissions.OwnerAddress ?? "N/A"}\n" +
+                    $"  RequiresPassword: {permissions.AccessType == WorldAccessType.SharedSecret}\n" +
+                    $"  AllowedWallets Count: {permissions.AllowedWallets.Count}\n" +
+                    $"  AllowedCommunities Count: {permissions.AllowedCommunities.Count}");
             }
             catch (OperationCanceledException)
             {
@@ -542,7 +536,11 @@ namespace DCL.PrivateWorlds.Testing
                 $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(passwordOrEmpty)}\"}}";
         }
 
-        private static string EscapeJsonString(string value) =>
-            value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        private static string EscapeJsonString(string value)
+        {
+            string quoted = JsonConvert.ToString(value);
+            return quoted.Substring(1, quoted.Length - 2);
+        }
     }
 }
+#endif

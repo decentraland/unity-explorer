@@ -7,8 +7,7 @@ using System.Threading;
 namespace Global.Dynamic
 {
     /// <summary>
-    /// Implements <see cref="ICommunityMembershipChecker"/> using <see cref="CommunitiesDataProvider"/>.
-    /// Lives in DCL.Plugins to avoid DCL.PrivateWorlds referencing DCL.Social (cyclic dependency).
+    /// Avoid DCL.PrivateWorlds referencing DCL.Social (cyclic dependency).
     /// </summary>
     public class CommunityMembershipCheckerAdapter : ICommunityMembershipChecker
     {
