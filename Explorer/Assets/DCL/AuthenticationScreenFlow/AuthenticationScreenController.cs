@@ -9,7 +9,6 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -34,15 +33,18 @@ namespace DCL.AuthenticationScreenFlow
     {
         public enum AuthStatus
         {
-            Init = 0,
+            None = 0,
 
-            LoginRequested = 1,
-            VerificationInProgress = 2,
-            FetchingProfile = 3,
-            LoggedIn = 4,
+            LoginSelectionScreen = 1,
+            LoginRequested = 2,
 
-            FetchingProfileCached = 5,
-            LoggedInCached = 6,
+            VerificationRequested = 3,
+
+            ProfileFetching = 4,
+            LoggedIn = 5,
+
+            ProfileFetchingCached = 6,
+            LoggedInCached = 7,
         }
 
         internal const int ANIMATION_DELAY = 300;
@@ -73,10 +75,9 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationTokenSource;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
-        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.Init);
+        public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
-        public AuthProvider CurrentProvider => web3Authenticator.CurrentProvider;
 
         public event Action DiscordButtonClicked;
         public event Action<string, bool> OTPVerified;
@@ -168,7 +169,6 @@ namespace DCL.AuthenticationScreenFlow
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
                 fsm.AddStates(
-                    new ProfileFetchingOTPAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
                     otpVerificationState,
                     new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
                 );
@@ -196,7 +196,6 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
@@ -208,10 +207,9 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
+                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, true, ct));
                 else
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
@@ -221,7 +219,6 @@ namespace DCL.AuthenticationScreenFlow
             catch (Exception e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }

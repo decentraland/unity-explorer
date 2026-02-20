@@ -10,7 +10,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly ILoadingStatus core;
         private const string STAGE_KEY = "state";
-        private const string STAGE_NAME = "stage_name";
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;

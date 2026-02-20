@@ -8,6 +8,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -83,14 +84,10 @@ namespace DCL.AuthenticationScreenFlow
             view.OnViewHidden += ReparentCharacterPreview;
         }
 
-        private void ReparentCharacterPreview()
-        {
-            characterPreviewView.transform.SetParent(viewInstance.transform);
-            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
-        }
-
         public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             userEmail = payload.email;
 
@@ -155,6 +152,13 @@ namespace DCL.AuthenticationScreenFlow
             view.TermsOfUse.SetIsOnWithoutNotify(false);
 
             view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
+            base.Exit();
+        }
+
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
         private void OpenClickableURL(string url) =>
@@ -397,6 +401,7 @@ namespace DCL.AuthenticationScreenFlow
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
 
                     view.Hide(UIAnimationHashes.SLIDE);
                     fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
@@ -421,7 +426,10 @@ namespace DCL.AuthenticationScreenFlow
             catch (OperationCanceledException)
             { /* Ignore cancellation */
             }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+            }
         }
     }
 }

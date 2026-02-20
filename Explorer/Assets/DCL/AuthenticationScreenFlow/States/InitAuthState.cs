@@ -15,7 +15,7 @@ namespace DCL.AuthenticationScreenFlow
             this.buildDataInstallSource = buildDataInstallSource;
         }
 
-        public void Enter()
+        public new void Enter()
         {
             viewInstance.VersionText.text = Application.isEditor
                 ? $"editor-version - {buildDataInstallSource}"
@@ -40,5 +40,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.LoginSelectionAuthView.ErrorPopupRoot.SetActive(false);
             viewInstance.LoginSelectionAuthView.RestrictedUserContainer.SetActive(false);
         }
+
+        public override void Exit() { }
     }
 }
