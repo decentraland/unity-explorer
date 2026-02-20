@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
+using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -21,14 +22,15 @@ namespace ECS.SceneLifeCycle.Components
         // Quick path to avoid an iteration
         public bool AllPromisesResolved;
 
-        public SceneEntityDefinition? StartupScene;
+        public List<SceneEntityDefinition> SceneResults;
+
 
         public FixedScenePointers(AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises)
         {
             Promises = promises;
             ListPromise = null;
             AllPromisesResolved = false;
-            StartupScene = null;
+            SceneResults = new List<SceneEntityDefinition>();
         }
 
         public FixedScenePointers(AssetPromise<SceneDefinitions, GetSceneDefinitionList> listPromise)
@@ -36,7 +38,7 @@ namespace ECS.SceneLifeCycle.Components
             Promises = Array.Empty<AssetPromise<SceneEntityDefinition, GetSceneDefinition>>();
             ListPromise = listPromise;
             AllPromisesResolved = false;
-            StartupScene = null;
+            SceneResults = new List<SceneEntityDefinition>();
         }
     }
 }
