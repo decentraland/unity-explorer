@@ -99,36 +99,100 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset!.Root.transform.SetParent(transformComponent.Transform);
                 result.Asset.Root.transform.ResetLocalTRS();
 
+                GameObject dvm = GameObject.Find("DrakkarVisibilityManager");
+                if (!dvm.TryGetComponent<VisibilityManager>(out VisibilityManager visMan))
+                {
+                    visMan = dvm.AddComponent<VisibilityManager>();
+                }
+
                 foreach (var renderer in result.Asset.Renderers)
                 {
                     GenerateAxisAlignedSpheres(renderer);
                 }
 
+                string strOccluder = "grid";
+
                 foreach (var renderer in result.Asset.Renderers)
                 {
-                    if (renderer.gameObject.TryGetComponent<VisibilityDriver>(out VisibilityDriver visDri))
+                    if (renderer.gameObject.name.StartsWith(strOccluder))
                     {
-                        if (renderer.gameObject.TryGetComponent<VisibilityEvent>(out VisibilityEvent visEve))
-                            visEve.renderers.Add(renderer);
-                        continue;
+                        var occ = renderer.gameObject.AddComponent<DrakkarOccluder>();
+
+                        occ.Visibility = new VisibilityGroup();
+                        VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
+                        occ.Visibility.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
+                        occ.Visibility.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
+
+                        for (int i = 0; i < viSpheres.Length; ++i) { occ.Visibility.Visibility_Spheres[i] = viSpheres[i]; }
+
+                        // frustumCheck defaults to NONE, which causes PrepareOccludersJob to skip every frame
+                        occ.frustumCheck = FRUSTUM_CHECK.FULL;
+                        // Min/Max define the local-space box in Drakkar's inverted convention (Min >= Max)
+                        Bounds lb = renderer.localBounds;
+                        occ.Min = lb.max;
+                        occ.Max = lb.min;
+                        // renderers must be set before Init() so renderersNum is populated for setVisibility()
+                        occ.renderers = new[] { renderer };
+
+                        occ.Init();
+                        occ.Recalculate();
+                        occ.tryRegister();
                     }
-
-                    var vd = renderer.gameObject.AddComponent<VisibilityDriver>();
-                    vd.VisibilityGroup = new VisibilityGroup();
-
-                    VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
-                    vd.VisibilityGroup.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
-                    vd.VisibilityGroup.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
-
-                    for (int i = 0; i < viSpheres.Length; ++i)
-                    {
-                        vd.VisibilityGroup.Visibility_Spheres[i] = viSpheres[i];
-                    }
-
-                    var ve = renderer.gameObject.AddComponent<VisibilityEvent>();
-                    ve.Driver = vd;
-                    ve.renderers.Add(renderer);
                 }
+
+                foreach (var renderer in result.Asset.Renderers)
+                {
+                    if (!renderer.gameObject.name.StartsWith(strOccluder) && !renderer.gameObject.TryGetComponent<DrakkarOccluder>(out DrakkarOccluder occ))
+                    {
+                        if (!renderer.gameObject.TryGetComponent<DrakkarOccludee>(out DrakkarOccludee occludee))
+                        {
+                            occludee = renderer.gameObject.AddComponent<DrakkarOccludee>();
+                            occludee.Visibility = new VisibilityGroup();
+                            VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
+                            occludee.Visibility.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
+                            occludee.Visibility.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
+
+                            for (int i = 0; i < viSpheres.Length; ++i) { occludee.Visibility.Visibility_Spheres[i] = viSpheres[i]; }
+
+                            // Min/Max define the local-space box in Drakkar's inverted convention (Min >= Max)
+                            Bounds lb = renderer.localBounds;
+                            occludee.Min = lb.max;
+                            occludee.Max = lb.min;
+                            // renderers must be set before Init() so renderersNum is populated for setVisibility()
+                            occludee.renderers = new[] { renderer };
+
+                            occludee.Init();
+                            occludee.Recalculate();
+                            occludee.tryRegister();
+                        }
+                    }
+                }
+
+                // foreach (var renderer in result.Asset.Renderers)
+                // {
+                //     if (renderer.gameObject.TryGetComponent<VisibilityDriver>(out VisibilityDriver visDri))
+                //     {
+                //         if (renderer.gameObject.TryGetComponent<VisibilityEvent>(out VisibilityEvent visEve))
+                //             visEve.renderers.Add(renderer);
+                //         continue;
+                //     }
+                //
+                //     var vd = renderer.gameObject.AddComponent<VisibilityDriver>();
+                //     vd.VisibilityGroup = new VisibilityGroup();
+                //
+                //     VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
+                //     vd.VisibilityGroup.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
+                //     vd.VisibilityGroup.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
+                //
+                //     for (int i = 0; i < viSpheres.Length; ++i)
+                //     {
+                //         vd.VisibilityGroup.Visibility_Spheres[i] = viSpheres[i];
+                //     }
+                //
+                //     var ve = renderer.gameObject.AddComponent<VisibilityEvent>();
+                //     ve.Driver = vd;
+                //     ve.renderers.Add(renderer);
+                // }
 
                 result.Asset.Root.SetActive(true);
 
@@ -183,8 +247,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 size[dominanceArray[2]] = size[dominanceArray[1]] * 0.5f;
             }
 
-            int axisOneCount = Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[1]] / size[dominanceArray[2]]));
-            int axisTwoCount = Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[0]] / size[dominanceArray[1]]));
+            // Cap per-axis sphere counts to avoid exhausting the Culler's 1000-sphere limit across all renderers
+            const int MAX_SPHERES_PER_AXIS = 2;
+            int axisOneCount = Mathf.Min(MAX_SPHERES_PER_AXIS, Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[1]] / size[dominanceArray[2]])));
+            int axisTwoCount = Mathf.Min(MAX_SPHERES_PER_AXIS, Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[0]] / size[dominanceArray[1]])));
 
             Vector3 subSize = Vector3.zero;
             subSize[dominanceArray[0]] = size[dominanceArray[0]] / axisTwoCount;
@@ -204,6 +270,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                     var vs = rend.gameObject.AddComponent<VisibilitySphere>();
                     vs.Visibility = new CullVisibility() { Radius = sub.extents.magnitude, Offset = (sub.center - original.center) };
+                    vs.Visibility.AutoCommanded = true;
+                    vs.Visibility.Static = true;
 
                     if (rend.gameObject.TryGetComponent(out VisibilityBounds vb))
                     {
