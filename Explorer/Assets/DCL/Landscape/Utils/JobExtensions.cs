@@ -4,8 +4,14 @@ namespace DCL.Landscape.Utils
 {
     public static class JobExtensions
     {
-        public static int GetBatchSize(int arrayLength) =>
-            (arrayLength / Unity.Jobs.LowLevel.Unsafe.JobsUtility.JobWorkerCount) + 1;
+        public static int GetBatchSize(int arrayLength)
+        {
+#if UNITY_WEBGL
+            return 1;
+#else
+            return (arrayLength / Unity.Jobs.LowLevel.Unsafe.JobsUtility.JobWorkerCount) + 1;
+#endif
+        }
     }
 
     public static class JobParallelForExtensions
