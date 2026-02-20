@@ -22,11 +22,13 @@ namespace DCL.SDKEntityTriggerArea.Components
 
         private readonly bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
+        private uint incrementalTick;
 
         public Vector3 AreaSize { get; private set; }
         public SDKEntityTriggerAreaMeshType MeshType { get; private set; }
         public ColliderLayer LayerMask { get; private set; }
         public bool IsDirty { get; set; }
+        public uint IncrementalTick => incrementalTick++;
 
         public readonly IReadOnlyCollection<Collider> EnteredEntitiesToBeProcessed => hasMonoBehaviour
             ? monoBehaviour!.EnteredEntitiesToBeProcessed
@@ -56,6 +58,7 @@ namespace DCL.SDKEntityTriggerArea.Components
             hasMonoBehaviour = monoBehaviour != null;
 
             IsDirty = true;
+            incrementalTick = 0;
         }
 
         public void TryAssignArea(IComponentPool<SDKEntityTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)

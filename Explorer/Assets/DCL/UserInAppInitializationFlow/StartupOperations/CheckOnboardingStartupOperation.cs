@@ -94,7 +94,7 @@ namespace DCL.UserInAppInitializationFlow
                 if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
                     return;
 
-            string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
+            string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldServer);
             var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
 
             if (await realmController.IsReachableAsync(realmURL, ct))

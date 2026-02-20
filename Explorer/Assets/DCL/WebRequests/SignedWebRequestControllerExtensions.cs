@@ -26,7 +26,7 @@ namespace DCL.WebRequests
                 GenericPostArguments.Empty,
                 ct,
                 reportData,
-                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
+                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
             );
         }
@@ -47,7 +47,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "post"),
                 null,
                 false
             );
@@ -70,7 +70,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "post"),
                 null,
                 false
             );
@@ -92,7 +92,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
                 null,
                 false
             );
@@ -114,7 +114,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "delete"),
                 null,
                 false
             );
@@ -137,7 +137,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "patch"),
                 null,
                 false
             );
@@ -160,7 +160,7 @@ namespace DCL.WebRequests
                 ct,
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "put"),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, controller.RequestHub.UrlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "put"),
                 null,
                 false
             );

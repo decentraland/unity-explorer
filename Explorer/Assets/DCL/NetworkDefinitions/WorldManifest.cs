@@ -14,17 +14,10 @@ namespace ECS
     public struct WorldManifest : IDisposable
     {
         public int total;
-
-        [JsonProperty("spawn_coordinate")]
-        public SpawnCoordinateData? spawn_coordinate;
-
-        [JsonIgnore]
+        public SpawnCoordinateData spawn_coordinate;
         private NativeHashSet<int2> occupiedParcels;
+        public bool IsEmpty { get; private set; }
 
-        [JsonIgnore]
-        private bool isEmpty;
-
-        public bool IsEmpty => isEmpty;
 
         //Avoid the dealloaction of occupiedParcels
         //Used by Genesis to avoid losing the data on realm change
@@ -43,7 +36,7 @@ namespace ECS
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
                 occupiedParcels = ParseParcelStringsToSet(dto.occupied),
-                isEmpty = false,
+                IsEmpty = false,
                 persist = persist
             };
         }
@@ -53,9 +46,9 @@ namespace ECS
             return new WorldManifest
             {
                 total = valueOccupiedParcels.Length,
-                spawn_coordinate = null,
+                spawn_coordinate = new SpawnCoordinateData(0,0),
                 occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
-                isEmpty = false,
+                IsEmpty = false,
                 persist = persist
             };
         }
@@ -92,7 +85,7 @@ namespace ECS
 
         public void Dispose()
         {
-            if (isEmpty) return;
+            if (IsEmpty) return;
             if (persist) return;
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
         }
@@ -102,14 +95,21 @@ namespace ECS
         public static WorldManifest Empty => new ()
         {
             occupiedParcels = EMPTY_SET,
-            isEmpty = true
+            IsEmpty = true,
+            spawn_coordinate = new SpawnCoordinateData(0,0)
         };
+    }
 
-        [Serializable]
-        public class SpawnCoordinateData
+    [Serializable]
+    public class SpawnCoordinateData
+    {
+        public int x;
+        public int y;
+
+        public SpawnCoordinateData(int x, int y)
         {
-            public int x;
-            public int y;
+            this.x = x;
+            this.y = y;
         }
     }
 
@@ -124,7 +124,6 @@ namespace ECS
         public string[] empty;
         public int total;
 
-        [JsonProperty("spawn_coordinate")]
-        public WorldManifest.SpawnCoordinateData spawn_coordinate;
+        public SpawnCoordinateData spawn_coordinate;
     }
 }
