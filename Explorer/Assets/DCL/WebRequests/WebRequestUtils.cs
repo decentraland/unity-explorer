@@ -182,6 +182,14 @@ namespace DCL.WebRequests
         public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
             unityWebRequest.GetResponseHeader("Content-Encoding");
 
+        public static bool IsLocalhost(string url) =>
+            url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
+
         /// <summary>
         ///     Does nothing with the web request
         /// </summary>
