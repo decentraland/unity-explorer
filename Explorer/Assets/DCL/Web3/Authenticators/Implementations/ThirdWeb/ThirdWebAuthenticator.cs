@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
@@ -43,12 +44,13 @@ namespace DCL.Web3.Authenticators
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             IWeb3AccountFactory web3AccountFactory,
+            IWebRequestController webRequestController,
             int? identityExpirationDuration = null)
         {
             var thirdwebClient = ThirdwebClient.Create(
                 CLIENT_ID,
                 bundleId: BUNDLE_ID,
-                httpClient: new ThirdwebHttpClient(),
+                httpClient: new DclThirdwebHttpClient(webRequestController),
                 sdkName: "UnitySDK",
                 sdkOs: Application.platform.ToString(),
                 sdkPlatform: "unity",
