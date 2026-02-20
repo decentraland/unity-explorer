@@ -204,7 +204,7 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
+            var fromDateUtc = fromDate.AddDays(-3).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
