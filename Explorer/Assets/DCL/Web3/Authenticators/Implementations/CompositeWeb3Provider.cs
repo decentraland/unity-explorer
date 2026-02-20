@@ -22,21 +22,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
-        private AuthProvider currentProvider = AuthProvider.Dapp;
-
-        public AuthProvider CurrentProvider
-        {
-            get => currentProvider;
-
-            set
-            {
-                if (currentProvider != value)
-                {
-                    currentProvider = value;
-                    OnMethodChanged?.Invoke(value);
-                }
-            }
-        }
+        public AuthProvider CurrentProvider { get; set; } = AuthProvider.Dapp;
 
         // IDappVerificationHandler - delegates to dappAuth
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
@@ -45,13 +31,10 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        public event Action<AuthProvider>? OnMethodChanged;
-        public bool IsThirdWebOTP => currentProvider == AuthProvider.ThirdWeb;
-        public bool IsDappWallet => currentProvider == AuthProvider.Dapp;
+        public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator CurrentAuthenticator => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
-
-        private IEthereumApi CurrentEthereumApi => currentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
@@ -65,10 +48,17 @@ namespace DCL.Web3.Authenticators
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
 
+        public void Dispose()
+        {
+            thirdWebAuth.Dispose();
+            dappAuth.Dispose();
+            identityCache.Dispose();
+        }
+
         // IWeb3Authenticator
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            IWeb3Identity identity = await CurrentAuthenticator.LoginAsync(payload, ct);
+            IWeb3Identity identity = await currentAuthenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
             analytics.Identify(identity);
             return identity;
@@ -77,7 +67,7 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             analytics.Identify(null);
-            await CurrentAuthenticator.LogoutAsync(ct);
+            await currentAuthenticator.LogoutAsync(ct);
             identityCache.Clear();
         }
 
@@ -94,42 +84,31 @@ namespace DCL.Web3.Authenticators
 
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
-            string email = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
-            bool emailOtpEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
-
-            // If OTP feature flag is disabled, skip ThirdWeb auto-login entirely — even if there is a stored email.
-            // This prevents getting stuck at the splash screen when the FF is turned off while the user has a previous OTP session.
-            if (!emailOtpEnabled && !string.IsNullOrEmpty(email))
-            {
-                ReportHub.Log(ReportCategory.AUTHENTICATION, "OTP email feature flag is disabled — clearing stored email and skipping ThirdWeb auto-login");
+            if (OtpIsDisabled())
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
+            string storedEmail = DCLPlayerPrefs.GetString(DCLPrefKeys.LOGGEDIN_EMAIL, string.Empty);
+
+            // Heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
+            if (string.IsNullOrEmpty(storedEmail))
+            {
                 CurrentProvider = AuthProvider.Dapp;
                 return UniTask.FromResult(true);
             }
+            else
+            {
+                CurrentProvider = AuthProvider.ThirdWeb;
+                return thirdWebAuth.TryAutoLoginAsync(ct);
+            }
 
-            // Heuristic: if we have a stored email, assume ThirdWeb OTP flow; otherwise default to Dapp Wallet.
-            CurrentProvider = string.IsNullOrEmpty(email) ? AuthProvider.Dapp : AuthProvider.ThirdWeb;
-
-            // Only ThirdWeb supports auto-login
-            return CurrentProvider == AuthProvider.ThirdWeb
-                ? thirdWebAuth.TryAutoLoginAsync(ct)
-                : UniTask.FromResult(true);
+            bool OtpIsDisabled() => !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH);
         }
 
         // IEthereumApi
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
-            CurrentEthereumApi.SendAsync(request, source, ct);
+            currentEthereumApi.SendAsync(request, source, ct);
 
-        public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback)
-        {
+        public void SetTransactionConfirmationCallback(TransactionConfirmationDelegate? callback) =>
             thirdWebAuth.SetTransactionConfirmationCallback(callback);
-        }
-
-        public void Dispose()
-        {
-            thirdWebAuth.Dispose();
-            dappAuth.Dispose();
-            identityCache.Dispose();
-        }
     }
 }
