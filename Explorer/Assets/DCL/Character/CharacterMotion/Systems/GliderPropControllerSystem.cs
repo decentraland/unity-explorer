@@ -25,7 +25,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly GameObject gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
 
-        private GameObjectPool<GliderPropView>? propPool;
+        //private GameObjectPool<GliderPropView>? propPool;
         private SingleInstanceEntity tickEntity;
 
         public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -37,8 +37,8 @@ namespace DCL.CharacterMotion.Systems
 
         public override void Initialize()
         {
-            propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
-            propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
+            // propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+            // propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
 
             tickEntity = World.CachePhysicsTick();
         }
@@ -68,7 +68,7 @@ namespace DCL.CharacterMotion.Systems
         [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
         private void CreateProp(Entity entity, IAvatarView avatarView)
         {
-            var prop = propPool!.Get();
+            var prop = Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>();//propPool!.Get();
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;
@@ -112,10 +112,13 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CleanUpDestroyedAvatarsProp(in GliderProp gliderProp)
+        private void CleanUpDestroyedAvatarsProp(ref GliderProp gliderProp)
         {
-            gliderProp.View.PrepareForNextActivation();
-            propPool!.Release(gliderProp.View);
+            //gliderProp.View.PrepareForNextActivation();
+            //propPool!.Release(gliderProp.View);
+
+            Object.Destroy(gliderProp.View.gameObject);
+            gliderProp.View = null;
         }
 
         [Query]
