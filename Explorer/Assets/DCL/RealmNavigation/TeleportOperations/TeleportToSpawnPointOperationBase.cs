@@ -110,6 +110,11 @@ namespace DCL.RealmNavigation.TeleportOperations
                 // It will always be in bound
                 if (allowsPositionOverride)
                     parcelToTeleport = new Vector2Int(manifest.spawn_coordinate.x, manifest.spawn_coordinate.y);
+                else
+                {
+                    if (!manifest.IsParcelInsideBoundaries(parcelToTeleport.x, parcelToTeleport.y))
+                        parcelToTeleport = scenes[0].metadata.scene.DecodedBase;
+                }
             }
             else
             {
