@@ -35,7 +35,7 @@ namespace DCL.Settings.ModuleControllers
 
             view.DropdownView.Dropdown.template.sizeDelta = new Vector2(view.DropdownView.Dropdown.template.sizeDelta.x, 300f);
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetPreferredLanguageSettings);
-            bool isTranslationChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_TRANSLATIONS);
+            bool isTranslationChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_TRANSLATION);
             view.gameObject.SetActive(isTranslationChatEnabled);
 
             if (view.TooltipButtonView != null)
