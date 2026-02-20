@@ -18,6 +18,10 @@ namespace ECS
         private NativeHashSet<int2> occupiedParcels;
         public bool IsEmpty { get; private set; }
 
+        private int minX;
+        private int maxX;
+        private int minY;
+        private int maxY;
 
         //Avoid the dealloaction of occupiedParcels
         //Used by Genesis to avoid losing the data on realm change
@@ -31,11 +35,18 @@ namespace ECS
             if (IsNullOrEmpty(dto.roads) && IsNullOrEmpty(dto.occupied) && IsNullOrEmpty(dto.empty))
                 return Empty;
 
+            var occupied = ParseParcelStringsToSet(dto.occupied);
+            var (minX, maxX, minY, maxY) = CalculateBounds(occupied);
+
             return new WorldManifest
             {
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
-                occupiedParcels = ParseParcelStringsToSet(dto.occupied),
+                occupiedParcels = occupied,
+                minX = minX,
+                maxX = maxX,
+                minY = minY,
+                maxY = maxY,
                 IsEmpty = false,
                 persist = persist
             };
@@ -43,15 +54,25 @@ namespace ECS
 
         public static WorldManifest Create(int2[] valueOccupiedParcels, bool persist = false)
         {
+            var occupied = ParcelArraysToSet(valueOccupiedParcels);
+            var (minX, maxX, minY, maxY) = CalculateBounds(occupied);
+
             return new WorldManifest
             {
                 total = valueOccupiedParcels.Length,
-                spawn_coordinate = new SpawnCoordinateData(0,0),
-                occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
+                spawn_coordinate = new SpawnCoordinateData(0, 0),
+                occupiedParcels = occupied,
+                minX = minX,
+                maxX = maxX,
+                minY = minY,
+                maxY = maxY,
                 IsEmpty = false,
                 persist = persist
             };
         }
+
+        public bool IsParcelInsideBoundaries(int x, int y) =>
+            !IsEmpty && x >= minX && x <= maxX && y >= minY && y <= maxY;
 
         private static bool IsNullOrEmpty(string[]? a) => a == null || a.Length == 0;
 
@@ -81,6 +102,22 @@ namespace ECS
             foreach (int2 p in parcelArray)
                 set.Add(p);
             return set;
+        }
+
+        private static (int minX, int maxX, int minY, int maxY) CalculateBounds(NativeHashSet<int2> parcels)
+        {
+            int bMinX = int.MaxValue, bMaxX = int.MinValue;
+            int bMinY = int.MaxValue, bMaxY = int.MinValue;
+
+            foreach (int2 p in parcels)
+            {
+                if (p.x < bMinX) bMinX = p.x;
+                if (p.x > bMaxX) bMaxX = p.x;
+                if (p.y < bMinY) bMinY = p.y;
+                if (p.y > bMaxY) bMaxY = p.y;
+            }
+
+            return (bMinX, bMaxX, bMinY, bMaxY);
         }
 
         public void Dispose()

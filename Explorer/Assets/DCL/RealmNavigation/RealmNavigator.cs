@@ -76,22 +76,20 @@ namespace DCL.RealmNavigation
             this.worldAccessGateProxy = worldAccessGateProxy;
         }
 
-        private bool CheckIsNewRealm(URLDomain realm)
+        public bool IsAlreadyOnRealm(URLDomain realm)
         {
             if (!realmController.RealmData.Configured)
-                return true;
-
-            if (realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
 
-            return true;
+            return realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl;
         }
 
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            string? worldName = null
+            bool isWorld = false,
+            bool allowsWorldPositionOverride = false
         )
         {
             if (ct.IsCancellationRequested)
@@ -100,31 +98,36 @@ namespace DCL.RealmNavigation
             if (realmController.RealmData.IsLocalSceneDevelopment)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
 
-            if (CheckIsNewRealm(realm) == false)
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
-
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
             // We use worldName != null to determine if the target is a world, instead of
             // RealmData.IsWorld(), because RealmData reflects the *current* realm — not the target.
             // This also avoids parsing the URL to extract a world name from the realm domain.
-            if (!string.IsNullOrEmpty(worldName))
+            if (isWorld)
             {
-                var result = await CheckWorldAccessAsync(worldName, ct);
-
-                if (result == WorldAccessResult.CheckFailed)
+                if (TryExtractWorldName(realm, out string worldName))
                 {
-                    ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
-                    return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
-                }
+                    var result = await CheckWorldAccessAsync(worldName, ct);
 
-                if (result != WorldAccessResult.Allowed)
-                    return MapToChangeRealmError(result);
+                    if (result == WorldAccessResult.CheckFailed)
+                    {
+                        ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+                        return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+                    }
+
+                    if (result != WorldAccessResult.Allowed)
+                        return MapToChangeRealmError(result);
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[RealmNavigator] Could not extract world name from realm URL '{realm}', skipping local permission pre-check");
+                }
             }
 
-            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
+            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport, allowsWorldPositionOverride);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
             if (!loadResult.Success)
@@ -170,6 +173,28 @@ namespace DCL.RealmNavigation
                 _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
             };
 
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
+        {
+            worldName = string.Empty;
+
+            if (string.IsNullOrEmpty(realm.Value))
+                return false;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
+        }
+
         private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(
             TeleportParams teleportParams,
             SequentialLoadingOperation<TeleportParams> ops,
@@ -199,7 +224,7 @@ namespace DCL.RealmNavigation
             return lastOpResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport, bool allowsWorldPositionOverride)
         {
             return async (parentLoadReport, ct) =>
             {
@@ -209,7 +234,7 @@ namespace DCL.RealmNavigation
                 if (ct.IsCancellationRequested)
                     return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
-                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus);
+                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus, allowsWorldPositionOverride);
 
                 EnumResult<TaskError> opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
@@ -235,6 +260,8 @@ namespace DCL.RealmNavigation
                 return opResult;
             };
         }
+
+
 
         public void RemoveCameraSamplingData()
         {
@@ -295,7 +322,8 @@ namespace DCL.RealmNavigation
                     currentDestinationParcel: parcel,
                     loadingStatus: loadingStatus,
                     report: parentLoadReport,
-                    currentDestinationRealm: URLDomain.EMPTY
+                    currentDestinationRealm: URLDomain.EMPTY,
+                    allowsWorldPositionOverride: false
                 );
 
                 EnumResult<TaskError> result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);

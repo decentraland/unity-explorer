@@ -77,21 +77,11 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
-        public bool Contains(Vector2Int parcel)
-        {
-            foreach (Vector2Int sceneParcel in SceneData.Parcels)
-            {
-                if (sceneParcel != parcel) continue;
-                return true;
-            }
+        public bool Contains(Vector2Int parcel) =>
+            SceneData.SceneEntityDefinition.Contains(parcel);
 
-            return false;
-        }
-
-        public bool IsSceneReady()
-        {
-            return SceneData.SceneLoadingConcluded;
-        }
+        public bool IsSceneReady() =>
+            SceneData.SceneLoadingConcluded;
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {

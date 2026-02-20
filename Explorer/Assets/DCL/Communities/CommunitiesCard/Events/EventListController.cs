@@ -150,7 +150,12 @@ namespace DCL.Communities.CommunitiesCard.Events
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (!string.IsNullOrWhiteSpace(eventData.Place.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), eventCardOperationsCts.Token, default, eventData.Place.world_name).Forget();
+                realmNavigator.TryChangeRealmAsync(
+                    URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
+                    eventCardOperationsCts.Token,
+                    default,
+                    isWorld: true,
+                    allowsSpawnPointerOverride: true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(eventData.Place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
         }

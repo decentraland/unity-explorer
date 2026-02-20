@@ -54,7 +54,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 if (userData.IsInWorld)
                 {
                     string worldUrl = new ENS(userData.worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
-                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(worldUrl), ct, default, userData.worldName).Forget();
+                    realmNavigator.TryChangeRealmAsync(
+                        URLDomain.FromString(worldUrl),
+                        ct,
+                        default,
+                        isWorld: true,
+                        allowsSpawnPointerOverride: true).Forget();
                 }
                 else
                 {
