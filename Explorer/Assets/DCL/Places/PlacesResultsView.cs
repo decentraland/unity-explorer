@@ -122,7 +122,6 @@ namespace DCL.Places
         {
             currentPlacesIds.Clear();
             placesResultsLoopGrid.SetListItemCount(0, false);
-            SetPlacesGridAsEmpty(true, section);
         }
 
         public void SetPlacesGridAsLoading(bool isLoading)

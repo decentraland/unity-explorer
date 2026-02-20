@@ -320,8 +320,9 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
             }
+
+            view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
