@@ -23,6 +23,7 @@ namespace DCL.Events
         public event Action<EventDTO>? EventCardClicked;
 
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
+        private const int DAYS_PRIOR_TO_TODAY_TO_REQUEST = -3;
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -188,7 +189,7 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)
@@ -204,7 +205,7 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
+            var fromDateUtc = fromDate.AddDays(DAYS_PRIOR_TO_TODAY_TO_REQUEST).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -228,17 +229,18 @@ namespace DCL.Events
                 eventsStateService.AddEvents(eventsResult.Value);
 
                 List<string> placesIds = new ();
+                List<EventDTO> liveEventsPriorToToday = new ();
                 foreach (EventDTO eventInfo in eventsResult.Value)
                 {
                     DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
 
                     for (var i = 0; i < numberOfDays; i++)
                     {
-                        // Live events are always shown on the calendar
+                        // Live events prior to today have to be also shown on the calendar
                         bool isTodayColumn = i == 0;
-                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn)
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn && eventLocalDate.Date < fromDate)
                         {
-                            eventsGroupedByDay.Value[i].Add(eventInfo);
+                            liveEventsPriorToToday.Add(eventInfo);
                             break;
                         }
 
@@ -253,7 +255,21 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                // Live events prior to today have to be placed after the today's live events
+                if (liveEventsPriorToToday.Count > 0)
+                {
+                    var todayLiveEventsCount = 0;
+                    foreach (EventDTO eventInfo in eventsGroupedByDay.Value[0])
+                    {
+                        if (eventInfo.live)
+                            todayLiveEventsCount++;
+                    }
+
+                    foreach (EventDTO liveEventInfo in liveEventsPriorToToday)
+                        eventsGroupedByDay.Value[0].Insert(todayLiveEventsCount++, liveEventInfo);
+                }
+
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)

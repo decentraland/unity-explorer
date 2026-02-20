@@ -309,10 +309,43 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+
+            var placeIdsList = placeIds.ToList();
+
+            if (placeIdsList.Count == 0)
+                return new PlacesData.PlacesAPIResponse()
+                {
+                    ok = true,
+                    data = new List<PlacesData.PlaceInfo>(),
+                    total = 0
+                };
+
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
+            {
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
+            }
+            jsonBody.Append("]");
+
+            if (placeIdsList.Count == 0)
+                jsonBody.Clear();
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseDestinationsURL));
 
             if (withConnectedUsers != null)
                 urlBuilder.AppendParameter(WITH_CONNECTED_USERS);

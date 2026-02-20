@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -34,11 +35,15 @@ namespace DCL.Places
         [SerializeField] private ImageView placeThumbnailImage = null!;
         [SerializeField] private Sprite defaultPlaceThumbnail = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private GameObject creatorContainer = null!;
         [SerializeField] private ProfilePictureView creatorThumbnail = null!;
+        [SerializeField] private Button openPassportButton = null!;
         [SerializeField] private TMP_Text creatorNameText = null!;
+        [SerializeField] private TMP_Text creatorWalletText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
-        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
+        [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
         [SerializeField] private TMP_Text descriptionText = null!;
@@ -80,6 +85,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public HoverableTooltip tooltip;
             }
         }
 
@@ -97,6 +103,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? JumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? StartNavigationButtonClicked;
         public event Action? ExitNavigationButtonClicked;
+        public event Action<string>? OpenPassportClicked;
 
         private readonly UniTask[] closeTasks = new UniTask[2];
 
@@ -156,27 +163,36 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             CancellationToken cancellationToken,
             List<Profile.CompactInfo>? friends = null,
-            HomePlaceEventBus? homePlaceEventBus = null)
+            HomePlaceEventBus? homePlaceEventBus = null,
+            EventDTO? liveEvent = null)
         {
             currentPlaceInfo = placeInfo;
             mainScroll.verticalNormalizedPosition = 1;
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
-            creatorThumbnail.gameObject.SetActive(false);
-            creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
+            creatorContainer.SetActive(false);
+            creatorNameText.text = placeInfo.contact_name;
+            creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
+            creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
+            creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
-            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            onlineMembersText.text = $"{onlineMembers}";
+            onlineMembersContainer.SetActive(onlineMembers > 0);
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
             coordsText.text = placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
             updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
-            liveTag.SetActive(placeInfo.live);
+
+            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
+            if (liveEvent != null)
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
 
             bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);
@@ -207,6 +223,7 @@ namespace DCL.Places
                     bool friendExists = i < friendProfiles.Count;
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friendProfiles[i];
+                    friendsConnected.thumbnails[i].tooltip.Configure(friendInfo.Name);
 
                     friendsProfileThumbnails[i].SetLoading(friendInfo.UserNameColor);
                     if (!string.IsNullOrEmpty(friendInfo.FaceSnapshotUrl))
@@ -224,9 +241,10 @@ namespace DCL.Places
             }
         }
 
-        public async UniTask SetCreatorThumbnailAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
+        public async UniTask SetCreatorAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
         {
-            creatorThumbnail.gameObject.SetActive(false);
+            creatorProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+            openPassportButton.onClick.RemoveAllListeners();
 
             if (creatorProfile != null)
             {
@@ -240,9 +258,19 @@ namespace DCL.Places
                         creatorProfile.Value.FaceSnapshotUrl,
                         cancellationToken);
 
-                    creatorThumbnail.gameObject.SetActive(creatorProfileThumbnail.Value.Sprite != null);
+                    if (creatorProfileThumbnail.Value.Sprite != null)
+                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
+
+                    if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
+                    {
+                        creatorNameText.text = creatorProfile.Value.Name;
+                        creatorNameText.gameObject.SetActive(true);
+                        creatorWalletText.gameObject.SetActive(false);
+                    }
                 }
             }
+
+            creatorContainer.SetActive(true);
         }
 
         public void SilentlySetLikeToggle(bool isOn)

@@ -20,11 +20,10 @@ namespace DCL.Places
 {
     public class PlacesResultsView : MonoBehaviour
     {
-        private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
-
         public event Action? BackButtonClicked;
+        public event Action? ExplorePlacesClicked;
+        public event Action? GetANameClicked;
         public event Action? PlacesGridScrollAtTheBottom;
-        public Action<string>? MyPlacesResultsEmptySubTextClicked;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceLikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceDislikeToggleChanged;
         public event Action<PlacesData.PlaceInfo, bool, PlaceCardView>? PlaceFavoriteToggleChanged;
@@ -48,38 +47,36 @@ namespace DCL.Places
 
         [Header("Places Grid")]
         [SerializeField] private LoopGridView placesResultsLoopGrid = null!;
-        [SerializeField] private ScrollRect placesResultsScrollRect = null!;
         [SerializeField] private GameObject placesResultsEmptyContainer = null!;
         [SerializeField] private GameObject favoritesResultsEmptyContainer = null!;
         [SerializeField] private GameObject myPlacesResultsEmptyContainer = null!;
-        [SerializeField] private TMP_Text myPlacesResultsEmptySubText = null!;
         [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
         [SerializeField] private SkeletonLoadingView placesResultsLoadingSpinner = null!;
         [SerializeField] private GameObject placesResultsLoadingMoreSpinner = null!;
+        [SerializeField] private Button explorePlacesFromEmptySearchButton = null!;
+        [SerializeField] private Button explorePlacesFromEmptyFavoritesButton = null!;
+        [SerializeField] private Button getANameButton = null!;
 
         [Header("Configuration")]
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
 
         private PlacesStateService placesStateService = null!;
         private readonly List<string> currentPlacesIds = new ();
-        private bool isResultsScrollPositionAtBottom => placesResultsScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
 
         private void Awake()
         {
             placesResultsBackButton.onClick.AddListener(() => BackButtonClicked?.Invoke());
-            placesResultsScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-            myPlacesResultsEmptySubText.ConvertUrlsToClickeableLinks(OnMyPlacesResultsEmptySubTextClicked);
+            explorePlacesFromEmptySearchButton.onClick.AddListener(() => ExplorePlacesClicked?.Invoke());
+            explorePlacesFromEmptyFavoritesButton.onClick.AddListener(() => ExplorePlacesClicked?.Invoke());
+            getANameButton.onClick.AddListener(() => GetANameClicked?.Invoke());
 
             contextMenu = new GenericContextMenu(placeCardContextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: placeCardContextMenuConfiguration.VerticalPadding, elementsSpacing: placeCardContextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => PlaceShareButtonClicked?.Invoke(lastClickedPlaceCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.CopyLinkText, placeCardContextMenuConfiguration.CopyLinkSprite, () => PlaceCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx!)));
         }
 
-        private void OnDestroy()
-        {
+        private void OnDestroy() =>
             placesResultsBackButton.onClick.RemoveAllListeners();
-            placesResultsScrollRect.onValueChanged.RemoveAllListeners();
-        }
 
         public void SetDependencies(
             PlacesStateService stateService,
@@ -125,7 +122,6 @@ namespace DCL.Places
         {
             currentPlacesIds.Clear();
             placesResultsLoopGrid.SetListItemCount(0, false);
-            SetPlacesGridAsEmpty(true, section);
         }
 
         public void SetPlacesGridAsLoading(bool isLoading)
@@ -177,7 +173,8 @@ namespace DCL.Places
                 thumbnailLoader: placesCardsThumbnailLoader!,
                 friends: placeInfoWithConnectedFriends.ConnectedFriends,
                 profileRepositoryWrapper,
-                isHome);
+                isHome,
+                liveEvent: placeInfoWithConnectedFriends.LiveEvent);
 
             // Setup card events
             cardView.SubscribeToInteractions(
@@ -190,6 +187,9 @@ namespace DCL.Places
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
+
+            if (index == currentPlacesIds.Count - 1)
+                PlacesGridScrollAtTheBottom?.Invoke();
 
             return gridItem;
         }
@@ -225,16 +225,5 @@ namespace DCL.Places
 
             placesResultsLoopGrid.gameObject.SetActive(!isEmpty);
         }
-
-        private void OnScrollRectValueChanged(Vector2 _)
-        {
-            if (!isResultsScrollPositionAtBottom)
-                return;
-
-            PlacesGridScrollAtTheBottom?.Invoke();
-        }
-
-        private void OnMyPlacesResultsEmptySubTextClicked(string id) =>
-            MyPlacesResultsEmptySubTextClicked?.Invoke(id);
     }
 }

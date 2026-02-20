@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 391719656419429140}
   - component: {fileID: 2289953021207733940}
   m_Layer: 5
-  m_Name: SDK7Only
+  m_Name: Recommended
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1501,8 +1501,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -4.549984, y: -0.5}
-  m_SizeDelta: {x: -85.09997, y: -3}
+  m_AnchoredPosition: {x: 19, y: -0.5}
+  m_SizeDelta: {x: -38, y: -3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2763527628331661585
 CanvasRenderer:
@@ -1532,7 +1532,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: SDK7 Only
+  m_text: Compatible Only
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}

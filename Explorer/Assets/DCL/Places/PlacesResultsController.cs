@@ -2,6 +2,7 @@
 using DCL.Browser;
 using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -29,22 +30,25 @@ namespace DCL.Places
         public event Action<PlacesFilters>? PlacesFiltered;
         public event Action<PlacesData.PlaceInfo, PlaceCardView, int, PlacesFilters>? PlaceClicked;
 
-        private const string GET_A_NAME_LINK_ID = "GET_A_NAME_LINK_ID";
-        private const string CREATOR_HUB_LINK_ID = "CREATOR_HUB_LINK_ID";
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
+        private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error getting live events. Please try again.";
         private const string GET_PLACES_ERROR_MESSAGE = "There was an error loading places. Please try again.";
         private const int PLACES_PER_PAGE = 20;
+        private const string SEARCH_COUNTER_TITLE = "Results for '{0}' {1}";
+        private const string RECENT_VISITED_COUNTER_TITLE = "Recent {0}";
+        private const string FAVORITES_COUNTER_TITLE = "Favorites {0}";
+        private const string MY_PLACES_COUNTER_TITLE = "My Places {0}";
 
         private readonly PlacesResultsView view;
         private readonly PlacesController placesController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
-        private readonly PlaceCategoriesSO placesCategories;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IMVCManager mvcManager;
+        private readonly HttpEventsApiService eventsApiService;
 
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
@@ -52,6 +56,7 @@ namespace DCL.Places
         private int currentPlacesTotalAmount;
         private PlacesSection sectionOpenedBeforeSearching = PlacesSection.BROWSE;
         private bool allFriendsLoaded;
+        private bool liveEventsLoaded;
 
         private CancellationTokenSource? loadPlacesCts;
         private CancellationTokenSource? placeCardOperationsCts;
@@ -61,7 +66,6 @@ namespace DCL.Places
             PlacesController placesController,
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
-            PlaceCategoriesSO placesCategories,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -69,22 +73,24 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
-            this.placesCategories = placesCategories;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.friendServiceProxy = friendServiceProxy;
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
+            this.eventsApiService = eventsApiService;
 
             view.BackButtonClicked += OnBackButtonClicked;
+            view.ExplorePlacesClicked += OnExplorePlacesClicked;
+            view.GetANameClicked += GetANameClicked;
             view.PlacesGridScrollAtTheBottom += TryLoadMorePlaces;
-            view.MyPlacesResultsEmptySubTextClicked += MyPlacesResultsEmptySubTextClicked;
             view.PlaceLikeToggleChanged += OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged += OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged += OnPlaceFavoriteToggleChanged;
@@ -104,8 +110,9 @@ namespace DCL.Places
         public void Dispose()
         {
             view.BackButtonClicked -= OnBackButtonClicked;
+            view.ExplorePlacesClicked -= OnExplorePlacesClicked;
+            view.GetANameClicked -= GetANameClicked;
             view.PlacesGridScrollAtTheBottom -= TryLoadMorePlaces;
-            view.MyPlacesResultsEmptySubTextClicked -= MyPlacesResultsEmptySubTextClicked;
             view.PlaceLikeToggleChanged -= OnPlaceLikeToggleChanged;
             view.PlaceDislikeToggleChanged -= OnPlaceDislikeToggleChanged;
             view.PlaceFavoriteToggleChanged -= OnPlaceFavoriteToggleChanged;
@@ -125,27 +132,18 @@ namespace DCL.Places
         private void OnBackButtonClicked() =>
             placesController.OpenSection(sectionOpenedBeforeSearching, force: true);
 
+        private void OnExplorePlacesClicked() =>
+            placesController.OpenSection(PlacesSection.BROWSE, force: true, resetCategory: true);
+
+        private void GetANameClicked() =>
+            webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+
         private void TryLoadMorePlaces()
         {
             if (isPlacesGridLoadingItems || placesStateService.CurrentPlaces.Count >= currentPlacesTotalAmount)
                 return;
 
             LoadPlaces(currentPlacesPageNumber + 1);
-        }
-
-        private void MyPlacesResultsEmptySubTextClicked(string id)
-        {
-            switch (id)
-            {
-                case GET_A_NAME_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
-                    break;
-                case CREATOR_HUB_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.CreatorHub);
-                    break;
-            }
-
-            view.PlayOnLinkClickAudio();
         }
 
         private void OnPlaceLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
@@ -184,7 +182,7 @@ namespace DCL.Places
         private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
-            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends))).Forget();
+            mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends.ConnectedFriends, placeInfoWithConnectedFriends.LiveEvent))).Forget();
             PlaceClicked?.Invoke(placeInfo, placeCardView, currentPlacesTotalAmount, currentFilters);
         }
 
@@ -213,6 +211,32 @@ namespace DCL.Places
         {
             isPlacesGridLoadingItems = true;
 
+            if (pageNumber == 0)
+            {
+                placesStateService.ClearPlaces();
+                view.ClearPlacesResults(currentFilters.Section);
+                view.SetPlacesGridAsLoading(true);
+                view.SetPlacesCounterActive(currentFilters.Section != PlacesSection.BROWSE || !string.IsNullOrEmpty(currentFilters.SearchText));
+
+                if (!string.IsNullOrEmpty(currentFilters.SearchText))
+                    view.SetPlacesCounter(string.Format(SEARCH_COUNTER_TITLE, currentFilters.SearchText, string.Empty), showBackButton: true);
+                else
+                    switch (currentFilters.Section)
+                    {
+                        case PlacesSection.RECENTLY_VISITED:
+                            view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, string.Empty));
+                            break;
+                        case PlacesSection.FAVORITES:
+                            view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, string.Empty));
+                            break;
+                        case PlacesSection.MY_PLACES:
+                            view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, string.Empty));
+                            break;
+                    }
+            }
+            else
+                view.SetPlacesGridLoadingMoreActive(true);
+
             if (!allFriendsLoaded)
             {
                 List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
@@ -220,15 +244,12 @@ namespace DCL.Places
                 allFriendsLoaded = true;
             }
 
-            if (pageNumber == 0)
+            if (!liveEventsLoaded)
             {
-                placesStateService.ClearPlaces();
-                view.ClearPlacesResults(currentFilters.Section);
-                view.SetPlacesGridAsLoading(true);
-                view.SetPlacesCounterActive(false);
+                List<EventDTO> liveEvents = await GetLiveEventsAsync(ct);
+                placesStateService.SetLiveEvents(liveEvents);
+                liveEventsLoaded = true;
             }
-            else
-                view.SetPlacesGridLoadingMoreActive(true);
 
             Profile? ownProfile = await selfProfile.ProfileAsync(ct);
             if (ownProfile == null)
@@ -270,7 +291,7 @@ namespace DCL.Places
                     break;
                 case PlacesSection.RECENTLY_VISITED:
                     var recentlyVisitedPlacesIds = placesAPIService.GetRecentlyVisitedPlaces();
-                    var placesByIdResult = await placesAPIService.GetPlacesByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
+                    var placesByIdResult = await placesAPIService.GetDestinationsByIdsAsync(recentlyVisitedPlacesIds, ct, withConnectedUsers: true)
                                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
                     // Since GetPlacesByIds endpoint doesn't return the data with the same sorting as the input list, we have to sort it manually
@@ -299,42 +320,33 @@ namespace DCL.Places
             {
                 currentPlacesPageNumber = pageNumber;
                 placesStateService.AddPlaces(placesResult.Value.Data);
-                view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
             }
+
+            view.AddPlacesResultsItems(placesResult.Value.Data, pageNumber == 0, currentFilters.Section);
 
             if (!string.IsNullOrEmpty(currentFilters.SearchText))
             {
-                view.SetPlacesCounter($"Results for '{currentFilters.SearchText}' ({placesResult.Value.Total})", showBackButton: true);
+                view.SetPlacesCounter(string.Format(SEARCH_COUNTER_TITLE, currentFilters.SearchText, $"({placesResult.Value.Total})"), showBackButton: true);
                 PlacesSearched?.Invoke(currentFilters.SearchText, placesResult.Value.Total);
             }
             else
             {
                 switch (currentFilters.Section)
                 {
-                    case PlacesSection.BROWSE when currentFilters.CategoryId != null:
-                    {
-                        string selectedCategoryName = placesCategories.GetCategoryName(currentFilters.CategoryId);
-                        view.SetPlacesCounter($"{(!string.IsNullOrEmpty(selectedCategoryName) ? selectedCategoryName : "the selected category")} ({placesResult.Value.Total})");
-                        break;
-                    }
-                    case PlacesSection.BROWSE:
-                        view.SetPlacesCounter("All");
-                        break;
                     case PlacesSection.RECENTLY_VISITED:
-                        view.SetPlacesCounter($"Recent ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(RECENT_VISITED_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                     case PlacesSection.FAVORITES:
-                        view.SetPlacesCounter($"Favorites ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(FAVORITES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                     case PlacesSection.MY_PLACES:
-                        view.SetPlacesCounter($"My Places ({placesResult.Value.Total})");
+                        view.SetPlacesCounter(string.Format(MY_PLACES_COUNTER_TITLE, $"({placesResult.Value.Total})"));
                         break;
                 }
 
                 PlacesFiltered?.Invoke(currentFilters);
             }
 
-            view.SetPlacesCounterActive(true);
             currentPlacesTotalAmount = placesResult.Value.Total;
 
             if (pageNumber == 0)
@@ -375,7 +387,9 @@ namespace DCL.Places
             view.ClearPlacesResults(null);
             placesStateService.ClearPlaces();
             placesStateService.ClearAllFriends();
+            placesStateService.ClearLiveEvents();
             allFriendsLoaded = false;
+            liveEventsLoaded = false;
         }
 
         private void OnPlaceSetAsHome(PlacesData.PlaceInfo placeInfo) =>
@@ -402,6 +416,25 @@ namespace DCL.Places
             }
 
             return result.Value.Friends.ToList();
+        }
+
+        private async UniTask<List<EventDTO>> GetLiveEventsAsync(CancellationToken ct)
+        {
+            var emptyResult = new List<EventDTO>();
+
+            Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.PLACES);
+
+            if (ct.IsCancellationRequested)
+                return emptyResult;
+
+            if (!result.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
+                return emptyResult;
+            }
+
+            return result.Value.ToList();
         }
     }
 }
