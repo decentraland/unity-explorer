@@ -1,10 +1,4 @@
 <linker>
-	<assembly fullname="UnityEngine.CoreModule">
-		<type fullname="UnityEngine.SpriteMask" preserve="all" />
-	</assembly>
-	<assembly fullname="UnityEngine.2DModule">
-		<type fullname="UnityEngine.SpriteMask" preserve="all" />
-	</assembly>
 	<assembly fullname="Unity.RenderPipelines.Universal.Runtime" preserve="all" />
 	<assembly fullname="Unity.RenderPipelines.Core.Runtime" preserve="all" />
 	<assembly fullname="UnityEngine.UIElementsModule" preserve="all" />
