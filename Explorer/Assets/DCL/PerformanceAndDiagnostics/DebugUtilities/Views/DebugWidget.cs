@@ -6,7 +6,8 @@ namespace DCL.DebugUtilities.Views
     /// <summary>
     ///     Widgets corresponds to a single feature scope
     /// </summary>
-    public class DebugWidget : VisualElement
+    [UxmlElement]
+    public partial class DebugWidget : VisualElement
     {
         private Foldout foldout;
         private string prefsKey;
@@ -37,7 +38,5 @@ namespace DCL.DebugUtilities.Views
 
         private static string ConstructPrefsKey(string title) =>
             string.Format(DCLPrefKeys.DEBUG_WIDGET_FOLDOUT, title);
-
-        public new class UxmlFactory : UxmlFactory<DebugWidget> { }
     }
 }

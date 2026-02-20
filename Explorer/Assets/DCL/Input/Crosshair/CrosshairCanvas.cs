@@ -4,7 +4,8 @@ using Utility.UIToolkit;
 
 namespace DCL.Input.Crosshair
 {
-    public class CrosshairCanvas : VisualElement, ICrosshairView
+    [UxmlElement]
+    public partial class CrosshairCanvas : VisualElement, ICrosshairView
     {
         private VisualElement crossHairElement;
         private Sprite crossHair;
@@ -67,7 +68,5 @@ namespace DCL.Input.Crosshair
         {
             VisualElementsExtensions.SetDisplayed(this, displayed);
         }
-
-        public new class UxmlFactory : UxmlFactory<CrosshairCanvas> { }
     }
 }

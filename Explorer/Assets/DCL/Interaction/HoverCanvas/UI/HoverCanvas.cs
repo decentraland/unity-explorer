@@ -5,7 +5,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.Interaction.HoverCanvas.UI
 {
-    public class HoverCanvas : VisualElement, IComparer<HoverCanvasTooltipElement>
+    [UxmlElement]
+    public partial class HoverCanvas : VisualElement, IComparer<HoverCanvasTooltipElement>
     {
         private List<HoverCanvasTooltipElement> tooltips;
 
@@ -52,7 +53,5 @@ namespace DCL.Interaction.HoverCanvas.UI
 
         public int Compare(HoverCanvasTooltipElement x, HoverCanvasTooltipElement y) =>
             x.parent.tabIndex.CompareTo(y.parent.tabIndex);
-
-        public new class UxmlFactory : UxmlFactory<HoverCanvas> { }
     }
 }

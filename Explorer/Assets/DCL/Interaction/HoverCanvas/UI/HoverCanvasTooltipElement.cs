@@ -3,7 +3,8 @@ using Utility.UIToolkit;
 
 namespace DCL.Interaction.HoverCanvas.UI
 {
-    public class HoverCanvasTooltipElement : VisualElement
+    [UxmlElement]
+    public partial class HoverCanvasTooltipElement : VisualElement
     {
         private Label hint;
 
@@ -52,7 +53,5 @@ namespace DCL.Interaction.HoverCanvas.UI
             }
             else inputIcon.SetDisplayed(false);
         }
-
-        public new class UxmlFactory : UxmlFactory<HoverCanvasTooltipElement> { }
     }
 }
