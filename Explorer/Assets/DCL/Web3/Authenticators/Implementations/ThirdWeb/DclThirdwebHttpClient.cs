@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -44,6 +45,7 @@ namespace DCL.Web3.Authenticators
         ///     <c>Thirdweb.Utils.ReconstructHttpClient</c> clones the HTTP client via reflection
         ///     using <c>GetConstructor(Type.EmptyTypes).Invoke(null)</c>.
         /// </summary>
+        [UsedImplicitly]
         public DclThirdwebHttpClient()
         {
             this.webRequestController = sharedWebRequestController
@@ -51,25 +53,19 @@ namespace DCL.Web3.Authenticators
                     $"{nameof(DclThirdwebHttpClient)} must first be created with {nameof(IWebRequestController)} before parameterless construction.");
         }
 
-        public void SetHeaders(Dictionary<string, string> headers)
-        {
+        public void Dispose() { }
+
+        public void SetHeaders(Dictionary<string, string> headers) =>
             Headers = new Dictionary<string, string>(headers);
-        }
 
-        public void ClearHeaders()
-        {
+        public void ClearHeaders() =>
             Headers.Clear();
-        }
 
-        public void AddHeader(string key, string value)
-        {
+        public void AddHeader(string key, string value) =>
             Headers[key] = value;
-        }
 
-        public void RemoveHeader(string key)
-        {
+        public void RemoveHeader(string key) =>
             Headers.Remove(key);
-        }
 
         public Task<ThirdwebHttpResponseMessage> GetAsync(string requestUri, CancellationToken cancellationToken = default) =>
             SendGetInternalAsync(requestUri, cancellationToken).AsTask();
@@ -83,8 +79,6 @@ namespace DCL.Web3.Authenticators
         public Task<ThirdwebHttpResponseMessage> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
             SendDeleteInternalAsync(requestUri, cancellationToken).AsTask();
 
-        public void Dispose() { }
-
         private async UniTask<ThirdwebHttpResponseMessage> SendGetInternalAsync(string requestUri, CancellationToken ct)
         {
             try
@@ -92,7 +86,7 @@ namespace DCL.Web3.Authenticators
                 return await webRequestController
                     .SendAsync<GenericGetRequest, GenericGetArguments, ThirdwebResponseOp<GenericGetRequest>, ThirdwebHttpResponseMessage>(
                         CommonArgumentsFor(requestUri),
-                        default,
+                        default(GenericGetArguments),
                         new ThirdwebResponseOp<GenericGetRequest>(),
                         ct,
                         ReportCategory.AUTHENTICATION,
@@ -197,7 +191,7 @@ namespace DCL.Web3.Authenticators
                     new ThirdwebHttpResponseMessage(
                         statusCode: statusCode,
                         content: new ThirdwebHttpContent(data),
-                        isSuccessStatusCode: statusCode >= 200 && statusCode < 300
+                        isSuccessStatusCode: statusCode is >= 200 and < 300
                     )
                 );
             }

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Prefs;
