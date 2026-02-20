@@ -60,10 +60,10 @@ namespace ECS.StreamableLoading.Common.Components
                     switch (streamableLoadingException.Severity)
                     {
                         case LogType.Exception:
-                            ReportHub.LogException(exception, reportData);
+                            //ReportHub.LogException(exception, reportData);
                             break;
                         default:
-                            ReportHub.Log(streamableLoadingException.Severity, reportData, exception.ToString());
+                            //ReportHub.Log(streamableLoadingException.Severity, reportData, exception.ToString());
                             break;
                     }
                 }

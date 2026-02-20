@@ -12,9 +12,10 @@ namespace DCL.CharacterMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
-            in JumpInputComponent jumpInputComponent,
+            in JumpState jumpState,
+            in JumpInputComponent jumpInput,
             int physicsTick,
-            float deltaTime)
+            float dt)
         {
             Vector3 gravityDirection = characterPhysics.IsOnASteepSlope ? characterPhysics.GravityDirection : Vector3.down;
 
@@ -26,28 +27,35 @@ namespace DCL.CharacterMotion
             }
 
             // If we are falling
-            if (!characterPhysics.IsGrounded || characterPhysics.JustJumped || (characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck))
+            if (!characterPhysics.IsGrounded || jumpState.JustJumped || (characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck))
             {
                 // gravity in settings is negative, since we now use directions, we need it to be absolute
                 float gravity = Math.Abs(settings.Gravity);
 
+                // Apply general multiplier
+                gravity *= characterPhysics.GravityMultiplier;
+
                 // In order to jump higher when pressing the jump button, we reduce the gravity
-                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
+                if (jumpInput.IsPressed && (physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) * dt < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
                 // In order to feel less floaty when jumping, we increase the gravity when going up ( the jump velocity is also scaled up )
                 if (characterPhysics.GravityVelocity.y > 0)
                     gravity *= settings.JumpGravityFactor;
 
-                characterPhysics.GravityVelocity += gravityDirection * (gravity * deltaTime);
-                characterPhysics.SlopeGravity += gravityDirection * (gravity * deltaTime);
+                characterPhysics.GravityVelocity += gravityDirection * (gravity * dt);
+                characterPhysics.SlopeGravity += gravityDirection * (gravity * dt);
             }
             else
             {
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
-                characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * deltaTime);
+                characterPhysics.GravityVelocity = gravityDirection * (Math.Abs(settings.Gravity) * dt);
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
+
+            // Reset the multiplier to 1 (neutral)
+            // The value needs to be applied every frame if needed
+            characterPhysics.GravityMultiplier = 1;
         }
 
         private static float PhysicsToDeltaTime(int ticks) =>

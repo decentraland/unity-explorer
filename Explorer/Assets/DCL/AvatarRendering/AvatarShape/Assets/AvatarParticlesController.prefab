@@ -44,10 +44,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6916d15be0104121a135b17880467d9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleSystemPerAnimationTypeList:
+  visualEffects:
   - Type: 0
     ParticleSystem: {fileID: 7027690908109731583, guid: 396503dac4a7c1248920458fadbf608f, type: 3}
+    VisualEffect: {fileID: 0}
   - Type: 1
     ParticleSystem: {fileID: 1427751686657548687, guid: de8c8172444fcc740a5b4a4ade001ecd, type: 3}
+    VisualEffect: {fileID: 0}
   - Type: 2
     ParticleSystem: {fileID: 6607984425052632445, guid: e9adde2f5540c3f4fb12524783965137, type: 3}
+    VisualEffect: {fileID: 0}
+  - Type: 3
+    ParticleSystem: {fileID: 0}
+    VisualEffect: {fileID: 5287820215367738025, guid: 4570a9885208a844f9496603c534d9b6, type: 3}

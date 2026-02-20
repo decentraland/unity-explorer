@@ -18,20 +18,14 @@ namespace DCL.CharacterMotion.Systems
     public partial class CalculateCameraFovSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity camera;
-        private float fOriginalLODBias;
 
         internal CalculateCameraFovSystem(World world) : base(world) { }
 
-        public override void Initialize()
-        {
+        public override void Initialize() =>
             camera = World.CacheCamera();
-            fOriginalLODBias = QualitySettings.lodBias;
-        }
 
-        protected override void Update(float t)
-        {
+        protected override void Update(float t) =>
             InterpolateQuery(World, t, ref camera.GetCameraFovComponent(World));
-        }
 
         [Query]
         private void Interpolate(
@@ -39,9 +33,10 @@ namespace DCL.CharacterMotion.Systems
             [Data] ref CameraFieldOfViewComponent fieldOfViewComponent,
             in ICharacterControllerSettings characterControllerSettings,
             in CharacterRigidTransform rigidTransform,
-            in MovementInputComponent movementInput)
+            in MovementInputComponent movementInput,
+            in GlideState glideState)
         {
-            if (movementInput.Kind == MovementKind.RUN)
+            if (movementInput.Kind == MovementKind.RUN && glideState.Value == GlideStateValue.PROP_CLOSED)
             {
                 float speedFactor = rigidTransform.MoveVelocity.Velocity.magnitude / characterControllerSettings.RunSpeed;
                 float targetFov = Mathf.Lerp(0, characterControllerSettings.CameraFOVWhileRunning, speedFactor);

@@ -132,10 +132,11 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = proto.SlideBlendValue,
                     IsGrounded = proto.IsGrounded,
-                    IsJumping = proto.IsJumping,
+                    JumpCount = proto.JumpCount,
                     IsLongJump = proto.IsLongJump,
-                    IsFalling = proto.IsFalling,
                     IsLongFall = proto.IsLongFall,
+                    IsFalling = proto.IsFalling,
+                    GlideState = (GlideStateValue)proto.GlideState,
                 },
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
@@ -191,10 +192,11 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.SlideBlendValue = message.animState.SlideBlendValue;
 
             movement.IsGrounded = message.animState.IsGrounded;
-            movement.IsJumping = message.animState.IsJumping;
+            movement.JumpCount = message.animState.JumpCount;
             movement.IsLongJump = message.animState.IsLongJump;
-            movement.IsFalling = message.animState.IsFalling;
             movement.IsLongFall = message.animState.IsLongFall;
+            movement.IsFalling = message.animState.IsFalling;
+            movement.GlideState = (Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState)message.animState.GlideState;
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;

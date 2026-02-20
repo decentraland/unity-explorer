@@ -60,6 +60,7 @@ MonoBehaviour:
   - rid: 745469515127586908
   - rid: 2563261270153757000
   - rid: 5190442831932031144
+  - rid: 5526985638232195369
   - rid: 1221415613651484787
   - rid: 732305993255354462
   - rid: 7426570530121056350
@@ -949,6 +950,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 5526985638232195369
+      type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <JumpIndicatorPrefab>k__BackingField:
+          m_AssetGUID: 77042a6626e1a064f90b622d0381d7df
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
@@ -1067,7 +1077,18 @@ MonoBehaviour:
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <ControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <Gliding>k__BackingField:
+          <PropPrefab>k__BackingField:
+            m_AssetGUID: 3c7d798e18864314497aa15d59d3ee1b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <AnimationSpeed>k__BackingField: 3
+          <StartingRotation>k__BackingField: -60
+          <CompleteRotationT>k__BackingField: 0.5
+          <TrailVelocityThreshold>k__BackingField: 1
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

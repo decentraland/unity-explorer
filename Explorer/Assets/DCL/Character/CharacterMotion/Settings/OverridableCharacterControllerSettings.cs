@@ -112,6 +112,54 @@ namespace DCL.CharacterMotion.Settings
 
         public float JumpGravityFactor => impl.JumpGravityFactor;
 
+        public int AirJumpCount
+        {
+            get => impl.AirJumpCount;
+            set => impl.AirJumpCount = value;
+        }
+
+        public float AirJumpHeight
+        {
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT, impl.AirJumpHeight);
+            set => impl.AirJumpHeight = value;
+        }
+
+        public float AirJumpDelay
+        {
+            get => impl.AirJumpDelay;
+            set => impl.AirJumpDelay = value;
+        }
+
+        public float AirJumpGravityDuringDelay
+        {
+            get => impl.AirJumpGravityDuringDelay;
+            set => impl.AirJumpGravityDuringDelay = value;
+        }
+
+        public float CooldownBetweenJumps
+        {
+            get => impl.CooldownBetweenJumps;
+            set => impl.CooldownBetweenJumps = value;
+        }
+
+        public float AirJumpDirectionChangeImpulse
+        {
+            get => impl.AirJumpDirectionChangeImpulse;
+            set => impl.AirJumpDirectionChangeImpulse = value;
+        }
+
+        public float GlideSpeed => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED, impl.GlideSpeed);
+
+        public float GlideMinGroundDistance => impl.GlideMinGroundDistance;
+
+        public float GlideMaxGravity => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY, impl.GlideMaxGravity);
+
+        public float GlideCooldown => impl.GlideCooldown;
+
+        public float GlideAnimMaxAngle => impl.GlideAnimMaxAngle;
+
+        public float GlideAnimBlendSpeed => impl.GlideAnimBlendSpeed;
+
         public float JumpGraceTime => impl.JumpGraceTime;
 
         public float JumpHeightStun => impl.JumpHeightStun;

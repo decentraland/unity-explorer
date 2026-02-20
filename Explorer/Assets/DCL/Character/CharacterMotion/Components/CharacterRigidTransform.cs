@@ -23,10 +23,12 @@ namespace DCL.CharacterMotion.Components
         public float SteepSlopeAngle;
         public bool IsCollidingWithWall;
 
-        // Buffers used to decide if the character can jump
-        public int LastGroundedFrame;
-        public int LastJumpFrame;
-        public bool JustJumped;
+        // Distance of the character from the ground
+        public float GroundDistance;
+
+        // Multiplier applied to gravity
+        // The value is set to 1 after gravity calculations, so it needs to be computed every frame if needed
+        public float GravityMultiplier;
 
         // Current velocity of the gravity
         public Vector3 GravityVelocity;

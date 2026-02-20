@@ -3,8 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
-using DCL.Character;
-using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
@@ -73,6 +71,9 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
             if (pbSettings.HasJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT, pbSettings.JumpHeight);
             if (pbSettings.HasRunJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT, pbSettings.RunJumpHeight);
             if (pbSettings.HasHardLandingCooldown) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN, pbSettings.HardLandingCooldown);
+            if (pbSettings.HasDoubleJumpHeight) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT, pbSettings.DoubleJumpHeight);
+            if (pbSettings.HasGlidingSpeed) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED, pbSettings.GlidingSpeed);
+            if (pbSettings.HasGlidingFallingSpeed) AvatarLocomotionOverridesHelper.SetValue(ref locomotionOverrides, AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY, pbSettings.GlidingFallingSpeed);
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
