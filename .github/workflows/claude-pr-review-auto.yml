@@ -7,7 +7,6 @@ jobs:
   review-on-qa-approval:
     if: |
       github.event.review.state == 'approved' &&
-      contains(fromJson('["Ludmilafantaniella", "anicalbano", "dafgreco"]'), github.event.review.user.login) &&
       !contains(github.event.pull_request.labels.*.name, 'no QA needed') &&
       !contains(github.event.pull_request.labels.*.name, 'no review')
     runs-on: ubuntu-latest
@@ -16,15 +15,28 @@ jobs:
       pull-requests: read
       id-token: write
     steps:
+      - name: Check if reviewer is in QA team
+        id: check-team
+        run: |
+          MEMBER=$(gh api \
+            /orgs/${{ github.repository_owner }}/teams/qa/memberships/${{ github.event.review.user.login }} \
+            --jq '.state' 2>/dev/null || echo "not_found")
+          echo "is_member=$([[ "$MEMBER" == "active" ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.ORG_READ_PAT }}
+
       - name: Checkout repository
+        if: steps.check-team.outputs.is_member == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Claude Review (QA Approval Triggered)
+        if: steps.check-team.outputs.is_member == 'true'
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          timeout_minutes: "60"
+          timeout_minutes: "10"
           direct_prompt: |
             This PR has been approved by QA and requires automated analysis focused on actionable improvements only.
             Review Focus
