@@ -41,7 +41,6 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:44"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (treeIndices.IsCreated)
                 treeIndices.Dispose();
 
@@ -51,7 +50,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:44"); // SPECIAL_DEBUG_LINE_STATEMENT
 
         public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:54"); // SPECIAL_DEBUG_LINE_STATEMENT
             // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
             // don't need to check if treeInstances is empty or anything like that.
             if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
@@ -69,7 +67,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:54"); // SPECIAL_DEBUG_LINE_STATEMENT
         public bool GetTreeTransform(int2 parcel, TreeInstanceData instance, out Vector3 position,
             out Quaternion rotation, out Vector3 scale)
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:72"); // SPECIAL_DEBUG_LINE_STATEMENT
             position.x = (parcel.x + (instance.PositionX * (1f / 255f))) * terrainData.parcelSize;
             position.z = (parcel.y + (instance.PositionZ * (1f / 255f))) * terrainData.parcelSize;
             LandscapeAsset prototype = terrainData.treeAssets[instance.PrototypeIndex];
@@ -102,7 +99,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:72"); // SPECIAL_DEBUG_LINE_STATEMENT
         [Conditional("GPUI_PRO_PRESENT")]
         public void Hide()
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:105"); // SPECIAL_DEBUG_LINE_STATEMENT
             foreach (int rendererKey in rendererKeys)
                 GPUICoreAPI.SetInstanceCount(rendererKey, 0);
         }
@@ -110,7 +106,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:105"); // SPECIAL_DEBUG_LINE_STATEMENT
         [Conditional("GPUI_PRO_PRESENT")]
         public void Instantiate()
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:113"); // SPECIAL_DEBUG_LINE_STATEMENT
             int stride = treeMaxParcel.x - treeMinParcel.x;
             var transforms = new List<Matrix4x4>[terrainData.treeAssets.Length];
 
@@ -160,9 +155,7 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:113"); // SPECIAL_DEBUG_LINE_STATEMENT
         public async UniTask LoadAsync(string treeFilePath)
         {
             // File stream is not supported on webgl
-UnityEngine.Debug.Log("CALLED TreeData.cs:163"); // SPECIAL_DEBUG_LINE_STATEMENT
 #if UNITY_WEBGL
-UnityEngine.Debug.Log("CALLED TreeData.cs:165"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (treeIndices.IsCreated)
                 treeIndices.Dispose();
 
@@ -171,11 +164,9 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:165"); // SPECIAL_DEBUG_LINE_STATEMENT
 
             treeIndices = new NativeArray<int>(0, Allocator.Persistent);
             treeInstances = new NativeArray<TreeInstanceData>(0, Allocator.Persistent);
-UnityEngine.Debug.Log("CALLED TreeData.cs:174"); // SPECIAL_DEBUG_LINE_STATEMENT
             return;
 #endif
 
-UnityEngine.Debug.Log("CALLED TreeData.cs:178"); // SPECIAL_DEBUG_LINE_STATEMENT
             try
             {
                 await using var stream = new FileStream(treeFilePath, FileMode.Open, FileAccess.Read,
@@ -308,7 +299,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:178"); // SPECIAL_DEBUG_LINE_STATEMENT
         public void SetTerrainData(int2 minParcel, int2 maxParcel,
             NativeArray<byte> occupancyMapDataArg, int occupancyMapSizeArg, int occupancyFloorArg, float maxHeightArg)
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:311"); // SPECIAL_DEBUG_LINE_STATEMENT
             terrainMinParcel = minParcel;
             terrainMaxParcel = maxParcel;
             occupancyMapData = occupancyMapDataArg;
@@ -320,7 +310,6 @@ UnityEngine.Debug.Log("CALLED TreeData.cs:311"); // SPECIAL_DEBUG_LINE_STATEMENT
         [Conditional("GPUI_PRO_PRESENT")]
         public void Show()
         {
-UnityEngine.Debug.Log("CALLED TreeData.cs:323"); // SPECIAL_DEBUG_LINE_STATEMENT
             for (int prototypeIndex = 0; prototypeIndex < rendererKeys.Length; prototypeIndex++)
                 GPUICoreAPI.SetInstanceCount(rendererKeys[prototypeIndex],
                     instanceCounts[prototypeIndex]);
