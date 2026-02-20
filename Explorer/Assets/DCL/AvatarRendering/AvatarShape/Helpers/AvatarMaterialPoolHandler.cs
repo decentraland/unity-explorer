@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using Utility;
 

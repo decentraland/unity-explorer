@@ -3,7 +3,6 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Wearables.Helpers;
 using Runtime.Wearables;
-using Temp.Helper.WebClient;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -51,7 +50,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             (avatarMaterial, slots, shaderId) = TrySetupFacialFeature(meshRenderer, poolHandler, avatarShapeComponent, facialFeatures, out bool isFacialFeature);
 
             if (!isFacialFeature)
-                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler, meshRenderer.name);
+                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler);
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
@@ -63,7 +62,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private static (Material avatarMaterial, TextureArraySlot?[] slots, int shaderId) SetupRegularMaterial(
-            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler, string? rendererName = null)
+            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler)
         {
             int shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
@@ -125,7 +124,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 if (meshRenderer.name.EndsWith(suffix))
                 {
                     result = true;
-                    int texCount = facialFeatures.Value.TryGetValue(category, out var texDict) ? texDict.Count : 0;
                     return DoFacialFeature(poolHandler, facialFeatures.Value[category], getColor(in avatarShapeComponent), defaultSlotIndexUsed);
                 }
             }

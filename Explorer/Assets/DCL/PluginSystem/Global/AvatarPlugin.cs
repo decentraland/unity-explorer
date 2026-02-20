@@ -20,7 +20,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
-using Temp.Helper.WebClient;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
