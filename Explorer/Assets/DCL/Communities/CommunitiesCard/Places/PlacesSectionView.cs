@@ -153,7 +153,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name),
                 (placeInfo, cardView) => ElementMainButtonClicked?.Invoke(placeInfo, cardView));
 
-            if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name))
+            if (!string.IsNullOrEmpty(placeInfo.PlaceInfo.world_name) && placeInfo.PlaceInfo.is_private)
                 WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfo.PlaceInfo.world_name, elementView, elementView.WorldAccessCancellationToken).Forget();
 
             if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)

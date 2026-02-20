@@ -196,8 +196,11 @@ namespace DCL.Places
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
 
-            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name))
+            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) &&
+                placeInfoWithConnectedFriends.PlaceInfo.is_private)
+            {
                 WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, cardView.WorldAccessCancellationToken).Forget();
+            }
 
             return gridItem;
         }
