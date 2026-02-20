@@ -3,17 +3,21 @@ on:
   pull_request_review:
     types: [submitted]
 
+concurrency:
+  group: claude-qa-review-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+  
 jobs:
   review-on-qa-approval:
     if: |
-      github.event.review.state == 'approved' &&
+      ${{ github.event.review.state == 'approved' &&
       !contains(github.event.pull_request.labels.*.name, 'no QA needed') &&
-      !contains(github.event.pull_request.labels.*.name, 'no review')
+      !contains(github.event.pull_request.labels.*.name, 'no review') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      id-token: write
+      pull-requests: write
+      issues: write
     steps:
       - name: Check if reviewer is in QA team
         id: check-team
@@ -23,7 +27,7 @@ jobs:
             --jq '.state' 2>/dev/null || echo "not_found")
           echo "is_member=$([[ "$MEMBER" == "active" ]] && echo true || echo false)" >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.ORG_READ_PAT }}
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
       - name: Checkout repository
         if: steps.check-team.outputs.is_member == 'true'
@@ -33,7 +37,7 @@ jobs:
 
       - name: Claude Review (QA Approval Triggered)
         if: steps.check-team.outputs.is_member == 'true'
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           timeout_minutes: "10"
@@ -60,4 +64,4 @@ jobs:
             3. Style preferences that don't violate standards
             4. Suggestions that are "nice-to-have" rather than necessary
             Focus entirely on what needs to be changed to make this PR production-ready.
-          allowed_tools: "mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__get_pull_request_diff"
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pull_request_review,mcp__github__get_pull_request_diff"
