@@ -114,10 +114,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 Entity? newGlobalEntity = raycastResultForGlobalEntities.GetEntityInfo()?.EntityReference;
                 if(previousGlobalEntity.HasValue && previousGlobalEntity.Value.EntityReference != newGlobalEntity)
                     World.Remove<HoveredComponent>(previousGlobalEntity.Value.EntityReference);
+
+                // Add hover to newly hit entity (only global entities, not scene entities)
+                // Scene entities don't need hover markers since visual highlighting is only used for avatars
                 if(newGlobalEntity.HasValue && (!previousGlobalEntity.HasValue || previousGlobalEntity.Value.EntityReference != newGlobalEntity))
                     World.Add<HoveredComponent>(newGlobalEntity.Value);
-
-                // We are not adding Hovered to scene entities since highlight is only needed for avatars (and not scene avatars)
             }
         }
 

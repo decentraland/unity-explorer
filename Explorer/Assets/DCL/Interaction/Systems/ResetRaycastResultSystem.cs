@@ -9,8 +9,13 @@ using ECS.LifeCycle.Components;
 namespace DCL.Interaction.Raycast
 {
     /// <summary>
-    ///     Resets the raycast results stored in the SceneEntities and GlobalEntities caches if the entity is marked for deletion
+    ///     Resets the raycast result cache for global entities when they are marked for deletion.
+    ///     Runs in CleanUpGroup to ensure cleanup happens before entities are destroyed.
     /// </summary>
+    /// <remarks>
+    ///     Only resets GlobalEntities results, not SceneEntities, since only global entities (like avatars)
+    ///     are tracked for hover state and need cleanup. Scene raycast results are discarded each frame anyway.
+    /// </remarks>
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class ResetRaycastResultSystem : BaseUnityLoopSystem
     {
@@ -21,6 +26,9 @@ namespace DCL.Interaction.Raycast
             ResetRaycastResultsQuery(World);
         }
 
+        /// <summary>
+        /// Finds all entities with raycast results and clears the global entity cache if that entity is being deleted.
+        /// </summary>
         [Query]
         private void ResetRaycastResults(ref PlayerOriginRaycastResultForSceneEntities sceneEntities, ref PlayerOriginRaycastResultForGlobalEntities globalEntities)
         {

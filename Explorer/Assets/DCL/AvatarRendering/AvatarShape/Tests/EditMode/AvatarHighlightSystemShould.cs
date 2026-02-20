@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [SetUp]
         public void Setup()
         {
-            // Create mock highlight settings
+            // Create mock highlight settings that control fade animation
             var highlightSettings = Substitute.For<IAvatarHighlightData>();
             highlightSettings.OutlineVfxOpacity.Returns(OUTLINE_OPACITY);
             highlightSettings.OutlineThickness.Returns(OUTLINE_THICKNESS);

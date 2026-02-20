@@ -27,6 +27,10 @@ namespace DCL.AvatarRendering.AvatarShape
             RemoveHighlightAvatarQuery(World, t);
         }
 
+        /// <summary>
+        /// Fades in avatar outline when HoveredComponent is present.
+        /// Applies the highlight to all renderers and smoothly increases opacity over FadeInTimeSeconds.
+        /// </summary>
         [Query]
         [All(typeof(HoveredComponent))]
         private void HighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, ref AvatarShapeComponent avatarShape)
@@ -40,6 +44,10 @@ namespace DCL.AvatarRendering.AvatarShape
             RenderFeature_ObjectHighlight.HighlightedObjects_Avatar.Highlight(avatarShape.OutlineCompatibleRenderers, BuildColor(highlight.Opacity), settings.OutlineThickness);
         }
 
+        /// <summary>
+        /// Fades out avatar outline when HoveredComponent is not present.
+        /// Smoothly decreases opacity to 0 over FadeOutTimeSeconds.
+        /// </summary>
         [Query]
         [None(typeof(HoveredComponent))]
         private void RemoveHighlightAvatar([Data] float t, ref AvatarHighlightComponent highlight, ref AvatarShapeComponent avatarShape)
