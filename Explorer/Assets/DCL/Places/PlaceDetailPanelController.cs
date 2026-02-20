@@ -76,7 +76,7 @@ namespace DCL.Places
                 homePlaceEventBus: homePlaceEventBus,
                 liveEvent: inputData.LiveEvent);
 
-            SetCreatorThumbnailAsync(panelCts.Token).Forget();
+            SetCreatorAsync(panelCts.Token).Forget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -106,14 +106,14 @@ namespace DCL.Places
         protected override void OnViewClose() =>
             panelCts.SafeCancelAndDispose();
 
-        private async UniTaskVoid SetCreatorThumbnailAsync(CancellationToken ct)
+        private async UniTaskVoid SetCreatorAsync(CancellationToken ct)
         {
             Profile.CompactInfo? creatorProfile = null;
 
             if (!string.IsNullOrEmpty(inputData.PlaceData.owner))
                 creatorProfile = await profileRepository.GetCompactAsync(inputData.PlaceData.owner, ct);
 
-            await viewInstance!.SetCreatorThumbnailAsync(creatorProfile, ct);
+            await viewInstance!.SetCreatorAsync(creatorProfile, ct);
         }
 
         private void OnLikeToggleChanged(PlacesData.PlaceInfo placeInfo, bool likeValue)

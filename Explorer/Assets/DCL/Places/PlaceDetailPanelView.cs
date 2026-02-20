@@ -123,7 +123,6 @@ namespace DCL.Places
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
             startNavigationButton.onClick.AddListener(() => StartNavigationButtonClicked?.Invoke(currentPlaceInfo));
             exitNavigationButton.onClick.AddListener(() => ExitNavigationButtonClicked?.Invoke());
-            openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
 
             contextMenu = new GenericContextMenu(placeCardContextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: placeCardContextMenuConfiguration.VerticalPadding, elementsSpacing: placeCardContextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(placeCardContextMenuConfiguration.ShareText, placeCardContextMenuConfiguration.ShareSprite, () => ShareButtonClicked?.Invoke(currentPlaceInfo)))
@@ -173,7 +172,6 @@ namespace DCL.Places
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
             creatorContainer.SetActive(false);
-            creatorThumbnail.gameObject.SetActive(false);
             creatorNameText.text = placeInfo.contact_name;
             creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
             creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
@@ -243,9 +241,10 @@ namespace DCL.Places
             }
         }
 
-        public async UniTask SetCreatorThumbnailAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
+        public async UniTask SetCreatorAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
         {
-            creatorThumbnail.gameObject.SetActive(false);
+            creatorProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+            openPassportButton.onClick.RemoveAllListeners();
 
             if (creatorProfile != null)
             {
@@ -259,7 +258,8 @@ namespace DCL.Places
                         creatorProfile.Value.FaceSnapshotUrl,
                         cancellationToken);
 
-                    creatorThumbnail.gameObject.SetActive(creatorProfileThumbnail.Value.Sprite != null);
+                    if (creatorProfileThumbnail.Value.Sprite != null)
+                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
 
                     if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
                     {
