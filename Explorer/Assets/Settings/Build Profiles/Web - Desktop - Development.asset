@@ -37,6 +37,11 @@ MonoBehaviour:
   - {fileID: 4800000, guid: 9f3c26b521ac7c44ea7ce1b164cc3808, type: 3}
   - {fileID: 4800000, guid: e5b617d736d0466ea1f935a5a0d79b1b, type: 3}
   - {fileID: 4800000, guid: 71b22c46a39ba46498cb2d8fab22343f, type: 3}
+  - {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 15105, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 15106, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 4800000, guid: d197ba80c994be24b8d3c757150237f4, type: 3}
+  - {fileID: 4800000, guid: c87696e8d053c4e49a546cd5b75e224d, type: 3}
   m_LightProbeOutsideHullStrategy: 0
   m_PreloadedShaders:
   - {fileID: 20000000, guid: 622e919733c115b40bf276cf626d2211, type: 2}
