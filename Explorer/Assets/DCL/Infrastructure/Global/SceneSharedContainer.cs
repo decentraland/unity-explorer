@@ -77,9 +77,7 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
             WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
 
-#if UNITY_EDITOR
-            IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
-#elif UNITY_WEBGL
+#if UNITY_WEBGL && !UNITY_EDITOR
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();

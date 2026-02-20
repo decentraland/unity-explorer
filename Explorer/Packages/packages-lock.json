@@ -48,11 +48,11 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#feat/webgl-support",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "2488227ce1013f3bf65408447d0fbc6531e54ed5"
+      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -69,7 +69,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "4963f95729bdb500e26de9f9d67139f4bd690de9"
+      "hash": "0098438a9f0ecc04b100fc1fb19bf81c6ec76163"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -93,7 +93,7 @@
       "hash": "55a640291aaa8430ac0c917d96e974b1b39bcb1e"
     },
     "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -101,16 +101,16 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "d8112ca7ebc0c660d7850d72850d46a3e376dc08"
+      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
     },
     "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#feat/webgl-support",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
