@@ -50,6 +50,7 @@ using Global.Versioning;
 using MVC;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
@@ -261,7 +262,10 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
-                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
+                var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
+
+                if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                    await BlockOnInsufficientDiskSpaceAsync(specResults, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -351,7 +355,7 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
+        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
                 new UnitySystemInfoProvider(),
@@ -392,7 +396,7 @@ namespace Global.Dynamic
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
-                return;
+                return minimumSpecsGuard.Results;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
                                                  .AssetsProvisioner!
@@ -406,6 +410,36 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;
+
+            return minimumSpecsGuard.Results;
+        }
+
+        private async UniTask BlockOnInsufficientDiskSpaceAsync(IReadOnlyList<SpecResult> specResults, CancellationToken ct)
+        {
+            bool storageMet = true;
+
+            foreach (SpecResult result in specResults)
+            {
+                if (result.Category == SpecCategory.Storage)
+                {
+                    storageMet = result.IsMet;
+                    break;
+                }
+            }
+
+            if (storageMet)
+                return;
+
+            var insufficientDiskSpacePrefab = await bootstrapContainer!
+                                                   .AssetsProvisioner!
+                                                   .ProvideMainAssetAsync(dynamicSettings.InsufficientDiskSpaceScreenPrefab, ct);
+
+            ControllerBase<InsufficientDiskSpaceScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                InsufficientDiskSpaceScreenController.CreateLazily(insufficientDiskSpacePrefab.Value.GetComponent<InsufficientDiskSpaceScreenView>(), null);
+
+            var controller = new InsufficientDiskSpaceScreenController(viewFactory);
+            dynamicWorldContainer!.MvcManager.RegisterController(controller);
+            await dynamicWorldContainer!.MvcManager.ShowAsync(InsufficientDiskSpaceScreenController.IssueCommand(), ct);
         }
 
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
