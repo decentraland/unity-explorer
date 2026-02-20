@@ -19,9 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const TextureFormat DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT = TextureFormat.RGBA32;
 
         /// <summary>
-        ///     WebGL: BC7 not supported. Use DXT (non-crunched) to match AB converter output.
-        ///     Default textures from Addressables convert to DXT5 on WebGL; arrays must match.
-        ///     AB converter must output DXT5 for main/emission and normals, NOT crunched.
+        ///     WebGL: BC7 is not supported. We must use DXT5 NOT crunched otherwise we cant make certain calculations easily.
         /// </summary>
         public const TextureFormat DEFAULT_WEBGL_TEXTURE_FORMAT = TextureFormat.DXT5;
 
