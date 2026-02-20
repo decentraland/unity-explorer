@@ -3,7 +3,6 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.Abstract;
-using Temp.Helper.WebClient;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
@@ -62,7 +61,6 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 if (assetBundleIntention.AssetBundleManifestVersion == null || assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
                 {
-                    WebGLDebugLog.Log("AB.Prepare", "WEB skipped: manifest null or failed", $"name={assetBundleIntention.Name} hash={assetBundleIntention.Hash}");
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest version must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
 
@@ -71,9 +69,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 string? version = assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion();
                 string? buildDate = assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate();
-                if (string.IsNullOrEmpty(version))
-                    WebGLDebugLog.LogWarning("AB.Prepare", "GetAssetBundleManifestVersion() is null/empty", $"hash={assetBundleIntention.Hash}");
-
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
@@ -83,7 +78,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 assetBundleIntention.CommonArguments = ca;
 
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, buildDate ?? "");
-                WebGLDebugLog.Log("AB.Prepare", "WEB", $"hash={assetBundleIntention.Hash} version={version} url={ca.URL.Value}");
             }
         }
 

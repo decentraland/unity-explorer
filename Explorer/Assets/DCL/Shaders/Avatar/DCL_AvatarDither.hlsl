@@ -1,4 +1,4 @@
-﻿#ifndef DCL_TOON_DITHER_INCLUDED
+#ifndef DCL_TOON_DITHER_INCLUDED
 #define DCL_TOON_DITHER_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
