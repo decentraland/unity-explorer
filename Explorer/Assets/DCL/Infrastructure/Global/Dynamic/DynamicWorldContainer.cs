@@ -145,6 +145,8 @@ namespace Global.Dynamic
 
         public IGlobalRealmController RealmController { get; }
 
+        public IRealmNavigator RealmNavigator { get; }
+
         public GlobalWorldFactory GlobalWorldFactory { get; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
@@ -164,6 +166,7 @@ namespace Global.Dynamic
         private DynamicWorldContainer(
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
+            IRealmNavigator realmNavigator,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IProfileRepository profileRepository,
@@ -179,6 +182,7 @@ namespace Global.Dynamic
         {
             MvcManager = mvcManager;
             RealmController = realmController;
+            RealmNavigator = realmNavigator;
             GlobalWorldFactory = globalWorldFactory;
             GlobalPlugins = globalPlugins;
             ProfileRepository = profileRepository;
@@ -795,7 +799,9 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.RealmData,
-                    realmNavigator),
+                    realmNavigator,
+                    worldCommsSecret,
+                    chatHistory),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
                     mapRendererContainer.MapRenderer,
@@ -1276,6 +1282,7 @@ namespace Global.Dynamic
             var container = new DynamicWorldContainer(
                 mvcManager,
                 realmContainer.RealmController,
+                realmNavigator,
                 globalWorldFactory,
                 globalPlugins,
                 profilesRepository,

@@ -104,8 +104,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider,
-            IWorldPermissionsService worldPermissionsService)
+            WorldManifestProvider worldManifestProvider)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -123,7 +122,6 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
             this.worldManifestProvider = worldManifestProvider;
-            this.worldPermissionsService = worldPermissionsService;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -209,7 +207,7 @@ namespace Global.Dynamic
             }
             catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
 
-            return statusCode != 401;
+            return statusCode >= 200 && statusCode < 300;
         }
 
         private static string ExtractCommsAdapterUrl(string input)

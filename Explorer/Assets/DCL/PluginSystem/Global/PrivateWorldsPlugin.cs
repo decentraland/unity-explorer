@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Chat.History;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
@@ -34,6 +35,8 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IRealmData realmData;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IWorldCommsSecret worldCommsSecret;
+        private readonly IChatHistory chatHistory;
 
         private PrivateWorldPermissionGuard? permissionGuard;
 
@@ -46,7 +49,9 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IRealmData realmData,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IWorldCommsSecret worldCommsSecret,
+            IChatHistory chatHistory)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -57,6 +62,8 @@ namespace DCL.PluginSystem.Global
             this.urlsSource = urlsSource;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
+            this.worldCommsSecret = worldCommsSecret;
+            this.chatHistory = chatHistory;
         }
 
         public void Dispose() =>
@@ -66,7 +73,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            permissionGuard = new PrivateWorldPermissionGuard(realmData, worldPermissionsService, realmNavigator);
+            permissionGuard = new PrivateWorldPermissionGuard(realmData, worldPermissionsService, realmNavigator, worldCommsSecret, chatHistory);
 
             if (settings.PrivateWorldPopup != null)
             {

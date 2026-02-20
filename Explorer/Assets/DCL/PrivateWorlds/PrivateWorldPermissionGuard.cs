@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -20,6 +22,8 @@ namespace DCL.PrivateWorlds
         private readonly IRealmData realmData;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IWorldCommsSecret worldCommsSecret;
+        private readonly IChatHistory chatHistory;
         private readonly CancellationTokenSource disposeCts = new();
 
         private CancellationTokenSource? loopCts;
@@ -27,14 +31,20 @@ namespace DCL.PrivateWorlds
         /// <param name="realmData">Current realm data; used to detect world entry/exit and to read the world name for permission checks.</param>
         /// <param name="worldPermissionsService">Service used to check if the current user still has access to the world.</param>
         /// <param name="realmNavigator">Used to teleport the player to Genesis Plaza when access is denied.</param>
+        /// <param name="worldCommsSecret">Contains validated world password. Used to distinguish "password required" from "already authenticated".</param>
+        /// <param name="chatHistory">Used to post a system message when access is revoked while already inside a world.</param>
         public PrivateWorldPermissionGuard(
             IRealmData realmData,
             IWorldPermissionsService worldPermissionsService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IWorldCommsSecret worldCommsSecret,
+            IChatHistory chatHistory)
         {
             this.realmData = realmData;
             this.worldPermissionsService = worldPermissionsService;
             this.realmNavigator = realmNavigator;
+            this.worldCommsSecret = worldCommsSecret;
+            this.chatHistory = chatHistory;
 
             realmData.RealmType.OnUpdate += OnRealmTypeChanged;
             OnRealmTypeChanged(realmData.RealmType.Value);
@@ -82,14 +92,31 @@ namespace DCL.PrivateWorlds
                     if (string.IsNullOrEmpty(worldName))
                         continue;
 
+                    // NOTE: Add timeout here to be sure
                     WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
                     if (ct.IsCancellationRequested)
                         break;
 
-                    if (context.Result is WorldAccessCheckResult.AccessDenied)
+                    // Clear stale secret while in non-password worlds. This prevents a secret from a previous world
+                    // from making PasswordRequired checks look "authenticated" after permissions change.
+                    if (context.Result is WorldAccessCheckResult.Allowed &&
+                        context.AccessInfo?.AccessType is not WorldAccessType.SharedSecret &&
+                        !string.IsNullOrEmpty(worldCommsSecret.Secret))
+                    {
+                        worldCommsSecret.Secret = null;
+                    }
+
+                    bool accessRevoked = context.Result is WorldAccessCheckResult.AccessDenied
+                                         || (context.Result is WorldAccessCheckResult.PasswordRequired && string.IsNullOrEmpty(worldCommsSecret.Secret));
+
+                    if (accessRevoked)
                     {
                         ReportHub.Log(ReportCategory.REALM,
-                            $"[PrivateWorlds] Access denied for '{worldName}' ({context.Result}), teleporting to Genesis");
+                            $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}), teleporting to Genesis");
+                        chatHistory.AddMessage(
+                            ChatChannel.NEARBY_CHANNEL_ID,
+                            ChatChannel.ChatChannelType.NEARBY,
+                            ChatMessage.NewFromSystem("Permissions for this world changed. You were returned to Genesis Plaza."));
                         realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false).Forget();
                         return;
                     }

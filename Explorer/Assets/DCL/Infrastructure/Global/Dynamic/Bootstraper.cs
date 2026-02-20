@@ -285,6 +285,21 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
+            if (realmLaunchSettings.initialRealm is InitialRealm.World)
+            {
+                bool isAuthorized = await dynamicWorldContainer.RealmController
+                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
+
+                if (!isAuthorized)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+                    await dynamicWorldContainer.RealmController
+                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
+                    return;
+                }
+            }
+
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
