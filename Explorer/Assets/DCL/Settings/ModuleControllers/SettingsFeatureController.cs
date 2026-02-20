@@ -12,7 +12,7 @@ namespace DCL.Settings.ModuleControllers
             controllerView = view;
 
         public void SetViewInteractable(bool interactable) =>
-            controllerView?.SetInteractable(interactable);
+            controllerView.SetInteractable(interactable);
 
         public virtual void OnAllControllersInstantiated(List<SettingsFeatureController> controllers){}
 
