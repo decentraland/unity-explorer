@@ -112,22 +112,19 @@ namespace DCL.PlacesAPIService
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string realmName, CancellationToken ct)
         {
-            if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
-                return placeInfo;
+            if (!AreCoordinatesWithinBounds(coords))
+                return null;
 
-            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync(placeId, ct);
+            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
 
             if (!response.ok)
                 return null;
 
             if (response.data.Count == 0)
                 return null;
-
             PlacesData.PlaceInfo place = response.data[0];
-            TryCachePlace(place);
-
             return place;
         }
 

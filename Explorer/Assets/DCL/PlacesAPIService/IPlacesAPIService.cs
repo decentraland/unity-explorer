@@ -23,7 +23,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
-        UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct);
+        UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);
 
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,

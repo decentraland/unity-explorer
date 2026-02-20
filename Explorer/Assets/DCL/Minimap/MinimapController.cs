@@ -284,7 +284,7 @@ namespace DCL.Minimap
                 try
                 {
                     PlacesData.PlaceInfo? info = realmData.ScenesAreFixed
-                        ? await GetWorldInfoAsync(realmData.RealmName, ct)
+                        ? await GetWorldInfoAsync(previousParcelPosition, realmData.RealmName, ct)
                         : await GetPlaceInfoAsync(previousParcelPosition, ct);
 
                     if (info == null)
@@ -434,16 +434,16 @@ namespace DCL.Minimap
 
             if (realmData.ScenesAreFixed)
             {
-                viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-
-                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(realmData.RealmName, ct);
+                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(parcelPosition, realmData.RealmName, ct);
                 if (worldInfo != null)
                 {
+                    viewInstance!.placeNameText.text = worldInfo.title;
                     viewInstance!.favoriteButton.SetButtonState(worldInfo.user_favorite);
                     placesAPIService.AddRecentlyVisitedPlace(worldInfo.id);
                 }
                 else
                 {
+                    viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     viewInstance!.favoriteButton.SetButtonState(false, false);
                 }
             }
@@ -492,13 +492,13 @@ namespace DCL.Minimap
             return null;
         }
 
-        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(string worldName, CancellationToken ct)
+        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(Vector2Int parcelPosition, string worldName, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
             try
             {
-                return await placesAPIService.GetWorldAsync(worldName, ct);
+                return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
             }
             catch (OperationCanceledException _) { }
             catch (NotAPlaceException notAPlaceException)
