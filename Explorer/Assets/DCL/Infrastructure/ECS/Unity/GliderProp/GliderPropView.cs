@@ -27,9 +27,12 @@ namespace ECS.Unity.GliderProp
         [field: SerializeField] public Vector2 RotorRotationSpeedRange { get; private set; } = new (360, 360 * 4);
 
         [field: Header("Audio")] [field: SerializeField] public AvatarAudioSettings Settings { get; private set; }
-        [field: SerializeField] public AudioSourceSettings AudioSources { get; private set; }
-        [field: SerializeField] public float IdleMaxVolume { get; private set; } = 1;
-        [field: SerializeField] public float FullSpeedMaxVolume { get; private set; } = 1;
+        [field: SerializeField] public AudioClip OpenGliderClip { get; private set; }
+        [field: SerializeField] public AudioClip CloseGliderClip { get; private set; }
+        [field: SerializeField] public AudioSource IdleAudioSource { get; private set; }
+        [field: SerializeField] public AudioSource MovingAudioSource { get; private set; }
+        [field: SerializeField] [field: Range(0, 1)] public float IdleMaxVolume { get; private set; } = 1;
+        [field: SerializeField] [field: Range(0, 1)] public float FullSpeedMaxVolume { get; private set; } = 1;
         [field: SerializeField] public float FullSpeedEngineLevel { get; private set; } = 1;
 
         [field: Header("VFX (Moving Only)")] [field: SerializeField] private List<ParticleSystem> ParticleSystems { get; set; }
@@ -57,12 +60,11 @@ namespace ECS.Unity.GliderProp
             SetTrailRenderingEnabled(false);
 
             int priority = Settings.AudioPriority;
-            AudioSources.OpenGlider.priority = priority;
-            AudioSources.Idle.priority = priority;
-            AudioSources.Moving.priority = priority;
+            IdleAudioSource.priority = priority;
+            MovingAudioSource.priority = priority;
 
-            AudioSources.Idle.volume = 0;
-            AudioSources.Moving.volume = 0;
+            IdleAudioSource.volume = 0;
+            MovingAudioSource.volume = 0;
         }
 
         private void SetTrailRenderingEnabled(bool value)
@@ -96,8 +98,8 @@ namespace ECS.Unity.GliderProp
             if (!Settings.AudioEnabled)
             {
                 // Intended immediate cutoff if audio is disabled by the settings, no interpolation
-                AudioSources.Idle.volume = 0;
-                AudioSources.Moving.volume = 0;
+                IdleAudioSource.volume = 0;
+                MovingAudioSource.volume = 0;
                 return;
             }
 
@@ -106,8 +108,8 @@ namespace ECS.Unity.GliderProp
             const float VOLUME_LERP_FACTOR = 4;
             overallEngineVolume = Mathf.MoveTowards(overallEngineVolume, engineEnabled ? 1 : 0, dt * VOLUME_LERP_FACTOR);
 
-            AudioSources.Idle.volume = (1 - smoothedEngineLevel) * IdleMaxVolume * overallEngineVolume;
-            AudioSources.Moving.volume = smoothedEngineLevel * FullSpeedMaxVolume * overallEngineVolume;
+            IdleAudioSource.volume = (1 - smoothedEngineLevel) * IdleMaxVolume * overallEngineVolume;
+            MovingAudioSource.volume = smoothedEngineLevel * FullSpeedMaxVolume * overallEngineVolume;
         }
 
         public void PrepareForNextActivation()
@@ -122,8 +124,7 @@ namespace ECS.Unity.GliderProp
         {
             if (!Settings.AudioEnabled) return;
 
-            AudioSources.OpenGlider.Play();
-        }
+            AudioSource.PlayClipAtPoint(OpenGliderClip, transform.position);        }
 
         private void OnOpenAnimationCompleted() =>
             OpenAnimationCompleted = true;
@@ -132,24 +133,12 @@ namespace ECS.Unity.GliderProp
         {
             if (!Settings.AudioEnabled) return;
 
-            AudioSources.CloseGlider.Play();
+            AudioSource.PlayClipAtPoint(CloseGliderClip, transform.position);
         }
 
         private void OnCloseAnimationCompleted() =>
             CloseAnimationCompleted = true;
 
         #endregion
-
-        [Serializable]
-        public class AudioSourceSettings
-        {
-            [field: SerializeField] public AudioSource OpenGlider { get; private set; }
-
-            [field: SerializeField] public AudioSource CloseGlider { get; private set; }
-
-            [field: SerializeField] public AudioSource Idle { get; private set; }
-
-            [field: SerializeField] public AudioSource Moving { get; private set; }
-        }
     }
 }

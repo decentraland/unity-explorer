@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
@@ -97,17 +96,7 @@ namespace DCL.CharacterMotion.Systems
             World.Remove<GliderPropEnabled>(entity);
             gliderProp.View.PrepareForNextActivation();
 
-            DisablePropDelayedAsync(entity, gliderProp.View).Forget();
-        }
-
-        private async UniTask DisablePropDelayedAsync(Entity entity, GliderPropView view)
-        {
-            // Arbitrary delay to make sure the 'glider closing' sound is fully played (the audio source is attached to the prop)
-            await UniTask.Delay(500);
-
-            if (!World.IsAlive(entity) || World.Has<GliderPropEnabled>(entity)) return;
-
-            view.gameObject.SetActive(false);
+            gliderProp.View.gameObject.SetActive(false);
         }
 
         [Query]
@@ -118,7 +107,6 @@ namespace DCL.CharacterMotion.Systems
             //propPool!.Release(gliderProp.View);
 
             Object.Destroy(gliderProp.View.gameObject);
-            gliderProp.View = null;
         }
 
         [Query]
