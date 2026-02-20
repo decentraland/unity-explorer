@@ -13,6 +13,7 @@ futures-util = { version = "0.3", default-features = false, features = ["sink"] 
 parking_lot = { version = "0.12", features = ["deadlock_detection"] }
 time = "0.3.36"
 anyhow = "1.0.100"
+futures = "0.3.32"
 
 [lib]
 crate-type = ["lib", "cdylib"]

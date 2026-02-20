@@ -1,10 +1,12 @@
 use anyhow::{anyhow, Context};
 use core::str;
+use futures::future::FutureExt;
 use std::{
     ffi::CString,
+    panic::AssertUnwindSafe,
     sync::{
         atomic::{AtomicU64, Ordering},
-        Arc,
+        Arc, Weak,
     },
 };
 use tokio::sync::Mutex;
@@ -40,7 +42,7 @@ pub struct SegmentServer {
 }
 
 pub enum ServerState {
-    Ready(Arc<SegmentServer>, tokio::runtime::Runtime),
+    Ready(Arc<SegmentServer>, tokio::runtime::Runtime, CallbacksBundle),
     Disposed,
 }
 
@@ -73,22 +75,25 @@ impl Server {
         let mut state = state_lock.unwrap();
 
         match *state {
-            ServerState::Ready(_, _) => false,
+            ServerState::Ready(_, _, _) => false,
             ServerState::Disposed => {
                 let new_runtime = tokio::runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
                     .unwrap();
 
+                let callbacks_bundle = CallbacksBundle::new(callback_fn, error_fn);
+
                 let server = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
-                    callback_fn,
-                    error_fn,
+                    callbacks_bundle.callback_fn(),
+                    callbacks_bundle.error_fn(),
                     &new_runtime,
                 );
-                *state = ServerState::Ready(Arc::new(server), new_runtime);
+
+                *state = ServerState::Ready(Arc::new(server), new_runtime, callbacks_bundle);
                 true
             }
         }
@@ -105,7 +110,8 @@ impl Server {
 
         match extracted {
             ServerState::Disposed => false,
-            ServerState::Ready(_, runtime) => {
+            ServerState::Ready(_, runtime, callbacks_bundle) => {
+                drop(callbacks_bundle);
                 runtime.shutdown_background();
                 *state = ServerState::Disposed;
                 true
@@ -132,13 +138,36 @@ impl Server {
 
         match &*state {
             ServerState::Disposed => 0,
-            ServerState::Ready(server, runtime) => {
+            ServerState::Ready(server, runtime, _) => {
                 let id = server.next_id();
                 let future_task = func(server.clone(), id);
-                runtime.spawn(future_task);
+                let future_task = AssertUnwindSafe(future_task);
+                runtime.spawn(future_task.catch_unwind());
                 id
             }
         }
+    }
+}
+
+pub struct CallbacksBundle {
+    callback_fn: Arc<FfiCallbackFn>,
+    error_fn: Arc<Option<FfiErrorCallbackFn>>,
+}
+
+impl CallbacksBundle {
+    pub fn new(callback_fn: FfiCallbackFn, error_fn: Option<FfiErrorCallbackFn>) -> Self {
+        Self {
+            callback_fn: Arc::new(callback_fn),
+            error_fn: Arc::new(error_fn),
+        }
+    }
+
+    pub fn callback_fn(&self) -> Weak<FfiCallbackFn> {
+        Arc::downgrade(&self.callback_fn)
+    }
+
+    pub fn error_fn(&self) -> Weak<Option<FfiErrorCallbackFn>> {
+        Arc::downgrade(&self.error_fn)
     }
 }
 
@@ -151,16 +180,18 @@ impl SegmentServer {
         queue_file_path: String,
         queue_count_limit: u32,
         writer_key: String,
-        callback_fn: FfiCallbackFn,
-        error_fn: Option<FfiErrorCallbackFn>,
+        callback_fn: Weak<FfiCallbackFn>,
+        error_fn: Weak<Option<FfiErrorCallbackFn>>,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
         let error_fn = Box::new(move |message: &str| {
-            if let Some(cb) = error_fn {
-                if let Ok(cstr) = CString::new(message) {
-                    unsafe {
-                        cb(cstr.as_ptr());
-                    }
+            if let Some(upgrade) = error_fn.upgrade() {
+                if let Some(cb) = *upgrade {
+                    if let Ok(cstr) = CString::new(message) {
+                        unsafe {
+                            cb(cstr.as_ptr());
+                        }
+                    };
                 };
             };
         });
@@ -187,10 +218,13 @@ impl SegmentServer {
 
         let moved_error_fn = error_fn.clone();
         let moved_send_daemon = send_daemon.clone();
-        async_runtime.spawn(async move {
-            let mut guard = moved_send_daemon.lock().await;
-            guard.start(moved_error_fn);
-        });
+        async_runtime.spawn(
+            AssertUnwindSafe(async move {
+                let mut guard = moved_send_daemon.lock().await;
+                guard.start(moved_error_fn);
+            })
+            .catch_unwind(),
+        );
         let direct_client = HttpClient::default();
 
         let context = AppContext {
@@ -200,7 +234,9 @@ impl SegmentServer {
             segment_client: direct_client,
             write_key: writer_key,
             callback_fn: Box::new(move |id, response| unsafe {
-                callback_fn(id, response);
+                if let Some(upgrade) = callback_fn.upgrade() {
+                    upgrade(id, response);
+                }
             }),
             error_fn,
         };
