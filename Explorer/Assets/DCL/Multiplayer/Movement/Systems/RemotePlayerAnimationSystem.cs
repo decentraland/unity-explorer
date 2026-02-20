@@ -88,7 +88,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // other states
             bool jumpTriggered = message.animState.JumpCount > animationComponent.States.JumpCount;
-            bool glidingTriggered = message.animState.GlideState == GlideStateValue.GLIDING && animationComponent.States.GlideState == GlideStateValue.OPENING_PROP;
+            bool glidingTriggered = message.animState.GlideState == GlideStateValue.OPENING_PROP && animationComponent.States.GlideState != GlideStateValue.OPENING_PROP;
             animationComponent.States.IsGrounded = message.animState.IsGrounded;
             animationComponent.States.JumpCount = message.animState.JumpCount;
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
