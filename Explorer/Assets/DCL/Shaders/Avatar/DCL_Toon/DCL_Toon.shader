@@ -332,7 +332,7 @@ Shader "DCL/DCL_Toon"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ _FORWARD_PLUS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             //#pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
             // -------------------------------------
@@ -384,6 +384,7 @@ Shader "DCL/DCL_Toon"
 
             ZWrite On
             ZTest LEqual
+            ColorMask 0
             Cull[_CullMode]
 
             HLSLPROGRAM

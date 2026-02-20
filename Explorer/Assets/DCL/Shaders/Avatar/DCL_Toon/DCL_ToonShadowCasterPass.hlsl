@@ -95,7 +95,7 @@ half4 ShadowPassFragment(Varyings input) : SV_TARGET
     LODFadeCrossFade(input.positionCS);
 #endif
 
-    return 0;
+    return half4(0, 0, 0, 0);
 }
 
 #endif

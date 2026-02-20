@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             string url = URLBuilder.Combine(ipfs.CatalystBaseUrl, URLSubdirectory.FromString("preview-wearables")).Value;
 
-            var args = new CommonLoadingArguments(URLAddress.FromString(url));
+            CommonLoadingArguments args = new CommonLoadingArguments(URLAddress.FromString(url));
             var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: IGNORE_ERROR_CODES)
                                                      .CreateFromJson<PreviewWearablesResponse>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 

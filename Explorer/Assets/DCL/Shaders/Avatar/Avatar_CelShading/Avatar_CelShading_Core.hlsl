@@ -5,7 +5,7 @@
 // node work by falling to regular texture sampling.
 #define FORCE_VIRTUAL_TEXTURING_OFF 1
 
-#if defined(_FORWARD_PLUS)
+#if defined(_CLUSTER_LIGHT_LOOP)
 #define _ADDITIONAL_LIGHTS 1
 #undef _ADDITIONAL_LIGHTS_VERTEX
 #define USE_FORWARD_PLUS 1

@@ -1,0 +1,27 @@
+{
+  "name": "decentraland.renderfeatures",
+  "displayName": "Decentraland.RenderFeatures",
+  "version": "1.1.0",
+  "unity": "6000.0",
+  "description": "Decentraland made RenderGraph RenderFeatures",
+  "keywords": [
+    "unity",
+    "unity3d",
+    "upm",
+    "utility"
+  ],
+  "homepage": "https://github.com/decentraland/unity-explorer-packages",
+  "bugs": {
+    "url": "https://github.com/decentraland/unity-explorer-packages/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:decentraland/unity-explorer-packages.git"
+  },
+  "license": "MIT",
+  "author": "Decentraland (https://github.com/decentraland)",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "_fingerprint": "2c3b8b8e9b290f28697725b3594381e090224e4b"
+}

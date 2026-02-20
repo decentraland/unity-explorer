@@ -11,7 +11,6 @@ using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Versioning;
-using Temp.Helper.WebClient;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Debugging;
 using System;

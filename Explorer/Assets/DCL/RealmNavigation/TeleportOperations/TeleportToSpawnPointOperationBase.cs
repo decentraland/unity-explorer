@@ -15,7 +15,6 @@ using SceneRuntime;
 using System;
 using System.Linq;
 using System.Threading;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Assertions;
 

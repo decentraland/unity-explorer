@@ -42,18 +42,16 @@ namespace ECS.Unity.GLTFContainer
                     foreach (var renderer in instanceRenderers.Value)
                     {
                         if (renderer == null) continue;
-                        
+
                         var materials = renderer.sharedMaterials;
                         for (int i = 0; i < materials.Length; i++)
                         {
                             var mat = materials[i];
                             if (mat == null) continue;
-                            
+
                             string shaderName = mat.shader != null ? mat.shader.name : null;
                             if (shaderName != null && (shaderName.Contains("Error") || shaderName.Contains("Hidden")))
-                            {
                                 mat.shader = sceneShader;
-                            }
                         }
                     }
                 }

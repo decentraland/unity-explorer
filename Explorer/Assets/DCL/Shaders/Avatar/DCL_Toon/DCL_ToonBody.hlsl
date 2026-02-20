@@ -1,3 +1,11 @@
+// Map deprecated _FORWARD_PLUS to replacement keyword (Unity uses _CLUSTER_LIGHT_LOOP)
+#if defined(_CLUSTER_LIGHT_LOOP) && !defined(USE_FORWARD_PLUS)
+#define USE_FORWARD_PLUS 1
+#endif
+#if !defined(USE_FORWARD_PLUS)
+#define USE_FORWARD_PLUS 0
+#endif
+
 #if (SHADER_LIBRARY_VERSION_MAJOR ==7 && SHADER_LIBRARY_VERSION_MINOR >= 3) || (SHADER_LIBRARY_VERSION_MAJOR >= 8)
     #ifdef _ADDITIONAL_LIGHTS
         #ifndef  REQUIRES_WORLD_SPACE_POS_INTERPOLATOR
@@ -364,13 +372,16 @@ int DetermineUTS_MainLightIndex(float3 posW, float4 shadowCoord, float4 position
         mainLightIndex = MAINLIGHT_IS_MAINLIGHT;
     }
     int lightCount = GetAdditionalLightsCount();
-    for (int ii = 0; ii < lightCount; ++ii)
+    if (lightCount > 0)
     {
-        nextLight = GetAdditionalUtsLight(ii, posW, positionCS);
-        if (nextLight.distanceAttenuation > mainLight.distanceAttenuation && nextLight.type == 0)
+        for (int ii = 0; ii < lightCount; ++ii)
         {
-            mainLight = nextLight;
-            mainLightIndex = ii;
+            nextLight = GetAdditionalUtsLight(ii, posW, positionCS);
+            if (nextLight.distanceAttenuation > mainLight.distanceAttenuation && nextLight.type == 0)
+            {
+                mainLight = nextLight;
+                mainLightIndex = ii;
+            }
         }
     }
 
