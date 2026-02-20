@@ -601,6 +601,7 @@ MonoBehaviour:
   likeRateText: {fileID: 3538198045634200666}
   visitsText: {fileID: 5511795897971971415}
   liveTagWithTooltip: {fileID: 4961979711546966322}
+  onlineMembersContainer: {fileID: 2641049825782402418}
   onlineMembersText: {fileID: 628994062886672682}
   friendsConnected:
     root: {fileID: 5478216109654613743}

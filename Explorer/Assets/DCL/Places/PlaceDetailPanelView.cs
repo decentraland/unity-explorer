@@ -43,6 +43,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
         [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
+        [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
         [SerializeField] private TMP_Text descriptionText = null!;
@@ -182,7 +183,9 @@ namespace DCL.Places
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
-            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            onlineMembersText.text = $"{onlineMembers}";
+            onlineMembersContainer.SetActive(onlineMembers > 0);
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
             coordsText.text = placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
