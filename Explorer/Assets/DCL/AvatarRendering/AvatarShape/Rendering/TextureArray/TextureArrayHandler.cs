@@ -1,5 +1,4 @@
 using DCL.Optimization.Pools;
-using DCL.Utility;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -48,11 +47,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
-            
+
             // NOTE: texture array size is different (smaller) for high-resolution textures
             effectiveMinArraySizeForLowRes = minArraySize;
             effectiveMinArraySizeForHighRes = minArraySizeForHighRes ?? minArraySize;
-            
+
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(defaultResolutions.Count);
 
             //NOTE: Default resolutions are always squared
@@ -81,11 +80,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.textureFormat = textureFormat;
             this.defaultTextures = defaultTextures;
             this.initialCapacityForEachResolution = initialCapacityForEachResolution;
-            
+
             // NOTE: texture array size is always the same for all resolutions
             effectiveMinArraySizeForLowRes = minArraySize;
             effectiveMinArraySizeForHighRes = minArraySize;
-            
+
             handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
 
             for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
@@ -106,7 +105,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 if (defaultTextures!.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                 {
                     var defaultSlot = slotHandler.GetNextFreeSlot();
-                    CopyDefaultTextureToArray(defaultTexture, defaultSlot, resolution);
+                    CopyDefaultTextureToArray(defaultTexture, defaultSlot);
                 }
             }
 
@@ -117,7 +116,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         {
             // NOTE: We are creating a considerably smaller array for resolutions over
             // NOTE: the high-resolution threshold. Shouldn't be a common case
-            int baseSizeToUse = resolution.x >= TextureArrayConstants.HIGH_RES_THRESHOLD || 
+            int baseSizeToUse = resolution.x >= TextureArrayConstants.HIGH_RES_THRESHOLD ||
                                 resolution.y >= TextureArrayConstants.HIGH_RES_THRESHOLD
                 ? effectiveMinArraySizeForHighRes
                 : effectiveMinArraySizeForLowRes;
@@ -128,14 +127,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 ? baseSizeToUse
                 : baseSizeToUse / 10;
 
-            
+
             var slotHandler = new TextureArraySlotHandler(
                 domain,
                 resolution,
                 finalSizeForSlotHandler,
                 initialCapacityForEachResolution,
                 textureFormat);
-            
+
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created, initialize the default texture
@@ -146,7 +145,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                     if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                     {
                         var defaultSlot = slotHandler.GetNextFreeSlot();
-                        CopyDefaultTextureToArray(defaultTexture, defaultSlot, resolution);
+                        CopyDefaultTextureToArray(defaultTexture, defaultSlot);
                     }
                 }
             }
@@ -192,28 +191,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureFormat GetTextureFormat() =>
             textureFormat;
 
-        /// <summary>
-        ///     Graphics.CopyTexture requires matching formats. When array is RGBA32 and default is compressed (BC7/DXT),
-        ///     convert first. When array is DXT, defaults must be DXT (WebGLTextureSubtarget.DXT build).
-        /// </summary>
-        private void CopyDefaultTextureToArray(Texture defaultTexture, TextureArraySlot defaultSlot, Vector2Int resolution)
+        private void CopyDefaultTextureToArray(Texture defaultTexture, TextureArraySlot defaultSlot)
         {
-            if (defaultTexture is Texture2D tex2d && tex2d.format != textureFormat && textureFormat == TextureFormat.RGBA32)
-            {
-                Texture2D converted = TextureUtilities.EnsureRGBA32Format(tex2d, resolution.x);
-                try
-                {
-                    Graphics.CopyTexture(converted, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
-                }
-                finally
-                {
-                    Object.Destroy(converted);
-                }
-            }
-            else
-            {
-                Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
-            }
+            Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
         }
     }
 }
