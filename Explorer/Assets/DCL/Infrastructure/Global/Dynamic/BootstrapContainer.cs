@@ -114,6 +114,15 @@ namespace Global.Dynamic
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
+                if (container.IdentityCache.Identity != null)
+                    UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
+
+                container.IdentityCache.OnIdentityChanged += () =>
+                {
+                    if (container.IdentityCache.Identity != null)
+                        UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
+                };
+
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, ct);
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
