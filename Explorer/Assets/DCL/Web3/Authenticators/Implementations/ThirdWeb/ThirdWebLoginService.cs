@@ -113,7 +113,7 @@ namespace DCL.Web3.Authenticators
                     signature = signature,
                 });
 
-                return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain);
+                return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.OTP);
             }
             catch (Exception)
             {

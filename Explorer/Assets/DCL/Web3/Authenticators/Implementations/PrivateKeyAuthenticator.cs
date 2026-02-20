@@ -34,6 +34,7 @@ namespace DCL.Web3.Authenticators
             public bool IsExpired => false;
 
             public AuthChain AuthChain { get; }
+            public IWeb3Identity.Web3IdentitySource Source { get; set; } = IWeb3Identity.Web3IdentitySource.None;
 
             public AuthChain Sign(string entityId)
             {
