@@ -136,20 +136,18 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(GliderPropEnabled))]
-        private void LocalUpdateTrail(in GliderProp gliderProp, in GlideState glideState, in CharacterRigidTransform rigidTransform) =>
-            UpdateTrail(glideState.Value, gliderProp, rigidTransform.MoveVelocity.Velocity);
+        private void LocalUpdateTrail(in GliderProp gliderProp, in GlideState glideState, in CharacterRigidTransform rigidTransform)
+        {
+            float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
+            Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
+            gliderProp.View.TrailEnabled = glideState.Value == GlideStateValue.GLIDING && velocity.sqrMagnitude > thresholdSq;
+        }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(GliderPropEnabled))]
-        private void RemoteUpdateTrail(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent, in InterpolationComponent interpolationComponent) =>
-            UpdateTrail(animationComponent.States.GlideState, gliderProp, interpolationComponent.End.velocity);
-
-        private void UpdateTrail(in GlideStateValue glideState, in GliderProp gliderProp, in Vector3 velocity)
-        {
-            float thresholdSq = glidingSettings.TrailVelocityThreshold * glidingSettings.TrailVelocityThreshold;
-            gliderProp.View.TrailEnabled = glideState == GlideStateValue.GLIDING && velocity.sqrMagnitude > thresholdSq;
-        }
+        [All(typeof(GliderPropEnabled), typeof(InterpolationComponent))]
+        private void RemoteUpdateTrail(in GliderProp gliderProp) =>
+            gliderProp.View.TrailEnabled = false;
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
