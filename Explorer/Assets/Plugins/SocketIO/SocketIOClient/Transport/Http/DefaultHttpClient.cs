@@ -61,37 +61,26 @@ namespace SocketIOClient.Transport.Http
     // TODO Implement if requierd to support HTTP Transport
     public class DefaultHttpClient : IHttpClient
     {
-        public void AddHeader(string name, string value)
-        {
+        public void AddHeader(string name, string value) =>
             throw new Exception("AddHeader is not supported");
-        }
 
-        public IEnumerable<string> GetHeaderValues(string name)
-        {
+
+        public IEnumerable<string> GetHeaderValues(string name) =>
             throw new Exception("GetHeaderValues is not supported");
-        }
 
-        public void SetProxy(IWebProxy proxy)
-        {
+        public void SetProxy(IWebProxy proxy) =>
             throw new Exception("SetProxy is not supported");
-        }
 
-        public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
+        public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             throw new Exception("SetProxy is not supported");
-        }
 
         public UniTask<HttpResponseMessage> PostAsync(string requestUri,
             HttpContent content,
-            CancellationToken cancellationToken)
-        {
+            CancellationToken cancellationToken) =>
             throw new Exception("SetProxy is not supported");
-        }
 
-        public UniTask<string> GetStringAsync(Uri requestUri)
-        {
+        public UniTask<string> GetStringAsync(Uri requestUri) =>
             throw new Exception("SetProxy is not supported");
-        }
 
         public void Dispose()
         { }
