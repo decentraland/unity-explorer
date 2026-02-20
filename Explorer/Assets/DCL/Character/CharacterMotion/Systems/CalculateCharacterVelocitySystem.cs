@@ -1,10 +1,12 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Velocity;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -13,9 +15,8 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using DCL.AvatarRendering.DemoScripts.Components;
 
-namespace DCL.CharacterMotion.Systems
+namespace DCL.Character.CharacterMotion.Systems
 {
     /// <summary>
     ///     Entry point to calculate everything that affects character's velocity
@@ -43,6 +44,11 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> airDrag = new (0);
         private readonly ElementBinding<float> stopTime = new (0);
 
+        private readonly ElementBinding<float> characterMass = new (0);
+        private readonly ElementBinding<float> externalEnvDrag = new (0);
+        private readonly ElementBinding<float> externalGroundFriction = new (0);
+        private readonly ElementBinding<float> maxExternalVelocity = new (0);
+
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             debugBuilder.TryAddWidget("Locomotion: Base")
@@ -59,6 +65,10 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Max Air Acceleration", maxAirAcc)
                         .AddFloatField("Air Drag", airDrag)
                         .AddFloatField("Grounded Stop Time", stopTime)
+                        .AddFloatField("Character Mass", characterMass)
+                        .AddFloatField("External Env Drag", externalEnvDrag)
+                        .AddFloatField("External Ground Friction", externalGroundFriction)
+                        .AddFloatField("Max External Velocity", maxExternalVelocity)
                 ;
         }
 
@@ -82,6 +92,10 @@ namespace DCL.CharacterMotion.Systems
             maxAirAcc.Value = settings.MaxAirAcceleration;
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
+            characterMass.Value = settings.CharacterMass;
+            externalEnvDrag.Value = settings.ExternalEnvDrag;
+            externalGroundFriction.Value = settings.ExternalGroundFriction;
+            maxExternalVelocity.Value = settings.MaxExternalVelocity;
         }
 
         protected override void Update(float t)
@@ -101,6 +115,10 @@ namespace DCL.CharacterMotion.Systems
             settings.MaxAirAcceleration = maxAirAcc.Value;
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
+            settings.CharacterMass = characterMass.Value;
+            settings.ExternalEnvDrag = externalEnvDrag.Value;
+            settings.ExternalGroundFriction = externalGroundFriction.Value;
+            settings.MaxExternalVelocity = maxExternalVelocity.Value;
 
             ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
             ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
@@ -125,7 +143,6 @@ namespace DCL.CharacterMotion.Systems
         [All(typeof(RandomAvatar))]
         [None(typeof(DeleteEntityIntention))]
         private void ResolveRandomAvatarVelocity(
-            Entity entity,
             [Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent cameraComponent,
@@ -159,17 +176,25 @@ namespace DCL.CharacterMotion.Systems
             // Apply velocity multiplier based on walls
             ApplyWallSlide.Execute(ref rigidTransform, characterController, in settings);
 
-            // Apply vertical velocity
+            // External forces (must run before gravity so ExternalAcceleration.y is available)
+            ApplyExternalImpulse.Execute(settings, ref rigidTransform);
+            ApplyExternalForce.Execute(settings, ref rigidTransform, dt);
+
+            // Vertical velocity (jump + gravity with effective gravity from external forces)
             ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
+
+            // Drag
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
+            ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
 
             if (cameraComponent.Mode == CameraMode.FirstPerson)
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
             else
                 ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
 
-            ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
+            if (!settings.EnableCharacterRotationBySlope)
+                ApplySlopeConditionalRotation.Execute(ref rigidTransform, in settings);
         }
     }
 }

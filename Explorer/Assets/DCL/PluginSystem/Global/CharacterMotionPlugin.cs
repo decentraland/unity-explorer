@@ -15,6 +15,7 @@ using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
+using CalculateCharacterVelocitySystem = DCL.Character.CharacterMotion.Systems.CalculateCharacterVelocitySystem;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global

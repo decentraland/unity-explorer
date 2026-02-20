@@ -123,7 +123,6 @@ MonoBehaviour:
   <WallSlideDetectionDistance>k__BackingField: 0.5
   <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
   <StepOffset>k__BackingField: 0.35
-  <HeadIKWeightChangeSpeed>k__BackingField: 2
   <RotationSpeed>k__BackingField: 400
   <MoveAnimBlendMaxWalkSpeed>k__BackingField: 1.5
   <MoveAnimBlendMaxJogSpeed>k__BackingField: 8
@@ -156,5 +155,13 @@ MonoBehaviour:
   <HeadIKHorizontalAngleLimit>k__BackingField: 50
   <HeadIKHorizontalAngleReset>k__BackingField: 120
   <HeadIKRotationSpeed>k__BackingField: 360
+  <HeadIKWeightChangeSpeed>k__BackingField: 2
+  <HeadIKRemotePlayersDistance>k__BackingField: 10
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
+  <ImpulseForce>k__BackingField: 20
+  <ImpulseDirection>k__BackingField: {x: 1, y: 0, z: 0}
+  <CharacterMass>k__BackingField: 1
+  <ExternalAirDrag>k__BackingField: 0.5
+  <ExternalFriction>k__BackingField: 8
+  <MaxExternalVelocity>k__BackingField: 50
