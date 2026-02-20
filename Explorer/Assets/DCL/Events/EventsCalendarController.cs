@@ -204,7 +204,7 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.ToUniversalTime();
+            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -234,6 +234,14 @@ namespace DCL.Events
 
                     for (var i = 0; i < numberOfDays; i++)
                     {
+                        // Live events are always shown on the calendar
+                        bool isTodayColumn = i == 0;
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn)
+                        {
+                            eventsGroupedByDay.Value[i].Add(eventInfo);
+                            break;
+                        }
+
                         if (eventLocalDate.Date == fromDate.AddDays(i))
                         {
                             eventsGroupedByDay.Value[i].Add(eventInfo);
