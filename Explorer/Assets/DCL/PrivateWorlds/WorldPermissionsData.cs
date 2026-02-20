@@ -9,19 +9,8 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public enum WorldAccessType
     {
-        /// <summary>
-        /// Anyone can access the world without restrictions.
-        /// </summary>
         Unrestricted,
-
-        /// <summary>
-        /// Only wallets explicitly listed or members of specified communities can access.
-        /// </summary>
         AllowList,
-
-        /// <summary>
-        /// Access requires a password/secret.
-        /// </summary>
         SharedSecret
     }
 
@@ -95,9 +84,22 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public class WorldAccessInfo
     {
+        private List<string> allowedWallets = new ();
+        private HashSet<string> allowedWalletsSet = new (StringComparer.OrdinalIgnoreCase);
+
         public WorldAccessType AccessType { get; set; }
         public string OwnerAddress { get; set; } = string.Empty;
-        public List<string> AllowedWallets { get; set; } = new ();
+        public List<string> AllowedWallets
+        {
+            get => allowedWallets;
+            set
+            {
+                allowedWallets = value ?? new List<string>();
+                allowedWalletsSet = new HashSet<string>(allowedWallets, StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        public IReadOnlyCollection<string> AllowedWalletsSet => allowedWalletsSet;
         public List<string> AllowedCommunities { get; set; } = new ();
 
         /// <summary>
@@ -136,16 +138,8 @@ namespace DCL.PrivateWorlds
         /// </summary>
         public bool IsWalletAllowed(string walletAddress)
         {
-            if (string.IsNullOrEmpty(walletAddress))
-                return false;
-
-            foreach (string allowed in AllowedWallets)
-            {
-                if (allowed.Equals(walletAddress, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
+            return !string.IsNullOrEmpty(walletAddress) &&
+                   allowedWalletsSet.Contains(walletAddress);
         }
     }
 }

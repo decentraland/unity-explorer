@@ -77,8 +77,8 @@ namespace DCL.PrivateWorlds
 
         private WorldAccessResult HandleAllowed(WorldAccessCheckContext context)
         {
-            // Owner of a SharedSecret world still needs a secret in the comms handshake.
-            // Backend validates ownership via signed fetch, so the actual value doesn't matter.
+            // NOTE: Owner of a SharedSecret world still needs a secret in the comms handshake.
+            // NOTE: Backend validates ownership via signed fetch, so the actual value doesn't matter.
             if (context.AccessInfo?.AccessType == WorldAccessType.SharedSecret)
                 worldCommsSecret.Secret = "owner";
 

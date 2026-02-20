@@ -10,36 +10,18 @@ using System.Threading;
 
 namespace DCL.PrivateWorlds
 {
-    /// <summary>
-    /// Result of checking world access permissions.
-    /// </summary>
     public enum WorldAccessCheckResult
     {
-        /// <summary>
-        /// User is allowed to access the world.
-        /// </summary>
         Allowed,
-
-        /// <summary>
-        /// World requires a password to enter.
-        /// </summary>
         PasswordRequired,
-
-        /// <summary>
-        /// User is not on the allow-list and not in any allowed community.
-        /// </summary>
         AccessDenied,
-
-        /// <summary>
-        /// Failed to fetch permissions, should fallback to server-side check.
-        /// </summary>
         CheckFailed
     }
 
     /// <summary>
     /// Contains the result of an access check along with additional context.
     /// </summary>
-    public class WorldAccessCheckContext
+    public struct WorldAccessCheckContext
     {
         public WorldAccessCheckResult Result { get; set; }
         public WorldAccessInfo? AccessInfo { get; set; }
@@ -65,7 +47,7 @@ namespace DCL.PrivateWorlds
         /// <param name="worldName">The world name</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Parsed world access info</returns>
-        UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct);
+        UniTask<WorldAccessInfo> GetWorldPermissionsAsync(string worldName, CancellationToken ct);
 
         /// <summary>
         /// Validates a password for a world. Returns success and optional error message from the backend (e.g. max attempts exceeded).
@@ -133,14 +115,7 @@ namespace DCL.PrivateWorlds
 
             try
             {
-                WorldAccessInfo? accessInfo = await GetWorldPermissionsAsync(worldName, ct);
-
-                if (accessInfo == null)
-                {
-                    context.Result = WorldAccessCheckResult.CheckFailed;
-                    context.ErrorMessage = "Failed to fetch world permissions";
-                    return context;
-                }
+                WorldAccessInfo accessInfo = await GetWorldPermissionsAsync(worldName, ct);
 
                 context.AccessInfo = accessInfo;
 
@@ -187,13 +162,15 @@ namespace DCL.PrivateWorlds
             return context;
         }
 
-        public virtual async UniTask<WorldAccessInfo?> GetWorldPermissionsAsync(string worldName, CancellationToken ct)
+        public async UniTask<WorldAccessInfo> GetWorldPermissionsAsync(string worldName, CancellationToken ct)
         {
             try
             {
                 string baseUrl = urlsSource.Url(DecentralandUrl.WorldPermissions);
                 string url = string.Format(baseUrl, worldName);
 
+                // NOTE: address allocations from serialization (either increasing check
+                // NOTE: or doing something else
                 var response = await webRequestController
                     .GetAsync(new CommonArguments(URLAddress.FromString(url)), ct, ReportCategory.REALM)
                     .CreateFromJson<WorldPermissionsResponse>(WRJsonParser.Newtonsoft);
@@ -207,7 +184,7 @@ namespace DCL.PrivateWorlds
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.REALM, $"Failed to fetch world permissions for '{worldName}': {e.Message}");
-                return null;
+                throw;
             }
         }
 
@@ -312,26 +289,42 @@ namespace DCL.PrivateWorlds
 
             if (communityMembershipChecker != null && accessInfo.AllowedCommunities.Count > 0)
             {
-                foreach (string communityId in accessInfo.AllowedCommunities)
+                var membershipChecks = new UniTask<bool>[accessInfo.AllowedCommunities.Count];
+
+                for (int i = 0; i < accessInfo.AllowedCommunities.Count; i++)
                 {
-                    try
-                    {
-                        if (await communityMembershipChecker.IsMemberOfCommunityAsync(communityId, ct))
-                            return true;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogWarning(ReportCategory.REALM,
-                            $"Failed to check community membership for '{communityId}': {e.Message}");
-                    }
+                    string communityId = accessInfo.AllowedCommunities[i];
+                    membershipChecks[i] = IsCommunityMembershipAllowedAsync(communityId, ct);
+                }
+
+                bool[] membershipResults = await UniTask.WhenAll(membershipChecks);
+
+                foreach (bool isMember in membershipResults)
+                {
+                    if (isMember)
+                        return true;
                 }
             }
 
             return false;
+
+            async UniTask<bool> IsCommunityMembershipAllowedAsync(string communityId, CancellationToken token)
+            {
+                try
+                {
+                    return await communityMembershipChecker.IsMemberOfCommunityAsync(communityId, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"Failed to check community membership for '{communityId}': {e.Message}");
+                    return false;
+                }
+            }
         }
     }
 }
