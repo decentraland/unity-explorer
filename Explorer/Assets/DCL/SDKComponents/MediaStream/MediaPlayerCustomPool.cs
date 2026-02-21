@@ -66,6 +66,15 @@ namespace DCL.SDKComponents.MediaStream
                 float now = UnityEngine.Time.realtimeSinceStartup;
                 keysToRemove.Clear();
 
+                // CloseMedia() in AVProVideo is asynchronous: it schedules native teardown but
+                // returns immediately. Destroying GameObjects on the same frame causes Unity to
+                // call into AVProVideo's Update/texture callbacks while its native resources are
+                // in a partially-closed state, leading to a native crash on macOS/Apple Silicon.
+                // Collect all expired players across all URL keys, close any still-open ones,
+                // then wait a single frame for AVProVideo to process the close events before
+                // batch-destroying.
+                var toDestroy = new List<MediaPlayer>();
+
                 foreach (KeyValuePair<string, Queue<MediaPlayerInfo>> kvp in offlineMediaPlayers)
                 {
                     Queue<MediaPlayerInfo>? queue = kvp.Value;
@@ -73,9 +82,12 @@ namespace DCL.SDKComponents.MediaStream
                     //IF the video hasnt been used in five minutes, then it will be get closed and destroyed
                     while (queue.Count > 0 && now - queue.Peek().lastTimeUsed > maxOfflineTimePossibleInSeconds)
                     {
-                        MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
-                        expiredPlayerInfo.mediaPlayer.CloseMedia();
-                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
+                        MediaPlayerInfo expiredPlayerInfo = queue.Dequeue();
+
+                        if (expiredPlayerInfo.mediaPlayer.MediaOpened)
+                            expiredPlayerInfo.mediaPlayer.CloseMedia();
+
+                        toDestroy.Add(expiredPlayerInfo.mediaPlayer);
                     }
 
                     if (queue.Count == 0)
@@ -84,6 +96,14 @@ namespace DCL.SDKComponents.MediaStream
 
                 foreach (string key in keysToRemove)
                     offlineMediaPlayers.Remove(key);
+
+                if (toDestroy.Count > 0)
+                {
+                    await UniTask.NextFrame();
+
+                    foreach (MediaPlayer mp in toDestroy)
+                        GameObject.Destroy(mp.gameObject);
+                }
             }
         }
 
