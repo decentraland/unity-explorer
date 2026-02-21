@@ -86,6 +86,29 @@ namespace DCL.SDKComponents.Tween.Components
                                            .SetAutoKill(false).Pause();
                     break;
 
+                case PBTween.ModeOneofCase.MoveRotateScale:
+                {
+                    // Avoid nested Sequences: DOTween doesn't reliably re-evaluate
+                    // From() values on tweens inside a nested Sequence when the parent
+                    // Sequence advances to that step. A single DOVirtual.Float drives
+                    // all three properties through its callback instead.
+                    Vector3 posStart = pbTween.MoveRotateScale.PositionStart;
+                    Vector3 posEnd = pbTween.MoveRotateScale.PositionEnd;
+                    var rotStart = pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion();
+                    var rotEnd = pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion();
+                    Vector3 scaleStart = pbTween.MoveRotateScale.ScaleStart;
+                    Vector3 scaleEnd = pbTween.MoveRotateScale.ScaleEnd;
+
+                    returnTween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
+                    {
+                        transform.localPosition = Vector3.Lerp(posStart, posEnd, t);
+                        transform.localRotation = Quaternion.Slerp(rotStart, rotEnd, t);
+                        transform.localScale = Vector3.Lerp(scaleStart, scaleEnd, t);
+                    })
+                    .SetAutoKill(false).Pause();
+                    break;
+                }
+
                 case PBTween.ModeOneofCase.TextureMove:
                     if (material != null)
                     {
