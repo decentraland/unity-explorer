@@ -23,3 +23,18 @@ MonoBehaviour:
     extensionCode: 
     isUseOriginal: 1
     modifiedDate: 09/05/2025 20:04:36.599
+  - shaderName: GPUInstancerPro/Standard
+    replacementShaderName: GPUInstancerPro/Standard
+    extensionCode: 
+    isUseOriginal: 1
+    modifiedDate: 01/22/2026 14:37:48.583
+  - shaderName: DCL/Tree
+    replacementShaderName: DCL/Tree
+    extensionCode: 
+    isUseOriginal: 1
+    modifiedDate: 01/27/2026 13:24:59.652
+  - shaderName: DCL/TreeImpostor
+    replacementShaderName: DCL/TreeImpostor
+    extensionCode: 
+    isUseOriginal: 1
+    modifiedDate: 01/27/2026 13:24:59.652
