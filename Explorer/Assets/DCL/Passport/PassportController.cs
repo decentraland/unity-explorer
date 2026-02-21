@@ -326,8 +326,7 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController,
-                imageControllerProvider));
+                passportErrorsController));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,

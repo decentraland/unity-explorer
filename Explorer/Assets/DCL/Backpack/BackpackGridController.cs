@@ -50,6 +50,7 @@ namespace DCL.Backpack
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems = new ();
         private readonly List<ITrimmedWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView?[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
+        private readonly ReportData wearableReportData = new (ReportCategory.WEARABLE);
 
         private CancellationTokenSource? pageFetchCancellationToken;
         private bool currentCollectiblesOnly;
@@ -155,7 +156,7 @@ namespace DCL.Backpack
                 return backpackItemView;
             }
         }
-        
+
         private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
         {
             IWearable? newBodyShape = null;
@@ -183,7 +184,7 @@ namespace DCL.Backpack
                         break;
                     }
                 }
-                
+
                 itemView.IsEquipped = isEquipped;
                 itemView.SetEquipButtonsState();
             }
@@ -272,10 +273,10 @@ namespace DCL.Backpack
         private void EquipItem(int slot, string itemId)
         {
             SetLoadingSlot(slot, true);
-            WearableProviderHelper.FetchWearableByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
-                                       wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
-                                       CancellationToken.None)
-                                  .Forget();
+            ElementProviderHelper.FetchElementByPointerAndExecuteAsync(itemId, wearablesProvider, wearableStorage, equippedWearables,
+                                      wearable => TryEquippingItemAsync(wearable, itemId, slot, CancellationToken.None).Forget(),
+                                      CancellationToken.None, wearableReportData)
+                                 .Forget();
         }
 
         private async UniTask TryEquippingItemAsync(IWearable wearable, string itemId, int slot, CancellationToken ct)
@@ -364,15 +365,17 @@ namespace DCL.Backpack
 
             try
             {
-                (var wearables, int totalAmount) = await wearablesProvider.GetAsync(CURRENT_PAGE_SIZE,
-                    pageNumber,
+                (var wearables, int totalAmount) = await wearablesProvider.GetTrimmedByParamsAsync(
+                    new IWearablesProvider.Params(CURRENT_PAGE_SIZE, pageNumber)
+                    {
+                        SortingField = currentSort.OrderByOperation.ToSortingField(),
+                        OrderBy = currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
+                        Category = currentCategory,
+                        CollectionType = collectionType,
+                        SmartWearablesOnly = currentSmartWearablesOnly,
+                        Name = currentSearch,
+                    },
                     ct,
-                    currentSort.OrderByOperation.ToSortingField(),
-                    currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                    currentCategory,
-                    collectionType,
-                    currentSmartWearablesOnly,
-                    currentSearch,
                     results);
 
                 if (refreshPageSelector)
@@ -430,8 +433,11 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId));
+        private void SelectItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackSelectWearableCommand(itemId, () => SetLoadingSlot(slot, false)));
+        }
 
         private void OnUnequip(IWearable unequippedWearable)
         {

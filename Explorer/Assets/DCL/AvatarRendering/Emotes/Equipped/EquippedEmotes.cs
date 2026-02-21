@@ -31,6 +31,15 @@ namespace DCL.AvatarRendering.Emotes.Equipped
             return -1;
         }
 
+        public int SlotOf(ITrimmedEmote emote)
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+                if (equippedEmotes[i]?.GetUrn() == emote.GetUrn())
+                    return i;
+
+            return -1;
+        }
+
         public int SlotOf(IEmote emote)
         {
             for (var i = 0; i < equippedEmotes.Length; i++)

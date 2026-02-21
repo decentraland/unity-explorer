@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using DCL.AvatarRendering.Emotes;
+﻿using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
@@ -11,7 +10,6 @@ using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Backpack.Gifting.Views;
-using DCL.Web3.Identities;
 using Utility;
 
 namespace DCL.Backpack.Gifting.Factory
@@ -27,7 +25,6 @@ namespace DCL.Backpack.Gifting.Factory
         private readonly IEventBus eventBus;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEmoteProvider emoteProvider;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         private readonly IWearableStylingCatalog wearableStylingCatalog;
         private readonly IWearableStorage wearableStorage;
@@ -41,7 +38,6 @@ namespace DCL.Backpack.Gifting.Factory
             IEventBus eventBus,
             IWearablesProvider wearablesProvider,
             IEmoteProvider emoteProvider,
-            IWeb3IdentityCache web3IdentityCache,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IWearableStylingCatalog wearableStylingCatalog,
             IPendingTransferService pendingTransferService,
@@ -52,7 +48,6 @@ namespace DCL.Backpack.Gifting.Factory
             this.eventBus = eventBus;
             this.wearablesProvider = wearablesProvider;
             this.emoteProvider = emoteProvider;
-            this.web3IdentityCache = web3IdentityCache;
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.wearableStylingCatalog = wearableStylingCatalog;
             this.pendingTransferService = pendingTransferService;
@@ -90,7 +85,6 @@ namespace DCL.Backpack.Gifting.Factory
                 equippedStatusProvider,
                 pendingTransferService,
                 emoteProvider,
-                web3IdentityCache,
                 wearableStylingCatalog,
                 wearableStorage,
                 emoteStorage);

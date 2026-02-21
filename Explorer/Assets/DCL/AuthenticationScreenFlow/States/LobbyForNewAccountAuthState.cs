@@ -182,11 +182,12 @@ namespace DCL.AuthenticationScreenFlow
             try
             {
                 // Load base wearables catalog from backend (pageSize 300 to get all)
-                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetAsync(
-                    pageSize: 300,
-                    pageNumber: 1,
-                    ct,
-                    collectionType: IWearablesProvider.CollectionType.Base);
+                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetTrimmedByParamsAsync(
+                    new IWearablesProvider.Params(300, 1)
+                    {
+                        CollectionType = IWearablesProvider.CollectionType.Base
+                    },
+                    ct);
 
                 ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items");
                 return wearables;

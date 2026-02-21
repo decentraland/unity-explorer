@@ -1,35 +1,30 @@
 using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.Web3;
-using ECS.StreamableLoading.Common.Components;
-using System.Collections.Generic;
-using System.Threading;
+using DCL.AvatarRendering.Loading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public interface IEmoteProvider
+    public interface IEmoteProvider : IElementsProvider<ITrimmedEmote, IEmote, IEmoteProvider.OwnedEmotesRequestOptions>
     {
         public readonly struct OrderOperation
         {
             public readonly string By;
-            public readonly bool IsAscendent;
+            public readonly bool IsAscending;
 
-            public OrderOperation(string by, bool isAscendent)
+            public OrderOperation(string by, bool isAscending)
             {
                 By = by;
-                IsAscendent = isAscendent;
+                IsAscending = isAscending;
             }
         }
 
         public readonly struct OwnedEmotesRequestOptions
         {
-            public readonly int? pageNum;
-            public readonly int? pageSize;
-            public readonly URN? collectionId;
-            public readonly OrderOperation? orderOperation;
-            public readonly string? name;
-            public readonly bool? includeAmount;
+            public readonly int? PageNum;
+            public readonly int? PageSize;
+            public readonly URN? CollectionId;
+            public readonly OrderOperation? OrderOperation;
+            public readonly string? Name;
+            public readonly bool? IncludeAmount;
 
             public OwnedEmotesRequestOptions(int? pageNum,
                 int? pageSize,
@@ -38,30 +33,13 @@ namespace DCL.AvatarRendering.Emotes
                 string? name,
                 bool? includeAmount = null)
             {
-                this.pageNum = pageNum;
-                this.pageSize = pageSize;
-                this.collectionId = collectionId;
-                this.orderOperation = orderOperation;
-                this.name = name;
-                this.includeAmount = includeAmount;
+                this.PageNum = pageNum;
+                this.PageSize = pageSize;
+                this.CollectionId = collectionId;
+                this.OrderOperation = orderOperation;
+                this.Name = name;
+                this.IncludeAmount = includeAmount;
             }
         }
-
-        /// <returns>Total amount</returns>
-        UniTask<int> GetOwnedEmotesAsync(
-            Web3Address userId,
-            CancellationToken ct,
-            OwnedEmotesRequestOptions requestOptions,
-            List<IEmote>? results = null,
-            CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false
-        );
-
-        UniTask GetEmotesAsync(
-            IReadOnlyCollection<URN> emoteIds,
-            BodyShape bodyShape,
-            CancellationToken ct,
-            List<IEmote> output
-        );
     }
 }

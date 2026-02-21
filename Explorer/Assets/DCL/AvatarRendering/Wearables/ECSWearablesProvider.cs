@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -14,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Utility;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.TrimmedWearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetTrimmedWearableByParamIntention>;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
@@ -22,21 +23,12 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ECSWearablesProvider : IWearablesProvider
     {
-        private const string PAGE_NUMBER = "pageNum";
-        private const string PAGE_SIZE = "pageSize";
         private const string NETWORK = "network";
-        private const string INCLUDE_AMOUNT = "includeAmount";
         private const string CATEGORY = "category";
-        private const string ORDER_BY = "orderBy";
         private const string COLLECTION_TYPE = "collectionType";
-        private const string ORDER_DIRECTION = "direction";
-        private const string SEARCH = "name";
-        private const string ASCENDING = "ASC";
-        private const string DESCENDING = "DESC";
         private const string ON_CHAIN_COLLECTION_TYPE = "on-chain";
         private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
         private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
-        private const string TRIMMED = "trimmed";
         private const string IS_SMART_WEARABLE = "isSmartWearable";
 
         private readonly string[] allWearableCategories = WearableCategories.CATEGORIES_PRIORITY.ToArray();
@@ -52,60 +44,48 @@ namespace DCL.AvatarRendering.Wearables
             this.world = world;
         }
 
-        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
-            int pageNumber,
+        public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetTrimmedByParamsAsync(
+            IWearablesProvider.Params parameters,
             CancellationToken ct,
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
-            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
-            string? category = null,
-            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            bool smartWearablesOnly = false,
-            string? name = null,
             List<ITrimmedWearable>? results = null,
-            string? network = null,
-            bool? includeAmount = null,
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
-            requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
-            requestParameters.Add((PAGE_SIZE, pageSize.ToString()));
-            requestParameters.Add((TRIMMED, "true"));
+            requestParameters.Add((IElementsProviderQueryParams.PAGE_NUMBER, parameters.PageNumber.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.PAGE_SIZE, parameters.PageSize.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.TRIMMED, "true"));
 
-            bool requestingAmount = includeAmount ?? false;
-            if (!requestingAmount)
-                requestParameters.Add((TRIMMED, "true"));
-            
-            if (!string.IsNullOrEmpty(network))
-                requestParameters.Add((NETWORK, network));
-            
-            if (includeAmount ?? true)
-                requestParameters.Add((INCLUDE_AMOUNT, "true"));
-            
-            if (!string.IsNullOrEmpty(category))
-                requestParameters.Add((CATEGORY, category));
+            if (!string.IsNullOrEmpty(parameters.Network))
+                requestParameters.Add((NETWORK, parameters.Network));
 
-            requestParameters.Add((ORDER_BY, sortingField.ToString()));
-            requestParameters.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
+            if (parameters.IncludeAmount ?? true)
+                requestParameters.Add((IElementsProviderQueryParams.INCLUDE_AMOUNT, "true"));
 
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.Base))
+            if (!string.IsNullOrEmpty(parameters.Category))
+                requestParameters.Add((CATEGORY, parameters.Category));
+
+            requestParameters.Add((IElementsProviderQueryParams.ORDER_BY, parameters.SortingField.ToString()));
+            requestParameters.Add((IElementsProviderQueryParams.ORDER_DIRECTION, GetDirectionParamValue(parameters.OrderBy)));
+
+            if (EnumUtils.HasFlag(parameters.CollectionType, IWearablesProvider.CollectionType.Base))
                 requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
 
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.OnChain))
+            if (EnumUtils.HasFlag(parameters.CollectionType, IWearablesProvider.CollectionType.OnChain))
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
 
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.ThirdParty))
+            if (EnumUtils.HasFlag(parameters.CollectionType, IWearablesProvider.CollectionType.ThirdParty))
                 requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
 
-            if (smartWearablesOnly)
+            if (parameters.SmartWearablesOnly)
                 requestParameters.Add((IS_SMART_WEARABLE, "true"));
 
-            if (!string.IsNullOrEmpty(name))
-                requestParameters.Add((SEARCH, name));
+            if (!string.IsNullOrEmpty(parameters.Name))
+                requestParameters.Add((IElementsProviderQueryParams.NAME, parameters.Name));
 
             results ??= new List<ITrimmedWearable>();
 
-            var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            var intention = new GetTrimmedWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
@@ -126,80 +106,10 @@ namespace DCL.AvatarRendering.Wearables
                 wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
-        public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(int pageSize,
-            int pageNumber,
-            CancellationToken ct,
-            IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date,
-            IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
-            string? category = null,
-            IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            bool smartWearablesOnly = false,
-            string? name = null,
-            string? network = null,
-            CommonLoadingArguments? loadingArguments = null)
-        {
-            // Use a local list for parameters to avoid conflict if GetAsync is called simultaneously
-            var localParams = new List<(string, string)>
-            {
-                (PAGE_NUMBER, pageNumber.ToString()), (PAGE_SIZE, pageSize.ToString()), (INCLUDE_AMOUNT, "true")
-            };
-
-            if (!string.IsNullOrEmpty(network))
-                localParams.Add((NETWORK, network));
-
-            if (!string.IsNullOrEmpty(category))
-                localParams.Add((CATEGORY, category));
-
-            localParams.Add((ORDER_BY, sortingField.ToString()));
-            localParams.Add((ORDER_DIRECTION, GetDirectionParamValue(orderBy)));
-
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.Base))
-                localParams.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
-
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.OnChain))
-                localParams.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
-
-            if (EnumUtils.HasFlag(collectionType, IWearablesProvider.CollectionType.ThirdParty))
-                localParams.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
-
-            if (smartWearablesOnly)
-                localParams.Add((IS_SMART_WEARABLE, "true"));
-
-            if (!string.IsNullOrEmpty(name))
-                localParams.Add((SEARCH, name));
-
-            // We need a temporary buffer because the Intention expects List<ITrimmedWearable>
-            var tempResultsBuffer = new List<ITrimmedWearable>();
-
-            var intention = new GetWearableByParamIntention(localParams, web3IdentityCache.Identity!.Address, tempResultsBuffer, 0);
-            if (loadingArguments.HasValue)
-                intention.CommonArguments = loadingArguments.Value;
-
-            var wearablesPromise = ParamPromise.Create(world!, intention, PartitionComponent.TOP_PRIORITY);
-            wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);
-
-            ct.ThrowIfCancellationRequested();
-
-            var typedResults = new List<IWearable>();
-
-            if (wearablesPromise.Result == null) return (typedResults, 0);
-            if (!wearablesPromise.Result.HasValue) return (typedResults, 0);
-            if (!wearablesPromise.Result!.Value.Succeeded) return (typedResults, 0);
-
-            foreach (var item in wearablesPromise.Result.Value.Asset.Wearables)
-            {
-                if (item is IWearable fullWearable)
-                {
-                    typedResults.Add(fullWearable);
-                }
-            }
-
-            return (typedResults, wearablesPromise.Result.Value.Asset.TotalAmount);
-        }
-        
-        public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+        public async UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
-            CancellationToken ct)
+            CancellationToken ct,
+            List<IWearable>? results = null)
         {
             var promise = WearablePromise.Create(world,
 
@@ -216,7 +126,11 @@ namespace DCL.AvatarRendering.Wearables
             if (!result.Succeeded)
                 return null;
 
-            return result.Asset.Wearables;
+            results ??= new List<IWearable>();
+
+            results.AddRange(result.Asset.Wearables);
+
+            return results;
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)
@@ -225,10 +139,11 @@ namespace DCL.AvatarRendering.Wearables
             {
                 case IWearablesProvider.OrderBy.Ascending:
                 default:
-                    return ASCENDING;
+                    return IElementsProviderQueryParams.Values.ASCENDING;
                 case IWearablesProvider.OrderBy.Descending:
-                    return DESCENDING;
+                    return IElementsProviderQueryParams.Values.DESCENDING;
             }
         }
+
     }
 }

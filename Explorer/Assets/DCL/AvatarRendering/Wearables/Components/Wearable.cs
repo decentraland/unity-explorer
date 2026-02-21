@@ -41,15 +41,16 @@ namespace DCL.AvatarRendering.Wearables.Components
             get => Model;
             set => Model = value;
         }
-        
+
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
         public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
 
         public AvatarAttachmentDTO DTO => Model.Asset!;
-        public TrimmedAvatarAttachmentDTO TrimmedDTO => TrimmedModel.Asset!;
-        
+        public TrimmedWearableDTO TrimmedDTO => TrimmedModel.Asset!;
+        TrimmedAvatarAttachmentDTO? ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
+
         public WearableType Type { get; private set; }
 
         public bool IsLoading { get; private set; }
@@ -69,11 +70,11 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = this.GetUrn().ToString();
+            var id = ((IAvatarAttachment)this).GetUrn().ToString();
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
-            
+
 
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;
@@ -93,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Model = result;
-            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(this.GetThumbnail().Value));
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
