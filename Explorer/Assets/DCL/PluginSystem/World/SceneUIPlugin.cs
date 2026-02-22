@@ -1,6 +1,7 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -18,11 +19,13 @@ using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Font = UnityEngine.Font;
 
 namespace DCL.PluginSystem.World
 {
@@ -90,14 +93,16 @@ namespace DCL.PluginSystem.World
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             finalizeWorldSystems.Add(UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry));
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock, styleFontDefinitions);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
+            UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, styleFontDefinitions);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 
+            ResetDirtyFlagSystem<PBUiTransform>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBUiBackground>.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 

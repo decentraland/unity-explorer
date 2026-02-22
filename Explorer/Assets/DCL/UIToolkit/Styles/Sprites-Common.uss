@@ -1,6 +1,7 @@
 /* AUTO GENERATED */
 :root {
     --sprite-common__background-gradient-mention: url('/Assets/Textures/UI/Common/background-gradient-mention.png');
+    --sprite-common__icon-arrow-down: url('/Assets/Textures/UI/Common/icon-arrow-down.png');
     --sprite-common__icon-checkmark-thin: url('/Assets/Textures/UI/Common/icon-checkmark-thin.png');
     --sprite-common__icon-close: url('/Assets/Textures/UI/Common/icon-close.png');
     --sprite-common__icon-connection: url('/Assets/Textures/UI/Common/icon-connection.png');
@@ -18,6 +19,12 @@
     background-image: var(--sprite-common__background-gradient-mention);
     width: 32px;
     height: 32px;
+}
+
+.sprite-common__icon-arrow-down {
+    background-image: var(--sprite-common__icon-arrow-down);
+    width: 32px;
+    height: 18.5px;
 }
 
 .sprite-common__icon-checkmark-thin {

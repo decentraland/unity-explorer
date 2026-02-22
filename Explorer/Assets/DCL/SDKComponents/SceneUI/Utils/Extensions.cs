@@ -1,8 +1,10 @@
+using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using Google.Protobuf.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,6 +13,117 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class Extensions
     {
+        // UiDropdown, UiInput and UiButton detect the hover event, but their UiTransform has the styles effect.
+        // A struct and static callbacks are used to avoid allocations.
+        public readonly struct HoverStyleBehaviourData
+        {
+            public readonly VisualElement HoverEventTarget;
+            public readonly VisualElement UiTransform;
+            public readonly World World;
+            public readonly Entity Entity;
+            public readonly float BorderDarkenFactor;
+            public readonly float BackgroundDarkenFactor;
+
+            // Store original border colors from VisualElement to lerp back to on hover leave
+            public readonly Color OriginalBorderTopColor;
+            public readonly Color OriginalBorderRightColor;
+            public readonly Color OriginalBorderBottomColor;
+            public readonly Color OriginalBorderLeftColor;
+
+            public HoverStyleBehaviourData(
+                VisualElement hoverEventTarget,
+                VisualElement uiTransform,
+                World world,
+                Entity entity,
+                float borderDarkenFactor,
+                float backgroundDarkenFactor,
+                Color originalBorderTopColor,
+                Color originalBorderRightColor,
+                Color originalBorderBottomColor,
+                Color originalBorderLeftColor)
+            {
+                HoverEventTarget = hoverEventTarget;
+                UiTransform = uiTransform;
+                World = world;
+                Entity = entity;
+                BorderDarkenFactor = borderDarkenFactor;
+                BackgroundDarkenFactor = backgroundDarkenFactor;
+                OriginalBorderTopColor = originalBorderTopColor;
+                OriginalBorderRightColor = originalBorderRightColor;
+                OriginalBorderBottomColor = originalBorderBottomColor;
+                OriginalBorderLeftColor = originalBorderLeftColor;
+            }
+        }
+
+        internal static readonly EventCallback<PointerEnterEvent, HoverStyleBehaviourData> HOVER_ENTER_CALLBACK = OnHoverEnter;
+        internal static readonly EventCallback<PointerLeaveEvent, HoverStyleBehaviourData> HOVER_LEAVE_CALLBACK = OnHoverLeave;
+
+        public static void RegisterHoverStyleCallbacks(this VisualElement hoverEventTarget, HoverStyleBehaviourData data)
+        {
+            hoverEventTarget.UnregisterHoverStyleCallbacks();
+            hoverEventTarget.RegisterCallback(HOVER_ENTER_CALLBACK, data);
+            hoverEventTarget.RegisterCallback(HOVER_LEAVE_CALLBACK, data);
+        }
+
+        public static void UnregisterHoverStyleCallbacks(this VisualElement hoverEventTarget)
+        {
+            hoverEventTarget.UnregisterCallback(HOVER_ENTER_CALLBACK);
+            hoverEventTarget.UnregisterCallback(HOVER_LEAVE_CALLBACK);
+        }
+
+        private static void OnHoverEnter(PointerEnterEvent evt, HoverStyleBehaviourData behaviourData)
+        {
+            if (behaviourData.HoverEventTarget.hasDisabledPseudoState)
+                return;
+
+            if (behaviourData.BorderDarkenFactor > 0)
+            {
+                behaviourData.UiTransform.style.borderTopColor = Color.Lerp(behaviourData.OriginalBorderTopColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderRightColor = Color.Lerp(behaviourData.OriginalBorderRightColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderBottomColor = Color.Lerp(behaviourData.OriginalBorderBottomColor, Color.black, behaviourData.BorderDarkenFactor);
+                behaviourData.UiTransform.style.borderLeftColor = Color.Lerp(behaviourData.OriginalBorderLeftColor, Color.black, behaviourData.BorderDarkenFactor);
+            }
+
+            if (behaviourData.BackgroundDarkenFactor > 0)
+            {
+                bool hasBackgroundComponent = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground);
+                Color baseColor = hasBackgroundComponent ? pbUiBackground!.GetColor() : Color.white;
+                Color darkenedColor = Color.Lerp(baseColor, Color.black, behaviourData.BackgroundDarkenFactor);
+
+                // Set the correct style property depending on whether the background uses a texture
+                if (hasBackgroundComponent && pbUiBackground!.Texture != null)
+                    behaviourData.UiTransform.style.unityBackgroundImageTintColor = darkenedColor;
+                else
+                    behaviourData.UiTransform.style.backgroundColor = darkenedColor;
+            }
+        }
+
+        private static void OnHoverLeave(PointerLeaveEvent evt, HoverStyleBehaviourData behaviourData)
+        {
+            if (evt.target != behaviourData.HoverEventTarget)
+                return; // detected on child
+
+            if (behaviourData.BorderDarkenFactor > 0)
+            {
+                behaviourData.UiTransform.style.borderTopColor = behaviourData.OriginalBorderTopColor;
+                behaviourData.UiTransform.style.borderRightColor = behaviourData.OriginalBorderRightColor;
+                behaviourData.UiTransform.style.borderBottomColor = behaviourData.OriginalBorderBottomColor;
+                behaviourData.UiTransform.style.borderLeftColor = behaviourData.OriginalBorderLeftColor;
+            }
+
+            if (behaviourData.BackgroundDarkenFactor > 0)
+            {
+                bool hasBackgroundComponent = behaviourData.World.TryGet(behaviourData.Entity, out PBUiBackground? pbUiBackground);
+                Color originalColor = hasBackgroundComponent ? pbUiBackground!.GetColor() : Color.white;
+
+                // Restore the correct style property depending on whether the background uses a texture
+                if (hasBackgroundComponent && pbUiBackground!.Texture != null)
+                    behaviourData.UiTransform.style.unityBackgroundImageTintColor = originalColor;
+                else
+                    behaviourData.UiTransform.style.backgroundColor = originalColor;
+            }
+        }
+
         public static TextAnchor ToUnityTextAlign(this TextAlignMode align)
         {
             switch (align)
@@ -142,23 +255,39 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusOut);
         }
 
+        // Using static callbacks to avoid closure allocations
+        private static readonly EventCallback<ChangeEvent<string>, UIDropdownComponent> DROPDOWN_VALUE_CHANGED_CALLBACK = OnDropdownValueChanged;
+        private static readonly EventCallback<PointerDownEvent, UIDropdownComponent> DROPDOWN_POINTER_DOWN_CALLBACK = OnDropdownPointerDown;
+        internal static readonly System.Action<VisualElement, float> OPACITY_ANIMATION_CALLBACK = static (element, value) => element.style.opacity = value;
+
         public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
         {
-            EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
-            {
-                evt.StopPropagation();
-                uiDropdownComponent.IsOnValueChangedTriggered = true;
-            };
-
             uiDropdownComponent.UnregisterDropdownCallbacks();
-            uiDropdownComponent.DropdownField.RegisterCallback(newOnChangeCallback);
-            uiDropdownComponent.currentOnValueChanged = newOnChangeCallback;
+            uiDropdownComponent.DropdownField.RegisterCallback(DROPDOWN_VALUE_CHANGED_CALLBACK, uiDropdownComponent);
+
+            // Enforce an opacity transition since Unity instantiates the popup on demand,
+            // and we cannot animate a property on it from the uss stylesheet.
+            // The animation must be scheduled (deferred) because Unity creates the popup element
+            // on demand, so it doesn't exist in the visual tree at PointerDown time.
+            uiDropdownComponent.cachedScheduledAction ??= uiDropdownComponent.AnimateDropdownOpacity;
+            uiDropdownComponent.DropdownField.RegisterCallback(DROPDOWN_POINTER_DOWN_CALLBACK, uiDropdownComponent);
         }
 
-        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiInputComponent)
+        public static void UnregisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
         {
-            if(uiInputComponent.currentOnValueChanged!=null)
-                uiInputComponent.DropdownField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
+            uiDropdownComponent.DropdownField.UnregisterCallback(DROPDOWN_VALUE_CHANGED_CALLBACK);
+            uiDropdownComponent.DropdownField.UnregisterCallback(DROPDOWN_POINTER_DOWN_CALLBACK);
+        }
+
+        private static void OnDropdownValueChanged(ChangeEvent<string> evt, UIDropdownComponent component)
+        {
+            evt.StopPropagation();
+            component.IsOnValueChangedTriggered = true;
+        }
+
+        private static void OnDropdownPointerDown(PointerDownEvent _, UIDropdownComponent component)
+        {
+            component.DropdownField.schedule.Execute(component.cachedScheduledAction);
         }
     }
 }

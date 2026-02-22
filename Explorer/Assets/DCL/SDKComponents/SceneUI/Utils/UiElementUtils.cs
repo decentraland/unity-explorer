@@ -7,7 +7,6 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using System.Linq;
 using UnityEngine;
-using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -200,30 +199,64 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, ref PBUiInput model)
+        public static void SetupUIInputComponent(ref UIInputComponent inputToSetup, in PBUiInput model, in StyleFontDefinition[] styleFontDefinitions)
         {
             bool isReadonly = !model.IsInteractive();
+
             inputToSetup.Placeholder.PlaceholderText = model.Placeholder;
             inputToSetup.Placeholder.PlaceholderColor = model.GetPlaceholderColor();
             inputToSetup.Placeholder.NormalColor = model.GetColor();
             inputToSetup.Placeholder.IsReadonly = isReadonly;
+
             inputToSetup.TextField.isReadOnly = isReadonly;
             inputToSetup.TextField.style.fontSize = model.GetFontSize();
-            inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
+
+            int font = (int)model.GetFont();
+            if (font < styleFontDefinitions.Length)
+                inputToSetup.TextField.style.unityFontDefinition = styleFontDefinitions[font];
+
             inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             inputToSetup.Placeholder.Refresh();
+
+            inputToSetup.TextField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
+            inputToSetup.TextField.SetEnabled(!model.Disabled);
+            inputToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
         }
 
-        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, ref PBUiDropdown model)
+        public static void SetupUIDropdownComponent(ref UIDropdownComponent dropdownToSetup, in PBUiDropdown model, in StyleFontDefinition[] styleFontDefinitions)
         {
-            dropdownToSetup.DropdownField.style.fontSize = model.GetFontSize();
-            dropdownToSetup.DropdownField.style.color = model.GetColor();
-            dropdownToSetup.DropdownField.choices.Clear();
-            dropdownToSetup.DropdownField.choices.AddRange(model.Options);
-            dropdownToSetup.DropdownField.SetValueWithoutNotify(dropdownToSetup.DropdownField.choices.ElementAtOrDefault(model.GetSelectedIndex()) ?? model.EmptyLabel);
-            dropdownToSetup.DropdownField.EnableInClassList("dcl-dropdown-readonly", model.Disabled);
-            dropdownToSetup.DropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
+            var dropdownField = dropdownToSetup.DropdownField;
+            dropdownField.style.fontSize = model.GetFontSize();
+            dropdownField.style.color = model.GetColor();
+
+            int font = (int)model.GetFont();
+            if (font < styleFontDefinitions.Length)
+                dropdownField.style.unityFontDefinition = styleFontDefinitions[font];
+
+            dropdownField.choices.Clear();
+            dropdownField.choices.AddRange(model.Options);
+
+            int selectedIndex = model.GetSelectedIndex();
+            if (selectedIndex != dropdownToSetup.LastIndexSetByScene)
+            {
+                var newValue = dropdownField.choices.ElementAtOrDefault(selectedIndex) ?? model.EmptyLabel;
+
+                // Below '-1' is checked, because '-1' is used for the case of 'accept Empty value'
+                if (dropdownToSetup.LastIndexSetByScene < -1)
+                    dropdownField.SetValueWithoutNotify(newValue);
+                else
+                    dropdownField.value = newValue;
+
+                dropdownToSetup.LastIndexSetByScene = selectedIndex;
+            }
+
             dropdownToSetup.TextElement.style.unityTextAlign = model.GetTextAlign();
+
+            var arrowIcon = dropdownField.Q(null, "unity-base-popup-field__arrow");
+            arrowIcon.AddToClassList("sprite-common__icon-arrow-down");
+
+            dropdownField.pickingMode = model.Disabled ? PickingMode.Ignore : PickingMode.Position;
+            dropdownField.SetEnabled(!model.Disabled);
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)
@@ -404,6 +437,118 @@ namespace DCL.SDKComponents.SceneUI.Utils
 #else
             return prefix;
 #endif
+        }
+
+        public static void ConfigureHoverStylesBehaviour(World world, Entity entity, in UITransformComponent uiTransformComponent, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
+        {
+            // Capture the current border colors from the VisualElement
+            var transform = uiTransformComponent.Transform;
+            var borderTopColor = transform.resolvedStyle.borderTopColor;
+            var borderRightColor = transform.resolvedStyle.borderRightColor;
+            var borderBottomColor = transform.resolvedStyle.borderBottomColor;
+            var borderLeftColor = transform.resolvedStyle.borderLeftColor;
+
+            var data = new Extensions.HoverStyleBehaviourData(
+                hoverEventTarget,
+                transform,
+                world,
+                entity,
+                borderDarkenFactor,
+                backgroundDarkenFactor,
+                borderTopColor,
+                borderRightColor,
+                borderBottomColor,
+                borderLeftColor);
+
+            hoverEventTarget.RegisterHoverStyleCallbacks(data);
+        }
+
+        private const float UI_TRANSFORM_DEFAULT_RADIUS = 10f;
+        private const float UI_TRANSFORM_DEFAULT_BORDER_WIDTH = 1f;
+        /// <summary>
+        /// Applies default UI transform styles for interactive UI elements (dropdowns, inputs, buttons).
+        /// Sets overflow to hidden, and applies default border radius, border width, and border color
+        /// when these properties are not explicitly defined in the PBUiTransform component.
+        /// </summary>
+        public static void ApplyDefaultUiTransformValues(in PBUiTransform pbUiTransform, VisualElement uiTransform)
+        {
+            uiTransform.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
+
+            if (pbUiTransform is
+                {
+                    HasBorderBottomLeftRadius: false,
+                    HasBorderBottomRightRadius: false,
+                    HasBorderTopLeftRadius: false,
+                    HasBorderTopRightRadius: false
+                })
+            {
+                uiTransform.style.borderBottomLeftRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderBottomRightRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderTopLeftRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+                uiTransform.style.borderTopRightRadius = new StyleLength(UI_TRANSFORM_DEFAULT_RADIUS);
+            }
+
+            if (pbUiTransform is
+                {
+                    HasBorderTopWidth: false,
+                    HasBorderRightWidth: false,
+                    HasBorderBottomWidth: false,
+                    HasBorderLeftWidth: false
+                })
+            {
+                uiTransform.style.borderTopWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderRightWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderBottomWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+                uiTransform.style.borderLeftWidth = new StyleFloat(UI_TRANSFORM_DEFAULT_BORDER_WIDTH);
+            }
+
+            if (pbUiTransform is
+                {
+                    BorderTopColor: null,
+                    BorderRightColor: null,
+                    BorderBottomColor: null,
+                    BorderLeftColor: null
+                })
+            {
+                uiTransform.style.borderTopColor = new StyleColor(Color.gray);
+                uiTransform.style.borderRightColor = new StyleColor(Color.gray);
+                uiTransform.style.borderBottomColor = new StyleColor(Color.gray);
+                uiTransform.style.borderLeftColor = new StyleColor(Color.gray);
+            }
+        }
+
+        /// <summary>
+        /// Applies a default background color to UI elements that don't have an explicit PBUiBackground component.
+        /// This ensures interactive elements like dropdowns, inputs, and buttons have a visible background by default.
+        /// </summary>
+        public static void ApplyDefaultUiBackgroundValues(World world, Entity entity, VisualElement uiTransform)
+        {
+            if (world.Has<PBUiBackground>(entity)) return;
+
+            uiTransform.style.backgroundColor = new StyleColor(Color.white);
+        }
+
+        /// <summary>
+        /// Clears the default interactive styles (overflow, background, default borders) applied by
+        /// <see cref="ApplyDefaultUiTransformValues"/> and <see cref="ApplyDefaultUiBackgroundValues"/>.
+        /// Called when returning the UITransform to the pool so values do not leak to the next use.
+        /// </summary>
+        public static void ClearDefaultInteractiveStyles(VisualElement uiTransform)
+        {
+            uiTransform.style.overflow = new StyleEnum<Overflow>(StyleKeyword.Null);
+            uiTransform.style.backgroundColor = new StyleColor(StyleKeyword.Null);
+            uiTransform.style.borderBottomLeftRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomRightRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopLeftRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopRightRadius = new StyleLength(StyleKeyword.Undefined);
+            uiTransform.style.borderTopWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderRightWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderLeftWidth = new StyleFloat(StyleKeyword.Undefined);
+            uiTransform.style.borderTopColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderRightColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderBottomColor = new StyleColor(StyleKeyword.Undefined);
+            uiTransform.style.borderLeftColor = new StyleColor(StyleKeyword.Undefined);
         }
     }
 }

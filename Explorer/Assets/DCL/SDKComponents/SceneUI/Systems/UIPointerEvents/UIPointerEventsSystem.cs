@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -14,6 +14,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 {
@@ -34,19 +35,66 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
+            UpdateUIButtonTransformDefaultsQuery(World);
+
+            SetupUiButtonQuery(World);
             TriggerPointerEventsQuery(World);
 
             HandleEntityDestructionQuery(World);
             HandleUIPointerEventsRemovalQuery(World);
         }
 
+        /*
+         * The SDK lets creators put a UI Pointer Events on any UiEntity regardless of the rest of its components...
+         * As defined in the SDK, UiButton entities composition breakdown:
+         * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Button/index.tsx#L80-L90
+         * - (mandatory) UiText
+         * - (optional, but Explorer queries require it) PBUiTransform
+         * - (optional) PBUiBackground
+         * - (optional, but the Explorer queries require it) PBPointerEvents
+         */
+        [Query]
+        [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
+        [All(typeof(PBUiText))]
+        private void SetupUiButton(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent, in PBPointerEvents pbPointerEvents)
+        {
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
+
+            bool showHoverFeedback = true;
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
+            {
+                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
+                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
+
+                if (pointerEvent.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetDown or PointerEventType.PetUp
+                    && info is { HasShowFeedback: true, ShowFeedback: false })
+                {
+                    showHoverFeedback = false;
+                    break;
+                }
+            }
+
+            if (showHoverFeedback)
+                UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiTransformComponent.Transform, 0.22f, 0.1f);
+
+            World.Add<UiButtonComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(UiButtonComponent))]
+        private void UpdateUIButtonTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        {
+            if (!pbUiTransform.IsDirty) return;
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
+        }
+
         [Query]
         private void TriggerPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
             if (sdkModel.IsDirty)
-            {
                 uiTransformComponent.RegisterPointerCallbacks();
-            }
 
             sdkModel.IsDirty = false;
 
@@ -68,13 +116,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         [Query]
         [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
-        private void HandleUIPointerEventsRemoval(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleUIPointerEventsRemoval(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleEntityDestruction(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
@@ -89,10 +137,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel)
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();
+            uiTransformComponent.Transform.UnregisterHoverStyleCallbacks();
+
+            if (World.Has<UiButtonComponent>(entity))
+                World.Remove<UiButtonComponent>(entity);
         }
     }
 }

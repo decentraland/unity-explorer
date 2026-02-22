@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -13,9 +13,19 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 {
+    /*
+     * As defined in the SDK, UiInput entities composition breakdown:
+     * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Input/index.tsx#L43-L55
+     * - PBUiInput
+     * - (optional, but Explorer queries require it) PBUiTransform
+     * - (optional) PBUiBackground
+     * - (optional) PBPointerEvents
+     */
+
     [UpdateInGroup(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIInputInstantiationSystem : BaseUnityLoopSystem
@@ -25,34 +35,43 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private readonly IComponentPool<UIInputComponent> inputTextsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IInputBlock inputBlock;
+        private readonly StyleFontDefinition[] styleFontDefinitions;
 
-        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, IECSToCRDTWriter ecsToCRDTWriter, IInputBlock inputBlock, in StyleFontDefinition[] styleFontDefinitions) : base(world)
         {
             inputTextsPool = poolsRegistry.GetReferenceTypePool<UIInputComponent>().EnsureNotNull();
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.inputBlock = inputBlock;
+            this.styleFontDefinitions = styleFontDefinitions;
         }
 
         protected override void Update(float t)
         {
+            UpdateUIInputTransformDefaultsQuery(World!);
+
             InstantiateUIInputQuery(World!);
             UpdateUIInputQuery(World!);
+
             TriggerInputResultsQuery(World!);
         }
 
         [Query]
-        [All(typeof(PBUiInput), typeof(UITransformComponent))]
+        [All(typeof(PBUiInput))]
         [None(typeof(UIInputComponent))]
-        private void InstantiateUIInput(in Entity entity, ref PBUiInput sdkModel, ref UITransformComponent uiTransformComponent)
+        private void InstantiateUIInput(in Entity entity, in PBUiInput sdkModel, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent)
         {
             var newUIInputComponent = inputTextsPool.Get()!;
             newUIInputComponent.Initialize(inputBlock,
                 UiElementUtils.BuildElementName(COMPONENT_NAME, entity),
-                "dcl-input",
                 sdkModel.Value,
                 sdkModel.Placeholder,
                 sdkModel.GetPlaceholderColor());
             uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
+            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, 0.22f, 0f);
+
             World!.Add(entity, newUIInputComponent);
         }
 
@@ -62,8 +81,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, ref sdkModel);
+            UiElementUtils.SetupUIInputComponent(ref uiInputComponent, in sdkModel, in styleFontDefinitions);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(UIInputComponent))]
+        private void UpdateUIInputTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        {
+            if (!pbUiTransform.IsDirty) return;
+
+            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
         }
 
         [Query]
