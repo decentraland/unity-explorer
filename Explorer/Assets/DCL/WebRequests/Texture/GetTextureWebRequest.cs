@@ -37,7 +37,7 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(string url, GetTextureArguments textureArguments, IDecentralandUrlsSource urlsSource, bool ktxEnabled)
         {
-            bool useKtx = textureArguments.UseKtx && ktxEnabled;
+            bool useKtx = textureArguments.UseKtx && ktxEnabled && !WebRequestUtils.IsLocalhost(url);
             string requestUrl = useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(url)) : url;
             UnityWebRequest webRequest = UnityWebRequest.Get(requestUrl);
 
