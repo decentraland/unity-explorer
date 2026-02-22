@@ -7,7 +7,11 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
+
+#if UNITY_EDITOR
 using DCL.PrivateWorlds.Testing;
+#endif
+
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;

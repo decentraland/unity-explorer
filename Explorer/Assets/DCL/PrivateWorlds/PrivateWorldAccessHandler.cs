@@ -4,8 +4,6 @@ using DCL.PrivateWorlds.UI;
 using MVC;
 using System;
 using System.Threading;
-using DCL.PrivateWorlds.Testing;
-using UnityEngine;
 
 namespace DCL.PrivateWorlds
 {
