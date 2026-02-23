@@ -132,7 +132,7 @@ namespace DCL.Profiles
                     }
 
                     claimedNameColor = value;
-                    if (value != null)
+                    if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && value is { a: > 0 })
                         UserNameColor = value.Value;
                 }
             }
