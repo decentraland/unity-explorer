@@ -307,6 +307,9 @@ namespace DCL.PlacesAPIService
             if (!response.ok)
                 throw new NotAPlaceException(coord);
 
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved for coord: {coord}");
+
             return response;
         }
 
