@@ -799,8 +799,6 @@ namespace Global.Dynamic
                     worldPermissionsService,
                     worldAccessGate,
                     staticContainer.InputBlock,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    bootstrapContainer.DecentralandUrlsSource,
                     staticContainer.RealmData,
                     realmNavigator,
                     worldCommsSecret,

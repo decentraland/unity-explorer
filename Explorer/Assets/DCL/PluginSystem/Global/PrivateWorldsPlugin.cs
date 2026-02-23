@@ -3,16 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat.History;
 using DCL.Input;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
-
-#if UNITY_EDITOR
-using DCL.PrivateWorlds.Testing;
-#endif
-
-using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -23,7 +16,7 @@ using UnityEngine.AddressableAssets;
 namespace DCL.PluginSystem.Global
 {
     /// <summary>
-    /// Plugin for Private Worlds feature. Registers popup controller and spawns test trigger.
+    /// Plugin for Private Worlds feature. Registers popup controller.
     /// The handler (PrivateWorldAccessHandler) is created in DynamicWorldContainer.
     /// Chat minimization on popup show is handled by IBlocksChat on the popup controller.
     /// When in a world, a permission guard periodically checks access and teleports to Genesis Plaza if denied.
@@ -35,8 +28,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
-        private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly IRealmData realmData;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldCommsSecret worldCommsSecret;
@@ -50,8 +41,6 @@ namespace DCL.PluginSystem.Global
             IWorldPermissionsService worldPermissionsService,
             IWorldAccessGate worldAccessGate,
             IInputBlock inputBlock,
-            IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource,
             IRealmData realmData,
             IRealmNavigator realmNavigator,
             IWorldCommsSecret worldCommsSecret,
@@ -62,8 +51,6 @@ namespace DCL.PluginSystem.Global
             this.worldPermissionsService = worldPermissionsService;
             this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
-            this.webRequestController = webRequestController;
-            this.urlsSource = urlsSource;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
             this.worldCommsSecret = worldCommsSecret;
@@ -91,25 +78,7 @@ namespace DCL.PluginSystem.Global
                     worldPermissionsService);
                 mvcManager.RegisterController(popupController);
             }
-
-#if UNITY_EDITOR
-            SpawnPrivateWorldsTestTrigger(worldPermissionsService, mvcManager, worldAccessGate, webRequestController, urlsSource);
-#endif
         }
-
-#if UNITY_EDITOR
-        private static void SpawnPrivateWorldsTestTrigger(
-            IWorldPermissionsService permissionsService,
-            IMVCManager mvcManager,
-            IWorldAccessGate worldAccessGate,
-            IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
-        {
-            var testTriggerGo = new GameObject("[DEBUG] PrivateWorldsTestTrigger");
-            var testTrigger = testTriggerGo.AddComponent<PrivateWorldsTestTrigger>();
-            testTrigger.Initialize(permissionsService, mvcManager, worldAccessGate, webRequestController, urlsSource);
-        }
-#endif
 
         public class PrivateWorldsSettings : IDCLPluginSettings
         {
