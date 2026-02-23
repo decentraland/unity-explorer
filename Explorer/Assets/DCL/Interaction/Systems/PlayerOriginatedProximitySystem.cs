@@ -46,7 +46,8 @@ namespace DCL.Interaction.Systems
         /// <summary>
         ///     Threshold used to calculate whether an entity falls inside the FOV sphere slice.
         /// </summary>
-        private readonly float fovAngleCosThres = Mathf.Cos(PROXIMITY_FOV_ANGLE_DEGREES * 0.5f * Mathf.Deg2Rad);
+        private static readonly float fovAngleCosThres = Mathf.Cos(PROXIMITY_FOV_ANGLE_DEGREES * 0.5f * Mathf.Deg2Rad);
+        private readonly float sqrFovAngleCosThres = fovAngleCosThres * fovAngleCosThres;
 
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly IScenesCache scenesCache;
@@ -109,9 +110,6 @@ namespace DCL.Interaction.Systems
                     PhysicsLayers.PLAYER_PROXIMITY_MASK
                 );
 
-                // if (hitCount == 0)
-                //     return;
-
                 uint highestPriority = 0;
 
                 for (int i = 0; i < hitCount; i++)
@@ -128,25 +126,49 @@ namespace DCL.Interaction.Systems
                     // Compute vector from player to target's collider closest point
                     Vector3 toTargetVec = GetSafeClosestPoint(buffer[i], playerControllerCenterPosition) - playerControllerCenterPosition;
 
-                    float distanceToPlayer = toTargetVec.magnitude;
-                    Vector3 toTargetDir = toTargetVec / distanceToPlayer; // Normalization
-                    Vector3 flatToTarget = Vector3.ProjectOnPlane(toTargetDir, Vector3.up).normalized;
+                    float sqrDistanceToPlayer = toTargetVec.sqrMagnitude;
+                    float maxDistance = GetClosestMaxPlayerDistance(pointerEvents!);
+                    float sqrMaxDistance = maxDistance * maxDistance;
 
-                    // Skip if outside horizontal FOV
-                    if (Vector3.Dot(playerFlatForward, flatToTarget) < fovAngleCosThres)
+                    // Skip if no pointer event is close enough
+                    if (sqrDistanceToPlayer > sqrMaxDistance)
                         continue;
 
-                    // TODO (Maurizio) maybe check for MaxPlayerDistance? among events
+                    // The dot calculation is done without normalizing to be as cheap as we can (normalization == sqrt)
+                    Vector3 flatToTarget = Vector3.ProjectOnPlane(toTargetVec, Vector3.up);
+
+                    // Skip if zero-length vector
+                    float flatSqrMag = flatToTarget.sqrMagnitude;
+                    if (flatSqrMag < 0.000001f)
+                        continue;
+
+                    float dot = Vector3.Dot(playerFlatForward, flatToTarget);
+                    float sqrDot = dot * dot;
+
+                    // Skip if outside FOV cone
+                    if (sqrDot < flatSqrMag * sqrFovAngleCosThres)
+                        continue;
+
+                    // Skip if target is not in front
+                    if (dot <= 0f)
+                        continue;
 
                     // Skip if we already have a higher priority result
                     uint priorityCandidate = GetHighestPriority(pointerEvents!);
                     if (priorityCandidate < highestPriority)
                         continue;
 
+                    float closestDistanceToPlayer = proximityResultForSceneEntities.DistanceToPlayer;
+                    float sqrClosestDistanceToPlayer = closestDistanceToPlayer * closestDistanceToPlayer;
+
                     // Skip if we already have a closer result with same priority
                     if (priorityCandidate == highestPriority
-                        && distanceToPlayer >= proximityResultForSceneEntities.DistanceToPlayer)
+                        && sqrDistanceToPlayer >= sqrClosestDistanceToPlayer)
                         continue;
+
+                    // Finally sqrt only for valid candidates
+                    float distanceToPlayer = Mathf.Sqrt(sqrDistanceToPlayer);
+                    Vector3 toTargetDir = toTargetVec / distanceToPlayer;
 
                     bool hasHit = Physics.Raycast(
                         playerControllerCenterPosition,
@@ -162,15 +184,6 @@ namespace DCL.Interaction.Systems
                     // New closest unobstructed entity can be set
                     proximityResultForSceneEntities.Set(sceneEntityInfo, buffer[i], distanceToPlayer);
                     highestPriority = priorityCandidate;
-
-                    // TODO (Maurizio) remove after tests
-#if UNITY_EDITOR
-                    Debug.DrawLine(
-                        playerControllerCenterPosition,
-                        buffer[i].bounds.ClosestPoint(playerControllerCenterPosition),
-                        Color.red
-                    );
-#endif
                 }
             }
             finally
@@ -183,15 +196,14 @@ namespace DCL.Interaction.Systems
             bool IsPlayerInValidScene() =>
                 scenesCache.TryGetByParcel(playerControllerCenterPosition.ToParcel(), out ISceneFacade currentScene)
                 && !currentScene.IsEmpty;
+        }
 
-            bool HasProximityEvent(in PBPointerEvents pointerEvents)
-            {
-                for (int i = 0; i < pointerEvents.PointerEvents.Count; i++)
-                    if (pointerEvents.PointerEvents[i].InteractionType == InteractionType.Proximity)
-                        return true;
-
-                return false;
-            }
+        private bool HasProximityEvent(in PBPointerEvents pointerEvents)
+        {
+            for (int i = 0; i < pointerEvents.PointerEvents.Count; i++)
+                if (pointerEvents.PointerEvents[i].InteractionType == InteractionType.Proximity)
+                    return true;
+            return false;
         }
 
         /// <summary>
@@ -204,6 +216,23 @@ namespace DCL.Interaction.Systems
         /// <returns>Closest safe point on or around the collider</returns>
         private Vector3 GetSafeClosestPoint(Collider collider, Vector3 origin) =>
             collider is MeshCollider { convex: false } ? collider.bounds.ClosestPoint(origin) : collider.ClosestPoint(origin);
+
+
+        private float GetClosestMaxPlayerDistance(PBPointerEvents pointerEvents)
+        {
+            float closestMaxDistance = float.MaxValue;
+            int count = pointerEvents.PointerEvents.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                float maxDistance = pointerEvents.PointerEvents[i].EventInfo.MaxPlayerDistance;
+
+                if (maxDistance < closestMaxDistance)
+                    closestMaxDistance = maxDistance;
+            }
+
+            return closestMaxDistance;
+        }
 
         private uint GetHighestPriority(PBPointerEvents pointerEvents)
         {

@@ -27,7 +27,7 @@ namespace DCL.ECSComponents {
             "CjBkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvcG9pbnRlcl9ldmVudHMu",
             "cHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxo1ZGVjZW50cmFs",
             "YW5kL3Nkay9jb21wb25lbnRzL2NvbW1vbi9pbnB1dF9hY3Rpb24ucHJvdG8i",
-            "sQUKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
+            "ywUKD1BCUG9pbnRlckV2ZW50cxJKCg5wb2ludGVyX2V2ZW50cxgBIAMoCzIy",
             "LmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBvaW50ZXJFdmVudHMu",
             "RW50cnka5wIKBEluZm8SRAoGYnV0dG9uGAEgASgOMi8uZGVjZW50cmFsYW5k",
             "LnNkay5jb21wb25lbnRzLmNvbW1vbi5JbnB1dEFjdGlvbkgAiAEBEhcKCmhv",
@@ -37,18 +37,18 @@ namespace DCL.ECSComponents {
             "AQESFQoIcHJpb3JpdHkYByABKA1IBogBAUIJCgdfYnV0dG9uQg0KC19ob3Zl",
             "cl90ZXh0Qg8KDV9tYXhfZGlzdGFuY2VCEAoOX3Nob3dfZmVlZGJhY2tCEQoP",
             "X3Nob3dfaGlnaGxpZ2h0QhYKFF9tYXhfcGxheWVyX2Rpc3RhbmNlQgsKCV9w",
-            "cmlvcml0eRrnAQoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEoDjI0LmRlY2Vu",
+            "cmlvcml0eRqBAgoFRW50cnkSSAoKZXZlbnRfdHlwZRgBIAEoDjI0LmRlY2Vu",
             "dHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uUG9pbnRlckV2ZW50VHlw",
             "ZRJFCgpldmVudF9pbmZvGAIgASgLMjEuZGVjZW50cmFsYW5kLnNkay5jb21w",
-            "b25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvEk0KEGludGVyYWN0aW9uX3R5",
+            "b25lbnRzLlBCUG9pbnRlckV2ZW50cy5JbmZvElIKEGludGVyYWN0aW9uX3R5",
             "cGUYAyABKA4yMy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuY29tbW9u",
-            "LkludGVyYWN0aW9uVHlwZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3Rv",
-            "Mw=="));
+            "LkludGVyYWN0aW9uVHlwZUgAiAEBQhMKEV9pbnRlcmFjdGlvbl90eXBlQhSq",
+            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.InputActionReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents), global::DCL.ECSComponents.PBPointerEvents.Parser, new[]{ "PointerEvents" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Info), global::DCL.ECSComponents.PBPointerEvents.Types.Info.Parser, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, new[]{ "Button", "HoverText", "MaxDistance", "ShowFeedback", "ShowHighlight", "MaxPlayerDistance", "Priority" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo", "InteractionType" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBPointerEvents.Types.Entry), global::DCL.ECSComponents.PBPointerEvents.Types.Entry.Parser, new[]{ "EventType", "EventInfo", "InteractionType" }, new[]{ "InteractionType" }, null, null, null)})
           }));
     }
     #endregion
@@ -808,6 +808,7 @@ namespace DCL.ECSComponents {
       {
         private static readonly pb::MessageParser<Entry> _parser = new pb::MessageParser<Entry>(() => new Entry());
         private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pb::MessageParser<Entry> Parser { get { return _parser; } }
@@ -835,6 +836,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Entry(Entry other) : this() {
+          _hasBits0 = other._hasBits0;
           eventType_ = other.eventType_;
           eventInfo_ = other.eventInfo_ != null ? other.eventInfo_.Clone() : null;
           interactionType_ = other.interactionType_;
@@ -879,17 +881,30 @@ namespace DCL.ECSComponents {
 
         /// <summary>Field number for the "interaction_type" field.</summary>
         public const int InteractionTypeFieldNumber = 3;
-        private global::DCL.ECSComponents.InteractionType interactionType_ = global::DCL.ECSComponents.InteractionType.Cursor;
+        private global::DCL.ECSComponents.InteractionType interactionType_;
         /// <summary>
-        /// the type of interaction source
+        /// the type of interaction source (default 0 == CURSOR)
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::DCL.ECSComponents.InteractionType InteractionType {
-          get { return interactionType_; }
+          get { if ((_hasBits0 & 1) != 0) { return interactionType_; } else { return global::DCL.ECSComponents.InteractionType.Cursor; } }
           set {
+            _hasBits0 |= 1;
             interactionType_ = value;
           }
+        }
+        /// <summary>Gets whether the "interaction_type" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasInteractionType {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "interaction_type" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearInteractionType() {
+          _hasBits0 &= ~1;
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -919,7 +934,7 @@ namespace DCL.ECSComponents {
           int hash = 1;
           if (EventType != global::DCL.ECSComponents.PointerEventType.PetUp) hash ^= EventType.GetHashCode();
           if (eventInfo_ != null) hash ^= EventInfo.GetHashCode();
-          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) hash ^= InteractionType.GetHashCode();
+          if (HasInteractionType) hash ^= InteractionType.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -946,7 +961,7 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(18);
             output.WriteMessage(EventInfo);
           }
-          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+          if (HasInteractionType) {
             output.WriteRawTag(24);
             output.WriteEnum((int) InteractionType);
           }
@@ -968,7 +983,7 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(18);
             output.WriteMessage(EventInfo);
           }
-          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+          if (HasInteractionType) {
             output.WriteRawTag(24);
             output.WriteEnum((int) InteractionType);
           }
@@ -988,7 +1003,7 @@ namespace DCL.ECSComponents {
           if (eventInfo_ != null) {
             size += 1 + pb::CodedOutputStream.ComputeMessageSize(EventInfo);
           }
-          if (InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+          if (HasInteractionType) {
             size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) InteractionType);
           }
           if (_unknownFields != null) {
@@ -1012,7 +1027,7 @@ namespace DCL.ECSComponents {
             }
             EventInfo.MergeFrom(other.EventInfo);
           }
-          if (other.InteractionType != global::DCL.ECSComponents.InteractionType.Cursor) {
+          if (other.HasInteractionType) {
             InteractionType = other.InteractionType;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
