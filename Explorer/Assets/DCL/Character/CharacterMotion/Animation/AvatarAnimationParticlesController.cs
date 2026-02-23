@@ -20,8 +20,6 @@ namespace DCL.CharacterMotion.Animation
 
         private readonly Dictionary<AvatarAnimationEventType, IObjectPool<IVfx>> poolLookup = new ();
 
-        private CancellationTokenSource cancellationTokenSource = null!;
-
         private void Start()
         {
             Transform vfxParent = transform;
@@ -32,8 +30,6 @@ namespace DCL.CharacterMotion.Animation
 
                 poolLookup.Add(data.Type, pool);
             }
-
-            cancellationTokenSource = new CancellationTokenSource();
         }
 
         private bool TryCreatePool(AnimationParticlesData data, Transform vfxParent, out ObjectPool<IVfx>? pool)
@@ -56,9 +52,6 @@ namespace DCL.CharacterMotion.Animation
             return true;
         }
 
-        private void OnDestroy() =>
-            cancellationTokenSource.SafeCancelAndDispose();
-
         public void PlayVfx(Transform position, AvatarAnimationEventType animationType)
         {
             if (!poolLookup.TryGetValue(animationType, out IObjectPool<IVfx> pool)) return;
@@ -66,13 +59,13 @@ namespace DCL.CharacterMotion.Animation
             IVfx vfx = pool.Get();
             vfx.SetPosition(position.position);
 
-            ScheduleReturnVfxToPoolAsync(vfx, pool, cancellationTokenSource.Token).Forget();
+            ScheduleReturnVfxToPoolAsync(vfx, pool, destroyCancellationToken).Forget();
         }
 
         private async UniTask ScheduleReturnVfxToPoolAsync(IVfx vfx, IObjectPool<IVfx> pool, CancellationToken ct)
         {
             await vfx.WaitForCompletionAsync(ct);
-            
+
             pool.Release(vfx);
         }
 
