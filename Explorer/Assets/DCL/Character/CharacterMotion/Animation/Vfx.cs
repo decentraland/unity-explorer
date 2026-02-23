@@ -6,7 +6,7 @@ namespace DCL.CharacterMotion.Animation
 {
     public abstract class Vfx<T> : IVfx where T : Component
     {
-        protected T target;
+        protected readonly T target;
 
         protected Vfx(T target)
         {
