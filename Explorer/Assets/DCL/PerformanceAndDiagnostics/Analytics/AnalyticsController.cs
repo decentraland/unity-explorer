@@ -63,19 +63,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Identify(IWeb3Identity? identity)
         {
-            if (identity != null)
+            analytics.Flush();
+
+            var address = identity?.Address;
+            var props = new JObject
             {
-                analytics.Flush();
+                ["dcl_eth_address"] = address?.ToString() ?? UNDEFINED,
+                ["auth_chain"] = identity?.AuthChain?.ToString() ?? UNDEFINED,
+            };
 
-                analytics.Identify(identity.Address, new JObject
-                    {
-                        ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
-                        ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,
-                    }
-                );
-
-                analytics.Flush();
-            }
+            analytics.Identify(address, props);
+            analytics.Flush();
         }
 
         private void TrackSystemInfo()
