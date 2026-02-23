@@ -16,6 +16,7 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'auto-pr') }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       pull-requests: write
       issues: write
