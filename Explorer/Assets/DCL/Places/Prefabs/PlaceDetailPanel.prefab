@@ -595,6 +595,7 @@ MonoBehaviour:
   placeNameText: {fileID: 7128827007575367659}
   creatorContainer: {fileID: 2463542316672476355}
   creatorThumbnail: {fileID: 6974345814752392230}
+  creatorThumbnailImage: {fileID: 9023362837304312097}
   openPassportButton: {fileID: 7508506134037681327}
   creatorNameText: {fileID: 2011430163614308745}
   creatorWalletText: {fileID: 90145863671325210}

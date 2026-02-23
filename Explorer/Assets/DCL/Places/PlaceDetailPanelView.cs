@@ -37,6 +37,7 @@ namespace DCL.Places
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private GameObject creatorContainer = null!;
         [SerializeField] private ProfilePictureView creatorThumbnail = null!;
+        [SerializeField] private Image creatorThumbnailImage = null!;
         [SerializeField] private Button openPassportButton = null!;
         [SerializeField] private TMP_Text creatorNameText = null!;
         [SerializeField] private TMP_Text creatorWalletText = null!;
@@ -270,6 +271,8 @@ namespace DCL.Places
                 }
             }
 
+            creatorNameText.color = creatorThumbnailImage.color;
+            creatorWalletText.color = creatorThumbnailImage.color;
             creatorContainer.SetActive(true);
         }
 
