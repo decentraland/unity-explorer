@@ -265,7 +265,7 @@ namespace Global.Dynamic
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 
                 if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
-                    await BlockOnInsufficientDiskSpaceAsync(specResults, ct);
+                    await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -414,8 +414,9 @@ namespace Global.Dynamic
             return minimumSpecsGuard.Results;
         }
 
-        private async UniTask BlockOnInsufficientDiskSpaceAsync(IReadOnlyList<SpecResult> specResults, CancellationToken ct)
+        private async UniTask BlockOnInsufficientDiskSpaceAsync(IReadOnlyList<SpecResult> specResults, IAppArgs applicationParametersParser, CancellationToken ct)
         {
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_CHECK_DISK_SPACE);
             bool storageMet = true;
 
             foreach (SpecResult result in specResults)
@@ -427,7 +428,7 @@ namespace Global.Dynamic
                 }
             }
 
-            if (storageMet)
+            if (storageMet && !forceShow)
                 return;
 
             var insufficientDiskSpacePrefab = await bootstrapContainer!

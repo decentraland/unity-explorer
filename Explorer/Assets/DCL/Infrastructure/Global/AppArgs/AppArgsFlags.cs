@@ -74,7 +74,8 @@ namespace Global.AppArgs
         public const string CHAT_MESSAGE_BUFFER = "chat-message-buffer";
         public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
-        public const string CHECK_DISK_SPACE = "check_disk_space";
+        public const string CHECK_DISK_SPACE = "check-disk-space";
+        public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
 
         public static class Multiplayer
         {
