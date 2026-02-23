@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.SDKEntityTriggerArea.Components;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
@@ -14,6 +15,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -35,6 +37,21 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private GameObject fakeAvatarBaseGO;
         private GameObject fakeTriggerAreaGO;
         private SDKEntityTriggerArea.SDKEntityTriggerArea sdkEntityTriggerArea;
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            var appArgs = new ApplicationParametersParser();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeaturesRegistry.Reset();
+            FeatureFlagsConfiguration.Reset();
+        }
 
         [SetUp]
         public void Setup()
