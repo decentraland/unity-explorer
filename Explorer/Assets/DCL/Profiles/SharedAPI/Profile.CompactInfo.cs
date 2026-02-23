@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.Web3;
 using ECS.StreamableLoading.Common.Components;
@@ -261,7 +262,7 @@ namespace DCL.Profiles
                     MentionName = new string(mentionBuffer);
                 }
 
-                if (claimedNameColor.HasValue)
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NAME_COLOR_CHANGE) && claimedNameColor is { a: > 0 })
                     UserNameColor = claimedNameColor.Value;
                 else
                     UserNameColor = NameColorHelper.GetNameColor(DisplayName);
