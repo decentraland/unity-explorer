@@ -123,7 +123,6 @@ namespace DCL.PlacesAPIService
 
             PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
 
-            if (!response.ok)
                 return null;
 
             if (response.data.Count == 0)
