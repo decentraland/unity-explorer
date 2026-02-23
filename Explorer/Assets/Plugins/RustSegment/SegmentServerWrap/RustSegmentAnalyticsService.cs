@@ -182,31 +182,45 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
-            string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+            try
+            {
+                string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
-            // Required to avoid polluting Sentry with retry messages
-            string reportCategory = marshaled.Contains("(will retry)")
-                ? ReportCategory.ANALYTICS_INTERNAL
-                : ReportCategory.ANALYTICS;
+                // Required to avoid polluting Sentry with retry messages
+                string reportCategory = marshaled.Contains("(will retry)")
+                    ? ReportCategory.ANALYTICS_INTERNAL
+                    : ReportCategory.ANALYTICS;
 
-            ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+            }
+            catch
+            {
+                // Ignore to avoid possibility of double exception
+            }
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
-            if (current == null) return;
-
-            lock (current.afterClean)
+            try
             {
-                var type = current.afterClean[operationId].Item1;
+                if (current == null) return;
 
-                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+                lock (current.afterClean)
+                {
+                    var type = current.afterClean[operationId].Item1;
 
-                if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+                    ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
-                current.CleanMemory(operationId);
+                    if (response is not NativeMethods.Response.Success)
+                        ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+
+                    current.CleanMemory(operationId);
+                }
+            }
+            catch
+            {
+                // Ignore to avoid possibility of double exception
             }
         }
 
