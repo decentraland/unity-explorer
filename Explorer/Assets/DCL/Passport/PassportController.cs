@@ -147,7 +147,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuBlockUserButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
         private NameColorPickerController? colorPickerController;
-        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -648,7 +647,6 @@ namespace DCL.Passport
 
         private void SetNewUserNameColor(Color color)
         {
-            userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
         }

@@ -14,6 +14,12 @@ namespace DCL.Web3.Authenticators
 {
     public class ThirdWebLoginService
     {
+        /// <summary>
+        ///     Maximum time allowed for auto-login to complete.
+        ///     Prevents indefinite waiting on the splash screen if ThirdWeb services are slow or unreachable.
+        /// </summary>
+        private static readonly TimeSpan AUTO_LOGIN_TIMEOUT = TimeSpan.FromSeconds(15);
+
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly int? identityExpirationDuration;
         public IThirdwebWallet? ActiveWallet { get; private set; }
@@ -38,21 +44,38 @@ namespace DCL.Web3.Authenticators
             if (string.IsNullOrEmpty(email))
                 return false;
 
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(AUTO_LOGIN_TIMEOUT);
+            CancellationToken linkedCt = timeoutCts.Token;
+
             try
             {
-                await UniTask.SwitchToMainThread(ct);
+                await UniTask.SwitchToMainThread(linkedCt);
 
                 InAppWallet? wallet = await InAppWallet.Create(
                     client,
                     email,
-                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
+                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
+                                                       .AsUniTask().AttachExternalCancellation(linkedCt);
 
-                if (!await wallet.IsConnected())
+                ct.ThrowIfCancellationRequested();
+                if (linkedCt.IsCancellationRequested)
+                {
+                    ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
+                    return false;
+                }
+
+                if (!await wallet.IsConnected().AsUniTask().AttachExternalCancellation(linkedCt))
                     return false;
 
                 ActiveWallet = wallet;
-                ReportHub.Log(ReportCategory.AUTHENTICATION, "✅ ThirdWeb auto-login successful");
+                ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
                 return true;
+            }
+            catch (OperationCanceledException)
+            {
+                // External cancellation — rethrow so caller knows it was cancelled
+                throw;
             }
             catch (Exception e)
             {
@@ -63,13 +86,13 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask LogoutAsync(CancellationToken ct)
         {
-            if (ActiveWallet != null)
-            {
-                try { await ActiveWallet.Disconnect(); }
-                finally { ActiveWallet = null; }
-            }
-
+            ct.ThrowIfCancellationRequested();
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
+            if (ActiveWallet != null)
+                try { await ActiveWallet.Disconnect().AsUniTask().AttachExternalCancellation(ct); }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+                finally { ActiveWallet = null; }
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
@@ -88,7 +111,7 @@ namespace DCL.Web3.Authenticators
 
                 ActiveWallet = await OTPLoginFlowAsync(email, ct);
 
-                string? sender = await ActiveWallet.GetAddress();
+                string? sender = await ActiveWallet.GetAddress().AsUniTask().AttachExternalCancellation(ct);
 
                 IWeb3Account ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -99,7 +122,7 @@ namespace DCL.Web3.Authenticators
                 var ephemeralMessage =
                     $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage);
+                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage).AsUniTask().AttachExternalCancellation(ct);
 
                 var authChain = AuthChain.Create();
                 authChain.SetSigner(sender.ToLower());
@@ -117,7 +140,7 @@ namespace DCL.Web3.Authenticators
             }
             catch (Exception)
             {
-                await LogoutAsync(CancellationToken.None);
+                await LogoutAsync(ct);
                 throw;
             }
             finally
@@ -136,9 +159,10 @@ namespace DCL.Web3.Authenticators
             pendingWallet = await InAppWallet.Create(
                 client,
                 email,
-                storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
+                storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
+                                             .AsUniTask().AttachExternalCancellation(ct);
 
-            await pendingWallet.SendOTP();
+            await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct);
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
 
             // Wait for successful login via SubmitOtp
@@ -158,7 +182,7 @@ namespace DCL.Web3.Authenticators
             return result;
         }
 
-        public async UniTask SubmitOtpAsync(string otp, CancellationToken ct = default)
+        public async UniTask SubmitOtpAsync(string otp, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -169,20 +193,22 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                await pendingWallet.LoginWithOtp(otp);
+                await pendingWallet.LoginWithOtp(otp).AsUniTask().AttachExternalCancellation(ct);
                 loginCompletionSource?.TrySetResult(true);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
         }
 
-        public async UniTask ResendOtpAsync(CancellationToken ct = default)
+        public async UniTask ResendOtpAsync(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             if (pendingWallet == null)
                 throw new InvalidOperationException("ResendOtp called but no pending wallet");
 
-            try { await pendingWallet.SendOTP(); }
+            try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
