@@ -16,7 +16,6 @@ using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
-using DCL.PrivateWorlds;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -41,8 +40,7 @@ namespace DCL.RealmNavigation
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
             TeleportController teleportController,
-            DecentralandEnvironment dclEnvironment,
-            IWorldPermissionsService worldPermissionsService)
+            DecentralandEnvironment dclEnvironment)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);

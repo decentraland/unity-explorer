@@ -24,7 +24,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -67,7 +66,6 @@ namespace Global.Dynamic
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly WorldManifestProvider worldManifestProvider;
 
         private GlobalWorld? globalWorld;
