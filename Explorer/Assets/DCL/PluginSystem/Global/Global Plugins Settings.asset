@@ -555,23 +555,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <RarityInfoPanelBackgroundsMapping>k__BackingField:
-          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
         <GridLayoutFixedColumnCount>k__BackingField: 4
         <ThumbnailHeight>k__BackingField: 201
         <ThumbnailWidth>k__BackingField: 272
         NameEditorPrefab:
           m_AssetGUID: 4362b43091b0d462db2641f8c866e9b9
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <ColorToggle>k__BackingField:
-          m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1050,8 +1038,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
         ParsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
           m_SubObjectName: 
@@ -1085,9 +1071,7 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
-          <AnimationSpeed>k__BackingField: 3
-          <StartingRotation>k__BackingField: -60
-          <CompleteRotationT>k__BackingField: 0.5
+          <EnablePropPooling>k__BackingField: 0
           <TrailVelocityThreshold>k__BackingField: 1
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}

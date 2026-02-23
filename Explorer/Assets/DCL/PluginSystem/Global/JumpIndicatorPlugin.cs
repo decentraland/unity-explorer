@@ -5,7 +5,7 @@ using DCL.JumpIndicator;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
+using UnityEngine.Rendering.Universal;
 
 namespace DCL.PluginSystem.Global
 {
@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private GameObject jumpIndicatorPrefab;
+        private DecalProjector jumpIndicatorPrefab;
 
         public JumpIndicatorPlugin(IAssetsProvisioner assetsProvisioner)
         {
@@ -34,7 +34,13 @@ namespace DCL.PluginSystem.Global
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public AssetReferenceT<GameObject> JumpIndicatorPrefab { get; private set; }
+            public JumpIndicatorPrefabReference JumpIndicatorPrefab { get; private set; }
+
+            [Serializable]
+            public class JumpIndicatorPrefabReference : ComponentReference<DecalProjector>
+            {
+                public JumpIndicatorPrefabReference(string guid) : base(guid) { }
+            }
         }
     }
 }

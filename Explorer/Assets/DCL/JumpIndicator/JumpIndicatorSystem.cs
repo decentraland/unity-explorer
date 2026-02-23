@@ -17,9 +17,9 @@ namespace DCL.JumpIndicator
         private static readonly int PLAYER_GROUND_DISTANCE_ID = Shader.PropertyToID("_PlayerGroundDistance");
 
         private readonly Entity playerEntity;
-        private readonly GameObject jumpIndicatorPrefab;
+        private readonly DecalProjector jumpIndicatorPrefab;
 
-        private JumpIndicatorSystem(World world, Entity playerEntity, GameObject jumpIndicatorPrefab) : base(world)
+        private JumpIndicatorSystem(World world, Entity playerEntity, DecalProjector jumpIndicatorPrefab) : base(world)
         {
             this.playerEntity = playerEntity;
             this.jumpIndicatorPrefab = jumpIndicatorPrefab;
@@ -36,9 +36,8 @@ namespace DCL.JumpIndicator
         [None(typeof(JumpIndicator))]
         private void InitializeJumpIndicator(in IAvatarView avatarView)
         {
-            var jumpIndicator = Object.Instantiate(jumpIndicatorPrefab, avatarView.GetTransform());
+            var decalProjector = Object.Instantiate(jumpIndicatorPrefab, avatarView.GetTransform());
 
-            var decalProjector = jumpIndicator.GetComponent<DecalProjector>();
             // Copy the material to avoid modifying the original asset
             decalProjector.material = new Material(decalProjector.material);
 
