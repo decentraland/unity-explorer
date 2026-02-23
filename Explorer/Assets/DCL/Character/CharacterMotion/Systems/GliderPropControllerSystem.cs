@@ -21,13 +21,13 @@ namespace DCL.CharacterMotion.Systems
         private const int PRE_ALLOCATED_PROP_COUNT = 4;
 
         private readonly CharacterMotionSettings.GlidingSettings glidingSettings;
-        private readonly GameObject gliderPrefab;
+        private readonly GliderPropView gliderPrefab;
         private readonly IComponentPoolsRegistry poolsRegistry;
 
         private GameObjectPool<GliderPropView>? propPool;
         private SingleInstanceEntity tickEntity;
 
-        public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GameObject gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GliderPropView gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.glidingSettings = glidingSettings;
             this.gliderPrefab = gliderPrefab;
@@ -41,7 +41,7 @@ namespace DCL.CharacterMotion.Systems
             if (glidingSettings.EnablePropPooling)
             {
 #endif
-                propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>());
+                propPool = new GameObjectPool<GliderPropView>(poolsRegistry.RootContainerTransform(), () => Object.Instantiate(gliderPrefab));
                 propPool.WarmUp(PRE_ALLOCATED_PROP_COUNT);
 #if !UNITY_EDITOR
             }
@@ -78,7 +78,7 @@ namespace DCL.CharacterMotion.Systems
         {
             var prop = glidingSettings.EnablePropPooling
                 ? propPool!.Get()
-                : Object.Instantiate(gliderPrefab).GetComponent<GliderPropView>();
+                : Object.Instantiate(gliderPrefab);
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;

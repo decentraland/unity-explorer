@@ -14,6 +14,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.Unity.GliderProp;
 using System.Threading;
 using UnityEngine;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
@@ -31,7 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private CharacterMotionSettings settings;
-        private GameObject gliderPropPrefab;
+        private GliderPropView gliderPropPrefab;
 
         public CharacterMotionPlugin(
             ICharacterObject characterObject,
