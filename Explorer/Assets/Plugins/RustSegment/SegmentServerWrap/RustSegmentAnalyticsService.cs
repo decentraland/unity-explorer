@@ -60,6 +60,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             current = this;
         }
 
+        // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
             current = null;
@@ -67,12 +68,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             if (result == false)
                 throw new Exception("Rust Segment dispose failed");
-        }
-
-        ~RustSegmentAnalyticsService()
-        {
-            if (current == this)
-                Dispose();
         }
 
         public void Identify(string? userId, JObject? traits = null)
