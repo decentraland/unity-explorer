@@ -117,13 +117,21 @@ namespace DCL.Chat.ChatMessages
             return translationMemory.TryGet(messageId, out _);
         }
 
+        private void ReleaseAndClearAllModels()
+        {
+            foreach (var vm in viewModels)
+                // The separator is not pooled like the other messages, so it should not be released
+                if (vm != separatorViewModel)
+                    ChatMessageViewModel.RELEASE(vm);
+
+            viewModels.Clear();
+        }
+
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
         {
             loadChannelCts.SafeCancelAndDispose();
 
-            viewModels.ForEach(ChatMessageViewModel.RELEASE);
-
-            viewModels.Clear();
+            ReleaseAndClearAllModels();
             view.Clear();
             viewModelsMap = null;
 
@@ -412,6 +420,7 @@ namespace DCL.Chat.ChatMessages
             {
                 try
                 {
+                    ReleaseAndClearAllModels();
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
@@ -456,8 +465,7 @@ namespace DCL.Chat.ChatMessages
 
                 view.SetScrollToBottomButtonVisibility(false, 0, false);
                 RemoveNewMessagesSeparator();
-                viewModels.ForEach(ChatMessageViewModel.RELEASE);
-                viewModels.Clear();
+                ReleaseAndClearAllModels();
                 view.Clear();
                 viewModelsMap?.Clear();
             }
