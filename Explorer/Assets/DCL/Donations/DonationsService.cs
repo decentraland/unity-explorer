@@ -12,6 +12,7 @@ using ECS.SceneLifeCycle;
 using MVC;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -113,7 +114,10 @@ namespace DCL.Donations
                     string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
 
                     if (addressFromScene != addressFromApis)
-                        ReportHub.LogWarning(ReportCategory.DONATIONS, $"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name}.");
+                    {
+                        SentrySdk.AddBreadcrumb("Possible phishing attempt detected in Donations");
+                        ReportHub.LogException(new Exception($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}. Using address from Places API."), ReportCategory.DONATIONS);
+                    }
 
                     donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
                 }
