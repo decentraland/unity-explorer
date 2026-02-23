@@ -1,12 +1,14 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using ECS.TestSuite;
+using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -26,6 +28,21 @@ namespace DCL.Multiplayer.SDK.Tests
         private World sceneWorld;
         private PlayerCRDTEntity playerCRDTEntity;
         private CharacterDataPropagationUtility characterDataPropagationUtility;
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            var appArgs = new ApplicationParametersParser();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
+            FeaturesRegistry.Reset();
+        }
 
         [SetUp]
         public void Setup()
