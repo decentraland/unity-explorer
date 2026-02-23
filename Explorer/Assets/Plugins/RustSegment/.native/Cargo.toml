@@ -20,9 +20,9 @@ crate-type = ["lib", "cdylib"]
 
 [profile.release]
 # traceable build
-debug = 2
-split-debuginfo = "packed"
-strip = "none"
-lto = false
+debug = 2 # goes to dSYM
+split-debuginfo = "packed" # pack dSYM
+strip = "symbols" # symbols are striped from dylib but persist in dSYM
+lto = true
 panic = "abort"
 
