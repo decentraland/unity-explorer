@@ -8,7 +8,6 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
