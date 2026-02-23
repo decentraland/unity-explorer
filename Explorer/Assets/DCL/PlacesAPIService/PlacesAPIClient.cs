@@ -307,7 +307,7 @@ namespace DCL.PlacesAPIService
             if (!response.ok)
                 throw new NotAPlaceException(coord);
 
-C            return response;
+            return response;
         }
 
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
