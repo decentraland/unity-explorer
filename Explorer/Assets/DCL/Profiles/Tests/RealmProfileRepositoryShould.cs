@@ -2,12 +2,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using Global.AppArgs;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -34,6 +36,21 @@ namespace DCL.Profiles.Tests
 
         // 19 profiles
         private List<Profile> dtos;
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            var appArgs = new ApplicationParametersParser();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
+            FeaturesRegistry.Reset();
+        }
 
         [SetUp]
         public void SetUp()

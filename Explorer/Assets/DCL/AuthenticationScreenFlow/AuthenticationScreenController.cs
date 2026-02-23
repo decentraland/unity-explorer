@@ -208,7 +208,12 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((storedIdentity, true, ct));
+                    fsm.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>(
+                        (storedIdentity,
+                            // Fixes https://github.com/decentraland/unity-explorer/issues/7016
+                            // Token file identities should be considered as "new logins"
+                            storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile,
+                            ct));
                 else
                 {
                     SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
