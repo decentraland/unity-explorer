@@ -34,8 +34,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
 
-            return IConnectiveRoom.Null.INSTANCE;
-
             if (adapterUrl.Contains("wss://"))
                 return wssRoomFactory();
 
