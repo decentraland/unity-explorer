@@ -115,7 +115,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
             if (options.IsCommsOffline)
+            {
+                await DisconnectCurrentRoomAsync(true, token);
+                await UniTask.WaitWhile(() => options.IsCommsOffline, cancellationToken: token);
                 return;
+            }
 
             MetaData meta = default;
 
