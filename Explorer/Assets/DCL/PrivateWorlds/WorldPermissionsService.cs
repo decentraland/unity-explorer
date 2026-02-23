@@ -121,6 +121,13 @@ namespace DCL.PrivateWorlds
 
                 switch (accessInfo.AccessType)
                 {
+                    case WorldAccessType.Unknown:
+                        ReportHub.LogWarning(ReportCategory.REALM,
+                            $"Unsupported world access type received for '{worldName}'. Failing access check safely.");
+                        context.Result = WorldAccessCheckResult.CheckFailed;
+                        context.ErrorMessage = "Unsupported world access type";
+                        break;
+
                     case WorldAccessType.Unrestricted:
                         context.Result = WorldAccessCheckResult.Allowed;
                         break;
@@ -144,7 +151,10 @@ namespace DCL.PrivateWorlds
                         break;
 
                     default:
-                        context.Result = WorldAccessCheckResult.Allowed;
+                        ReportHub.LogWarning(ReportCategory.REALM,
+                            $"Unhandled WorldAccessType '{accessInfo.AccessType}' for '{worldName}'. Failing access check safely.");
+                        context.Result = WorldAccessCheckResult.CheckFailed;
+                        context.ErrorMessage = "Unhandled world access type";
                         break;
                 }
             }

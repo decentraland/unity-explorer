@@ -9,6 +9,7 @@ namespace DCL.PrivateWorlds
     /// </summary>
     public enum WorldAccessType
     {
+        Unknown,
         Unrestricted,
         AllowList,
         SharedSecret
@@ -128,6 +129,10 @@ namespace DCL.PrivateWorlds
             else if (access.Type.Equals("shared-secret", StringComparison.OrdinalIgnoreCase))
             {
                 info.AccessType = WorldAccessType.SharedSecret;
+            }
+            else
+            {
+                info.AccessType = WorldAccessType.Unknown;
             }
 
             return info;
