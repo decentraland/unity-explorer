@@ -269,8 +269,11 @@ namespace DCL.Events
                 currentEventsIds[eventsListIndex].Add(string.Empty);
         }
 
-        private void OnEventsScrollValueChanged(int eventsListIndex) =>
-            eventsLists[eventsListIndex].moreEventsArrow.SetActive(eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f);
+        private void OnEventsScrollValueChanged(int eventsListIndex)
+        {
+            bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f;
+            eventsLists[eventsListIndex].moreEventsArrow.SetActive(scrollIsNotAtTheBottom);
+        }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>
             DaySelectorButtonClicked?.Invoke(date);
