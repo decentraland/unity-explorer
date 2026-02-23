@@ -21,6 +21,7 @@ namespace DCL.PlacesAPIService
 
         private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
+        private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> worldsByCoords = new ();
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
         private readonly string[] singlePositionBuffer = new string[1];
@@ -117,6 +118,9 @@ namespace DCL.PlacesAPIService
             if (!AreCoordinatesWithinBounds(coords))
                 return null;
 
+            if (worldsByCoords.TryGetValue(coords, out PlacesData.PlaceInfo cachedPlace))
+                return cachedPlace;
+
             PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
 
             if (!response.ok)
@@ -124,7 +128,9 @@ namespace DCL.PlacesAPIService
 
             if (response.data.Count == 0)
                 return null;
+
             PlacesData.PlaceInfo place = response.data[0];
+            worldsByCoords[coords] = place;
             return place;
         }
 
@@ -281,6 +287,11 @@ namespace DCL.PlacesAPIService
 
         public List<string> GetRecentlyVisitedPlaces() =>
             recentlyVisitedPlacesController.GetRecentlyVisitedPlaces();
+
+        public void ClearWorldsCache()
+        {
+            worldsByCoords.Clear();
+        }
 
         public void Dispose()
         {

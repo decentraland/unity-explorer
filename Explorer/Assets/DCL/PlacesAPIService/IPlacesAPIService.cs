@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Threading;
@@ -51,6 +51,8 @@ namespace DCL.PlacesAPIService
         UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
+
+        void ClearWorldsCache();
 
         void AddRecentlyVisitedPlace(string placeId);
         List<string> GetRecentlyVisitedPlaces();
