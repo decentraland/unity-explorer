@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Translation;
 using System;
@@ -106,7 +107,13 @@ namespace DCL.Chat
 
         private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage)
         {
-            int nameLength = originalMessage.SenderValidatedName.Length;
+            int nameLength = 0;
+
+            if (string.IsNullOrEmpty(originalMessage.SenderValidatedName))
+                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
+            else
+                nameLength = originalMessage.SenderValidatedName.Length;
+
             string walletId = originalMessage.SenderWalletId;
             int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
             int nameTotalLength = nameLength + walletIdLength;
