@@ -75,6 +75,10 @@ namespace Global.AppArgs
         public const string STOP_ON_DUPLICATE_IDENTITY = "stop-on-duplicate-identity";
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
 
+        public const string DOUBLE_JUMP = "double-jump";
+
+        public const string GLIDING = "gliding";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

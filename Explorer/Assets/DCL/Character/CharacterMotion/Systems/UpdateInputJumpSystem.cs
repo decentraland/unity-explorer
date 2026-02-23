@@ -5,6 +5,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Systems;
 using DCL.SDKComponents.InputModifier.Components;
@@ -47,18 +48,22 @@ namespace DCL.CharacterMotion.Systems
 
             bool isNormalJump = jumpState.JumpCount == 0;
 
-            if (inputModifierComponent is { DisableJump: true, DisableGliding: true } && isNormalJump)
+            bool disableJump = inputModifierComponent.DisableJump;
+            bool disableDoubleJump = inputModifierComponent.DisableDoubleJump || !FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_JUMP);
+            bool disableGliding = inputModifierComponent.DisableGliding || !FeaturesRegistry.Instance.IsEnabled(FeatureId.GLIDING);
+
+            if (disableJump && disableGliding && isNormalJump)
                 // Trying to jump but BOTH normal jump and gliding are disabled
                 return;
 
-            if (inputModifierComponent is { DisableDoubleJump: true, DisableGliding: true } && !isNormalJump)
+            if (disableDoubleJump && disableGliding && !isNormalJump)
                 // Trying to double jump but BOTH double jump and gliding are disabled
                 return;
 
             // If jumping is disabled set 0 max air jumps regardless of settings, that way we go directly to gliding
-            jumpState.MaxAirJumpCount = inputModifierComponent.DisableJump || inputModifierComponent.DisableDoubleJump ? 0 : settings.AirJumpCount;
+            jumpState.MaxAirJumpCount = disableJump || disableDoubleJump ? 0 : settings.AirJumpCount;
 
-            if (inputModifierComponent.DisableGliding && jumpState.JumpCount > jumpState.MaxAirJumpCount)
+            if (disableGliding && jumpState.JumpCount > jumpState.MaxAirJumpCount)
                 // Trying to glide but gliding is disabled
                 return;
 
