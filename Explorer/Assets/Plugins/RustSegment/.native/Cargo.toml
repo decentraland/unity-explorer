@@ -17,3 +17,12 @@ futures = "0.3.32"
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+[profile.release]
+# traceable build
+debug = 2
+split-debuginfo = "packed"
+strip = "none"
+lto = false
+panic = "abort"
+
