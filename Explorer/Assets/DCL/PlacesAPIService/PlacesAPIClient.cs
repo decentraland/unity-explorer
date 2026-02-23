@@ -285,7 +285,11 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
         {
-            var url = $"{basePlacesURL}?positions={coord}&names={realmName}";
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+            urlBuilder.AppendParameter(new URLParameter("positions", coord));
+            urlBuilder.AppendParameter(new URLParameter("names", realmName));
+            URLAddress url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
