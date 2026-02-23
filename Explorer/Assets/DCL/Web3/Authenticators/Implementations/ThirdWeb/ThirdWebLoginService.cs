@@ -55,20 +55,22 @@ namespace DCL.Web3.Authenticators
                 InAppWallet? wallet = await InAppWallet.Create(
                     client,
                     email,
-                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"));
+                    storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
+                                                       .AsUniTask().AttachExternalCancellation(linkedCt);
 
-                if (!await wallet.IsConnected())
+                ct.ThrowIfCancellationRequested();
+                if (linkedCt.IsCancellationRequested)
+                {
+                    ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
+                    return false;
+                }
+
+                if (!await wallet.IsConnected().AsUniTask().AttachExternalCancellation(linkedCt))
                     return false;
 
                 ActiveWallet = wallet;
                 ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb auto-login successful");
                 return true;
-            }
-            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-            {
-                // Timeout expired (not an external cancellation) — treat as auto-login failure
-                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"ThirdWeb auto-login timed out after {AUTO_LOGIN_TIMEOUT.TotalSeconds}s");
-                return false;
             }
             catch (OperationCanceledException)
             {
@@ -120,7 +122,7 @@ namespace DCL.Web3.Authenticators
                 var ephemeralMessage =
                     $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {sessionExpiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage);
+                string signature = await ActiveWallet!.PersonalSign(ephemeralMessage).AsUniTask().AttachExternalCancellation(ct);
 
                 var authChain = AuthChain.Create();
                 authChain.SetSigner(sender.ToLower());
