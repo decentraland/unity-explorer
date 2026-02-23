@@ -1,17 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics;
-using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using Global.AppArgs;
 using MVC;
+using Plugins.NativeWindowManager;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
 
@@ -24,39 +21,32 @@ namespace DCL.AuthenticationScreenFlow
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly IAppArgs appArgs;
-        private readonly List<Resolution> possibleResolutions;
 
         public IdentityVerificationDappAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ICompositeWeb3Provider compositeWeb3Provider,
-            IAppArgs appArgs,
-            List<Resolution> possibleResolutions) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             this.machine = machine;
             view = viewInstance.VerificationDappAuthView;
             this.controller = controller;
             this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
-            this.appArgs = appArgs;
-            this.possibleResolutions = possibleResolutions;
         }
 
         public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
             // Checks the current screen mode because it could have been overridden with Alt+Enter
-            if (Screen.fullScreenMode != FullScreenMode.Windowed)
-                WindowModeUtils.ApplyWindowedMode();
+            NativeWindowManager.RequestTemporaryWindowMode();
 
             AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
         {
-            RestoreResolutionAndScreenMode();
+            NativeWindowManager.TryRevertTemporaryWindowMode();
             view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
         }
 
@@ -184,13 +174,6 @@ namespace DCL.AuthenticationScreenFlow
 
             // Close Web3Authentication span
             SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
-        }
-
-        private void RestoreResolutionAndScreenMode()
-        {
-            Resolution targetResolution = WindowModeUtils.GetTargetResolution(possibleResolutions);
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
         }
     }
 }

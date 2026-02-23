@@ -11,6 +11,7 @@ using DCL.UI.ConfirmationDialog.Opener;
 using DCL.Utility;
 using Global.AppArgs;
 using MVC;
+using Plugins.NativeWindowManager;
 using UnityEngine;
 using Utility;
 using static DCL.Backpack.Gifting.Events.GiftingEvents;
@@ -21,7 +22,7 @@ namespace DCL.Backpack.Gifting.Presenters
         : ControllerBase<GiftTransferStatusView, GiftTransferParams>
     {
         private static readonly TimeSpan LONG_RUNNING_HINT_DELAY = TimeSpan.FromSeconds(10);
-        
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private enum State { Waiting, Success, Failed }
@@ -34,8 +35,6 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
 
-        private readonly IScreenModeController screenModeController;
-        
         private IDisposable? subProgress;
 
         private CancellationTokenSource? lifeCts;
@@ -46,8 +45,7 @@ namespace DCL.Backpack.Gifting.Presenters
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            GiftTransferRequestCommand giftTransferRequestCommand,
-            IScreenModeController screenModeController
+            GiftTransferRequestCommand giftTransferRequestCommand
         )
             : base(viewFactory)
         {
@@ -56,9 +54,8 @@ namespace DCL.Backpack.Gifting.Presenters
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.giftTransferRequestCommand = giftTransferRequestCommand;
-            this.screenModeController = screenModeController;
         }
-        
+
         protected override void OnViewShow()
         {
             lifeCts = new CancellationTokenSource();
@@ -113,7 +110,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private async UniTask ProcessTransferFlowAsync(CancellationToken ct)
         {
-            screenModeController.ApplyWindowedMode();
+            NativeWindowManager.RequestTemporaryWindowMode();
 
             try
             {
@@ -136,10 +133,10 @@ namespace DCL.Backpack.Gifting.Presenters
             }
             finally
             {
-                screenModeController.RestoreResolutionAndScreenMode();
+                NativeWindowManager.TryRevertTemporaryWindowMode();
             }
         }
-        
+
         private void OnMarketplaceActivityLinkClicked(string _)
         {
             LinkCallback(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceLink));
@@ -172,7 +169,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 // If the Web3 signature prompt takes too long,
                 // show a hint so users don't think the UI is frozen.
                 await UniTask.Delay(LONG_RUNNING_HINT_DELAY, cancellationToken: token);
-                
+
                 if (viewInstance != null && viewInstance.LongRunningHint != null)
                     viewInstance.LongRunningHint.gameObject.SetActive(true);
             }
@@ -187,7 +184,7 @@ namespace DCL.Backpack.Gifting.Presenters
             currentState = State.Success;
             delayCts.SafeCancelAndDispose();
             RequestClose();
-            
+
             OpenSuccessScreenAfterCloseAsync(CancellationToken.None)
                 .Forget();
         }
@@ -198,7 +195,7 @@ namespace DCL.Backpack.Gifting.Presenters
             delayCts.SafeCancelAndDispose();
 
             RequestClose();
-            
+
             ShowErrorPopupAsync(CancellationToken.None)
                 .Forget();
         }
@@ -222,7 +219,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 ReportHub.LogException(e, new ReportData(ReportCategory.GIFTING));
             }
         }
-        
+
         private void SetViewState(State newState)
         {
             currentState = newState;
