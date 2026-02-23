@@ -8,7 +8,7 @@ namespace DCL.RealmNavigation.TeleportOperations
     {
         private readonly IPlacesAPIService placesAPIService;
 
-        internal ClearWorldsCacheTeleportOperation(IPlacesAPIService placesAPIService)
+        public ClearWorldsCacheTeleportOperation(IPlacesAPIService placesAPIService)
         {
             this.placesAPIService = placesAPIService;
         }

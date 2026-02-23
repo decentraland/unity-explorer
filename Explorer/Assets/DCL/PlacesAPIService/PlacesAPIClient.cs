@@ -304,13 +304,10 @@ namespace DCL.PlacesAPIService
                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
-
-
             if (!response.ok)
                 throw new NotAPlaceException(coord);
 
-            // At this moment WR is already disposed
-            return response;
+C            return response;
         }
 
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
