@@ -37,7 +37,11 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position, token).Forget();
+                if(position.HasValue)
+                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token).Forget();
+                else
+                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
+
                 result = Result.SuccessResult();
             }
             else if (position.HasValue)
