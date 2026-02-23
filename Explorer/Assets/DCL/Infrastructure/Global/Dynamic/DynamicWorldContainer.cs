@@ -137,6 +137,7 @@ namespace Global.Dynamic
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IChatHistory chatHistory;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
@@ -163,6 +164,8 @@ namespace Global.Dynamic
 
         public ISystemClipboard SystemClipboard { get; }
 
+        public IChatHistory ChatHistory => chatHistory;
+
         private DynamicWorldContainer(
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
@@ -172,6 +175,7 @@ namespace Global.Dynamic
             IProfileRepository profileRepository,
             IUserInAppInitializationFlow userInAppInAppInitializationFlow,
             IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             IProfileBroadcast profileBroadcast,
@@ -192,6 +196,7 @@ namespace Global.Dynamic
             RoomHub = roomHub;
             SystemClipboard = systemClipboard;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
@@ -1287,6 +1292,7 @@ namespace Global.Dynamic
                 profilesRepository,
                 initializationFlowContainer.InitializationFlow,
                 chatMessagesBus,
+                chatHistory,
                 messagePipesHub,
                 remoteMetadata,
                 profileBroadcast,

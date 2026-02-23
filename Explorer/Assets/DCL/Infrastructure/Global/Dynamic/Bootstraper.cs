@@ -2,6 +2,8 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -294,6 +296,12 @@ namespace Global.Dynamic
                 {
                     ReportHub.LogWarning(ReportCategory.REALM,
                         $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+
+                    dynamicWorldContainer.ChatHistory.AddMessage(
+                        ChatChannel.NEARBY_CHANNEL_ID,
+                        ChatChannel.ChatChannelType.NEARBY,
+                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
+
                     await dynamicWorldContainer.RealmController
                         .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
                     return;
