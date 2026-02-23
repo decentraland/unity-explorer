@@ -22,8 +22,8 @@ namespace DCL.Events
     {
         public event Action<EventDTO>? EventCardClicked;
 
+        private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error loading live events. Please try again.";
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
-        private const int DAYS_PRIOR_TO_TODAY_TO_REQUEST = -3;
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -205,7 +205,19 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.AddDays(DAYS_PRIOR_TO_TODAY_TO_REQUEST).ToUniversalTime();
+            Result<IReadOnlyList<EventDTO>> liveEventsResults = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                      .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!liveEventsResults.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
+                return;
+            }
+
+            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -219,18 +231,35 @@ namespace DCL.Events
                 return;
             }
 
+            List<EventDTO> eventsList = new ();
+            if (fromDate.Date == DateTime.Today)
+            {
+                // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
+                foreach (EventDTO liveEventInfo in liveEventsResults.Value)
+                {
+                    DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
+                    if (eventLocalDate.Date < fromDate)
+                        eventsList.Add(liveEventInfo);
+                }
+            }
+            foreach (EventDTO eventInfo in eventsResult.Value)
+            {
+                DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
+                if (eventLocalDate.Date >= fromDate)
+                    eventsList.Add(eventInfo);
+            }
 
             using PoolExtensions.Scope<List<List<EventDTO>>> eventsGroupedByDay = EVENTS_GROUPED_BY_DAY_POOL.AutoScope();
             for (var i = 0; i < numberOfDays; i++)
                 eventsGroupedByDay.Value.Add(new List<EventDTO>());
 
-            if (eventsResult.Value.Count > 0)
+            if (eventsList.Count > 0)
             {
-                eventsStateService.AddEvents(eventsResult.Value);
+                eventsStateService.AddEvents(eventsList);
 
                 List<string> placesIds = new ();
                 List<EventDTO> liveEventsPriorToToday = new ();
-                foreach (EventDTO eventInfo in eventsResult.Value)
+                foreach (EventDTO eventInfo in eventsList)
                 {
                     DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
 
