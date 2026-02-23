@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             // Gather intentions for the batch immediately so they are not processed individually
             GatherIntentionsForBatchQuery(World, ref currentBatch);
 
-            if (nextDispatch > DateTime.Now)
+            if (nextDispatch > DateTime.UtcNow)
                 return;
 
             // The time is right - launch the batch
@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 // The batch will be finalized by FinalizeWearableLoadingSystemBase - no special actions are needed
             }
 
-            nextDispatch = DateTime.Now + batchHeartbeat;
+            nextDispatch = DateTime.UtcNow + batchHeartbeat;
 
             // Recreate the batch
             currentBatch = BatchedPointersIntentions.Create();
