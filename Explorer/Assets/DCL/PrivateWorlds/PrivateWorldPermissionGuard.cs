@@ -113,11 +113,20 @@ namespace DCL.PrivateWorlds
                     {
                         ReportHub.Log(ReportCategory.REALM,
                             $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}), teleporting to Genesis");
+
+                        var teleportResult = await realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false);
+
+                        if (!teleportResult.Success)
+                        {
+                            ReportHub.LogWarning(ReportCategory.REALM,
+                                $"[PrivateWorlds] Failed to teleport revoked user from '{worldName}' to Genesis. Permission guard will continue retrying.");
+                            continue;
+                        }
+
                         chatHistory.AddMessage(
                             ChatChannel.NEARBY_CHANNEL_ID,
                             ChatChannel.ChatChannelType.NEARBY,
                             ChatMessage.NewFromSystem("Permissions for this world changed. You were returned to Genesis Plaza."));
-                        realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false).Forget();
                         return;
                     }
                 }
