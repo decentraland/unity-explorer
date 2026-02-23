@@ -21,7 +21,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
-        public AuthProvider CurrentProvider { get; set; } = AuthProvider.Dapp;
+        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
 
         // IDappVerificationHandler - delegates to dappAuth
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
@@ -30,7 +30,6 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
-        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
