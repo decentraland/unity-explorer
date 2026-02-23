@@ -182,6 +182,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
+            /*
             try
             {
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
@@ -197,11 +198,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
             {
                 // Ignore to avoid possibility of double exception
             }
+            */
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
+            /*
             try
             {
                 if (current == null) return;
@@ -222,6 +225,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             {
                 // Ignore to avoid possibility of double exception
             }
+            */
         }
 
         private void CleanMemory(ulong operationId)
