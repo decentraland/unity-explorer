@@ -124,6 +124,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             roomState.Set(IConnectiveRoom.State.Starting);
             room.ConnectionUpdated += OnConnectionUpdated;
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
             return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
         }
 
