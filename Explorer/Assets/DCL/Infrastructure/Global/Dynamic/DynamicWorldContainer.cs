@@ -528,7 +528,6 @@ namespace Global.Dynamic
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new GoToLocalChatCommand(chatTeleporter),
-                new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,
