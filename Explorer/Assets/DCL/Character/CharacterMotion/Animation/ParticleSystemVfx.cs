@@ -20,12 +20,7 @@ namespace DCL.CharacterMotion.Animation
 
         public override async UniTask WaitForCompletionAsync(CancellationToken ct)
         {
-            // Wait the particle system duration so that all particles have been emitted
-            await UniTask.Delay((int)(target.main.duration * 1000), cancellationToken: ct);
-            if (ct.IsCancellationRequested) return;
-
-            // Now wait till all particles have died off
-            while (target.particleCount > 0)
+            while (target.IsAlive())
             {
                 await UniTask.NextFrame(ct);
                 if (ct.IsCancellationRequested) return;
