@@ -12,17 +12,20 @@ namespace DCL.Web3.Identities
         public IWeb3Account EphemeralAccount { get; }
         public bool IsExpired => Expiration < DateTime.UtcNow;
         public AuthChain AuthChain { get; }
+        public IWeb3Identity.Web3IdentitySource Source { get; }
 
         public DecentralandIdentity(
             Web3Address address,
             IWeb3Account ephemeralAccount,
             DateTime expiration,
-            AuthChain authChain)
+            AuthChain authChain,
+            IWeb3Identity.Web3IdentitySource source)
         {
             AssertSigner(authChain);
             AssertEcdsaEphemeral(authChain);
 
             AuthChain = authChain;
+            Source = source;
             Address = address;
             EphemeralAccount = ephemeralAccount;
             Expiration = expiration;
