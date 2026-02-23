@@ -21,7 +21,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
-        public AuthProvider CurrentProvider { get; set; } = AuthProvider.Dapp;
+        public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
 
         // IDappVerificationHandler - delegates to dappAuth
         public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
@@ -69,10 +69,6 @@ namespace DCL.Web3.Authenticators
             await currentAuthenticator.LogoutAsync(ct);
             identityCache.Clear();
         }
-
-        // IDappVerificationHandler - only dappAuth supports this
-        public void CancelCurrentWeb3Operation() =>
-            dappAuth.CancelCurrentWeb3Operation();
 
         // IOtpAuthenticator - only thirdWebAuth supports these
         public UniTask SubmitOtpAsync(string otp, CancellationToken ct = default) =>
