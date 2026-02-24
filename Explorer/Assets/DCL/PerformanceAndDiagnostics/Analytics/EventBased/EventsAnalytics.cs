@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.explorePanelController = explorePanelController;
 
             DCLInput.Instance.Shortcuts.Events.performed += OnEventsOpenedFromShortcut;
-            explorePanelController.EventsOpened += OnEventsOpenedFromStartMenu;
+            explorePanelController.EventsOpenedFromStartMenu += OnEventsOpenedFromStartMenu;
             explorePanelController.EventsController.SectionOpen += OnSectionOpen;
             explorePanelController.EventsController.CreateEventButtonClicked += OnCreateEventButtonClicked;
             explorePanelController.EventsController.EventsCalendarController.EventCardClicked += OnEventCardClicked;
@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.Events.performed -= OnEventsOpenedFromShortcut;
-            explorePanelController.EventsOpened -= OnEventsOpenedFromStartMenu;
+            explorePanelController.EventsOpenedFromStartMenu -= OnEventsOpenedFromStartMenu;
             explorePanelController.EventsController.SectionOpen -= OnSectionOpen;
             explorePanelController.EventsController.CreateEventButtonClicked -= OnCreateEventButtonClicked;
             explorePanelController.EventsController.EventsCalendarController.EventCardClicked -= OnEventCardClicked;

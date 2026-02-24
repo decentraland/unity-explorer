@@ -51,12 +51,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO(Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO(Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise)
         {
-            if (TryFinalizeIfCancelled(entity, promise))
+            if (TryFinalizeIfCancelled(entity, ref promise))
                 return;
 
-            if (promise.SafeTryConsume(World!, GetReportCategory(), out StreamableLoadingResult<WearablesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<WearablesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {

@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.explorePanelController = explorePanelController;
 
             DCLInput.Instance.Shortcuts.Places.performed += OnPlacesOpenedFromShortcut;
-            explorePanelController.PlacesOpened += OnPlacesOpenedFromStartMenu;
+            explorePanelController.PlacesOpenedFromStartMenu += OnPlacesOpenedFromStartMenu;
             explorePanelController.PlacesController.PlacesResultsController.PlacesSearched += OnPlacesSearched;
             explorePanelController.PlacesController.PlacesResultsController.PlacesFiltered += OnPlacesFiltered;
             explorePanelController.PlacesController.PlacesResultsController.PlaceClicked += OnPlaceClicked;
@@ -35,7 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.Places.performed -= OnPlacesOpenedFromShortcut;
-            explorePanelController.PlacesOpened -= OnPlacesOpenedFromStartMenu;
+            explorePanelController.PlacesOpenedFromStartMenu -= OnPlacesOpenedFromStartMenu;
             explorePanelController.PlacesController.PlacesResultsController.PlacesSearched -= OnPlacesSearched;
             explorePanelController.PlacesController.PlacesResultsController.PlacesFiltered -= OnPlacesFiltered;
             explorePanelController.PlacesController.PlacesResultsController.PlaceClicked -= OnPlaceClicked;

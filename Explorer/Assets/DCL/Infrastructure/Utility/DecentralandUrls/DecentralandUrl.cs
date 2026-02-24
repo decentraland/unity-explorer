@@ -131,6 +131,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         WorldContentServer = 79,
 
         WorldEntitiesActive = 80,
+        WorldCommsAdapter = 81,
+
+
 
 
     }

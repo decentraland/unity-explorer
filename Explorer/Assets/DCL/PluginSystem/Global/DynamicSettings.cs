@@ -29,6 +29,7 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject BlockedScreenPrefab { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MinimumSpecsScreenPrefab { get; private set; }
+        [field: SerializeField] public AssetReferenceGameObject InsufficientDiskSpaceScreenPrefab { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject LivekitDownPrefab { get; private set; }
         [field: SerializeField] public AssetReferenceT<DebugViewsCatalogSO> DebugViewsCatalog { get; private set; }
     }
