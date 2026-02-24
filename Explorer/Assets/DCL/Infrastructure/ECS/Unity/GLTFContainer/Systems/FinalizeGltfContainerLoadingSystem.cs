@@ -5,6 +5,7 @@ using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
+using Drakkar;
 using Drakkar.GameUtils;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
@@ -105,6 +106,9 @@ namespace ECS.Unity.GLTFContainer.Systems
                     visMan = dvm.AddComponent<VisibilityManager>();
                 }
 
+                // Force DrakkarConsole visible in the Editor regardless of build type
+                DrakkarConsole.forceConsole = true;
+
                 foreach (var renderer in result.Asset.Renderers)
                 {
                     GenerateAxisAlignedSpheres(renderer);
@@ -120,7 +124,9 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                         occ.Visibility = new VisibilityGroup();
                         VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
-                        occ.Visibility.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
+                        // Round-robin across the 6 culler groups so each group gets ~1/6 of all objects,
+                        // preventing any single group from exceeding its 1000-sphere capacity.
+                        occ.Visibility.CullingGroup = countee++ % 6;
                         occ.Visibility.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
 
                         for (int i = 0; i < viSpheres.Length; ++i) { occ.Visibility.Visibility_Spheres[i] = viSpheres[i]; }
@@ -149,7 +155,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                             occludee = renderer.gameObject.AddComponent<DrakkarOccludee>();
                             occludee.Visibility = new VisibilityGroup();
                             VisibilitySphere[] viSpheres = renderer.gameObject.GetComponents<VisibilitySphere>();
-                            occludee.Visibility.CullingGroup = (int)((countee += viSpheres.Length) / 1000);
+                            // Round-robin across the 6 culler groups (same strategy as occluders above)
+                            occludee.Visibility.CullingGroup = countee++ % 6;
                             occludee.Visibility.Visibility_Spheres = new VisibilitySphere[viSpheres.Length];
 
                             for (int i = 0; i < viSpheres.Length; ++i) { occludee.Visibility.Visibility_Spheres[i] = viSpheres[i]; }
@@ -247,8 +254,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 size[dominanceArray[2]] = size[dominanceArray[1]] * 0.5f;
             }
 
-            // Cap per-axis sphere counts to avoid exhausting the Culler's 1000-sphere limit across all renderers
-            const int MAX_SPHERES_PER_AXIS = 2;
+            // Use a single sphere per renderer to avoid exhausting the Culler's 1000-sphere limit.
+            // Multi-sphere subdivision (for elongated meshes) is an optimisation we trade away here for
+            // correctness: with 6 groups × 1000 capacity the system can handle up to 6000 renderers.
+            const int MAX_SPHERES_PER_AXIS = 1;
             int axisOneCount = Mathf.Min(MAX_SPHERES_PER_AXIS, Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[1]] / size[dominanceArray[2]])));
             int axisTwoCount = Mathf.Min(MAX_SPHERES_PER_AXIS, Mathf.Max(1, Mathf.FloorToInt(size[dominanceArray[0]] / size[dominanceArray[1]])));
 
