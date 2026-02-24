@@ -244,10 +244,11 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
 
-                        // Skip logging for Transform (componentId=1) to reduce spam
-                        if (batchState.crdtMessage.ComponentId != 1)
-                            UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
-                        
+                        // Skip logging for Transform (1)
+                        //if (batchState.crdtMessage.ComponentId != 1)
+                        // Commented log for now, we might need it to debug scene issues in the future.
+                            //UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
+
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
                     }

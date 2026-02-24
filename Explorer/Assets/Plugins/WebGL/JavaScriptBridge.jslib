@@ -742,6 +742,11 @@ mergeInto(LibraryManager.library, {
                 return null;
             }
             
+            const connectionRelated = /connection|quality|status|room|state/i;
+            if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
+                console.log('[JSBridge] HostObject call objectId=' + objectIdStr + ' methodName=' + methodName);
+            }
+            
             // Allocate strings on the heap for the callback
             const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
             const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
@@ -770,15 +775,27 @@ mergeInto(LibraryManager.library, {
                 
                 if (resultLen < 0) {
                     console.warn('[JSContext] Result buffer too small, needed:', -resultLen);
+                    if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
+                        console.warn('[JSBridge] Connection-related call failed: buffer too small objectId=' + objectIdStr + ' methodName=' + methodName);
+                    }
                     return null;
                 }
                 
                 if (resultLen === 0) {
+                    if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
+                        console.log('[JSBridge] Connection-related call returned empty objectId=' + objectIdStr + ' methodName=' + methodName);
+                    }
                     return null;
                 }
                 
                 // Read the result string from the buffer
                 const resultStr = UTF8ToString(resultBufferPtr, resultLen);
+                
+                // Debug: log connection/room-related returns to trace LiveKit Scene room status
+                if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
+                    const preview = resultStr.length > 300 ? resultStr.substring(0, 300) + '...' : resultStr;
+                    console.log('[JSBridge] HostObject return objectId=' + objectIdStr + ' methodName=' + methodName + ' resultLen=' + resultLen + ' resultPreview=' + preview);
+                }
                 
                 // Parse and deserialize the result
                 return deserializeResult(resultStr, context);
@@ -836,9 +853,12 @@ mergeInto(LibraryManager.library, {
                         return null;
                     }
                     
-                    // Plain object without special markers - return unparsed string
-                    // so the caller (SDK) can parse it if needed
-                    // console.log('[deserializeResult] Plain object, returning unparsed string');
+                    // WebSocket ReceiveResponse: must return parsed object so data.type, data.binary, data.text work
+                    if (parsed.type === 'Text' || parsed.type === 'Binary' || parsed.type === 'Close') {
+                        return parsed;
+                    }
+                    
+                    // Other Plain object without special markers - return unparsed string: so caller (SDK) can parse if needed
                     return resultStr;
                 }
                 
