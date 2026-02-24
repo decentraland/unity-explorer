@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
             changeRealmPromptController?.Dispose();
         }
 
+        [Serializable]
         public class ChangeRealmPromptSettings : IDCLPluginSettings
         {
             [field: Header(nameof(ChangeRealmPromptPlugin) + "." + nameof(ChangeRealmPromptSettings))]
