@@ -59,7 +59,7 @@ namespace DCL.Profiles.Self.Playground
                         new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
                         urlsSource,
                         new DefaultProfileCache(),
-                        new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null),
+                        new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null),
                         false)
                 ),
                 web3IdentityCache,

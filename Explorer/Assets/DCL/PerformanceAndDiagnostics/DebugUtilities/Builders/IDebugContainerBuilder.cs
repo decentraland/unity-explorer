@@ -1,5 +1,6 @@
 ﻿using DCL.DebugUtilities.Views;
 using DCL.Utility.Types;
+using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
@@ -14,7 +15,7 @@ namespace DCL.DebugUtilities
 
         DebugContainer Container { get; }
 
-        Result<DebugWidgetBuilder> AddWidget(WidgetName name);
+        public Result<DebugWidgetBuilder> GetOrAddWidget(WidgetName name);
 
         IReadOnlyDictionary<string, DebugWidget> Widgets { get; }
 
@@ -33,7 +34,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
             public static readonly WidgetName CURRENT_SCENE = "Current scene".AsWidgetName();
             public static readonly WidgetName REALM = "Realm".AsWidgetName();
-            public static readonly WidgetName PROFILES = "Profiles".AsWidgetName();
+            public static readonly WidgetName ENTITY_REQUESTS = "Entity Requests".AsWidgetName();
             public static readonly WidgetName ANALYTICS = "Analytics".AsWidgetName();
             public static readonly WidgetName GPU_INSTANCING = "GPU Instancing".AsWidgetName();
             public static readonly WidgetName MEMORY_LIMITS = "Memory Limits".AsWidgetName();
@@ -55,19 +56,18 @@ namespace DCL.DebugUtilities
 
     public static class DebugContainerBuilderExtensions
     {
-        // TODO REMOVE BEFORE MERGE
         public static DebugWidgetBuilder? TryAddWidget(this IDebugContainerBuilder debugContainerBuilder, string name) =>
             debugContainerBuilder.TryAddWidget(name.AsWidgetName());
 
         public static DebugWidgetBuilder? TryAddWidget(this IDebugContainerBuilder debugContainerBuilder, WidgetName name)
         {
-            var widget = debugContainerBuilder.AddWidget(name);
+            Result<DebugWidgetBuilder> widget = debugContainerBuilder.GetOrAddWidget(name);
             return widget.Success ? widget.Value : null;
         }
     }
 
     // Enforces to keep widget naming organized
-    public class WidgetName
+    public readonly struct WidgetName : IEquatable<WidgetName>
     {
         public readonly string Name;
 
@@ -78,6 +78,15 @@ namespace DCL.DebugUtilities
 
         public static implicit operator string(WidgetName widgetName) =>
             widgetName.Name;
+
+        public bool Equals(WidgetName other) =>
+            Name == other.Name;
+
+        public override bool Equals(object? obj) =>
+            obj is WidgetName other && Equals(other);
+
+        public override int GetHashCode() =>
+            Name.GetHashCode();
     }
 
     internal static class WidgetNameExtensions
