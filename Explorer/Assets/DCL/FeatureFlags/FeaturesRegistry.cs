@@ -155,6 +155,7 @@ namespace DCL.FeatureFlags
         FORCE_BACKFACE_CULLING,
         NAME_COLOR_CHANGE,
         EMAIL_OTP_AUTH,
+        CHECK_DISK_SPACE,
         AVATAR_HIGHLIGHT
     }
 }
