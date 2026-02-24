@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class Extensions
     {
-        // UiDropdown, UiInput and UiButton detect the hover event, but their UiTransform has the styles effect.
+        // UiDropdown and UiInput detect the hover event, but their UiTransform has the styles effect.
         // A struct and static callbacks are used to avoid allocations.
         public readonly struct HoverStyleBehaviourData
         {

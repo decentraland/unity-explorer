@@ -466,7 +466,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
         private const float UI_TRANSFORM_DEFAULT_RADIUS = 10f;
         private const float UI_TRANSFORM_DEFAULT_BORDER_WIDTH = 1f;
         /// <summary>
-        /// Applies default UI transform styles for interactive UI elements (dropdowns, inputs, buttons).
+        /// Applies default UI transform styles for interactive UI elements (dropdowns, inputs).
         /// Sets overflow to hidden, and applies default border radius, border width, and border color
         /// when these properties are not explicitly defined in the PBUiTransform component.
         /// </summary>
@@ -519,7 +519,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         /// <summary>
         /// Applies a default background color to UI elements that don't have an explicit PBUiBackground component.
-        /// This ensures interactive elements like dropdowns, inputs, and buttons have a visible background by default.
+        /// This ensures interactive elements like dropdowns and inputs have a visible background by default.
         /// </summary>
         public static void ApplyDefaultUiBackgroundValues(World world, Entity entity, VisualElement uiTransform)
         {

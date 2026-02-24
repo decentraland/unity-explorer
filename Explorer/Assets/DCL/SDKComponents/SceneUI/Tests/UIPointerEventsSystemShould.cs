@@ -35,9 +35,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, new CRDTEntity(500));
         }
 
-        private static PBPointerEvents.Types.Info ButtonShowFeedbackInfo =>
-            new() { ShowFeedback = true };
-
         [Test]
         [TestCase(PointerEventType.PetDown)]
         [TestCase(PointerEventType.PetUp)]
@@ -45,12 +42,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [TestCase(PointerEventType.PetHoverLeave)]
         public void TriggerPointerEvents(PointerEventType eventType)
         {
-            // Arrange - PetDown with ShowFeedback true so SetupUiButton runs and adds UiButtonComponent
+            // Arrange
             var input = new PBPointerEvents { IsDirty = true };
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
+                EventInfo = new PBPointerEvents.Types.Info(),
             });
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
@@ -85,201 +82,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUiButtonOnTextEntityWithPointerEventsWhenPetDownShowFeedbackTrue()
-        {
-            // Arrange - entity with PBUiText + PBPointerEvents with PetDown and ShowFeedback true (UiButton pattern)
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-
-            // Act
-            system.Update(0);
-
-            // Assert - UiButtonComponent should be added
-            Assert.IsTrue(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void ApplyDefaultTransformValuesOnSetupUiButton()
-        {
-            // Arrange - PetDown with ShowFeedback true so defaults are applied
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-
-            // Act
-            system.Update(0);
-
-            // Assert - default transform values should be applied
-            var transformStyle = uiTransformComponent.Transform.style;
-            Assert.AreEqual(Overflow.Hidden, transformStyle.overflow.value);
-            Assert.AreEqual(new StyleLength(10f), transformStyle.borderBottomLeftRadius);
-            Assert.AreEqual(new StyleLength(10f), transformStyle.borderTopLeftRadius);
-            Assert.AreEqual(new StyleFloat(1f), transformStyle.borderTopWidth);
-            Assert.AreEqual(new StyleColor(Color.gray), transformStyle.borderTopColor);
-        }
-
-        [Test]
-        public void ApplyDefaultBackgroundOnSetupUiButton()
-        {
-            // Arrange - entity without PBUiBackground; PetDown with ShowFeedback true so default white background is applied
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-
-            // Act
-            system.Update(0);
-
-            // Assert - white background should be applied
-            Assert.AreEqual(new StyleColor(Color.white), uiTransformComponent.Transform.style.backgroundColor);
-        }
-
-        [Test]
-        public void NotSetupUiButtonWhenAlreadyHasUiButtonComponent()
-        {
-            // Arrange - entity already has UiButtonComponent (query has [None(typeof(UiButtonComponent))])
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents, new UiButtonComponent());
-
-            // Act & Assert - should not throw or add a second UiButtonComponent
-            Assert.DoesNotThrow(() => system.Update(0));
-            Assert.IsTrue(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void NotSetupUiButtonWhenNoPetDownWithShowFeedbackTrue()
-        {
-            // Arrange - PBPointerEvents without PetDown+ShowFeedback true (e.g. custom UiEntity, not SDK <Button>)
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetHoverEnter,
-                EventInfo = new PBPointerEvents.Types.Info { ShowFeedback = false },
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-
-            // Act
-            system.Update(0);
-
-            // Assert - UiButtonComponent is not added; defaults and hover apply only to UiButton (<Button>) pattern
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void NotSetupUiButtonWhenPetDownHasShowFeedbackFalse()
-        {
-            // Arrange - PetDown present but ShowFeedback false
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info { ShowFeedback = false },
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void UpdateUIButtonTransformDefaultsWhenDirty()
-        {
-            // Arrange - setup the button first (PetDown + ShowFeedback true)
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-            system.Update(0);
-
-            // Act - mark PBUiTransform as dirty
-            ref PBUiTransform pbUiTransform = ref world.Get<PBUiTransform>(entity);
-            pbUiTransform.IsDirty = true;
-            system.Update(0);
-
-            // Assert - defaults should be reapplied
-            Assert.AreEqual(Overflow.Hidden, uiTransformComponent.Transform.style.overflow.value);
-        }
-
-        [Test]
-        public void RemoveUiButtonComponentOnPointerEventsRemoval()
-        {
-            // Arrange - setup the button and pointer events
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-            system.Update(0);
-
-            Assert.IsTrue(world.Has<UiButtonComponent>(entity));
-
-            // Act - remove PBPointerEvents
-            world.Remove<PBPointerEvents>(entity);
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void RemoveUiButtonComponentOnEntityDestruction()
-        {
-            // Arrange - setup the button and pointer events
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
-            system.Update(0);
-
-            Assert.IsTrue(world.Has<UiButtonComponent>(entity));
-
-            // Act - add DeleteEntityIntention
-            world.Add(entity, new DeleteEntityIntention());
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
         public void ResetPickingModeOnPointerEventsRemoval()
         {
-            // Arrange - add pointer events so SetupUiButton runs and sets PickingMode
+            // Arrange - add pointer events
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = ButtonShowFeedbackInfo,
+                EventInfo = new PBPointerEvents.Types.Info(),
             });
-            world.Add(entity, new PBUiText(), pbPointerEvents);
+            world.Add(entity, pbPointerEvents);
             system.Update(0);
 
             // Act - remove pointer events; PBUiTransform default PointerFilter is not PfmBlock

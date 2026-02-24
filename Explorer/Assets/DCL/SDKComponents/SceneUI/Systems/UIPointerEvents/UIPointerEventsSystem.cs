@@ -35,61 +35,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         protected override void Update(float _)
         {
-            UpdateUIButtonTransformDefaultsQuery(World);
-
-            SetupUiButtonQuery(World);
             TriggerPointerEventsQuery(World);
 
             HandleEntityDestructionQuery(World);
             HandleUIPointerEventsRemovalQuery(World);
-        }
-
-        /*
-         * The SDK lets creators put a UI Pointer Events on any UiEntity regardless of the rest of its components...
-         * Since not all UiEntities ARE 'UiButton', we only put UiButtonComponent on the corresponding ones.
-         * As defined in the SDK, UiButton (<Button>) entities composition breakdown:
-         * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Button/index.tsx#L80-L90
-         * - (mandatory) UiText
-         * - (optional, but Explorer queries require it) PBUiTransform
-         * - (optional) PBUiBackground
-         * - (optional, but the Explorer queries require it) PBPointerEvents
-         *     - For <Button> We're forcing the SDK to put PBPointerEvents with 'PetDown' EventType + ShowFeedback: true since SDK 7.20.3
-         */
-        [Query]
-        [None(typeof(PBUiDropdown), typeof(PBUiInput), typeof(UiButtonComponent))]
-        [All(typeof(PBUiText))]
-        private void SetupUiButton(in Entity entity, in PBUiTransform pbUiTransform, ref UITransformComponent uiTransformComponent, in PBPointerEvents pbPointerEvents)
-        {
-            bool hasPointerDownHoverFeedback = false;
-            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
-            {
-                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
-                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
-                if (pointerEvent.EventType is PointerEventType.PetDown && info is { HasShowFeedback: true, ShowFeedback: true })
-                {
-                    hasPointerDownHoverFeedback = true;
-                    break;
-                }
-            }
-
-            // This means the Ui Entity is not a "UiButton (<Button>)" it's just a manually combined UiEntity, and we
-            // should not apply defaults nor hover behaviour on those.
-            if (!hasPointerDownHoverFeedback) return;
-
-            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
-            UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiTransformComponent.Transform, 0.3f, 0.15f);
-
-            World.Add<UiButtonComponent>(entity);
-        }
-
-        [Query]
-        [All(typeof(UiButtonComponent))]
-        private void UpdateUIButtonTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
-        {
-            if (!pbUiTransform.IsDirty) return;
-
-            UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
         }
 
         [Query]
@@ -144,9 +93,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();
             uiTransformComponent.Transform.UnregisterHoverStyleCallbacks();
-
-            if (World.Has<UiButtonComponent>(entity))
-                World.Remove<UiButtonComponent>(entity);
         }
     }
 }
