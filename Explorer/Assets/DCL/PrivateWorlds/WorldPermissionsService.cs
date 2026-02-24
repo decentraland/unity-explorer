@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PrivateWorlds
 {
@@ -91,6 +92,8 @@ namespace DCL.PrivateWorlds
     public class WorldPermissionsService : IWorldPermissionsService
     {
         private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
+        private const string COMMS_HANDSHAKE_INTENT = "dcl:explorer:comms-handshake";
+        private const string EXPLORER_SIGNER = "dcl:explorer";
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -205,7 +208,7 @@ namespace DCL.PrivateWorlds
                 string baseUrl = urlsSource.Url(DecentralandUrl.WorldComms);
                 string url = string.Format(baseUrl, worldName);
 
-                string metadata = $"{{\"intent\":\"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false,\"secret\":\"{EscapeJsonString(password)}\"}}";
+                string metadata = BuildValidatePasswordMetadataJson(password);
 
                 var commonArguments = new CommonArguments(
                     URLAddress.FromString(url),
@@ -272,14 +275,26 @@ namespace DCL.PrivateWorlds
             public string? Error { get; set; }
         }
 
-        /// <summary>
-        /// Escapes a string for safe embedding in a JSON value using Newtonsoft.
-        /// </summary>
-        private static string EscapeJsonString(string value)
+        [Serializable]
+        private struct ValidatePasswordMetadata
         {
-            // JsonConvert.ToString returns a quoted string like "the\"value", so trim the outer quotes
-            string quoted = JsonConvert.ToString(value);
-            return quoted.Substring(1, quoted.Length - 2);
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+        }
+
+        private static string BuildValidatePasswordMetadataJson(string password)
+        {
+            var metadata = new ValidatePasswordMetadata
+            {
+                intent = COMMS_HANDSHAKE_INTENT,
+                signer = EXPLORER_SIGNER,
+                isGuest = false,
+                secret = password,
+            };
+
+            return JsonUtility.ToJson(metadata);
         }
 
         private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
