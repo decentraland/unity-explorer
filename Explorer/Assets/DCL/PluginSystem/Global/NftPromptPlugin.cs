@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
             nftPromptController?.Dispose();
         }
 
+        [Serializable]
         public class NftPromptSettings : IDCLPluginSettings
         {
             [field: Header(nameof(NftPromptPlugin) + "." + nameof(NftPromptSettings))]

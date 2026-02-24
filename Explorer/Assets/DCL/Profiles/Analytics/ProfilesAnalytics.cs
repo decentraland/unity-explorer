@@ -9,7 +9,7 @@ namespace DCL.Profiles
     {
         private readonly ConcurrentDictionary<string, DateTime> startedRequests = new (StringComparer.CurrentCultureIgnoreCase);
 
-        private readonly ProfilesDebug profilesDebug;
+        public readonly ProfilesDebug profilesDebug;
         private readonly IAnalyticsController analyticsController;
 
         public ProfilesAnalytics(ProfilesDebug profilesDebug, IAnalyticsController analyticsController)

@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
@@ -49,6 +50,7 @@ namespace DCL.PluginSystem.Global
             externalUrlPromptController?.Dispose();
         }
 
+        [Serializable]
         public class ExternalUrlPromptSettings : IDCLPluginSettings
         {
             [field: Header(nameof(ExternalUrlPromptPlugin) + "." + nameof(ExternalUrlPromptSettings))]

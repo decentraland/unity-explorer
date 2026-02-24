@@ -93,7 +93,7 @@ namespace DCL.InWorldCamera.Playground
                     new RealmProfileRepository(IWebRequestController.TEST,
                         new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
                         urlsSource,
-                        new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(new NullDebugContainerBuilder()), IAnalyticsController.Null), false)
+                        new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
