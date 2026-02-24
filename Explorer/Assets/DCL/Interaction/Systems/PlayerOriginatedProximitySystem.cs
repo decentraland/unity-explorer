@@ -121,11 +121,13 @@ namespace DCL.Interaction.Systems
                     Vector3 toTargetVec = GetSafeClosestPoint(buffer[i], playerControllerCenterPosition) - playerControllerCenterPosition;
 
                     float sqrDistanceToPlayer = toTargetVec.sqrMagnitude;
-                    float maxDistance = GetClosestMaxPlayerDistance(pointerEvents!);
-                    float sqrMaxDistance = maxDistance * maxDistance;
+
+                    // Get minimum max player distance and highest priority among pointer events entries
+                    GetMaxDistanceAndHighestPriority(pointerEvents!, out float maxPlayerDistance, out uint priority);
+                    float sqrMaxPlayerDistance = maxPlayerDistance * maxPlayerDistance;
 
                     // Skip if no pointer event is close enough
-                    if (sqrDistanceToPlayer > sqrMaxDistance)
+                    if (sqrDistanceToPlayer > sqrMaxPlayerDistance)
                         continue;
 
                     // The dot calculation is done without normalizing to be as cheap as we can (normalization == sqrt)
@@ -148,15 +150,14 @@ namespace DCL.Interaction.Systems
                         continue;
 
                     // Skip if we already have a higher priority result
-                    uint priorityCandidate = GetHighestPriority(pointerEvents!);
-                    if (priorityCandidate < highestPriority)
+                    if (priority < highestPriority)
                         continue;
 
                     float closestDistanceToPlayer = proximityResultForSceneEntities.DistanceToPlayer;
                     float sqrClosestDistanceToPlayer = closestDistanceToPlayer * closestDistanceToPlayer;
 
                     // Skip if we already have a closer result with same priority
-                    if (priorityCandidate == highestPriority
+                    if (priority == highestPriority
                         && sqrDistanceToPlayer >= sqrClosestDistanceToPlayer)
                         continue;
 
@@ -177,7 +178,7 @@ namespace DCL.Interaction.Systems
 
                     // New closest unobstructed entity can be set
                     proximityResultForSceneEntities.Set(sceneEntityInfo, buffer[i], distanceToPlayer);
-                    highestPriority = priorityCandidate;
+                    highestPriority = priority;
                 }
             }
             finally
@@ -212,60 +213,43 @@ namespace DCL.Interaction.Systems
             collider is MeshCollider { convex: false } ? collider.bounds.ClosestPoint(origin) : collider.ClosestPoint(origin);
 
         /// <summary>
-        /// Iterates through all pointer events and returns the smallest
-        /// <see cref="EventInfo.MaxPlayerDistance"/> value found.
+        /// Computes the minimum <c>MaxPlayerDistance</c> and maximum <c>Priority</c>
+        /// across all entries in the given <see cref="PBPointerEvents"/>.
         /// </summary>
         /// <param name="pointerEvents">
-        /// Container holding the collection of pointer events to evaluate.
+        /// The pointer events collection to evaluate.
         /// </param>
-        /// <returns>
-        /// The minimum <c>MaxPlayerDistance</c> among all contained events.
-        /// Returns <see cref="float.MaxValue"/> if the collection is empty.
-        /// </returns>
-        private float GetClosestMaxPlayerDistance(PBPointerEvents pointerEvents)
+        /// <param name="maxPlayerDistance">
+        /// Outputs the smallest <c>MaxPlayerDistance</c> found, or <see cref="float.MaxValue"/>
+        /// if the collection is empty.
+        /// </param>
+        /// <param name="highestPriority">
+        /// Outputs the greatest <c>Priority</c> found, or <c>0</c> if the collection is empty.
+        /// </param>
+        private void GetMaxDistanceAndHighestPriority(
+            PBPointerEvents pointerEvents,
+            out float maxPlayerDistance,
+            out uint highestPriority
+            )
         {
             var events = pointerEvents.PointerEvents;
             int count = events.Count;
 
-            float closestMaxDistance = float.MaxValue;
+            maxPlayerDistance = float.MaxValue;
+            highestPriority = 0;
 
             for (int i = 0; i < count; i++)
             {
-                float maxDistance = events[i].EventInfo.MaxPlayerDistance;
+                var info = events[i].EventInfo;
 
-                if (maxDistance < closestMaxDistance)
-                    closestMaxDistance = maxDistance;
-            }
+                float maxDistance = info.MaxPlayerDistance;
+                if (maxDistance < maxPlayerDistance)
+                    maxPlayerDistance = maxDistance;
 
-            return closestMaxDistance;
-        }
-
-        /// <summary>
-        /// Iterates through all pointer events and returns the highest
-        /// <see cref="EventInfo.Priority"/> value found.
-        /// </summary>
-        /// <param name="pointerEvents">
-        /// Container holding the collection of pointer events to evaluate.
-        /// </param>
-        /// <returns>
-        /// The greatest <c>Priority</c> value among all contained events.
-        /// Returns <c>0</c> if the collection is empty.
-        /// </returns>
-        private uint GetHighestPriority(PBPointerEvents pointerEvents)
-        {
-            var events = pointerEvents.PointerEvents;
-            int count = events.Count;
-
-            uint highestPriority = 0;
-
-            for  (int i = 0; i < count; i++)
-            {
-                uint priority = pointerEvents.PointerEvents[i].EventInfo.Priority;
+                uint priority = info.Priority;
                 if (priority > highestPriority)
                     highestPriority = priority;
             }
-
-            return highestPriority;
         }
     }
 }
