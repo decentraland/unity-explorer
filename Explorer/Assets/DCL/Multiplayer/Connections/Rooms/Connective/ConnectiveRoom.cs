@@ -222,6 +222,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                .Log($"{logPrefix} - Trying to disconnect current room finished");
         }
 
+        protected void SetNoConnectionRequired()
+        {
+            roomState.Set(IConnectiveRoom.State.Stopped);
+            attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+        }
+
         protected async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to started: {connectionString}");

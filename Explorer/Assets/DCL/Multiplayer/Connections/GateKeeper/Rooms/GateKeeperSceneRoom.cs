@@ -116,8 +116,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             if (options.IsCommsOffline)
             {
-                await DisconnectCurrentRoomAsync(true, token);
-                await UniTask.WaitWhile(() => options.IsCommsOffline, cancellationToken: token);
+                SetNoConnectionRequired();
                 return;
             }
 
