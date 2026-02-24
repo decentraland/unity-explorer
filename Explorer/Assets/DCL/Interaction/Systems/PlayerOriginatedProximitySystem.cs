@@ -47,6 +47,10 @@ namespace DCL.Interaction.Systems
         ///     Threshold used to calculate whether an entity falls inside the FOV sphere slice.
         /// </summary>
         private static readonly float fovAngleCosThres = Mathf.Cos(PROXIMITY_FOV_ANGLE_DEGREES * 0.5f * Mathf.Deg2Rad);
+
+        /// <summary>
+        ///     Precomputed squared threshold
+        /// </summary>
         private readonly float sqrFovAngleCosThres = fovAngleCosThres * fovAngleCosThres;
 
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
@@ -88,16 +92,6 @@ namespace DCL.Interaction.Systems
 
             ref ProximityResultForSceneEntities proximityResultForSceneEntities = ref playerInteractionEntity.ProximityResultForSceneEntities;
             proximityResultForSceneEntities.Reset();
-
-            // TODO (Maurizio) remove after tests
-#if UNITY_EDITOR
-            DrawFOV(
-                playerControllerCenterPosition,
-                playerFlatForward,
-                PROXIMITY_DEFAULT_MAX_DISTANCE,
-                Mathf.Acos(fovAngleCosThres) * Mathf.Rad2Deg
-            );
-#endif
 
             Collider[] buffer = collidersBufferPool.Get();
 
@@ -217,15 +211,27 @@ namespace DCL.Interaction.Systems
         private Vector3 GetSafeClosestPoint(Collider collider, Vector3 origin) =>
             collider is MeshCollider { convex: false } ? collider.bounds.ClosestPoint(origin) : collider.ClosestPoint(origin);
 
-
+        /// <summary>
+        /// Iterates through all pointer events and returns the smallest
+        /// <see cref="EventInfo.MaxPlayerDistance"/> value found.
+        /// </summary>
+        /// <param name="pointerEvents">
+        /// Container holding the collection of pointer events to evaluate.
+        /// </param>
+        /// <returns>
+        /// The minimum <c>MaxPlayerDistance</c> among all contained events.
+        /// Returns <see cref="float.MaxValue"/> if the collection is empty.
+        /// </returns>
         private float GetClosestMaxPlayerDistance(PBPointerEvents pointerEvents)
         {
+            var events = pointerEvents.PointerEvents;
+            int count = events.Count;
+
             float closestMaxDistance = float.MaxValue;
-            int count = pointerEvents.PointerEvents.Count;
 
             for (int i = 0; i < count; i++)
             {
-                float maxDistance = pointerEvents.PointerEvents[i].EventInfo.MaxPlayerDistance;
+                float maxDistance = events[i].EventInfo.MaxPlayerDistance;
 
                 if (maxDistance < closestMaxDistance)
                     closestMaxDistance = maxDistance;
@@ -234,10 +240,23 @@ namespace DCL.Interaction.Systems
             return closestMaxDistance;
         }
 
+        /// <summary>
+        /// Iterates through all pointer events and returns the highest
+        /// <see cref="EventInfo.Priority"/> value found.
+        /// </summary>
+        /// <param name="pointerEvents">
+        /// Container holding the collection of pointer events to evaluate.
+        /// </param>
+        /// <returns>
+        /// The greatest <c>Priority</c> value among all contained events.
+        /// Returns <c>0</c> if the collection is empty.
+        /// </returns>
         private uint GetHighestPriority(PBPointerEvents pointerEvents)
         {
+            var events = pointerEvents.PointerEvents;
+            int count = events.Count;
+
             uint highestPriority = 0;
-            int count = pointerEvents.PointerEvents.Count;
 
             for  (int i = 0; i < count; i++)
             {
@@ -248,37 +267,5 @@ namespace DCL.Interaction.Systems
 
             return highestPriority;
         }
-
-#if UNITY_EDITOR
-        private void DrawFOV(Vector3 origin, Vector3 flatForward, float maxDistance, float fovAngle)
-        {
-            int segments = 20; // smoothness of arc
-            float halfFov = fovAngle;
-
-            Quaternion leftRot = Quaternion.AngleAxis(-halfFov, Vector3.up);
-            Quaternion rightRot = Quaternion.AngleAxis(halfFov, Vector3.up);
-
-            Vector3 leftDir = leftRot * flatForward;
-            Vector3 rightDir = rightRot * flatForward;
-
-            // Draw boundaries
-            Debug.DrawLine(origin, origin + (leftDir * maxDistance), Color.blue);
-            Debug.DrawLine(origin, origin + (rightDir * maxDistance), Color.blue);
-
-            // Draw arc
-            Vector3 prevPoint = origin + (leftDir * maxDistance);
-
-            for (int i = 1; i <= segments; i++)
-            {
-                float lerp = i / (float)segments;
-                float angle = Mathf.Lerp(-halfFov, halfFov, lerp);
-                Vector3 dir = Quaternion.AngleAxis(angle, Vector3.up) * flatForward;
-                Vector3 nextPoint = origin + (dir * maxDistance);
-
-                Debug.DrawLine(prevPoint, nextPoint, Color.blue);
-                prevPoint = nextPoint;
-            }
-        }
-#endif
     }
 }
