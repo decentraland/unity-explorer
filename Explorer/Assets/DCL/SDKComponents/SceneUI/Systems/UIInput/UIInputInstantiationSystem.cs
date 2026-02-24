@@ -13,6 +13,7 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
@@ -76,6 +77,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateUIInput(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)
@@ -87,6 +89,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
         [Query]
         [All(typeof(UIInputComponent))]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateUIInputTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
         {
             if (!pbUiTransform.IsDirty) return;

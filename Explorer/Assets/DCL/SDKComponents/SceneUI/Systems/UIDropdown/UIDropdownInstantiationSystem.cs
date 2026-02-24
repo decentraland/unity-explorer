@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
@@ -67,6 +68,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateUIDropdown(ref UIDropdownComponent uiDropdownComponent, ref PBUiDropdown sdkModel)
         {
             if (!sdkModel.IsDirty) return;
@@ -77,6 +79,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
         [Query]
         [All(typeof(UIDropdownComponent))]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateUIDropdownTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
         {
             if (!pbUiTransform.IsDirty) return;
