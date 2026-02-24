@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -77,6 +78,7 @@ namespace DCL.PluginSystem
             mvcManager.RegisterController(genericContextMenuController);
         }
 
+        [Serializable]
         public class GenericContextMenuSettings : IDCLPluginSettings
         {
             [field: Header(nameof(GenericContextMenuPlugin) + "." + nameof(GenericContextMenuSettings))]

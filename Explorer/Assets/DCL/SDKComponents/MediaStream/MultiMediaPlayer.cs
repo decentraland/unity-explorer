@@ -13,10 +13,17 @@ namespace DCL.SDKComponents.MediaStream
         STOPPED,
     }
 
-    public readonly struct AvProPlayer
+    public class AvProPlayer
     {
         public readonly MediaPlayer AvProMediaPlayer;
         public readonly MediaPlayerCustomPool MediaPlayerCustomPool;
+
+        /// <summary>
+        /// This is here because UpdateMediaPlayerSystem uses an async method SetPlaybackProperties that needs to
+        /// complete before we do anything else, otherwise it might overwrite a later call to
+        /// UpdatePlaybackProperties, if that call is done before it completes. Check issue #6974 for more info.
+        /// </summary>
+        public bool WaitingForProperties;
 
         public AvProPlayer(MediaPlayer avProMediaPlayer, MediaPlayerCustomPool mediaPlayerCustomPool)
         {
@@ -76,6 +83,11 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsReady => Match(
             static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
             static _ => true
+        );
+
+        public bool WaitingForProperties => Match(
+            static avPro => avPro.WaitingForProperties,
+            static _ => false
         );
 
         public Vector2 GetTexureScale => Match(static avPro =>
@@ -181,13 +193,15 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public readonly void SetPlaybackProperties(PBVideoPlayer sdkVideoPlayer)
+        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
                 MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
-                MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer).Forget();
+                mediaPlayer.WaitingForProperties = true;
+                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer);
+                mediaPlayer.WaitingForProperties = false;
             }
 
             // Livekit streaming doesn't need to adjust playback properties

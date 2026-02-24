@@ -141,6 +141,7 @@ namespace DCL.PluginSystem.Global
         }
     }
 
+    [Serializable]
     public struct Web3AuthPluginSettings : IDCLPluginSettings
     {
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]

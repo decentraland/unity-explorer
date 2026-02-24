@@ -61,18 +61,17 @@ namespace DCL.AvatarRendering.Emotes
             {
                 URN convertedUrn = ConvertLegacyEmoteUrnToOnChain(emoteDto.metadata.id);
 
-                if (emotes.TryGetValue(convertedUrn, out IEmote existingEmote))
+                if (!emotes.TryGetValue(convertedUrn, out IEmote? emote))
                 {
-                    UpdateListedCachePriority(convertedUrn);
-                    return existingEmote;
+                    emote = new Emote(new StreamableLoadingResult<EmoteDTO>(emoteDto), false);
+                    emotes.Add(convertedUrn, emote);
                 }
 
-                return AddEmote(
-                    convertedUrn,
-                    new Emote(
-                        new StreamableLoadingResult<EmoteDTO>(emoteDto), false),
-                    qualifiedForUnloading
-                );
+                if (qualifiedForUnloading && !UpdateListedCachePriority(convertedUrn))
+                    cacheKeysDictionary[convertedUrn] =
+                        listedCacheKeys.AddLast((convertedUrn, MultithreadingUtility.FrameCount));
+
+                return emote;
             }
         }
 
@@ -99,18 +98,7 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
-        private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
-        {
-            emotes.Add(urn, wearable);
-
-            if (qualifiedForUnloading)
-                cacheKeysDictionary[urn] =
-                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
-
-            return wearable;
-        }
-
-        private void UpdateListedCachePriority(URN @for)
+        private bool UpdateListedCachePriority(URN @for)
         {
             if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(URN key, long lastUsedFrame)> node))
             {
@@ -119,7 +107,11 @@ namespace DCL.AvatarRendering.Emotes
                 cacheKeysDictionary[@for] = node;
                 listedCacheKeys.Remove(node);
                 listedCacheKeys.AddLast(node);
+
+                return true;
             }
+
+            return false;
         }
 
         private static bool TryUnloadAllWearableAssets(IEmote emote)

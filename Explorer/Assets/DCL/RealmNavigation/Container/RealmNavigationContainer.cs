@@ -1,10 +1,11 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PlacesAPIService;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -40,11 +41,12 @@ namespace DCL.RealmNavigation
             IRoomHub roomHub,
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
-            ILoadingScreen loadingScreen)
+            ILoadingScreen loadingScreen,
+            IPlacesAPIService placesAPIService)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
-            IAnalyticsController analytics = bootstrapContainer.Analytics.EnsureNotNull();
+            IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
             {
@@ -52,6 +54,7 @@ namespace DCL.RealmNavigation
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new ClearWorldsCacheTeleportOperation(placesAPIService),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
                 new LoadLandscapeTeleportOperation(landscape),
@@ -79,7 +82,7 @@ namespace DCL.RealmNavigation
 
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, bootstrapContainer.Analytics!,
+                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, analytics,
                     realmChangeOperations, teleportInSameRealmOperation),
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
             };

@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
@@ -132,6 +133,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(minimapController);
         }
 
+        [Serializable]
         public class MinimapPluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public MinimapContextMenuSettings MinimapContextMenuSettings;

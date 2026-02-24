@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -26,15 +27,16 @@ namespace DCL.EventsApi
         private const string HIGHLIGHT_PARAMETER_VALUE = "highlight";
         private const string WITH_CONNECTED_USERS_PARAMETER = "with_connected_users";
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
         private readonly StringBuilder placeIdsBuilder = new ();
 
-        public HttpEventsApiService(IWebRequestController webRequestController,
-            URLDomain baseUrl)
+        public HttpEventsApiService(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
             this.webRequestController = webRequestController;
-            this.baseUrl = baseUrl;
+            this.urlsSource = urlsSource;
+            baseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.ApiEvents));
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false)
@@ -170,7 +172,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(
                 url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
@@ -190,7 +192,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericPostArguments> result = webRequestController.DeleteAsync(
                 url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "delete"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
@@ -206,7 +208,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity,
