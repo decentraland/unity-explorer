@@ -27,7 +27,7 @@ public class AvatarTransformMatrixJobWrapperShould
         var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
         transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int initialIndex);
 
-        jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
+        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
 
         transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int afterIndex);
         Assert.AreNotEqual(initialIndex, afterIndex);
@@ -41,7 +41,7 @@ public class AvatarTransformMatrixJobWrapperShould
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
             var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
-            jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
+            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
         }
 
         // After resizing, the internal array size should be doubled
@@ -56,14 +56,14 @@ public class AvatarTransformMatrixJobWrapperShould
         var transformMatrixComponent2 = AvatarTransformMatrixComponent.NewDefault();
 
         // Add the first avatar
-        jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent1);
+        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent1);
         transformMatrixComponent1.IndexInGlobalJobArray.TryGetValue(out int firstIndex);
 
         // Release the first avatar
         jobWrapper.ReleaseAvatar(ref transformMatrixComponent1);
 
         // Add a second avatar and check if it reuses the released index
-        jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent2);
+        jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent2);
         transformMatrixComponent2.IndexInGlobalJobArray.TryGetValue(out int secondIndex);
 
         Assert.AreEqual(firstIndex, secondIndex);
@@ -77,7 +77,7 @@ public class AvatarTransformMatrixJobWrapperShould
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
             var transformMatrixComponent = AvatarTransformMatrixComponent.NewDefault();
-            jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
+            jobWrapper.RegisterAvatar(avatarBase, ref transformMatrixComponent);
         }
 
         // The matrices and bools should have been resized to double their initial size
