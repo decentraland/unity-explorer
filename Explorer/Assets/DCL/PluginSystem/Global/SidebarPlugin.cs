@@ -31,6 +31,7 @@ using DCL.WebRequests;
 using ECS;
 using MVC;
 using Runtime.Wearables;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -174,6 +175,7 @@ namespace DCL.PluginSystem.Global
             ));
         }
 
+        [Serializable]
         public class SidebarSettings : IDCLPluginSettings
         {
             [field: SerializeField]

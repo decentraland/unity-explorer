@@ -88,6 +88,7 @@ namespace Global.Dynamic
             mapRendererSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.MapRendererSettings, ct, nameof(settings.MapRendererSettings));
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public MapRendererSettingsRef MapRendererSettings { get; private set; } = null!;
