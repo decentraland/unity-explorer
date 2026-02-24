@@ -24,6 +24,8 @@ namespace DCL.Events
 {
     public class EventsController : ISection, IDisposable
     {
+        public event Action<bool>? CreateEventButtonClicked;
+
         private const string GET_FRIENDS_ERROR_MESSAGE = "There was an error loading friends. Please try again.";
         private const string GET_MY_COMMUNITIES_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
 
@@ -31,7 +33,9 @@ namespace DCL.Events
         public event Action? EventsClosed;
         public event Action? GoToTodayClicked;
 
-        public  DateTime CurrentCalendarFromDate { get; set; }
+        public DateTime CurrentCalendarFromDate { get; set; }
+        public EventsCalendarController EventsCalendarController { get; }
+        public EventCardActionsController EventCardActionsController { get; }
 
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
@@ -43,7 +47,6 @@ namespace DCL.Events
 
         private bool isSectionActivated;
         private bool isFriendsAndCommunitiesLoaded;
-        private readonly EventsCalendarController eventsCalendarController;
         private readonly EventsByDayController eventsByDayController;
         private readonly EventsStateService eventsStateService;
 
@@ -68,22 +71,23 @@ namespace DCL.Events
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            EventCardActionsController = eventCardActionsController;
 
             eventsStateService = new EventsStateService();
-            eventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
+            EventsCalendarController = new EventsCalendarController(view.EventsCalendarView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, eventCardActionsController, profileRepositoryWrapper);
             eventsByDayController = new EventsByDayController(view.EventsByDayView, this, eventsApiService, placesAPIService, eventsStateService, mvcManager, thumbnailLoader, profileRepositoryWrapper);
 
             view.GoToTodayButtonClicked += OnGoToTodayButtonClicked;
-            view.CreateButtonClicked += GoToCreateEventPage;
+            view.CreateButtonClicked += OnCreateButtonClicked;
         }
 
         public void Dispose()
         {
-            eventsCalendarController.Dispose();
+            EventsCalendarController.Dispose();
             eventsByDayController.Dispose();
 
             view.GoToTodayButtonClicked -= OnGoToTodayButtonClicked;
-            view.CreateButtonClicked -= GoToCreateEventPage;
+            view.CreateButtonClicked -= OnCreateButtonClicked;
         }
 
         public void Activate()
@@ -182,7 +186,13 @@ namespace DCL.Events
         private void OnGoToTodayButtonClicked() =>
             GoToTodayClicked?.Invoke();
 
-        public void GoToCreateEventPage() =>
-            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit");
+        private void OnCreateButtonClicked() =>
+            GoToCreateEventPage(true);
+
+        public void GoToCreateEventPage(bool fromHeader)
+        {
+            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?utm_source=explorer&utm_campaign=discover");
+            CreateEventButtonClicked?.Invoke(fromHeader);
+        }
     }
 }

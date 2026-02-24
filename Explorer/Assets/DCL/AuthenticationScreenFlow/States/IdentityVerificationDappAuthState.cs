@@ -27,6 +27,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IAppArgs appArgs;
         private readonly List<Resolution> possibleResolutions;
 
+        private Exception? loginException;
+
         public IdentityVerificationDappAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
@@ -47,103 +49,83 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((LoginMethod method, CancellationToken ct) payload)
         {
+            base.Enter();
+
+            loginException = null;
+
             // Checks the current screen mode because it could have been overridden with Alt+Enter
             if (Screen.fullScreenMode != FullScreenMode.Windowed)
                 WindowModeUtils.ApplyWindowedMode();
+
+            controller.CurrentRequestID = string.Empty;
 
             AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
         {
+            if (loginException == null)
+                view.Hide(OUT);
+            else
+            {
+                if (currentState.Value == AuthStatus.VerificationRequested)
+                    view.Hide(SLIDE);
+
+                spanErrorInfo = loginException switch
+                {
+                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
+                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
+                    CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
+                    Web3Exception ex => new SpanErrorInfo("Connection error during authentication flow", ex),
+                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
+                };
+
+                if (loginException is not OperationCanceledException)
+                    ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
+            }
+
             RestoreResolutionAndScreenMode();
             view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
+            base.Exit();
         }
 
         private async UniTaskVoid AuthenticateAsync(LoginMethod method, CancellationToken ct)
         {
             try
             {
-                controller.CurrentRequestID = string.Empty;
-
-                var web3AuthSpan = new SpanData
-                {
-                    SpanName = "Web3Authentication",
-                    SpanOperation = "auth.web3_login",
-                    Depth = 1,
-                };
-
-                SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, web3AuthSpan);
-
                 compositeWeb3Provider.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
-
-                // Close auth spans before transitioning to profile fetching
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close CodeVerification
-
-                SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME); // Close Web3Authentication
-
-                view.Hide(OUT);
-                machine.Enter<ProfileFetchingAuthState, (IWeb3Identity identity, bool isCached, CancellationToken ct)>((identity, false, ct));
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (identity, false, ct));
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e)
             {
-                CloseAuthSpansWithError("Login process was cancelled by user");
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (SignatureExpiredException e)
             {
-                CloseAuthSpansWithError("Web3 signature expired during authentication", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Web3SignatureException e)
             {
-                CloseAuthSpansWithError("Web3 signature validation failed", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (CodeVerificationException e)
             {
-                CloseAuthSpansWithError("Code verification failed during authentication", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
             catch (Web3Exception e)
             {
-                CloseAuthSpansWithError("Connection error during authentication flow", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             catch (Exception e)
             {
-                CloseAuthSpansWithError("Unexpected error during authentication flow", e);
-                ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-
-                if (currentState.Value == AuthStatus.VerificationInProgress)
-                    view.Hide(SLIDE);
-
+                loginException = e;
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
             }
             finally
@@ -155,18 +137,16 @@ namespace DCL.AuthenticationScreenFlow
         private void ShowVerification((int code, DateTime expiration, string requestId) data)
         {
             compositeWeb3Provider.VerificationRequired -= ShowVerification;
-            currentState.Value = AuthStatus.VerificationInProgress;
 
             controller.CurrentRequestID = data.requestId;
+            currentState.Value = AuthStatus.VerificationRequested;
 
-            var verificationSpan = new SpanData
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
                 SpanName = "CodeVerification",
                 SpanOperation = "auth.code_verification",
-                Depth = 1,
-            };
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, verificationSpan);
+                Depth = STATE_SPAN_DEPTH + 1,
+            });
 
             // Hide non-interactable Login Screen
             viewInstance.LoginSelectionAuthView.Hide();
@@ -174,16 +154,6 @@ namespace DCL.AuthenticationScreenFlow
             // Show Verification Screen
             view.Show(data.code, data.expiration);
             view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
-        }
-
-        private void CloseAuthSpansWithError(string errorMessage, Exception? exception = null)
-        {
-            // Close CodeVerification span if it was started
-            if (currentState.Value == AuthStatus.VerificationInProgress)
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
-
-            // Close Web3Authentication span
-            SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, errorMessage, exception);
         }
 
         private void RestoreResolutionAndScreenMode()

@@ -27,11 +27,9 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class ResolveStaticPointersSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity cameraEntity;
-        private readonly IDecentralandUrlsSource urlsSource;
 
-        internal ResolveStaticPointersSystem(World world, IDecentralandUrlsSource urlsSource) : base(world)
+        internal ResolveStaticPointersSystem(World world) : base(world)
         {
-            this.urlsSource = urlsSource;
         }
 
         public override void Initialize()
@@ -63,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    CreateSceneFacadePromise.Execute(World, entity, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)), in definition, partitionComponent);
+                    CreateSceneFacadePromise.Execute(World, entity, in definition, partitionComponent);
                     return;
                 }
             }

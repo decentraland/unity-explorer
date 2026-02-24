@@ -19,6 +19,8 @@ namespace DCL.FeatureFlags
             this.result = result;
         }
 
+        public bool IsEmpty => result.IsEmpty;
+
         public bool IsEnabled(string id)
         {
             return result.flags.GetValueOrDefault(id, false);

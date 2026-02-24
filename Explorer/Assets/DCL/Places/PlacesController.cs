@@ -20,13 +20,15 @@ namespace DCL.Places
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
 
+        public PlacesResultsController PlacesResultsController { get; }
+        public PlacesCardSocialActionsController PlaceCardActionsController { get; }
+
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
         private readonly PlacesStateService placesStateService;
-        private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
         private readonly IInputBlock inputBlock;
 
@@ -50,9 +52,10 @@ namespace DCL.Places
             this.cursor = cursor;
             this.placesCategories = placesCategories;
             this.inputBlock = inputBlock;
+            PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
                 friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
@@ -67,7 +70,7 @@ namespace DCL.Places
             view.SearchBarDeselected -= RestoreShortcutsInput;
 
             placesStateService.Dispose();
-            placesResultsController.Dispose();
+            PlacesResultsController.Dispose();
         }
 
         public void Activate()
