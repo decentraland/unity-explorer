@@ -151,7 +151,7 @@ jobs:
         with:
           repository: decentraland/performance-testing
           event-type: unity-explorer
-          token: ${{ secrets.performance_testing_pat }}
+          token: ${{ secrets.PERFORMANCE_TESTING_PAT }}
           client-payload: |-
             {
               "WINDOWS_ARTIFACT_S3_URL": "${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}",
