@@ -28,12 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IAvatarHighlightData highlightData;
-
-        internal AvatarLoaderSystem(World world, IAvatarHighlightData highlightData) : base(world)
-        {
-            this.highlightData = highlightData;
-        }
+        internal AvatarLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {

@@ -14,9 +14,9 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarHighlightSystem : BaseUnityLoopSystem
     {
-        private readonly IAvatarHighlightData settings;
+        private readonly ReadOnlyAvatarHighlightData settings;
 
-        internal AvatarHighlightSystem(World world, IAvatarHighlightData settings) : base(world)
+        internal AvatarHighlightSystem(World world, ReadOnlyAvatarHighlightData settings) : base(world)
         {
             this.settings = settings;
         }

@@ -21,13 +21,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void Setup()
         {
             // Create mock highlight settings that control fade animation
-            var highlightSettings = Substitute.For<IAvatarHighlightData>();
-            highlightSettings.OutlineVfxOpacity.Returns(OUTLINE_OPACITY);
-            highlightSettings.OutlineThickness.Returns(OUTLINE_THICKNESS);
-            highlightSettings.OutlineColor.Returns(new Color(1, 0, 0, 1));
-            highlightSettings.FadeInTimeSeconds.Returns(FADE_IN_TIME);
-            highlightSettings.FadeOutTimeSeconds.Returns(FADE_OUT_TIME);
-
+            var highlightSettings = new ReadOnlyAvatarHighlightData(OUTLINE_OPACITY, OUTLINE_THICKNESS, Color.red, FADE_IN_TIME, FADE_OUT_TIME);
             system = new AvatarHighlightSystem(world, highlightSettings);
 
             var avatarShape = new AvatarShapeComponent("TestAvatar", "test-id");

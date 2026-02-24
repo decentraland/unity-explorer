@@ -52,11 +52,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             IRealmData realmData = Substitute.For<IRealmData>();
             IIpfsRealm ipfsRealm = Substitute.For<IIpfsRealm>();
-            IAvatarHighlightData highlightData = Substitute.For<IAvatarHighlightData>();
 
             ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
             realmData.Ipfs.Returns(ipfsRealm);
-            system = new AvatarLoaderSystem(world, highlightData);
+            system = new AvatarLoaderSystem(world);
 
             fakePointers = new List<URN>();
             fakePointers.Add(BODY_SHAPE_MALE);
