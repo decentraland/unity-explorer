@@ -441,7 +441,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ConfigureHoverStylesBehaviour(World world, Entity entity, in UITransformComponent uiTransformComponent, VisualElement hoverEventTarget, float borderDarkenFactor, float backgroundDarkenFactor)
         {
-            // Capture the current border colors from the VisualElement
             var transform = uiTransformComponent.Transform;
             var borderTopColor = transform.resolvedStyle.borderTopColor;
             var borderRightColor = transform.resolvedStyle.borderRightColor;

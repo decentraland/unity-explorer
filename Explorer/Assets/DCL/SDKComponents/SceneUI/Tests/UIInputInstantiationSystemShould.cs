@@ -183,8 +183,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Act
             system.Update(0);
 
-            // Assert - defaults should be reapplied (overflow hidden is always set)
+            // Assert - defaults should be reapplied and hover styles re-configured with current border colors
             Assert.AreEqual(Overflow.Hidden, uiTransformComponent.Transform.style.overflow.value);
+            Assert.AreEqual(new StyleColor(Color.gray), uiTransformComponent.Transform.style.borderTopColor);
         }
 
         [Test]

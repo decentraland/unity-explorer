@@ -29,6 +29,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
     public partial class UIDropdownInstantiationSystem : BaseUnityLoopSystem
     {
         private const string COMPONENT_NAME = "UIDropdown";
+        private const float HOVER_BORDER_DARKEN_FACTOR = 0.3f;
+        private const float HOVER_BACKGROUND_DARKEN_FACTOR = 0.15f;
 
         private readonly IComponentPool<UIDropdownComponent> dropdownsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -62,7 +64,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newDropdown.DropdownField, 0.3f, 0.15f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newDropdown.DropdownField, HOVER_BORDER_DARKEN_FACTOR, HOVER_BACKGROUND_DARKEN_FACTOR);
 
             World.Add(entity, newDropdown);
         }
@@ -80,11 +82,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         [Query]
         [All(typeof(UIDropdownComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIDropdownTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        private void UpdateUIDropdownTransformDefaults(in Entity entity, in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform, ref UIDropdownComponent uiDropdownComponent)
         {
             if (!pbUiTransform.IsDirty) return;
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
+            // Re-configure hover so the stored border colors match the updated transform (e.g. defaults applied above); avoids wrong restore on hover leave when PBUiTransform changed while hovered.
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiDropdownComponent.DropdownField, HOVER_BORDER_DARKEN_FACTOR, HOVER_BACKGROUND_DARKEN_FACTOR);
         }
 
         [Query]

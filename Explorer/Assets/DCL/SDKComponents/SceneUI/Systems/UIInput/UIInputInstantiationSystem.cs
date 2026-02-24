@@ -32,6 +32,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     public partial class UIInputInstantiationSystem : BaseUnityLoopSystem
     {
         private const string COMPONENT_NAME = "UIInput";
+        private const float HOVER_BORDER_DARKEN_FACTOR = 0.3f;
+        private const float HOVER_BACKGROUND_DARKEN_FACTOR = 0f;
 
         private readonly IComponentPool<UIInputComponent> inputTextsPool;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -71,7 +73,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, 0.3f, 0f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, HOVER_BORDER_DARKEN_FACTOR, HOVER_BACKGROUND_DARKEN_FACTOR);
 
             World!.Add(entity, newUIInputComponent);
         }
@@ -90,11 +92,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [Query]
         [All(typeof(UIInputComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateUIInputTransformDefaults(in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform)
+        private void UpdateUIInputTransformDefaults(in Entity entity, in UITransformComponent uiTransformComponent, in PBUiTransform pbUiTransform, ref UIInputComponent uiInputComponent)
         {
             if (!pbUiTransform.IsDirty) return;
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
+            // Re-configure hover so the stored border colors match the updated transform (e.g. defaults applied above); avoids wrong restore on hover leave when PBUiTransform changed while hovered.
+            UiElementUtils.ConfigureHoverStylesBehaviour(World!, entity, in uiTransformComponent, uiInputComponent.TextField, HOVER_BORDER_DARKEN_FACTOR, HOVER_BACKGROUND_DARKEN_FACTOR);
         }
 
         [Query]
