@@ -2,10 +2,12 @@ using Arch.Core;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
+using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -21,6 +23,21 @@ namespace DCL.Multiplayer.SDK.Tests
         private IECSToCRDTWriter ecsToCRDTWriter;
         private SDKProfile profile;
         private PlayerSceneCRDTEntity playerCRDTEntity;
+
+        [OneTimeSetUp]
+        public void InitFF()
+        {
+            var appArgs = new ApplicationParametersParser();
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeaturesRegistry.Reset();
+            FeatureFlagsConfiguration.Reset();
+        }
 
         [SetUp]
         public void Setup()
