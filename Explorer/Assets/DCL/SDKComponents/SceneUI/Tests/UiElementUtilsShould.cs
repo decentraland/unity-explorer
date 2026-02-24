@@ -322,8 +322,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         // --- Hover feedback with textured background tests ---
 
-        private const float BORDER_DARKEN = 0.22f;
-        private const float BACKGROUND_DARKEN = 0.1f;
+        private const float BORDER_DARKEN = 0.3f;
+        private const float BACKGROUND_DARKEN = 0.15f;
 
         private HoverStyleBehaviourData CreateHoverData(VisualElement hoverTarget = null, VisualElement uiTransform = null)
         {

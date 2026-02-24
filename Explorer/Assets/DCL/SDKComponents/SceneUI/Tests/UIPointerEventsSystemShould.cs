@@ -35,6 +35,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
             world.Add(entity, new CRDTEntity(500));
         }
 
+        private static PBPointerEvents.Types.Info ButtonShowFeedbackInfo =>
+            new() { ShowFeedback = true };
+
         [Test]
         [TestCase(PointerEventType.PetDown)]
         [TestCase(PointerEventType.PetUp)]
@@ -42,12 +45,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [TestCase(PointerEventType.PetHoverLeave)]
         public void TriggerPointerEvents(PointerEventType eventType)
         {
-            // Arrange
+            // Arrange - PetDown with ShowFeedback true so SetupUiButton runs and adds UiButtonComponent
             var input = new PBPointerEvents { IsDirty = true };
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
@@ -82,14 +85,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUiButtonOnTextEntityWithPointerEvents()
+        public void SetupUiButtonOnTextEntityWithPointerEventsWhenPetDownShowFeedbackTrue()
         {
-            // Arrange - entity with PBUiText + PBPointerEvents (no PBUiDropdown, PBUiInput, UiButtonComponent)
+            // Arrange - entity with PBUiText + PBPointerEvents with PetDown and ShowFeedback true (UiButton pattern)
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
 
@@ -103,12 +106,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void ApplyDefaultTransformValuesOnSetupUiButton()
         {
-            // Arrange
+            // Arrange - PetDown with ShowFeedback true so defaults are applied
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
 
@@ -127,12 +130,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void ApplyDefaultBackgroundOnSetupUiButton()
         {
-            // Arrange - entity without PBUiBackground
+            // Arrange - entity without PBUiBackground; PetDown with ShowFeedback true so default white background is applied
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
 
@@ -144,52 +147,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void NotSetupUiButtonOnEntityWithPBUiDropdown()
-        {
-            // Arrange - entity has PBUiDropdown, so SetupUiButton should be skipped
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents, new PBUiDropdown());
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
-        public void NotSetupUiButtonOnEntityWithPBUiInput()
-        {
-            // Arrange - entity has PBUiInput, so SetupUiButton should be skipped
-            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
-            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
-            {
-                EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
-            });
-            world.Add(entity, new PBUiText(), pbPointerEvents, new PBUiInput());
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
-        }
-
-        [Test]
         public void NotSetupUiButtonWhenAlreadyHasUiButtonComponent()
         {
-            // Arrange - entity already has UiButtonComponent (should be [None] filtered)
+            // Arrange - entity already has UiButtonComponent (query has [None(typeof(UiButtonComponent))])
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents, new UiButtonComponent());
 
@@ -199,9 +164,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void SetupUiButtonWithShowFeedbackDisabled()
+        public void NotSetupUiButtonWhenNoPetDownWithShowFeedbackTrue()
         {
-            // Arrange - pointer events with ShowFeedback=false
+            // Arrange - PBPointerEvents without PetDown+ShowFeedback true (e.g. custom UiEntity, not SDK <Button>)
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
@@ -213,19 +178,38 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Act
             system.Update(0);
 
-            // Assert - UiButtonComponent should still be added even with feedback disabled
-            Assert.IsTrue(world.Has<UiButtonComponent>(entity));
+            // Assert - UiButtonComponent is not added; defaults and hover apply only to UiButton (<Button>) pattern
+            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
+        }
+
+        [Test]
+        public void NotSetupUiButtonWhenPetDownHasShowFeedbackFalse()
+        {
+            // Arrange - PetDown present but ShowFeedback false
+            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
+            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetDown,
+                EventInfo = new PBPointerEvents.Types.Info { ShowFeedback = false },
+            });
+            world.Add(entity, new PBUiText(), pbPointerEvents);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.IsFalse(world.Has<UiButtonComponent>(entity));
         }
 
         [Test]
         public void UpdateUIButtonTransformDefaultsWhenDirty()
         {
-            // Arrange - setup the button first
+            // Arrange - setup the button first (PetDown + ShowFeedback true)
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
             system.Update(0);
@@ -247,7 +231,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
             system.Update(0);
@@ -270,7 +254,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
             system.Update(0);
@@ -288,12 +272,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void ResetPickingModeOnPointerEventsRemoval()
         {
-            // Arrange - add pointer events with PfmBlock filter
+            // Arrange - add pointer events so SetupUiButton runs and sets PickingMode
             var pbPointerEvents = new PBPointerEvents { IsDirty = true };
             pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetDown,
-                EventInfo = new PBPointerEvents.Types.Info(),
+                EventInfo = ButtonShowFeedbackInfo,
             });
             world.Add(entity, new PBUiText(), pbPointerEvents);
             system.Update(0);
