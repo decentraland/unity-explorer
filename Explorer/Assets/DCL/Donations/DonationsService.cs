@@ -115,8 +115,8 @@ namespace DCL.Donations
 
                     if (addressFromScene != addressFromApis)
                     {
-                        SentrySdk.AddBreadcrumb("Possible phishing attempt detected in Donations");
-                        ReportHub.LogException(new Exception($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}. Using address from Places API."), ReportCategory.DONATIONS);
+                        SentrySdk.AddBreadcrumb($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}.");
+                        ReportHub.LogException(new Exception( "Possible phishing attempt detected in Donations: using address from Places API."), ReportCategory.DONATIONS);
                     }
 
                     donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
