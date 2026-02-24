@@ -29,7 +29,6 @@ use segment::queue::queued_batcher::QueuedBatcher;
 pub struct AppContext {
     pub batcher: QueuedBatcher,
     pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
-    pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
@@ -38,6 +37,7 @@ pub struct AppContext {
 
 pub struct SegmentServer {
     context: Arc<Mutex<AppContext>>,
+    daemon: Arc<parking_lot::Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     next_id: AtomicU64,
 }
 
@@ -47,13 +47,13 @@ pub enum ServerState {
 }
 
 pub struct Server {
-    state: std::sync::Mutex<ServerState>,
+    state: parking_lot::Mutex<ServerState>,
 }
 
 impl Default for Server {
     fn default() -> Self {
         Self {
-            state: std::sync::Mutex::new(ServerState::Disposed),
+            state: parking_lot::Mutex::new(ServerState::Disposed),
         }
     }
 }
@@ -67,12 +67,7 @@ impl Server {
         callback_fn: FfiCallbackFn,
         error_fn: Option<FfiErrorCallbackFn>,
     ) -> bool {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return false;
-        }
-
-        let mut state = state_lock.unwrap();
+        let mut state = self.state.lock();
 
         match *state {
             ServerState::Ready(_, _, _) => false,
@@ -101,17 +96,13 @@ impl Server {
     }
 
     pub fn dispose(&self) -> bool {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return false;
-        }
-
-        let mut state = state_lock.unwrap();
+        let mut state = self.state.lock();
         let extracted = std::mem::replace(&mut *state, ServerState::Disposed);
 
         match extracted {
             ServerState::Disposed => false,
-            ServerState::Ready(_, runtime, callbacks_bundle) => {
+            ServerState::Ready(server, runtime, callbacks_bundle) => {
+                server.stop_daemon();
                 drop(callbacks_bundle);
                 runtime.shutdown_background();
                 *state = ServerState::Disposed;
@@ -130,12 +121,7 @@ impl Server {
     where
         <Fut as Future>::Output: Send,
     {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return 0;
-        }
-
-        let state = state_lock.unwrap();
+        let state = self.state.lock();
 
         match &*state {
             ServerState::Disposed => 0,
@@ -215,23 +201,25 @@ impl SegmentServer {
         let client = HttpClient::default();
         let send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
-        let send_daemon = Arc::new(Mutex::new(send_daemon));
+        let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
 
-        let moved_error_fn = error_fn.clone();
         let moved_send_daemon = send_daemon.clone();
+
         async_runtime.spawn(
             AssertUnwindSafe(async move {
-                let mut guard = moved_send_daemon.lock().await;
-                guard.start(moved_error_fn);
+                let mut guard = moved_send_daemon.lock();
+                guard.start(|message: &str| {
+                    std::eprintln!("Error AnalyticsEventSendDaemon: {message}")
+                });
             })
             .catch_unwind(),
         );
+
         let direct_client = HttpClient::default();
 
         let context = AppContext {
             batcher: queue_batcher,
             queue: event_queue,
-            daemon: send_daemon,
             segment_client: direct_client,
             write_key: writer_key,
             callback_fn: Box::new(move |id, response| unsafe {
@@ -244,6 +232,7 @@ impl SegmentServer {
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
+            daemon: send_daemon,
             context: Arc::new(Mutex::new(context)),
         }
     }
@@ -361,6 +350,10 @@ impl SegmentServer {
                     .report_error(Some(id), e.to_string());
             }
         }
+    }
+
+    pub fn stop_daemon(&self) {
+        self.daemon.lock().stop();
     }
 }
 
