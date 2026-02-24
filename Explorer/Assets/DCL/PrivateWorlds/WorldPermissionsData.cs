@@ -4,6 +4,13 @@ using System.Collections.Generic;
 
 namespace DCL.PrivateWorlds
 {
+    internal static class WorldPermissionTypeNames
+    {
+        public const string Unrestricted = "unrestricted";
+        public const string AllowList = "allow-list";
+        public const string SharedSecret = "shared-secret";
+    }
+
     /// <summary>
     /// Represents the type of access control for a world.
     /// </summary>
@@ -52,7 +59,7 @@ namespace DCL.PrivateWorlds
     public class PermissionConfig
     {
         [JsonProperty("type")]
-        public string Type { get; set; } = "unrestricted";
+        public string Type { get; set; } = WorldPermissionTypeNames.Unrestricted;
 
         [JsonProperty("wallets")]
         public List<string>? Wallets { get; set; }
@@ -68,7 +75,7 @@ namespace DCL.PrivateWorlds
     public class AccessPermissionConfig
     {
         [JsonProperty("type")]
-        public string Type { get; set; } = "unrestricted";
+        public string Type { get; set; } = WorldPermissionTypeNames.Unrestricted;
 
         [JsonProperty("wallets")]
         public List<string>? Wallets { get; set; }
@@ -116,17 +123,17 @@ namespace DCL.PrivateWorlds
             var access = response.Permissions.Access;
 
             if (access == null || string.IsNullOrEmpty(access.Type) ||
-                access.Type.Equals("unrestricted", StringComparison.OrdinalIgnoreCase))
+                access.Type.Equals(WorldPermissionTypeNames.Unrestricted, StringComparison.OrdinalIgnoreCase))
             {
                 info.AccessType = WorldAccessType.Unrestricted;
             }
-            else if (access.Type.Equals("allow-list", StringComparison.OrdinalIgnoreCase))
+            else if (access.Type.Equals(WorldPermissionTypeNames.AllowList, StringComparison.OrdinalIgnoreCase))
             {
                 info.AccessType = WorldAccessType.AllowList;
                 info.AllowedWallets = access.Wallets ?? new List<string>();
                 info.AllowedCommunities = access.Communities ?? new List<string>();
             }
-            else if (access.Type.Equals("shared-secret", StringComparison.OrdinalIgnoreCase))
+            else if (access.Type.Equals(WorldPermissionTypeNames.SharedSecret, StringComparison.OrdinalIgnoreCase))
             {
                 info.AccessType = WorldAccessType.SharedSecret;
             }
