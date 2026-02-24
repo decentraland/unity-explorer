@@ -113,7 +113,7 @@ namespace DCL.Landscape
                 // buffer might have been overwritten by WorldTerrainGenerator
                 // Fixes: https://github.com/decentraland/unity-explorer/issues/7150
                 // The trees regeneration might be a very expensive operation with over than 100k iterations
-                // We need to throttle the process to prevent possible thread-locks
+                // We need to throttle this process to avoid long main-thread stalls
                 await Trees!.InstantiateAsync(ct);
                 Trees!.Show();
             }
