@@ -46,6 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         /*
          * The SDK lets creators put a UI Pointer Events on any UiEntity regardless of the rest of its components...
+         * Since not all UiEntities ARE 'UiButton', we only put UiButtonComponent on the corresponding ones.
          * As defined in the SDK, UiButton (<Button>) entities composition breakdown:
          * https://github.com/decentraland/js-sdk-toolchain/blob/main/packages/@dcl/react-ecs/src/components/Button/index.tsx#L80-L90
          * - (mandatory) UiText
@@ -77,7 +78,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiTransformComponent.Transform, 0.22f, 0.1f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, uiTransformComponent.Transform, 0.3f, 0.15f);
 
             World.Add<UiButtonComponent>(entity);
         }

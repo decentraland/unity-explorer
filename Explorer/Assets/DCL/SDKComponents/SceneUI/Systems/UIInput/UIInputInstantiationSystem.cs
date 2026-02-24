@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, 0.22f, 0f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newUIInputComponent.TextField, 0.3f, 0f);
 
             World!.Add(entity, newUIInputComponent);
         }

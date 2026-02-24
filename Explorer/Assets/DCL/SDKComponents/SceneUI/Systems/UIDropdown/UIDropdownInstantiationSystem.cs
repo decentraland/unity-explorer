@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);
-            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newDropdown.DropdownField, 0.22f, 0.1f);
+            UiElementUtils.ConfigureHoverStylesBehaviour(World, entity, in uiTransformComponent, newDropdown.DropdownField, 0.3f, 0.15f);
 
             World.Add(entity, newDropdown);
         }
