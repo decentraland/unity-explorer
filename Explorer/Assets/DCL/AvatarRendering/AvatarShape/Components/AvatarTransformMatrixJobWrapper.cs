@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Jobs;
@@ -16,16 +17,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         private bool disposed;
 
-        // Matrix multiply per bone is non-trivial; smaller batches distribute load more evenly.
-        private const int BONE_MATRIX_BATCH_COUNT = 32;
+        // Each task processes one full avatar (62 bone multiplies). Small batch count keeps
+        // worker utilisation high without excessive scheduling overhead.
+        private const int BONE_MATRIX_BATCH_COUNT = 4;
 
         internal const int AVATAR_ARRAY_SIZE = 100;
         private const int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
         private const int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
-        private QuickArray<Matrix4x4> matrixFromAllAvatars;
+        private QuickArray<float4x4> matrixFromAllAvatars;
         private QuickArray<bool> updateAvatar;
-        private QuickArray<Matrix4x4> bonesCombined;
+        private QuickArray<float4x4> bonesCombined;
         public BoneMatrixCalculationJob job;
 
         // Per-slot Transform references used to rebuild the TransformAccessArrays when avatars are added or removed.
@@ -64,10 +66,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             UnityEngine.Object.DontDestroyOnLoad(dummyGO);
             dummyTransform = dummyGO.transform;
 
-            bonesCombined = new QuickArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH);
+            bonesCombined = new QuickArray<float4x4>(BONES_PER_AVATAR_LENGTH);
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, bonesCombined.InnerNativeArray());
 
-            matrixFromAllAvatars = new QuickArray<Matrix4x4>(AVATAR_ARRAY_SIZE);
+            matrixFromAllAvatars = new QuickArray<float4x4>(AVATAR_ARRAY_SIZE);
             updateAvatar = new QuickArray<bool>(AVATAR_ARRAY_SIZE);
 
             slotBones = new Transform[AVATAR_ARRAY_SIZE][];
@@ -104,7 +106,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             job.AvatarTransform = matrixFromAllAvatars.InnerNativeArray();
             job.UpdateAvatar = updateAvatar.InnerNativeArray();
-            handle = job.Schedule(ActiveBonesCount(), BONE_MATRIX_BATCH_COUNT, combinedGatherHandle);
+            handle = job.Schedule(avatarIndex, BONE_MATRIX_BATCH_COUNT, combinedGatherHandle);
         }
 
         public void CompleteBoneMatrixCalculations()
@@ -187,9 +189,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             currentAvatarAmountSupported = newCapacity;
             structureDirty = true;
         }
-
-        private int ActiveBonesCount() =>
-            avatarIndex * BONES_ARRAY_LENGTH;
 
         public void Dispose()
         {

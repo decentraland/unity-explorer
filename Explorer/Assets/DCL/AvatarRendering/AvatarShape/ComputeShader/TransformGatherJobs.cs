@@ -1,7 +1,6 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.Jobs;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -15,7 +14,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public struct BoneGatherJob : IJobParallelForTransform
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<Matrix4x4> BonesCombined;
+        public NativeArray<float4x4> BonesCombined;
 
         public void Execute(int index, TransformAccess transform)
         {
@@ -32,11 +31,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public struct AvatarRootGatherJob : IJobParallelForTransform
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<Matrix4x4> MatrixFromAllAvatars;
+        public NativeArray<float4x4> MatrixFromAllAvatars;
 
         public void Execute(int index, TransformAccess transform)
         {
-            MatrixFromAllAvatars[index] = (Matrix4x4)math.inverse((float4x4)transform.localToWorldMatrix);
+            MatrixFromAllAvatars[index] = math.inverse((float4x4)transform.localToWorldMatrix);
         }
     }
 }
