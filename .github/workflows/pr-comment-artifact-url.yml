@@ -124,18 +124,20 @@ jobs:
             --name size_report_macos \
             --dir size_reports 2>/dev/null || true
 
-          WINDOWS_ROW=$(cat size_reports/size_report_windows64.md 2>/dev/null || true)
-          MACOS_ROW=$(cat size_reports/size_report_macos.md 2>/dev/null || true)
+          WINDOWS_ROW=$(grep "^|" size_reports/size_report_windows64.md 2>/dev/null || true)
+          MACOS_ROW=$(grep "^|" size_reports/size_report_macos.md 2>/dev/null || true)
+          RELEASE_TAG=$(grep "^release_tag=" size_reports/size_report_windows64.md size_reports/size_report_macos.md 2>/dev/null | head -1 | cut -d= -f2 || true)
 
           if [ -n "$WINDOWS_ROW" ] || [ -n "$MACOS_ROW" ]; then
             {
               echo "SIZE_REPORT<<EOF"
-              echo "### Artifact size check (vs latest release)"
+              echo "### Artifact size check"
               echo ""
               echo "| Target | Size (MB / MiB) | Cap (MB) | Δ MB vs release | Δ % vs release | Result |"
               echo "|--------|----------------:|--------:|----------------:|---------------:|--------|"
               [ -n "$WINDOWS_ROW" ] && echo "$WINDOWS_ROW"
               [ -n "$MACOS_ROW" ] && echo "$MACOS_ROW"
+              [ -n "$RELEASE_TAG" ] && echo "" && echo "_Comparing against: **${RELEASE_TAG}**_"
               echo "EOF"
             } >> "$GITHUB_ENV"
           else

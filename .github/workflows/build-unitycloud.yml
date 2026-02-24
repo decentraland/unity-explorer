@@ -545,8 +545,10 @@ jobs:
         if: always() && steps.size_check.outputs.result != ''
         run: |
           mkdir -p size_report
-          echo "| ${{ matrix.target }} | ${{ steps.size_check.outputs.size_mb }} / ${{ steps.size_check.outputs.size_mib }} | ${{ steps.size_check.outputs.cap_mb }} | ${{ steps.size_check.outputs.delta_mb }} | ${{ steps.size_check.outputs.delta_pct }} | ${{ steps.size_check.outputs.result }} |" \
-            > size_report/size_report_${{ matrix.target }}.md
+          {
+            echo "release_tag=${{ steps.size_check.outputs.release_tag }}"
+            echo "| ${{ matrix.target }} | ${{ steps.size_check.outputs.size_mb }} / ${{ steps.size_check.outputs.size_mib }} | ${{ steps.size_check.outputs.cap_mb }} | ${{ steps.size_check.outputs.delta_mb }} | ${{ steps.size_check.outputs.delta_pct }} | ${{ steps.size_check.outputs.result }} |"
+          } > size_report/size_report_${{ matrix.target }}.md
 
       - name: Upload size report
         if: always() && steps.size_check.outputs.result != ''
