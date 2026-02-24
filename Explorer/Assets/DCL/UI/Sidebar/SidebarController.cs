@@ -10,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.EventsApi;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -54,7 +55,6 @@ namespace DCL.UI.Sidebar
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private bool includeMarketplaceCredits;
-        private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
@@ -81,7 +81,6 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            bool includeDiscover,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -107,7 +106,6 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.includeDiscover = includeDiscover;
             this.eventsApiService = eventsApiService;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
@@ -172,7 +170,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
 
-            if (includeDiscover)
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER))
             {
                 viewInstance.placesButton.onClick.AddListener(() =>
                 {

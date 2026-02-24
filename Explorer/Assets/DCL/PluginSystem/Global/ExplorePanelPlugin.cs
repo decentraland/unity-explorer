@@ -144,7 +144,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
 
         private readonly bool includeCameraReel;
-        private readonly bool includeDiscover;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -218,7 +217,6 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            bool includeDiscover,
             IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
@@ -288,7 +286,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
-            this.includeDiscover = includeDiscover;
             this.appArgs = appArgs;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -570,7 +567,6 @@ namespace DCL.PluginSystem.Global
                     eventsController,
                     inputBlock,
                     includeCameraReel,
-                    includeDiscover,
                     sharedSpaceManager,
                     eventsApiService);
 

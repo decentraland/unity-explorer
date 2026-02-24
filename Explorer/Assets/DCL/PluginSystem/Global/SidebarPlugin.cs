@@ -56,7 +56,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly bool includeMarketplaceCredits;
-        private readonly bool includeDiscover;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -87,7 +86,6 @@ namespace DCL.PluginSystem.Global
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            bool includeDiscover,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
@@ -117,7 +115,6 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
-            this.includeDiscover = includeDiscover;
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -163,7 +160,6 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                includeDiscover,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
