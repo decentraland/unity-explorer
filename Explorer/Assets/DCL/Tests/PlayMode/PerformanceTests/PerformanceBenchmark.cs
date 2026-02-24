@@ -1,8 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -15,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
@@ -37,16 +41,41 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             reportScope = new MockedReportScope();
         }
 
+        [OneTimeSetUp]
+        public void SetupFF()
+        {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(new FeatureFlagsResultDto
+            {
+                flags = new Dictionary<string, bool> { [FeatureFlagsStrings.USE_GATEWAY] = true },
+                variants = new Dictionary<string, FeatureFlagVariantDto>(),
+            }));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
+        }
+
         [TearDown]
         public void TearDown() =>
             reportScope?.Dispose();
 
-        protected void CreateController(int concurrency, bool disableABCache = false)
+        protected void EnableErrors()
+        {
+            reportScope!.Mock.When(x => x.LogException(Arg.Any<Exception>(),
+                             Arg.Is<ReportData>(data => data.Category == ReportCategory.GENERIC_WEB_REQUEST), Arg.Any<Object?>()))
+                        .Do(x => Debug.unityLogger.LogException(x.Arg<Exception>()));
+        }
+
+        protected void CreateController(int concurrency, bool disableABCache = false, DecentralandEnvironment env = DecentralandEnvironment.Zone, bool ktxEnabled = true, bool useGateway = false)
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
-            controller = new WebRequestController(analytics, identityCache,
-                new RequestHub(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
+            var hub = new RequestHub(useGateway ? GatewayUrlsSource.CreateForTest(env, ILaunchMode.PLAY) : DecentralandUrlsSource.CreateForTest(env, ILaunchMode.PLAY), disableABCache);
+            hub.SetKTXEnabled(ktxEnabled);
+
+            controller = new WebRequestController(analytics, identityCache, hub, new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
         protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
@@ -55,12 +84,12 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             analytics.WarmingUp = true;
 
             // Warmup a few times (DNS/TLS/JIT)
-            for (int i = 0; i < warmupCount; i++)
+            for (var i = 0; i < warmupCount; i++)
                 await UniTask.WhenAll(loopThrough.Select(createRequest));
 
             analytics.WarmingUp = false;
 
-            for (int i = 0; i < iterationsCount; i++)
+            for (var i = 0; i < iterationsCount; i++)
             {
                 long ts = Stopwatch.GetTimestamp();
 
@@ -70,7 +99,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
                 var tasks = new UniTask[targetRequestsCount];
 
-                for (int j = 0; j < targetRequestsCount; j++)
+                for (var j = 0; j < targetRequestsCount; j++)
                     tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync(ReportCategory.GENERIC_WEB_REQUEST);
 
                 await UniTask.WhenAll(tasks);
@@ -86,7 +115,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         protected static double Sum(SampleGroup sampleGroup)
         {
-            double sum = 0.0;
+            var sum = 0.0;
 
             foreach (double sample in sampleGroup.Samples)
                 sum += sample;
