@@ -19,97 +19,245 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 191273726208528384
-    m_Localized: "The Creator Hub gives you tools to build your own spaces, from
-      simple hangouts to bigger experiences. What you build can become someone\u2019s
-      regular spot."
+    m_Localized: Get rewarded for your time spent in Decentraland. Collect Credits
+      each week and use them in the Marketplace to get Wearables & Emotes for free!
     m_Metadata:
       m_Items: []
   - m_Id: 1078626870091776
-    m_Localized: Show Up
+    m_Localized: Emotes
     m_Metadata:
       m_Items: []
   - m_Id: 1078683115708416
+    m_Localized: Wave to friends or show off your moves using <b>'B'</b> to trigger
+      the Emote Wheel. Customize options from your Backpack so you're always ready
+      to go!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1078715894194176
+    m_Localized: Wearables
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1078768453017600
+    m_Localized: Express yourself without limits! From accessories to full skins,
+      the Marketplace has thousands of community-made Wearables for crafting your
+      unique look.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 191273272888152064
+    m_Localized: <size=70>Marketplace Credits</size>
+    m_Metadata:
+      m_Items: []
+  - m_Id: 191273924741713920
+    m_Localized: Genesis City
+    m_Metadata:
+      m_Items: []
+  - m_Id: 191273927132467200
+    m_Localized: "Decentraland's open-world metropolis is made up of thousands of
+      community-owned LAND parcels. Explore by foot or use the map to teleport\u2014there's
+      always something new to discover!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197019265204740096
+    m_Localized: Events
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197019292912312320
+    m_Localized: From movie nights to dance parties, Decentraland's community-driven
+      events are the best place to make friends! Browse the Event page and find what
+      interests you.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098386597339136
+    m_Localized: Camera
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098550963724288
+    m_Localized: "Save snapshots of your favorite moments in Decentraland. Use <b>'C'</b>
+      to open the Camera and <b>'Space Bar'</b> to take a shot\u2014don't forget
+      to strike a pose!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098607523913728
+    m_Localized: Badges
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098653933887488
+    m_Localized: "Unlock badges by excelling at what you love\u2014socializing, creating,
+      or styling the perfect look in Decentraland\u2014and show them off on your
+      profile!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098893369925632
+    m_Localized: Worlds
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098927905824768
+    m_Localized: Get a NAME, unlock a whole World! Separate from Genesis City, use
+      your World to hang out, host events, or experiment with scene building.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197099039080046592
+    m_Localized: Communities
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197099055790153728
+    m_Localized: 'Explore Communities to connect over shared interests. Hang in the
+      group chat, get event updates, and enjoy that cozy sense of belonging!
+
+'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197397929998147584
+    m_Localized: Creator Hub
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197397960180359168
+    m_Localized: Build anything you can imagine from the perfect hangout, to alien
+      worlds, or a full on gaming experience. Deploy to your World or LAND to invite
+      the community!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 219996672412868608
+    m_Localized: Art Week
+    m_Metadata:
+      m_Items: []
+  - m_Id: 219996789945655296
+    m_Localized: "Can virtual art make us feel more human?\nFind out Sept 24\u201327,
+      2025 through 30+ immersive installations, creator tours, workshops, parties,
+      and more."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232214342377889792
+    m_Localized: Join The Vibe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232214434111512576
+    m_Localized: "Join DCL Regenesis Labs first hackathon\n(Oct 13\u2013Nov 9). Vibe
+      coding, spooky vibes, and $7.5K+ in prizes await!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232572835362463744
+    m_Localized: Fright Night
+    m_Metadata:
+      m_Items: []
+  - m_Id: 232572909886857216
+    m_Localized: "Join Decentraland October 30 - 31 for a virtual celebration of
+      all things spooky. \nExpect haunted builds, creepy quests, and surprises around
+      every corner."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 240512924747030528
+    m_Localized: Music Festival
+    m_Metadata:
+      m_Items: []
+  - m_Id: 240515377949302784
+    m_Localized: "Step into SUB/STREAM (Dec 3\u20136)\u2014a four-day virtual celebration
+      of stream-native music, with headline sets, epic light shows, and exclusive
+      Wearable drops"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 252176286601961472
+    m_Localized: Festive Trail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 252176435784966144
+    m_Localized: "Step into a festive world of gifts, games, and daily surprises
+      from Dec 16\u2013Jan 6. Discover new scenes, meet up with friends, and see
+      what opens next as the Trail unfolds."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 280508973964058624
+    m_Localized: Take a Shot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 280509008571260928
+    m_Localized: "See something worth remembering? Press \u2018C\u2019 to open the
+      Camera and \u2018Space bar\u2019 to snap a photo."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 280509031170170880
+    m_Localized: Show Up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 280509054129790976
     m_Localized: Spend time in Decentraland and earn Credits. Use them in the Marketplace
       to pick up Wearables and Emotes, no purchase needed. Shape your look as you
       go.
     m_Metadata:
       m_Items: []
-  - m_Id: 1078715894194176
-    m_Localized: Take a Shot
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078768453017600
-    m_Localized: "See something worth remembering? Press \u2018C\u2019 to open the
-      Camera and \u2018Space bar\u2019 to snap a photo."
-    m_Metadata:
-      m_Items: []
-  - m_Id: 191273272888152064
+  - m_Id: 280509069669687296
     m_Localized: Build Something
     m_Metadata:
       m_Items: []
-  - m_Id: 191273924741713920
+  - m_Id: 280509174804111360
+    m_Localized: "The Creator Hub gives you tools to build your own spaces, from
+      simple hangouts to bigger experiences. What you build can become someone\u2019s
+      regular spot."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 280509192596348928
     m_Localized: Your Presence
     m_Metadata:
       m_Items: []
-  - m_Id: 191273927132467200
+  - m_Id: 280509209528754176
     m_Localized: 'Badges reflect how you''ve spent time here: socializing, creating,
       or just being around. They show up on your profile so others get a sense of
       who they''re meeting.'
     m_Metadata:
       m_Items: []
-  - m_Id: 197019265204740096
+  - m_Id: 280509223613227008
     m_Localized: Say Hi!
     m_Metadata:
       m_Items: []
-  - m_Id: 197019292912312320
+  - m_Id: 280509251295633408
     m_Localized: "Emotes let you wave, react, or show off your moves without saying
       a word. Press \u2018B\u2019 to open the Emote Wheel and join the moment."
     m_Metadata:
       m_Items: []
-  - m_Id: 197098386597339136
+  - m_Id: 280509267145908224
     m_Localized: Your Look
     m_Metadata:
       m_Items: []
-  - m_Id: 197098550963724288
+  - m_Id: 280509282161516544
     m_Localized: "Wearables shape how you appear over time. Made by the community,
       they become part of how people recognize you\u2014and how you show off your
       style."
     m_Metadata:
       m_Items: []
-  - m_Id: 197098607523913728
+  - m_Id: 280509304580071424
     m_Localized: Your People
     m_Metadata:
       m_Items: []
-  - m_Id: 197098653933887488
+  - m_Id: 280509320132550656
     m_Localized: "Communities are how you find your people \u2014 from dance parties
       and chess matches to language practice, late-night talks, and art tours. Show
       up a few times and you start recognizing who\u2019s there."
     m_Metadata:
       m_Items: []
-  - m_Id: 197098893369925632
+  - m_Id: 280509333256527872
     m_Localized: What's On
     m_Metadata:
       m_Items: []
-  - m_Id: 197098927905824768
+  - m_Id: 280509345684250624
     m_Localized: Movie nights, trivia, dance parties, there's usually something happening.
       Drop in enough times and you'll start to recognize the regulars.
     m_Metadata:
       m_Items: []
-  - m_Id: 197099039080046592
+  - m_Id: 280509356048375808
     m_Localized: Your Space
     m_Metadata:
       m_Items: []
-  - m_Id: 197099055790153728
+  - m_Id: 280509369730195456
     m_Localized: 'Your World is yours to do what you want with: build, experiment,
       hang out, host. You can also wander into other people''s Worlds and see what
       they''ve put together.'
     m_Metadata:
       m_Items: []
-  - m_Id: 197397929998147584
+  - m_Id: 280509380392116224
     m_Localized: Hang Out
     m_Metadata:
       m_Items: []
-  - m_Id: 197397960180359168
+  - m_Id: 280509391242780672
     m_Localized: "Genesis Plaza is the place people tend to hang\u2014around the
       fire pit, in conversation, crossing paths, feeding pigeons. Come by and see
       who\u2019s around!"
