@@ -41,14 +41,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             ReportHub.LogProductionInfo( $"Loading scene '{definition?.GetLogSceneName()}' began");
 
-            // Warning! Obscure Logic!
-            // Each scene can override the content base url, so we need to check if the scene definition has a base url
-            // and if it does, we use it, otherwise we use the realm's base url
-            var contentBaseUrl = ipfsPath.BaseUrl.IsEmpty
-                ? intention.ContentBaseUrl
-                : ipfsPath.BaseUrl;
-
-            var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
+            var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
             var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);

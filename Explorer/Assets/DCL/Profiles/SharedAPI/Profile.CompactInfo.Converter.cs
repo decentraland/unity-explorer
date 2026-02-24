@@ -1,7 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using UnityEngine;
 
 namespace DCL.Profiles
 {
@@ -20,14 +22,17 @@ namespace DCL.Profiles
 
         public static Profile.CompactInfo ReadJson(JToken jObject)
         {
-            var compact = new Profile.CompactInfo
-            {
-                UserId = jObject["userId"]?.Value<string>() ?? jObject["pointer"]?.Value<string>() ?? "",
-                HasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false,
-                Name = jObject["name"]?.Value<string>() ?? "",
-                UnclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "",
-                FaceSnapshotUrl = URLAddress.FromString(jObject["thumbnailUrl"]?.Value<string>() ?? "")
-            };
+            var userId = jObject["userId"]?.Value<string>() ?? jObject["pointer"]?.Value<string>() ?? "";
+            var hasClaimedName = jObject["hasClaimedName"]?.Value<bool>() ?? false;
+            var name = jObject["name"]?.Value<string>() ?? "";
+            var faceSnapshotUrl = URLAddress.FromString(jObject["thumbnailUrl"]?.Value<string>() ?? "");
+            Color? nameColor =  jObject["nameColor"] == null ? null : JsonUtils.DeserializeColor(jObject["nameColor"], Color.black);
+
+            var compact = new Profile.CompactInfo(userId, name, hasClaimedName, faceSnapshotUrl);
+            var unclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
+            compact.UnclaimedName = unclaimedName;
+            if(nameColor.HasValue)
+                compact.ClaimedNameColor = nameColor;
 
             return compact;
         }

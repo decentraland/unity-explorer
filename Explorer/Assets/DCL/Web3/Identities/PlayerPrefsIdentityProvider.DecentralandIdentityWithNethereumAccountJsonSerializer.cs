@@ -34,7 +34,8 @@ namespace DCL.Web3.Identities
                 return new DecentralandIdentity(new Web3Address(jsonRoot.address),
                     accountFactory.CreateAccount(new EthECKey(jsonRoot.key)),
                     DateTime.Parse(jsonRoot.expiration, null, DateTimeStyles.RoundtripKind),
-                    authChain);
+                    authChain,
+                    IWeb3Identity.Web3IdentitySource.Cached);
             }
 
             public string Serialize(IWeb3Identity identity)

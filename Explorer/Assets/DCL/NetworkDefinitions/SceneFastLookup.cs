@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.IncreasingRadius
+namespace DCL.Ipfs
 {
     public struct SceneFastLookup
     {
