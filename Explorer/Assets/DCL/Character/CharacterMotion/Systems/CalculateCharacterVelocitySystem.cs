@@ -185,9 +185,10 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
 
             // Drag
-            ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
+            ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, dt);
             ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
 
+            // Rotation
             if (cameraComponent.Mode == CameraMode.FirstPerson)
                 ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
             else
