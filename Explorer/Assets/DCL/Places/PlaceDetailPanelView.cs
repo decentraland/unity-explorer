@@ -175,7 +175,7 @@ namespace DCL.Places
             creatorContainer.SetActive(false);
             creatorNameText.text = placeInfo.contact_name;
             creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
-            creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
+            creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) && placeInfo.owner.Length >= 10 ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
             creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
@@ -189,7 +189,7 @@ namespace DCL.Places
             coordsText.text = placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
-            updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
+            updatedDateText.text = DateTimeOffset.TryParse(placeInfo.updated_at, out var date) ? date.ToString("dd/MM/yyyy") : "-";
 
             liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
             if (liveEvent != null)

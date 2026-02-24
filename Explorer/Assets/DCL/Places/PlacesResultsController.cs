@@ -364,17 +364,10 @@ namespace DCL.Places
             if (!placesResult.Success)
                 return sortedPlacesResponse;
 
+            var placesById = placesResult.Value.Data.ToDictionary(p => p.id);
             foreach (string placeId in sortedPlacesIds)
-            {
-                foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.Data)
-                {
-                    if (placeInfo.id != placeId)
-                        continue;
-
+                if (placesById.TryGetValue(placeId, out var placeInfo))
                     sortedPlacesResponse.data.Add(placeInfo);
-                    break;
-                }
-            }
 
             sortedPlacesResponse.total = sortedPlacesResponse.data.Count;
 

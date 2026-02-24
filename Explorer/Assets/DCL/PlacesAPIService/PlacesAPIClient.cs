@@ -337,9 +337,6 @@ namespace DCL.PlacesAPIService
             }
             jsonBody.Append("]");
 
-            if (placeIdsList.Count == 0)
-                jsonBody.Clear();
-
             PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
 
@@ -372,9 +369,6 @@ namespace DCL.PlacesAPIService
                     jsonBody.Append(", ");
             }
             jsonBody.Append("]");
-
-            if (placeIdsList.Count == 0)
-                jsonBody.Clear();
 
             PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
