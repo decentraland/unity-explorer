@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -642,6 +643,7 @@ namespace DCL.PluginSystem.Global
             new ShowEventInfoCommand(@event, eventInfoPanelController!, placesAndEventsPanelController!,
                 searchBarController!, placesAPIService, place);
 
+        [Serializable]
         public class ExplorePanelSettings : IDCLPluginSettings
         {
             [field: Header(nameof(ExplorePanelPlugin) + "." + nameof(ExplorePanelSettings))]

@@ -117,6 +117,7 @@ namespace DCL.SkyBox
             }
         }
 
+        [Serializable]
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
             [field: SerializeField]

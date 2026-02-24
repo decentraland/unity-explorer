@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat.MessageBus;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
             teleportPromptController?.Dispose();
         }
 
+        [Serializable]
         public class TeleportPromptSettings : IDCLPluginSettings
         {
             [field: Header(nameof(TeleportPromptPlugin) + "." + nameof(TeleportPromptSettings))]

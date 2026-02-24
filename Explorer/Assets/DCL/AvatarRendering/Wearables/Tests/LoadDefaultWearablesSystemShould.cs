@@ -8,7 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.IO;
 using UnityEngine;
-using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadDefaultWearablesSystem;
+using LoadDefaultWearablesSystem = DCL.AvatarRendering.Wearables.Systems.LoadDefaultWearablesSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
