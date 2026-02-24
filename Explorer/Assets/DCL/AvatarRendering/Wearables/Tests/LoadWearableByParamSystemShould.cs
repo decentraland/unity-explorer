@@ -14,7 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.Load.LoadWearablesByParamSystem;
+using LoadWearablesByParamSystem = DCL.AvatarRendering.Wearables.Systems.LoadWearablesByParamSystem;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
