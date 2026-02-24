@@ -37,7 +37,8 @@ namespace DCL.PlacesAPIService
             bool? withLiveEvents = null);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
-        UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
+        UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
