@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -26,7 +27,6 @@ using System.Threading;
 using DCL.RealmNavigation;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -153,6 +153,11 @@ namespace Global.Dynamic
                     worldManifest
                 );
 
+                UnityDiagnosticsCenter.Instance.SetRealmInfo(
+                    realmData.Ipfs.CatalystBaseUrl.Value,
+                    realmData.Ipfs.ContentBaseUrl.Value,
+                    realmData.Ipfs.LambdasBaseUrl.Value);
+
                 // Add the realm component
                 var realmComp = new RealmComponent(realmData);
 
@@ -208,14 +213,14 @@ namespace Global.Dynamic
             return statusCode != 401;
         }
 
-        public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
+        public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
             FixedScenePointers fixedScenePointers = default;
 
             await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
                                           && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
 
-            return fixedScenePointers.Promises!;
+            return fixedScenePointers.SceneResults;
         }
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
