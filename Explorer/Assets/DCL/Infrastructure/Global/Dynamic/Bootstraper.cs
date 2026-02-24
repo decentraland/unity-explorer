@@ -114,6 +114,7 @@ namespace Global.Dynamic
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
+                bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
                 realmData,
                 bootstrapContainer.AssetsProvisioner,
@@ -131,7 +132,6 @@ namespace Global.Dynamic
                 memoryCap,
                 bootstrapContainer.VolumeBus,
                 EnableAnalytics,
-                bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
                 bootstrapContainer.Environment,
@@ -334,7 +334,7 @@ namespace Global.Dynamic
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
                 if (EnableAnalytics)
-                    bootstrapContainer.Analytics!.Identify(identity);
+                    bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

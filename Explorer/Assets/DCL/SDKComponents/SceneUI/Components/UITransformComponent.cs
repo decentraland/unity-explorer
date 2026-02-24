@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CRDT;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -97,6 +97,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             if (IsRoot) return;
 
             this.UnregisterPointerCallbacks();
+            reusableTransform.UnregisterHoverStyleCallbacks();
             reusableTransform.tabIndex = 0;
             reusableTransform.RemoveFromHierarchy();
         }
