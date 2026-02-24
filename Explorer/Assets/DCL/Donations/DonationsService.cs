@@ -140,7 +140,7 @@ namespace DCL.Donations
             PlacesData.PlaceInfo? placeInfo;
 
             if (realmData.ScenesAreFixed)
-                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+                placeInfo = await placesAPIService.GetWorldAsync(currentScene.Info.BaseParcel, realmData.RealmName, ct);
             else
                 placeInfo = await GetPlaceInfoAsync(currentScene.Info.BaseParcel, ct);
 
