@@ -283,9 +283,13 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
         {
-            var url = $"{baseWorldsURL}?names={placeId}";
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+            urlBuilder.AppendParameter(new URLParameter("positions", coord));
+            urlBuilder.AppendParameter(new URLParameter("names", realmName));
+            URLAddress url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
@@ -300,12 +304,12 @@ namespace DCL.PlacesAPIService
                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
-
-
             if (!response.ok)
-                throw new NotAPlaceException(placeId);
+                throw new NotAPlaceException(coord);
 
-            // At this moment WR is already disposed
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved for coord: {coord}");
+
             return response;
         }
 

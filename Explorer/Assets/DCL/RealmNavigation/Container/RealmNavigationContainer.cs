@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PrivateWorlds;
+using DCL.PlacesAPIService;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -47,7 +48,8 @@ namespace DCL.RealmNavigation
             IRoomHub roomHub,
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
-            ILoadingScreen loadingScreen)
+            ILoadingScreen loadingScreen,
+            IPlacesAPIService placesAPIService)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
@@ -59,6 +61,7 @@ namespace DCL.RealmNavigation
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
+                new ClearWorldsCacheTeleportOperation(placesAPIService),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
                 new LoadLandscapeTeleportOperation(landscape),

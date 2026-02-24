@@ -18,7 +18,7 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         /// Currently selected authentication method
         /// </summary>
-        AuthProvider CurrentProvider { get; set; }
+        AuthProvider CurrentProvider { set; }
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected
