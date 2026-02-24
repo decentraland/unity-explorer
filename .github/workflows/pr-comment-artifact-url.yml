@@ -109,6 +109,39 @@ jobs:
           echo "Build done on: $BUILD_DATE"
           echo "BUILD_DATE=$BUILD_DATE" >> "$GITHUB_ENV"
 
+      - name: Download size reports
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          gh run download "$PREVIOUS_JOB_ID" \
+            --repo "$OWNER/$REPO" \
+            --name size_report_windows64 \
+            --dir size_reports 2>/dev/null || true
+          gh run download "$PREVIOUS_JOB_ID" \
+            --repo "$OWNER/$REPO" \
+            --name size_report_macos \
+            --dir size_reports 2>/dev/null || true
+
+          WINDOWS_ROW=$(cat size_reports/size_report_windows64.md 2>/dev/null || true)
+          MACOS_ROW=$(cat size_reports/size_report_macos.md 2>/dev/null || true)
+
+          if [ -n "$WINDOWS_ROW" ] || [ -n "$MACOS_ROW" ]; then
+            {
+              echo "SIZE_REPORT<<EOF"
+              echo "### Artifact size check (vs latest release)"
+              echo ""
+              echo "| Target | Size (MB / MiB) | Cap (MB) | Δ MB vs release | Δ % vs release | Result |"
+              echo "|--------|----------------:|--------:|----------------:|---------------:|--------|"
+              [ -n "$WINDOWS_ROW" ] && echo "$WINDOWS_ROW"
+              [ -n "$MACOS_ROW" ] && echo "$MACOS_ROW"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          else
+            echo "SIZE_REPORT=" >> "$GITHUB_ENV"
+          fi
+
       - name: Find Comment
         uses: peter-evans/find-comment@v2
         id: find-comment
@@ -130,10 +163,10 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body: |-
-            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"> 
-            
+            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
             Windows and Mac build successful in Unity Cloud! You can find a link to the downloadable artifact below.
-            
+
             | Name                | Link                    |
             | --------            | ----------------------- |
             | Commit              | ${{ env.HEAD_SHA }}     |
@@ -143,6 +176,8 @@ jobs:
             | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
             | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
             | Built on            | ${{ env.BUILD_DATE }} |
+
+            ${{ env.SIZE_REPORT }}
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
 

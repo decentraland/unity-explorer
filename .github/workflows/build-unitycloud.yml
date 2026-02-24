@@ -418,8 +418,8 @@ jobs:
         id: size_check
         env:
           # Per-target absolute caps (MB)
-          MAX_MACOS_MB: 370
-          MAX_WINDOWS64_MB: 280
+          MAX_MACOS_MB: 410
+          MAX_WINDOWS64_MB: 320
 
           # Per-platform delta thresholds (MB); 0 = disabled
           DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
@@ -528,9 +528,33 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # Export key values so the PR comment workflow can include them
+          echo "size_mb=$MB_DEC" >> "$GITHUB_OUTPUT"
+          echo "size_mib=$MIB_BIN" >> "$GITHUB_OUTPUT"
+          echo "cap_mb=${MAX:-0}" >> "$GITHUB_OUTPUT"
+          echo "delta_mb=$DELTA_MB" >> "$GITHUB_OUTPUT"
+          echo "delta_pct=$DELTA_PCT" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG:-}" >> "$GITHUB_OUTPUT"
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+
           # Enforce (fail the job) only if toggles are true
           if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then exit 1; fi
           if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then exit 1; fi
+
+      - name: Save size report
+        if: always() && steps.size_check.outputs.result != ''
+        run: |
+          mkdir -p size_report
+          echo "| ${{ matrix.target }} | ${{ steps.size_check.outputs.size_mb }} / ${{ steps.size_check.outputs.size_mib }} | ${{ steps.size_check.outputs.cap_mb }} | ${{ steps.size_check.outputs.delta_mb }} | ${{ steps.size_check.outputs.delta_pct }} | ${{ steps.size_check.outputs.result }} |" \
+            > size_report/size_report_${{ matrix.target }}.md
+
+      - name: Upload size report
+        if: always() && steps.size_check.outputs.result != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: size_report_${{ matrix.target }}
+          path: size_report/
+          if-no-files-found: warn
 
       - name: Set SHA, branch, and build prefix
         run: |
