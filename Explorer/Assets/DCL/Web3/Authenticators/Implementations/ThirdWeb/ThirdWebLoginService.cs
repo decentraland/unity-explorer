@@ -136,7 +136,7 @@ namespace DCL.Web3.Authenticators
                     signature = signature,
                 });
 
-                return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain);
+                return new DecentralandIdentity(new Web3Address(sender), ephemeralAccount, sessionExpiration, authChain, IWeb3Identity.Web3IdentitySource.OTP);
             }
             catch (Exception)
             {
@@ -193,7 +193,8 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                await pendingWallet.LoginWithOtp(otp).AsUniTask().AttachExternalCancellation(ct);
+                await pendingWallet.LoginWithOtp(otp);
+                                   // .AsUniTask().AttachExternalCancellation(ct); <- this breaks the flow for InvalidOperationEx
                 loginCompletionSource?.TrySetResult(true);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
