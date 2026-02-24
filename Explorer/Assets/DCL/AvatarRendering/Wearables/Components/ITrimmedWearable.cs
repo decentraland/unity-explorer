@@ -3,7 +3,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface ITrimmedWearable : ITrimmedAvatarAttachment
+    public interface ITrimmedWearable : ITrimmedAvatarAttachment<TrimmedWearableDTO>
     {
         public int Amount { get; set; }
         bool IsCompatibleWithBodyShape(string bodyShape);

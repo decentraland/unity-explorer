@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Ipfs;
+using ECS.StreamableLoading.Common.Components;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -56,5 +57,10 @@ namespace DCL.AvatarRendering.Loading.Components
         string? IThumbnailAttachment.GetContentDownloadUrl() => GetContentDownloadUrl();
 
         string? IThumbnailAttachment.GetEntityId() => GetEntityId();
+    }
+
+    public interface ITrimmedAvatarAttachment<TModelDTO> : ITrimmedAvatarAttachment
+    {
+        StreamableLoadingResult<TModelDTO> TrimmedModel { get; set; }
     }
 }

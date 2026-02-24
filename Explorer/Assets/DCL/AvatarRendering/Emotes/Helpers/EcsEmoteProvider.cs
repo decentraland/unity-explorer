@@ -102,7 +102,10 @@ namespace DCL.AvatarRendering.Emotes
                 throw promise.Result.Value.Exception!;
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
+
             output.AddRange(emotes.Value);
+            foreach (var emote in output)
+                emote.PopulateTrimmedModel();
 
             return output;
         }

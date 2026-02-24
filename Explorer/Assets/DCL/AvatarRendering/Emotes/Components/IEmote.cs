@@ -57,6 +57,12 @@ namespace DCL.AvatarRendering.Emotes
         string? IThumbnailAttachment.GetEntityId() =>
             ((IAvatarAttachment)this).GetEntityId();
 
+        void PopulateTrimmedModel()
+        {
+            if (Model.IsInitialized)
+                TrimmedModel = new StreamableLoadingResult<TrimmedEmoteDTO>(Model.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
+        }
+
         UniTask<Sprite> IThumbnailAttachment.WaitForThumbnailAsync(int checkInterval, CancellationToken ct) =>
             WaitForThumbnailImplAsync(this, checkInterval, ct);
 
