@@ -506,13 +506,10 @@ namespace Global.Dynamic
             );
 #endif
 
-#if UNITY_WEBGL
-            RealmNavigationContainer? realmNavigatorContainer = null;
-#else
             var realmNavigatorContainer = RealmNavigationContainer.Create(
                     staticContainer,
                     bootstrapContainer,
-                    lodContainer,
+                    roadAssetsPool,
                     realmContainer,
 #if !NO_LIVEKIT_MODE
                     remoteEntities,
@@ -523,7 +520,6 @@ namespace Global.Dynamic
                     exposedGlobalDataContainer,
                     loadingScreen
                     );
-#endif
 
 
 #if !NO_LIVEKIT_MODE
