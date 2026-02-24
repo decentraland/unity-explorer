@@ -45,6 +45,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.FORCE_BACKFACE_CULLING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FORCE_BACKFACE_CULLING, featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING), requireDebug: false),
                 [FeatureId.NAME_COLOR_CHANGE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.NAME_COLOR_CHANGE, featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || Application.isEditor),
                 [FeatureId.EMAIL_OTP_AUTH] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
+                [FeatureId.CHECK_DISK_SPACE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.DOUBLE_JUMP] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
                 [FeatureId.GLIDING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GLIDING, featureFlags.IsEnabled(FeatureFlagsStrings.GLIDING) || Application.isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
@@ -156,6 +157,7 @@ namespace DCL.FeatureFlags
         FORCE_BACKFACE_CULLING,
         NAME_COLOR_CHANGE,
         EMAIL_OTP_AUTH,
+        CHECK_DISK_SPACE,
         DOUBLE_JUMP,
         GLIDING
     }

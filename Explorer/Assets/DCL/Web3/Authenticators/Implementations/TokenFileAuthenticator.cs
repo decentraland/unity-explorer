@@ -86,7 +86,8 @@ namespace DCL.Web3.Authenticators
             IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
-            return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain);
+            return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain,
+                IWeb3Identity.Web3IdentitySource.TokenFile);
         }
 
         public UniTask LogoutAsync(CancellationToken ct) =>
