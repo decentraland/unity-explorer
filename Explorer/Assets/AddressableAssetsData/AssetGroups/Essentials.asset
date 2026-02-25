@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 123e00daa809b4e31934bfaddb9db160
+    m_Address: NoDiskSpaceScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 13e534245f7a87d498ae850d58b9115f
     m_Address: Assets/DCL/VoiceChat/VoiceChatPlaybackAudioSource.prefab
     m_ReadOnly: 0
@@ -100,13 +105,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 508289f0a6feab048964059d0534fdd7
-    m_Address: PlaceCategories
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 502bd975d08eca847807411acf6a73d2
-    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
+  - m_GUID: 508289f0a6feab048964059d0534fdd7
+    m_Address: PlaceCategories
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

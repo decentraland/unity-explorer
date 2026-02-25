@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        [Serializable]
         public class DuplicateIdentitySettings : IDCLPluginSettings
         {
             [field: SerializeField] public DuplicateIdentityWindowViewRef DuplicateIdentityWindow { get; private set; } = null!;
