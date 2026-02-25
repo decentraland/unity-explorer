@@ -410,6 +410,14 @@ MonoBehaviour:
       Severity: 0
     - Category: REALM
       Severity: 0
+    - Category: ASSET_PRE_LOAD
+      Severity: 4
+    - Category: ASSET_PRE_LOAD
+      Severity: 1
+    - Category: DONATIONS
+      Severity: 4
+    - Category: DONATIONS
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -771,6 +779,14 @@ MonoBehaviour:
     - Category: SOCIAL
       Severity: 4
     - Category: SOCIAL
+      Severity: 1
+    - Category: DONATIONS
+      Severity: 4
+    - Category: DONATIONS
+      Severity: 1
+    - Category: ASSET_PRE_LOAD
+      Severity: 4
+    - Category: ASSET_PRE_LOAD
       Severity: 1
   debounceEnabled: 1
   isSentryEnabled: 1

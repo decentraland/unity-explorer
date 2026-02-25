@@ -173,7 +173,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             if (promise.Result is {Succeeded: true})
             {
-                var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+                using ConsumedList<IEmote> consumed = promise.Result!.Value.Asset.ConsumeEmotes();
                 var value = consumed.Value[0]!;
                 URN urn = value.GetUrn();
 

@@ -298,7 +298,7 @@ namespace Global.Dynamic
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             IMVCManager mvcManager = dynamicWorldParams.EnableAnalytics
-                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics!)
+                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller)
                 : coreMvcManager;
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
@@ -329,7 +329,7 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
 
             var selfEmotes = new List<URN>();
-            ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
+            ParseParamsForcedEmotes(bootstrapContainer.AppArgs, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
@@ -441,7 +441,7 @@ namespace Global.Dynamic
                 : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
-                ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
+                ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics.Controller)
                 : livekitHealthCheck;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
@@ -453,14 +453,13 @@ namespace Global.Dynamic
             bool isNameEditorEnabled = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PROFILE_NAME_EDITOR, featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || Application.isEditor);
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
             bool includeBannedUsersFromScene = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BANNED_USERS_FROM_SCENE, featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || Application.isEditor);
-            bool includeDiscover = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || Application.isEditor);
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
             IEventBus emotesEventBus = new EventBus(true);
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, includeDiscover, emotesEventBus);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
@@ -550,7 +549,7 @@ namespace Global.Dynamic
                                                  .WithDebugPanel(debugBuilder);
 
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
-                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
+                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics.Controller, profileCache, selfProfile)
                 : coreChatMessageBus;
 
             IDonationsService donationsService;
@@ -560,7 +559,8 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                     placesAPIService, bootstrapContainer.Environment,
                     bootstrapContainer.DecentralandUrlsSource);
-                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics!) : coreDonationsService;
+
+                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics.Controller) : coreDonationsService;
             }
             else
                 donationsService = new DonationsServiceDisabled();
@@ -587,7 +587,7 @@ namespace Global.Dynamic
             );
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
-                ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
+                ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics.Controller)
                 : coreBackpackEventBus;
 
             var profileBroadcast = new DebounceProfileBroadcast(
@@ -661,7 +661,7 @@ namespace Global.Dynamic
                 chatEventBus,
                 genericUserProfileContextMenuSettingsSo,
                 includeUserBlocking,
-                bootstrapContainer.Analytics,
+                bootstrapContainer.Analytics.Controller,
                 onlineUsersProvider,
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
@@ -687,8 +687,6 @@ namespace Global.Dynamic
             var thumbnailProvider = new ECSThumbnailProvider(bootstrapContainer.DecentralandUrlsSource, globalWorld);
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
-
-            var entitiesAnalytics = new EntitiesAnalytics(bootstrapContainer.Analytics);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -726,9 +724,9 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emoteWheelShortcutHandler, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, entitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
+                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, bootstrapContainer.Analytics.EntitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, bootstrapContainer.DecentralandUrlsSource, entitiesAnalytics),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache, bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.Analytics.EntitiesAnalytics),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -761,7 +759,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.CompositeWeb3Provider,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeDiscover,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource, passportBridge, eventBus,
@@ -869,7 +867,6 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
-                    includeDiscover,
                     appArgs,
                     userBlockingCacheProxy,
                     sharedSpaceManager,
@@ -889,7 +886,7 @@ namespace Global.Dynamic
                     homePlaceEventBus,
                     staticContainer.SmartWearableCache,
                     staticContainer.ImageControllerProvider,
-                    bootstrapContainer.Analytics!,
+                    bootstrapContainer.Analytics.Controller,
                     communitiesDataService,
                     staticContainer.LoadingStatus,
                     donationsService,
@@ -919,7 +916,7 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.ApplicationParametersParser, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus, featureFlags),
@@ -1089,7 +1086,7 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics,
+                    bootstrapContainer.Analytics.Controller,
                     chatEventBus,
                     sharedSpaceManager,
                     socialServiceEventBus,
@@ -1181,13 +1178,13 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
                     voiceChatContainer.VoiceChatOrchestrator,
-                    bootstrapContainer.Analytics!,
+                    bootstrapContainer.Analytics.Controller,
                     homePlaceEventBus,
                     socialServiceEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
-                        bootstrapContainer.Analytics!,
+                        bootstrapContainer.Analytics.Controller,
                         staticContainer.Profiler,
                         staticContainer.LoadingStatus,
                         staticContainer.RealmData,
@@ -1236,7 +1233,7 @@ namespace Global.Dynamic
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
                 builderCollectionsPreview,
-                entitiesAnalytics
+                bootstrapContainer.Analytics.EntitiesAnalytics
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

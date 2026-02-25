@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -14,6 +14,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using UnityEngine.UIElements;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 {
@@ -44,9 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
         private void TriggerPointerEvents(ref PBPointerEvents sdkModel, ref UITransformComponent uiTransformComponent, ref CRDTEntity sdkEntity)
         {
             if (sdkModel.IsDirty)
-            {
                 uiTransformComponent.RegisterPointerCallbacks();
-            }
 
             sdkModel.IsDirty = false;
 
@@ -68,13 +67,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
 
         [Query]
         [None(typeof(PBPointerEvents), typeof(DeleteEntityIntention))]
-        private void HandleUIPointerEventsRemoval(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleUIPointerEventsRemoval(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel) =>
-            RemovePointerEvents(ref uiTransformComponent, ref sdkModel);
+        private void HandleEntityDestruction(in Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel) =>
+            RemovePointerEvents(entity, ref uiTransformComponent, in sdkModel);
 
         private void AppendMessage(ref CRDTEntity sdkEntity, InputAction button, PointerEventType eventType)
         {
@@ -89,10 +88,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIPointerEvents
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (null, button, eventType, sceneStateProvider));
         }
 
-        private void RemovePointerEvents(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkModel)
+        private void RemovePointerEvents(Entity entity, ref UITransformComponent uiTransformComponent, in PBUiTransform sdkModel)
         {
             uiTransformComponent.Transform.pickingMode = sdkModel.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
             uiTransformComponent.UnregisterPointerCallbacks();
+            uiTransformComponent.Transform.UnregisterHoverStyleCallbacks();
         }
     }
 }
