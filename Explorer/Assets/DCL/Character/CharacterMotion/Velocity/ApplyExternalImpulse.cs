@@ -21,7 +21,10 @@ namespace DCL.Character.CharacterMotion
             characterPhysics.ExternalVelocity += deltaVelocity;
 
             if (characterPhysics.ExternalImpulse.y > 0f)
+            {
                 characterPhysics.IsGrounded = false;
+                characterPhysics.GravityVelocity.y = 0f;
+            }
 
             // Clamp to max external velocity
             if (characterPhysics.ExternalVelocity.sqrMagnitude > settings.MaxExternalVelocity * settings.MaxExternalVelocity)
