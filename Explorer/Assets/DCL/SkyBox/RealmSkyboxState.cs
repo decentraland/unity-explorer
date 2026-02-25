@@ -1,3 +1,4 @@
+using DCL.Ipfs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using ECS;
@@ -37,7 +38,7 @@ namespace DCL.SkyBox
                 SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
 
             settings.IsDayCycleEnabled = false;
-            settings.TransitionMode = TransitionMode.FORWARD;
+            settings.TransitionMode = SceneMetadata.TransitionMode.FORWARD;
             ApplyFixedHour();
             transition.Enter();
         }
